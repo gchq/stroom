@@ -20,11 +20,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.security.shared.FindUserCriteria;
-import stroom.security.shared.User;
-import stroom.security.shared.UserRef;
-import stroom.security.shared.UserService;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserRef;
 import stroom.util.test.FileSystemTestUtil;
 

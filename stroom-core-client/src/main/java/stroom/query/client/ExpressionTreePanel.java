@@ -29,11 +29,10 @@ import stroom.data.grid.client.MouseHelper;
 import stroom.datasource.api.v1.DataSourceField;
 import stroom.dictionary.shared.Dictionary;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.structure.client.view.Box;
 import stroom.pipeline.structure.client.view.TreePanel;
-import stroom.query.shared.IndexField;
+import stroom.query.api.v1.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.widget.htree.client.BracketConnectorRenderer;
 import stroom.widget.htree.client.ConnectorRenderer;
@@ -176,8 +175,8 @@ public class ExpressionTreePanel extends TreePanel<Item> {
         }
     }
 
-    public void init(final ClientDispatchAsync dispatcher, final DocRef dataSource, final List<DataSourceField> indexFields) {
-        termEditor.init(dispatcher, dataSource, indexFields);
+    public void init(final ClientDispatchAsync dispatcher, final DocRef dataSource, final List<DataSourceField> fields) {
+        termEditor.init(dispatcher, dataSource, fields);
     }
 
     public void endEditing() {

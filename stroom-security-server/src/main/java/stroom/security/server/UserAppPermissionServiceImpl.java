@@ -21,7 +21,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.CoreSqlBuilder;
+import stroom.entity.server.util.HqlBuilder;
+import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.jobsystem.server.ClusterLockService;
 import stroom.security.Secured;
@@ -147,13 +149,12 @@ public class UserAppPermissionServiceImpl implements UserAppPermissionService {
     public void createAll(final Set<String> requiredSet) {
         clusterLockService.lock(LOCK_NAME);
 
-        SQLBuilder sql = new SQLBuilder();
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT p FROM ");
         sql.append(Permission.class.getName());
         sql.append(" as p");
 
-        @SuppressWarnings("unchecked")
-        final List<Permission> existingPermissionList = entityManager.executeQueryResultList(sql, null);
+        @SuppressWarnings("unchecked") final List<Permission> existingPermissionList = entityManager.executeQueryResultList(sql, null);
         final Map<String, Permission> existingPermissionMap = new HashMap<>();
         for (final Permission permission : existingPermissionList) {
             existingPermissionMap.put(permission.getName(), permission);
@@ -180,25 +181,35 @@ public class UserAppPermissionServiceImpl implements UserAppPermissionService {
             LOGGER.info("createAll() - Removing {}", existingPermission);
 
             // Delete old application permissions.
-            sql = new SQLBuilder(false);
-            sql.append("DELETE FROM ");
-            sql.append(AppPermission.TABLE_NAME);
-            sql.append(" WHERE ");
-            sql.append(AppPermission.PERMISSION);
-            sql.append(" = ");
-            sql.append(existingPermission.getId());
-            entityManager.executeNativeUpdate(sql);
+            deleteOldAppPerms(existingPermission);
 
             // Delete old permissions.
-            sql = new SQLBuilder(false);
-            sql.append("DELETE FROM ");
-            sql.append(Permission.TABLE_NAME);
-            sql.append(" WHERE ");
-            sql.append(Permission.ID);
-            sql.append(" = ");
-            sql.append(existingPermission.getId());
-            entityManager.executeNativeUpdate(sql);
+            deleteOldPerms(existingPermission);
         }
+    }
+
+    private void deleteOldAppPerms(final Permission existingPermission) {
+        // Delete old application permissions.
+        final SqlBuilder sql = new SqlBuilder();
+        sql.append("DELETE FROM ");
+        sql.append(AppPermission.TABLE_NAME);
+        sql.append(" WHERE ");
+        sql.append(AppPermission.PERMISSION);
+        sql.append(" = ");
+        sql.arg(existingPermission.getId());
+        entityManager.executeNativeUpdate(sql);
+    }
+
+    private void deleteOldPerms(final Permission existingPermission) {
+        // Delete old permissions.
+        final SqlBuilder sql = new SqlBuilder();
+        sql.append("DELETE FROM ");
+        sql.append(Permission.TABLE_NAME);
+        sql.append(" WHERE ");
+        sql.append(Permission.ID);
+        sql.append(" = ");
+        sql.arg(existingPermission.getId());
+        entityManager.executeNativeUpdate(sql);
     }
 
     @Override
@@ -209,7 +220,7 @@ public class UserAppPermissionServiceImpl implements UserAppPermissionService {
 
     private Set<String> getPermissionSetForUser(final UserRef userRef) {
         try {
-            final SQLBuilder sqlBuilder = new SQLBuilder(SQL_GET_PERMISSION_KEYSET_FOR_USER, userRef.getUuid());
+            final SqlBuilder sqlBuilder = new SqlBuilder(SQL_GET_PERMISSION_KEYSET_FOR_USER, userRef.getUuid());
             return new HashSet<>(entityManager.executeNativeQueryResultList(sqlBuilder));
 
         } catch (final RuntimeException e) {
@@ -225,7 +236,7 @@ public class UserAppPermissionServiceImpl implements UserAppPermissionService {
             LOGGER.error("Unknown permission: " + permission);
         } else {
             try {
-                final SQLBuilder sqlBuilder = new SQLBuilder(SQL_INSERT_USER_PERMISSIONS, 1, userRef.getUuid(), permissionId);
+                final SqlBuilder sqlBuilder = new SqlBuilder(SQL_INSERT_USER_PERMISSIONS, 1, userRef.getUuid(), permissionId);
                 entityManager.executeNativeUpdate(sqlBuilder);
             } catch (final PersistenceException e) {
                 // Expected exception.
@@ -245,7 +256,7 @@ public class UserAppPermissionServiceImpl implements UserAppPermissionService {
             LOGGER.error("Unknown permission: " + permission);
         } else {
             try {
-                final SQLBuilder sqlBuilder = new SQLBuilder(SQL_DELETE_USER_PERMISSIONS, userRef.getUuid(), permissionId);
+                final SqlBuilder sqlBuilder = new SqlBuilder(SQL_DELETE_USER_PERMISSIONS, userRef.getUuid(), permissionId);
                 entityManager.executeNativeUpdate(sqlBuilder);
             } catch (final RuntimeException e) {
                 LOGGER.error("removePermission()", e);

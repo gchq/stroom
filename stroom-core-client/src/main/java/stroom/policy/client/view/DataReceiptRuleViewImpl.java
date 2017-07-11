@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.client.view;
+package stroom.policy.client.view;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -25,7 +25,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.item.client.ItemListBox;
-import stroom.streamstore.client.presenter.DataReceiptRulePresenter.DataReceiptRuleView;
+import stroom.policy.client.presenter.DataReceiptRulePresenter.DataReceiptRuleView;
 import stroom.streamstore.shared.DataReceiptAction;
 
 public class DataReceiptRuleViewImpl extends ViewImpl implements DataReceiptRuleView {

@@ -16,15 +16,12 @@
 
 package stroom.servlet;
 
-import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Scope;
-import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Component;
 import stroom.resource.server.ResourceStore;
 import stroom.util.shared.ResourceKey;
-import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -32,7 +29,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.UUID;
 
 /**
@@ -40,30 +36,34 @@ import java.util.UUID;
  * in the session.
  */
 @Component(SessionResourceStoreImpl.BEAN_NAME)
-@Lazy
-@Scope(value = StroomScope.SESSION, proxyMode = ScopedProxyMode.INTERFACES)
 public class SessionResourceStoreImpl extends HttpServlet implements SessionResourceStore {
-    public static final String BEAN_NAME = "sessionResourceStore";
-
     private static final long serialVersionUID = -4533441835216235920L;
+
+    public static final String BEAN_NAME = "sessionResourceStore";
     private static final String UUID_ARG = "UUID";
-    private final HashMap<ResourceKey, ResourceKey> sessionResourceMap = new HashMap<>();
-    @Resource(name = "resourceStore")
-    private transient ResourceStore resourceStore;
+
+    private final ResourceStore resourceStore;
+    private final Provider<SessionResourceMap> sessionResourceMapProvider;
+
+    @Inject
+    SessionResourceStoreImpl(final ResourceStore resourceStore, final Provider<SessionResourceMap> sessionResourceMapProvider) {
+        this.resourceStore = resourceStore;
+        this.sessionResourceMapProvider = sessionResourceMapProvider;
+    }
 
     @Override
-    public synchronized ResourceKey createTempFile(final String name) {
+    public ResourceKey createTempFile(final String name) {
         final ResourceKey key = resourceStore.createTempFile(name);
         final ResourceKey sessionKey = new ResourceKey(name, UUID.randomUUID().toString());
 
-        sessionResourceMap.put(sessionKey, key);
+        getMap().put(sessionKey, key);
 
         return sessionKey;
     }
 
     @Override
-    public synchronized void deleteTempFile(final ResourceKey key) {
-        final ResourceKey realKey = sessionResourceMap.remove(key);
+    public void deleteTempFile(final ResourceKey key) {
+        final ResourceKey realKey = getMap().remove(key);
         if (realKey == null) {
             return;
         }
@@ -71,12 +71,20 @@ public class SessionResourceStoreImpl extends HttpServlet implements SessionReso
     }
 
     @Override
-    public synchronized Path getTempFile(final ResourceKey key) {
-        final ResourceKey realKey = sessionResourceMap.get(key);
+    public Path getTempFile(final ResourceKey key) {
+        final ResourceKey realKey = getMap().get(key);
         if (realKey == null) {
             return null;
         }
-        return resourceStore.getTempFile(sessionResourceMap.get(key));
+        return resourceStore.getTempFile(getMap().get(key));
+    }
+
+    private SessionResourceMap getMap() {
+        final SessionResourceMap sessionResourceMap = sessionResourceMapProvider.get();
+        if (sessionResourceMap == null) {
+            throw new NullPointerException("Null session resource map");
+        }
+        return sessionResourceMap;
     }
 
     @Override
@@ -106,5 +114,4 @@ public class SessionResourceStoreImpl extends HttpServlet implements SessionReso
             resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Resource not found");
         }
     }
-
 }

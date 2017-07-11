@@ -21,9 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.util.StroomDatabaseInfo;
-import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.server.util.StroomEntityManager;
@@ -312,7 +309,7 @@ public class StreamTaskCreatorTransactionHelper {
             // Anything created?
             if (totalTasksCreated > 0) {
                 LOGGER.debug("processStreamProcessorFilter() - Created {} tasks ({} avaliable) in the range {}",
-                        new Object[] {totalTasksCreated, availableTasksCreated, streamIdRange});
+                        new Object[]{totalTasksCreated, availableTasksCreated, streamIdRange});
 
                 // If we have never created tasks before or the last poll gave
                 // us no tasks then start to report a new creation range.

@@ -30,7 +30,6 @@ import stroom.index.shared.IndexService;
 import stroom.query.api.v1.DocRef;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.UserRef;
-import stroom.security.shared.UserService;
 import stroom.util.test.FileSystemTestUtil;
 
 import javax.annotation.Resource;

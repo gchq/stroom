@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,8 +16,9 @@
 
 package stroom.query.shared;
 
-import stroom.dispatch.shared.Action;
-import stroom.entity.shared.DocRef;
+import stroom.datasource.api.v1.DataSourceField;
+import stroom.entity.shared.Action;
+import stroom.query.api.v1.DocRef;
 import stroom.util.shared.SharedList;
 import stroom.util.shared.SharedString;
 
@@ -25,14 +26,14 @@ public class FetchSuggestionsAction extends Action<SharedList<SharedString>> {
     private static final long serialVersionUID = -7883596658097683550L;
 
     private DocRef dataSource;
-    private IndexField field;
+    private DataSourceField field;
     private String text;
 
     public FetchSuggestionsAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public FetchSuggestionsAction(final DocRef dataSource, final IndexField field, final String text) {
+    public FetchSuggestionsAction(final DocRef dataSource, final DataSourceField field, final String text) {
         this.dataSource = dataSource;
         this.field = field;
         this.text = text;
@@ -42,24 +43,12 @@ public class FetchSuggestionsAction extends Action<SharedList<SharedString>> {
         return dataSource;
     }
 
-    public void setDataSource(final DocRef dataSource) {
-        this.dataSource = dataSource;
-    }
-
-    public IndexField getField() {
+    public DataSourceField getField() {
         return field;
-    }
-
-    public void setField(final IndexField field) {
-        this.field = field;
     }
 
     public String getText() {
         return text;
-    }
-
-    public void setText(final String text) {
-        this.text = text;
     }
 
     @Override

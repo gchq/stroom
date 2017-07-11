@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,8 +17,6 @@
 package stroom.dashboard.client.query;
 
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -53,7 +51,9 @@ import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.process.shared.CreateProcessorAction;
 import stroom.query.api.v1.DocRef;
+import stroom.query.api.v1.ExpressionBuilder;
 import stroom.query.api.v1.ExpressionOperator;
+import stroom.query.api.v1.ExpressionOperator.Op;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.security.client.ClientSecurityContext;
@@ -62,12 +62,11 @@ import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Limits;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.StreamProcessor;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcon;
-import stroom.widget.button.client.GlyphIcons;
-import stroom.widget.button.client.ImageButtonView;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
@@ -77,7 +76,6 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.widget.tab.client.presenter.ImageIcon;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -98,24 +96,23 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final QueryFavouritesPresenter favouritesPresenter;
     private final Provider<EntityChooser> pipelineSelection;
     private final ProcessorLimitsPresenter processorLimitsPresenter;
-    private final Resources resources;
     private final MenuListPresenter menuListPresenter;
     private final ClientDispatchAsync dispatcher;
 
     private final IndexLoader indexLoader;
     private final SearchModel searchModel;
-    private final ImageButtonView addOperatorButton;
-    private final GlyphButtonView addTermButton;
-    private final GlyphButtonView disableItemButton;
-    private final GlyphButtonView deleteItemButton;
-    private final ImageButtonView historyButton;
-    private final ImageButtonView favouriteButton;
-    private final ImageButtonView warningsButton;
+    private final ButtonView addOperatorButton;
+    private final ButtonView addTermButton;
+    private final ButtonView disableItemButton;
+    private final ButtonView deleteItemButton;
+    private final ButtonView historyButton;
+    private final ButtonView favouriteButton;
+    private final ButtonView warningsButton;
 
     private String params;
     private QueryComponentSettings queryComponentSettings;
     private String currentWarnings;
-    private ImageButtonView processButton;
+    private ButtonView processButton;
     private long defaultProcessorTimeLimit = DEFAULT_TIME_LIMIT;
     private long defaultProcessorRecordLimit = DEFAULT_RECORD_LIMIT;
     private boolean initialised;
@@ -127,7 +124,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                           final ExpressionTreePresenter expressionPresenter, final QueryHistoryPresenter historyPresenter,
                           final QueryFavouritesPresenter favouritesPresenter,
                           final Provider<EntityChooser> pipelineSelection,
-                          final ProcessorLimitsPresenter processorLimitsPresenter, final Resources resources,
+                          final ProcessorLimitsPresenter processorLimitsPresenter,
                           final MenuListPresenter menuListPresenter, final ClientDispatchAsync dispatcher,
                           final ClientSecurityContext securityContext, final ClientPropertyCache clientPropertyCache,
                           final TimeZones timeZones) {
@@ -138,7 +135,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         this.pipelineSelection = pipelineSelection;
         this.processorLimitsPresenter = processorLimitsPresenter;
         this.menuListPresenter = menuListPresenter;
-        this.resources = resources;
         this.dispatcher = dispatcher;
 
         view.setExpressionView(expressionPresenter.getView());
@@ -156,19 +152,19 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             }
         });
 
-        addTermButton = view.addButton(GlyphIcons.ADD);
+        addTermButton = view.addButton(SvgPresets.ADD);
         addTermButton.setTitle("Add Term");
-        addOperatorButton = view.addButton("Add Operator", resources.addOperator(), resources.addOperator(), true);
-        disableItemButton = view.addButton(GlyphIcons.DISABLE);
-        deleteItemButton = view.addButton(GlyphIcons.DELETE);
-        historyButton = view.addButton("History", resources.history(), null, true);
-        favouriteButton = view.addButton("Favourites", resources.favourite(), null, true);
+        addOperatorButton = view.addButton(SvgPresets.OPERATOR);
+        disableItemButton = view.addButton(SvgPresets.DISABLE);
+        deleteItemButton = view.addButton(SvgPresets.DELETE);
+        historyButton = view.addButton(SvgPresets.HISTORY.enabled(true));
+        favouriteButton = view.addButton(SvgPresets.FAVOURITES.enabled(true));
 
         if (securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)) {
-            processButton = view.addButton("Process", resources.pipeline(), resources.pipelineDisabled(), true);
+            processButton = view.addButton(SvgPresets.PROCESS.enabled(true));
         }
 
-        warningsButton = view.addButton("Show Warnings", resources.warning(), null, true);
+        warningsButton = view.addButton(SvgPresets.ALERT.title("Show Warnings"));
         warningsButton.setVisible(false);
 
         indexLoader = new IndexLoader(getEventBus(), dispatcher);
@@ -220,12 +216,10 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                 historyPresenter.show(QueryPresenter.this, getComponents().getDashboard().getId());
             }
         }));
-        registerHandler(favouriteButton.addClickHandler( event-> {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    final ExpressionOperator root =
-                    expressionPresenter.write();
-                    favouritesPresenter.show(QueryPresenter.this, getComponents().getDashboard().getId(),
-                            getSettings().getDataSource(), root);
+        registerHandler(favouriteButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                final ExpressionOperator root = expressionPresenter.write();
+                favouritesPresenter.show(QueryPresenter.this, getComponents().getDashboard().getId(), getSettings().getDataSource(), root);
 
             }
         }));
@@ -275,16 +269,16 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     private void loadedDataSource(final DocRef dataSourceRef, final DataSourceFieldsMap dataSourceFieldsMap) {
         // Create a list of index fields.
-        final List<DataSourceField> indexedFields = new ArrayList<>();
+        final List<DataSourceField> fields = new ArrayList<>();
         if (dataSourceFieldsMap != null) {
-            for (final DataSourceField indexField : dataSourceFieldsMap.values()) {
-                if (indexField.getQueryable()) {
-                    indexedFields.add(indexField);
+            for (final DataSourceField field : dataSourceFieldsMap.values()) {
+                if (field.getQueryable()) {
+                    fields.add(field);
                 }
             }
         }
-        Collections.sort(indexedFields, Comparator.comparing(DataSourceField::getName));
-        expressionPresenter.setFields(indexedFields);
+        Collections.sort(fields, Comparator.comparing(DataSourceField::getName));
+        expressionPresenter.init(dispatcher, dataSourceRef, fields);
 
         final EqualsBuilder builder = new EqualsBuilder();
         builder.append(queryComponentSettings.getDataSource(), dataSourceRef);
@@ -295,7 +289,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         }
 
         // Only allow searching if we have a data source and have loaded fields from it successfully.
-        getView().setEnabled(dataSourceRef != null && indexedFields.size() > 0);
+        getView().setEnabled(dataSourceRef != null && fields.size() > 0);
 
         init();
     }
@@ -403,7 +397,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     @Override
     public void start() {
-        run(true);
+        run(true, true);
     }
 
     @Override
@@ -415,7 +409,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         searchModel.destroy();
     }
 
-    private void run(final boolean incremental) {
+    private void run(final boolean incremental, final boolean storeHistory) {
         final DocRef dataSourceRef = queryComponentSettings.getDataSource();
 
         if (dataSourceRef == null) {
@@ -429,7 +423,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             // Write expression.
             final ExpressionOperator root = expressionPresenter.write();
 
-            searchModel.search(root, params, incremental);
+            searchModel.search(root, params, incremental, storeHistory);
         }
     }
 
@@ -447,7 +441,10 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         loadDataSource(queryComponentSettings.getDataSource());
 
         // Read expression.
-        final ExpressionOperator root = queryComponentSettings.getExpression();
+        ExpressionOperator root = queryComponentSettings.getExpression();
+        if (root == null) {
+            root = new ExpressionBuilder(Op.AND).build();
+        }
         setExpression(root);
     }
 
@@ -476,7 +473,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             // An auto search can only commence if the UI has fully loaded and the data source has also loaded from the server.
             final Automate automate = getAutomate();
             if (automate.isOpen()) {
-                run(true);
+                run(true, false);
             }
         }
     }
@@ -560,7 +557,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                     public void run() {
                         // Make sure search is currently inactive before we attempt to execute a new query.
                         if (SearchModel.Mode.INACTIVE.equals(searchModel.getMode())) {
-                            QueryPresenter.this.run(false);
+                            QueryPresenter.this.run(false, false);
                         }
                     }
                 };
@@ -576,12 +573,12 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         final boolean hasSelection = selectedItem != null;
 
         final List<Item> menuItems = new ArrayList<Item>();
-        menuItems.add(new IconMenuItem(1, GlyphIcons.ADD, GlyphIcons.ADD, "Add Term", null, true, () -> addTerm()));
-        menuItems.add(new IconMenuItem(2, ImageIcon.create(resources.addOperator()), ImageIcon.create(resources.addOperator()), "Add Operator", null,
+        menuItems.add(new IconMenuItem(1, SvgPresets.ADD, SvgPresets.ADD, "Add Term", null, true, () -> addTerm()));
+        menuItems.add(new IconMenuItem(2, SvgPresets.OPERATOR, SvgPresets.OPERATOR, "Add Operator", null,
                 true, () -> addOperator()));
-        menuItems.add(new IconMenuItem(3, GlyphIcons.DISABLE, GlyphIcons.DISABLE, getEnableDisableText(),
+        menuItems.add(new IconMenuItem(3, SvgPresets.DISABLE, SvgPresets.DISABLE, getEnableDisableText(),
                 null, hasSelection, () -> disable()));
-        menuItems.add(new IconMenuItem(4, GlyphIcons.DELETE, GlyphIcons.DELETE, "Delete", null,
+        menuItems.add(new IconMenuItem(4, SvgPresets.DELETE, SvgPresets.DELETE, "Delete", null,
                 hasSelection, () -> delete()));
 
         return menuItems;
@@ -619,31 +616,12 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     public interface QueryView extends View, HasUiHandlers<QueryUiHandlers> {
-        ImageButtonView addButton(String title, ImageResource enabledImage, ImageResource disabledImage,
-                                  boolean enabled);
-
-        GlyphButtonView addButton(GlyphIcon preset);
+        ButtonView addButton(SvgPreset preset);
 
         void setExpressionView(View view);
 
         void setMode(SearchModel.Mode mode);
 
         void setEnabled(boolean enabled);
-    }
-
-    public interface Resources extends ClientBundle {
-        ImageResource addOperator();
-
-        ImageResource search();
-
-        ImageResource history();
-
-        ImageResource favourite();
-
-        ImageResource pipeline();
-
-        ImageResource pipelineDisabled();
-
-        ImageResource warning();
     }
 }

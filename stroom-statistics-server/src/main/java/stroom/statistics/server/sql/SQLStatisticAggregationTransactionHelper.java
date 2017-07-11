@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.ConnectionUtil;
-import stroom.entity.server.util.SQLUtil;
+import stroom.entity.server.util.SqlUtil;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.node.server.StroomPropertyService;
 import stroom.statistics.shared.StatisticType;
@@ -332,7 +332,7 @@ public class SQLStatisticAggregationTransactionHelper {
     protected int doAggregateSQL_Update(final Connection connection, final TaskMonitor taskMonitor, final String prefix,
                                         final String sql, final List<Object> args) throws SQLException {
         final LogExecutionTime time = new LogExecutionTime();
-        final String trace = SQLUtil.buildSQLTrace(sql, args);
+        final String trace = SqlUtil.buildSQLTrace(sql, args);
 
         taskMonitor.info("{}\n {}", prefix, trace);
 
@@ -345,7 +345,7 @@ public class SQLStatisticAggregationTransactionHelper {
     protected long doLongSelect(final Connection connection, final TaskMonitor taskMonitor, final String prefix,
                                 final String sql, final List<Object> args) throws SQLException {
         final LogExecutionTime time = new LogExecutionTime();
-        final String trace = SQLUtil.buildSQLTrace(sql, args);
+        final String trace = SqlUtil.buildSQLTrace(sql, args);
 
         taskMonitor.info("{}\n {}", prefix, trace);
 

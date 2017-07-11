@@ -32,8 +32,6 @@ import stroom.dictionary.shared.Dictionary;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.dictionary.shared.FindDictionaryCriteria;
 import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.DocRef;
-import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.FindFolderCriteria;
 import stroom.entity.shared.Folder;
@@ -286,7 +284,7 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     private ExpressionBuilder createExpression(final Dictionary dictionary) {
         final ExpressionBuilder root = new ExpressionBuilder(Op.AND);
         root.addTerm("EventTime", Condition.LESS_THAN, "2020-01-01T00:00:00.000Z");
-        root.addTerm("User", Condition.IN_DICTIONARY, DocRefUtil.create(dictionary));
+        root.addDictionaryTerm("User", Condition.IN_DICTIONARY, DocRefUtil.create(dictionary));
         return root;
     }
 }

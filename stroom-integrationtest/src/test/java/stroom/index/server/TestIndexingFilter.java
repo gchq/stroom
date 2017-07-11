@@ -17,15 +17,11 @@
 package stroom.index.server;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexOptions;
+import org.apache.lucene.index.IndexableFieldType;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Test;
-import org.xml.sax.SAXException;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexOptions;
-import org.apache.lucene.index.IndexableFieldType;
-import org.junit.Assert;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 import stroom.AbstractProcessIntegrationTest;
@@ -48,10 +44,6 @@ import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexField.AnalyzerType;
-import stroom.query.shared.IndexFieldType;
-import stroom.query.shared.IndexFields;
 import stroom.test.PipelineTestUtil;
 import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.date.DateUtil;

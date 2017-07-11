@@ -17,21 +17,18 @@
 package stroom.servlet;
 
 import org.springframework.stereotype.Component;
+import stroom.query.api.v1.DocRef;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.Folder;
 import stroom.importexport.server.ImportExportService;
-import stroom.query.api.v1.DocRef;
+import stroom.node.server.StroomPropertyService;
 import stroom.resource.server.ResourceStore;
-import stroom.security.Insecure;
-import stroom.security.SecurityContext;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ResourceKey;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -45,51 +42,47 @@ import java.util.ArrayList;
  */
 @Component(ExportConfigServlet.BEAN_NAME)
 public class ExportConfigServlet extends HttpServlet {
-    public static final String BEAN_NAME = "exportConfigServlet";
-
     private static final long serialVersionUID = -4533441835216235920L;
 
-    private final transient SecurityContext securityContext;
+    public static final String BEAN_NAME = "exportConfigServlet";
+
+    private static final String PROPERTY = "stroom.export.enabled";
+
     private final transient ImportExportService importExportService;
     private final transient ResourceStore resourceStore;
+    private final transient StroomPropertyService propertyService;
 
     @Inject
-    public ExportConfigServlet(final SecurityContext securityContext,
-                               final ImportExportService importExportService,
-                               @Named("resourceStore") final ResourceStore resourceStore) {
-        this.securityContext = securityContext;
+    public ExportConfigServlet(final ImportExportService importExportService,
+                               @Named("resourceStore") final ResourceStore resourceStore,
+                               final StroomPropertyService propertyService) {
         this.importExportService = importExportService;
         this.resourceStore = resourceStore;
-    }
-
-    /**
-     * Method Interceptor needs to go on public API By-pass authentication /
-     * authorisation checks This servlet is protected by a certifcate required
-     * filter
-     */
-    @Override
-    @Insecure
-    public void service(final ServletRequest arg0, final ServletResponse arg1) throws ServletException, IOException {
-        super.service(arg0, arg1);
+        this.propertyService = propertyService;
     }
 
     @Override
     protected void doGet(final HttpServletRequest req, final HttpServletResponse resp)
             throws ServletException, IOException {
-        final ResourceKey tempResourceKey = resourceStore.createTempFile("StroomConfig.zip");
+        final boolean enabled = propertyService.getBooleanProperty(PROPERTY, false);
+        if (enabled) {
+            final ResourceKey tempResourceKey = resourceStore.createTempFile("StroomConfig.zip");
 
-        try {
-            final Path tempFile = resourceStore.getTempFile(tempResourceKey);
+            try {
+                final Path tempFile = resourceStore.getTempFile(tempResourceKey);
 
-            final DocRefs docRefs = new DocRefs();
-            docRefs.add(new DocRef(Folder.ENTITY_TYPE, "0", "System"));
+                final DocRefs docRefs = new DocRefs();
+                docRefs.add(new DocRef(Folder.ENTITY_TYPE, "0", "System"));
 
-            importExportService.exportConfig(docRefs, tempFile, new ArrayList<>());
+                importExportService.exportConfig(docRefs, tempFile, new ArrayList<>());
 
-            StreamUtil.streamToStream(Files.newInputStream(tempFile), resp.getOutputStream(), true);
+                StreamUtil.streamToStream(Files.newInputStream(tempFile), resp.getOutputStream(), true);
 
-        } finally {
-            resourceStore.deleteTempFile(tempResourceKey);
+            } finally {
+                resourceStore.deleteTempFile(tempResourceKey);
+            }
+        } else {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Export is not enabled");
         }
     }
 }

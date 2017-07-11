@@ -85,7 +85,7 @@ public class SearchRequestMapper {
             return null;
         }
 
-        final stroom.query.api.v1.SearchRequest copy = new stroom.query.api.v1.SearchRequest(new QueryKey(queryKey.getUuid()), mapQuery(searchRequest), mapResultRequests(searchRequest), searchRequest.getDateTimeLocale(), searchRequest.getSearch().getIncremental());
+        final stroom.query.api.v1.SearchRequest copy = new stroom.query.api.v1.SearchRequest(new QueryKey(queryKey.getUuid()), mapQuery(searchRequest), mapResultRequests(searchRequest), searchRequest.getDateTimeLocale(), searchRequest.getSearch().isIncremental());
 
         return copy;
     }
@@ -368,7 +368,7 @@ public class SearchRequestMapper {
     }
 
 
-    private stroom.query.api.v1.TableSettings  mapVisSettingsToTableSettings(final VisComponentSettings visComponentSettings, final TableSettings parentTableSettings) {
+    private stroom.query.api.v1.TableSettings mapVisSettingsToTableSettings(final VisComponentSettings visComponentSettings, final TableSettings parentTableSettings) {
         DocRef docRef = visComponentSettings.getVisualisation();
         TableSettings tableSettings = null;
 
@@ -443,10 +443,10 @@ public class SearchRequestMapper {
                     }
 
                     tableSettings = new TableSettingsBuilder()
-                        .fields(fields)
-                        .maxResults(limits)
-                        .showDetail(true)
-                        .build();
+                            .fields(fields)
+                            .maxResults(limits)
+                            .showDetail(true)
+                            .build();
                 }
             }
 

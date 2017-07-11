@@ -17,12 +17,11 @@
 package stroom.proxy.repo;
 
 import stroom.util.io.CloseableUtil;
-import stroom.util.zip.StroomZipOutputStream;
 
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class StroomZipOutputStreamUtil {
+public class StroomStreamHandlerUtil {
     private StroomStreamHandlerUtil() {
         // Utlity class.
     }

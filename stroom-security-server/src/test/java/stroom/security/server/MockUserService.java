@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,9 +20,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.MockEntityService;
 import stroom.security.shared.FindUserCriteria;
-import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
-import stroom.security.shared.UserService;
 import stroom.util.spring.StroomSpringProfiles;
 
 import java.util.List;
@@ -55,22 +53,12 @@ public class MockUserService extends MockEntityService<User, FindUserCriteria> i
     }
 
     @Override
-    public User loadByUuidInsecure(final String uuid) {
-        return loadByUuid(uuid);
-    }
-
-    @Override
     public Class<User> getEntityClass() {
         return User.class;
     }
 
     @Override
-    public UserRef getUserRefByName(final String name) {
-        return null;
-    }
-
-    @Override
-    public UserRef getUserGroupRefByName(final String name) {
+    public UserRef getUserByName(final String name) {
         return null;
     }
 
@@ -85,20 +73,20 @@ public class MockUserService extends MockEntityService<User, FindUserCriteria> i
     }
 
     @Override
-    public User createUser(final String name) {
+    public UserRef createUser(final String name) {
         final User user = new User();
         user.setUuid(UUID.randomUUID().toString());
         user.setName(name);
-        return save(user);
+        return UserRefFactory.create(save(user));
     }
 
     @Override
-    public User createUserGroup(final String name) {
+    public UserRef createUserGroup(final String name) {
         final User user = new User();
         user.setUuid(UUID.randomUUID().toString());
         user.setName(name);
         user.setGroup(true);
-        return save(user);
+        return UserRefFactory.create(save(user));
     }
 
     @Override

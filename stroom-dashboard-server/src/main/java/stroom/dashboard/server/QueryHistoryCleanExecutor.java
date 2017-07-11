@@ -16,12 +16,13 @@
 
 package stroom.dashboard.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.dashboard.shared.QueryService;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.StroomPropertyService;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Task;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
@@ -37,7 +38,7 @@ import java.util.List;
 @Component
 @Scope(value = StroomScope.TASK)
 public class QueryHistoryCleanExecutor {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(QueryHistoryCleanExecutor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(QueryHistoryCleanExecutor.class);
 
     private final TaskMonitor taskMonitor;
     private final QueryService queryService;

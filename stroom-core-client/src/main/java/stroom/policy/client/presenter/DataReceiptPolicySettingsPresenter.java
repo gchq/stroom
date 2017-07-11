@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.client.presenter;
+package stroom.policy.client.presenter;
 
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.inject.Inject;
@@ -33,7 +33,7 @@ import stroom.entity.client.presenter.HasWrite;
 import stroom.query.api.v1.ExpressionBuilder;
 import stroom.query.api.v1.ExpressionOperator.Op;
 import stroom.query.client.ExpressionTreePresenter;
-import stroom.streamstore.client.presenter.DataReceiptPolicySettingsPresenter.DataReceiptPolicySettingsView;
+import stroom.policy.client.presenter.DataReceiptPolicySettingsPresenter.DataReceiptPolicySettingsView;
 import stroom.streamstore.shared.DataReceiptAction;
 import stroom.streamstore.shared.DataReceiptPolicy;
 import stroom.streamstore.shared.DataReceiptRule;

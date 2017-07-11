@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.client.presenter;
+package stroom.policy.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
@@ -24,6 +24,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.streamstore.client.presenter.ColumnSizeConstants;
 import stroom.streamstore.shared.DataRetentionRule;
 import stroom.util.client.BorderUtil;
 import stroom.widget.button.client.ButtonView;

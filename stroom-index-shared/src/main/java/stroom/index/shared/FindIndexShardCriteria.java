@@ -20,16 +20,16 @@ import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityMatcher;
-import stroom.entity.shared.OrderBy;
 import stroom.entity.shared.Range;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 
 public class FindIndexShardCriteria extends BaseCriteria implements EntityMatcher<IndexShard> {
-    public static final OrderBy ORDER_BY_ID = new OrderBy("Id", "id", IndexShard.ID);
-    public static final OrderBy ORDER_BY_PARTITION = new OrderBy("Partition", "partition", IndexShard.PARTITION);
     private static final long serialVersionUID = 3552286394659242683L;
+
+    public static final String FIELD_PARTITION = "Partition";
+
     private Range<Integer> documentCountRange = new Range<Integer>();
     private EntityIdSet<Node> nodeIdSet = new EntityIdSet<Node>();
     private EntityIdSet<Volume> volumeIdSet = new EntityIdSet<Volume>();
@@ -55,12 +55,12 @@ public class FindIndexShardCriteria extends BaseCriteria implements EntityMatche
         return indexShardStatusSet;
     }
 
-    public Range<Integer> getDocumentCountRange() {
-        return documentCountRange;
-    }
-
     public void setDocumentCountRange(Range<Integer> documentCountRange) {
         this.documentCountRange = documentCountRange;
+    }
+
+    public Range<Integer> getDocumentCountRange() {
+        return documentCountRange;
     }
 
     public EntityIdSet<Index> getIndexIdSet() {

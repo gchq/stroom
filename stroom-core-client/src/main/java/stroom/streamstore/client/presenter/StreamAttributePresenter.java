@@ -28,6 +28,9 @@ import stroom.query.api.v1.ExpressionTerm.Condition;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.StreamAttributeCondition;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class StreamAttributePresenter extends MyPresenterWidget<StreamAttributePresenter.StreamAttributeView> {
     @Inject
     public StreamAttributePresenter(final EventBus eventBus, final StreamAttributeView view,
@@ -36,7 +39,7 @@ public class StreamAttributePresenter extends MyPresenterWidget<StreamAttributeP
 
         final FindStreamAttributeKeyCriteria criteria = new FindStreamAttributeKeyCriteria();
         criteria.setSort(FindStreamAttributeKeyCriteria.FIELD_NAME);
-        dispatcher.exec(new EntityReferenceFindAction<>(criteria)).onSuccess(view::setKeys);
+        dispatcher.exec(new EntityReferenceFindAction<>(criteria)).onSuccess(result -> view.setKeys(new ArrayList<>(result)));
     }
 
     public void read(final StreamAttributeCondition condition) {

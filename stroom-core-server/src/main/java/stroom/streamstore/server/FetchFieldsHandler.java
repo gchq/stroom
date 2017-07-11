@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
 package stroom.streamstore.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.query.shared.IndexFields;
+import stroom.entity.shared.DataSourceFields;
 import stroom.streamstore.shared.FetchFieldsAction;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
@@ -25,9 +25,9 @@ import stroom.util.spring.StroomScope;
 
 @TaskHandlerBean(task = FetchFieldsAction.class)
 @Scope(StroomScope.TASK)
-public class FetchFieldsHandler extends AbstractTaskHandler<FetchFieldsAction, IndexFields> {
+public class FetchFieldsHandler extends AbstractTaskHandler<FetchFieldsAction, DataSourceFields> {
     @Override
-    public IndexFields exec(final FetchFieldsAction task) {
-        return StreamFields.getFields();
+    public DataSourceFields exec(final FetchFieldsAction task) {
+        return new DataSourceFields(StreamFields.getFields());
     }
 }

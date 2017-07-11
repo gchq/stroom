@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,14 +18,15 @@ package stroom.security.server;
 
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.web.filter.authc.BasicHttpAuthenticationFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.cert.CertificateUtil;
-import stroom.util.logging.StroomLogger;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
 public class CertificateAuthenticationFilter extends BasicHttpAuthenticationFilter {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(CertificateAuthenticationFilter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CertificateAuthenticationFilter.class);
 
     @Override
     protected boolean isLoginAttempt(final ServletRequest request, final ServletResponse response) {

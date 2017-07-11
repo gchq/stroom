@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,7 +16,7 @@
 
 package stroom.streamstore.shared;
 
-import stroom.query.shared.IndexFields;
+import stroom.datasource.api.v1.DataSourceField;
 import stroom.util.shared.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -34,7 +34,7 @@ public class DataReceiptPolicy implements SharedObject {
     private static final long serialVersionUID = -7268301402378907741L;
 
     @XmlElement(name = "fields")
-    private IndexFields fields;
+    private List<DataSourceField> fields;
     @XmlElement(name = "rule")
     private List<DataReceiptRule> rules;
     @XmlTransient
@@ -44,16 +44,16 @@ public class DataReceiptPolicy implements SharedObject {
         // Default constructor for GWT serialisation.
     }
 
-    public DataReceiptPolicy(final IndexFields fields, final List<DataReceiptRule> rules) {
+    public DataReceiptPolicy(final List<DataSourceField> fields, final List<DataReceiptRule> rules) {
         this.fields = fields;
         this.rules = rules;
     }
 
-    public IndexFields getFields() {
+    public List<DataSourceField> getFields() {
         return fields;
     }
 
-    public void setFields(final IndexFields fields) {
+    public void setFields(final List<DataSourceField> fields) {
         this.fields = fields;
     }
 

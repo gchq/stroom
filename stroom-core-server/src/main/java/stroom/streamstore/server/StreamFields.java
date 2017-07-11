@@ -1,12 +1,14 @@
 package stroom.streamstore.server;
 
+import stroom.datasource.api.v1.DataSourceField;
+import stroom.datasource.api.v1.DataSourceField.DataSourceFieldType;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexFields;
+import stroom.query.api.v1.ExpressionTerm.Condition;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,8 +31,8 @@ public final class StreamFields {
     private static final Map<String, String> STREAM_TYPE_FIELDS = new HashMap<>();
     private static final Map<String, String> PIPELINE_FIELDS = new HashMap<>();
     //    private static final Map<String, String> STREAM_ATTRIBUTE_FIELDS = new HashMap<>();
-    private static final IndexFields FIELDS;
-    private static final Map<String, IndexField> INDEX_FIELD_MAP;
+    private static final List<DataSourceField> FIELDS;
+    private static final Map<String, DataSourceField> INDEX_FIELD_MAP;
 
     static {
         STREAM_FIELDS.put(STREAM_ID, Stream.ID);
@@ -54,15 +56,15 @@ public final class StreamFields {
 //        STREAM_ATTRIBUTE_FIELDS.put(StreamAttributeConstants.FILE_SIZE, StreamAttributeConstants.FILE_SIZE);
 //        STREAM_ATTRIBUTE_FIELDS.put(StreamAttributeConstants.STREAM_SIZE, StreamAttributeConstants.STREAM_SIZE);
 
-        final Set<IndexField> set = new HashSet<>();
+        final Set<DataSourceField> set = new HashSet<>();
 
-        set.add(IndexField.createNumericField(STREAM_ID));
-        set.add(IndexField.createNumericField(PARENT_STREAM_ID));
-        set.add(IndexField.createDateField(CREATED_ON));
+        set.add(createField(DataSourceFieldType.NUMERIC_FIELD, STREAM_ID));
+        set.add(createField(DataSourceFieldType.NUMERIC_FIELD, PARENT_STREAM_ID));
+        set.add(createField(DataSourceFieldType.DATE_FIELD, CREATED_ON));
 
-        set.add(IndexField.createField(FEED));
-        set.add(IndexField.createField(STREAM_TYPE));
-        set.add(IndexField.createField(PIPELINE));
+        set.add(createField(DataSourceFieldType.FIELD, FEED));
+        set.add(createField(DataSourceFieldType.FIELD, STREAM_TYPE));
+        set.add(createField(DataSourceFieldType.FIELD, PIPELINE));
 
 //        STREAM_ATTRIBUTE_FIELDS.forEach((k, v) -> {
 //            final IndexField indexField = create(k, StreamAttributeConstants.SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP.get(v));
@@ -71,9 +73,57 @@ public final class StreamFields {
 //            }
 //        });
 
-        final List<IndexField> list = set.stream().sorted(Comparator.comparing(IndexField::getFieldName)).collect(Collectors.toList());
-        FIELDS = new IndexFields(list);
-        INDEX_FIELD_MAP = list.stream().collect(Collectors.toMap(IndexField::getFieldName, Function.identity()));
+        final List<DataSourceField> list = set.stream().sorted(Comparator.comparing(DataSourceField::getName)).collect(Collectors.toList());
+        FIELDS = list;
+        INDEX_FIELD_MAP = list.stream().collect(Collectors.toMap(DataSourceField::getName, Function.identity()));
+    }
+
+    private static DataSourceField createField(final DataSourceFieldType fieldType, final String fieldName) {
+        return new DataSourceField(fieldType, fieldName, true, getDefaultConditions(fieldType));
+    }
+
+    private static List<Condition> getDefaultConditions(final DataSourceFieldType fieldType) {
+        final List<Condition> conditions = new ArrayList<>();
+
+        if (fieldType != null) {
+            // First make sure the operator is set.
+            switch (fieldType) {
+                case ID:
+                    conditions.add(Condition.EQUALS);
+                    conditions.add(Condition.IN);
+                    conditions.add(Condition.IN_DICTIONARY);
+                    break;
+                case FIELD:
+                    conditions.add(Condition.EQUALS);
+                    conditions.add(Condition.IN);
+                    conditions.add(Condition.IN_DICTIONARY);
+                    break;
+
+                case NUMERIC_FIELD:
+                    conditions.add(Condition.EQUALS);
+                    conditions.add(Condition.GREATER_THAN);
+                    conditions.add(Condition.GREATER_THAN_OR_EQUAL_TO);
+                    conditions.add(Condition.LESS_THAN);
+                    conditions.add(Condition.LESS_THAN_OR_EQUAL_TO);
+                    conditions.add(Condition.BETWEEN);
+                    conditions.add(Condition.IN);
+                    conditions.add(Condition.IN_DICTIONARY);
+                    break;
+
+                case DATE_FIELD:
+                    conditions.add(Condition.EQUALS);
+                    conditions.add(Condition.GREATER_THAN);
+                    conditions.add(Condition.GREATER_THAN_OR_EQUAL_TO);
+                    conditions.add(Condition.LESS_THAN);
+                    conditions.add(Condition.LESS_THAN_OR_EQUAL_TO);
+                    conditions.add(Condition.BETWEEN);
+                    conditions.add(Condition.IN);
+                    conditions.add(Condition.IN_DICTIONARY);
+                    break;
+            }
+        }
+
+        return conditions;
     }
 
     public static Map<String, String> getStreamFields() {
@@ -92,11 +142,11 @@ public final class StreamFields {
         return PIPELINE_FIELDS;
     }
 
-    public static IndexFields getFields() {
+    public static List<DataSourceField> getFields() {
         return FIELDS;
     }
 
-    public static Map<String, IndexField> getFieldMap() {
+    public static Map<String, DataSourceField> getFieldMap() {
         return INDEX_FIELD_MAP;
     }
 }

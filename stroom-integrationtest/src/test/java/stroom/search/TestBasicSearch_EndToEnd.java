@@ -23,8 +23,6 @@ import stroom.CommonIndexingTest;
 import stroom.dashboard.shared.DataSourceFieldsMap;
 import stroom.datasource.api.v1.DataSourceField;
 import stroom.datasource.api.v1.DataSourceField.DataSourceFieldType;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonIndexingTest;
 import stroom.index.server.IndexShardUtil;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -37,15 +35,6 @@ import stroom.query.api.v1.ExpressionOperator;
 import stroom.query.api.v1.ExpressionOperator.Op;
 import stroom.query.api.v1.ExpressionTerm.Condition;
 import stroom.search.server.IndexDataSourceFieldUtil;
-
-import javax.annotation.Resource;
-import java.util.List;
-import stroom.query.shared.ExpressionBuilder;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionOperator.Op;
-import stroom.query.shared.ExpressionTerm.Condition;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexFieldsMap;
 
 import javax.annotation.Resource;
 import java.util.List;

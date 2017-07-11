@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.client.view;
+package stroom.policy.client.view;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -24,7 +24,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.datasource.api.v1.DataSourceField.DataSourceFieldType;
 import stroom.item.client.ItemListBox;
-import stroom.streamstore.client.presenter.FieldEditPresenter.FieldEditView;
+import stroom.policy.client.presenter.FieldEditPresenter.FieldEditView;
 
 public class FieldEditViewImpl extends ViewImpl implements FieldEditView {
     public interface Binder extends UiBinder<Widget, FieldEditViewImpl> {

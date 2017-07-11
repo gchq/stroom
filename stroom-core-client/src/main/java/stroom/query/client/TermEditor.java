@@ -33,14 +33,10 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.datasource.api.v1.DataSourceField;
 import stroom.datasource.api.v1.DataSourceField.DataSourceFieldType;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.item.client.ItemListBox;
 import stroom.query.api.v1.DocRef;
 import stroom.query.api.v1.ExpressionTerm.Condition;
-import stroom.query.shared.ExpressionTerm.Condition;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexFieldType;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.customdatebox.client.MyDateBox;
 
@@ -69,7 +65,7 @@ public class TermEditor extends Composite {
     private final List<HandlerRegistration> registrations = new ArrayList<>();
 
     private Term term;
-    private List<DataSourceField> indexFields;
+    private List<DataSourceField> fields;
     private boolean reading;
     private boolean editing;
     private ExpressionUiHandlers uiHandlers;
@@ -131,13 +127,13 @@ public class TermEditor extends Composite {
         initWidget(layout);
     }
 
-    public void init(final ClientDispatchAsync dispatcher, final DocRef dataSource, final List<DataSourceField> indexFields) {
+    public void init(final ClientDispatchAsync dispatcher, final DocRef dataSource, final List<DataSourceField> fields) {
         suggestOracle.setDispatcher(dispatcher);
         suggestOracle.setDataSource(dataSource);
-        this.indexFields = indexFields;
+        this.fields = fields;
         fieldListBox.clear();
-        if (indexFields != null) {
-            fieldListBox.addItems(indexFields);
+        if (fields != null) {
+            fieldListBox.addItems(fields);
         }
     }
 
@@ -170,9 +166,9 @@ public class TermEditor extends Composite {
 
         // Select the current value.
         DataSourceField termField = null;
-        if (indexFields != null && indexFields.size() > 0) {
-            termField = indexFields.get(0);
-            for (final DataSourceField field : indexFields) {
+        if (fields != null && fields.size() > 0) {
+            termField = fields.get(0);
+            for (final DataSourceField field : fields) {
                 if (field.getName().equals(term.getField())) {
                     termField = field;
                     break;

@@ -41,8 +41,8 @@ public class UserEventInfoProvider implements EventInfoProvider {
     public BaseObject createBaseObject(final java.lang.Object obj) {
         if (obj instanceof BaseEntity) {
             final Entity entity = (Entity) obj;
-            if (entity instanceof stroom.security.shared.User) {
-                final stroom.security.shared.User user = (stroom.security.shared.User) entity;
+            if (entity instanceof stroom.security.server.User) {
+                final stroom.security.server.User user = (stroom.security.server.User) entity;
                 final User usr = new User();
                 usr.setId(user.getName());
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.client.gin;
+package stroom.policy.client.gin;
 
 import com.google.gwt.inject.client.AsyncProvider;
 import stroom.streamstore.client.presenter.ClassificationWrapperPresenter;
@@ -23,14 +23,5 @@ import stroom.streamstore.client.presenter.StreamListPresenter;
 import stroom.streamstore.client.presenter.StreamPresenter;
 import stroom.streamstore.client.presenter.StreamTaskListPresenter;
 
-public interface StreamStoreGinjector {
-    AsyncProvider<ClassificationWrapperPresenter> getClassificationWrapperPresenter();
-
-    AsyncProvider<StreamPresenter> getStreamPresenter();
-
-    AsyncProvider<StreamFilterPresenter> getStreamFilterPresenter();
-
-    AsyncProvider<StreamListPresenter> getStreamListPresenter();
-
-    AsyncProvider<StreamTaskListPresenter> getStreamTaskListPresenter();
+public interface PolicyGinjector {
 }

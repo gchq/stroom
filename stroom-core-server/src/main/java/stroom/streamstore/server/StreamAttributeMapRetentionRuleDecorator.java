@@ -119,19 +119,19 @@ public class StreamAttributeMapRetentionRuleDecorator {
             }
         }
 
-        StreamFields.getFields().getIndexFields().forEach(indexField -> {
-            final String value = streamAttributeMap.getAttributeValue(indexField.getFieldName());
+        StreamFields.getFields().forEach(field -> {
+            final String value = streamAttributeMap.getAttributeValue(field.getName());
             if (value != null) {
                 try {
-                    switch (indexField.getFieldType()) {
+                    switch (field.getType()) {
                         case FIELD:
-                            attributeMap.put(indexField.getFieldName(), value);
+                            attributeMap.put(field.getName(), value);
                             break;
                         case DATE_FIELD:
-                            attributeMap.put(indexField.getFieldName(), DateUtil.parseNormalDateTimeString(value));
+                            attributeMap.put(field.getName(), DateUtil.parseNormalDateTimeString(value));
                             break;
                         default:
-                            attributeMap.put(indexField.getFieldName(), Long.valueOf(value));
+                            attributeMap.put(field.getName(), Long.valueOf(value));
                             break;
                     }
                 } catch (final Exception e) {

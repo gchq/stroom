@@ -18,15 +18,17 @@ package stroom.streamtask.server;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestScenarioCreator;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
-import stroom.query.shared.ExpressionBuilder;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionOperator.Op;
-import stroom.query.shared.ExpressionTerm.Condition;
+import stroom.query.api.v1.ExpressionBuilder;
+import stroom.query.api.v1.ExpressionOperator;
+import stroom.query.api.v1.ExpressionOperator.Op;
+import stroom.query.api.v1.ExpressionTerm.Condition;
 import stroom.streamstore.server.DataRetentionExecutor;
 import stroom.streamstore.server.DataRetentionService;
 import stroom.streamstore.server.StreamMaintenanceService;
@@ -38,14 +40,13 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestDataRetentionExecutor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestDataRetentionExecutor.class);
 
     @Resource
     private CommonTestScenarioCreator commonTestScenarioCreator;

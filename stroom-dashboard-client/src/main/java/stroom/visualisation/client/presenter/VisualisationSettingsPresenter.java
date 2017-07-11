@@ -91,7 +91,7 @@ public class VisualisationSettingsPresenter
     }
 
     @Override
-    protected void onPermissionsCheck(final boolean readOnly) {
+    public void onPermissionsCheck(final boolean readOnly) {
         super.onPermissionsCheck(readOnly);
         editorPresenter.setReadOnly(readOnly);
         editorPresenter.getContextMenu().setShowFormatOption(!readOnly);

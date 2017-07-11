@@ -25,7 +25,6 @@ import stroom.AbstractCoreIntegrationTest;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
-import stroom.security.shared.UserService;
 import stroom.util.test.FileSystemTestUtil;
 
 import javax.annotation.Resource;

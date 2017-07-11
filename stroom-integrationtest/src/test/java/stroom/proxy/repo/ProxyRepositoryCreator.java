@@ -27,18 +27,14 @@ import stroom.feed.shared.FindFeedCriteria;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.zip.StroomHeaderArguments;
-import stroom.util.zip.StroomZipEntry;
-import stroom.util.zip.StroomZipFile;
-import stroom.util.zip.StroomZipFileType;
-import stroom.util.zip.StroomZipOutputStream;
-import stroom.util.zip.StroomZipRepository;
 
 import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.stream.Stream;
 
 public class ProxyRepositoryCreator {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryCreator.class);

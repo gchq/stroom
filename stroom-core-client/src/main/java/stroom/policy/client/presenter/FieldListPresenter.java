@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.client.presenter;
+package stroom.policy.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.dom.client.NativeEvent;

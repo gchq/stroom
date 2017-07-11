@@ -36,7 +36,6 @@ import stroom.util.io.StreamUtil;
 import stroom.util.spring.DummyTask;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.util.test.StroomExpectedException;
-import stroom.util.zip.StroomZipFile;
 
 import javax.annotation.Resource;
 import java.io.BufferedOutputStream;

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,6 +17,8 @@
 package stroom.dashboard.server;
 
 import event.logging.BaseAdvancedQueryItem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,8 +29,9 @@ import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
-import stroom.entity.server.util.SQLBuilder;
-import stroom.entity.server.util.SQLUtil;
+import stroom.entity.server.util.FieldMap;
+import stroom.entity.server.util.HqlBuilder;
+import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.EntityServiceException;
 import stroom.importexport.server.ImportExportHelper;
@@ -45,11 +48,16 @@ import java.util.UUID;
 @Transactional
 @AutoMarshal
 public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, FindQueryCriteria> implements QueryService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(QueryServiceImpl.class);
+    private final StroomEntityManager entityManager;
     private final SecurityContext securityContext;
 
     @Inject
-    QueryServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext) {
+    QueryServiceImpl(final StroomEntityManager entityManager,
+                     final ImportExportHelper importExportHelper,
+                     final SecurityContext securityContext) {
         super(entityManager, importExportHelper, securityContext);
+        this.entityManager = entityManager;
         this.securityContext = securityContext;
     }
 
@@ -88,13 +96,107 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
     }
 
     @Override
+    public void clean(final String user, final boolean favourite, final Integer oldestId, final long oldestCrtMs) {
+        try {
+            LOGGER.debug("Deleting old rows");
+
+            final SqlBuilder sql = new SqlBuilder();
+            sql.append("DELETE");
+            sql.append(" FROM ");
+            sql.append(QueryEntity.TABLE_NAME);
+            sql.append(" WHERE ");
+            sql.append(QueryEntity.CREATE_USER);
+            sql.append(" = ");
+            sql.arg(user);
+            sql.append(" AND ");
+            sql.append(QueryEntity.FAVOURITE);
+            sql.append(" = ");
+            sql.arg(favourite);
+            sql.append(" AND ");
+
+            if (oldestId != null) {
+                sql.append("(");
+                sql.append(QueryEntity.ID);
+                sql.append(" <= ");
+                sql.arg(oldestId);
+                sql.append(" OR ");
+                sql.append(QueryEntity.CREATE_TIME);
+                sql.append(" < ");
+                sql.arg(oldestCrtMs);
+                sql.append(")");
+            } else {
+                sql.append(QueryEntity.CREATE_TIME);
+                sql.append(" < ");
+                sql.arg(oldestCrtMs);
+            }
+
+            final long rows = entityManager.executeNativeUpdate(sql);
+            LOGGER.debug("Deleted " + rows + " rows");
+
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<String> getUsers(final boolean favourite) {
+        final SqlBuilder sql = new SqlBuilder();
+        sql.append("SELECT ");
+        sql.append(QueryEntity.CREATE_USER);
+        sql.append(" FROM ");
+        sql.append(QueryEntity.TABLE_NAME);
+        sql.append(" WHERE ");
+        sql.append(QueryEntity.FAVOURITE);
+        sql.append(" = ");
+        sql.arg(favourite);
+        sql.append(" GROUP BY ");
+        sql.append(QueryEntity.CREATE_USER);
+        sql.append(" ORDER BY ");
+        sql.append(QueryEntity.CREATE_USER);
+
+        @SuppressWarnings("unchecked") final List<String> list = entityManager.executeNativeQueryResultList(sql);
+
+        return list;
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public Integer getOldestId(final String user, final boolean favourite, final int retain) {
+        final SqlBuilder sql = new SqlBuilder();
+        sql.append("SELECT");
+        sql.append(" ID");
+        sql.append(" FROM ");
+        sql.append(QueryEntity.TABLE_NAME);
+        sql.append(" WHERE ");
+        sql.append(QueryEntity.CREATE_USER);
+        sql.append(" = ");
+        sql.arg(user);
+        sql.append(" AND ");
+        sql.append(QueryEntity.FAVOURITE);
+        sql.append(" = ");
+        sql.arg(favourite);
+        sql.append(" ORDER BY ID DESC LIMIT 1 OFFSET ");
+        sql.arg(retain);
+
+        @SuppressWarnings("unchecked") final List<Integer> list = entityManager.executeNativeQueryResultList(sql);
+
+        if (list.size() == 1) {
+            return list.get(0);
+        }
+
+        return null;
+    }
+
+    @Override
     protected void checkUpdatePermission(final QueryEntity entity) {
         // Ignore.
     }
 
     @Override
     public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindQueryCriteria criteria) {
-        CriteriaLoggingUtil.appendEntityIdSet(items, "dashboardIdSet", criteria.getDashboardIdSet());
+        CriteriaLoggingUtil.appendLongTerm(items, "dashboardId", criteria.getDashboardId());
+        CriteriaLoggingUtil.appendStringTerm(items, "queryId", criteria.getQueryId());
         super.appendCriteria(items, criteria);
     }
 
@@ -103,26 +205,33 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
         return new QueryQueryAppender(entityManager);
     }
 
-    @Override
-    public String getNamePattern() {
-        // Unnamed queries are valid.
-        return null;
-    }
-
     private static class QueryQueryAppender extends QueryAppender<QueryEntity, FindQueryCriteria> {
         public QueryQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
         }
 
         @Override
-        protected void appendBasicCriteria(final SQLBuilder sql, final String alias, final FindQueryCriteria criteria) {
+        protected void appendBasicCriteria(final HqlBuilder sql, final String alias, final FindQueryCriteria criteria) {
             super.appendBasicCriteria(sql, alias, criteria);
 
             if (criteria.getFavourite() != null) {
-                SQLUtil.appendValueQuery(sql, alias + ".favourite", criteria.getFavourite());
+                sql.appendValueQuery(alias + ".favourite", criteria.getFavourite());
             }
 
-            SQLUtil.appendSetQuery(sql, true, alias + ".dashboard", criteria.getDashboardIdSet());
+            sql.appendValueQuery(alias + ".dashboardId", criteria.getDashboardId());
+            sql.appendValueQuery(alias + ".queryId", criteria.getQueryId());
         }
+    }
+
+    @Override
+    public String getNamePattern() {
+        // Unnamed queries are valid.
+        return null;
+    }
+
+    @Override
+    protected FieldMap createFieldMap() {
+        return super.createFieldMap()
+                .add(FindQueryCriteria.FIELD_TIME, QueryEntity.CREATE_TIME, "createTime");
     }
 }

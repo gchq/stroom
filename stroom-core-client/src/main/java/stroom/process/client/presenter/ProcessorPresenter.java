@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -53,10 +53,10 @@ import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamProcessorFilter;
+import stroom.svg.client.SvgPresets;
 import stroom.util.shared.SharedMap;
 import stroom.util.shared.SharedObject;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -77,9 +77,9 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 
     private PipelineEntity pipelineEntity;
     private SharedObject selectedProcessor;
-    private GlyphButtonView addButton;
-    private GlyphButtonView editButton;
-    private GlyphButtonView removeButton;
+    private ButtonView addButton;
+    private ButtonView editButton;
+    private ButtonView removeButton;
 
     private boolean allowUpdate;
 
@@ -120,11 +120,11 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 
     private void createButtons() {
         if (addButton == null && removeButton == null) {
-            addButton = processorListPresenter.getView().addButton(GlyphIcons.ADD);
+            addButton = processorListPresenter.getView().addButton(SvgPresets.ADD);
             addButton.setTitle("Add Processor");
-            editButton = processorListPresenter.getView().addButton(GlyphIcons.EDIT);
+            editButton = processorListPresenter.getView().addButton(SvgPresets.EDIT);
             editButton.setTitle("Edit Processor");
-            removeButton = processorListPresenter.getView().addButton(GlyphIcons.REMOVE);
+            removeButton = processorListPresenter.getView().addButton(SvgPresets.REMOVE);
             removeButton.setTitle("Remove Processor");
             registerHandler(addButton.addClickHandler(event -> {
                 if (allowUpdate) {
@@ -219,7 +219,6 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                         builder.addOperator(expression);
 
                         expressionPresenter.read(builder.build());
-
                     });
                 } else {
                     expressionPresenter.read(expression);
@@ -256,7 +255,6 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                     if (feedsExclude != null && feedsExclude.iterator().hasNext()) {
                         final ExpressionBuilder not = operator.addOperator(Op.NOT);
                         addEntityListTerm(not, feedsExclude, "Feed");
-
                     }
 
                     addEntityListTerm(operator, streamTypes, "Stream Type");

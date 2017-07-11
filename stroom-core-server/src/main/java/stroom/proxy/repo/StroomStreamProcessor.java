@@ -16,10 +16,11 @@
 
 package stroom.proxy.repo;
 
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 import stroom.feed.MetaMap;
 import stroom.util.cert.CertificateUtil;
@@ -30,8 +31,6 @@ import stroom.util.io.InitialByteArrayOutputStream;
 import stroom.util.io.InitialByteArrayOutputStream.BufferPos;
 import stroom.util.io.StreamProgressMonitor;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.StroomLogger;
-import stroom.util.zip.MetaMapFactory;
 import stroom.util.zip.StroomHeaderArguments;
 import stroom.util.zip.StroomStatusCode;
 import stroom.util.zip.StroomStreamException;
@@ -52,7 +51,6 @@ public class StroomStreamProcessor {
     private static final String ZERO_CONTENT = "0";
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomStreamProcessor.class);
     private static String hostName;
-    private final HeaderMap globalHeaderMap;
 
     private final MetaMap globalMetaMap;
     private final List<? extends StroomStreamHandler> stroomStreamHandlerList;

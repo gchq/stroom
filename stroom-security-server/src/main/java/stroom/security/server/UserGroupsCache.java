@@ -24,9 +24,7 @@ import stroom.entity.server.event.EntityEventBus;
 import stroom.entity.server.event.EntityEventHandler;
 import stroom.entity.shared.EntityAction;
 import stroom.query.api.v1.DocRef;
-import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
-import stroom.security.shared.UserService;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

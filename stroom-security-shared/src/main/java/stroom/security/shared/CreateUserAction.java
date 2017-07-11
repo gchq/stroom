@@ -16,7 +16,7 @@
 
 package stroom.security.shared;
 
-import stroom.dispatch.shared.Action;
+import stroom.entity.shared.Action;
 
 public class CreateUserAction extends Action<UserRef> {
     private String name;

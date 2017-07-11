@@ -30,7 +30,7 @@ import stroom.security.client.CurrentUser;
 import stroom.security.client.event.ChangePasswordEvent;
 import stroom.security.client.event.ChangePasswordEvent.ChangePasswordHandler;
 import stroom.security.shared.ChangePasswordAction;
-import stroom.security.shared.User;
+import stroom.security.shared.UserRef;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -40,9 +40,32 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 public class ChangePasswordPresenter
         extends MyPresenter<ChangePasswordPresenter.ChangePasswordView, ChangePasswordPresenter.ChangePasswordProxy>
         implements ChangePasswordHandler, PopupUiHandlers {
+    public interface ChangePasswordView extends View, HasUiHandlers<PopupUiHandlers> {
+        String getUserName();
+
+        void setUserName(String userName);
+
+        String getOldPassword();
+
+        void setOldPassword(String oldPassword);
+
+        String getNewPassword();
+
+        void setNewPassword(String newPassword);
+
+        String getConfirmPassword();
+
+        void setConfirmPassword(String confirmPassword);
+    }
+
+    @ProxyCodeSplit
+    public interface ChangePasswordProxy extends Proxy<ChangePasswordPresenter> {
+    }
+
     private final CurrentUser currentUser;
     private final ClientDispatchAsync dispatcher;
-    private User user;
+
+    private UserRef userRef;
     private boolean loginOnChange;
 
     @Inject
@@ -57,7 +80,7 @@ public class ChangePasswordPresenter
     @ProxyEvent
     @Override
     public void onChangePassword(final ChangePasswordEvent event) {
-        user = event.getUser();
+        userRef = event.getUserRef();
         loginOnChange = event.isLogonChange();
         read();
         forceReveal();
@@ -70,7 +93,7 @@ public class ChangePasswordPresenter
     }
 
     private void read() {
-        getView().setUserName(user.getName());
+        getView().setUserName(userRef.getName());
         getView().setOldPassword("");
         getView().setNewPassword("");
         getView().setConfirmPassword("");
@@ -105,7 +128,7 @@ public class ChangePasswordPresenter
                         null);
 
             } else {
-                dispatcher.exec(new ChangePasswordAction(user, oldPassword, newPassword)).onSuccess(result -> {
+                dispatcher.exec(new ChangePasswordAction(userRef, oldPassword, newPassword)).onSuccess(result -> {
                     AlertEvent.fireInfo(ChangePasswordPresenter.this, "The password has been changed.",
                             () -> {
                                 currentUser.setUserAndPermissions(result, loginOnChange);
@@ -114,27 +137,5 @@ public class ChangePasswordPresenter
                 });
             }
         }
-    }
-
-    public interface ChangePasswordView extends View, HasUiHandlers<PopupUiHandlers> {
-        String getUserName();
-
-        void setUserName(String userName);
-
-        String getOldPassword();
-
-        void setOldPassword(String oldPassword);
-
-        String getNewPassword();
-
-        void setNewPassword(String newPassword);
-
-        String getConfirmPassword();
-
-        void setConfirmPassword(String confirmPassword);
-    }
-
-    @ProxyCodeSplit
-    public interface ChangePasswordProxy extends Proxy<ChangePasswordPresenter> {
     }
 }

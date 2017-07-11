@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.query.shared;
+package stroom.index.shared;
 
 import java.util.HashMap;
 

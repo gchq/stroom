@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,6 +18,9 @@ package stroom.index.server;
 
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Element;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.store.AlreadyClosedException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import stroom.cache.AbstractCacheBean;
@@ -29,12 +32,14 @@ import stroom.index.shared.Index;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexService;
 import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexShardService;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.Node;
+import stroom.security.Secured;
 import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskManager;
 import stroom.util.logging.LambdaLogger;
@@ -59,17 +64,19 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Pool API into open index shards.
  */
-@Component("indexShardWriterCache")
+@Component("indexShardManager")
+@Secured(IndexShard.MANAGE_INDEX_SHARDS_PERMISSION)
 @Profile(StroomSpringProfiles.PROD)
 @EntityEventHandler(type = Index.ENTITY_TYPE)
-public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, IndexShardWriter>
-        implements IndexShardWriterCache, EntityEvent.Handler {
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardWriterCacheImpl.class);
+public class IndexShardManagerImpl extends AbstractCacheBean<IndexShardKey, IndexShardWriter> implements IndexShardManager, EntityEvent.Handler {
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardManagerImpl.class);
     private static final int MAX_CACHE_ENTRIES = 1000000;
+    private static final int MAX_ATTEMPTS = 100;
 
     private final IndexService indexService;
     private final IndexShardService indexShardService;
@@ -81,9 +88,11 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
     private final ConcurrentHashMap<IndexShard, IndexShardWriter> ownedWriters = new ConcurrentHashMap<>();
     private final AtomicBoolean deletingShards = new AtomicBoolean();
 
+    private final StripedLock keyLocks = new StripedLock();
+
     @Inject
-    IndexShardWriterCacheImpl(final CacheManager cacheManager, final StroomPropertyService stroomPropertyService,
-                              final IndexService indexService, final IndexShardService indexShardService, final NodeCache nodeCache, final TaskManager taskManager) {
+    IndexShardManagerImpl(final CacheManager cacheManager, final StroomPropertyService stroomPropertyService,
+                          final IndexService indexService, final IndexShardService indexShardService, final NodeCache nodeCache, final TaskManager taskManager) {
         super(cacheManager, "Index Shard Writer Cache", MAX_CACHE_ENTRIES);
         this.stroomPropertyService = stroomPropertyService;
         this.indexService = indexService;
@@ -93,6 +102,79 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
 
         setMaxIdleTime(10, TimeUnit.SECONDS);
         setMaxLiveTime(1, TimeUnit.DAYS);
+    }
+
+    @Override
+    public void addDocument(final IndexShardKey indexShardKey, final Document document) {
+        if (document != null) {
+            // Try and add the document silently without locking.
+            boolean success = false;
+            try {
+                final IndexShardWriter indexShardWriter = get(indexShardKey);
+                indexShardWriter.addDocument(document);
+                success = true;
+            } catch (final Throwable t) {
+                LOGGER.trace(t::getMessage, t);
+            }
+
+            // Attempt a few more times under lock.
+            for (int attempt = 0; !success && attempt < MAX_ATTEMPTS; attempt++) {
+                // If we failed then try under lock to make sure we get a new writer.
+                final Lock lock = keyLocks.getLockForKey(indexShardKey);
+                lock.lock();
+                try {
+                    // Ask the cache for the current one (it might have been changed by another thread) and try again.
+                    final IndexShardWriter indexShardWriter = get(indexShardKey);
+                    success = addDocument(indexShardWriter, document);
+
+                    if (!success) {
+                        // Failed to add it so remove this object from the cache and try to get another one.
+                        remove(indexShardKey);
+                    }
+
+                } catch (final Throwable t) {
+                    LOGGER.trace(t::getMessage, t);
+
+                    // If we've already tried once already then give up.
+                    if (attempt > 0) {
+                        throw t;
+                    }
+                } finally {
+                    lock.unlock();
+                }
+            }
+
+            // One final try that will throw an index exception if needed.
+            if (!success) {
+                try {
+                    final IndexShardWriter indexShardWriter = get(indexShardKey);
+                    indexShardWriter.addDocument(document);
+                } catch (final IndexException e) {
+                    throw e;
+                } catch (final Throwable e) {
+                    throw new IndexException(e.getMessage(), e);
+                }
+            }
+        }
+    }
+
+    private boolean addDocument(final IndexShardWriter indexShardWriter, final Document document) {
+        boolean success = false;
+        try {
+            indexShardWriter.addDocument(document);
+            success = true;
+        } catch (final AlreadyClosedException | IndexException e) {
+            LOGGER.trace(e::getMessage, e);
+
+        } catch (final Throwable t) {
+            LOGGER.error(t::getMessage, t);
+
+            // Mark the shard as corrupt as this should be the
+            // only reason we can't add a document.
+            indexShardWriter.setStatus(IndexShardStatus.CORRUPT);
+        }
+
+        return success;
     }
 
     /**
@@ -124,12 +206,12 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
             // Look for closed, non deleted, non full, non corrupt index shard
             // to add to
             if (indexShard.getIndex().getId() == key.getIndex().getId()
-                    && writer.getPartition().equals(key.getPartition()) && writer.isClosed() && !writer.isFull()) {
+                    && writer.getPartition().equals(key.getPartition()) && IndexShardStatus.CLOSED.equals(writer.getStatus()) && !writer.isFull()) {
                 try {
                     // Open the writer.
                     final boolean success = writer.open(false);
                     if (success) {
-                        LOGGER.debug(() -> "getOrCreateIndexShard() - Opened index shard " + indexShard.getId() + " for index " + key.getIndex().getName() + " and partition " + key.getPartition());
+                        LOGGER.debug(() -> "getExistingWriter() - Opened existing index shard " + indexShard.getId() + " for index " + key.getIndex().getName() + " and partition " + key.getPartition());
                         return writer;
                     }
                 } catch (final Exception e) {
@@ -310,7 +392,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
                             final Entry<IndexShard, IndexShardWriter> entry = iter.next();
                             final IndexShardWriter writer = entry.getValue();
                             try {
-                                if (writer != null && writer.isDeleted()) {
+                                if (writer != null && IndexShardStatus.DELETED.equals(writer.getStatus())) {
                                     LOGGER.debug(() -> "deleteLogicallyDeleted() - Deleting index shard " + writer.getIndexShard().getId());
 
                                     if (writer.deleteFromDisk()) {
@@ -488,8 +570,12 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
     }
 
     @Override
-    public IndexShardWriter getWriter(final IndexShard indexShard) {
-        return ownedWriters.get(indexShard);
+    public IndexWriter getWriter(final IndexShard indexShard) {
+        final IndexShardWriter indexShardWriter = ownedWriters.get(indexShard);
+        if (indexShardWriter != null) {
+            return indexShardWriter.getWriter();
+        }
+        return null;
     }
 
     @Override

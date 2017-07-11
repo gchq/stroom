@@ -16,8 +16,6 @@
 
 package stroom.security.server;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.server.MockDocumentEntityService;
 import stroom.entity.shared.EntityIdSet;
@@ -27,6 +25,8 @@ import stroom.entity.shared.FolderIdSet;
 import stroom.entity.shared.FolderService;
 import stroom.importexport.server.EntityPathResolver;
 import stroom.util.spring.StroomSpringProfiles;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 
@@ -49,11 +49,6 @@ public class MockFolderService extends MockDocumentEntityService<Folder, FindFol
      */
     public void setupTestUser() {
         create(null, "Junit Group");
-    }
-
-    @Override
-    public EntityIdSet<Folder> buildNestedFolderList(final FolderIdSet queryFolderIdSet) {
-        return null;
     }
 
     @Override

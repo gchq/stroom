@@ -17,7 +17,6 @@
 package stroom.util;
 
 import stroom.util.io.StreamUtil;
-import stroom.util.zip.HeaderMap;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,9 +30,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
 import java.util.StringTokenizer;
-
-import stroom.util.io.StreamUtil;
-import stroom.feed.MetaMap;
 
 public class MigrationTool {
     static boolean ignoreError;

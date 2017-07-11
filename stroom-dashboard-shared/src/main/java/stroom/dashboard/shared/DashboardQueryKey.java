@@ -21,14 +21,16 @@ import java.io.Serializable;
 public class DashboardQueryKey implements Serializable {
     private String uuid;
     private long dashboardId;
+    private String queryId;
 
     public DashboardQueryKey() {
     }
 
-    public static DashboardQueryKey create(final String uuid, final long dashboardId) {
+    public static DashboardQueryKey create(final String uuid, final long dashboardId, final String queryId) {
         final DashboardQueryKey dashboardQueryKey = new DashboardQueryKey();
         dashboardQueryKey.uuid = uuid;
         dashboardQueryKey.dashboardId = dashboardId;
+        dashboardQueryKey.queryId = queryId;
         return dashboardQueryKey;
     }
 
@@ -40,6 +42,10 @@ public class DashboardQueryKey implements Serializable {
         return dashboardId;
     }
 
+    public String getQueryId() {
+        return queryId;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
@@ -48,13 +54,15 @@ public class DashboardQueryKey implements Serializable {
         final DashboardQueryKey that = (DashboardQueryKey) o;
 
         if (dashboardId != that.dashboardId) return false;
-        return uuid != null ? uuid.equals(that.uuid) : that.uuid == null;
+        if (uuid != null ? !uuid.equals(that.uuid) : that.uuid != null) return false;
+        return queryId != null ? queryId.equals(that.queryId) : that.queryId == null;
     }
 
     @Override
     public int hashCode() {
         int result = uuid != null ? uuid.hashCode() : 0;
         result = 31 * result + (int) (dashboardId ^ (dashboardId >>> 32));
+        result = 31 * result + (queryId != null ? queryId.hashCode() : 0);
         return result;
     }
 
@@ -63,6 +71,7 @@ public class DashboardQueryKey implements Serializable {
         return "DashboardQueryKey{" +
                 "uuid='" + uuid + '\'' +
                 ", dashboardId=" + dashboardId +
+                ", queryId='" + queryId + '\'' +
                 '}';
     }
 }

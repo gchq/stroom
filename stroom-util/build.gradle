@@ -1,7 +1,6 @@
 dependencies {
     compile project(':stroom-util-shared')
 
-    compile libs.commons_compress
     compile libs.commons_io
     permitUnusedDeclared libs.commons_io
     compile libs.commons_lang

@@ -30,8 +30,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
-import stroom.index.server.IndexShardWriter;
-import stroom.index.server.IndexShardWriterCache;
+import stroom.index.server.Indexer;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardService;
 import stroom.search.server.IndexShardSearcher;
@@ -47,15 +46,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class IndexShardSearcherCache implements InitializingBean {
     public static final int MAX_OPEN_SHARDS = 2;
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardSearcherCache.class);
-    private final IndexShardWriterCache indexShardWriterPool;
+
+    private final Indexer indexer;
     private final CacheManager cacheManager;
+
     private final Cache cache;
     private final SelfPopulatingCache selfPopulatingCache;
 
     @Inject
-    public IndexShardSearcherCache(final IndexShardWriterCache indexShardWriterPool,
-            final IndexShardService indexShardService, final CacheManager cacheManager) {
-        this.indexShardWriterPool = indexShardWriterPool;
+    public IndexShardSearcherCache(final Indexer indexer,
+                                   final IndexShardService indexShardService, final CacheManager cacheManager) {
+        this.indexer = indexer;
         this.cacheManager = cacheManager;
 
         final CacheConfiguration cacheConfiguration = new CacheConfiguration("Index Shard Searcher Cache",
@@ -69,8 +70,7 @@ public class IndexShardSearcherCache implements InitializingBean {
         cache = new Cache(cacheConfiguration) {
             @Override
             public void removeAll() throws IllegalStateException, CacheException {
-                @SuppressWarnings("rawtypes")
-                final List keys = cache.getKeys();
+                @SuppressWarnings("rawtypes") final List keys = cache.getKeys();
                 for (final Object key : keys) {
                     cache.remove(key);
                 }
@@ -166,6 +166,7 @@ public class IndexShardSearcherCache implements InitializingBean {
         private volatile ConcurrentLinkedQueue<Throwable> exceptions;
         private volatile boolean cached;
         private volatile boolean open;
+        private volatile IndexWriter indexWriter;
 
         public IndexShardSearcherPool(final IndexShard indexShard) {
             this.indexShard = indexShard;
@@ -207,19 +208,33 @@ public class IndexShardSearcherCache implements InitializingBean {
         }
 
         private synchronized void open() {
+            IndexWriter indexWriter = null;
+            Exception writerException = null;
+
+            // Get the current writer for this index shard.
+            try {
+                indexWriter = indexer.getWriter(indexShard);
+            } catch (final Exception e) {
+                writerException = e;
+            }
+
+            // See if the writer has changed since we created this searcher.
+            if (indexWriter != this.indexWriter) {
+                // If the writer has changed and this searcher is still open then close this searcher so it can be
+                // opened again using the current writer.
+                if (open) {
+                    close();
+                }
+
+                // Assign the current writer.
+                this.indexWriter = indexWriter;
+
+                // Reset any exceptions.
+                exceptions = null;
+            }
+
             if (!open && !hasExceptions()) {
                 try {
-                    IndexWriter indexWriter = null;
-                    Exception writerException = null;
-                    try {
-                        final IndexShardWriter indexShardWriter = indexShardWriterPool.getWriter(indexShard);
-                        if (indexShardWriter != null) {
-                            indexWriter = indexShardWriter.getWriter();
-                        }
-                    } catch (final Exception e) {
-                        writerException = e;
-                    }
-
                     indexShardSearcher = new IndexShardSearcherImpl(indexShard, indexWriter);
 
                     if (writerException != null) {

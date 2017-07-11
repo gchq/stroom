@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,15 +27,15 @@ import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
+import stroom.query.api.v1.DocRef;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.explorer.shared.EntityData;
 import stroom.node.client.view.WrapperView;
-import stroom.query.api.v1.DocRef;
 import stroom.script.shared.Script;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.ButtonView;
+import stroom.svg.client.SvgPresets;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,8 +45,8 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
         implements HasRead<Script>, HasWrite<Script>, HasDirtyHandlers {
     private final ScriptListPresenter scriptListPresenter;
     private final EntityChooser explorerDropDownTreePresenter;
-    private final GlyphButtonView addButton;
-    private final GlyphButtonView removeButton;
+    private final ButtonView addButton;
+    private final ButtonView removeButton;
     private DocRefs scripts;
 
     @Inject
@@ -62,9 +62,9 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
 
         view.setView(scriptListPresenter.getView());
 
-        addButton = scriptListPresenter.getView().addButton(GlyphIcons.ADD);
+        addButton = scriptListPresenter.getView().addButton(SvgPresets.ADD);
         addButton.setTitle("Add Dependency");
-        removeButton = scriptListPresenter.getView().addButton(GlyphIcons.REMOVE);
+        removeButton = scriptListPresenter.getView().addButton(SvgPresets.REMOVE);
         removeButton.setTitle("Remove Dependency");
     }
 
@@ -140,7 +140,7 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
             Collections.sort(list, DocRef::compareTo);
             scriptListPresenter.setData(list);
         } else {
-            scriptListPresenter.setData(new ArrayList<>());
+            scriptListPresenter.setData(new ArrayList<DocRef>());
         }
     }
 

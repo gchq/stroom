@@ -16,8 +16,6 @@
 
 package stroom.index.shared;
 
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
 import stroom.entity.shared.AuditedEntity;
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
@@ -26,6 +24,8 @@ import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.util.shared.HasDisplayValue;
 import stroom.util.shared.ModelStringUtil;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -61,6 +61,7 @@ public class IndexShard extends AuditedEntity {
             + SQLNameConstants.MS_SUFFIX;
     public static final String INDEX_VERSION = SQLNameConstants.INDEX + SEP + SQLNameConstants.VERSION;
     public static final String ENTITY_TYPE = "IndexShard";
+    public static final String MANAGE_INDEX_SHARDS_PERMISSION = "Manage Index Shards";
     public static final Set<IndexShardStatus> NON_DELETED_INDEX_SHARD_STATUS = Collections.unmodifiableSet(
             new HashSet<>(Arrays.asList(IndexShardStatus.OPEN, IndexShardStatus.CLOSED, IndexShardStatus.CORRUPT)));
     public static final Set<IndexShardStatus> READABLE_INDEX_SHARD_STATUS = Collections
@@ -292,6 +293,10 @@ public class IndexShard extends AuditedEntity {
         CLOSED("Closed", 0),
         // Open - We are writing to it (maybe index or merge)
         OPEN("Open", 1),
+        // Closing - We are in the process of closing the index shard.
+        CLOSING("Closing", 10),
+        // Opening - We are in the process of opening an index shard.
+        OPENING("Opening", 20),
         // Deleted - Used to mark shard for deletion
         DELETED("Deleted", 99),
         // Corrupt - Used to mark shard has been corrupted

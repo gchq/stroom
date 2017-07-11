@@ -16,13 +16,6 @@
 
 package stroom.security.client.presenter;
 
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -31,12 +24,12 @@ import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.event.ReloadEntityEvent;
-import stroom.entity.shared.EntityServiceSaveAction;
 import stroom.security.client.event.ResetPasswordEvent;
 import stroom.security.shared.CanEmailPasswordResetAction;
-import stroom.security.shared.EmailPasswordResetForUserAction;
-import stroom.security.shared.User;
+import stroom.security.shared.EmailPasswordResetForUserNameAction;
+import stroom.security.shared.LoadUserPropertiesAction;
+import stroom.security.shared.SaveUserPropertiesAction;
+import stroom.security.shared.UserProperties;
 import stroom.security.shared.UserRef;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -51,7 +44,7 @@ public class UserEditPresenter extends MyPresenterWidget<UserEditPresenter.UserE
     private final UserEditAddRemoveUsersPresenter userListAddRemovePresenter;
     private final AppPermissionsPresenter appPermissionsPresenter;
 
-    private User user;
+    private UserRef userRef;
 
     @Inject
     public UserEditPresenter(final EventBus eventBus, final UserEditView view,
@@ -70,22 +63,17 @@ public class UserEditPresenter extends MyPresenterWidget<UserEditPresenter.UserE
     protected void onBind() {
         super.onBind();
         registerHandler(getView().getLoginNeverExpires().addValueChangeHandler(event -> {
-            user.setLoginExpiry(!getView().getLoginNeverExpires().getBooleanValue());
-            save();
+            final UserProperties userProperties = new UserProperties(null, !getView().getLoginNeverExpires().getBooleanValue());
+            dispatcher.exec(new SaveUserPropertiesAction(userRef, userProperties)).onSuccess(up -> getView().getLoginNeverExpires().setBooleanValue(!up.getLoginExpires()));
         }));
         registerHandler(getView().getStatusNotEnabled().addValueChangeHandler(event -> {
-            user.setStatusEnabled(!getView().getStatusNotEnabled().getBooleanValue());
-            save();
-        }));
-        registerHandler(getEventBus().addHandler(ReloadEntityEvent.getType(), event -> {
-            if (event.getEntity().equals(user)) {
-                read((User) event.getEntity());
-            }
+            final UserProperties userProperties = new UserProperties(!getView().getStatusNotEnabled().getBooleanValue(), null);
+            dispatcher.exec(new SaveUserPropertiesAction(userRef, userProperties)).onSuccess(up -> getView().getStatusNotEnabled().setBooleanValue(!up.getStatus()));
         }));
     }
 
-    public void show(final User user, final PopupUiHandlers popupUiHandlers) {
-        read(user);
+    public void show(final UserRef userRef, final PopupUiHandlers popupUiHandlers) {
+        read(userRef);
 
         final PopupUiHandlers internalPopupUiHandlers = new PopupUiHandlers() {
             @Override
@@ -100,29 +88,26 @@ public class UserEditPresenter extends MyPresenterWidget<UserEditPresenter.UserE
             }
         };
         final PopupSize popupSize = new PopupSize(500, 600, 500, 600, true);
-        final String caption = "User - " + user.getName();
+        final String caption = "User - " + userRef.getName();
         ShowPopupEvent.fire(UserEditPresenter.this, UserEditPresenter.this, PopupView.PopupType.CLOSE_DIALOG,
                 popupSize, caption, internalPopupUiHandlers);
     }
 
-    private void read(User user) {
-        this.user = user;
+    private void read(UserRef userRef) {
+        this.userRef = userRef;
 
-        // Set the status.
-        if (!user.isStatusEnabled()) {
-            getView().getStatusNotEnabled().setValue(TickBoxState.TICK);
-        } else {
-            getView().getStatusNotEnabled().setValue(TickBoxState.UNTICK);
-        }
+        dispatcher.exec(new LoadUserPropertiesAction(userRef)).onSuccess(up -> {
+            if (up.getStatus()) {
+                getView().getStatusNotEnabled().setValue(TickBoxState.UNTICK);
+            } else {
+                getView().getStatusNotEnabled().setValue(TickBoxState.TICK);
+            }
 
-        getView().getLoginNeverExpires().setBooleanValue(!user.isLoginExpiry());
+            getView().getLoginNeverExpires().setBooleanValue(!up.getLoginExpires());
+        });
 
-        userListAddRemovePresenter.setUser(UserRef.create(user));
-        appPermissionsPresenter.setUser(UserRef.create(user));
-    }
-
-    private void save() {
-        dispatcher.exec(new EntityServiceSaveAction<>(user)).onSuccess(this::read);
+        userListAddRemovePresenter.setUser(userRef);
+        appPermissionsPresenter.setUser(userRef);
     }
 
     @Override
@@ -139,19 +124,18 @@ public class UserEditPresenter extends MyPresenterWidget<UserEditPresenter.UserE
         if (email) {
             dispatcher.exec(new CanEmailPasswordResetAction()).onSuccess(result -> {
                 if (result.getBoolean()) {
-                    dispatcher.exec(new EmailPasswordResetForUserAction(user)).onSuccess(user -> {
-                        read(user);
-                        AlertEvent.fireInfo(UserEditPresenter.this,
-                                "The password has been reset. An email with the new password has been sent to the users email account.",
-                                null);
-                    });
+                    dispatcher.exec(new EmailPasswordResetForUserNameAction(userRef.getName())).onSuccess(user ->
+                            AlertEvent.fireInfo(UserEditPresenter.this,
+                                    "The password has been reset. An email with the new password has been sent to the users email account.",
+                                    null)
+                    );
                 } else {
                     AlertEvent.fireError(UserEditPresenter.this, "System is not set up to email passwords!",
                             null);
                 }
             });
         } else {
-            ResetPasswordEvent.fire(UserEditPresenter.this, user);
+            ResetPasswordEvent.fire(UserEditPresenter.this, userRef);
         }
     }
 

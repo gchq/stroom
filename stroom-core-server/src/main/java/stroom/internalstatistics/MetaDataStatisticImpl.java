@@ -19,10 +19,10 @@ package stroom.internalstatistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
+import stroom.feed.MetaMap;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsFacadeFactory;
 import stroom.util.date.DateUtil;
-import stroom.util.zip.HeaderMap;
 
 import javax.annotation.Resource;
 import java.util.HashMap;
@@ -46,7 +46,7 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
     /**
      * @return build the STAT or return null for not valid
      */
-    private InternalStatisticEvent buildStatisticEvent(final MetaDataStatisticTemplate template, final HeaderMap metaData) {
+    private InternalStatisticEvent buildStatisticEvent(final MetaDataStatisticTemplate template, final MetaMap metaData) {
         Long timeMs = null;
         final String timeValue = metaData.get(template.getTimeMsAttribute());
         if (StringUtils.hasText(timeValue)) {
@@ -90,7 +90,7 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
     }
 
     @Override
-    public void recordStatistics(final HeaderMap metaData) {
+    public void recordStatistics(final MetaMap metaData) {
         for (final MetaDataStatisticTemplate template : templates) {
             try {
                 final InternalStatisticEvent statisticEvent = buildStatisticEvent(template, metaData);

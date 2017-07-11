@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.client;
+package stroom.policy.client;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -25,7 +25,7 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.monitoring.client.MonitoringPlugin;
 import stroom.policy.shared.Policy;
 import stroom.security.client.ClientSecurityContext;
-import stroom.streamstore.client.presenter.DataReceiptPolicyPresenter;
+import stroom.policy.client.presenter.DataReceiptPolicyPresenter;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.MenuItem;

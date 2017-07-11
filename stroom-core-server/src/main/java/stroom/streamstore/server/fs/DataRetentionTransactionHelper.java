@@ -21,16 +21,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import stroom.datasource.api.v1.DataSourceField;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.entity.server.util.PreparedStatementUtil;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.query.shared.ExpressionItem;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionTerm;
-import stroom.query.shared.IndexField;
+import stroom.query.api.v1.ExpressionItem;
+import stroom.query.api.v1.ExpressionOperator;
+import stroom.query.api.v1.ExpressionTerm;
 import stroom.streamstore.server.ExpressionMatcher;
 import stroom.streamstore.server.StreamFields;
 import stroom.streamstore.shared.DataRetentionRule;
@@ -208,8 +208,8 @@ public class DataRetentionTransactionHelper {
         final Map<String, Object> attributeMap = new HashMap<>();
         fieldSet.forEach(fieldName -> {
             try {
-                final IndexField indexField = StreamFields.getFieldMap().get(fieldName);
-                switch (indexField.getFieldType()) {
+                final DataSourceField field = StreamFields.getFieldMap().get(fieldName);
+                switch (field.getType()) {
                     case FIELD:
                         final String string = resultSet.getString(fieldName);
                         attributeMap.put(fieldName, string);

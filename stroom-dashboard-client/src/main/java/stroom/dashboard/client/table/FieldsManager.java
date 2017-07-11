@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,7 +29,7 @@ import stroom.dashboard.shared.Sort.SortDirection;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.data.grid.client.DataGridViewImpl.Heading;
 import stroom.data.grid.client.DataGridViewImpl.HeadingListener;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
@@ -51,15 +51,51 @@ import java.util.Map;
 import java.util.Set;
 
 public class FieldsManager implements HeadingListener {
+    public interface Style extends CssResource {
+        String labels();
+
+        String label();
+
+        String row();
+
+        String fieldLabel();
+
+        String fieldText();
+
+        String sortOrder();
+
+        String buttons();
+    }
+
+    public interface Resources extends ClientBundle {
+        ImageResource expression();
+
+        ImageResource sortaz();
+
+        ImageResource sortza();
+
+        ImageResource group();
+
+        ImageResource format();
+
+        ImageResource filter();
+
+        @Source("fields.css")
+        Style style();
+    }
+
     private static Resources resources;
+
     private final TablePresenter tablePresenter;
     private final ExpressionPresenter expressionPresenter;
     private final FormatPresenter formatPresenter;
     private final FilterPresenter filterPresenter;
-    private final MenuListPresenter menuListPresenter;
     private int fieldsStartIndex;
+
+    private final MenuListPresenter menuListPresenter;
     private boolean busy;
     private TableComponentSettings tableSettings;
+
     public FieldsManager(final TablePresenter tablePresenter, final MenuListPresenter menuListPresenter,
                          final ExpressionPresenter expressionPresenter, final FormatPresenter formatPresenter,
                          final FilterPresenter filterPresenter) {
@@ -417,7 +453,7 @@ public class FieldsManager implements HeadingListener {
     }
 
     private Item createFilterMenu(final Field field, final Set<Item> highlights) {
-        final Item item = new IconMenuItem(3, GlyphIcons.FILTER, GlyphIcons.FILTER, "Filter", null, true, () -> filterField(field));
+        final Item item = new IconMenuItem(3, SvgPresets.FILTER, SvgPresets.FILTER, "Filter", null, true, () -> filterField(field));
         if (field.getFilter() != null && ((field.getFilter().getIncludes() != null
                 && field.getFilter().getIncludes().trim().length() > 0)
                 || (field.getFilter().getExcludes() != null && field.getFilter().getExcludes().trim().length() > 0))) {
@@ -436,40 +472,7 @@ public class FieldsManager implements HeadingListener {
     }
 
     private Item createRemoveMenu(final Field field, final Set<Item> highlights) {
-        final Item item = new IconMenuItem(5, GlyphIcons.REMOVE, GlyphIcons.REMOVE, "Remove", null, true, () -> deleteField(field));
+        final Item item = new IconMenuItem(5, SvgPresets.REMOVE, SvgPresets.REMOVE, "Remove", null, true, () -> deleteField(field));
         return item;
-    }
-
-    public interface Style extends CssResource {
-        String labels();
-
-        String label();
-
-        String row();
-
-        String fieldLabel();
-
-        String fieldText();
-
-        String sortOrder();
-
-        String buttons();
-    }
-
-    public interface Resources extends ClientBundle {
-        ImageResource expression();
-
-        ImageResource sortaz();
-
-        ImageResource sortza();
-
-        ImageResource group();
-
-        ImageResource format();
-
-        ImageResource filter();
-
-        @Source("fields.css")
-        Style style();
     }
 }

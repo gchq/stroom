@@ -30,9 +30,6 @@
 	<!-- <link rel="stylesheet" href="mdl/material.min.css" /> -->
     <!-- <script type="text/javascript" src='mdl/material.min.js'></script> -->
 
-	<!-- Font Awesome -->
-	<link rel="stylesheet" type="text/css" href="css/font-awesome.css">
-
     <!-- Roboto Font -->
 	<link rel="stylesheet" type="text/css" href="css/roboto.css">
 
@@ -44,18 +41,17 @@
     <link rel="stylesheet" href="css/firefox-scrollbar.css" type="text/css" />
     <link rel="stylesheet" href="css/stroom-control.css" type="text/css" />
     <link rel="stylesheet" href="css/stroom-button.css" type="text/css" />
-    <link rel="stylesheet" href="css/fa-button.css" type="text/css" />
     <link rel="stylesheet" href="css/stroom-dashboard.css" type="text/css" />
     <link rel="stylesheet" href="css/stroom.css" type="text/css" />
     <link rel="stylesheet" href="dynamic.css" type="text/css" />
-    
-    <link rel="stylesheet" href="xsdbrowser/xsdbrowser.css" type="text/css" />      
-   
+
+    <link rel="stylesheet" href="xsdbrowser/xsdbrowser.css" type="text/css" />
+
     <!-- Themes -->
     <link rel="stylesheet" href="css/stroom-theme-standard.css" type="text/css" />
 <!--     <link rel="stylesheet" href="css/stroom-theme-transitions.css" type="text/css" /> -->
     <link rel="stylesheet" href="css/stroom-theme-dark.css" type="text/css" />
-   
+
     <!-- Material Design Spinner -->
     <link rel="stylesheet" href="css/spinner.min.css" type="text/css" />
     <link rel="stylesheet" href="css/spinner.custom.css" type="text/css" />
@@ -69,7 +65,7 @@
   <body class="stroom-body" oncontextmenu="return false;">
       <!-- Add history support -->
     <iframe src="javascript:''" id="__gwt_historyFrame" tabIndex='-1' style="position:absolute;width:0;height:0;border:0"></iframe>
-    
+
     <div class="stroom-background">
     </div>
     <div class="tubeEffect">
@@ -94,8 +90,8 @@
 	    <div id="loadingText">Loading Application. Please wait...</div>
 	  </div>
 	</div>
-	
-	<div id="logo" style="position:absolute;top:0px;left:0px;width:146px;height:35px;background:url('images/logo.png');background-repeat:no-repeat" />
+
+	<img id="logo" style="position:absolute;top:0px;left:0px;width:146px;height:35px" src="images/logo.svg" />
   
     <noscript>
       <div style="width: 22em; position: absolute; left: 50%; margin-left: -11em; color: red; background-color:white; border: 1px solid red; padding: 4px; font-family: sans-serif">

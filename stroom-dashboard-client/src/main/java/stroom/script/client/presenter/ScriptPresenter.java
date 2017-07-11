@@ -136,7 +136,7 @@ public class ScriptPresenter extends EntityEditTabPresenter<LinkTabPanelView, Sc
     }
 
     @Override
-    protected void onPermissionsCheck(final boolean readOnly) {
+    public void onPermissionsCheck(final boolean readOnly) {
         super.onPermissionsCheck(readOnly);
         this.readOnly = readOnly;
     }

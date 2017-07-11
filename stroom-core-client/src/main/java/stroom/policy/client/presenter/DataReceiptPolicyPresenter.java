@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.client.presenter;
+package stroom.policy.client.presenter;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;

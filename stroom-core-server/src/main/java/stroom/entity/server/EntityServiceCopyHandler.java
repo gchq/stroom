@@ -17,7 +17,7 @@
 package stroom.entity.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityServiceCopyAction;
@@ -76,7 +76,7 @@ class EntityServiceCopyHandler
                 folder = folderService.loadByIdInsecure(action.getFolder().getId(), Collections.emptySet());
             }
 
-            result = entityService.copy(entity, DocRef.create(folder), action.getName(), action.getPermissionInheritance());
+            result = entityService.copy(entity, DocRefUtil.create(folder), action.getName(), action.getPermissionInheritance());
             entityEventLog.create(result);
         } catch (final RuntimeException e) {
             entityEventLog.create(entity, e);

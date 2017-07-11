@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,10 +40,8 @@ import stroom.security.server.exception.AuthenticationServiceException;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.PermissionNames;
-import stroom.security.shared.User;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
-import stroom.security.shared.UserService;
 import stroom.security.spring.SecurityConfiguration;
 import stroom.util.spring.StroomScope;
 
@@ -65,7 +63,7 @@ class SecurityContextImpl implements SecurityContext {
     private final UserService userService;
     private final DocumentPermissionService documentPermissionService;
     private final GenericEntityService genericEntityService;
-    private JWTService jwtService;
+    private final JWTService jwtService;
 
     private static final String INTERNAL = "INTERNAL";
     private static final String SYSTEM = "system";
@@ -114,7 +112,7 @@ class SecurityContextImpl implements SecurityContext {
                 }
             } else if (USER.equals(type)) {
                 if (name.length() > 0) {
-                    userRef = userService.getUserRefByName(name);
+                    userRef = userService.getUserByName(name);
                     if (userRef == null) {
                         final String message = "Unable to push user '" + name + "' as user is unknown";
                         LOGGER.error(message);
@@ -158,10 +156,7 @@ class SecurityContextImpl implements SecurityContext {
             if (userRef == null) {
                 final Subject subject = getSubject();
                 if (subject != null && subject.isAuthenticated()) {
-                    final User user = (User) subject.getPrincipal();
-                    if (user != null) {
-                        userRef = UserRef.create(user);
-                    }
+                    userRef = (UserRef) subject.getPrincipal();
                 }
             }
         } catch (final InvalidSessionException e) {

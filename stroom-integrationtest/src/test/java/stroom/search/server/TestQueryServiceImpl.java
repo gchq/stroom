@@ -20,12 +20,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.junit.Assert;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.junit.Assert;
-import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.dashboard.server.QueryHistoryCleanExecutor;
 import stroom.dashboard.shared.Dashboard;
@@ -46,8 +40,8 @@ import stroom.query.api.v1.ExpressionOperator;
 import stroom.query.api.v1.ExpressionOperator.Op;
 import stroom.query.api.v1.ExpressionTerm.Condition;
 import stroom.query.api.v1.Query;
-import stroom.security.shared.User;
-import stroom.security.shared.UserService;
+import stroom.security.server.UserService;
+import stroom.security.shared.UserRef;
 import stroom.util.thread.ThreadUtil;
 
 import javax.annotation.Resource;
@@ -91,7 +85,8 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         final DocRef dataSourceRef = DocRefUtil.create(index);
 
         refQuery = queryService.create(null, "Ref query");
-        refQuery.setDashboard(dashboard);
+        refQuery.setDashboardId(dashboard.getId());
+        refQuery.setQueryId(QUERY_COMPONENT);
         refQuery.setQuery(new Query(dataSourceRef, new ExpressionOperator(null, Op.AND, Arrays.asList())));
         queryService.save(refQuery);
 
@@ -105,7 +100,8 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         LOGGER.info(root.toString());
 
         testQuery = queryService.create(null, "Test query");
-        testQuery.setDashboard(dashboard);
+        testQuery.setDashboardId(dashboard.getId());
+        testQuery.setQueryId(QUERY_COMPONENT);
         testQuery.setQuery(new Query(dataSourceRef, root.build()));
         testQuery = queryService.save(testQuery);
 
@@ -159,18 +155,18 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         criteria.setQueryId(QUERY_COMPONENT);
         criteria.setSort(FindQueryCriteria.FIELD_TIME, Direction.DESCENDING, false);
 
-        BaseResultList<Query> list = queryService.find(criteria);
+        BaseResultList<QueryEntity> list = queryService.find(criteria);
         Assert.assertEquals(2, list.size());
 
-        Query query = list.get(0);
+        QueryEntity query = list.get(0);
 
         // Now insert the same query over 100 times.
         for (int i = 0; i < 120; i++) {
-            final Query newQuery = queryService.create(null, "History");
+            final QueryEntity newQuery = queryService.create(null, "History");
             newQuery.setDashboardId(query.getDashboardId());
             newQuery.setQueryId(query.getQueryId());
             newQuery.setFavourite(false);
-            newQuery.setQueryData(query.getQueryData());
+            newQuery.setQuery(query.getQuery());
             newQuery.setData(query.getData());
             queryService.save(newQuery);
         }

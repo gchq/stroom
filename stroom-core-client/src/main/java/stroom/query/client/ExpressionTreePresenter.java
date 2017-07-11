@@ -28,6 +28,7 @@ import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.datasource.api.v1.DataSourceField;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.query.api.v1.DocRef;
 import stroom.query.api.v1.ExpressionOperator;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
@@ -71,8 +72,8 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         return selectionModel.addSelectionChangeHandler(handler);
     }
 
-    public void init(final ClientDispatchAsync dispatcher, final DocRef dataSource, final List<DataSourceField> indexFields) {
-        getView().init(dispatcher, dataSource, indexFields);
+    public void init(final ClientDispatchAsync dispatcher, final DocRef dataSource, final List<DataSourceField> fields) {
+        getView().init(dispatcher, dataSource, fields);
     }
 
     public void read(final ExpressionOperator root) {
@@ -225,7 +226,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
 
         void setSelectionModel(MySingleSelectionModel<Item> selectionModel);
 
-        void init(ClientDispatchAsync dispatcher, DocRef dataSource, List<DataSourceField> indexFields);
+        void init(ClientDispatchAsync dispatcher, DocRef dataSource, List<DataSourceField> fields);
 
         void endEditing();
 

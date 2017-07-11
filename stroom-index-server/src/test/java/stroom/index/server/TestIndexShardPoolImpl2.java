@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -43,10 +43,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestIndexShardPoolImpl2 extends StroomUnitTest {
-    public static int getRandomNumber(final int size) {
-        return (int) Math.floor((Math.random() * size));
-    }
-
     @Before
     public void before() {
         FileSystemUtil.deleteContents(new File(getCurrentTestDir(), "index"));
@@ -87,7 +83,7 @@ public class TestIndexShardPoolImpl2 extends StroomUnitTest {
         };
 
         try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
-            final IndexShardWriterCacheImpl indexShardPoolImpl = new IndexShardWriterCacheImpl(cacheManager, null, null,
+            final IndexShardManagerImpl indexShardManager = new IndexShardManagerImpl(cacheManager, null, null,
                     mockIndexShardService, new NodeCache(defaultNode), null) {
                 @Override
                 protected void destroy(final IndexShardKey key, final IndexShardWriter value) {
@@ -105,20 +101,13 @@ public class TestIndexShardPoolImpl2 extends StroomUnitTest {
             final SimpleExecutor simpleExecutor = new SimpleExecutor(10);
 
             for (int i = 0; i < 1000; i++) {
-                simpleExecutor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        for (int i = 0; i < 100; i++) {
-                            // Get a writer from the pool.
-                            final IndexShardWriter writer = indexShardPoolImpl.get(indexShardKey);
-
-                            // Do some work.
-                            final Field field = FieldFactory.create(indexField, "test");
-                            final Document document = new Document();
-                            document.add(field);
-
-                            writer.addDocument(document);
-                        }
+                simpleExecutor.execute(() -> {
+                    for (int i1 = 0; i1 < 100; i1++) {
+                        // Do some work.
+                        final Field field = FieldFactory.create(indexField, "test");
+                        final Document document = new Document();
+                        document.add(field);
+                        indexShardManager.addDocument(indexShardKey, document);
                     }
                 });
             }
@@ -127,5 +116,9 @@ public class TestIndexShardPoolImpl2 extends StroomUnitTest {
         } catch (final Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         }
+    }
+
+    public static int getRandomNumber(final int size) {
+        return (int) Math.floor((Math.random() * size));
     }
 }

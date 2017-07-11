@@ -26,6 +26,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import stroom.statistics.server.sql.search.FilterTermsTree.OperatorNode;
+import stroom.statistics.server.sql.search.FilterTermsTree.TermNode;
+
 public class FilterTermsTreeBuilder {
     private FilterTermsTreeBuilder() {
         // Utility class of static methods so should never be initialised
@@ -41,9 +44,10 @@ public class FilterTermsTreeBuilder {
      * {@link ExpressionItem} tree are not supported so it may throw a
      * {@link RuntimeException}.
      *
-     * @param rootItem The {@link ExpressionItem} object that is the root of the tree
+     * @param rootItem
+     *            The {@link ExpressionItem} object that is the root of the tree
      * @return A {@link FilterTermsTree} object containing a tree of
-     * {@link PrintableNode} objects
+     *         {@link PrintableNode} objects
      */
     public static FilterTermsTree convertExpresionItemsTree(final ExpressionOperator rootItem,
                                                             final Set<String> blackListedFieldNames) {
@@ -93,16 +97,16 @@ public class FilterTermsTreeBuilder {
             // any further down the stack as we can only filter on distinct UIDs
 
             if (oldNode.getCondition().equals(Condition.EQUALS)) {
-                newNode = new FilterTermsTree.TermNode(oldNode.getField(), oldNode.getValue());
+                newNode = new TermNode(oldNode.getField(), oldNode.getValue());
             } else if (oldNode.getCondition().equals(Condition.IN)) {
                 if (oldNode.getValue() == null) {
-                    newNode = new FilterTermsTree.TermNode(oldNode.getField(), null);
+                    newNode = new TermNode(oldNode.getField(), null);
                 } else {
                     final String[] values = oldNode.getValue().split(Condition.IN_CONDITION_DELIMITER);
 
                     if (values.length == 1) {
                         // only one value so just convert it like it is EQUALS
-                        newNode = new FilterTermsTree.TermNode(oldNode.getField(), oldNode.getValue());
+                        newNode = new TermNode(oldNode.getField(), oldNode.getValue());
                     } else {
                         // multiple values in the IN list so convert it into a
                         // set of EQUALS terms under and OR node
@@ -112,7 +116,7 @@ public class FilterTermsTreeBuilder {
                             orTermNodes.add(convertTermNode(
                                     new ExpressionTerm(oldNode.getField(), Condition.EQUALS, value), fieldBlackList));
                         }
-                        newNode = new FilterTermsTree.OperatorNode(FilterOperationMode.OR, orTermNodes);
+                        newNode = new OperatorNode(FilterOperationMode.OR, orTermNodes);
                     }
                 }
             } else {
@@ -159,7 +163,7 @@ public class FilterTermsTreeBuilder {
                 // to the tree instead
                 newNode = children.get(0);
             } else {
-                newNode = new FilterTermsTree.OperatorNode(operationMode, children);
+                newNode = new OperatorNode(operationMode, children);
             }
 
             return newNode;

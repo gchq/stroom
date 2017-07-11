@@ -18,6 +18,7 @@ package stroom.streamstore.server.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.feed.MetaMap;
 import stroom.io.SeekableOutputStream;
 import stroom.streamstore.server.StreamException;
 import stroom.streamstore.server.StreamTarget;
@@ -60,12 +61,12 @@ public final class FileSystemStreamTarget implements StreamTarget {
      * Creates a new file system stream target.
      */
     public static FileSystemStreamTarget create(final Stream stream, final Set<StreamVolume> metaDataVolume,
-            final StreamType streamType, final boolean append) {
+                                                final StreamType streamType, final boolean append) {
         return new FileSystemStreamTarget(stream, metaDataVolume, streamType, append);
     }
 
     private FileSystemStreamTarget(final Stream requestMetaData, final Set<StreamVolume> metaDataVolume,
-            final StreamType streamType, final boolean append) {
+                                   final StreamType streamType, final boolean append) {
         this.stream = requestMetaData;
         this.metaDataVolume = metaDataVolume;
         this.streamType = streamType;
@@ -75,7 +76,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
     }
 
     private FileSystemStreamTarget(final FileSystemStreamTarget aParent, final StreamType aStreamType,
-            final Set<File> aFiles) {
+                                   final Set<File> aFiles) {
         this.stream = aParent.stream;
         this.metaDataVolume = aParent.metaDataVolume;
         this.parent = aParent;

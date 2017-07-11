@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,10 +23,7 @@ import stroom.query.api.v1.Query;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
 import javax.persistence.Lob;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
@@ -37,11 +34,14 @@ public class QueryEntity extends DocumentEntity {
     public static final String ENTITY_TYPE = "Query";
     public static final String TABLE_NAME = SQLNameConstants.QUERY;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
+    public static final String DASHBOARD_ID = SQLNameConstants.DASHBOARD + ID_SUFFIX;
+    public static final String QUERY_ID = SQLNameConstants.QUERY + ID_SUFFIX;
     public static final String FAVOURITE = SQLNameConstants.FAVOURITE;
 
     private static final long serialVersionUID = 3598996730392094523L;
 
-    private Dashboard dashboard;
+    private Long dashboardId;
+    private String queryId;
     private String data;
     private Query query;
     private boolean favourite;
@@ -50,14 +50,22 @@ public class QueryEntity extends DocumentEntity {
         // Default constructor necessary for GWT serialisation.
     }
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = true)
-    @JoinColumn(name = Dashboard.FOREIGN_KEY)
-    public Dashboard getDashboard() {
-        return dashboard;
+    @Column(name = DASHBOARD_ID)
+    public Long getDashboardId() {
+        return dashboardId;
     }
 
-    public void setDashboard(final Dashboard dashboard) {
-        this.dashboard = dashboard;
+    public void setDashboardId(final Long dashboardId) {
+        this.dashboardId = dashboardId;
+    }
+
+    @Column(name = QUERY_ID)
+    public String getQueryId() {
+        return queryId;
+    }
+
+    public void setQueryId(final String queryId) {
+        this.queryId = queryId;
     }
 
     @Lob

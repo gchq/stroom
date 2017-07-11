@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -55,15 +55,15 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
     public SharedList<SharedString> exec(final FetchSuggestionsAction task) {
         if (task.getDataSource() != null) {
             if ("STREAM_STORE".equals(task.getDataSource().getUuid())) {
-                if (task.getField().getFieldName().equals(StreamFields.FEED)) {
+                if (task.getField().getName().equals(StreamFields.FEED)) {
                     return createList(feedService, task.getText());
                 }
 
-                if (task.getField().getFieldName().equals(StreamFields.PIPELINE)) {
+                if (task.getField().getName().equals(StreamFields.PIPELINE)) {
                     return createList(pipelineEntityService, task.getText());
                 }
 
-                if (task.getField().getFieldName().equals(StreamFields.STREAM_TYPE)) {
+                if (task.getField().getName().equals(StreamFields.STREAM_TYPE)) {
                     return createList(streamTypeService, task.getText());
                 }
             }

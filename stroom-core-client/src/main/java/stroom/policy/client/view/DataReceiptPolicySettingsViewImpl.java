@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.client.view;
+package stroom.policy.client.view;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -23,7 +23,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.streamstore.client.presenter.DataReceiptPolicySettingsPresenter.DataReceiptPolicySettingsView;
+import stroom.policy.client.presenter.DataReceiptPolicySettingsPresenter.DataReceiptPolicySettingsView;
 
 public class DataReceiptPolicySettingsViewImpl extends ViewImpl implements DataReceiptPolicySettingsView {
     private final Widget widget;

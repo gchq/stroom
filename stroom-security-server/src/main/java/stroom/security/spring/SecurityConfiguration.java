@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,8 +17,8 @@
 package stroom.security.spring;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
-import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.shiro.web.servlet.AbstractShiroFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +30,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
-import stroom.security.server.DBRealm;
+import stroom.security.server.CertificateAuthenticationFilter;
 import stroom.security.server.JWTAuthenticationFilter;
 import stroom.security.server.JWTService;
 import stroom.util.config.StroomProperties;
@@ -55,23 +55,15 @@ import java.util.Properties;
  * component scan as configurations should be specified explicitly.
  */
 @Configuration
-@ComponentScan(
-        basePackages = {"stroom.security.server", "stroom.security.shared"},
-        excludeFilters = {
-            @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class)
-        }
-)
+@ComponentScan(basePackages = {"stroom.security.server", "stroom.security.shared"}, excludeFilters = {
+        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
 public class SecurityConfiguration {
     public static final String PROD_SECURITY = "PROD_SECURITY";
     public static final String MOCK_SECURITY = "MOCK_SECURITY";
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityConfiguration.class);
 
-    public SecurityConfiguration(){
-        LOGGER.info("SecurityConfiguration loading...");
-    }
-
     @Resource
-    private DBRealm dbRealm;
+    private SecurityManager securityManager;
 
     @Bean(name = "jwtFilter")
     public JWTAuthenticationFilter jwtAuthenticationFilter(JWTService jwtService) {
@@ -81,21 +73,16 @@ public class SecurityConfiguration {
     @Bean(name = "shiroFilter")
     public AbstractShiroFilter shiroFilter(JWTAuthenticationFilter jwtAuthenticationFilter) throws Exception {
         final ShiroFilterFactoryBean shiroFilter = new ShiroFilterFactoryBean();
-        shiroFilter.setSecurityManager(securityManager());
+        shiroFilter.setSecurityManager(securityManager);
         shiroFilter.setLoginUrl("/login.html");
         shiroFilter.setSuccessUrl("/stroom.jsp");
+        shiroFilter.getFilters().put("certFilter", new CertificateAuthenticationFilter());
         shiroFilter.getFilters().put("jwtFilter", jwtAuthenticationFilter);
         shiroFilter.getFilterChainDefinitionMap().put("/**/secure/**", "authc, roles[USER]");
+        shiroFilter.getFilterChainDefinitionMap().put("/export", "certFilter");
         shiroFilter.getFilterChainDefinitionMap().put("/api/authentication/getToken", "anon");
         shiroFilter.getFilterChainDefinitionMap().put("/api/**", "jwtFilter");
         return (AbstractShiroFilter) shiroFilter.getObject();
-    }
-
-    @Bean(name = "securityManager")
-    public org.apache.shiro.mgt.SecurityManager securityManager() {
-        final DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager();
-        securityManager.setRealm(dbRealm);
-        return securityManager;
     }
 
     @Bean(name = "mailSender")

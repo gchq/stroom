@@ -1,14 +1,14 @@
 package stroom.streamstore.server;
 
+import stroom.datasource.api.v1.DataSourceField;
+import stroom.datasource.api.v1.DataSourceField.DataSourceFieldType;
 import stroom.dictionary.shared.Dictionary;
 import stroom.dictionary.shared.DictionaryService;
-import stroom.entity.shared.DocRef;
-import stroom.query.shared.ExpressionTerm.Condition;
-import stroom.query.shared.ExpressionItem;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionTerm;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexFieldType;
+import stroom.query.api.v1.DocRef;
+import stroom.query.api.v1.ExpressionItem;
+import stroom.query.api.v1.ExpressionOperator;
+import stroom.query.api.v1.ExpressionTerm;
+import stroom.query.api.v1.ExpressionTerm.Condition;
 import stroom.util.date.DateUtil;
 
 import java.util.HashMap;
@@ -18,13 +18,13 @@ import java.util.regex.Pattern;
 public class ExpressionMatcher {
     private static final String DELIMITER = ",";
 
-    private final Map<String, IndexField> indexFieldMap;
+    private final Map<String, DataSourceField> fieldMap;
     private final DictionaryService dictionaryService;
     private final Map<DocRef, String[]> wordMap = new HashMap<>();
     private final Map<String, Pattern> patternMap = new HashMap<>();
 
-    public ExpressionMatcher(final Map<String, IndexField> indexFieldMap, final DictionaryService dictionaryService) {
-        this.indexFieldMap = indexFieldMap;
+    public ExpressionMatcher(final Map<String, DataSourceField> fieldMap, final DictionaryService dictionaryService) {
+        this.fieldMap = fieldMap;
         this.dictionaryService = dictionaryService;
     }
 
@@ -85,11 +85,11 @@ public class ExpressionMatcher {
         if (termField == null || termField.length() == 0) {
             throw new MatchException("Field not set");
         }
-        final IndexField indexField = indexFieldMap.get(termField);
-        if (indexField == null) {
+        final DataSourceField field = fieldMap.get(termField);
+        if (field == null) {
             throw new MatchException("Field not found in index: " + termField);
         }
-        final String fieldName = indexField.getFieldName();
+        final String fieldName = field.getName();
 
         // Ensure an appropriate termValue has been provided for the condition type.
         if (Condition.IN_DICTIONARY.equals(condition)) {
@@ -108,7 +108,7 @@ public class ExpressionMatcher {
         }
 
         // Create a query based on the field type and condition.
-        if (indexField.getFieldType().isNumeric()) {
+        if (field.getType().isNumeric()) {
             switch (condition) {
                 case EQUALS: {
                     final long num1 = getNumber(fieldName, attribute);
@@ -154,12 +154,12 @@ public class ExpressionMatcher {
                 case IN:
                     return isNumericIn(fieldName, termValue, attribute);
                 case IN_DICTIONARY:
-                    return isInDictionary(fieldName, dictionary, indexField, attribute);
+                    return isInDictionary(fieldName, dictionary, field, attribute);
                 default:
                     throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + indexField.getFieldType().getDisplayValue() + " field type");
+                            + field.getType().getDisplayValue() + " field type");
             }
-        } else if (IndexFieldType.DATE_FIELD.equals(indexField.getFieldType())) {
+        } else if (DataSourceFieldType.DATE_FIELD.equals(field.getType())) {
             switch (condition) {
                 case EQUALS: {
                     final long date1 = getDate(fieldName, attribute);
@@ -205,10 +205,10 @@ public class ExpressionMatcher {
                 case IN:
                     return isDateIn(fieldName, termValue, attribute);
                 case IN_DICTIONARY:
-                    return isInDictionary(fieldName, dictionary, indexField, attribute);
+                    return isInDictionary(fieldName, dictionary, field, attribute);
                 default:
                     throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + indexField.getFieldType().getDisplayValue() + " field type");
+                            + field.getType().getDisplayValue() + " field type");
             }
         } else {
             switch (condition) {
@@ -219,10 +219,10 @@ public class ExpressionMatcher {
                 case IN:
                     return isIn(fieldName, termValue, attribute);
                 case IN_DICTIONARY:
-                    return isInDictionary(fieldName, dictionary, indexField, attribute);
+                    return isInDictionary(fieldName, dictionary, field, attribute);
                 default:
                     throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + indexField.getFieldType().getDisplayValue() + " field type");
+                            + field.getType().getDisplayValue() + " field type");
             }
         }
     }
@@ -272,15 +272,15 @@ public class ExpressionMatcher {
     }
 
     private boolean isInDictionary(final String fieldName, final DocRef docRef,
-                                   final IndexField indexField, final Object attribute) {
+                                   final DataSourceField field, final Object attribute) {
         final String[] lines = loadWords(docRef);
         if (lines != null) {
             for (final String line : lines) {
-                if (indexField.getFieldType().isNumeric()) {
+                if (field.getType().isNumeric()) {
                     if (isNumericIn(fieldName, line, attribute)) {
                         return true;
                     }
-                } else if (IndexFieldType.DATE_FIELD.equals(indexField.getFieldType())) {
+                } else if (DataSourceFieldType.DATE_FIELD.equals(field.getType())) {
                     if (isDateIn(fieldName, line, attribute)) {
                         return true;
                     }

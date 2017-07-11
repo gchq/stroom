@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.client.presenter;
+package stroom.policy.client.presenter;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -25,7 +25,7 @@ import stroom.query.api.v1.DocRef;
 import stroom.query.api.v1.ExpressionBuilder;
 import stroom.query.api.v1.ExpressionOperator;
 import stroom.query.api.v1.ExpressionOperator.Op;
-import stroom.streamstore.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
+import stroom.policy.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
 import stroom.streamstore.shared.DataRetentionRule;
 import stroom.streamstore.shared.FetchFieldsAction;
 import stroom.streamstore.shared.TimeUnit;

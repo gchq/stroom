@@ -18,7 +18,6 @@ package stroom.proxy.repo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
 import stroom.feed.MetaMap;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.InitialByteArrayOutputStream;
@@ -47,11 +46,7 @@ public abstract class StroomZipRepositoryProcessor extends RepositoryProcessor {
     public final static int DEFAULT_MAX_AGGREGATION = 10000;
     public final static long DEFAULT_MAX_STREAM_SIZE = ModelStringUtil.parseIECByteSizeString("10G");
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomZipRepositoryProcessor.class);
-    /**
-     * Flag set to stop things
-     */
-    private final Monitor monitor;
-    private final Map<String, List<File>> feedToFileMap = new ConcurrentHashMap<>();
+
     /**
      * The max number of parts to send in a zip file
      */

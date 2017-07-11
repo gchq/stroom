@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,17 +22,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.GenericEntityService;
-import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
+import stroom.query.api.v1.DocRef;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityService;
 import stroom.entity.shared.SQLNameConstants;
-import stroom.query.api.v1.DocRef;
 import stroom.security.shared.DocumentPermissions;
-import stroom.security.shared.User;
-import stroom.security.shared.User.UserStatus;
 import stroom.security.shared.UserRef;
+import stroom.security.shared.UserStatus;
 
 import javax.inject.Inject;
 import javax.persistence.PersistenceException;
@@ -198,7 +197,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         final Map<UserRef, Set<String>> userPermissions = new HashMap<>();
 
         try {
-            final SQLBuilder sqlBuilder = new SQLBuilder(SQL_GET_PERMISSION_FOR_DOCUMENT, document.getType(), document.getUuid());
+            final SqlBuilder sqlBuilder = new SqlBuilder(SQL_GET_PERMISSION_FOR_DOCUMENT, document.getType(), document.getUuid());
             final List list = entityManager.executeNativeQueryResultList(sqlBuilder);
             list.stream().forEach(o -> {
                 final Object[] arr = (Object[]) o;
@@ -228,7 +227,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     @Override
     public void addPermission(final UserRef userRef, final DocRef document, final String permission) {
         try {
-            final SQLBuilder sqlBuilder = new SQLBuilder(SQL_INSERT_PERMISSION, 1, userRef.getUuid(), document.getType(), document.getUuid(), permission);
+            final SqlBuilder sqlBuilder = new SqlBuilder(SQL_INSERT_PERMISSION, 1, userRef.getUuid(), document.getType(), document.getUuid(), permission);
             entityManager.executeNativeUpdate(sqlBuilder);
         } catch (final PersistenceException e) {
             // Expected exception.
@@ -243,7 +242,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     @Override
     public void removePermission(final UserRef userRef, final DocRef document, final String permission) {
         try {
-            final SQLBuilder sqlBuilder = new SQLBuilder(SQL_DELETE_PERMISSION, userRef.getUuid(), document.getType(), document.getUuid(), permission);
+            final SqlBuilder sqlBuilder = new SqlBuilder(SQL_DELETE_PERMISSION, userRef.getUuid(), document.getType(), document.getUuid(), permission);
             entityManager.executeNativeUpdate(sqlBuilder);
         } catch (final RuntimeException e) {
             LOGGER.error("removePermission()", e);
@@ -254,7 +253,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     @Override
     public void clearDocumentPermissions(final DocRef document) {
         try {
-            final SQLBuilder sqlBuilder = new SQLBuilder(SQL_DELETE_DOCUMENT_PERMISSIONS, document.getType(), document.getUuid());
+            final SqlBuilder sqlBuilder = new SqlBuilder(SQL_DELETE_DOCUMENT_PERMISSIONS, document.getType(), document.getUuid());
             entityManager.executeNativeUpdate(sqlBuilder);
         } catch (final RuntimeException e) {
             LOGGER.error("clearDocumentPermissions()", e);
@@ -265,7 +264,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     @Override
     public void clearUserPermissions(final UserRef userRef) {
         try {
-            final SQLBuilder sqlBuilder = new SQLBuilder(SQL_DELETE_USER_PERMISSIONS, userRef.getUuid());
+            final SqlBuilder sqlBuilder = new SqlBuilder(SQL_DELETE_USER_PERMISSIONS, userRef.getUuid());
             entityManager.executeNativeUpdate(sqlBuilder);
         } catch (final RuntimeException e) {
             LOGGER.error("clearUserPermissions()", e);

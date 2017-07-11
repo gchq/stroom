@@ -14,14 +14,18 @@
  * limitations under the License.
  */
 
-package stroom.security.testshared;
+package stroom.security.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.security.shared.User;
-import stroom.security.shared.User.UserStatus;
+import org.junit.runner.RunWith;
+import stroom.security.server.User;
+import stroom.security.shared.UserStatus;
+import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
 
-public class TestUser {
+@RunWith(StroomJUnit4ClassRunner.class)
+public class TestUser extends StroomUnitTest {
     @Test
     public void testSimple() {
         final User user = new User();

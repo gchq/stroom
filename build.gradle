@@ -41,11 +41,12 @@ ext.versions = [
     stroom: '6.0-beta.1-SNAPSHOT',
 
     //------Stroom-repos---------------
+    stroomProxyRepo: 'v5.1-beta.8',
     eventLogging: 'v3.1.0',
     hadoopCommonShaded: 'v2.6.4-3',
     hadoopHdfsShaded: 'v2.6.4',
     stroomExpression: 'v0.1.0', //same version for both stroom-query-api and stroom-query-common
-    stroomQuery: 'v1.0.0', //same version for both stroom-query-api and stroom-query-common
+    stroomQuery: 'v1.0.1', //same version for both stroom-query-api and stroom-query-common
     stroomStats: 'v0.4.0-alpha',
 
     //------------3rd-party------------
@@ -72,6 +73,7 @@ ext.urlLibs = [
     stroomQueryCommon: "stroom-query-common-$versions.stroomQuery",
     stroomExpression: "stroom-expression-$versions.stroomExpression",
     stroomStatsApi: "stroom-stats-api-$versions.stroomStats",
+    stroomProxyRepo: "stroom-proxy-repo-$versions.stroomProxyRepo",
     eventLogging: "event-logging-$versions.eventLogging",
     hadoopCommonShaded: "hadoop-common-shaded-$versions.hadoopCommonShaded-all",
     hadoopHdfsShaded: "hadoop-hdfs-shaded-$versions.hadoopHdfsShaded-all",
@@ -153,7 +155,7 @@ ext.libs = [
     mysql_connector_java: "mysql:mysql-connector-java:5.1.40",
     poi: "org.apache.poi:poi:3.15",
     poi_ooxml: "org.apache.poi:poi-ooxml:3.15",
-    saxon_he: "net.sf.saxon:Saxon-HE:9.6.0-6",
+    saxon_he: "net.sf.saxon:Saxon-HE:9.7.0-18",
     shiro_aspectj: "org.apache.shiro:shiro-aspectj:$versions.shiro",
     shiro_core: "org.apache.shiro:shiro-core:$versions.shiro",
     shiro_spring: "org.apache.shiro:shiro-spring:$versions.shiro",
@@ -344,6 +346,9 @@ urlDependencies {
 
     compile(urlLibs.stroomStatsApi,
             "https://github.com/gchq/stroom-stats/releases/download/$versions.stroomStats/${urlLibs.stroomStatsApi}.jar")
+
+    compile(urlLibs.stroomProxyRepo,
+            "https://github.com/gchq/stroom-proxy/releases/download/$versions.stroomProxyRepo/${urlLibs.stroomProxyRepo}.jar")
 
     compile(urlLibs.eventLogging,
             "https://github.com/gchq/event-logging/releases/download/$versions.eventLogging/${urlLibs.eventLogging}.jar")

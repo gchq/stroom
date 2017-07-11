@@ -31,15 +31,10 @@ import stroom.cache.shared.CacheInfo;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 public abstract class AbstractCacheBean<K, V> implements CacheBean<K, V> {
-    public interface Destroyable {
-        void destroy();
-    }
-
     private static class CacheListener extends CacheEventListenerAdapter {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CacheListener.class);
+        private static final Logger LOGGER = LoggerFactory.getLogger(CacheListener.class);
 
         private final AbstractCacheBean<?, ?> parent;
 

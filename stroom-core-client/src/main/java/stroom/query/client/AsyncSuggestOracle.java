@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,10 +18,10 @@ package stroom.query.client;
 
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle.MultiWordSuggestion;
 import com.google.gwt.user.client.ui.SuggestOracle;
+import stroom.datasource.api.v1.DataSourceField;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.query.shared.FetchSuggestionsAction;
-import stroom.query.shared.IndexField;
 import stroom.util.shared.SharedString;
 
 import java.util.ArrayList;
@@ -30,7 +30,7 @@ import java.util.List;
 public class AsyncSuggestOracle extends SuggestOracle {
     private ClientDispatchAsync dispatcher;
     private DocRef dataSource;
-    private IndexField field;
+    private DataSourceField field;
 
     public void setDispatcher(final ClientDispatchAsync dispatcher) {
         this.dispatcher = dispatcher;
@@ -40,7 +40,7 @@ public class AsyncSuggestOracle extends SuggestOracle {
         this.dataSource = dataSource;
     }
 
-    public void setField(final IndexField field) {
+    public void setField(final DataSourceField field) {
         this.field = field;
     }
 

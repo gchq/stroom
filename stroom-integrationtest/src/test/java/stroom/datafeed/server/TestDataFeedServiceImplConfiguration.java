@@ -23,10 +23,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import stroom.feed.MetaMap;
+import stroom.proxy.repo.MetaMapFactory;
 import stroom.streamstore.server.MockStreamStore;
-import stroom.util.logging.StroomLogger;
 import stroom.util.thread.ThreadLocalBuffer;
-import stroom.util.zip.MetaMapFactory;
 
 /**
  * @Configuration specific to TesetDataFeedServiceImpl.

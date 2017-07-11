@@ -28,8 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryDataLogUtil;
 import stroom.entity.server.util.EntityServiceLogUtil;
-import stroom.entity.server.util.StroomDatabaseInfo;
-import stroom.entity.server.util.EntityServiceLogUtil;
 import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.SqlBuilder;
@@ -78,7 +76,6 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorService;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.zip.HeaderMap;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -118,12 +115,6 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         set.add(Feed.ENTITY_TYPE);
         set.add(StreamType.ENTITY_TYPE);
         SOURCE_FETCH_SET = set;
-    }
-
-    static {
-        // Set the default timezone and locale for all date time operations.
-        DateTimeZone.setDefault(DateTimeZone.UTC);
-        Locale.setDefault(Locale.ROOT);
     }
 
     private static final FieldMap FIELD_MAP = new FieldMap()

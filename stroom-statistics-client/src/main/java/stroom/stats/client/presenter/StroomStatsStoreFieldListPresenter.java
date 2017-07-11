@@ -26,7 +26,6 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
@@ -35,8 +34,8 @@ import stroom.entity.client.presenter.HasWrite;
 import stroom.stats.shared.StatisticField;
 import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.stats.shared.StroomStatsStoreEntityData;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 import java.util.ArrayList;
@@ -45,9 +44,9 @@ import java.util.List;
 public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGridView<StatisticField>>
         implements HasRead<StroomStatsStoreEntity>, HasWrite<StroomStatsStoreEntity>, HasDirtyHandlers {
     private final StroomStatsStoreFieldEditPresenter stroomStatsStoreFieldEditPresenter;
-    private final GlyphButtonView newButton;
-    private final GlyphButtonView editButton;
-    private final GlyphButtonView removeButton;
+    private final ButtonView newButton;
+    private final ButtonView editButton;
+    private final ButtonView removeButton;
     private StroomStatsStoreEntityData stroomStatsStoreEntityData;
 
     private StroomStatsStoreCustomMaskListPresenter customMaskListPresenter;
@@ -55,16 +54,15 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
     @SuppressWarnings("unchecked")
     @Inject
     public StroomStatsStoreFieldListPresenter(final EventBus eventBus,
-                                              final StroomStatsStoreFieldEditPresenter stroomStatsStoreFieldEditPresenter,
-                                              final ClientDispatchAsync dispatcher) {
+                                              final StroomStatsStoreFieldEditPresenter stroomStatsStoreFieldEditPresenter) {
         super(eventBus, new DataGridViewImpl<>(true, true));
         this.stroomStatsStoreFieldEditPresenter = stroomStatsStoreFieldEditPresenter;
 
-        newButton = getView().addButton(GlyphIcons.NEW_ITEM);
+        newButton = getView().addButton(SvgPresets.NEW_ITEM);
         newButton.setTitle("New Field");
-        editButton = getView().addButton(GlyphIcons.EDIT);
+        editButton = getView().addButton(SvgPresets.EDIT);
         editButton.setTitle("Edit Field");
-        removeButton = getView().addButton(GlyphIcons.REMOVE);
+        removeButton = getView().addButton(SvgPresets.REMOVE);
         removeButton.setTitle("Remove Field");
 
         addColumns();

@@ -92,7 +92,7 @@ public class SearchModel {
      * Run a search with the provided expression, returning results for all
      * components.
      */
-    public void search(final ExpressionOperator expression, final String params, final boolean incremental) {
+    public void search(final ExpressionOperator expression, final String params, final boolean incremental, final boolean storeHistory) {
         // Toggle the request mode or start a new search.
         switch (mode) {
             case ACTIVE:
@@ -102,7 +102,7 @@ public class SearchModel {
                 break;
             case INACTIVE:
                 reset();
-                startNewSearch(expression, params, incremental);
+                startNewSearch(expression, params, incremental, storeHistory);
                 break;
             case PAUSED:
                 // Tell every component that it should want data.
@@ -117,7 +117,7 @@ public class SearchModel {
      *
      * @param expression The expression to search with.
      */
-    private void startNewSearch(final ExpressionOperator expression, final String params, final boolean incremental) {
+    private void startNewSearch(final ExpressionOperator expression, final String params, final boolean incremental, final boolean storeHistory) {
         final Map<String, ComponentSettings> resultComponentMap = createResultComponentMap();
         if (resultComponentMap != null) {
             final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
@@ -130,8 +130,8 @@ public class SearchModel {
                 replaceExpressionParameters(builder, expression, currentParameterMap);
                 currentExpression = builder.build();
 
-                currentQueryKey = DashboardQueryKey.create(dashboardUUID.getUUID(), dashboardUUID.getDashboardId());
-                currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, currentParameterMap, incremental);
+                currentQueryKey = DashboardQueryKey.create(dashboardUUID.getUUID(), dashboardUUID.getDashboardId(), dashboardUUID.getComponentId());
+                currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, currentParameterMap, incremental, storeHistory);
                 activeSearch = currentSearch;
 
                 // Let the query presenter know search is active.
@@ -180,7 +180,7 @@ public class SearchModel {
             if (resultComponentMap != null) {
                 final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
                 if (dataSourceRef != null) {
-                    currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, currentParameterMap, true);
+                    currentSearch = new Search(dataSourceRef, currentExpression, resultComponentMap, currentParameterMap, true, false);
                     activeSearch = currentSearch;
 
                     // Tell the refreshing component that it should want data.
@@ -312,7 +312,7 @@ public class SearchModel {
     public void setDashboardUUID(final DashboardUUID dashboardUUID) {
         this.dashboardUUID = dashboardUUID;
         destroy();
-        currentQueryKey = DashboardQueryKey.create(dashboardUUID.getUUID(), dashboardUUID.getDashboardId());
+        currentQueryKey = DashboardQueryKey.create(dashboardUUID.getUUID(), dashboardUUID.getDashboardId(), dashboardUUID.getComponentId());
     }
 
     public SearchResponse getCurrentResult() {

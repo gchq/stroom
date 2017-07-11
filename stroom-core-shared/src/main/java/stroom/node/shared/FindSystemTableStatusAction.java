@@ -17,8 +17,6 @@
 package stroom.node.shared;
 
 import stroom.entity.shared.Action;
-import stroom.entity.shared.BaseCriteria.OrderByDirection;
-import stroom.entity.shared.OrderBy;
 import stroom.entity.shared.ResultList;
 
 /**
@@ -27,27 +25,18 @@ import stroom.entity.shared.ResultList;
 public class FindSystemTableStatusAction extends Action<ResultList<DBTableStatus>> {
     private static final long serialVersionUID = 1019772059356717579L;
 
-    private OrderBy orderBy;
-    private OrderByDirection orderByDirection;
+    private FindDBTableCriteria criteria;
 
     public FindSystemTableStatusAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public OrderBy getOrderBy() {
-        return orderBy;
+    public FindSystemTableStatusAction(final FindDBTableCriteria criteria) {
+        this.criteria = criteria;
     }
 
-    public void setOrderBy(final OrderBy orderBy) {
-        this.orderBy = orderBy;
-    }
-
-    public OrderByDirection getOrderByDirection() {
-        return orderByDirection;
-    }
-
-    public void setOrderByDirection(final OrderByDirection orderByDirection) {
-        this.orderByDirection = orderByDirection;
+    public FindDBTableCriteria getCriteria() {
+        return criteria;
     }
 
     @Override

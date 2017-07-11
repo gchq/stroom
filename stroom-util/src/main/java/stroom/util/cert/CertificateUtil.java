@@ -20,16 +20,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.security.auth.x500.X500Principal;
-import javax.servlet.http.HttpServletRequest;
+import javax.servlet.ServletRequest;
 import java.security.cert.X509Certificate;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.servlet.ServletRequest;
-
-import stroom.feed.MetaMap;
 
 public class CertificateUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(CertificateUtil.class);
@@ -60,8 +58,7 @@ public class CertificateUtil {
      * Pull out the Subject from the certificate. E.g.
      * "CN=some.server.co.uk, OU=servers, O=some organisation, C=GB"
      *
-     * @param certs
-     *            ARGS from the SERVLET request.
+     * @param certs ARGS from the SERVLET request.
      */
     public static java.security.cert.X509Certificate extractCertificate(final Object[] certs) {
         if (certs != null) {
@@ -115,7 +112,7 @@ public class CertificateUtil {
             return null;
         }
         final StringTokenizer attributes = new StringTokenizer(dn, ",");
-        final MetaMap map = new MetaMap();
+        final Map<String, String> map = new HashMap<>();
         while (attributes.hasMoreTokens()) {
             final String token = attributes.nextToken();
             if (token.contains("=")) {
@@ -163,10 +160,9 @@ public class CertificateUtil {
      * that the values in the fields should not be normalised - they are
      * case-sensitive.
      *
-     * @param dn
-     *            Distinguished Name to normalise. Must be RFC 2253-compliant
+     * @param dn Distinguished Name to normalise. Must be RFC 2253-compliant
      * @return The DN in RFC 2253 format, with a consistent case for the field
-     *         names and separation
+     * names and separation
      */
     public static String dnToRfc2253(final String dn) {
         if (LOGGER.isTraceEnabled()) {

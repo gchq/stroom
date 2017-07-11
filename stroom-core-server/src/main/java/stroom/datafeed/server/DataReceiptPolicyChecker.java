@@ -19,12 +19,12 @@ package stroom.datafeed.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import stroom.datasource.api.v1.DataSourceField;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.feed.MetaMap;
-import stroom.query.shared.ExpressionItem;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionTerm;
-import stroom.query.shared.IndexField;
+import stroom.query.api.v1.ExpressionItem;
+import stroom.query.api.v1.ExpressionOperator;
+import stroom.query.api.v1.ExpressionTerm;
 import stroom.streamstore.server.DataReceiptService;
 import stroom.streamstore.server.ExpressionMatcher;
 import stroom.streamstore.shared.DataReceiptAction;
@@ -86,7 +86,7 @@ public class DataReceiptPolicyChecker {
     private static class Checker {
         private final ExpressionMatcher expressionMatcher;
         private final List<DataReceiptRule> activeRules;
-        private final Map<String, IndexField> fieldMap;
+        private final Map<String, DataSourceField> fieldMap;
         private final long creationTime;
 
         Checker(final DataReceiptService dataReceiptService, final DictionaryService dictionaryService) {
@@ -95,37 +95,37 @@ public class DataReceiptPolicyChecker {
             // We need to examine the meta map and ensure we aren't dropping or rejecting this data.
             final DataReceiptPolicy dataReceiptPolicy = dataReceiptService.load();
             if (dataReceiptPolicy != null && dataReceiptPolicy.getRules() != null && dataReceiptPolicy.getFields() != null) {
-                // Create a map of index fields.
-                final Map<String, IndexField> indexFieldMap = dataReceiptPolicy.getFields().getIndexFields()
+                // Create a map of fields.
+                final Map<String, DataSourceField> fieldMap = dataReceiptPolicy.getFields()
                         .stream()
-                        .collect(Collectors.toMap(IndexField::getFieldName, Function.identity()));
+                        .collect(Collectors.toMap(DataSourceField::getName, Function.identity()));
 
                 // Also make sure we create a list of rules that are enabled and have at least one enabled term.
                 final Set<String> fieldSet = new HashSet<>();
-                activeRules = new ArrayList<>();
+                this.activeRules = new ArrayList<>();
                 dataReceiptPolicy.getRules().forEach(rule -> {
                     if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().enabled()) {
-                        final Set<String> fields = new HashSet<>();
-                        addToFieldSet(rule, fields);
-                        if (fields.size() > 0) {
-                            fieldSet.addAll(fields);
+                        final Set<String> set = new HashSet<>();
+                        addToFieldSet(rule, set);
+                        if (set.size() > 0) {
+                            fieldSet.addAll(set);
                             activeRules.add(rule);
                         }
                     }
                 });
 
                 // Create a map of fields that are valid fields and have been used in the expressions.
-                fieldMap = fieldSet
+                this.fieldMap = fieldSet
                         .stream()
-                        .map(indexFieldMap::get)
+                        .map(fieldMap::get)
                         .filter(Objects::nonNull)
-                        .collect(Collectors.toMap(IndexField::getFieldName, Function.identity()));
+                        .collect(Collectors.toMap(DataSourceField::getName, Function.identity()));
 
-                expressionMatcher = new ExpressionMatcher(fieldMap, dictionaryService);
+                this.expressionMatcher = new ExpressionMatcher(this.fieldMap, dictionaryService);
             } else {
-                fieldMap = null;
-                activeRules = null;
-                expressionMatcher = null;
+                this.fieldMap = null;
+                this.activeRules = null;
+                this.expressionMatcher = null;
             }
         }
 
@@ -143,12 +143,12 @@ public class DataReceiptPolicyChecker {
             return DataReceiptAction.RECEIVE;
         }
 
-        private Map<String, Object> createAttributeMap(final MetaMap metaMap, final Map<String, IndexField> fieldMap) {
+        private Map<String, Object> createAttributeMap(final MetaMap metaMap, final Map<String, DataSourceField> fieldMap) {
             final Map<String, Object> attributeMap = new HashMap<>();
-            fieldMap.forEach((fieldName, indexField) -> {
+            fieldMap.forEach((fieldName, field) -> {
                 try {
                     final String string = metaMap.get(fieldName);
-                    switch (indexField.getFieldType()) {
+                    switch (field.getType()) {
                         case FIELD:
                             attributeMap.put(fieldName, string);
                             break;

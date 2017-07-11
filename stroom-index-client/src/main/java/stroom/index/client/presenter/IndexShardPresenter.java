@@ -19,8 +19,6 @@ package stroom.index.client.presenter;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.inject.Inject;
@@ -36,6 +34,7 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.entity.client.presenter.HasPermissionCheck;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.ResultList;
@@ -47,12 +46,13 @@ import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
+import stroom.security.client.ClientSecurityContext;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
+import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ModelStringUtil;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
-import stroom.widget.button.client.ImageButtonView;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -64,27 +64,33 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexShard>>
-        implements Refreshable, HasRead<Index> {
+        implements Refreshable, HasRead<Index>, HasPermissionCheck {
     private final TooltipPresenter tooltipPresenter;
     private final ClientDispatchAsync dispatcher;
+    private final ClientSecurityContext securityContext;
     private ActionDataProvider<IndexShard> dataProvider;
     private ResultList<IndexShard> resultList = null;
     private final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-    private final ImageButtonView buttonFlush;
-    private final ImageButtonView buttonClose;
-    private final GlyphButtonView buttonDelete;
+    private final ButtonView buttonFlush;
+    private final ButtonView buttonClose;
+    private final ButtonView buttonDelete;
     private Index index;
+    private boolean readOnly;
+    private boolean allowDelete;
 
     @Inject
-    public IndexShardPresenter(final EventBus eventBus, final Resources resources,
-                               final TooltipPresenter tooltipPresenter, final ClientDispatchAsync dispatcher) {
+    public IndexShardPresenter(final EventBus eventBus,
+                               final TooltipPresenter tooltipPresenter,
+                               final ClientDispatchAsync dispatcher,
+                               final ClientSecurityContext securityContext) {
         super(eventBus, new DataGridViewImpl<>(false));
         this.tooltipPresenter = tooltipPresenter;
         this.dispatcher = dispatcher;
+        this.securityContext = securityContext;
 
-        buttonFlush = getView().addButton("Flush Selected Shards", resources.flush(), resources.flushDisabled(), false);
-        buttonClose = getView().addButton("Close Selected Shards", resources.close(), resources.closeDisabled(), false);
-        buttonDelete = getView().addButton(GlyphIcons.DELETE);
+        buttonFlush = getView().addButton(SvgPresets.SHARD_FLUSH);
+        buttonClose = getView().addButton(SvgPresets.SHARD_CLOSE);
+        buttonDelete = getView().addButton(SvgPresets.DELETE);
         buttonDelete.setTitle("Delete Selected Shards");
 
         addColumns();
@@ -111,10 +117,10 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     }
 
     private void enableButtons() {
-        final boolean enabled = !criteria.getIndexShardSet().isMatchNothing();
+        final boolean enabled = !readOnly && (criteria.getIndexShardSet().size() > 0 || Boolean.TRUE.equals(criteria.getIndexShardSet().getMatchAll())) && securityContext.hasAppPermission(IndexShard.MANAGE_INDEX_SHARDS_PERMISSION);
         buttonFlush.setEnabled(enabled);
         buttonClose.setEnabled(enabled);
-        buttonDelete.setEnabled(enabled);
+        buttonDelete.setEnabled(allowDelete && enabled);
     }
 
     private void addColumns() {
@@ -153,7 +159,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
             public TickBoxState getValue() {
                 if (Boolean.TRUE.equals(criteria.getIndexShardSet().getMatchAll())) {
                     return TickBoxState.TICK;
-                } else if (criteria.getIndexShardSet().getSet().size() > 0) {
+                } else if (criteria.getIndexShardSet().size() > 0) {
                     return TickBoxState.HALF_TICK;
                 }
                 return TickBoxState.UNTICK;
@@ -188,6 +194,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                 }
                 criteria.getIndexShardSet().remove(row);
             }
+            getView().redrawHeaders();
             enableButtons();
         });
     }
@@ -230,7 +237,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                 ShowPopupEvent.fire(IndexShardPresenter.this, tooltipPresenter, PopupType.POPUP, popupPosition, null);
             }
         };
-        getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.GLYPH_COL);
+        getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
     }
 
     private void addNodeColumn() {
@@ -374,6 +381,17 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
             };
             dataProvider.addDataDisplay(getView().getDataDisplay());
         }
+
+        securityContext.hasDocumentPermission(index.getType(), index.getUuid(), DocumentPermissionNames.DELETE).onSuccess(result -> {
+            this.allowDelete = result;
+            enableButtons();
+        });
+    }
+
+    @Override
+    public void onPermissionsCheck(final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
     }
 
     private void onChangeData(final ResultList<IndexShard> data) {
@@ -384,13 +402,6 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                 enableButtons();
             }
         }
-
-//        IndexShard selected = getView().getSelectionModel().getSelected();
-//        if (selected != null) {
-//            if (!resultList.contains(selected)) {
-//                getView().getSelectionModel().clear();
-//            }
-//        }
     }
 
     private void flush() {
@@ -492,15 +503,5 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                 AlertEvent.fireInfo(IndexShardPresenter.this,
                         "Selected index shards will be deleted. Please be patient as this may take some time.",
                         this::refresh));
-    }
-
-    public interface Resources extends ClientBundle {
-        ImageResource flush();
-
-        ImageResource flushDisabled();
-
-        ImageResource close();
-
-        ImageResource closeDisabled();
     }
 }

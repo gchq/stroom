@@ -16,7 +16,7 @@
 
 package stroom.datafeed.server;
 
-import stroom.util.zip.MetaMapFactory;
+import stroom.proxy.repo.MetaMapFactory;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;

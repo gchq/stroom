@@ -26,9 +26,7 @@ import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.StroomPropertyService;
 import stroom.security.Insecure;
 import stroom.security.shared.FindUserCriteria;
-import stroom.security.shared.User;
-import stroom.security.shared.User.UserStatus;
-import stroom.security.shared.UserService;
+import stroom.security.shared.UserStatus;
 import stroom.util.spring.StroomSimpleCronSchedule;
 
 import javax.inject.Inject;

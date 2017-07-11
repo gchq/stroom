@@ -18,19 +18,13 @@ package stroom.streamstore.server.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.feed.MetaMap;
 import stroom.io.StreamCloser;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
-import stroom.util.zip.HeaderMap;
-import stroom.util.logging.StroomLogger;
-import stroom.feed.MetaMap;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 
 import java.io.File;
 import java.io.IOException;

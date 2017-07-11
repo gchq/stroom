@@ -24,7 +24,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public abstract class CoreSqlBuilder {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SQLBuilder.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CoreSqlBuilder.class);
+
     private static final boolean VALIDATE = true;
 
     private final List<Object> args;

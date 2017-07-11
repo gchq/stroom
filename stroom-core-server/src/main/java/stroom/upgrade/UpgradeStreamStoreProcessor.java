@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import stroom.entity.server.util.ConnectionUtil;
+import stroom.feed.MetaMap;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
@@ -35,11 +36,6 @@ import stroom.streamtask.shared.StreamTask;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.spring.StroomScope;
-import stroom.util.zip.HeaderMap;
-import stroom.feed.MetaMap;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import javax.sql.DataSource;
@@ -186,7 +182,7 @@ public class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor 
 
     @Override
     public void exec(final StreamProcessor streamProcessor, final StreamProcessorFilter streamProcessorFilter,
-            final StreamTask streamTask, final StreamSource streamSource) {
+                     final StreamTask streamTask, final StreamSource streamSource) {
         final Stream stream = streamSource.getStream();
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         final String streamTime = DateUtil.createNormalDateTimeString(stream.getCreateMs());
@@ -226,7 +222,7 @@ public class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor 
             LOGGER.warn("exec() - No attributes added for stream {}", stream);
         }
 
-        LOGGER.info("exec() - Processing stream {} {} - Finished in {} added {} attributes", new Object[] {stream, streamTime,
+        LOGGER.info("exec() - Processing stream {} {} - Finished in {} added {} attributes", new Object[]{stream, streamTime,
                 logExecutionTime, metaMap.size()});
 
     }

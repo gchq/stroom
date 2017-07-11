@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,14 +31,6 @@ public class IndexFields implements Serializable {
 
     private List<IndexField> indexFields;
 
-    public IndexFields() {
-        this.indexFields = new ArrayList<>();
-    }
-
-    public IndexFields(final List<IndexField> indexFields) {
-        this.indexFields = indexFields;
-    }
-
     public static IndexFields createStreamIndexFields() {
         final List<IndexField> indexFields = new ArrayList<>();
         // Always add standard id fields for now.
@@ -47,11 +39,12 @@ public class IndexFields implements Serializable {
         return new IndexFields(indexFields);
     }
 
-    public void addIndexField(final IndexField indexField) {
-        if (indexFields == null) {
-            indexFields = new ArrayList<>();
-        }
-        indexFields.add(indexField);
+    public IndexFields() {
+        this.indexFields = new ArrayList<>();
+    }
+
+    public IndexFields(final List<IndexField> indexFields) {
+        this.indexFields = indexFields;
     }
 
     @XmlElements({@XmlElement(name = "field", type = IndexField.class)})
@@ -59,37 +52,38 @@ public class IndexFields implements Serializable {
         return indexFields;
     }
 
-    public void setIndexFields(final List<IndexField> indexFields) {
-        this.indexFields = indexFields;
-    }
-
     public void add(final IndexField indexField) {
-        if (indexFields == null) {
-            indexFields = new ArrayList<>();
-        }
         indexFields.add(indexField);
     }
 
     public void remove(final IndexField indexField) {
-        if (indexFields != null) {
-            indexFields.remove(indexField);
-        }
+        indexFields.remove(indexField);
     }
 
     public boolean contains(final IndexField indexField) {
-        if (indexFields != null) {
-            return indexFields.contains(indexField);
-        }
-        return false;
+        return indexFields != null && indexFields.contains(indexField);
     }
 
     public Set<String> getFieldNames() {
         final Set<String> set = new HashSet<>();
-        if (indexFields != null) {
-            for (final IndexField field : indexFields) {
-                set.add(field.getFieldName());
-            }
+        for (final IndexField field : indexFields) {
+            set.add(field.getFieldName());
         }
         return set;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        final IndexFields that = (IndexFields) o;
+
+        return indexFields != null ? indexFields.equals(that.indexFields) : that.indexFields == null;
+    }
+
+    @Override
+    public int hashCode() {
+        return indexFields != null ? indexFields.hashCode() : 0;
     }
 }

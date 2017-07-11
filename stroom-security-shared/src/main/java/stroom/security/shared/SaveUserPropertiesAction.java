@@ -16,7 +16,7 @@
 
 package stroom.security.shared;
 
-import stroom.dispatch.shared.Action;
+import stroom.entity.shared.Action;
 
 public class SaveUserPropertiesAction extends Action<UserProperties> {
     private static final long serialVersionUID = -6740095230475597845L;

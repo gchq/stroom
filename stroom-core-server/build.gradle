@@ -8,6 +8,7 @@ dependencies {
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
+    compile urlDependencies.get(urlLibs.stroomProxyRepo)
     compile urlDependencies.get(urlLibs.eventLogging)
     compile urlDependencies.get(urlLibs.stroomQueryCommon)
     compile urlDependencies.get(urlLibs.stroomStatsApi)
@@ -16,6 +17,7 @@ dependencies {
     compile libs.guava
     compile libs.gwt_servlet
     compile libs.commons_lang
+    compile libs.commons_compress
     compile libs.javax_annotation_api
     compile libs.javax_inject
     compile libs.javax_servlet_api

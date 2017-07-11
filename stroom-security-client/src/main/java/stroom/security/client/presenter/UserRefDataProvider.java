@@ -21,9 +21,8 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.BaseCriteria.OrderByDirection;
-import stroom.entity.shared.OrderBy;
 import stroom.entity.shared.ResultList;
+import stroom.entity.shared.Sort.Direction;
 import stroom.security.shared.FetchUserRefAction;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserRef;
@@ -100,12 +99,12 @@ public class UserRefDataProvider
     @Override
     public void onColumnSort(final ColumnSortEvent event) {
         if (event.getColumn() instanceof OrderByColumn<?, ?>) {
-            final OrderBy orderBy = ((OrderByColumn<?, ?>) event.getColumn()).getOrderBy();
+            final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
             if (findAction != null) {
                 if (event.isSortAscending()) {
-                    findAction.getCriteria().setOrderBy(orderBy, OrderByDirection.ASCENDING);
+                    findAction.getCriteria().setSort(orderByColumn.getField(), Direction.ASCENDING, orderByColumn.isIgnoreCase());
                 } else {
-                    findAction.getCriteria().setOrderBy(orderBy, OrderByDirection.DESCENDING);
+                    findAction.getCriteria().setSort(orderByColumn.getField(), Direction.DESCENDING, orderByColumn.isIgnoreCase());
                 }
                 refresh();
             }
