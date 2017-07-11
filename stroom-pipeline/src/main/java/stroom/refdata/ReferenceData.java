@@ -16,15 +16,15 @@
 
 package stroom.refdata;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.query.api.DocRef;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.StreamHolder;
+import stroom.query.api.v1.DocRef;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.Stream;

@@ -17,7 +17,6 @@
 package stroom.entity.client.presenter;
 
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
-
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.table.client.Refreshable;

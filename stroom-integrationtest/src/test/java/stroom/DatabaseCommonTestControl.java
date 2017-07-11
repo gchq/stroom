@@ -29,8 +29,6 @@ import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.Res;
 import stroom.feed.shared.Feed;
-import stroom.importexport.server.ImportExportSerializer;
-import stroom.importexport.server.ImportExportSerializer.ImportMode;
 import stroom.index.server.IndexShardWriterCache;
 import stroom.index.server.IndexShardWriterImpl;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -55,7 +53,8 @@ import stroom.security.server.DocumentPermission;
 import stroom.security.server.Permission;
 import stroom.security.server.UserGroupUser;
 import stroom.security.shared.User;
-import stroom.statistics.shared.StatisticStore;
+import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.Stream;
@@ -69,12 +68,10 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterTracker;
 import stroom.streamtask.shared.StreamTask;
-import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.visualisation.shared.Visualisation;
 import stroom.xmlschema.shared.XMLSchema;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -86,12 +83,13 @@ import java.util.Map;
  */
 @Component
 public class DatabaseCommonTestControl implements CommonTestControl, ApplicationContextAware {
+
     @Resource
     private VolumeService volumeService;
     @Resource
     private IndexShardService indexShardService;
     @Resource
-    private ImportExportSerializer importExportSerializer;
+    private ContentImportService contentImportService;
     @Resource
     private StreamAttributeKeyService streamAttributeKeyService;
     @Resource
@@ -140,7 +138,8 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
         deleteEntity(Script.class);
         deleteEntity(Res.class);
         deleteEntity(Dictionary.class);
-        deleteEntity(StatisticStore.class);
+        deleteEntity(StatisticStoreEntity.class);
+        deleteEntity(StroomStatsStoreEntity.class);
 
         // Make sure we are no longer creating tasks.
         streamTaskCreator.shutdown();
@@ -246,12 +245,6 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
     // @Override
     @Override
     public void createRequiredXMLSchemas() {
-        // Import schemas if we haven't done so already.
-        final int schemaCount = countEntity(XMLSchema.class);
-        if (schemaCount == 0) {
-            // Import the schemas.
-            final File xsdDir = new File(StroomCoreServerTestFileUtil.getTestResourcesDir(), "samples/config/XML Schemas");
-            importExportSerializer.read(xsdDir, null, ImportMode.IGNORE_CONFIRMATION);
-        }
+        contentImportService.importXmlSchemas();
     }
 }

@@ -16,26 +16,25 @@
 
 package stroom;
 
-import java.io.File;
-import java.io.IOException;
-
-import javax.annotation.Resource;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.io.FileUtil;
+import stroom.util.test.IntegrationTest;
 import stroom.util.test.StroomSpringJUnit4ClassRunner;
 import stroom.util.test.StroomTest;
-import stroom.util.test.IntegrationTest;
 import stroom.util.test.TestState;
 import stroom.util.test.TestState.State;
+
+import javax.annotation.Resource;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 
 /**
  * This class should be common to all component and integration tests.
@@ -50,8 +49,13 @@ public abstract class StroomIntegrationTest implements StroomTest {
 
     private static final boolean TEAR_DOWN_DATABASE_BETWEEEN_TESTS = true;
 
+    private static boolean XML_SCHEMAS_DOWNLOADED = false;
+
     @Resource
     private CommonTestControl commonTestControl;
+
+    @Resource
+    private ContentImportService contentImportService;
 
     @BeforeClass
     public static final void beforeClass() throws IOException {
@@ -93,6 +97,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
 
         onBefore();
     }
+
 
     /**
      * Remove all entities from the database.
@@ -144,6 +149,17 @@ public abstract class StroomIntegrationTest implements StroomTest {
         }
     }
 
+    public void importSchemas() {
+        importSchemas(false);
+    }
+
+    public void importSchemas(final boolean force) {
+        if (force || !XML_SCHEMAS_DOWNLOADED) {
+            contentImportService.importXmlSchemas();
+            XML_SCHEMAS_DOWNLOADED = true;
+        }
+    }
+
     /**
      * Remove all entities from the database.
      */
@@ -170,5 +186,9 @@ public abstract class StroomIntegrationTest implements StroomTest {
     @Override
     public File getCurrentTestDir() {
         return FileUtil.getTempDir();
+    }
+
+    public Path getCurrentTestPath() {
+        return FileUtil.getTempDir().toPath();
     }
 }

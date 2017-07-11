@@ -16,11 +16,11 @@
 
 package stroom.pipeline.server.writer;
 
-import java.io.IOException;
-
 import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.server.fs.serializable.SegmentOutputStream;
 import stroom.util.io.WrappedOutputStream;
+
+import java.io.IOException;
 
 public class WrappedSegmentOutputStream extends WrappedOutputStream implements SegmentOutputStream {
     private final RASegmentOutputStream segmentOutputStream;

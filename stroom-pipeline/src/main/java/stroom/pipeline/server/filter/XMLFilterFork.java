@@ -16,18 +16,17 @@
 
 package stroom.pipeline.server.filter;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.AbstractElement;
 import stroom.pipeline.server.factory.Processor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * An XML filter that is capable of firing SAX events at multiple child filters

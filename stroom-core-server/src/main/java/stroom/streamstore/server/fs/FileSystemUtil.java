@@ -25,13 +25,12 @@ import stroom.util.io.FileUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
-import java.util.Date;
+import java.util.Comparator;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
 /**
  * Utility class to open a File based on it's meta data.
@@ -168,6 +167,25 @@ public final class FileSystemUtil {
         return allOk;
     }
 
+    public static boolean deleteDirectory(final File path) {
+        boolean success = true;
+        if (path != null && path.isDirectory()) {
+            if (deleteContents(path)) {
+                final boolean deleteDir = path.delete();
+                if (!deleteDir) {
+                    LOGGER.error("Failed to delete file " + path);
+                    success = false;
+                } else {
+                    LOGGER.debug("Deleted file " + path);
+                }
+            } else {
+                LOGGER.error("Failed to delete file " + path);
+                success = false;
+            }
+        }
+        return success;
+    }
+
     public static boolean deleteContents(final File path) {
         boolean allOk = true;
         File[] kids = path.listFiles();
@@ -198,24 +216,7 @@ public final class FileSystemUtil {
         return allOk;
     }
 
-    public static boolean deleteDirectory(final File path) {
-        if (deleteContents(path)) {
-            boolean deleteDir = path.delete();
-
-            if (!deleteDir) {
-                LOGGER.error("Failed to delete file " + path);
-                return false;
-            } else {
-                LOGGER.debug("Deleted file " + path);
-                return true;
-            }
-        } else {
-            LOGGER.error("Failed to delete file " + path);
-        }
-        return false;
-    }
-
-    public static boolean deleteDirectory(final Path path) throws IOException {
+    public static boolean deleteDirectory(final Path path) {
         if (deleteContents(path)) {
             try {
                 Files.delete(path);
@@ -232,40 +233,28 @@ public final class FileSystemUtil {
     }
 
     public static boolean deleteContents(final Path path) {
+        final AtomicBoolean success = new AtomicBoolean(true);
+
         try {
-            Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)
-                        throws IOException {
-                    Files.delete(file);
-                    return FileVisitResult.CONTINUE;
+            if (Files.isDirectory(path)) {
+                try (final Stream<Path> stream = Files.walk(path)) {
+                    stream.sorted(Comparator.reverseOrder()).forEach(p -> {
+                        try {
+                            Files.delete(p);
+                            LOGGER.debug("Deleted file " + p);
+                        } catch (final IOException e) {
+                            LOGGER.error("Failed to delete file " + p);
+                            success.set(false);
+                        }
+                    });
                 }
-
-                @Override
-                public FileVisitResult visitFileFailed(final Path file, final IOException exc) throws IOException {
-                    // try to delete the file anyway, even if its attributes
-                    // could not be read, since delete-only access is
-                    // theoretically possible
-                    Files.delete(file);
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) throws IOException {
-                    if (exc == null) {
-                        Files.delete(dir);
-                        return FileVisitResult.CONTINUE;
-                    } else {
-                        // directory iteration failed; propagate exception
-                        throw exc;
-                    }
-                }
-            });
+            }
         } catch (final IOException e) {
-            return false;
+            LOGGER.error("Failed to delete file " + path);
+            success.set(false);
         }
 
-        return true;
+        return success.get();
     }
 
     /**

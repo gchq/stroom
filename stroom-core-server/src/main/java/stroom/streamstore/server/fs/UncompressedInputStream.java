@@ -16,13 +16,13 @@
 
 package stroom.streamstore.server.fs;
 
+import stroom.io.SeekableInputStream;
+import stroom.io.StreamCloser;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
-
-import stroom.io.SeekableInputStream;
-import stroom.io.StreamCloser;
 
 /**
  * A stream that interfaces with a random access file.

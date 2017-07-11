@@ -18,20 +18,20 @@ package stroom.security.client;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
-public abstract class ClientSecurityContext {
+public interface ClientSecurityContext {
     /**
      * Get the id of the user associated with this security context.
      *
      * @return The id of the user associated with this security context.
      */
-    public abstract String getUserId();
+    String getUserId();
 
     /**
      * Check if the user associated with this security context is logged in.
      *
      * @return True if the user is logged in.
      */
-    public abstract boolean isLoggedIn();
+    boolean isLoggedIn();
 
     /**
      * Check if the user associated with this security context has the requested
@@ -41,7 +41,7 @@ public abstract class ClientSecurityContext {
      * @return True if the user associated with the security context has the
      * requested permission.
      */
-    public abstract boolean hasAppPermission(String permission);
+    boolean hasAppPermission(String permission);
 
     /**
      * Check if the user associated with this security context has the requested
@@ -54,5 +54,5 @@ public abstract class ClientSecurityContext {
      * @return True if the user associated with the security context has the
      * requested permission.
      */
-    public abstract void hasDocumentPermission(String documentType, String documentId, String permission, AsyncCallback<Boolean> callback);
+    void hasDocumentPermission(String documentType, String documentId, String permission, AsyncCallback<Boolean> callback);
 }

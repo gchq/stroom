@@ -16,8 +16,6 @@
 
 package stroom.xml.converter;
 
-import java.io.File;
-
 import stroom.cache.server.MockSchemaPool;
 import stroom.cache.server.SchemaLoaderImpl;
 import stroom.cache.server.SchemaPool;
@@ -33,6 +31,8 @@ import stroom.xmlschema.server.XMLSchemaCache;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XMLSchema;
 import stroom.xmlschema.shared.XMLSchemaService;
+
+import java.io.File;
 
 public class SchemaFilterFactory {
     private final XMLSchemaService xmlSchemaService = new MockXMLSchemaService();

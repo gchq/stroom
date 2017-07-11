@@ -19,7 +19,6 @@ package stroom.streamstore.client.presenter;
 import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.Range;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.entity.shared.Action;
@@ -118,25 +117,19 @@ public class ActionDataProvider<R extends SharedObject> extends AsyncDataProvide
         }
 
         fetchCount++;
-        dispatcher.execute(action, new AsyncCallbackAdaptor<ResultList<R>>() {
-            public void onSuccess(final ResultList<R> resultList) {
-                if (requestedRange.equals(range) && !refetch) {
-                    if (resultList != null) {
-                        changeData(resultList);
-                    }
-                    fetching = false;
-                } else {
-                    refetch = false;
-                    doFetch(requestedRange);
+        dispatcher.exec(action).onSuccess(resultList -> {
+            if (requestedRange.equals(range) && !refetch) {
+                if (resultList != null) {
+                    changeData(resultList);
                 }
-            }
-
-            @Override
-            public void onFailure(final Throwable caught) {
-                super.onFailure(caught);
                 fetching = false;
+            } else {
                 refetch = false;
+                doFetch(requestedRange);
             }
+        }).onFailure(caught -> {
+            fetching = false;
+            refetch = false;
         });
     }
 

@@ -34,10 +34,10 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -79,10 +79,10 @@ public final class ImportFileServlet extends HttpServlet {
             final InputStream inputStream = fileItem.getInputStream();
 
             final ResourceKey uuid = sessionResourceStore.createTempFile(fileItem.getName());
-            final File file = sessionResourceStore.getTempFile(uuid);
-            streamEventLog.importStream(new Date(), "Import", file.getAbsolutePath(), null);
+            final Path file = sessionResourceStore.getTempFile(uuid);
+            streamEventLog.importStream(new Date(), "Import", file.toAbsolutePath().toString(), null);
 
-            StreamUtil.streamToStream(inputStream, new FileOutputStream(file));
+            StreamUtil.streamToStream(inputStream, Files.newOutputStream(file));
 
             propertyMap.setSuccess(true);
             uuid.write(propertyMap);
@@ -99,7 +99,7 @@ public final class ImportFileServlet extends HttpServlet {
     }
 
     private Map<String, FileItem> getFileItems(final HttpServletRequest request) {
-        final Map<String, FileItem> fields = new HashMap<String, FileItem>();
+        final Map<String, FileItem> fields = new HashMap<>();
         final FileItemFactory factory = new DiskFileItemFactory();
         final ServletFileUpload upload = new ServletFileUpload(factory);
 

@@ -16,18 +16,11 @@
 
 package stroom.headless;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
-
 import stroom.pipeline.server.ErrorWriter;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.filter.AbstractXMLFilter;
@@ -37,6 +30,12 @@ import stroom.util.shared.StoredError;
 import stroom.util.zip.HeaderMap;
 import stroom.xml.event.simple.StartElement;
 import stroom.xml.event.simple.StartPrefixMapping;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.List;
 
 public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
     private static final Logger LOGGER = LoggerFactory.getLogger(HeadlessFilter.class);

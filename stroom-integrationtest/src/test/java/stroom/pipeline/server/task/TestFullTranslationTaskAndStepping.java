@@ -16,14 +16,13 @@
 
 package stroom.pipeline.server.task;
 
-import java.io.File;
-import java.time.Duration;
-import java.time.Period;
-
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.test.StroomProcessTestFileUtil;
-import org.junit.Test;
+
+import java.io.File;
+import java.time.Duration;
 
 public class TestFullTranslationTaskAndStepping extends TranslationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestFullTranslationTaskAndStepping.class);

@@ -16,10 +16,10 @@
 
 package stroom.cache.server;
 
-import java.io.Serializable;
-
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
+
+import java.io.Serializable;
 
 public class SchemaKey implements Serializable {
     private static final long serialVersionUID = 8418383654436897040L;

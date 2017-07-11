@@ -16,13 +16,13 @@
 
 package stroom.importexport.server;
 
+import stroom.entity.shared.Entity;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import stroom.entity.shared.NamedEntity;
 
 /**
  * Class to all the generic call to contain the entity type and class so that
@@ -31,14 +31,14 @@ import stroom.entity.shared.NamedEntity;
 public class ClassTypeMap implements Serializable {
     private static final long serialVersionUID = -3931661635840196195L;
 
-    private final Map<String, Class<? extends NamedEntity>> entityTypeMap = new HashMap<>();
-    private final Map<Class<? extends NamedEntity>, String> entityClassMap = new HashMap<>();
+    private final Map<String, Class<? extends Entity>> entityTypeMap = new HashMap<>();
+    private final Map<Class<? extends Entity>, String> entityClassMap = new HashMap<>();
     private final Map<String, Integer> entityPriorityMap = new HashMap<>();
     private final List<String> entityTypeList = new ArrayList<>();
 
     private int priority = 1;
 
-    public void registerEntity(final Class<? extends NamedEntity> entityClass) {
+    public void registerEntity(final Class<? extends Entity> entityClass) {
         try {
             final String entityType = entityClass.newInstance().getType();
 
@@ -52,7 +52,7 @@ public class ClassTypeMap implements Serializable {
         }
     }
 
-    public void registerEntityReference(final Class<? extends NamedEntity> entityClass) {
+    public void registerEntityReference(final Class<? extends Entity> entityClass) {
         try {
             final String entityType = entityClass.newInstance().getType();
 
@@ -64,11 +64,11 @@ public class ClassTypeMap implements Serializable {
         }
     }
 
-    public Class<? extends NamedEntity> getEntityClass(final String entityType) {
+    public Class<? extends Entity> getEntityClass(final String entityType) {
         return entityTypeMap.get(entityType);
     }
 
-    public String getEntityType(final Class<? extends NamedEntity> clazz) {
+    public String getEntityType(final Class<? extends Entity> clazz) {
         return entityClassMap.get(clazz);
     }
 

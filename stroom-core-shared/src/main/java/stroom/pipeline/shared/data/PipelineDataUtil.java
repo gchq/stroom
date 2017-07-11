@@ -20,7 +20,7 @@ import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 
 import java.util.Collections;
 

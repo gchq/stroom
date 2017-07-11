@@ -17,13 +17,28 @@ parent.subprojects.each { p ->
 }
 gwtSourceDirs << sourceSets.main.compileClasspath
 
+// We need to add the sources of GitHub dependencies.
+gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(urlLibs.stroomQueryApiSources))).getAsPath())
+gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(urlLibs.stroomQueryApi))).getAsPath())
+
 dependencies {
     compile project(':stroom-index-client')
     compile project(':stroom-statistics-client')
     compile project(':stroom-dashboard-client')
+    compile project(':stroom-security-shared')
+    permitUnusedDeclared project(':stroom-security-shared')
+    compile project(':stroom-core-client')
+    compile project(':stroom-security-client-api')
+    compile project(':stroom-core-client-widget')
+    compile project(':stroom-security-client')
 
-    compile 'com.google.gwt.inject:gin:2.1.2'
-    compile 'com.google.gwt:gwt-dev:2.8.0'
+
+    compile libs.gin
+    compile libs.guice
+    compile libs.gwt_dev
+    permitUnusedDeclared libs.gwt_dev
+    compile libs.gwt_user
+    compile libs.gwtp_mvp_client
 }
 
 task gwtCompile(dependsOn: classes, type: JavaExec) {
@@ -43,30 +58,30 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
         file(extraDir).mkdirs()
     }
 
-    main = 'com.google.gwt.dev.Compiler'
+    main = gwtCompilerProps.mainClass
 
     classpath {
         gwtSourceDirs
     }
 
     args =
-            [
-                    '-logLevel', 'INFO',
-                    '-workDir', workDir,
-                    '-XfragmentCount', '5',
-                    '-optimize', '9',
-                    '-failOnError',
-                    '-localWorkers', '5',
-                    '-war', warDir,
-                    '-deploy', deployDir,
-                    '-extra', extraDir,
-                    '-strict',
-                    module                               // Your GWT module
-            ]
+        [
+            '-logLevel', 'INFO',
+            '-workDir', workDir,
+            '-XfragmentCount', '5',
+            '-optimize', '9',
+            '-failOnError',
+            '-localWorkers', gwtCompilerProps.workers,
+            '-war', warDir,
+            '-deploy', deployDir,
+            '-extra', extraDir,
+            '-strict',
+            module                               // Your GWT module
+        ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
-    minHeapSize = '1G'
-    maxHeapSize = '4G'
+    minHeapSize = gwtCompilerProps.minHeap
+    maxHeapSize = gwtCompilerProps.maxHeap
 }
 
 task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
@@ -84,32 +99,32 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
         file(extraDir).mkdirs()
     }
 
-    main = 'com.google.gwt.dev.Compiler'
+    main = gwtCompilerProps.mainClass
 
     classpath {
         gwtSourceDirs
     }
 
     args =
-            [
-                    '-logLevel', 'INFO',
-                    '-workDir', workDir,
-                    '-draftCompile',                        // Speeds up compile with 25%
-                    '-XfragmentCount', '0',
-                    '-optimize', '0',
-                    '-failOnError',
-                    '-localWorkers', '5',
-                    '-incremental',
-                    '-war', warDir,
-                    '-deploy', deployDir,
-                    '-extra', extraDir,
-                    '-strict',
-                    module                                  // Your GWT module
-            ]
+        [
+            '-logLevel', 'INFO',
+            '-workDir', workDir,
+            '-draftCompile',                        // Speeds up compile with 25%
+            '-XfragmentCount', '0',
+            '-optimize', '0',
+            '-failOnError',
+            '-localWorkers', gwtCompilerProps.workers,
+            '-incremental',
+            '-war', warDir,
+            '-deploy', deployDir,
+            '-extra', extraDir,
+            '-strict',
+            module                                  // Your GWT module
+        ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
-    minHeapSize = '1G'
-    maxHeapSize = '4G'
+    minHeapSize = gwtCompilerProps.minHeap
+    maxHeapSize = gwtCompilerProps.maxHeap
 }
 
 task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
@@ -136,21 +151,21 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
     }
 
     args =
-            [
-                    '-logLevel', 'INFO',
-                    '-workDir', workDir,
-                    '-failOnError',
-                    '-war', warDir,
-                    '-deploy', deployDir,
-                    '-extra', extraDir,
-                    '-strict',
-                    '-noserver',
-                    module                                  // Your GWT module
-            ]
+        [
+            '-logLevel', 'INFO',
+            '-workDir', workDir,
+            '-failOnError',
+            '-war', warDir,
+            '-deploy', deployDir,
+            '-extra', extraDir,
+            '-strict',
+            '-noserver',
+            module                                  // Your GWT module
+        ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
-    minHeapSize = '1G'
-    maxHeapSize = '4G'
+    minHeapSize = gwtCompilerProps.devModeMinHeap
+    maxHeapSize = gwtCompilerProps.devModeMaxHeap
 }
 
 task gwtClean {

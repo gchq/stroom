@@ -19,7 +19,7 @@ package stroom.search.server;
 import stroom.node.shared.Node;
 import stroom.query.CoprocessorSettings;
 import stroom.query.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.query.api.Query;
+import stroom.query.api.v1.Query;
 import stroom.util.shared.VoidResult;
 import stroom.util.task.ServerTask;
 
@@ -39,10 +39,10 @@ public class AsyncSearchTask extends ServerTask<VoidResult>implements Serializab
 
     private volatile transient ClusterSearchResultCollector resultCollector;
 
-    public AsyncSearchTask(final String sessionId, final String userName, final String searchName, final Query query,
+    public AsyncSearchTask(final String userToken, final String searchName, final Query query,
                            final Node targetNode, final int resultSendFrequency,
                            final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap, final String dateTimeLocale, final long now) {
-        super(null, sessionId, userName);
+        super(null, userToken);
         this.searchName = searchName;
         this.query = query;
         this.targetNode = targetNode;

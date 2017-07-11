@@ -16,16 +16,15 @@
 
 package stroom.streamtask.server;
 
-import javax.inject.Inject;
-
-import stroom.entity.server.util.StroomDatabaseInfo;
-import stroom.entity.server.util.StroomEntityManager;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
-
 import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.StroomDatabaseInfo;
+import stroom.entity.server.util.StroomEntityManager;
 import stroom.streamstore.shared.Stream;
+
+import javax.inject.Inject;
 
 @Transactional(isolation = Isolation.READ_COMMITTED)
 @Component

@@ -16,15 +16,7 @@
 
 package stroom.headless;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-
-import javax.annotation.Resource;
-
-import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
-
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.StringCriteria;
 import stroom.feed.shared.Feed;
@@ -60,15 +52,20 @@ import stroom.streamstore.server.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.streamstore.shared.StreamTypeService;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.date.DateUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
-import stroom.util.zip.StroomHeaderArguments;
+import stroom.util.spring.StroomScope;
 import stroom.util.zip.HeaderMap;
+import stroom.util.zip.StroomHeaderArguments;
+
+import javax.annotation.Resource;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
 
 @TaskHandlerBean(task = HeadlessTranslationTask.class)
 @Scope(StroomScope.TASK)
@@ -107,8 +104,6 @@ public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<Headless
     private StreamStore streamStore;
     @Resource(name = "cachedFeedService")
     private FeedService feedService;
-    @Resource(name = "cachedStreamTypeService")
-    private StreamTypeService streamTypeService;
     @Resource(name = "cachedPipelineEntityService")
     private PipelineEntityService pipelineEntityService;
     @Resource

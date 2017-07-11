@@ -1,8 +1,29 @@
 dependencies {
     compile project(':stroom-security-client-api')
     compile project(':stroom-security-shared')
+    permitUnusedDeclared project(':stroom-security-shared')
     compile project(':stroom-core-shared')
     compile project(':stroom-core-client-widget')
-    testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-util-shared')
+
+    compile libs.gin
+    compile libs.guice
+    compile libs.gwt_user
+    compile libs.gwtp_mvp_client
+    compile libs.javax_inject
+
+    //Needed only for the GwtCompilerWrapper
+    compileOnly libs.gwt_dev
+
     testCompile project(path: ':stroom-util')
+    testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
+    testCompile libs.junit
+
+    //the following logging libs are needed when running junits outside dropwizard
+    testRuntime libs.jcl_over_slf4j
+    testRuntime libs.jul_to_slf4j
+    testRuntime libs.log4j_over_slf4j
+    testRuntime libs.logback_classic
+    testRuntime libs.logback_core
 }

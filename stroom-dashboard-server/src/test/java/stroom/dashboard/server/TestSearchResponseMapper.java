@@ -17,15 +17,14 @@
 package stroom.dashboard.server;
 
 import org.junit.Test;
-import stroom.query.api.Field;
-import stroom.query.api.FieldBuilder;
-import stroom.query.api.FlatResult;
-import stroom.query.api.Format;
-import stroom.query.api.Format.Type;
-import stroom.query.api.OffsetRange;
-import stroom.query.api.Row;
-import stroom.query.api.SearchResponse;
-import stroom.query.api.TableResult;
+import stroom.query.api.v1.Field;
+import stroom.query.api.v1.FieldBuilder;
+import stroom.query.api.v1.FlatResult;
+import stroom.query.api.v1.Format.Type;
+import stroom.query.api.v1.OffsetRange;
+import stroom.query.api.v1.Row;
+import stroom.query.api.v1.SearchResponse;
+import stroom.query.api.v1.TableResult;
 
 import java.util.ArrayList;
 import java.util.Arrays;

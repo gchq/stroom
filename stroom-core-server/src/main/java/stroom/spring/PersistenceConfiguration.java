@@ -16,14 +16,11 @@
 
 package stroom.spring;
 
+import com.mchange.v2.c3p0.ComboPooledDataSource;
+import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.node.server.GlobalProperties;
-import stroom.util.config.StroomProperties;
-import stroom.util.shared.Version;
-import com.mchange.v2.c3p0.ComboPooledDataSource;
-import org.flywaydb.core.Flyway;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.orm.jpa.JpaTransactionManager;
@@ -31,6 +28,9 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import stroom.node.server.GlobalProperties;
+import stroom.util.config.StroomProperties;
+import stroom.util.shared.Version;
 
 import javax.persistence.EntityManagerFactory;
 import java.beans.PropertyVetoException;
@@ -108,12 +108,13 @@ public class PersistenceConfiguration {
                             }
 
                             version = new Version(maj, min, pat);
+                            LOGGER.info("Found schema_version.version " + ver);
                         }
                     }
                 }
             }
         } catch (final Exception e) {
-            LOGGER.debug(e.getMessage(), e);
+            LOGGER.debug(e.getMessage());
             // Ignore.
         }
 
@@ -124,6 +125,7 @@ public class PersistenceConfiguration {
                         try (final ResultSet resultSet = statement.executeQuery("SELECT VER_MAJ, VER_MIN, VER_PAT FROM STROOM_VER ORDER BY VER_MAJ DESC, VER_MIN DESC, VER_PAT DESC LIMIT 1")) {
                             if (resultSet.next()) {
                                 version = new Version(resultSet.getInt(1), resultSet.getInt(2), resultSet.getInt(3));
+                                LOGGER.info("Found STROOM_VER.VER_MAJ/VER_MIN/VER_PAT " + version);
                             }
                         }
                     }

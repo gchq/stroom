@@ -16,19 +16,18 @@
 
 package stroom.xml.converter.ds3;
 
+import org.apache.commons.lang.StringEscapeUtils;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import stroom.pipeline.server.filter.AbstractXMLFilter;
+import stroom.xml.converter.ds3.GroupFactory.MatchOrder;
+import stroom.xml.converter.ds3.NodeFactory.NodeType;
+
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
-
-import org.apache.commons.lang.StringEscapeUtils;
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
-
-import stroom.pipeline.server.filter.AbstractXMLFilter;
-import stroom.xml.converter.ds3.GroupFactory.MatchOrder;
-import stroom.xml.converter.ds3.NodeFactory.NodeType;
 
 public class ConfigFilter extends AbstractXMLFilter {
     private static final String XML_ELEMENT_DATA_SPLITTER = "dataSplitter";

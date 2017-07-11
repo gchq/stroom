@@ -16,18 +16,17 @@
 
 package stroom.util.task;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.spring.StroomScope;
 import org.springframework.beans.factory.config.CustomScopeConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-
 import stroom.util.spring.StroomBeanStore;
+import stroom.util.spring.StroomScope;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A package-private context configuration for a specific test.

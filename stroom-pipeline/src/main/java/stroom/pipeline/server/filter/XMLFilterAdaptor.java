@@ -16,14 +16,13 @@
 
 package stroom.pipeline.server.filter;
 
-import java.util.Collections;
-import java.util.List;
-
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-
 import stroom.pipeline.server.factory.Processor;
+
+import java.util.Collections;
+import java.util.List;
 
 public class XMLFilterAdaptor implements XMLFilter {
     @Override

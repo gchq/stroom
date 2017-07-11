@@ -16,12 +16,12 @@
 
 package stroom.db.migration.mysql;
 
+import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.server.ObjectMarshaller;
 import stroom.entity.shared.DocRefs;
-import stroom.query.api.DocRef;
-import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
+import stroom.query.api.v1.DocRef;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

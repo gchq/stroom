@@ -30,10 +30,8 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
-import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
-import stroom.dashboard.client.main.ComponentChangeEvent;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.ResultComponent;
@@ -47,9 +45,8 @@ import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.FetchVisualisationAction;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dashboard.shared.VisResultRequest;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.script.client.ScriptCache;
 import stroom.script.shared.FetchScriptAction;
 import stroom.script.shared.Script;
@@ -60,7 +57,6 @@ import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 import stroom.visualisation.client.presenter.VisFunction.StatusHandler;
 import stroom.visualisation.client.presenter.VisFunctionCache;
-import stroom.visualisation.shared.Visualisation;
 import stroom.widget.tab.client.presenter.LayerContainer;
 
 import java.util.HashSet;
@@ -183,12 +179,9 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     @Override
     public void setComponents(final Components components) {
         super.setComponents(components);
-        registerHandler(components.addComponentChangeHandler(new ComponentChangeEvent.Handler() {
-            @Override
-            public void onChange(final ComponentChangeEvent event) {
-                if (visSettings != null && EqualsUtil.isEquals(visSettings.getTableId(), event.getComponentId())) {
-                    updateTableId(event.getComponentId());
-                }
+        registerHandler(components.addComponentChangeHandler(event -> {
+            if (visSettings != null && EqualsUtil.isEquals(visSettings.getTableId(), event.getComponentId())) {
+                updateTableId(event.getComponentId());
             }
         }));
     }
@@ -353,53 +346,42 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         function.setStatus(LoadStatus.LOADING_ENTITY);
 
         final FetchVisualisationAction fetchVisualisationAction = new FetchVisualisationAction(visualisation);
-        dispatcher.execute(fetchVisualisationAction, new AsyncCallbackAdaptor<Visualisation>() {
-            @Override
-            public void onSuccess(final Visualisation result) {
-                if (result != null) {
-                    // Get all possible settings for this visualisation.
-                    possibleSettings = null;
-                    try {
-                        if (result.getSettings() != null) {
+        dispatcher.exec(fetchVisualisationAction)
+                .onSuccess(result -> {
+                    if (result != null) {
+                        // Get all possible settings for this visualisation.
+                        possibleSettings = null;
+                        try {
                             if (result.getSettings() != null) {
-                                possibleSettings = JSONUtil.getObject(JSONUtil.parse(result.getSettings()));
+                                if (result.getSettings() != null) {
+                                    possibleSettings = JSONUtil.getObject(JSONUtil.parse(result.getSettings()));
+                                }
+                            }
+                        } catch (final Exception e) {
+                            failure(function, "Unable to parse settings for visualisaton: "
+                                    + visSettings.getVisualisation());
+                        }
+
+                        function.setFunctionName(result.getFunctionName());
+
+                        // Do we have required scripts.
+                        if (result.getScriptRef() != null) {
+                            // Now we have loaded the visualisation, load all
+                            // associated scripts.
+                            loadScripts(function, result.getScriptRef());
+
+                        } else {
+                            // Set the function status to loaded. This will tell all
+                            // handlers that the function is ready for use.
+                            if (!LoadStatus.FAILURE.equals(function.getStatus())) {
+                                function.setStatus(LoadStatus.LOADED);
                             }
                         }
-                    } catch (final Exception e) {
-                        failure(function, "Unable to parse settings for visualisaton: "
-                                + visSettings.getVisualisation());
-                    }
-
-                    function.setFunctionName(result.getFunctionName());
-
-                    // Do we have required scripts.
-                    if (result.getScriptRef() != null) {
-                        // Now we have loaded the visualisation, load all
-                        // associated scripts.
-                        loadScripts(function, result.getScriptRef());
-
                     } else {
-                        // Set the function status to loaded. This will tell all
-                        // handlers that the function is ready for use.
-                        if (!LoadStatus.FAILURE.equals(function.getStatus())) {
-                            function.setStatus(LoadStatus.LOADED);
-                        }
+                        failure(function, "No visualisaton found for: " + visSettings.getVisualisation());
                     }
-                } else {
-                    failure(function, "No visualisaton found for: " + visSettings.getVisualisation());
-                }
-            }
-
-            @Override
-            public void onFailure(final Throwable caught) {
-                failure(function, caught.getMessage());
-            }
-
-            @Override
-            public boolean handlesFailure() {
-                return true;
-            }
-        });
+                })
+                .onFailure(caught -> failure(function, caught.getMessage()));
     }
 
     private void loadScripts(final VisFunction function, final DocRef scriptRef) {
@@ -409,12 +391,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
 
         final FetchScriptAction fetchScriptAction = new FetchScriptAction(scriptRef,
                 scriptCache.getLoadedScripts(), fetchSet);
-        dispatcher.execute(fetchScriptAction, new AsyncCallbackAdaptor<SharedList<Script>>() {
-            @Override
-            public void onSuccess(final SharedList<Script> result) {
-                startInjectingScripts(result, function);
-            }
-        });
+        dispatcher.exec(fetchScriptAction).onSuccess(result -> startInjectingScripts(result, function));
     }
 
     private void startInjectingScripts(final SharedList<Script> scripts, final VisFunction function) {

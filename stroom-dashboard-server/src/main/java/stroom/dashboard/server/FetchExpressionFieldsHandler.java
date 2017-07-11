@@ -19,7 +19,8 @@ package stroom.dashboard.server;
 import org.springframework.context.annotation.Scope;
 import stroom.dashboard.shared.DataSourceFields;
 import stroom.dashboard.shared.FetchDataSourceFieldsAction;
-import stroom.datasource.api.DataSource;
+import stroom.datasource.DataSourceProviderRegistry;
+import stroom.datasource.api.v1.DataSource;
 import stroom.security.SecurityContext;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
@@ -45,19 +46,10 @@ class FetchExpressionFieldsHandler extends AbstractTaskHandler<FetchDataSourceFi
             // Elevate the users permissions for the duration of this task so they can read the index if they have 'use' permission.
             securityContext.elevatePermissions();
 
-            final DataSourceProvider dataSourceProvider = dataSourceProviderRegistry.getDataSourceProvider(action.getDataSourceRef());
-
-            if (dataSourceProvider == null) {
-                return null;
-            }
-
-            final DataSource dataSource = dataSourceProvider.getDataSource(action.getDataSourceRef());
-
-            if (dataSource == null) {
-                return null;
-            }
-
-            return new DataSourceFields(dataSource.getFields());
+            return dataSourceProviderRegistry.getDataSourceProvider(action.getDataSourceRef())
+                    .map(provider ->
+                            new DataSourceFields(provider.getDataSource(action.getDataSourceRef()).getFields()))
+                    .orElse(null);
         } finally {
             securityContext.restorePermissions();
         }

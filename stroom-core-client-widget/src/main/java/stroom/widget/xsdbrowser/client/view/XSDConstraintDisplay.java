@@ -16,16 +16,15 @@
 
 package stroom.widget.xsdbrowser.client.view;
 
-import java.util.List;
-
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MaxScrollPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
-
 import stroom.widget.xsdbrowser.client.view.XSDNode.XSDType;
+
+import java.util.List;
 
 public class XSDConstraintDisplay extends Composite {
     private final ScrollPanel layout;

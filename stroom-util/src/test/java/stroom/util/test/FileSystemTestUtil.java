@@ -23,9 +23,6 @@ public abstract class FileSystemTestUtil {
 
     private static final File configDir = new File(CONFIG_PATH);
     private static final File configXSDDir = new File(configDir, "xsd");
-    private static final File configXSLTDir = new File(configDir, "xslt");
-
-    public static final char SEPERATOR_CHAR = '/';
 
     private FileSystemTestUtil() {
         // Utility
@@ -42,24 +39,10 @@ public abstract class FileSystemTestUtil {
         return TEST_PREFIX + "_" + testSuffix;
     }
 
-    public static File getConfigDir() {
-        if (!configDir.isDirectory()) {
-            throw new RuntimeException("Directory not found: " + configDir.getAbsolutePath());
-        }
-        return configDir;
-    }
-
     public static File getConfigXSDDir() {
         if (!configXSDDir.isDirectory()) {
             throw new RuntimeException("Directory not found: " + configXSDDir.getAbsolutePath());
         }
         return configXSDDir;
-    }
-
-    public static File getConfigXSLTDir() {
-        if (!configXSLTDir.isDirectory()) {
-            throw new RuntimeException("Directory not found: " + configXSLTDir.getAbsolutePath());
-        }
-        return configXSLTDir;
     }
 }

@@ -19,11 +19,11 @@ package stroom.dashboard.client.vis;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.dashboard.client.main.SettingsPresenter;
-import stroom.widget.tab.client.presenter.SlideTabLayoutView;
+import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 
 public class VisSettingsPresenter extends SettingsPresenter {
     @Inject
-    public VisSettingsPresenter(final EventBus eventBus, final SlideTabLayoutView view,
+    public VisSettingsPresenter(final EventBus eventBus, final LinkTabsLayoutView view,
             final BasicVisSettingsPresenter basicSettingsPresenter) {
         super(eventBus, view);
 

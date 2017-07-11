@@ -17,9 +17,7 @@
 package stroom.dashboard.client.query;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -38,22 +36,12 @@ public class NameViewImpl extends ViewWithUiHandlers<PopupUiHandlers>implements 
     @Inject
     public NameViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        widget.addAttachHandler(new AttachEvent.Handler() {
-            @Override
-            public void onAttachOrDetach(final AttachEvent event) {
-                focus();
-            }
-        });
+        widget.addAttachHandler(event -> focus());
     }
 
     @Override
     public void focus() {
-        Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-            @Override
-            public void execute() {
-                name.setFocus(true);
-            }
-        });
+        Scheduler.get().scheduleDeferred(() -> name.setFocus(true));
     }
 
     @Override

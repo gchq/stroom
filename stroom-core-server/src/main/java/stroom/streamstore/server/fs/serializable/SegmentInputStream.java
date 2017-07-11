@@ -16,9 +16,9 @@
 
 package stroom.streamstore.server.fs.serializable;
 
-import java.io.IOException;
-
 import stroom.io.IInputStream;
+
+import java.io.IOException;
 
 /**
  * <p>

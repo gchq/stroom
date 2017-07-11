@@ -23,7 +23,6 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 import stroom.core.client.event.DirtyKeyDownHander;
-import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.presenter.EntitySettingsPresenter;
 import stroom.script.shared.Script;
@@ -59,12 +58,7 @@ public class ScriptSettingsPresenter
 
     @Override
     protected void onBind() {
-        final DirtyHandler dirtyHandler = new DirtyHandler() {
-            @Override
-            public void onDirty(final DirtyEvent event) {
-                setDirty(true);
-            }
-        };
+        final DirtyHandler dirtyHandler = event -> setDirty(true);
         registerHandler(scriptDependencyListPresenter.addDirtyHandler(dirtyHandler));
     }
 

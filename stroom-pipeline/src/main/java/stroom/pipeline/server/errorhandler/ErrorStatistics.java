@@ -16,9 +16,9 @@
 
 package stroom.pipeline.server.errorhandler;
 
-import java.util.Collection;
-
 import stroom.util.shared.Severity;
+
+import java.util.Collection;
 
 public interface ErrorStatistics {
     boolean isAllOk();

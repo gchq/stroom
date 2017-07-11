@@ -19,7 +19,13 @@ package stroom.pipeline.server.factory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.pipeline.server.errorhandler.*;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import stroom.pipeline.server.errorhandler.ErrorReceiver;
+import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.server.errorhandler.ErrorStatistics;
+import stroom.pipeline.server.errorhandler.ExpectedProcessException;
+import stroom.pipeline.server.errorhandler.LoggedException;
 import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskCallback;
 import stroom.task.server.TaskManager;
@@ -29,8 +35,6 @@ import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskScopeContext;
 import stroom.util.task.TaskScopeContextHolder;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -88,7 +92,7 @@ class ProcessorFactoryImpl implements ProcessorFactory {
                     }
                 };
 
-                final GenericServerTask task = new GenericServerTask(parentTask, null, null, "Process",
+                final GenericServerTask task = GenericServerTask.create(parentTask,  "Process",
                         null);
                 task.setRunnable(processor::process);
                 taskManager.execAsync(task, taskCallback);

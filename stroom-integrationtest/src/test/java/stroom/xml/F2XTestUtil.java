@@ -16,6 +16,9 @@
 
 package stroom.xml;
 
+import org.junit.Assert;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.server.PipelineMarshaller;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
@@ -35,13 +38,10 @@ import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.RecordCount;
 import stroom.streamstore.server.StreamStore;
-import stroom.test.StroomProcessTestFileUtil;
 import stroom.test.PipelineTestUtil;
+import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
-import org.junit.Assert;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.ByteArrayOutputStream;

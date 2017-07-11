@@ -17,7 +17,6 @@
 package stroom.pipeline.server;
 
 import org.springframework.stereotype.Component;
-
 import stroom.entity.server.EntityMarshaller;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineData;

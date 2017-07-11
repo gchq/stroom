@@ -19,7 +19,6 @@ package stroom.util.concurrent;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.thread.ThreadUtil;
 

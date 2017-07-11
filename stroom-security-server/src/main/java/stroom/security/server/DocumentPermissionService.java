@@ -16,15 +16,12 @@
 
 package stroom.security.server;
 
-import stroom.query.api.DocRef;
-import stroom.security.shared.DocumentPermissionKeySet;
+import stroom.query.api.v1.DocRef;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.UserRef;
 
 public interface DocumentPermissionService {
     DocumentPermissions getPermissionsForDocument(DocRef document);
-
-    DocumentPermissionKeySet getPermissionKeySetForUser(UserRef userRef);
 
     void addPermission(UserRef userRef, DocRef document, String permission);
 

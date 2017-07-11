@@ -16,22 +16,14 @@
 
 package stroom.dashboard.server;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.dashboard.expression.TypeConverter;
+import stroom.dashboard.server.VisResult.Store;
 import stroom.dashboard.shared.Format.Type;
 import stroom.dashboard.shared.SearchResponse;
-import stroom.dashboard.server.VisResult.Store;
-import stroom.query.api.Field;
-import stroom.query.api.FlatResult;
-import stroom.query.api.Result;
+import stroom.query.api.v1.Field;
+import stroom.query.api.v1.FlatResult;
+import stroom.query.api.v1.Result;
 import stroom.util.shared.OffsetRange;
 
 import java.util.ArrayList;
@@ -43,7 +35,7 @@ import java.util.Map.Entry;
 
 @Component
 public class SearchResponseMapper {
-    public SearchResponse mapResponse(final stroom.query.api.SearchResponse searchResponse) {
+    public SearchResponse mapResponse(final stroom.query.api.v1.SearchResponse searchResponse) {
         if (searchResponse == null) {
             return null;
         }
@@ -80,8 +72,8 @@ public class SearchResponseMapper {
             return null;
         }
 
-        if (result instanceof stroom.query.api.TableResult) {
-            final stroom.query.api.TableResult tableResult = (stroom.query.api.TableResult) result;
+        if (result instanceof stroom.query.api.v1.TableResult) {
+            final stroom.query.api.v1.TableResult tableResult = (stroom.query.api.v1.TableResult) result;
             final TableResult copy = new TableResult();
 
             copy.setRows(tableResult.getRows());
@@ -102,10 +94,10 @@ public class SearchResponseMapper {
         return null;
     }
 
-    private List<Row> mapRows(final List<stroom.query.api.Row> rows) {
+    private List<Row> mapRows(final List<stroom.query.api.v1.Row> rows) {
         final List<Row> copy = new ArrayList<>();
         if (rows != null) {
-            for (final stroom.query.api.Row row : rows) {
+            for (final stroom.query.api.v1.Row row : rows) {
                 final Row item = new Row(row.getGroupKey(), row.getValues(), row.getDepth());
                 copy.add(item);
             }

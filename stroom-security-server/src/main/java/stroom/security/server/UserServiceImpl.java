@@ -95,17 +95,21 @@ public class UserServiceImpl implements UserService {
 
     private final EntityServiceHelper<User> entityServiceHelper;
     private final FindServiceHelper<User, FindUserCriteria> findServiceHelper;
+    private final DocumentPermissionService documentPermissionService;
 
     private final QueryAppender<User, FindUserCriteria> queryAppender;
 
     private String entityType;
 
     @Inject
-    UserServiceImpl(final StroomEntityManager entityManager, final PasswordEncoder passwordEncoder,
-                    @Value("#{propertyConfigurer.getProperty('stroom.developmentMode')}") final boolean neverExpire) {
+    UserServiceImpl(final StroomEntityManager entityManager,
+                    final PasswordEncoder passwordEncoder,
+                    @Value("#{propertyConfigurer.getProperty('stroom.developmentMode')}") final boolean neverExpire,
+                    final DocumentPermissionService documentPermissionService) {
         this.entityManager = entityManager;
         this.passwordEncoder = passwordEncoder;
         this.neverExpire = neverExpire;
+        this.documentPermissionService = documentPermissionService;
 
         this.queryAppender = createQueryAppender(entityManager);
         this.entityServiceHelper = new EntityServiceHelper<>(entityManager, getEntityClass(), queryAppender);
@@ -188,6 +192,7 @@ public class UserServiceImpl implements UserService {
         return null;
     }
 
+    @Insecure
     @Override
     public List<UserRef> findUsersInGroup(final UserRef userGroup) {
         final SQLBuilder sql = new SQLBuilder();
@@ -217,6 +222,7 @@ public class UserServiceImpl implements UserService {
         return toRefList(entityManager.executeNativeQueryResultList(sql, User.class));
     }
 
+    @Insecure
     @Override
     public List<UserRef> findGroupsForUser(final UserRef user) {
         final SQLBuilder sql = new SQLBuilder();
@@ -349,7 +355,18 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Boolean delete(final User entity) throws RuntimeException {
-        return entityServiceHelper.delete(entity);
+        final Boolean success =  entityServiceHelper.delete(entity);
+
+        // Delete any document permissions associated with this user.
+        try {
+            if (documentPermissionService != null && Boolean.TRUE.equals(success)) {
+                documentPermissionService.clearUserPermissions(UserRef.create(entity));
+            }
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+
+        return success;
     }
 
     private List<UserRef> toRefList(final List<User> list) {

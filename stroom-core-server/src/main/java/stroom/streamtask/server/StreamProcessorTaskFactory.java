@@ -16,17 +16,16 @@
 
 package stroom.streamtask.server;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import javax.annotation.Resource;
-
 import stroom.jobsystem.server.DistributedTaskFactory;
 import stroom.jobsystem.server.DistributedTaskFactoryBean;
 import stroom.node.shared.Node;
 import stroom.streamtask.shared.StreamTask;
 import stroom.util.shared.VoidResult;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @DistributedTaskFactoryBean(jobName = StreamProcessorTask.JOB_NAME, description = "Job to process streams matching stream processor filters with their associated pipelines")
 public class StreamProcessorTaskFactory implements DistributedTaskFactory<StreamProcessorTask, VoidResult> {

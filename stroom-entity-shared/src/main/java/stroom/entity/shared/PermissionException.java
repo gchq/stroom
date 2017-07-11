@@ -30,7 +30,7 @@ public class PermissionException extends EntityServiceException {
     }
 
     public PermissionException(final String securedType, final String name, final String methodName,
-            final String message) {
+                               final String message) {
         super(message, null, false);
         if (securedType != null || name != null || methodName != null) {
             setDetail(ModelStringUtil.toDisplayValue(securedType) + (name == null ? "" : " - " + name)
@@ -39,7 +39,7 @@ public class PermissionException extends EntityServiceException {
     }
 
     public static PermissionException createLoginRequiredException(final String name,
-            final String methodName) {
+                                                                   final String methodName) {
         return new PermissionException(null, name, methodName, "User must be logged in to call service");
     }
 
@@ -48,12 +48,6 @@ public class PermissionException extends EntityServiceException {
         return new PermissionException(null, permission, methodName,
                 "User does not have the required permission (" + permission + ")");
     }
-
-//    public static PermissionException createDocumentTypePermissionRequiredException(final String type, final String permission,
-//                                                                               final String methodName) {
-//        return new PermissionException(type, permission, methodName,
-//                "User does not have the required permission (" + permission + ") for document type: " + type);
-//    }
 
     public static PermissionException createDocumentPermissionRequiredException(final Document document, final String permission,
                                                                                 final String methodName) {

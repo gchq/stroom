@@ -17,7 +17,6 @@
 package stroom.refdata;
 
 import org.xml.sax.SAXException;
-
 import stroom.xml.event.EventList;
 import stroom.xml.event.EventListBuilder;
 import stroom.xml.event.EventListBuilderFactory;

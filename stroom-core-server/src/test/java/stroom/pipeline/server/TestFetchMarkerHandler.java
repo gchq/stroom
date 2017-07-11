@@ -26,6 +26,7 @@ import stroom.util.shared.Summary;
 import stroom.util.test.StroomUnitTest;
 
 import java.io.File;
+import java.io.StringReader;
 import java.util.List;
 
 public class TestFetchMarkerHandler extends StroomUnitTest {
@@ -48,7 +49,7 @@ public class TestFetchMarkerHandler extends StroomUnitTest {
         final String string = StreamUtil.fileToString(inFile);
 
         final MarkerListCreator fetchMarkerHandler = new MarkerListCreator();
-        final List<Marker> markersList = fetchMarkerHandler.createFullList(string, expanded);
+        final List<Marker> markersList = fetchMarkerHandler.createFullList(new StringReader(string), expanded);
 
         Assert.assertEquals(expectedSize, markersList.size());
 

@@ -16,8 +16,7 @@
 
 package stroom.entity.server.util;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import stroom.util.io.StreamUtil;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
@@ -28,8 +27,8 @@ import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
-
-import stroom.util.io.StreamUtil;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 
 public final class XMLMarshallerUtil {
     private XMLMarshallerUtil() {

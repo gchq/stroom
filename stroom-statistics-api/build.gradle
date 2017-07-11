@@ -1,3 +1,7 @@
 dependencies {
     compile project(':stroom-entity-shared')
+    compile project(':stroom-util-shared')
+
+    compile libs.guava
+    compile libs.slf4j_api
 }

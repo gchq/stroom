@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.Test;
-import stroom.query.api.SearchRequest;
+import stroom.query.api.v1.SearchRequest;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;

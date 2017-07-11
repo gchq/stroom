@@ -16,18 +16,19 @@
 
 package stroom.resource.server;
 
-import java.io.File;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.springframework.stereotype.Component;
-
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.ResourceKey;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomShutdown;
 import stroom.util.spring.StroomStartup;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Simple Store that gives you 1 hour to use your temp file and then it deletes
@@ -79,12 +80,12 @@ public class ResourceStoreImpl implements ResourceStore {
     }
 
     @Override
-    public synchronized File getTempFile(final ResourceKey resourceKey) {
+    public synchronized Path getTempFile(final ResourceKey resourceKey) {
         // File gone !
         if (!currentFiles.contains(resourceKey) && !oldFiles.contains(resourceKey)) {
             return null;
         }
-        return new File(resourceKey.getKey());
+        return Paths.get(resourceKey.getKey());
     }
 
     @StroomShutdown

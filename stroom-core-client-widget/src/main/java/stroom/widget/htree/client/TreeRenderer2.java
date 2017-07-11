@@ -16,11 +16,11 @@
 
 package stroom.widget.htree.client;
 
-import java.util.List;
-
 import stroom.widget.htree.client.treelayout.Bounds;
 import stroom.widget.htree.client.treelayout.TreeForTreeLayout;
 import stroom.widget.htree.client.treelayout.TreeLayout;
+
+import java.util.List;
 
 public class TreeRenderer2<T> {
     public static final String SHADOW_LAYER = "shadow";

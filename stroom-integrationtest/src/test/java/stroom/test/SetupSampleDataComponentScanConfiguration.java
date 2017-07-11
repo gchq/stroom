@@ -35,8 +35,6 @@ import stroom.entity.server.MockDocumentEntityService;
 import stroom.entity.server.MockEntityService;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.feed.server.MockFeedService;
-import stroom.importexport.server.MockImportExportSerializer;
-import stroom.importexport.server.MockImportExportService;
 import stroom.index.server.MockIndexService;
 import stroom.index.server.MockIndexShardService;
 import stroom.index.server.MockIndexShardWriter;
@@ -64,7 +62,6 @@ import stroom.resource.server.MockResourceStore;
 import stroom.security.server.MockFolderService;
 import stroom.security.server.MockUserService;
 import stroom.statistic.server.MockMetaDataStatistic;
-import stroom.statistics.server.MockStatisticEventStoreFactory;
 import stroom.streamstore.server.MockStreamStore;
 import stroom.streamstore.server.MockStreamTypeService;
 import stroom.streamtask.server.MockStreamProcessorFilterService;
@@ -101,8 +98,6 @@ import stroom.xmlschema.server.MockXMLSchemaService;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockHeaderMapFactory.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockHttpServletRequest.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockHttpServletResponse.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockImportExportSerializer.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockImportExportService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockIndexService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockIndexShardWriterCache.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockIndexShardService.class),
@@ -120,7 +115,6 @@ import stroom.xmlschema.server.MockXMLSchemaService;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockRecordCountService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockResourceStore.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockScheduleService.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockStatisticEventStoreFactory.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockStreamProcessorFilterService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockStreamProcessorService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockStreamStore.class),

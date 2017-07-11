@@ -32,11 +32,11 @@ public class ClientProperties implements SharedObject {
     public static final String UP_DATE = "upDate";
 
     // TODO : Make maintenance message get served on heartbeat.
-    public static final String MAINTENANCE_MESSAGE = "stroom.maintenanceMessage";
+    public static final String MAINTENANCE_MESSAGE = "stroom.maintenance.message";
     public static final String MAX_RESULTS = "stroom.search.maxResults";
     public static final String PROCESS_TIME_LIMIT = "stroom.search.process.defaultTimeLimit";
     public static final String PROCESS_RECORD_LIMIT = "stroom.search.process.defaultRecordLimit";
-    public static final String STATISTIC_ENGINES = "stroom.stats.common.statisticEngines";
+    public static final String STATISTIC_ENGINES = "stroom.statistics.common.statisticEngines";
     public static final String NAME_PATTERN = "stroom.namePattern";
     public static final String LABEL_COLOURS = "stroom.theme.labelColours";
     public static final String HELP_URL = "stroom.helpUrl";

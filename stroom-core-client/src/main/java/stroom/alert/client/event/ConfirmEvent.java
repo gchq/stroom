@@ -20,7 +20,6 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtml;
-
 import stroom.alert.client.presenter.ConfirmCallback;
 
 public class ConfirmEvent extends CommonAlertEvent<ConfirmEvent.Handler> {

@@ -17,7 +17,6 @@
 package stroom.entity.client.gin;
 
 import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
-
 import stroom.entity.client.presenter.CopyEntityPresenter;
 import stroom.entity.client.presenter.CopyEntityPresenter.CopyEntityProxy;
 import stroom.entity.client.presenter.CopyEntityPresenter.CopyEntityView;

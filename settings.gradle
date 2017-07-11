@@ -21,7 +21,6 @@ include 'stroom-util-shared'
 include 'stroom-entity-shared'
 
 // API projects
-include 'stroom-query-api'
 include 'stroom-security-api'
 include 'stroom-statistics-api'
 
@@ -55,8 +54,6 @@ include 'stroom-remote'
 include 'stroom-util'
 include 'stroom-core-server'
 include 'stroom-pipeline'
-include 'stroom-expression'
-include 'stroom-query-common'
 include 'stroom-security-server'
 include 'stroom-index-server'
 include 'stroom-statistics-server'

@@ -1,59 +1,76 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-  xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:s="urn:import:stroom.main.client.view">
-  <ui:style>
-    .root {
-    	position: absolute;
-    	left: 0px;
-    	top: 0px;
-    	width: 100%;
-    	height: 100%;
-    	overflow: hidden;
-    }
-    
-    .topPanel {
-    	position: absolute;
-    	left: 0px;
-    	top: 0px;
-    	width: 100%;
-    	height: 14px;
-    }
-    
-    .bottomPanel {
-    	position: absolute;
-    	left: 1px;
-    	right: 1px;
-    	top: 14px;
-    	bottom: 1px;
-    	overflow: hidden;
-    }
-    
-    .contentPanel {
-    	width: 100%;
-    	height: 100%;
-    	overflow: hidden;
-    }
-    
-    .spinner {
-    	position: absolute;
-    	top: 2px;
-    	right: 2px;
-    	width: 32px;
-    	height: 32px;
-    	z-index: 1;
-    }
-  </ui:style>
+             xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:s="urn:import:stroom.main.client.view">
+    <ui:style>
+        .max {
+        position: absolute;
+        left: 0px;
+        right: 0px;
+        top: 0px;
+        bottom: 0px;
+        overflow: hidden;
+        }
 
-  <!-- Add a focus panel as the root so we can catch all keyboard events. -->
-  <g:FocusPanel styleName="{style.root}">
-    <g:FlowPanel styleName="{style.root}">
-      <g:SimplePanel styleName="{style.bottomPanel}">
-        <g:ResizeLayoutPanel ui:field="contentPanel"
-          styleName="{style.contentPanel}">
-        </g:ResizeLayoutPanel>
-      </g:SimplePanel>
-      <g:SimplePanel ui:field="topPanel" styleName="{style.topPanel}" />
-      <s:Spinner ui:field="spinner" styleName="spinner {style.spinner}" />
-    </g:FlowPanel>
-  </g:FocusPanel>
+        .banner {
+        position: absolute;
+        left: 0px;
+        right: 0px;
+        top: 0px;
+        height: 20px;
+        overflow: hidden;
+        text-align: center;
+        font-weight: 500;
+        background-color: yellow;
+        border: 1px solid black;
+        padding: 1px;
+        }
+
+        .topPanel {
+        position: absolute;
+        left: 0px;
+        top: 0px;
+        width: 100%;
+        height: 14px;
+        }
+
+        .bottomPanel {
+        position: absolute;
+        left: 1px;
+        right: 1px;
+        top: 14px;
+        bottom: 1px;
+        overflow: hidden;
+        }
+
+        .contentPanel {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        }
+
+        .spinner {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        width: 32px;
+        height: 32px;
+        z-index: 1;
+        }
+    </ui:style>
+
+    <!-- Add a focus panel as the root so we can catch all keyboard events. -->
+    <g:FocusPanel styleName="{style.max}">
+        <g:FlowPanel styleName="{style.max}">
+            <g:SimplePanel ui:field="banner" styleName="{style.banner}"/>
+            <g:FlowPanel ui:field="main" styleName="{style.max}">
+                <g:SimplePanel styleName="{style.bottomPanel}">
+                    <g:ResizeLayoutPanel ui:field="contentPanel"
+                                         styleName="{style.contentPanel}">
+                    </g:ResizeLayoutPanel>
+                </g:SimplePanel>
+                <g:SimplePanel ui:field="topPanel" styleName="{style.topPanel}"/>
+                <s:Spinner ui:field="spinner" styleName="spinner {style.spinner}"/>
+            </g:FlowPanel>
+        </g:FlowPanel>
+    </g:FocusPanel>
 </ui:UiBinder>

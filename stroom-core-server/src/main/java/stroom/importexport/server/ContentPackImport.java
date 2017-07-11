@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;
-import stroom.node.shared.GlobalPropertyService;
 import stroom.util.config.StroomProperties;
 import stroom.util.spring.StroomStartup;
 
@@ -30,8 +29,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SuppressWarnings("unused")
 @Component
@@ -40,20 +43,18 @@ public class ContentPackImport {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContentPackImport.class);
 
     static final String AUTO_IMPORT_ENABLED_PROP_KEY = "stroom.contentPackImportEnabled";
-    static final String CONTENT_PACK_IMPORT_DIR = "contentPackImport";
+    static final Path CONTENT_PACK_IMPORT_DIR = Paths.get("contentPackImport");
     static final String FAILED_DIR = "failed";
     static final String IMPORTED_DIR = "imported";
 
     private ImportExportService importExportService;
     private StroomPropertyService stroomPropertyService;
-    private GlobalPropertyService globalPropertyService;
 
     @SuppressWarnings("unused")
     @Inject
-    ContentPackImport(ImportExportService importExportService, StroomPropertyService stroomPropertyService, GlobalPropertyService globalPropertyService) {
+    ContentPackImport(ImportExportService importExportService, StroomPropertyService stroomPropertyService) {
         this.importExportService = importExportService;
         this.stroomPropertyService = stroomPropertyService;
-        this.globalPropertyService = globalPropertyService;
     }
 
     //Startup with very low priority to ensure it starts after everything else
@@ -70,57 +71,47 @@ public class ContentPackImport {
     }
 
     private void doImport() {
+        final List<Path> contentPacksDirs = getContentPackBaseDirs();
+        doImport(contentPacksDirs);
+    }
+
+    private void doImport(final List<Path> contentPacksDirs) {
         LOGGER.info("ContentPackImport started");
 
-        final Optional<Path> optContentPacksDir = getContentPackBaseDir();
+        AtomicInteger successCounter = new AtomicInteger();
+        AtomicInteger failedCounter = new AtomicInteger();
 
-        if (optContentPacksDir.isPresent()) {
-            final Path contentPacksDir = optContentPacksDir.get();
+        contentPacksDirs.forEach(contentPacksDir -> {
             try {
                 if (!Files.isDirectory(contentPacksDir)) {
-                    LOGGER.error("Content packs directory {} doesn't exist", contentPacksDir.toAbsolutePath());
-                    return;
+                    LOGGER.warn("Content packs directory {} doesn't exist", contentPacksDir.toAbsolutePath());
+                } else {
+
+                    LOGGER.info("Processing content packs in directory {}", contentPacksDir.toAbsolutePath().toString());
+
+                    try (final Stream<Path> stream = Files.list(contentPacksDir)) {
+                        stream.filter(path -> path.toString().endsWith("zip"))
+                                .sorted()
+                                .forEachOrdered((contentPackPath) -> {
+                                    boolean result = importContentPack(contentPacksDir, contentPackPath);
+                                    if (result) {
+                                        successCounter.incrementAndGet();
+                                    } else {
+                                        failedCounter.incrementAndGet();
+                                    }
+                                });
+                    }
                 }
-
-                Path importedDir = Files.createDirectories(contentPacksDir.resolve(IMPORTED_DIR));
-                Path failedDir = Files.createDirectories(contentPacksDir.resolve(FAILED_DIR));
-
-                AtomicInteger successCounter = new AtomicInteger();
-                AtomicInteger failedCounter = new AtomicInteger();
-
-                Files.list(contentPacksDir)
-                        .filter(path -> path.toString().endsWith("zip"))
-                        .sorted()
-                        .forEachOrdered((contentPackPath) -> {
-                            boolean result = importContentPack(contentPacksDir, contentPackPath);
-                            if (result) {
-                                successCounter.incrementAndGet();
-                            } else {
-                                failedCounter.incrementAndGet();
-                            }
-                            Path destDir = result ? importedDir : failedDir;
-                            Path filename = contentPackPath.getFileName();
-                            Path destPath = destDir.resolve(filename);
-                            try {
-                                Files.move(contentPackPath, destPath, StandardCopyOption.REPLACE_EXISTING);
-                            } catch (IOException e) {
-                                throw new RuntimeException(String.format("Error moving file from %s to %s",
-                                        contentPackPath.toAbsolutePath(), destPath.toAbsolutePath()));
-                            }
-                        });
-
-                LOGGER.info("Content pack import counts - success: {}, failed: {}",
-                        successCounter.get(),
-                        failedCounter.get());
-
             } catch (IOException e) {
                 LOGGER.error("Unable to read content pack files from {}", contentPacksDir.toAbsolutePath(), e);
             }
 
-            LOGGER.info("ContentPackImport finished");
-        } else {
-            LOGGER.error("Unable to proceed with import, no base directory found");
-        }
+        });
+        LOGGER.info("Content pack import counts - success: {}, failed: {}",
+                successCounter.get(),
+                failedCounter.get());
+
+        LOGGER.info("ContentPackImport finished");
     }
 
     private boolean importContentPack(Path parentPath, Path contentPack) {
@@ -130,34 +121,55 @@ public class ContentPackImport {
             //It is possible to import a content pack (or packs) with missing dependencies
             //so the onus is on the person putting the file in the import directory to
             //ensure the packs they import are complete
-            importExportService.performImportWithoutConfirmation(contentPack.toFile());
+            importExportService.performImportWithoutConfirmation(contentPack);
+            moveFile(contentPack, contentPack.getParent().resolve(IMPORTED_DIR));
 
             LOGGER.info("Completed import of content pack {}", contentPack.toAbsolutePath());
 
         } catch (Exception e) {
             LOGGER.error("Error importing content pack {}", contentPack.toAbsolutePath(), e);
+            moveFile(contentPack, contentPack.getParent().resolve(FAILED_DIR));
             return false;
         }
         return true;
     }
 
-    private Optional<Path> getContentPackBaseDir() {
-        Optional<Path> contentPackDir;
-
-        String catalinaBase = System.getProperty("catalina.home");
-        String userHome = System.getProperty("user.home");
-
-        if (catalinaBase != null) {
-            //running inside tomcat so use a subdir in there
-            contentPackDir = Optional.of(Paths.get(catalinaBase, "..", CONTENT_PACK_IMPORT_DIR));
-        } else if (userHome != null) {
-            //not in tomcat so use the personal user conf dir as a base
-            contentPackDir = Optional.of(Paths.get(userHome, StroomProperties.USER_CONF_DIR, CONTENT_PACK_IMPORT_DIR));
-        } else {
-            contentPackDir = Optional.empty();
+    private void moveFile(Path contentPack, Path destDir) {
+        Path destPath = destDir.resolve(contentPack.getFileName());
+        try {
+            //make sure the directory exists
+            Files.createDirectories(destDir);
+            Files.move(contentPack, destPath, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new RuntimeException(String.format("Error moving file from %s to %s",
+                    contentPack.toAbsolutePath(), destPath.toAbsolutePath()));
         }
-        return contentPackDir;
     }
 
+    private List<Path> getContentPackBaseDirs() {
+        return Arrays.asList(getApplicationJarDir(), getUserHomeDir()).stream()
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(path -> path.resolve(CONTENT_PACK_IMPORT_DIR))
+                .collect(Collectors.toList());
+    }
+
+    private Optional<Path> getUserHomeDir() {
+        return Optional.ofNullable(System.getProperty("user.home"))
+                .flatMap(userHome -> Optional.of(Paths.get(userHome, StroomProperties.USER_CONF_DIR)));
+    }
+
+
+    private Optional<Path> getApplicationJarDir() {
+        try {
+            //This isn't ideal when running in junit, as it will be the location of the junit class
+            //however it won't find any zips in here so will carry on regardless
+            String codeSourceLocation = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
+            return Optional.of(Paths.get(codeSourceLocation).getParent());
+        } catch (Exception e) {
+            LOGGER.warn("Unable to determine application jar directory due to: {}", e.getMessage());
+            return Optional.empty();
+        }
+    }
 
 }

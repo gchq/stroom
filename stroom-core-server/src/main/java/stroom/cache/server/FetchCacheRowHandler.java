@@ -31,7 +31,6 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 @TaskHandlerBean(task = FetchCacheRowAction.class)
@@ -52,12 +51,7 @@ public class FetchCacheRowHandler extends AbstractTaskHandler<FetchCacheRowActio
         }
 
         // Sort the cache names.
-        Collections.sort(values, new Comparator<CacheRow>() {
-            @Override
-            public int compare(final CacheRow o1, final CacheRow o2) {
-                return o1.getCacheName().compareTo(o2.getCacheName());
-            }
-        });
+        Collections.sort(values, (o1, o2) -> o1.getCacheName().compareTo(o2.getCacheName()));
 
         return BaseResultList.createUnboundedList(values);
     }

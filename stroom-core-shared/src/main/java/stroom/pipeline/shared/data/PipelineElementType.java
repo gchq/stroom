@@ -16,13 +16,13 @@
 
 package stroom.pipeline.shared.data;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 import stroom.util.shared.HasDisplayValue;
 import stroom.util.shared.HasType;
 import stroom.util.shared.SharedObject;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class PipelineElementType implements Comparable<PipelineElementType>, HasType, SharedObject {
     public enum Category implements HasDisplayValue {

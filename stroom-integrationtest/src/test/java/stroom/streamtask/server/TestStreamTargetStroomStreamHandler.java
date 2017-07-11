@@ -16,18 +16,18 @@
 
 package stroom.streamtask.server;
 
+import org.junit.Assert;
+import org.junit.Test;
 import stroom.AbstractProcessIntegrationTest;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.streamstore.server.MockStreamStore;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.StreamType;
+import stroom.util.zip.HeaderMap;
 import stroom.util.zip.StroomHeaderArguments;
 import stroom.util.zip.StroomZipEntry;
 import stroom.util.zip.StroomZipFileType;
-import stroom.util.zip.HeaderMap;
-import org.junit.Assert;
-import org.junit.Test;
 
 import javax.annotation.Resource;
 import java.io.IOException;

@@ -20,9 +20,9 @@ public interface SecurityContext {
     /**
      * Temporarily set a different user to perform an action.
      *
-     * @param name The user identifier to push.
+     * @param token The user token to push.
      */
-    void pushUser(String name);
+    void pushUser(String token);
 
     /**
      * Remove a temporary user from the stack.
@@ -80,7 +80,7 @@ public interface SecurityContext {
      * id.
      *
      * @param documentType The type of document.
-     * @param documentId   The id of the document.
+     * @param documentUuid   The id of the document.
      * @param permission   The permission we are checking for.
      * @return True if the user associated with the security context has the
      * requested permission.

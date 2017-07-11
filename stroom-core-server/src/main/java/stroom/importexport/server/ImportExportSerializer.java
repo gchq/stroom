@@ -16,19 +16,16 @@
 
 package stroom.importexport.server;
 
-import java.io.File;
+import stroom.entity.shared.DocRefs;
+import stroom.entity.shared.ImportState;
+import stroom.entity.shared.ImportState.ImportMode;
+import stroom.util.shared.Message;
+
+import java.nio.file.Path;
 import java.util.List;
 
-import stroom.entity.shared.EntityActionConfirmation;
-import stroom.entity.shared.FindFolderCriteria;
-
 public interface ImportExportSerializer {
-    enum ImportMode {
-        CREATE_CONFIRMATION, ACTION_CONFIRMATION, IGNORE_CONFIRMATION
-    }
+    void read(Path dir, List<ImportState> importStateList, ImportMode importMode);
 
-    void read(File dir, List<EntityActionConfirmation> entityActionConfirmationList, ImportMode importMode);
-
-    void write(File dir, FindFolderCriteria findFolderCriteria, boolean omitAuditFields, boolean ignoreErrors,
-            List<String> messageList);
+    void write(Path dir, DocRefs docRefs, boolean omitAuditFields, List<Message> messageList);
 }

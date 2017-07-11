@@ -16,11 +16,10 @@
 
 package stroom.xml.event.np;
 
-import java.io.Serializable;
-
+import net.sf.saxon.om.NamePool;
 import org.xml.sax.Attributes;
 
-import net.sf.saxon.om.NamePool;
+import java.io.Serializable;
 
 public class NPAttributes implements Attributes, Serializable {
     private static final long serialVersionUID = 8341093893787192467L;

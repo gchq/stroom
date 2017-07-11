@@ -16,15 +16,11 @@
 
 package stroom.util;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.XMLFilterImpl;
-
 import stroom.xml.event.Event;
 import stroom.xml.event.simple.Characters;
 import stroom.xml.event.simple.EndDocument;
@@ -37,6 +33,9 @@ import stroom.xml.event.simple.SkippedEntity;
 import stroom.xml.event.simple.StartDocument;
 import stroom.xml.event.simple.StartElement;
 import stroom.xml.event.simple.StartPrefixMapping;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This filter is used to buffer SAX events in memory if required. Having

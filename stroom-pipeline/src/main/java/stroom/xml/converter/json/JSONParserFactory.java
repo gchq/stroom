@@ -16,11 +16,10 @@
 
 package stroom.xml.converter.json;
 
-import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.XMLReader;
-
+import stroom.util.spring.StroomScope;
 import stroom.xml.converter.ParserFactory;
 
 @Component

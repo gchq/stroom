@@ -16,9 +16,6 @@
 
 package stroom.xml.event.np;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
 import net.sf.saxon.event.ReceiverOptions;
@@ -28,6 +25,9 @@ import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.tree.tiny.CharSlice;
 import net.sf.saxon.type.BuiltInAtomicType;
 import net.sf.saxon.type.Untyped;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class EventListConsumer {
     private static final String EMPTY = "";

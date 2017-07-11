@@ -18,12 +18,6 @@ package stroom.statistics.client.common.view;
 
 import java.util.List;
 
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.TextArea;
@@ -36,8 +30,8 @@ import stroom.item.client.ItemListBox;
 import stroom.item.client.StringListBox;
 import stroom.statistics.client.common.presenter.StatisticsDataSourceSettingsPresenter.StatisticsDataSourceSettingsView;
 import stroom.statistics.client.common.presenter.StatisticsDataSourceSettingsUiHandlers;
-import stroom.statistics.shared.EventStoreTimeIntervalEnum;
-import stroom.statistics.shared.StatisticRollUpType;
+import stroom.statistics.shared.common.EventStoreTimeIntervalEnum;
+import stroom.statistics.shared.common.StatisticRollUpType;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
 import stroom.widget.tickbox.client.view.TickBox;
@@ -51,8 +45,6 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
 
     @UiField
     TextArea description;
-    @UiField
-    StringListBox engineName;
 
     @UiField(provided = true)
     ItemListBox<StatisticType> statisticType;
@@ -83,9 +75,6 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
         precision.addItem(EventStoreTimeIntervalEnum.HOUR);
         precision.addItem(EventStoreTimeIntervalEnum.DAY);
 
-        engineName = new StringListBox();
-        engineName.addItem(StatisticStoreEntity.NOT_SET);
-
         enabled = new TickBox(TickBoxState.UNTICK, null);
         // default to not ticked so Stroom doesn't start recording stats while the
         // enity is being built up, i.e. fields
@@ -98,48 +87,27 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
         // the ms equivelent is one of the values
         // from EventStoreTimeItervalEnum
 
-        statisticType.addSelectionHandler(new SelectionHandler<StatisticType>() {
-            @Override
-            public void onSelection(final SelectionEvent<StatisticType> event) {
-                if (getUiHandlers() != null) {
-                    getUiHandlers().onChange();
-                }
+        statisticType.addSelectionHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onChange();
             }
         });
 
-        rollUpType.addSelectionHandler(new SelectionHandler<StatisticRollUpType>() {
-            @Override
-            public void onSelection(final SelectionEvent<StatisticRollUpType> event) {
-                if (getUiHandlers() != null) {
-                    getUiHandlers().onChange();
-                }
+        rollUpType.addSelectionHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onChange();
             }
         });
 
-        precision.addSelectionHandler(new SelectionHandler<EventStoreTimeIntervalEnum>() {
-            @Override
-            public void onSelection(final SelectionEvent<EventStoreTimeIntervalEnum> event) {
-                if (getUiHandlers() != null) {
-                    getUiHandlers().onChange();
-                }
+        precision.addSelectionHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onChange();
             }
         });
 
-        engineName.addChangeHandler(new ChangeHandler() {
-            @Override
-            public void onChange(final ChangeEvent event) {
-                if (getUiHandlers() != null) {
-                    getUiHandlers().onChange();
-                }
-            }
-        });
-
-        enabled.addValueChangeHandler(new ValueChangeHandler<TickBoxState>() {
-            @Override
-            public void onValueChange(final ValueChangeEvent<TickBoxState> event) {
-                if (getUiHandlers() != null) {
-                    getUiHandlers().onChange();
-                }
+        enabled.addValueChangeHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onChange();
             }
         });
     }
@@ -152,11 +120,6 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
     @Override
     public TextArea getDescription() {
         return description;
-    }
-
-    @Override
-    public String getEngineName() {
-        return engineName.getSelected();
     }
 
     @Override
@@ -174,15 +137,6 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
         this.statisticType.setSelectedItem(statisticType);
     }
 
-    @Override
-    public void setEngineName(final String engine) {
-        this.engineName.setSelected(engine);
-    }
-
-    @Override
-    public void setEngineNames(final List<String> names) {
-        this.engineName.addItems(names);
-    }
 
     @Override
     public EventStoreTimeIntervalEnum getPrecision() {

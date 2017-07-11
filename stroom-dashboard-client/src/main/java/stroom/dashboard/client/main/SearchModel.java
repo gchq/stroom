@@ -24,11 +24,11 @@ import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.SearchResponse;
-import stroom.query.api.DocRef;
-import stroom.query.api.ExpressionBuilder;
-import stroom.query.api.ExpressionItem;
-import stroom.query.api.ExpressionOperator;
-import stroom.query.api.ExpressionTerm;
+import stroom.query.api.v1.DocRef;
+import stroom.query.api.v1.ExpressionBuilder;
+import stroom.query.api.v1.ExpressionItem;
+import stroom.query.api.v1.ExpressionOperator;
+import stroom.query.api.v1.ExpressionTerm;
 import stroom.util.client.KVMapUtil;
 
 import java.util.HashMap;
@@ -40,7 +40,7 @@ public class SearchModel {
     private final QueryPresenter queryPresenter;
     private final IndexLoader indexLoader;
     private final TimeZones timeZones;
-    private final Map<String, ResultComponent> componentMap = new HashMap<>();
+    private Map<String, ResultComponent> componentMap = new HashMap<>();
     private Map<String, String> currentParameterMap;
     private ExpressionOperator currentExpression;
     private SearchResponse currentResult;
@@ -320,11 +320,17 @@ public class SearchModel {
     }
 
     public void addComponent(final String componentId, final ResultComponent resultComponent) {
+        // Create and assign a new map here to prevent concurrent modification exceptions.
+        final Map<String, ResultComponent> componentMap = new HashMap<>(this.componentMap);
         componentMap.put(componentId, resultComponent);
+        this.componentMap = componentMap;
     }
 
     public void removeComponent(final String componentId) {
+        // Create and assign a new map here to prevent concurrent modification exceptions.
+        final Map<String, ResultComponent> componentMap = new HashMap<>(this.componentMap);
         componentMap.remove(componentId);
+        this.componentMap = componentMap;
     }
 
     public enum Mode {

@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.event.EntityEvent;
@@ -55,6 +56,7 @@ import java.util.List;
 import java.util.Set;
 
 @Component
+@Primary
 @Transactional
 public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactoryAware {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomEntityManagerImpl.class);
@@ -139,7 +141,7 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
 
         if (performChecksAndEvents) {
             final EntityEventBus eventBus = eventBusProvider.get();
-            EntityEvent.fire(eventBus, DocRefUtil.create(entity), EntityAction.ADD);
+            EntityEvent.fire(eventBus, DocRefUtil.create(entity), EntityAction.CREATE);
         }
 
         return entity;
@@ -300,12 +302,18 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
     @SuppressWarnings("rawtypes")
     @Override
     public List executeQueryResultList(final SQLBuilder sql) {
-        return executeQueryResultList(sql, null);
+        return executeQueryResultList(sql, null, false);
     }
 
     @SuppressWarnings("rawtypes")
     @Override
     public List executeQueryResultList(final SQLBuilder sql, final BaseCriteria criteria) {
+        return executeQueryResultList(sql, criteria, false);
+    }
+
+    @SuppressWarnings("rawtypes")
+    @Override
+    public List executeQueryResultList(final SQLBuilder sql, final BaseCriteria criteria, final boolean allowCaching) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         List rtn;
 

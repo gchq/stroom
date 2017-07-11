@@ -19,7 +19,6 @@ package stroom.xml.event.np;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-
 import stroom.xml.event.EventList;
 import stroom.xml.event.EventListBuilder;
 

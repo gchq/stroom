@@ -16,11 +16,11 @@
 
 package stroom.streamtask.server;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class InclusiveRanges {
     public static class InclusiveRange {

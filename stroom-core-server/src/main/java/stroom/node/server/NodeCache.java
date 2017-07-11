@@ -16,15 +16,14 @@
 
 package stroom.node.server;
 
-import javax.annotation.Resource;
-
 import org.springframework.stereotype.Component;
-
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventHandler;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityAction;
 import stroom.node.shared.Node;
+
+import javax.annotation.Resource;
 
 @EntityEventHandler(type = Node.ENTITY_TYPE, action = { EntityAction.UPDATE, EntityAction.DELETE })
 @Component

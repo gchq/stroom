@@ -16,16 +16,8 @@
 
 package stroom.pipeline.server.task;
 
-import java.io.File;
-import java.io.OutputStream;
-import java.util.List;
-
-import javax.annotation.Resource;
-
-import stroom.test.StroomProcessTestFileUtil;
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.AbstractProcessIntegrationTest;
 import stroom.CommonTranslationTest;
 import stroom.streamstore.server.MockStreamStore;
@@ -33,7 +25,13 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.server.StreamProcessorTaskExecutor;
 import stroom.test.ComparisonHelper;
+import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.shared.Severity;
+
+import javax.annotation.Resource;
+import java.io.File;
+import java.io.OutputStream;
+import java.util.List;
 
 public class TestTranslationTask extends AbstractProcessIntegrationTest {
     private static final int N3 = 3;

@@ -16,10 +16,10 @@
 
 package stroom.resource.server;
 
+import stroom.util.io.WrappedInputStream;
+
 import java.io.IOException;
 import java.io.InputStream;
-
-import stroom.util.io.WrappedInputStream;
 
 public class BOMRemovalInputStream extends WrappedInputStream {
     private static final String UTF_8 = "UTF-8";

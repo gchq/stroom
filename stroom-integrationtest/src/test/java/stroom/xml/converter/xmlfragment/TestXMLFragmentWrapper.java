@@ -16,19 +16,17 @@
 
 package stroom.xml.converter.xmlfragment;
 
-import java.io.ByteArrayInputStream;
-
-import javax.annotation.Resource;
-
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.AbstractProcessIntegrationTest;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.task.TaskScopeContextHolder;
 import stroom.xml.F2XTestUtil;
 import stroom.xml.XMLValidator;
+
+import javax.annotation.Resource;
+import java.io.ByteArrayInputStream;
 
 public class TestXMLFragmentWrapper extends AbstractProcessIntegrationTest {
     @Resource

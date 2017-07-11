@@ -17,7 +17,6 @@
 package stroom.query.client;
 
 import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
-
 import stroom.query.client.ExpressionTreePresenter.ExpressionTreeView;
 
 public class QueryModule extends AbstractPresenterModule {

@@ -17,7 +17,6 @@
 package stroom.importexport.client.gin;
 
 import com.google.gwt.inject.client.AsyncProvider;
-
 import stroom.importexport.client.ExportConfigPlugin;
 import stroom.importexport.client.ImportConfigPlugin;
 import stroom.importexport.client.presenter.ExportConfigPresenter;

@@ -20,6 +20,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.CssResource;
@@ -34,10 +35,8 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
 import stroom.explorer.client.view.ExplorerCell;
 import stroom.explorer.shared.ExplorerData;
-import stroom.explorer.shared.SimpleExplorerItem;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.HasNodeState;
-import stroom.util.shared.HasNodeState.NodeState;
 import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.util.client.DoubleSelectTest;
 import stroom.widget.util.client.MultiSelectEvent;
@@ -49,9 +48,10 @@ import stroom.widget.util.client.SelectionType;
 import java.util.List;
 import java.util.Set;
 
-public class ExplorerTree extends AbstractExporerTree {
+public class ExplorerTree extends AbstractExplorerTree {
     private final ExplorerTreeModel treeModel;
     private final MultiSelectionModel<ExplorerData> selectionModel;
+    private final ScrollPanel scrollPanel;
     private final CellTable<ExplorerData> cellTable;
     private final DoubleSelectTest doubleClickTest = new DoubleSelectTest();
     private final boolean allowMultiSelect;
@@ -103,7 +103,7 @@ public class ExplorerTree extends AbstractExporerTree {
 
         treeModel = new ExplorerTreeModel(this, spinnerSmall, dispatcher);
 
-        final ScrollPanel scrollPanel = new ScrollPanel();
+        scrollPanel = new ScrollPanel();
         scrollPanel.setWidth("100%");
         scrollPanel.setHeight("100%");
         scrollPanel.setWidget(cellTable);
@@ -163,20 +163,7 @@ public class ExplorerTree extends AbstractExporerTree {
     }
 
     private void setOpenState(boolean open) {
-        final ExplorerData selected = selectionModel.getSelected();
-        if (selected != null) {
-            if (open) {
-                if (!treeModel.getOpenItems().contains(selected)) {
-                    treeModel.toggleOpenState(selected);
-                    refresh();
-                }
-            } else {
-                if (treeModel.getOpenItems().contains(selected)) {
-                    treeModel.toggleOpenState(selected);
-                    refresh();
-                }
-            }
-        }
+        treeModel.setItemOpen(selectionModel.getSelected(), open);
     }
 
     private void moveSelection(int plus) {
@@ -220,6 +207,19 @@ public class ExplorerTree extends AbstractExporerTree {
     protected void setInitialSelectedItem(final ExplorerData selection) {
         selectionModel.clear();
         setSelectedItem(selection);
+        scrollSelectedIntoView();
+    }
+
+    private void scrollSelectedIntoView() {
+        final ExplorerData selected = selectionModel.getSelected();
+        if (selected != null) {
+            final int index = getItemIndex(selected);
+            if (index > 0) {
+                final TableRowElement tableRowElement = cellTable.getRowElement(index);
+                tableRowElement.scrollIntoView();
+                scrollPanel.scrollToLeft();
+            }
+        }
     }
 
     protected void setSelectedItem(ExplorerData selection) {
@@ -330,7 +330,6 @@ public class ExplorerTree extends AbstractExporerTree {
                                 super.onCellPreview(event);
 
                                 treeModel.toggleOpenState(selectedItem);
-                                refresh();
                             } else {
                                 final boolean doubleClick = doubleClickTest.test(selectedItem);
                                 doSelect(selectedItem, new SelectionType(doubleClick, false, allowMultiSelect, event.getNativeEvent().getCtrlKey(), event.getNativeEvent().getShiftKey()));

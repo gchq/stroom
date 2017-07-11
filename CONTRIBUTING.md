@@ -14,7 +14,7 @@ We love pull requests and we want to make it as easy as possible to contribute c
 * Make your changes and test. Make sure you include new or updated tests if you need to.
 * Run a full build from the project root: `./gradlew clean build`.
 
-## Sumitting changes
+## Submitting changes
 * Sign the [GCHQ Contributor Licence Agreement](https://github.com/gchq/Gaffer/wiki/GCHQ-OSS-Contributor-License-Agreement-V1.0) 
 * Push your changes to your fork.
 * Submit a [pull request](https://github.com/gchq/stroom/pulls).

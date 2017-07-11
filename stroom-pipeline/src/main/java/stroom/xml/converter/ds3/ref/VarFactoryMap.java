@@ -16,13 +16,13 @@
 
 package stroom.xml.converter.ds3.ref;
 
+import stroom.xml.converter.ds3.NodeFactory;
+import stroom.xml.converter.ds3.VarFactory;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import stroom.xml.converter.ds3.NodeFactory;
-import stroom.xml.converter.ds3.VarFactory;
 
 public class VarFactoryMap {
     private Set<String> uniqueIdSet;

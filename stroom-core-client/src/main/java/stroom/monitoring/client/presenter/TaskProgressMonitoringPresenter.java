@@ -35,7 +35,6 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.entity.shared.BaseCriteria.OrderByDirection;
@@ -50,7 +49,6 @@ import stroom.task.shared.TerminateTaskProgressAction;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.TaskId;
-import stroom.util.shared.VoidResult;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.customdatebox.client.ClientDateUtil;
@@ -116,14 +114,14 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
 
         // Select Column
         final Column<TaskProgress, TickBoxState> column = new Column<TaskProgress, TickBoxState>(
-                new TickBoxCell(tickBoxAppearance, false, false)) {
+                TickBoxCell.create(tickBoxAppearance, false, false)) {
             @Override
             public TickBoxState getValue(final TaskProgress object) {
                 return TickBoxState.fromBoolean(selectedTaskProgress.contains(object));
             }
         };
 
-        getView().addColumn(column, "", 15);
+        getView().addColumn(column, "", ColumnSizeConstants.CHECKBOX_COL);
 
         // Expander column.
         final Column<TaskProgress, Expander> expanderColumn = new Column<TaskProgress, Expander>(new ExpanderCell()) {
@@ -146,7 +144,7 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
                 TooltipUtil.addHeading(html, "Task");
                 TooltipUtil.addRowData(html, "Name", row.getTaskName());
                 TooltipUtil.addRowData(html, "User", row.getUserName());
-                TooltipUtil.addRowData(html, "Submit Time", ClientDateUtil.createDateTimeString(row.getSubmitTimeMs()));
+                TooltipUtil.addRowData(html, "Submit Time", ClientDateUtil.toISOString(row.getSubmitTimeMs()));
                 TooltipUtil.addRowData(html, "Age", ModelStringUtil.formatDurationString(row.getAgeMs()));
                 TooltipUtil.addBreak(html);
                 TooltipUtil.addRowData(html, "Id", row.getId());
@@ -169,7 +167,7 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
                         popupPosition, null);
             }
         };
-        getView().addColumn(furtherInfoColumn, "<br/>", 15);
+        getView().addColumn(furtherInfoColumn, "<br/>", ColumnSizeConstants.GLYPH_COL);
 
         // Add Handlers
         column.setFieldUpdater((index, object, value) -> {
@@ -216,7 +214,7 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
         final Column<TaskProgress, String> submitTimeColumn = new Column<TaskProgress, String>(new TextCell()) {
             @Override
             public String getValue(final TaskProgress value) {
-                return ClientDateUtil.createDateTimeString(value.getSubmitTimeMs());
+                return ClientDateUtil.toISOString(value.getSubmitTimeMs());
             }
         };
         getView().addResizableColumn(submitTimeColumn, "Submit Time", ColumnSizeConstants.DATE_COL);
@@ -228,7 +226,7 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
                 return ModelStringUtil.formatDurationString(value.getAgeMs());
             }
         };
-        getView().addResizableColumn(ageColumn, "Age", 50);
+        getView().addResizableColumn(ageColumn, "Age", ColumnSizeConstants.SMALL_COL);
 
         // Info.
         final Column<TaskProgress, String> infoColumn = new Column<TaskProgress, String>(new TextCell()) {
@@ -241,7 +239,7 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
                 return value.getTaskInfo();
             }
         };
-        getView().addResizableColumn(infoColumn, "Info", 400);
+        getView().addResizableColumn(infoColumn, "Info", 1000);
         getView().addEndColumn(new EndColumn<>());
 
         // Handle use of the expander column.
@@ -296,13 +294,8 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
                 "Terminate: " + taskProgress.getTaskName(), findTaskCriteria, kill);
 
         requestedTerminateTaskProgress.add(taskProgress);
-        dispatcher.execute(action, new AsyncCallbackAdaptor<VoidResult>() {
-        });
+        dispatcher.exec(action);
     }
-
-//    private void setButtonsEnabled() {
-//        terminateButton.setEnabled(selectedTaskProgress.size() > 0);
-//    }
 
     @Override
     public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<Set<String>> handler) {

@@ -16,15 +16,15 @@
 
 package stroom.pipeline.server.errorhandler;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import stroom.util.shared.Indicators;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Implements a SAX error handler for logging all errors to log4j.

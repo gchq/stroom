@@ -28,14 +28,13 @@ import com.google.gwt.user.client.ui.Widget;
 import stroom.entity.client.presenter.HasReadAndWrite;
 import stroom.item.client.StringListBox;
 import stroom.util.client.JSONUtil;
-import stroom.widget.customdatebox.client.CustomDateBox;
+import stroom.widget.customdatebox.client.MyDateBox;
 import stroom.widget.tab.client.presenter.Layer;
 import stroom.widget.tab.client.presenter.LayerContainer;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class DynamicSettingsPane extends Composite implements Layer, HasReadAndWrite<JSONObject> {
@@ -102,14 +101,11 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
                 ctrl.setText(defaultValue);
             }
         } else if ("date".equals(type)) {
-            final CustomDateBox ctrl = createDateBox(id);
+            final MyDateBox ctrl = createDateBox(id);
             widget = ctrl;
 
             if (defaultValue != null) {
-                final Date d = getDate(ctrl, defaultValue);
-                if (d != null) {
-                    ctrl.setValue(d);
-                }
+                ctrl.setValue(defaultValue);
             }
         } else if ("number".equals(type)) {
             final ValueSpinner ctrl = createNumberBox(id);
@@ -206,22 +202,19 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
         return ctrl;
     }
 
-    private CustomDateBox createDateBox(final String id) {
-        final CustomDateBox ctrl = new CustomDateBox();
+    private MyDateBox createDateBox(final String id) {
+        final MyDateBox ctrl = new MyDateBox();
         ctrl.getElement().getStyle().setWidth(100, Unit.PCT);
 
         final HasReadAndWrite<JSONObject> hasReadAndWrite = new HasReadAndWrite<JSONObject>() {
             @Override
             public void read(final JSONObject settings) {
-                final Date d = getDate(ctrl, JSONUtil.getString(settings.get(id)));
-                if (d != null) {
-                    ctrl.setValue(d);
-                }
+                ctrl.setValue(JSONUtil.getString(settings.get(id)));
             }
 
             @Override
             public void write(final JSONObject settings) {
-                final String val = ctrl.getTextBox().getText();
+                final String val = ctrl.getValue();
                 if (val != null && val.trim().length() > 0) {
                     settings.put(id, new JSONString(val.trim()));
                 }
@@ -278,14 +271,6 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
         controls.add(hasReadAndWrite);
 
         return ctrl;
-    }
-
-    private Date getDate(final CustomDateBox dateBox, final String val) {
-        if (dateBox != null && val != null) {
-            final Date d = dateBox.getFormat().parse(dateBox, val, false);
-            return d;
-        }
-        return null;
     }
 
     private Long getLong(final String val) {

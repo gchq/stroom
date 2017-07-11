@@ -28,7 +28,8 @@ import java.io.Serializable;
  * cpu%.
  */
 public enum StatisticType implements HasDisplayValue,HasPrimitiveValue,Serializable {
-    COUNT("Count", 1), VALUE("Value", 2);
+    COUNT("Count", 1),
+    VALUE("Value", 2);
 
     private final String displayValue;
     private final byte primitiveValue;

@@ -25,7 +25,6 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
-
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 public class ResizableCloseContent extends ResizeComposite implements HasEnabled {

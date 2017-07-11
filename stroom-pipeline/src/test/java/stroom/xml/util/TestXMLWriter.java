@@ -16,6 +16,21 @@
 
 package stroom.xml.util;
 
+import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.junit.Assert;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.InputSource;
+import org.xml.sax.XMLReader;
+import stroom.entity.server.util.XMLUtil;
+import stroom.test.StroomProcessTestFileUtil;
+import stroom.util.io.FileUtil;
+import stroom.util.test.StroomUnitTest;
+import stroom.util.xml.SAXParserFactoryFactory;
+
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -26,23 +41,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
-
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.util.test.StroomUnitTest;
-import stroom.util.xml.SAXParserFactoryFactory;
-import org.apache.commons.io.output.ByteArrayOutputStream;
-import org.junit.Assert;
-import org.junit.Test;
-import org.xml.sax.InputSource;
-import org.xml.sax.XMLReader;
-
-import stroom.entity.server.util.XMLUtil;
-import stroom.test.StroomProcessTestFileUtil;
-import stroom.util.io.FileUtil;
 
 public class TestXMLWriter extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestXMLWriter.class);

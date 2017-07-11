@@ -16,14 +16,14 @@
 
 package stroom.pipeline.server.reader;
 
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 import java.io.CharArrayReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.CharBuffer;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 public class TestBadTextXMLFilterReader {
     static final String m_aTrivialValidXML = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<TopLevelEntity>"

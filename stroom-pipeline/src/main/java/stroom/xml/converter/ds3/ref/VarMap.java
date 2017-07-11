@@ -16,10 +16,10 @@
 
 package stroom.xml.converter.ds3.ref;
 
+import stroom.xml.converter.ds3.Var;
+
 import java.util.HashMap;
 import java.util.Map;
-
-import stroom.xml.converter.ds3.Var;
 
 public class VarMap {
     private final Map<String, Var> map = new HashMap<String, Var>();

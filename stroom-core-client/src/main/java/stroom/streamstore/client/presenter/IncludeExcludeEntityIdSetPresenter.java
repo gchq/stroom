@@ -27,7 +27,6 @@ import com.gwtplatform.mvp.client.View;
 import stroom.data.table.client.CellTableView;
 import stroom.data.table.client.CellTableViewImpl;
 import stroom.data.table.client.CellTableViewImpl.DisabledResources;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefs;
@@ -36,7 +35,7 @@ import stroom.entity.shared.EntityReferenceComparator;
 import stroom.entity.shared.IncludeExcludeEntityIdSet;
 import stroom.process.shared.LoadEntityIdSetAction;
 import stroom.process.shared.SetId;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.util.shared.SharedMap;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -59,6 +58,7 @@ public class IncludeExcludeEntityIdSetPresenter<T extends BaseEntity>
     private String type;
     private boolean groupedEntity;
     private IncludeExcludeEntityIdSet<T> includeExcludeEntityIdSet;
+
     @Inject
     public IncludeExcludeEntityIdSetPresenter(final EventBus eventBus, final IncludeExcludeEntityIdSetView view,
                                               final IncludeExcludeEntityIdSetPopupPresenter popupPresenter, final ClientDispatchAsync dispatcher) {
@@ -115,31 +115,28 @@ public class IncludeExcludeEntityIdSetPresenter<T extends BaseEntity>
             }
 
             final LoadEntityIdSetAction action = new LoadEntityIdSetAction(loadMap);
-            dispatcher.execute(action, new AsyncCallbackAdaptor<SharedMap<SetId, DocRefs>>() {
-                @Override
-                public void onSuccess(final SharedMap<SetId, DocRefs> result) {
-                    final DocRefs included = result.get(includeSetId);
-                    final DocRefs excluded = result.get(excludeSetId);
+            dispatcher.exec(action).onSuccess(result -> {
+                final DocRefs included = result.get(includeSetId);
+                final DocRefs excluded = result.get(excludeSetId);
 
-                    data = new ArrayList<String>();
-                    if (included != null && included.getDoc().size() > 0) {
-                        final List<DocRef> refs = new ArrayList<>(included.getDoc());
-                        Collections.sort(refs, new EntityReferenceComparator());
-                        for (final DocRef entity : refs) {
-                            data.add("+ " + entity.getName());
-                        }
+                data = new ArrayList<String>();
+                if (included != null && included.getDoc().size() > 0) {
+                    final List<DocRef> refs = new ArrayList<>(included.getDoc());
+                    Collections.sort(refs, new EntityReferenceComparator());
+                    for (final DocRef entity : refs) {
+                        data.add("+ " + entity.getName());
                     }
-
-                    if (excluded != null && excluded.getDoc().size() > 0) {
-                        final List<DocRef> refs = new ArrayList<>(excluded.getDoc());
-                        Collections.sort(refs, new EntityReferenceComparator());
-                        for (final DocRef entity : refs) {
-                            data.add("- " + entity.getName());
-                        }
-                    }
-
-                    refresh();
                 }
+
+                if (excluded != null && excluded.getDoc().size() > 0) {
+                    final List<DocRef> refs = new ArrayList<>(excluded.getDoc());
+                    Collections.sort(refs, new EntityReferenceComparator());
+                    for (final DocRef entity : refs) {
+                        data.add("- " + entity.getName());
+                    }
+                }
+
+                refresh();
             });
         } else {
             this.data = new ArrayList<String>();

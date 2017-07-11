@@ -19,15 +19,13 @@ package stroom.dashboard.client.main;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import stroom.dashboard.shared.DataSourceFields;
 import stroom.dashboard.shared.DataSourceFieldsMap;
 import stroom.dashboard.shared.FetchDataSourceFieldsAction;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.HasChangeDataHandlers;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -59,23 +57,20 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
 
     public void loadDataSource(final DocRef dataSourceRef) {
         if (dataSourceRef != null) {
-            dispatcher.execute(new FetchDataSourceFieldsAction(dataSourceRef), new AsyncCallbackAdaptor<DataSourceFields>() {
-                @Override
-                public void onSuccess(final DataSourceFields result) {
-                    loadedDataSourceRef = dataSourceRef;
+            dispatcher.exec(new FetchDataSourceFieldsAction(dataSourceRef)).onSuccess(result -> {
+                loadedDataSourceRef = dataSourceRef;
 
-                    if (result != null) {
-                        dataSourceFieldsMap = new DataSourceFieldsMap(result.getFields());
-                        indexFieldNames = new ArrayList<>(dataSourceFieldsMap.keySet());
-                        Collections.sort(indexFieldNames);
-                    } else {
-                        dataSourceFieldsMap = new DataSourceFieldsMap();
-                        indexFieldNames = new ArrayList<>();
-                    }
-
-                    loadCount++;
-                    ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
+                if (result != null) {
+                    dataSourceFieldsMap = new DataSourceFieldsMap(result.getFields());
+                    indexFieldNames = new ArrayList<>(dataSourceFieldsMap.keySet());
+                    Collections.sort(indexFieldNames);
+                } else {
+                    dataSourceFieldsMap = new DataSourceFieldsMap();
+                    indexFieldNames = new ArrayList<>();
                 }
+
+                loadCount++;
+                ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
             });
         } else {
             loadedDataSourceRef = null;

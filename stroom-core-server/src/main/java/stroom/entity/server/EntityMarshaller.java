@@ -16,12 +16,12 @@
 
 package stroom.entity.server;
 
+import javassist.Modifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.entity.server.util.XMLMarshallerUtil;
 import stroom.entity.shared.BaseEntity;
-import javassist.Modifier;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;

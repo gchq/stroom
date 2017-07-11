@@ -16,16 +16,11 @@
 
 package stroom.streamstore.server.fs;
 
-import java.io.File;
-import java.io.IOException;
-
-import stroom.util.test.StroomUnitTest;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import stroom.streamstore.server.fs.serializable.CompoundInputStream;
 import stroom.streamstore.server.fs.serializable.NestedInputStream;
 import stroom.streamstore.server.fs.serializable.NestedOutputStream;
@@ -37,6 +32,10 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
+
+import java.io.File;
+import java.io.IOException;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestCompoundInputStream extends StroomUnitTest {

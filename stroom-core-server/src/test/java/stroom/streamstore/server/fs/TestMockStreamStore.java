@@ -16,13 +16,9 @@
 
 package stroom.streamstore.server.fs;
 
-import java.io.IOException;
-
-import stroom.util.test.StroomUnitTest;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import stroom.feed.shared.Feed;
 import stroom.streamstore.server.MockStreamStore;
 import stroom.streamstore.server.StreamSource;
@@ -32,6 +28,9 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
+
+import java.io.IOException;
 
 /**
  * <p>

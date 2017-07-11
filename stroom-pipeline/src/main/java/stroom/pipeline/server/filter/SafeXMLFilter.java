@@ -21,7 +21,6 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 import org.xml.sax.helpers.XMLFilterImpl;
-
 import stroom.util.CharBuffer;
 
 public class SafeXMLFilter extends XMLFilterImpl {

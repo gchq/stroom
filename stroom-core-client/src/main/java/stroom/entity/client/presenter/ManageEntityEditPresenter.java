@@ -20,7 +20,6 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceLoadAction;
@@ -41,7 +40,7 @@ public abstract class ManageEntityEditPresenter<V extends View, E extends NamedE
 
     @Inject
     public ManageEntityEditPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher, final V view,
-            final ClientSecurityContext securityContext) {
+                                     final ClientSecurityContext securityContext) {
         super(eventBus, view);
         this.dispatcher = dispatcher;
         this.securityContext = securityContext;
@@ -83,14 +82,11 @@ public abstract class ManageEntityEditPresenter<V extends View, E extends NamedE
             // Reload it so we always have the latest version
             final EntityServiceLoadAction<E> action = new EntityServiceLoadAction<E>(DocRefUtil.create(entity),
                     getEntityFetchSet());
-            dispatcher.execute(action, new AsyncCallbackAdaptor<E>() {
-                @Override
-                public void onSuccess(final E result) {
-                    setEntity(result);
-                    read();
-                    ShowPopupEvent.fire(ManageEntityEditPresenter.this, ManageEntityEditPresenter.this, popupType,
-                            getPopupSize(), caption, internalPopupUiHandlers);
-                }
+            dispatcher.exec(action).onSuccess(result -> {
+                setEntity(result);
+                read();
+                ShowPopupEvent.fire(ManageEntityEditPresenter.this, ManageEntityEditPresenter.this, popupType,
+                        getPopupSize(), caption, internalPopupUiHandlers);
             });
         } else {
             // new entity

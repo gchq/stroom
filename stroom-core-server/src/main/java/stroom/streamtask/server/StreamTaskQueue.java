@@ -16,10 +16,10 @@
 
 package stroom.streamtask.server;
 
+import stroom.streamtask.shared.StreamTask;
+
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import stroom.streamtask.shared.StreamTask;
 
 public class StreamTaskQueue {
     private final LinkedBlockingDeque<StreamTask> queue = new LinkedBlockingDeque<StreamTask>();

@@ -16,24 +16,16 @@
 
 package stroom.script.server;
 
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestScenarioCreator;
-import stroom.entity.shared.*;
-import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
-import stroom.feed.shared.FindFeedCriteria;
-import stroom.pipeline.shared.FindPipelineEntityCriteria;
-import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
-import stroom.script.shared.Script;
-import stroom.script.shared.ScriptService;
-import stroom.streamstore.shared.StreamType;
-import stroom.util.test.FileSystemTestUtil;
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.AbstractCoreIntegrationTest;
+import stroom.entity.shared.Res;
+import stroom.script.shared.Script;
+import stroom.script.shared.ScriptService;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.Collections;
+import java.util.Set;
 
 public class TestScriptServiceImpl extends AbstractCoreIntegrationTest {
     private static final Set<String> FETCH_SET = Collections.singleton(Script.FETCH_RESOURCE);

@@ -16,16 +16,16 @@
 
 package stroom.headless;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.test.StroomProcessTestFileUtil;
-import stroom.test.ComparisonHelper;
-import stroom.util.config.StroomProperties;
-import stroom.util.io.FileUtil;
-import stroom.util.zip.ZipUtil;
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Ignore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.test.ComparisonHelper;
+import stroom.test.StroomProcessTestFileUtil;
+import stroom.util.config.StroomProperties;
+import stroom.util.io.FileUtil;
+import stroom.util.zip.ZipUtil;
 
 import java.io.File;
 import java.nio.charset.Charset;

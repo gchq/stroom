@@ -16,10 +16,10 @@
 
 package stroom.pipeline.server.errorhandler;
 
-import javax.xml.transform.SourceLocator;
-
 import org.xml.sax.Locator;
 import org.xml.sax.SAXParseException;
+
+import javax.xml.transform.SourceLocator;
 
 public class SourceLocatorImpl implements SourceLocator, Locator {
     private final int lineNumber;

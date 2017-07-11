@@ -18,10 +18,9 @@ package stroom.streamstore.client.presenter;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-
-import stroom.security.client.ClientSecurityContext;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
@@ -40,18 +39,18 @@ public class StreamListPresenter extends AbstractStreamListPresenter {
         addInfoColumn();
 
         addCreatedColumn();
-        addEffectiveColumn();
-        addFeedColumn();
         addStreamTypeColumn();
+        addFeedColumn();
+        addPipelineColumn();
 
-        addAttributeColumn(StreamAttributeConstants.STREAM_SIZE, ColumnSizeConstants.MEDIUM_COL);
-        addAttributeColumn(StreamAttributeConstants.FILE_SIZE, ColumnSizeConstants.MEDIUM_COL);
-        addAttributeColumn(StreamAttributeConstants.REC_READ, ColumnSizeConstants.MEDIUM_COL);
-        addAttributeColumn(StreamAttributeConstants.REC_WRITE, ColumnSizeConstants.MEDIUM_COL);
-        addAttributeColumn(StreamAttributeConstants.REC_INFO, ColumnSizeConstants.MEDIUM_COL);
-        addAttributeColumn(StreamAttributeConstants.REC_WARN, ColumnSizeConstants.MEDIUM_COL);
-        addAttributeColumn(StreamAttributeConstants.REC_ERROR, ColumnSizeConstants.MEDIUM_COL);
-        addAttributeColumn(StreamAttributeConstants.REC_FATAL, ColumnSizeConstants.MEDIUM_COL);
+        addAttributeColumn("Raw", StreamAttributeConstants.STREAM_SIZE, ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Disk", StreamAttributeConstants.FILE_SIZE, ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Read", StreamAttributeConstants.REC_READ, ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Write", StreamAttributeConstants.REC_WRITE, ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Fatal", StreamAttributeConstants.REC_FATAL, 40);
+        addAttributeColumn("Error", StreamAttributeConstants.REC_ERROR, 40);
+        addAttributeColumn("Warn", StreamAttributeConstants.REC_WARN, 40);
+        addAttributeColumn("Info", StreamAttributeConstants.REC_INFO, 40);
 
         getView().addEndColumn(new EndColumn<StreamAttributeMap>());
     }

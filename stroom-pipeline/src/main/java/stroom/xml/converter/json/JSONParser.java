@@ -16,18 +16,16 @@
 
 package stroom.xml.converter.json;
 
-import java.io.IOException;
-
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonTokenId;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
-
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonTokenId;
-
 import stroom.xml.converter.AbstractParser;
+
+import java.io.IOException;
 
 public class JSONParser extends AbstractParser {
     private static final String XML_TYPE_STRING = "string";

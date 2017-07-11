@@ -47,19 +47,13 @@ public class StroomFilter implements Filter {
     }
 
     /**
-     * @param request
-     *            NA
-     * @param response
-     *            NA
-     * @param chain
-     *            NA
-     * @throws IOException
-     *             NA
-     * @throws ServletException
-     *             NA
-     *
+     * @param request  NA
+     * @param response NA
+     * @param chain    NA
+     * @throws IOException      NA
+     * @throws ServletException NA
      * @see javax.servlet.Filter#doFilter(javax.servlet.ServletRequest,
-     *      javax.servlet.ServletResponse, javax.servlet.FilterChain)
+     * javax.servlet.ServletResponse, javax.servlet.FilterChain)
      */
     @SuppressWarnings("unchecked")
     @Override
@@ -94,11 +88,8 @@ public class StroomFilter implements Filter {
     }
 
     /**
-     * @param filterConfig
-     *            NA
-     * @throws ServletException
-     *             NA
-     *
+     * @param filterConfig NA
+     * @throws ServletException NA
      * @see javax.servlet.Filter#init(javax.servlet.FilterConfig)
      */
     @Override

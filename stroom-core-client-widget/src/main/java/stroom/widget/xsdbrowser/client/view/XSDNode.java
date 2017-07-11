@@ -16,18 +16,17 @@
 
 package stroom.widget.xsdbrowser.client.view;
 
+import com.google.gwt.xml.client.Node;
+import com.google.gwt.xml.client.NodeList;
+import stroom.util.shared.CompareBuilder;
+import stroom.util.shared.EqualsBuilder;
+import stroom.util.shared.HashCodeBuilder;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.google.gwt.xml.client.Node;
-import com.google.gwt.xml.client.NodeList;
-
-import stroom.util.shared.CompareBuilder;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
 
 public class XSDNode implements Comparable<XSDNode> {
     private static final String XSD_NS = "http://www.w3.org/2001/XMLSchema";

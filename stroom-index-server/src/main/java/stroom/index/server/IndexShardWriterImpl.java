@@ -57,11 +57,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Stream;
 
 public class IndexShardWriterImpl implements IndexShardWriter {
-    public static final int DEFAULT_RAM_BUFFER_MB_SIZE = 1024;
+    static final int DEFAULT_RAM_BUFFER_MB_SIZE = 1024;
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardWriterImpl.class);
-
     /**
      * When we are in debug mode we track some important info from the LUCENE
      * log so that we can report some debug info
@@ -87,15 +87,19 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     private volatile Index fieldIndex;
     private volatile IndexShard indexShard;
     private volatile int ramBufferSizeMB = DEFAULT_RAM_BUFFER_MB_SIZE;
+
     /**
      * Lucene stuff
      */
     private volatile Directory directory;
     private volatile IndexWriter indexWriter;
-    private volatile int lastDocumentCount;
-    private volatile long lastCommitMs;
-    private volatile int lastCommitDocumentCount;
-    private volatile long lastCommitDurationMs;
+    private volatile Integer lastDocumentCount;
+    private volatile Long lastCommitMs;
+    private volatile Integer lastCommitDocumentCount;
+    private volatile Long lastCommitDurationMs;
+
+    private volatile boolean checked;
+
     private LoggerPrintStream loggerPrintStream;
 
     /**
@@ -186,12 +190,14 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                 // as we don't want to overwrite an index.
                 if (Files.isDirectory(dir)) {
                     // This is a workaround for lingering .nfs files.
-                    Files.list(dir).forEach(file -> {
-                        if (Files.isDirectory(file) || !file.getFileName().startsWith(".")) {
-                            throw new IndexException("Attempting to create a new index in \""
-                                    + dir.toAbsolutePath().toString() + "\" but one already exists.");
-                        }
-                    });
+                    try (final Stream<Path> stream = Files.list(dir)) {
+                        stream.forEach(file -> {
+                            if (Files.isDirectory(file) || !file.getFileName().startsWith(".")) {
+                                throw new IndexException("Attempting to create a new index in \""
+                                        + dir.toAbsolutePath().toString() + "\" but one already exists.");
+                            }
+                        });
+                    }
                 } else {
                     // Try and make all required directories.
                     try {
@@ -201,6 +207,9 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                                 "Unable to create directories for new index in \"" + dir.toAbsolutePath().toString() + "\"");
                     }
                 }
+            } else {
+                // Ensure all shards are checked before they are opened.
+                check();
             }
 
             // Create lucene directory object.
@@ -226,8 +235,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
             final LiveIndexWriterConfig liveIndexWriterConfig = indexWriter.getConfig();
             liveIndexWriterConfig.setRAMBufferSizeMB(ramBufferSizeMB);
 
-            // TODO : We might still want to write separate segments I'm not
-            // sure on pros/cons?
+            // TODO : We might still want to write separate segments I'm not sure on pros / cons ?
             liveIndexWriterConfig.setUseCompoundFile(false);
             liveIndexWriterConfig.setMaxBufferedDocs(Integer.MAX_VALUE);
 
@@ -303,48 +311,50 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     }
 
     @Override
-    public synchronized boolean check() {
-        boolean success = false;
+    public synchronized void check() {
+        if (!checked) {
+            checked = true;
 
-        // Don't clean deleted indexes.
-        if (!IndexShardStatus.DELETED.equals(indexShard.getStatus())) {
-            try {
-                // Output some debug.
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Checking index - " + indexShard);
-                }
-                // Mark the index as closed.
-                setStatus(IndexShardStatus.CLOSED);
+            // Don't check deleted shards.
+            if (!IndexShardStatus.DELETED.equals(indexShard.getStatus())) {
+                try {
+                    // Output some debug.
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("Checking index - " + indexShard);
+                    }
+                    // Mark the index as closed.
+                    setStatus(IndexShardStatus.CLOSED);
 
-                if (Files.isDirectory(dir) && Files.list(dir).count() > 0) {
-                    // The directory exists and contains files so make sure it
-                    // is unlocked.
-                    try {
-                        final Path lockFile = dir.resolve(IndexWriter.WRITE_LOCK_NAME);
-                        if (Files.isRegularFile(lockFile)) {
-                            Files.delete(lockFile);
+                    if (Files.isDirectory(dir)) {
+                        try (final Stream<Path> stream = Files.list(dir)) {
+                            if (stream.count() > 0) {
+                                // The directory exists and contains files so make sure it
+                                // is unlocked.
+                                try {
+                                    final Path lockFile = dir.resolve(IndexWriter.WRITE_LOCK_NAME);
+                                    if (Files.isRegularFile(lockFile)) {
+                                        Files.delete(lockFile);
+                                    }
+                                } catch (final IOException e) {
+                                    // There is no lock file so ignore.
+                                }
+
+                                // Sync the DB.
+                                sync();
+                            } else {
+                                if (!Files.isDirectory(dir)) {
+                                    throw new IndexException("Unable to find index shard directory: " + dir.toString());
+                                } else {
+                                    throw new IndexException("Unable to find any index shard data in directory: " + dir.toString());
+                                }
+                            }
                         }
-                    } catch (final IOException e) {
-                        // There is no lock file so ignore.
                     }
-
-                    // Sync the DB.
-                    sync();
-                    success = true;
-                } else {
-                    if (!Files.isDirectory(dir)) {
-                        throw new IndexException("Unable to find index shard directory: " + dir.toString());
-                    } else {
-                        throw new IndexException(
-                                "Unable to find any index shard data in directory: " + dir.toString());
-                    }
+                } catch (final Throwable t) {
+                    LOGGER.error(t.getMessage(), t);
                 }
-            } catch (final Throwable t) {
-                LOGGER.error(t.getMessage(), t);
             }
         }
-
-        return success;
     }
 
     @Override
@@ -417,13 +427,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
 
     @Override
     public boolean addDocument(final Document document) {
-        return doAddDocument(document, 1);
-    }
-
-    private boolean doAddDocument(final Document document, final int tryCount) {
         boolean added = false;
-        boolean retry = false;
-
         if (document != null) {
             // We can't write to deleted index shard's
             if (!IndexShardStatus.DELETED.equals(indexShard.getStatus())) {
@@ -456,9 +460,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                                         + " " + toString());
                             }
                         } catch (final AlreadyClosedException e) {
-                            LOGGER.warn(e.getMessage(), e);
-                            doOpen(false);
-                            retry = true;
+                            LOGGER.debug(e.getMessage());
                         } catch (final CorruptIndexException e) {
                             LOGGER.error(e.getMessage(), e);
                             // Mark the shard as corrupt as this should be the
@@ -466,7 +468,6 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                             setStatus(IndexShardStatus.CORRUPT);
                         } catch (final Throwable t) {
                             LOGGER.error(t.getMessage(), t);
-                            retry = true;
                         }
 
                         // If we were unable to add the document then decrement
@@ -478,16 +479,6 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                         documentCount.decrementAndGet();
                     }
                 }
-            }
-        }
-
-        if (retry) {
-            if (tryCount > 10) {
-                LOGGER.warn("Giving up adding document to this index shard after " + tryCount + " tries");
-                close();
-            } else {
-                LOGGER.debug("Retrying addDocument()");
-                added = doAddDocument(document, tryCount + 1);
             }
         }
 
@@ -666,7 +657,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         // Allow the thing to run without a service (e.g. benchmark mode)
         if (service != null) {
             boolean success = false;
-            for (int i = 0; i < 10 && success == false; i++) {
+            for (int i = 0; i < 10 && !success; i++) {
                 refreshEntity();
                 success = save();
             }
@@ -679,7 +670,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         // Allow the thing to run without a service (e.g. benchmark mode)
         if (service != null) {
             boolean success = false;
-            for (int i = 0; i < 10 && success == false; i++) {
+            for (int i = 0; i < 10 && !success; i++) {
                 refreshEntity();
                 indexShard.setStatus(status);
                 success = save();
@@ -727,10 +718,8 @@ public class IndexShardWriterImpl implements IndexShardWriter {
             // Update the size of the index.
             if (dir != null && Files.isDirectory(dir)) {
                 final AtomicLong totalSize = new AtomicLong();
-                try {
-                    Files.list(dir).forEach(file -> {
-                        totalSize.addAndGet(file.toFile().length());
-                    });
+                try (final Stream<Path> stream = Files.list(dir)) {
+                    stream.forEach(file -> totalSize.addAndGet(file.toFile().length()));
                 } catch (final IOException e) {
                     LOGGER.error(e.getMessage());
                 }
@@ -738,10 +727,16 @@ public class IndexShardWriterImpl implements IndexShardWriter {
             }
 
             // Only update the document count details if we have read them.
-            if (lastDocumentCount > 0) {
+            if (lastDocumentCount != null) {
                 indexShard.setDocumentCount(lastDocumentCount);
+            }
+            if (lastCommitDocumentCount != null) {
                 indexShard.setCommitDocumentCount(lastCommitDocumentCount);
+            }
+            if (lastCommitDurationMs != null) {
                 indexShard.setCommitDurationMs(lastCommitDurationMs);
+            }
+            if (lastCommitMs != null) {
                 indexShard.setCommitMs(lastCommitMs);
             }
         } catch (final Throwable t) {
@@ -751,14 +746,12 @@ public class IndexShardWriterImpl implements IndexShardWriter {
 
     @Override
     public String toString() {
-        final StringBuilder builder = new StringBuilder();
-        builder.append("indexShard=");
-        builder.append(indexShard);
-        builder.append(", indexWriter=");
-        builder.append(indexWriter == null ? "closed" : "open");
-        builder.append(", actualDocs=");
-        builder.append(documentCount);
-        return builder.toString();
+        return "indexShard="
+                + indexShard
+                + ", indexWriter="
+                + (indexWriter == null ? "closed" : "open")
+                + ", actualDocs="
+                + documentCount;
     }
 
     public synchronized void trace(final PrintStream ps) {
@@ -767,9 +760,9 @@ public class IndexShardWriterImpl implements IndexShardWriter {
 
             ps.println("Document Count = " + ModelStringUtil.formatCsv(documentCount.intValue()));
             if (dir != null) {
-                ps.println("Index File(s) Size = " + ModelStringUtil.formatByteSizeString(indexShard.getFileSize()));
+                ps.println("Index File(s) Size = " + ModelStringUtil.formatIECByteSizeString(indexShard.getFileSize()));
             }
-            ps.println("RAM Buffer Size = " + ModelStringUtil.formatCsv(ramBufferSizeMB) + " MB");
+            ps.println("RAM Buffer Size = " + ModelStringUtil.formatCsv(ramBufferSizeMB) + " M");
 
             for (final Entry<String, String> term : LOG_WATCH_TERMS.entrySet()) {
                 ps.println(term.getKey() + " = " + loggerPrintStream.getWatchTermCount(term.getValue()));

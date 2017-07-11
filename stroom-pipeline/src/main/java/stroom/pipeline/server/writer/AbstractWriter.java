@@ -16,15 +16,6 @@
 
 package stroom.pipeline.server.writer;
 
-import java.io.OutputStream;
-import java.io.Writer;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import stroom.io.EncodingWriter;
 import stroom.io.MultiOutputStream;
 import stroom.io.NullOutputStream;
@@ -41,6 +32,15 @@ import stroom.pipeline.server.factory.Target;
 import stroom.pipeline.server.filter.AbstractXMLFilter;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
+
+import java.io.OutputStream;
+import java.io.Writer;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public abstract class AbstractWriter extends AbstractXMLFilter implements Target, HasTargets {
     private static final NullOutputStream NULL_OUTPUT_STREAM = new NullOutputStream();

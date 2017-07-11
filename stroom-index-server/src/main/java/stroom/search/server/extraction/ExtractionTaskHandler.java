@@ -38,7 +38,7 @@ import stroom.pipeline.state.CurrentUserHolder;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.search.server.SearchException;
 import stroom.security.SecurityContext;
 import stroom.streamstore.server.StreamSource;
@@ -49,6 +49,7 @@ import stroom.task.server.TaskHandlerBean;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
+import stroom.util.shared.UserTokenUtil;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
@@ -124,7 +125,7 @@ public class ExtractionTaskHandler extends AbstractTaskHandler<ExtractionTask, V
             this.task = task;
 
             // Set the current user.
-            currentUserHolder.setCurrentUser(task.getUserId());
+            currentUserHolder.setCurrentUser(UserTokenUtil.getUserId(task.getUserToken()));
 
             final DocRef pipelineRef = task.getPipelineRef();
 

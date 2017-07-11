@@ -5,8 +5,12 @@ node_modules
 _book
 .gradle/
 classes/
+libs/
+jars/
 stroom-dashboard-gwt/hs_err_pid*.log
 stroom-app-gwt/hs_err_pid*.log
+
+stroom-core-server/src/test/resources/transientContentPacks/
 
 # IntelliJ
 # Here we ignore everything and create exceptions for what we want to share.
@@ -14,3 +18,23 @@ stroom-app-gwt/hs_err_pid*.log
 *.iml
 /.idea/*
 !/.idea/runConfigurations
+# END OF IntelliJ
+
+
+#Gradle stuff (from https://github.com/github/gitignore/blob/master/Gradle.gitignore)
+.gradle
+/build/
+
+# Ignore Gradle GUI config
+gradle-app.setting
+
+# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
+!gradle-wrapper.jar
+
+# Cache of project
+.gradletasknamecache
+
+# # Work around https://youtrack.jetbrains.com/issue/IDEA-116898
+# gradle/wrapper/gradle-wrapper.properties
+
+#END OF Gradle stuff

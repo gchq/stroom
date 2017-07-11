@@ -21,7 +21,7 @@ import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
 import stroom.query.CoprocessorSettings;
 import stroom.query.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.query.api.Query;
+import stroom.query.api.v1.Query;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
@@ -66,8 +66,8 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
         coprocessorMap.put(new CoprocessorKey(0, new String[]{"eventCoprocessor"}), settings);
 
         // Create an asynchronous search task.
-        final String searchName = "Search " + task.getSessionId();
-        final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(task.getSessionId(), task.getUserId(), searchName,
+        final String searchName = "Event Search";
+        final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(task.getUserToken(), searchName,
                 query, node, task.getResultSendFrequency(), coprocessorMap, null, nowEpochMilli);
 
         // Create a collector to store search results.

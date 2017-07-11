@@ -16,23 +16,21 @@
 
 package stroom.jobsystem.server;
 
+import net.sf.ehcache.CacheManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+import stroom.cache.AbstractCacheBean;
+import stroom.util.shared.Task;
+import stroom.util.spring.StroomFrequencySchedule;
+
+import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
-
-import javax.inject.Inject;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-
-import stroom.cache.AbstractCacheBean;
-import stroom.util.shared.Task;
-import stroom.util.spring.StroomFrequencySchedule;
-import net.sf.ehcache.CacheManager;
 
 @Component
 public class TaskCache extends AbstractCacheBean<String, Queue<Task<?>>> {

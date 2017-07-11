@@ -16,12 +16,11 @@
 
 package stroom.pipeline.server.filter;
 
+import org.xml.sax.ContentHandler;
+import stroom.pipeline.server.factory.Processor;
+
 import java.util.Collections;
 import java.util.List;
-
-import org.xml.sax.ContentHandler;
-
-import stroom.pipeline.server.factory.Processor;
 
 public class XMLFilterContentHandlerAdaptor extends ContentHandlerAdaptor implements XMLFilter {
     public XMLFilterContentHandlerAdaptor(final ContentHandler handler) {

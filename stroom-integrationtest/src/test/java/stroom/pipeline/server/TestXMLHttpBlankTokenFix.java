@@ -16,6 +16,9 @@
 
 package stroom.pipeline.server;
 
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 import stroom.AbstractProcessIntegrationTest;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
@@ -35,14 +38,11 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.RecordCount;
-import stroom.test.StroomProcessTestFileUtil;
 import stroom.test.PipelineTestUtil;
+import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
 
 import javax.annotation.Resource;
 import java.io.File;

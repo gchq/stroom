@@ -16,6 +16,20 @@
 
 package stroom.pipeline.server.reader;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.pipeline.destination.Destination;
+import stroom.pipeline.destination.DestinationProvider;
+import stroom.pipeline.server.errorhandler.ProcessException;
+import stroom.pipeline.server.factory.AbstractElement;
+import stroom.pipeline.server.factory.Element;
+import stroom.pipeline.server.factory.HasTargets;
+import stroom.pipeline.server.factory.Processor;
+import stroom.pipeline.server.factory.TakesInput;
+import stroom.pipeline.server.factory.TakesReader;
+import stroom.pipeline.server.factory.Target;
+import stroom.util.io.StreamUtil;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -33,20 +47,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.pipeline.destination.Destination;
-import stroom.pipeline.destination.DestinationProvider;
-import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.pipeline.server.factory.AbstractElement;
-import stroom.pipeline.server.factory.Element;
-import stroom.pipeline.server.factory.HasTargets;
-import stroom.pipeline.server.factory.Processor;
-import stroom.pipeline.server.factory.TakesInput;
-import stroom.pipeline.server.factory.TakesReader;
-import stroom.pipeline.server.factory.Target;
-import stroom.util.io.StreamUtil;
 
 public class AbstractIOElement extends AbstractElement implements HasTargets {
     private static abstract class DestinationProcessor implements Processor {

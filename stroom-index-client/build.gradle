@@ -1,4 +1,14 @@
 dependencies {
-    compile project(':stroom-index-shared')
     compile project(':stroom-core-client')
+    compile project(':stroom-core-client-widget')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-index-shared')
+    compile project(':stroom-security-client-api')
+    compile project(':stroom-util-shared')
+
+    compile libs.gin
+    compile libs.guice
+    compile libs.gwt_user
+    compile libs.gwtp_mvp_client
 }

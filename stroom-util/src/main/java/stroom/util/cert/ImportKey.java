@@ -16,6 +16,8 @@
 
 package stroom.util.cert;
 
+import stroom.util.io.StreamUtil;
+
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.FileInputStream;
@@ -30,8 +32,6 @@ import java.security.cert.CertificateFactory;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Collection;
 import java.util.HashMap;
-
-import stroom.util.io.StreamUtil;
 
 /**
  * <p>

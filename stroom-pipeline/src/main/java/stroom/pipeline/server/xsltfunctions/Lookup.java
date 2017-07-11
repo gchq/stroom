@@ -16,14 +16,13 @@
 
 package stroom.pipeline.server.xsltfunctions;
 
-import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-
-import stroom.xml.event.np.NPEventList;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import stroom.util.spring.StroomScope;
+import stroom.xml.event.np.NPEventList;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)

@@ -16,20 +16,19 @@
 
 package stroom.streamstore.server.fs;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-
-import stroom.util.test.StroomUnitTest;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import stroom.streamstore.server.fs.serializable.RASegmentInputStream;
 import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.server.fs.serializable.SegmentOutputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestRASegmentStreamsByteSeeking extends StroomUnitTest {

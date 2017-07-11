@@ -32,10 +32,11 @@ import stroom.dictionary.shared.Dictionary;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.dictionary.shared.FindDictionaryCriteria;
 import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.EntityActionConfirmation;
+import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.FindFolderCriteria;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
+import stroom.entity.shared.ImportState;
 import stroom.entity.shared.Res;
 import stroom.feed.shared.FeedService;
 import stroom.index.shared.FindIndexCriteria;
@@ -44,10 +45,10 @@ import stroom.index.shared.IndexService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
-import stroom.query.api.ExpressionBuilder;
-import stroom.query.api.ExpressionOperator.Op;
-import stroom.query.api.ExpressionTerm;
-import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.v1.ExpressionBuilder;
+import stroom.query.api.v1.ExpressionOperator.Op;
+import stroom.query.api.v1.ExpressionTerm;
+import stroom.query.api.v1.ExpressionTerm.Condition;
 import stroom.resource.server.ResourceStore;
 import stroom.script.shared.Script;
 import stroom.script.shared.ScriptService;
@@ -112,8 +113,8 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     private void test(final boolean skipVisCreation, final boolean skipVisExport, final boolean update) {
         deleteAllAndCheck();
 
-        final Folder group1 = folderService.create(null, "Group1");
-        final Folder group2 = folderService.create(null, "Group2");
+        final Folder folder1 = folderService.create(null, "Group1");
+        final Folder folder2 = folderService.create(null, "Group2");
 
         Assert.assertEquals(2, commonTestControl.countEntity(Folder.class));
 
@@ -122,25 +123,25 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
             final Res res = new Res();
             res.setData("Test Data");
 
-            Script script = scriptService.create(DocRefUtil.create(group2), "Test Script");
+            Script script = scriptService.create(DocRefUtil.create(folder2), "Test Script");
             script.setResource(res);
             script = scriptService.save(script);
 
-            vis = visualisationService.create(DocRefUtil.create(group2), "Test Vis");
+            vis = visualisationService.create(DocRefUtil.create(folder2), "Test Vis");
             vis.setScriptRef(DocRefUtil.create(script));
             vis = visualisationService.save(vis);
             Assert.assertEquals(1, commonTestControl.countEntity(Visualisation.class));
         }
 
-        PipelineEntity pipelineEntity = pipelineEntityService.create(DocRefUtil.create(group1), "Test Pipeline");
+        PipelineEntity pipelineEntity = pipelineEntityService.create(DocRefUtil.create(folder1), "Test Pipeline");
         pipelineEntity = pipelineEntityService.save(pipelineEntity);
         Assert.assertEquals(1, commonTestControl.countEntity(PipelineEntity.class));
 
-        Index index = indexService.create(DocRefUtil.create(group1), "Test Index");
+        Index index = indexService.create(DocRefUtil.create(folder1), "Test Index");
         index = indexService.save(index);
         Assert.assertEquals(1, commonTestControl.countEntity(Index.class));
 
-        Dictionary dictionary = dictionaryService.create(DocRefUtil.create(group1), "Test Dictionary");
+        Dictionary dictionary = dictionaryService.create(DocRefUtil.create(folder1), "Test Dictionary");
         dictionary = dictionaryService.save(dictionary);
         Assert.assertEquals(1, commonTestControl.countEntity(Dictionary.class));
 
@@ -188,7 +189,7 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         final DashboardConfig dashboardData = new DashboardConfig();
         dashboardData.setComponents(components);
 
-        Dashboard dashboard = dashboardService.create(DocRefUtil.create(group1), "Test Dashboard");
+        Dashboard dashboard = dashboardService.create(DocRefUtil.create(folder1), "Test Dashboard");
         dashboard.setDashboardData(dashboardData);
         dashboard = dashboardService.save(dashboard);
         Assert.assertEquals(1, commonTestControl.countEntity(Dashboard.class));
@@ -201,21 +202,21 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         final int startDashboardSize = commonTestControl.countEntity(Dashboard.class);
 
         final ResourceKey file = resourceStore.createTempFile("Export.zip");
-        final FindFolderCriteria criteria = new FindFolderCriteria();
-        criteria.getFolderIdSet().add(group1);
+        final DocRefs docRefs = new DocRefs();
+        docRefs.add(DocRefUtil.create(folder1));
         if (!skipVisExport) {
-            criteria.getFolderIdSet().add(group2);
+            docRefs.add(DocRefUtil.create(folder2));
         } else {
             startFolderSize = 1;
             startVisualisationSize = 0;
         }
 
         // Export all
-        importExportService.exportConfig(criteria, resourceStore.getTempFile(file), false, null);
+        importExportService.exportConfig(docRefs, resourceStore.getTempFile(file), null);
 
         final ResourceKey exportConfig = resourceStore.createTempFile("ExportPlain.zip");
 
-        importExportService.exportConfig(criteria, resourceStore.getTempFile(exportConfig), false, null);
+        importExportService.exportConfig(docRefs, resourceStore.getTempFile(exportConfig), null);
 
         if (!update) {
             // Delete everything.
@@ -223,10 +224,10 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         }
 
         // Import All
-        final List<EntityActionConfirmation> confirmations = importExportService
+        final List<ImportState> confirmations = importExportService
                 .createImportConfirmationList(resourceStore.getTempFile(file));
 
-        for (final EntityActionConfirmation confirmation : confirmations) {
+        for (final ImportState confirmation : confirmations) {
             confirmation.setAction(true);
         }
 

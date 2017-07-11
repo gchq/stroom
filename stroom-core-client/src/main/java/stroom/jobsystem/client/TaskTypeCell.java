@@ -16,8 +16,6 @@
 
 package stroom.jobsystem.client;
 
-import java.util.HashMap;
-
 import com.google.gwt.cell.client.AbstractInputCell;
 import com.google.gwt.cell.client.SelectionCell;
 import com.google.gwt.cell.client.ValueUpdater;
@@ -30,9 +28,10 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
-
 import stroom.jobsystem.shared.JobNode.JobType;
 import stroom.jobsystem.shared.TaskType;
+
+import java.util.HashMap;
 
 public class TaskTypeCell extends AbstractInputCell<TaskType, TaskType> {
     public interface Resources extends ClientBundle {

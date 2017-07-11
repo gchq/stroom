@@ -16,13 +16,12 @@
 
 package stroom.pipeline.server.filter;
 
+import javax.xml.namespace.NamespaceContext;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-
-import javax.xml.namespace.NamespaceContext;
 
 public class NamespaceContextImpl implements NamespaceContext {
     private Map<String, String> prefixToUriMap = new HashMap<>();

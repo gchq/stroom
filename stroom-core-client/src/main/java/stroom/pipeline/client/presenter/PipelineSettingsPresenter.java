@@ -20,11 +20,10 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
-
-import stroom.security.client.ClientSecurityContext;
 import stroom.entity.client.presenter.EntitySettingsPresenter;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntity.PipelineType;
+import stroom.security.client.ClientSecurityContext;
 
 public class PipelineSettingsPresenter
         extends EntitySettingsPresenter<PipelineSettingsPresenter.PipelineSettingsView, PipelineEntity>

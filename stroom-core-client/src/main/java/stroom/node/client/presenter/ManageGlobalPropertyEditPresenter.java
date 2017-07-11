@@ -16,27 +16,32 @@
 
 package stroom.node.client.presenter;
 
-import stroom.dispatch.client.AsyncCallbackAdaptor;
-import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.presenter.ManageEntityEditPresenter;
-import stroom.entity.shared.EntityServiceSaveAction;
-import stroom.node.shared.GlobalProperty;
-import stroom.security.client.ClientSecurityContext;
-import stroom.widget.popup.client.presenter.PopupSize;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
+import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.entity.client.presenter.ManageEntityEditPresenter;
+import stroom.entity.shared.EntityServiceSaveAction;
+import stroom.node.client.ClientPropertyCache;
+import stroom.node.shared.GlobalProperty;
+import stroom.security.client.ClientSecurityContext;
+import stroom.widget.popup.client.presenter.PopupSize;
 
 public final class ManageGlobalPropertyEditPresenter
         extends ManageEntityEditPresenter<ManageGlobalPropertyEditPresenter.GlobalPropertyEditView, GlobalProperty> {
-    final ClientDispatchAsync dispatcher;
+    private final ClientDispatchAsync dispatcher;
+    private final ClientPropertyCache clientPropertyCache;
 
     @Inject
-    public ManageGlobalPropertyEditPresenter(final EventBus eventBus, final GlobalPropertyEditView view,
-                                             final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext) {
+    public ManageGlobalPropertyEditPresenter(final EventBus eventBus,
+                                             final GlobalPropertyEditView view,
+                                             final ClientDispatchAsync dispatcher,
+                                             final ClientSecurityContext securityContext,
+                                             final ClientPropertyCache clientPropertyCache) {
         super(eventBus, dispatcher, view, securityContext);
         this.dispatcher = dispatcher;
+        this.clientPropertyCache = clientPropertyCache;
     }
 
     @Override
@@ -67,17 +72,15 @@ public final class ManageGlobalPropertyEditPresenter
         getEntity().setValue(getView().getValue().getText());
 
         // Save the device.
-        dispatcher.execute(new EntityServiceSaveAction<GlobalProperty>(getEntity()),
-                new AsyncCallbackAdaptor<GlobalProperty>() {
-                    @Override
-                    public void onSuccess(final GlobalProperty result) {
-                        setEntity(result);
-                        if (hideOnSave) {
-                            hide();
-                        }
-                    }
-                });
+        dispatcher.exec(new EntityServiceSaveAction<>(getEntity())).onSuccess(result -> {
+            setEntity(result);
+            if (hideOnSave) {
+                hide();
 
+                // Refresh client properties in case they were affected by this change.
+                clientPropertyCache.refresh();
+            }
+        });
     }
 
     @Override

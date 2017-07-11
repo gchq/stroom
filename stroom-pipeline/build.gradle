@@ -1,36 +1,44 @@
 dependencies {
     compile project(':stroom-core-server')
-    compile 'org.apache.poi:poi-ooxml:3.15'
-    compile('org.apache.hadoop:hadoop-hdfs-shaded:2.6.4:all') { /* LATEST 2.7.3 */
-        exclude(module: 'jetty')
-        exclude(module: 'jetty-util')
-        exclude(module: 'servlet-api')
-        exclude(module: 'servlet-api-2.5')
-        exclude(module: 'jsp-2.1')
-        exclude(module: 'jsp-api-2.1')
-        exclude(module: 'jsp-api')
-        exclude(module: 'jasper-runtime')
-        exclude(module: 'jasper-compiler')
-        exclude(module: 'xercesImpl')
-    }
-    compile('org.apache.hadoop:hadoop-common-shaded:2.6.4:all') { /* LATEST 2.7.3 */
-        exclude(module: 'asm')
-        exclude(module: 'jetty')
-        exclude(module: 'jetty-util')
-        exclude(module: 'servlet-api')
-        exclude(module: 'servlet-api-2.5')
-        exclude(module: 'jsp-2.1')
-        exclude(module: 'jsp-api-2.1')
-        exclude(module: 'jsp-api')
-        exclude(module: 'jasper-runtime')
-        exclude(module: 'jasper-compiler')
-    }
-    //Using 1.x because there is a classpath conflict with 2.x
-//    compile 'com.sun.jersey:jersey-client:1.19'
-    compile 'org.glassfish.jersey.core:jersey-client:2.23.2'
-    compile 'org.apache.kafka:kafka-clients:0.10.1.0'
+    compile project(':stroom-core-shared')
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-security-api')
+    compile project(':stroom-statistics-api')
+    permitUnusedDeclared project(':stroom-statistics-api') //not clear why it thinks this is unused
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
+
+    compile urlDependencies.get(urlLibs.hadoopCommonShaded)
+    compile urlDependencies.get(urlLibs.hadoopHdfsShaded)
+
+    compile libs.spring_beans
+    compile libs.spring_context
+    compile libs.spring_tx
+    compile libs.jersey_client
+    compile libs.kafka_clients
+    compile libs.slf4j_api
+    compile libs.guava
+    compile libs.commons_lang
+    compile libs.ehcache_core
+    compile libs.saxon_he
+    compile libs.jackson_core
+    compile libs.xml_apis
+    compile libs.stax_api
+    compile libs.javax_inject
+    compile libs.ws_rs_api
+    compile libs.javax_annotation_api
 
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
+
+    testCompile libs.junit
+    testCompile libs.mockito_core
+
+    //the following logging libs are needed when running junits outside dropwizard
+    testRuntime libs.jcl_over_slf4j
+    testRuntime libs.jul_to_slf4j
+    testRuntime libs.log4j_over_slf4j
+    testRuntime libs.logback_classic
+    testRuntime libs.logback_core
 }

@@ -18,6 +18,7 @@ package stroom.cluster.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventHandler;
 import stroom.entity.shared.EntityAction;
@@ -32,7 +33,6 @@ import stroom.util.date.DateUtil;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomStartup;
 import stroom.util.thread.ThreadUtil;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -44,7 +44,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Component that remembers the node list and who is the current master node
  */
-@EntityEventHandler(type = Node.ENTITY_TYPE, action = {EntityAction.ADD, EntityAction.DELETE, EntityAction.UPDATE})
+@EntityEventHandler(type = Node.ENTITY_TYPE, action = {EntityAction.CREATE, EntityAction.DELETE, EntityAction.UPDATE})
 @Component(ClusterNodeManager.BEAN_NAME)
 public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.Handler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterNodeManagerImpl.class);

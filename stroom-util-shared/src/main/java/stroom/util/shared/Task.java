@@ -24,9 +24,7 @@ public interface Task<R> extends HasTerminate {
 
     String getTaskName();
 
-    String getSessionId();
-
-    String getUserId();
+    String getUserToken();
 
     ThreadPool getThreadPool();
 }

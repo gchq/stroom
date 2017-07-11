@@ -16,14 +16,14 @@
 
 package stroom.streamstore.server.fs;
 
+import stroom.io.SeekableOutputStream;
+import stroom.io.StreamCloser;
+
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-
-import stroom.io.SeekableOutputStream;
-import stroom.io.StreamCloser;
 
 /**
  * Output stream that writes a lock file with the data and then renames to the

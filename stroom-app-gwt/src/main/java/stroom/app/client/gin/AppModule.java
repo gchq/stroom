@@ -28,6 +28,7 @@ import stroom.about.client.presenter.AboutPresenter;
 import stroom.about.client.presenter.AboutPresenter.AboutProxy;
 import stroom.about.client.presenter.AboutPresenter.AboutView;
 import stroom.about.client.view.AboutViewImpl;
+import stroom.core.client.LocationManager;
 import stroom.app.client.presenter.AppPresenter;
 import stroom.app.client.view.AppViewImpl;
 import stroom.content.client.presenter.ContentTabPanePresenter;
@@ -82,6 +83,8 @@ public class AppModule extends AbstractPresenterModule {
         bind(KeyboardInterceptor.class).asEagerSingleton();
 
         // bind(CurrentUser.class).in(Singleton.class);
+
+        bind(LocationManager.class).asEagerSingleton();
         bind(ContentManager.class).asEagerSingleton();
 
         // Constants

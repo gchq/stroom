@@ -17,7 +17,6 @@
 package stroom.dashboard.client.table;
 
 import com.google.gwt.cell.client.Cell;
-import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
@@ -32,19 +31,22 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.core.client.LocationManager;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
-import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
+import stroom.dashboard.client.table.TablePresenter.TableView;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
+import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DataSourceFieldsMap;
 import stroom.dashboard.shared.DownloadSearchResultsAction;
@@ -57,17 +59,15 @@ import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
-import stroom.datasource.api.DataSourceField;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
+import stroom.datasource.api.v1.DataSourceField;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.dispatch.client.ExportFileCompleteHandler;
+import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
-import stroom.pipeline.client.event.ChangeDataEvent;
-import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
+import stroom.security.client.ClientSecurityContext;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ParamUtil;
 import stroom.widget.button.client.GlyphButtonView;
@@ -82,14 +82,15 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>>
+public class TablePresenter extends AbstractComponentPresenter<TableView>
         implements HasDirtyHandlers, ResultComponent {
     public static final ComponentType TYPE = new ComponentType(1, "table", "Table");
     private static final int MIN_EXPANDER_COL_WIDTH = 0;
+
+    private final LocationManager locationManager;
     private final TableResultRequest tableResultRequest = new TableResultRequest(0, 100);
     private final List<Column<Row, ?>> existingColumns = new ArrayList<>();
     private final List<HandlerRegistration> searchModelHandlerRegistrations = new ArrayList<>();
@@ -100,6 +101,8 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
     private final ClientDispatchAsync dispatcher;
     private final TimeZones timeZones;
     private final FieldsManager fieldsManager;
+    private final DataGridView<Row> dataGrid;
+
     private int lastExpanderColumnWidth;
     private int currentExpanderColumnWidth;
     private SearchModel currentSearchModel;
@@ -115,56 +118,62 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
     private int[] maxResults = TableComponentSettings.DEFAULT_MAX_RESULTS;
 
     @Inject
-    public TablePresenter(final EventBus eventBus, final MenuListPresenter menuListPresenter,
-                          final ExpressionPresenter expressionPresenter, final FormatPresenter formatPresenter,
+    public TablePresenter(final EventBus eventBus,
+                          final TableView view,
+                          final ClientSecurityContext securityContext,
+                          final LocationManager locationManager,
+                          final MenuListPresenter menuListPresenter,
+                          final ExpressionPresenter expressionPresenter,
+                          final FormatPresenter formatPresenter,
                           final FilterPresenter filterPresenter,
                           final Provider<FieldAddPresenter> fieldAddPresenterProvider,
-                          final Provider<TableSettingsPresenter> settingsPresenterProvider, final DownloadPresenter downloadPresenter,
-                          final ClientDispatchAsync dispatcher, final ClientPropertyCache clientPropertyCache,
+                          final Provider<TableSettingsPresenter> settingsPresenterProvider,
+                          final DownloadPresenter downloadPresenter,
+                          final ClientDispatchAsync dispatcher,
+                          final ClientPropertyCache clientPropertyCache,
                           final TimeZones timeZones) {
-        super(eventBus, new DataGridViewImpl<>(true), settingsPresenterProvider);
+        super(eventBus, view, settingsPresenterProvider);
+        this.locationManager = locationManager;
         this.fieldAddPresenterProvider = fieldAddPresenterProvider;
         this.downloadPresenter = downloadPresenter;
         this.dispatcher = dispatcher;
         this.timeZones = timeZones;
+        this.dataGrid = new DataGridViewImpl<>(true);
+
+        view.setTableView(dataGrid);
 
         // Add the 'add field' button.
-        addFieldButton = getView().addButton(GlyphIcons.ADD);
+        addFieldButton = dataGrid.addButton(GlyphIcons.ADD);
         addFieldButton.setTitle("Add Field");
 
         // Download
-        downloadButton = getView().addButton(GlyphIcons.DOWNLOAD);
+        downloadButton = dataGrid.addButton(GlyphIcons.DOWNLOAD);
+        downloadButton.setVisible(securityContext.hasAppPermission(Dashboard.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
 
         fieldsManager = new FieldsManager(this, menuListPresenter, expressionPresenter, formatPresenter,
                 filterPresenter);
-        getView().setHeadingListener(fieldsManager);
+        dataGrid.setHeadingListener(fieldsManager);
 
-        clientPropertyCache.get(new AsyncCallbackAdaptor<ClientProperties>() {
-            @Override
-            public void onSuccess(final ClientProperties result) {
-                final String value = result.get(ClientProperties.MAX_RESULTS);
-                if (value != null) {
-                    final String[] parts = value.split(",");
-                    final int[] arr = new int[parts.length];
-                    for (int i = 0; i < arr.length; i++) {
-                        arr[i] = Integer.valueOf(parts[i].trim());
+        clientPropertyCache.get()
+                .onSuccess(result -> {
+                    final String value = result.get(ClientProperties.MAX_RESULTS);
+                    if (value != null) {
+                        final String[] parts = value.split(",");
+                        final int[] arr = new int[parts.length];
+                        for (int i = 0; i < arr.length; i++) {
+                            arr[i] = Integer.valueOf(parts[i].trim());
+                        }
+                        maxResults = arr;
                     }
-                    maxResults = arr;
-                }
-            }
-
-            @Override
-            public void onFailure(final Throwable caught) {
-                AlertEvent.fireError(TablePresenter.this, caught.getMessage(), null);
-            }
-        });
+                })
+                .onFailure(caught -> AlertEvent.fireError(TablePresenter.this, caught.getMessage(), null));
     }
 
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(getView().getSelectionModel().addSelectionHandler(event -> performRowAction(getView().getSelectionModel().getSelected())));
-        registerHandler(getView().addRangeChangeHandler(event -> {
+        registerHandler(dataGrid.getSelectionModel().addSelectionHandler(event -> performRowAction(dataGrid.getSelectionModel().getSelected())));
+        registerHandler(dataGrid.addRangeChangeHandler(event -> {
             if (!ignoreRangeChange) {
                 final com.google.gwt.view.client.Range range = event.getNewRange();
                 tableResultRequest.setRange(range.getStart(), range.getLength());
@@ -176,6 +185,7 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
                 onAddField(event);
             }
         }));
+
         registerHandler(downloadButton.addClickHandler(event -> {
             if (currentSearchModel != null) {
                 if (currentSearchModel.isSearching()) {
@@ -206,7 +216,7 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
             final HandlerRegistration handlerRegistration = fieldAddPresenter
                     .addSelectionChangeHandler(selectionHandler);
 
-            final List<Field> addFields = new ArrayList<Field>();
+            final List<Field> addFields = new ArrayList<>();
             if (currentSearchModel.getIndexLoader().getIndexFieldNames() != null) {
                 for (final String indexFieldName : currentSearchModel.getIndexLoader().getIndexFieldNames()) {
                     final Field field = new Field(indexFieldName);
@@ -279,11 +289,11 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
                     @Override
                     public void onHideRequest(final boolean autoClose, final boolean ok) {
                         if (ok) {
-                            dispatcher.execute(
+                            dispatcher.exec(
                                     new DownloadSearchResultsAction(queryKey, search, getComponentData().getId(),
                                             downloadPresenter.getFileType(), downloadPresenter.isSample(),
-                                            downloadPresenter.getPercent(), timeZones.getTimeZone()),
-                                    new ExportFileCompleteHandler(null));
+                                            downloadPresenter.getPercent(), timeZones.getTimeZone()))
+                                    .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result));
                         }
 
                         HidePopupEvent.fire(TablePresenter.this, downloadPresenter);
@@ -335,8 +345,8 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
                 // they have changed.
                 if (valuesRange.offset == 0 || values.length > 0) {
                     updateColumns();
-                    getView().setRowData(valuesRange.offset, Arrays.asList(values));
-                    getView().setRowCount(tableResult.totalResults, true);
+                    dataGrid.setRowData(valuesRange.offset, Arrays.asList(values));
+                    dataGrid.setRowCount(tableResult.totalResults, true);
                 }
 
                 // Enable download of current results.
@@ -345,10 +355,10 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
                 // Disable download of current results.
                 downloadButton.setEnabled(false);
 
-                getView().setRowData(0, new ArrayList<Row>());
-                getView().setRowCount(0, true);
+                dataGrid.setRowData(0, new ArrayList<>());
+                dataGrid.setRowCount(0, true);
 
-                getView().getSelectionModel().clear();
+                dataGrid.getSelectionModel().clear();
             }
 //        }
         } catch (final Exception e) {
@@ -374,7 +384,7 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
                     if (width > currentExpanderColumnWidth) {
                         currentExpanderColumnWidth = width;
                         lastExpanderColumnWidth = width;
-                        getView().setColumnWidth(this, width, Unit.PX);
+                        dataGrid.setColumnWidth(this, width, Unit.PX);
                     }
 
                     final boolean open = tableResultRequest.isGroupOpen(row.groupKey);
@@ -386,14 +396,11 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
                 return null;
             }
         };
-        column.setFieldUpdater(new FieldUpdater<Row, Expander>() {
-            @Override
-            public void update(final int index, final Row result, final Expander value) {
-                tableResultRequest.setGroupOpen(result.groupKey, !value.isExpanded());
-                refresh();
-            }
+        column.setFieldUpdater((index, result, value) -> {
+            tableResultRequest.setGroupOpen(result.groupKey, !value.isExpanded());
+            refresh();
         });
-        getView().addColumn(column, "<br/>", lastExpanderColumnWidth);
+        dataGrid.addColumn(column, "<br/>", lastExpanderColumnWidth);
         existingColumns.add(column);
     }
 
@@ -426,7 +433,7 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
             @Override
             public String getCellStyleNames(Cell.Context context, Row object) {
                 if (field.getFormat() != null && field.getFormat().getWrap() != null && field.getFormat().getWrap()) {
-                    return super.getCellStyleNames(context, object) + " " + getView().getResources().dataGridStyle().dataGridCellWrapText();
+                    return super.getCellStyleNames(context, object) + " " + dataGrid.getResources().dataGridStyle().dataGridCellWrapText();
                 }
 
                 return super.getCellStyleNames(context, object);
@@ -434,9 +441,9 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
         };
 
         final FieldHeader fieldHeader = new FieldHeader(fieldsManager, field);
-        fieldHeader.setUpdater(value -> getView().redrawHeaders());
+        fieldHeader.setUpdater(value -> dataGrid.redrawHeaders());
 
-        getView().addResizableColumn(column, fieldHeader, field.getWidth());
+        dataGrid.addResizableColumn(column, fieldHeader, field.getWidth());
         existingColumns.add(column);
     }
 
@@ -472,12 +479,7 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
 
         if (currentSearchModel != null) {
             searchModelHandlerRegistrations
-                    .add(currentSearchModel.getIndexLoader().addChangeDataHandler(new ChangeDataHandler<IndexLoader>() {
-                        @Override
-                        public void onChange(final ChangeDataEvent<IndexLoader> event) {
-                            updateFields();
-                        }
-                    }));
+                    .add(currentSearchModel.getIndexLoader().addChangeDataHandler(event -> updateFields()));
         }
 
         updateFields();
@@ -501,12 +503,8 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
     }
 
     private void updateFields() {
-        List<Field> fields = null;
-        if (tableSettings.getFields() != null) {
-            fields = tableSettings.getFields();
-        } else {
-            fields = new ArrayList<Field>();
-            tableSettings.setFields(fields);
+        if (tableSettings.getFields() == null) {
+            tableSettings.setFields(new ArrayList<>());
         }
 
         // Update columns.
@@ -514,13 +512,7 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
     }
 
     private void removeHiddenFields() {
-        final Iterator<Field> iter = tableSettings.getFields().iterator();
-        while (iter.hasNext()) {
-            final Field field = iter.next();
-            if (!field.isVisible()) {
-                iter.remove();
-            }
-        }
+        tableSettings.getFields().removeIf(field -> !field.isVisible());
     }
 
     private int ensureHiddenField(final String indexFieldName) {
@@ -539,7 +531,7 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
         return tableSettings.getFields().size() - 1;
     }
 
-    public DataSourceFieldsMap getIndexFieldsMap() {
+    private DataSourceFieldsMap getIndexFieldsMap() {
         if (currentSearchModel != null && currentSearchModel.getIndexLoader() != null
                 && currentSearchModel.getIndexLoader().getDataSourceFieldsMap() != null) {
             return currentSearchModel.getIndexLoader().getDataSourceFieldsMap();
@@ -548,7 +540,7 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
         return null;
     }
 
-    public void updateColumns() {
+    void updateColumns() {
         final List<Field> fields = tableSettings.getFields();
 
         // First remove existing hidden fields.
@@ -561,7 +553,7 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
 
         // Remove existing columns.
         for (final Column<Row, ?> column : existingColumns) {
-            getView().removeColumn(column);
+            dataGrid.removeColumn(column);
         }
         existingColumns.clear();
 
@@ -601,7 +593,7 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
             }
         }
 
-        getView().resizeTableToFitColumns();
+        dataGrid.resizeTableToFitColumns();
     }
 
     @Override
@@ -653,7 +645,7 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
         tableResultRequest.setRange(0, 100);
     }
 
-    public void clearAndRefresh() {
+    void clearAndRefresh() {
         clear();
     }
 
@@ -709,7 +701,7 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
     private class AddSelectionHandler implements SelectionChangeEvent.Handler {
         private final FieldAddPresenter presenter;
 
-        public AddSelectionHandler(final FieldAddPresenter presenter) {
+        AddSelectionHandler(final FieldAddPresenter presenter) {
             this.presenter = presenter;
         }
 
@@ -721,5 +713,11 @@ public class TablePresenter extends AbstractComponentPresenter<DataGridView<Row>
                 fieldsManager.addField(field);
             }
         }
+    }
+
+    public interface TableView extends View {
+        void setTableView(View view);
+
+        void setRefreshing(boolean refreshing);
     }
 }

@@ -25,6 +25,6 @@ import stroom.util.test.StroomUnitTest;
 public class TestUserServiceImpl_Unit extends StroomUnitTest {
     @Test
     public void test() {
-        new UserServiceImpl(null, null, false);
+        new UserServiceImpl(null, null, false, null);
     }
 }

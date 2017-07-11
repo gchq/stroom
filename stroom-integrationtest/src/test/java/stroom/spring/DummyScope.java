@@ -16,11 +16,11 @@
 
 package stroom.spring;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.config.Scope;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * For use in testing where there aren't web-only scopes. E.g. session and

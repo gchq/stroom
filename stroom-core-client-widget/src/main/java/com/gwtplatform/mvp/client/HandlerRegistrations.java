@@ -16,10 +16,10 @@
 
 package com.gwtplatform.mvp.client;
 
+import com.google.web.bindery.event.shared.HandlerRegistration;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import com.google.web.bindery.event.shared.HandlerRegistration;
 
 public class HandlerRegistrations implements HandlerRegistration {
     private final List<HandlerRegistration> handlerRegistrations;

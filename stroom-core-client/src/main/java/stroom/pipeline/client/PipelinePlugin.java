@@ -19,19 +19,17 @@ package stroom.pipeline.client;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.PresenterWidget;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.EntityPluginEventManager;
-import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.EntityEditPresenter;
 import stroom.entity.shared.DocRefUtil;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.process.client.presenter.ProcessorPresenter;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamtask.shared.StreamProcessor;
 
@@ -50,25 +48,17 @@ public class PipelinePlugin extends EntityPlugin<PipelineEntity> {
     protected void onBind() {
         super.onBind();
 
-        registerHandler(getEventBus().addHandler(CreateProcessorEvent.getType(), new CreateProcessorEvent.Handler() {
-            @Override
-            public void onCreate(final CreateProcessorEvent event) {
-                final StreamProcessor streamProcessor = event.getStreamProcessorFilter().getStreamProcessor();
-                final PipelineEntity pipelineEntity = streamProcessor.getPipeline();
-                final DocRef docRef = DocRefUtil.create(pipelineEntity);
-                // Open the item in the content pane.
-                final PipelinePresenter pipelinePresenter = (PipelinePresenter) open(docRef, true);
-                // Highlight the item in the explorer tree.
-                highlight(docRef);
+        registerHandler(getEventBus().addHandler(CreateProcessorEvent.getType(), event -> {
+            final StreamProcessor streamProcessor = event.getStreamProcessorFilter().getStreamProcessor();
+            final PipelineEntity pipelineEntity = streamProcessor.getPipeline();
+            final DocRef docRef = DocRefUtil.create(pipelineEntity);
+            // Open the item in the content pane.
+            final PipelinePresenter pipelinePresenter = (PipelinePresenter) open(docRef, true);
+            // Highlight the item in the explorer tree.
+            highlight(docRef);
 
-                pipelinePresenter.selectTab(PipelinePresenter.PROCESSORS);
-                pipelinePresenter.getContent(PipelinePresenter.PROCESSORS, new ContentCallback() {
-                    @Override
-                    public void onReady(final PresenterWidget<?> content) {
-                        ((ProcessorPresenter) content).refresh(event.getStreamProcessorFilter());
-                    }
-                });
-            }
+            pipelinePresenter.selectTab(PipelinePresenter.PROCESSORS);
+            pipelinePresenter.getContent(PipelinePresenter.PROCESSORS, content -> ((ProcessorPresenter) content).refresh(event.getStreamProcessorFilter()));
         }));
     }
 

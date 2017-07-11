@@ -16,18 +16,17 @@
 
 package stroom.volume.server;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import stroom.util.test.StroomUnitTest;
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.VolumeState;
+import stroom.util.test.StroomUnitTest;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TestVolumeSelector extends StroomUnitTest {
     @Test

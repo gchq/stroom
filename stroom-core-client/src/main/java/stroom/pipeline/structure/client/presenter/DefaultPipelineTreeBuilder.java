@@ -16,11 +16,11 @@
 
 package stroom.pipeline.structure.client.presenter;
 
-import java.util.List;
-import java.util.Map;
-
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
+
+import java.util.List;
+import java.util.Map;
 
 public class DefaultPipelineTreeBuilder implements PipelineTreeBuilder {
     @Override

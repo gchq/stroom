@@ -16,15 +16,15 @@
 
 package stroom.streamstore.server.fs.serializable;
 
+import stroom.streamstore.server.StreamTarget;
+import stroom.streamstore.shared.StreamType;
+import stroom.util.io.CloseableUtil;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
-
-import stroom.streamstore.server.StreamTarget;
-import stroom.streamstore.shared.StreamType;
-import stroom.util.io.CloseableUtil;
 
 /**
  * This class implements the <code>SegmentOutputStream</code> interface and

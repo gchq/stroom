@@ -20,18 +20,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseResultList;
+import stroom.statistics.internal.InternalStatisticEvent;
+import stroom.statistics.internal.InternalStatisticsFacadeFactory;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.Node;
-import stroom.query.api.Query;
+import stroom.query.api.v1.Query;
 import stroom.search.server.EventRef;
 import stroom.search.server.EventRefs;
 import stroom.search.server.EventSearchTask;
 import stroom.security.SecurityContext;
-import stroom.statistics.common.StatisticEvent;
-import stroom.statistics.common.Statistics;
-import stroom.statistics.common.StatisticsFactory;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Limits;
@@ -53,6 +52,7 @@ import stroom.task.server.TaskManager;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.UserTokenUtil;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomShutdown;
@@ -60,7 +60,6 @@ import stroom.util.spring.StroomStartup;
 import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -93,6 +92,8 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamTaskCreatorImpl.class);
 
+    private static final String INTERNAL_STAT_KEY_STREAM_TASK_QUEUE_SIZE = "streamTaskQueueSize";
+
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final StreamTaskCreatorTransactionHelper streamTaskTransactionHelper;
     private final TaskManager taskManager;
@@ -100,7 +101,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     private final StreamTaskService streamTaskService;
     private final StreamTaskHelper streamTaskHelper;
     private final StroomPropertyService propertyService;
-    private final Provider<StatisticsFactory> factoryProvider;
+    private final InternalStatisticsFacadeFactory internalStatisticsFacadeFactory;
     private final StreamStore streamStore;
     private final SecurityContext securityContext;
 
@@ -135,7 +136,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     private final ConcurrentHashMap<Long, Boolean> exhaustedFilterMap = new ConcurrentHashMap<>();
     private volatile StreamTaskCreatorRecentStreamDetails streamTaskCreatorRecentStreamDetails;
     private volatile int totalQueueSize = 1000;
-    private volatile int lastQueueSizeForStats = 0;
+    private volatile int lastQueueSizeForStats = -1;
 
     /**
      * Make sure the task store isn't allowed to be filled until this node has
@@ -144,7 +145,17 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     private volatile boolean allowFillTaskStore = false;
 
     @Inject
-    StreamTaskCreatorImpl(final StreamProcessorFilterService streamProcessorFilterService, final StreamTaskCreatorTransactionHelper streamTaskTransactionHelper, final TaskManager taskManager, final NodeCache nodeCache, final StreamTaskService streamTaskService, final StreamTaskHelper streamTaskHelper, final StroomPropertyService propertyService, final Provider<StatisticsFactory> factoryProvider, final StreamStore streamStore, final SecurityContext securityContext) {
+    StreamTaskCreatorImpl(final StreamProcessorFilterService streamProcessorFilterService,
+                          final StreamTaskCreatorTransactionHelper streamTaskTransactionHelper,
+                          final TaskManager taskManager,
+                          final NodeCache nodeCache,
+                          final StreamTaskService streamTaskService,
+                          final StreamTaskHelper streamTaskHelper,
+                          final StroomPropertyService propertyService,
+                          final InternalStatisticsFacadeFactory internalStatisticsFacadeFactory,
+                          final StreamStore streamStore,
+                          final SecurityContext securityContext) {
+
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.streamTaskTransactionHelper = streamTaskTransactionHelper;
         this.taskManager = taskManager;
@@ -152,7 +163,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         this.streamTaskService = streamTaskService;
         this.streamTaskHelper = streamTaskHelper;
         this.propertyService = propertyService;
-        this.factoryProvider = factoryProvider;
+        this.internalStatisticsFacadeFactory = internalStatisticsFacadeFactory;
         this.streamStore = streamStore;
         this.securityContext = securityContext;
     }
@@ -495,7 +506,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
             if (loadedFilter != null) {
 
                 // Set the current user to be the one who created the filter so that only streams that that user has access to are processed.
-                securityContext.pushUser(loadedFilter.getUpdateUser());
+                securityContext.pushUser(UserTokenUtil.create(loadedFilter.getCreateUser(), null));
                 try {
                     LOGGER.debug("createTasksForFilter() - streamProcessorFilter {}", loadedFilter.toString());
 
@@ -749,7 +760,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         tracker.setStatus("Searching...");
         final StreamProcessorFilterTracker updatedTracker = streamTaskTransactionHelper.saveTracker(tracker);
 
-        final EventSearchTask eventSearchTask = new EventSearchTask(null, filter.getUpdateUser(), findStreamCriteria, query,
+        final EventSearchTask eventSearchTask = new EventSearchTask(UserTokenUtil.create(filter.getUpdateUser(), null), findStreamCriteria, query,
                 minEvent, maxEvent, maxStreams, maxEvents, maxEventsPerStream, POLL_INTERVAL_MS);
         taskManager.execAsync(eventSearchTask, new TaskCallbackAdaptor<EventRefs>() {
             @Override
@@ -896,14 +907,15 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
             // Avoid writing loads of same value stats So write every min while
             // it changes Under little load the queue size will be 0
             final int queueSize = getStreamTaskQueueSize();
-            if (queueSize != lastQueueSizeForStats && factoryProvider != null) {
+            if (queueSize != lastQueueSizeForStats) {
                 try {
-                    final StatisticsFactory factory = factoryProvider.get();
-                    final Statistics statisticEventStore = factory.instance();
-
                     // Value type event as the queue size is not additive
-                    statisticEventStore.putEvent(new StatisticEvent(System.currentTimeMillis(),
-                            "Stream Task Queue Size", null, new Double(queueSize)));
+                    internalStatisticsFacadeFactory.create()
+                            .putEvent(InternalStatisticEvent.createValueStat(
+                                    INTERNAL_STAT_KEY_STREAM_TASK_QUEUE_SIZE,
+                                    System.currentTimeMillis(),
+                                    null,
+                                    queueSize));
                 } catch (final Throwable t) {
                     LOGGER.error(t.getMessage(), t);
                 }

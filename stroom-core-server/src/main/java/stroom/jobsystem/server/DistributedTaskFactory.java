@@ -16,10 +16,10 @@
 
 package stroom.jobsystem.server;
 
-import java.util.List;
-
 import stroom.node.shared.Node;
 import stroom.util.shared.SharedObject;
+
+import java.util.List;
 
 /**
  * This interface is to be used by all classes that will create tasks for the

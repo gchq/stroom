@@ -16,17 +16,15 @@
 
 package stroom.jobsystem.server;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.annotation.Resource;
-
-import stroom.entity.server.util.StroomDatabaseInfo;
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.AbstractCoreIntegrationTest;
+import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.util.thread.ThreadUtil;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TestClusterLockService extends AbstractCoreIntegrationTest {
     @Resource

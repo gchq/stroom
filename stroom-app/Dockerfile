@@ -20,36 +20,48 @@ FROM openjdk:8-alpine
 ENV IN_DOCKER="true"
 ENV STROOM_CONTENT_PACK_IMPORT_ENABLE="true"
 
-WORKDIR /usr/stroom-app
+# update alpine and install Bash/tini/su-exec as they are not in alpine by default
+# Create a user with no home and no shell
+RUN echo "http_proxy: $http_proxy" && \
+    echo "https_proxy: $https_proxy" && \
+    apk add --no-cache \
+        bash \
+        su-exec \
+        tini && \
+    adduser -s /bin/false -D stroom && \
+    mkdir -p /stroom && \
+    mkdir -p /stroom/volumes && \
+    mkdir -p /stroom/contentPackImport 
 
+#This is where stroom will run from and any local data will be
+WORKDIR /stroom
 
 #Copy the content packs in so they get imported on first run of Stroom
 #TODO this should be a singley named jar
-ADD ./build/libs/stroom-app-all.jar /usr/stroom-app/stroom-app-all.jar
-ADD ./prod.yml /usr/stroom-app/config.yml
+ADD ./build/libs/stroom-app-all.jar /stroom/stroom-app-all.jar
+ADD ./prod.yml /stroom/config.yml
+ADD ./docker-entrypoint.sh /usr/local/bin/
 
 #TODO ContentPackImport is finding the contentPackImport dir but not importing anything. Not sure why yet.
-ADD https://github.com/gchq/stroom-content/releases/download/stroom-101-v1.0/stroom-101.zip /usr/stroom-app/contentPackImport/
-ADD https://github.com/gchq/stroom-content/releases/download/event-logging-xml-schema-v1.0/event-logging-xml-schema.zip /usr/stroom-app/contentPackImport/
-ADD https://github.com/gchq/stroom-content/releases/download/core-xml-schemas-v1.0/core-xml-schemas.zip /usr/stroom-app/contentPackImport/
-ADD https://github.com/gchq/stroom-visualisations-dev/releases/download/v3.0.2/visualisations-production-v3.0.2.zip /usr/stroom-app/contentPackImport/
-
-
-
-# update alpine and install Bash as it is not in alpine by default
-# then run setup to configure the tomcat instance
-RUN echo "http_proxy: $http_proxy" && \
-    echo "https_proxy: $https_proxy" && \
-    apk update && \
-    apk upgrade && \
-    apk add --no-cache bash && \
-    rm -rf /var/cache/apk/* && \
-    mkdir -p ./volumes
+ADD https://github.com/gchq/stroom-content/releases/download/stroom-101-v1.0/stroom-101-v1.0.zip /stroom/contentPackImport/
+ADD https://github.com/gchq/stroom-content/releases/download/event-logging-xml-schema-v1.0/event-logging-xml-schema-v1.0.zip /stroom/contentPackImport/
+ADD https://github.com/gchq/stroom-content/releases/download/core-xml-schemas-v1.0/core-xml-schemas-v1.0.zip /stroom/contentPackImport/
+ADD https://github.com/gchq/stroom-visualisations-dev/releases/download/v3.0.4/visualisations-production-v3.0.4.zip /stroom/contentPackImport/
+ADD https://github.com/gchq/stroom-content/releases/download/internal-statistics-sql-v2.0/internal-statistics-sql-v2.0.zip /stroom/contentPackImport/
+ADD https://github.com/gchq/stroom-content/releases/download/internal-statistics-stroom-stats-v2.0/internal-statistics-stroom-stats-v2.0.zip /stroom/contentPackImport/
+ADD https://github.com/gchq/stroom-content/releases/download/internal-dashboards-v1.1/internal-dashboards-v1.1.zip /stroom/contentPackImport/
 
 #Create Docker volume for Stroom's volumes dir
-VOLUME /usr/stroom-app/volumes/
+VOLUME /stroom/volumes/
+
+#Make sure all the files are owned by the stroom user
+RUN chown -R stroom /stroom
 
 # export 8080 for stroom to listen on
 EXPOSE 8080
 
-CMD java -jar stroom-app-all.jar server config.yml
+#run entrypoint script inside tini for better unix process handling, see https://github.com/krallin/tini/issues/8
+ENTRYPOINT ["/sbin/tini", "--", "docker-entrypoint.sh"]
+
+#start the app
+CMD ["java", "-jar", "stroom-app-all.jar", "server", "config.yml"]

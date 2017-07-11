@@ -16,25 +16,29 @@
 
 package stroom;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.zip.*;
-import org.apache.commons.lang.StringUtils;
-
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.zip.HeaderMap;
+import stroom.util.zip.StroomHeaderArguments;
 import stroom.util.zip.StroomZipEntry;
+import stroom.util.zip.StroomZipFile;
+import stroom.util.zip.StroomZipFileType;
+import stroom.util.zip.StroomZipOutputStream;
+import stroom.util.zip.StroomZipRepository;
+
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public class ProxyRepositoryCreator {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryCreator.class);

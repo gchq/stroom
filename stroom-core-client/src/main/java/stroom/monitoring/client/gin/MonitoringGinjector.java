@@ -17,7 +17,6 @@
 package stroom.monitoring.client.gin;
 
 import com.google.gwt.inject.client.AsyncProvider;
-
 import stroom.jobsystem.client.presenter.JobListPresenter;
 import stroom.monitoring.client.DatabaseTablesMonitoringPlugin;
 import stroom.monitoring.client.JobListPlugin;

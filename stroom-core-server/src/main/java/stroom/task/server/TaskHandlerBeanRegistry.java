@@ -18,15 +18,15 @@ package stroom.task.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.shared.SharedObject;
-import stroom.util.shared.Task;
-import stroom.util.spring.StroomBeanStore;
-import stroom.util.spring.ApplicationContextUtil;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
+import stroom.util.shared.SharedObject;
+import stroom.util.shared.Task;
+import stroom.util.spring.ApplicationContextUtil;
+import stroom.util.spring.StroomBeanStore;
 
 import javax.annotation.Resource;
 import java.util.HashMap;

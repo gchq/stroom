@@ -1,9 +1,9 @@
 package stroom.task.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
-import org.springframework.context.annotation.Scope;
 
 import javax.inject.Inject;
 

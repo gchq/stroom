@@ -16,18 +16,16 @@
 
 package stroom.util.spring;
 
-import java.util.ArrayDeque;
-import java.util.HashMap;
-
-import javax.annotation.Resource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Required;
 import org.springframework.context.SmartLifecycle;
-
 import stroom.util.concurrent.AtomicSequence;
 import stroom.util.thread.ThreadScopeContextHolder;
+
+import javax.annotation.Resource;
+import java.util.ArrayDeque;
+import java.util.HashMap;
 
 /**
  * As we are re-loading beans when our properties change we want to make sure

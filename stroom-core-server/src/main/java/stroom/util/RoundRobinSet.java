@@ -16,12 +16,12 @@
 
 package stroom.util;
 
+import stroom.util.shared.SharedObject;
+
 import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Set;
-
-import stroom.util.shared.SharedObject;
 
 /**
  * A set that on calling iterator you get back the items in a different round

@@ -18,7 +18,6 @@ package stroom.data.grid.client;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.user.cellview.client.Column;
-
 import stroom.entity.shared.OrderBy;
 import stroom.util.shared.HasDisplayValue;
 

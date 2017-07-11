@@ -20,13 +20,14 @@ import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.AbstractCoreIntegrationTest;
+import stroom.ContentImportService;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
+import stroom.entity.shared.ImportState.ImportMode;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.importexport.server.ImportExportSerializer;
-import stroom.importexport.server.ImportExportSerializer.ImportMode;
 import stroom.node.server.NodeCache;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
@@ -58,6 +59,7 @@ import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Indicators;
+import stroom.util.task.ServerTask;
 import stroom.util.zip.HeaderMap;
 import stroom.util.zip.StroomHeaderArguments;
 import stroom.util.zip.StroomStreamProcessor;
@@ -74,7 +76,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -108,6 +109,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private StreamTypeService streamTypeService;
     @Resource
     private ImportExportSerializer importExportSerializer;
+    @Resource
+    private ContentImportService contentImportService;
 
     protected void testTranslationTask(final boolean translate, final boolean compareOutput) {
         final List<Exception> exceptions = new ArrayList<>();
@@ -119,7 +122,9 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
         FileUtil.mkdirs(outputDir);
 
-        importExportSerializer.read(configDir, null, ImportMode.IGNORE_CONFIRMATION);
+        importExportSerializer.read(configDir.toPath(), null, ImportMode.IGNORE_CONFIRMATION);
+
+        contentImportService.importXmlSchemas();
 
         // Process reference data.
         processData(inputDir, outputDir, true, compareOutput, exceptions);
@@ -132,7 +137,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     protected void processData(final File inputDir, final File outputDir, final boolean reference,
-            final boolean compareOutput, final List<Exception> exceptions) {
+                               final boolean compareOutput, final List<Exception> exceptions) {
         // Create a stream processor for each pipeline.
         final BaseResultList<PipelineEntity> pipelines = pipelineEntityService.find(new FindPipelineEntityCriteria());
         for (final PipelineEntity pipelineEntity : pipelines) {
@@ -188,7 +193,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     private void test(final File inputFile, final Feed feed, final File outputDir, final String stem,
-            final boolean compareOutput, final List<Exception> exceptions) throws Exception {
+                      final boolean compareOutput, final List<Exception> exceptions) throws Exception {
         LOGGER.info("Testing: " + inputFile.getName());
 
         addStream(inputFile, feed);
@@ -344,7 +349,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         streamCriteria.obtainStreamIdSet().setMatchAll(Boolean.TRUE);
         streamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_REFERENCE);
         streamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS);
-        final SteppingTask action = new SteppingTask(null, "Test User");
+        final SteppingTask action = new SteppingTask(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
         action.setPipeline(DocRefUtil.create(pipelineEntity));
         action.setCriteria(streamCriteria);
 
@@ -402,7 +407,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     private SteppingResult step(final StepType direction, final int steps, final SteppingTask request,
-            final SteppingResult existingResponse) {
+                                final SteppingResult existingResponse) {
         SteppingResult newResponse = existingResponse;
 
         for (int i = 0; i < steps; i++) {

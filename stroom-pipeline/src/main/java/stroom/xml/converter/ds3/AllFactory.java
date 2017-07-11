@@ -16,9 +16,9 @@
 
 package stroom.xml.converter.ds3;
 
-import java.util.Set;
-
 import stroom.xml.converter.ds3.ref.VarMap;
+
+import java.util.Set;
 
 public class AllFactory extends ExpressionFactory {
     public AllFactory(final NodeFactory parent, final String id) {

@@ -16,6 +16,7 @@
 
 package stroom.volume.server;
 
+import com.google.common.collect.ImmutableMap;
 import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,29 +35,42 @@ import stroom.entity.shared.EntityAction;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;
-import stroom.node.shared.*;
+import stroom.node.shared.FindVolumeCriteria;
+import stroom.node.shared.Node;
+import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.Volume.VolumeUseStatus;
+import stroom.node.shared.VolumeService;
+import stroom.node.shared.VolumeState;
+import stroom.security.Insecure;
 import stroom.security.Secured;
-import stroom.statistics.common.StatisticEvent;
-import stroom.statistics.common.StatisticTag;
-import stroom.statistics.common.Statistics;
-import stroom.statistics.common.StatisticsFactory;
-import stroom.streamstore.server.fs.FileSystemUtil;
+import stroom.statistics.internal.InternalStatisticEvent;
+import stroom.statistics.internal.InternalStatisticsFacade;
+import stroom.statistics.internal.InternalStatisticsFacadeFactory;
 import stroom.util.config.StroomProperties;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomStartup;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 /**
  * Implementation for the volume API.
@@ -64,7 +78,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @Transactional
 @Component("volumeService")
 @Secured(Volume.MANAGE_VOLUMES_PERMISSION)
-@EntityEventHandler(type = Volume.ENTITY_TYPE, action = {EntityAction.ADD, EntityAction.DELETE})
+@EntityEventHandler(type = Volume.ENTITY_TYPE, action = {EntityAction.CREATE, EntityAction.DELETE})
 public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolumeCriteria>
         implements VolumeService, EntityEvent.Handler, Clearable {
     /**
@@ -74,20 +88,22 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     /**
      * Should we try to write to local volumes if possible?
      */
-    public static final String PROP_PREFER_LOCAL_VOLUMES = "stroom.streamstore.preferLocalVolumes";
+    private static final String PROP_PREFER_LOCAL_VOLUMES = "stroom.streamstore.preferLocalVolumes";
     /**
      * How should we select volumes to use?
      */
-    public static final String PROP_VOLUME_SELECTOR = "stroom.streamstore.volumeSelector";
+    private static final String PROP_VOLUME_SELECTOR = "stroom.streamstore.volumeSelector";
+
+    private static final String INTERNAL_STAT_KEY_VOLUMES = "volumes";
 
     /**
      * Whether a default volume should be created on application start, but only if other volumes don't already exist
      */
-    public static final String PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP = "stroom.volumes.createDefaultOnStart";
+    static final String PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP = "stroom.volumes.createDefaultOnStart";
 
-    public static final Path DEFAULT_VOLUMES_SUBDIR = Paths.get("volumes");
-    public static final Path DEFAULT_INDEX_VOLUME_SUBDIR = Paths.get("defaultIndexVolume");
-    public static final Path DEFAULT_STREAM_VOLUME_SUBDIR = Paths.get("defaultStreamVolume");
+    static final Path DEFAULT_VOLUMES_SUBDIR = Paths.get("volumes");
+    static final Path DEFAULT_INDEX_VOLUME_SUBDIR = Paths.get("defaultIndexVolume");
+    static final Path DEFAULT_STREAM_VOLUME_SUBDIR = Paths.get("defaultStreamVolume");
 
     private static final Logger LOGGER = LoggerFactory.getLogger(VolumeServiceImpl.class);
 
@@ -113,38 +129,27 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     private final NodeCache nodeCache;
     private final StroomPropertyService stroomPropertyService;
     private final StroomBeanStore stroomBeanStore;
-    private final Provider<StatisticsFactory> factoryProvider;
+    private final InternalStatisticsFacadeFactory internalStatisticsFacadeFactory;
     private final AtomicReference<List<Volume>> currentVolumeState = new AtomicReference<>();
 
-    private volatile Statistics statistics;
-
     @Inject
-    public VolumeServiceImpl(final StroomEntityManager stroomEntityManager, final NodeCache nodeCache,
-                             final StroomPropertyService stroomPropertyService, final StroomBeanStore stroomBeanStore,
-                             final Provider<StatisticsFactory> factoryProvider) {
+    VolumeServiceImpl(final StroomEntityManager stroomEntityManager, final NodeCache nodeCache,
+                      final StroomPropertyService stroomPropertyService, final StroomBeanStore stroomBeanStore,
+                      final InternalStatisticsFacadeFactory internalStatisticsFacadeFactory) {
         super(stroomEntityManager);
         this.stroomEntityManager = stroomEntityManager;
         this.nodeCache = nodeCache;
         this.stroomPropertyService = stroomPropertyService;
         this.stroomBeanStore = stroomBeanStore;
-        this.factoryProvider = factoryProvider;
+        this.internalStatisticsFacadeFactory = internalStatisticsFacadeFactory;
     }
 
     private static void registerVolumeSelector(final VolumeSelector volumeSelector) {
         volumeSelectorMap.put(volumeSelector.getName(), volumeSelector);
     }
 
-    @StroomStartup
-    public void afterPropertiesSet() throws Exception {
-        if (stroomBeanStore != null) {
-            final StatisticsFactory factory = factoryProvider.get();
-            if (factory != null) {
-                statistics = factory.instance();
-            }
-        }
-    }
-
     @Transactional(readOnly = true)
+    @Insecure
     @Override
     public Set<Volume> getStreamVolumeSet(final Node node) {
         LocalVolumeUse localVolumeUse = null;
@@ -157,6 +162,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     }
 
     @Transactional(readOnly = true)
+    @Insecure
     @Override
     public Set<Volume> getIndexVolumeSet(final Node node, final Set<Volume> allowedVolumes) {
         return getVolumeSet(node, null, null, VolumeUseStatus.ACTIVE, LocalVolumeUse.REQUIRED, allowedVolumes, 1);
@@ -349,28 +355,35 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         try {
             final VolumeState volumeState = volume.getVolumeState();
 
-            if (statistics != null) {
-                final List<StatisticTag> tags = new ArrayList<>();
-                tags.add(new StatisticTag("Id", String.valueOf(volume.getId())));
-                tags.add(new StatisticTag("Node", volume.getNode().getName()));
-                tags.add(new StatisticTag("Path", volume.getPath()));
-
-                if (volume.getBytesLimit() != null) {
-                    statistics.putEvent(new StatisticEvent(System.currentTimeMillis(), "Volume Limit", tags,
-                            (double) volume.getBytesLimit()));
-                }
-                statistics.putEvent(new StatisticEvent(System.currentTimeMillis(), "Volume Used", tags,
-                        (double) volumeState.getBytesUsed()));
-                statistics.putEvent(new StatisticEvent(System.currentTimeMillis(), "Volume Free", tags,
-                        (double) volumeState.getBytesFree()));
-                statistics.putEvent(new StatisticEvent(System.currentTimeMillis(), "Volume Total", tags,
-                        (double) volumeState.getBytesTotal()));
-                statistics.putEvent(new StatisticEvent(System.currentTimeMillis(), "Volume Use%", tags,
-                        (double) volumeState.getPercentUsed()));
-            }
+            final long now = System.currentTimeMillis();
+            InternalStatisticsFacade.BatchBuilder batchBuilder = internalStatisticsFacadeFactory.create().batchBuilder();
+            addStatisticEvent(batchBuilder, now, volume, "Limit", volume.getBytesLimit());
+            addStatisticEvent(batchBuilder, now, volume, "Used", volumeState.getBytesUsed());
+            addStatisticEvent(batchBuilder, now, volume, "Free", volumeState.getBytesFree());
+            addStatisticEvent(batchBuilder, now, volume, "Total", volumeState.getBytesTotal());
+            batchBuilder.putBatch();
         } catch (final Throwable t) {
             LOGGER.warn(t.getMessage());
             LOGGER.debug(t.getMessage(), t);
+        }
+    }
+
+    private void addStatisticEvent(final InternalStatisticsFacade.BatchBuilder batchBuilder,
+                                   final long timeMs,
+                                   final Volume volume,
+                                   final String type,
+                                   final Long bytes) {
+        if (bytes != null) {
+            Map<String, String> tags = ImmutableMap.<String, String>builder()
+                    .put("Id", String.valueOf(volume.getId()))
+                    .put("Node", volume.getNode().getName())
+                    .put("Path", volume.getPath())
+                    .put("Type", type)
+                    .build();
+
+            InternalStatisticEvent event = InternalStatisticEvent.createValueStat(
+                    INTERNAL_STAT_KEY_VOLUMES, timeMs, tags, bytes.doubleValue());
+            batchBuilder.addEvent(event);
         }
     }
 
@@ -488,7 +501,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     }
 
     private static class VolumeQueryAppender extends QueryAppender<Volume, FindVolumeCriteria> {
-        public VolumeQueryAppender(final StroomEntityManager entityManager) {
+        VolumeQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
         }
 
@@ -564,7 +577,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         }
     }
 
-    private OptionalLong getDefaultVolumeLimit(final Path path){
+    private OptionalLong getDefaultVolumeLimit(final Path path) {
         try {
             long totalBytes = Files.getFileStore(path).getTotalSpace();
             //set an arbitrary limit of 90% of the filesystem total size to ensure we don't fill up the
@@ -573,7 +586,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
             //to all volumes and any other data on the filesystem. I.e. once the amount of the filesystem in use
             //is greater than the limit writes to those volumes will be prevented. See Volume.isFull() and
             //this.updateVolumeState()
-            return OptionalLong.of((long)(totalBytes * 0.9));
+            return OptionalLong.of((long) (totalBytes * 0.9));
         } catch (IOException e) {
             LOGGER.warn("Unable to determine the total space on the filesystem for path: ", path.toAbsolutePath().toString());
             return OptionalLong.empty();
@@ -581,22 +594,35 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     }
 
     private Optional<Path> getDefaultVolumesPath() {
-        Optional<Path> defaultVolumesDir;
+        return Stream.<Supplier<Optional<Path>>>of(
+                this::getApplicationJarDir,
+                this::getUserHomeDir,
+                Optional::empty)
+                .map(Supplier::get)
+                .filter(Optional::isPresent)
+                .findFirst()
+                .map(Optional::get)
+                .flatMap(path -> Optional.of(path.resolve(DEFAULT_VOLUMES_SUBDIR)));
+    }
 
-        String catalinaHome = System.getProperty("catalina.home");
-        String userHome = System.getProperty("user.home");
+    private Optional<Path> getUserHomeDir() {
+        return Optional.ofNullable(System.getProperty("user.home"))
+                .flatMap(userHome -> Optional.of(Paths.get(userHome, StroomProperties.USER_CONF_DIR)));
+    }
 
-        if (catalinaHome != null) {
-            //running inside tomcat so use a subdir in there
-            Path catalinaHomePath = Paths.get(catalinaHome);
-            defaultVolumesDir = Optional.of(catalinaHomePath.getParent().resolve(DEFAULT_VOLUMES_SUBDIR));
-        } else if (userHome != null) {
-            //not in tomcat so use the personal user conf dir as a base
-            defaultVolumesDir = Optional.of(Paths.get(userHome, StroomProperties.USER_CONF_DIR).resolve(DEFAULT_VOLUMES_SUBDIR));
-        } else {
-            defaultVolumesDir = Optional.empty();
+
+    private Optional<Path> getApplicationJarDir() {
+        try {
+            String codeSourceLocation = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
+            if (Pattern.matches(".*/stroom[^/]*.jar$", codeSourceLocation)) {
+                return Optional.of(Paths.get(codeSourceLocation).getParent());
+            } else {
+                return Optional.empty();
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Unable to determine application jar directory due to: {}", e.getMessage());
+            return Optional.empty();
         }
-        return defaultVolumesDir;
     }
 
 }

@@ -16,11 +16,11 @@
 
 package stroom.importexport.server;
 
+import javassist.Modifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseEntity;
-import stroom.query.api.DocRef;
-import javassist.Modifier;
+import stroom.query.api.v1.DocRef;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;

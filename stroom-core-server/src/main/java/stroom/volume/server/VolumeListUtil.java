@@ -16,11 +16,11 @@
 
 package stroom.volume.server;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import stroom.node.shared.Rack;
 import stroom.node.shared.Volume;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class VolumeListUtil {
     public static List<Volume> removeFullVolumes(final List<Volume> list) {

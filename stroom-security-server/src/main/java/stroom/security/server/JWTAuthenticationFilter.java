@@ -29,7 +29,10 @@ import java.io.IOException;
 
 public class JWTAuthenticationFilter extends AuthenticatingFilter {
 
-    public JWTAuthenticationFilter() {
+    private JWTService jwtService;
+
+    public JWTAuthenticationFilter(final JWTService jwtService) {
+        this.jwtService = jwtService;
         setLoginUrl(DEFAULT_LOGIN_URL);
     }
 
@@ -47,7 +50,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
     protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws Exception {
         boolean loggedIn = false;
 
-        if (isLoginRequest(request, response) || JWTUtils.getAuthHeader(request).isPresent()) {
+        if (isLoginRequest(request, response) || JWTService.getAuthHeader(request).isPresent()) {
             loggedIn = executeLogin(request, response);
         }
 
@@ -62,7 +65,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
 
     @Override
     protected AuthenticationToken createToken(ServletRequest request, ServletResponse response) throws IOException {
-        return JWTUtils.verifyToken(request).orElseGet(() -> new UsernamePasswordToken());
+        return jwtService.verifyToken(request).orElseGet(() -> new UsernamePasswordToken());
     }
 
     @Override

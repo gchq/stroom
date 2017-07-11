@@ -2,11 +2,14 @@ plugins {
   id 'com.github.johnrengelman.shadow' version '1.2.4'
 }
 
+apply plugin: 'application'
+mainClassName = 'stroom.startup.App'
+
 jar {
     manifest {
         attributes(
                 "Implementation-Title": "Stroom",
-                "Implementation-Version": version,
+                "Implementation-Version": versions.stroom,
                 "Main-Class" : "stroom.startup.App"
         )
     }
@@ -39,36 +42,69 @@ configurations {
         exclude group: "org.slf4j", module: "slf4j-log4j12"
         exclude group: "log4j", module: "log4j"
     }
+
+    // This means our integration tests get all the dependencies from our tests and we don't need to specify them twice.
+    integrationTestCompile.extendsFrom testCompile
+    integrationTestRuntime.extendsFrom testRuntime
 }
 
 dependencies {
 
-    compile "ch.qos.logback:logback-classic:1.2.1"
-    compile "org.slf4j:log4j-over-slf4j:1.7.22"
-
     compile project(':stroom-core-server')
-    compile project(':stroom-index-server')
-    compile project(':stroom-statistics-server')
-    compile project(':stroom-dashboard-server')
     compile project(':stroom-security-server')
-    compile "io.dropwizard:dropwizard-core:1.0.6"
-    compile "io.dropwizard:dropwizard-assets:1.0.6"
+    compile project(':stroom-index-server')
+    compile project(':stroom-statistics-api')
+    permitUnusedDeclared project(':stroom-statistics-api') //not clear why it thinks this is unused
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-index-shared')
+    compile project(':stroom-util')
+    compile project(':stroom-security-api')
 
-    // TODO Added after adding shading
-    compile group: 'javax.el', name: 'javax.el-api', version: '3.0.0'
-    compile group: 'org.glassfish.web', name: 'javax.el', version: '2.2.6'
+    runtime project(':stroom-dashboard-server')
+    runtime project(':stroom-statistics-server')
 
+    compile urlDependencies.get(versions.stroomQueryApi)
+    compile urlDependencies.get(versions.stroomQueryCommon)
 
-    compile 'org.springframework.security:spring-security-web:4.2.1.RELEASE'
-    compile "org.springframework.security:spring-security-web:4.2.1.RELEASE"
-    compile "org.springframework.security:spring-security-config:4.1.1.RELEASE"
-    compile "org.springframework.security:spring-security-aspects:4.2.1.RELEASE"
-    compile "org.springframework:spring-web:4.2.1.RELEASE"
+    compile libs.curator_client
+    compile libs.curator_framework
+    compile libs.curator_x_discovery
+    compile (libs.dropwizard_assets) {
+        exclude ( group: "org.glassfish.web", module: "javax.el" )
+    }
+    compile (libs.dropwizard_core) {
+        exclude ( group: "org.glassfish.web", module: "javax.el" )
+    }
+    compile libs.dropwizard_jersey
+    compile libs.dropwizard_jetty
+    compile libs.dropwizard_metrics_annotation
+    compile libs.dropwizard_metrics_healthchecks
+    compile libs.dropwizard_servlets
+    compile libs.guava
+    compile libs.jackson_annotations
+    compile libs.javax_inject
+    compile libs.javax_servlet_api
+    compile libs.jersey_server
+    compile libs.jetty_server
+    compile libs.jetty_servlet
+    compile libs.logback_classic
+    compile libs.shiro_core
+    compile libs.slf4j_api
+    compile libs.spring_beans
+    compile libs.spring_context
+    compile libs.spring_web
+    compile libs.vavr
+    compile libs.ws_rs_api
 
-    compile "org.apache.geronimo.specs:geronimo-servlet_3.0_spec:1.0"
+    runtime libs.shiro_web
+    runtime libs.javax_el
+    runtime libs.javax_el_api
 
-    testCompile 'io.dropwizard:dropwizard-testing:1.0.6'
-    testCompile 'io.dropwizard:dropwizard-client:1.0.6'
+    integrationTestCompile libs.junit
+    integrationTestCompile libs.mockito_core
+    integrationTestCompile libs.assertj_core
+    integrationTestCompile libs.dropwizard_testing
+    integrationTestCompile libs.dropwizard_client
 }
 
 sourceSets {
@@ -77,17 +113,13 @@ sourceSets {
         java {
             compileClasspath += main.output + test.output
             runtimeClasspath += main.output + test.output
-            srcDir file('src/integration-test/java')
+            srcDir file('src/integrationTest/java')
         }
-        resources.srcDir file('src/integration-test/resources')
+        resources.srcDir file('src/integrationTest/resources')
     }
 }
 
-configurations {
-    // This means our integration tests get all the dependencies from our tests and we don't need to specify them twice.
-    integrationTestCompile.extendsFrom testCompile
-    integrationTestRuntime.extendsFrom testRuntime
-}
+
 
 // This task lets us run the actual integration tests.
 task integrationTest(type: Test) {
@@ -95,8 +127,7 @@ task integrationTest(type: Test) {
     classpath = sourceSets.integrationTest.runtimeClasspath
 }
 
-// TODO: Integration tests currently require manual setup of resources, which means
-//       they cannot be included in the build as automated tests.
+// TODO: Integration tests currently require manual setup of resources, which means hey cannot be included in the build as automated tests.
 // These lines pull the integration test task into our build process.
 //check.dependsOn integrationTest
 //integrationTest.mustRunAfter test
@@ -104,4 +135,8 @@ task integrationTest(type: Test) {
 // This means the reports from our integration tests won't over-write the reports from our unit tests.
 tasks.withType(Test) {
     reports.html.destination = file("${reporting.baseDir}/${name}")
+}
+
+run {
+    args 'server', './dev.yml'
 }

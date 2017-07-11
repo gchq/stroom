@@ -16,9 +16,9 @@
 
 package stroom.volume.server;
 
-import java.util.List;
-
 import stroom.node.shared.Volume;
+
+import java.util.List;
 
 public class RandomVolumeSelector implements VolumeSelector {
     public static final String NAME = "Random";

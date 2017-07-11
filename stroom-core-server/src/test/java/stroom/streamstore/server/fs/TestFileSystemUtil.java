@@ -16,6 +16,10 @@
 
 package stroom.streamstore.server.fs;
 
+import org.apache.commons.io.FileUtils;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import stroom.feed.shared.Feed;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
@@ -23,13 +27,9 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
-import stroom.util.test.StroomUnitTest;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.FileSystemTestUtil;
-import org.apache.commons.io.FileUtils;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
 
 import java.io.File;
 import java.io.IOException;

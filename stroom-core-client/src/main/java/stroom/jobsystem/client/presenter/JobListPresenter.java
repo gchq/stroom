@@ -16,7 +16,6 @@
 
 package stroom.jobsystem.client.presenter;
 
-import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
@@ -48,13 +47,6 @@ import java.util.List;
 
 public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
     private EntityServiceFindActionDataProvider<FindJobCriteria, Job> dataProvider;
-//    private final InterceptingSelectionChangeHandler interceptingSelectionChangeHandler = new InterceptingSelectionChangeHandler();
-//    private final MySingleSelectionModel<Job> selectionModel = new MySingleSelectionModel<Job>() {
-//        @Override
-//        protected boolean isSelectable(final Job item) {
-//            return item.isPersistent();
-//        }
-//    };
 
     private final SaveQueue<Job> jobSaver;
 
@@ -92,7 +84,7 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
         }, "Job");
 
         // Enabled.
-        final Column<Job, TickBoxState> enabledColumn = new Column<Job, TickBoxState>(new TickBoxCell(false, false)) {
+        final Column<Job, TickBoxState> enabledColumn = new Column<Job, TickBoxState>(TickBoxCell.create(false, false)) {
             @Override
             public TickBoxState getValue(final Job row) {
                 if (!row.isPersistent()) {
@@ -101,17 +93,14 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
                 return TickBoxState.fromBoolean(row.isEnabled());
             }
         };
-        enabledColumn.setFieldUpdater(new FieldUpdater<Job, TickBoxState>() {
-            @Override
-            public void update(final int index, final Job row, final TickBoxState value) {
-                final boolean newValue = value.toBoolean();
-                jobSaver.save(new EntitySaveTask<Job>(new EntityRow<Job>(row)) {
-                    @Override
-                    protected void setValue(final Job entity) {
-                        entity.setEnabled(newValue);
-                    }
-                });
-            }
+        enabledColumn.setFieldUpdater((index, row, value) -> {
+            final boolean newValue = value.toBoolean();
+            jobSaver.save(new EntitySaveTask<Job>(new EntityRow<Job>(row)) {
+                @Override
+                protected void setValue(final Job entity) {
+                    entity.setEnabled(newValue);
+                }
+            });
         });
         getView().addColumn(enabledColumn, "Enabled", 80);
 
@@ -151,16 +140,6 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
         this.dataProvider.setCriteria(findJobCriteria);
 
     }
-
-//    @Override
-//    public HandlerRegistration addSelectionChangeHandler(final Handler handler) {
-//        return interceptingSelectionChangeHandler.addSelectionChangeHandler(handler);
-//    }
-//
-//
-//    public HandlerRegistration addSelectionHandler(DataGridSelectEvent.Handler handler) {
-//        return getView().addSelectionHandler(handler);
-//    }
 
     public MultiSelectionModel<Job> getSelectionModel() {
         return getView().getSelectionModel();

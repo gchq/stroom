@@ -15,6 +15,9 @@
  */
 
 dependencies {
-    compile project(':stroom-query-api')
+    compile urlDependencies.get(urlLibs.stroomQueryApi)
     compile project(':stroom-entity-shared')
+    compile project(':stroom-util-shared')
+
+    compile libs.hibernate_jpa_api
 }

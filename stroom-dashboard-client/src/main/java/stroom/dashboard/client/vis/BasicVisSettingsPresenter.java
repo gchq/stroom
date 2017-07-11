@@ -30,13 +30,9 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.FetchVisualisationAction;
 import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.VisComponentSettings;
-import stroom.data.client.event.DataSelectionEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.explorer.shared.ExplorerData;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.client.JSONUtil;
 import stroom.util.shared.EqualsBuilder;
@@ -75,13 +71,10 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
 
     @Override
     protected void onBind() {
-        registerHandler(visualisationPresenter.addDataSelectionHandler(new DataSelectionHandler<ExplorerData>() {
-            @Override
-            public void onSelection(final DataSelectionEvent<ExplorerData> event) {
-                if (!EqualsUtil.isEquals(currentVisualisation, visualisationPresenter.getSelectedEntityReference())) {
-                    writeDynamicSettings(dynamicSettings);
-                    loadVisualisation(visualisationPresenter.getSelectedEntityReference(), dynamicSettings);
-                }
+        registerHandler(visualisationPresenter.addDataSelectionHandler(event -> {
+            if (!EqualsUtil.isEquals(currentVisualisation, visualisationPresenter.getSelectedEntityReference())) {
+                writeDynamicSettings(dynamicSettings);
+                loadVisualisation(visualisationPresenter.getSelectedEntityReference(), dynamicSettings);
             }
         }));
     }
@@ -116,16 +109,13 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
         currentVisualisation = docRef;
         if (docRef != null) {
             final FetchVisualisationAction action = new FetchVisualisationAction(docRef);
-            dispatcher.execute(action, new AsyncCallbackAdaptor<Visualisation>() {
-                @Override
-                public void onSuccess(final Visualisation result) {
-                    String jsonString = "";
-                    if (result != null && result.getSettings() != null) {
-                        jsonString = result.getSettings();
-                    }
-                    final JSONObject settings = JSONUtil.getObject(JSONUtil.parse(jsonString));
-                    readSettings(settings, dynamicSettings);
+            dispatcher.exec(action).onSuccess(result -> {
+                String jsonString = "";
+                if (result != null && result.getSettings() != null) {
+                    jsonString = result.getSettings();
                 }
+                final JSONObject settings = JSONUtil.getObject(JSONUtil.parse(jsonString));
+                readSettings(settings, dynamicSettings);
             });
         }
     }

@@ -20,12 +20,11 @@ import stroom.jobsystem.shared.JobNode;
 import stroom.jobsystem.shared.JobNodeInfo;
 import stroom.task.cluster.ClusterTask;
 import stroom.util.shared.SharedMap;
-import stroom.util.shared.Task;
 
 public class JobNodeInfoClusterTask extends ClusterTask<SharedMap<JobNode, JobNodeInfo>> {
     private static final long serialVersionUID = 3242415690833883484L;
 
-    public JobNodeInfoClusterTask() {
-        super(null, "JobNodeInfoClusterTask");
+    public JobNodeInfoClusterTask(final String userToken) {
+        super(userToken, "JobNodeInfoClusterTask");
     }
 }

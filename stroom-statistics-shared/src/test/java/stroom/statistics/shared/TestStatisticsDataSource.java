@@ -16,14 +16,17 @@
 
 package stroom.statistics.shared;
 
+import org.junit.Assert;
+import org.junit.Test;
+import stroom.statistics.shared.common.CustomRollUpMask;
+import stroom.statistics.shared.common.StatisticField;
+import stroom.statistics.shared.common.StatisticRollUpType;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-
-import org.junit.Assert;
-import org.junit.Test;
 
 public class TestStatisticsDataSource {
     private static final String FIELD1 = "field1";

@@ -18,14 +18,13 @@ package stroom.streamtask.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
 import stroom.streamstore.server.StreamSource;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamTask;
+import stroom.util.spring.StroomScope;
 
 @Scope(StroomScope.PROTOTYPE)
 @Component("streamProcessorTaskTester")

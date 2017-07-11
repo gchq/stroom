@@ -25,8 +25,8 @@ import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableResultRequest;
-import stroom.query.api.Query;
-import stroom.query.api.ResultRequest;
+import stroom.query.api.v1.Query;
+import stroom.query.api.v1.ResultRequest;
 import stroom.visualisation.shared.VisualisationService;
 
 import java.util.List;
@@ -50,7 +50,7 @@ public class TestSearchRequestMapper {
         stroom.dashboard.shared.SearchRequest dashboardSearchRequest = SearchRequestTestData.dashboardSearchRequest();
 
         // When
-        stroom.query.api.SearchRequest mappedApiSearchRequest = searchRequestMapper.mapRequest(new DashboardQueryKey(), dashboardSearchRequest);
+        stroom.query.api.v1.SearchRequest mappedApiSearchRequest = searchRequestMapper.mapRequest(new DashboardQueryKey(), dashboardSearchRequest);
 
         // Then
         verify_Search_to_Query_mapping(

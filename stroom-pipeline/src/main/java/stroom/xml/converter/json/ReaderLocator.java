@@ -16,12 +16,11 @@
 
 package stroom.xml.converter.json;
 
+import org.xml.sax.Locator;
+import stroom.util.io.WrappedReader;
+
 import java.io.IOException;
 import java.io.Reader;
-
-import org.xml.sax.Locator;
-
-import stroom.util.io.WrappedReader;
 
 public class ReaderLocator extends WrappedReader implements Locator {
     private int lineNo = 1;

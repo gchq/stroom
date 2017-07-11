@@ -19,10 +19,16 @@ package stroom.startup;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.setup.Bootstrap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.Config;
 
 public class App extends Application<Config> {
+    private final Logger LOGGER = LoggerFactory.getLogger(App.class);
+
     public static void main(String[] args) throws Exception {
+        // Hibernate requires JBoss Logging. The SLF4J API jar wasn't being detected so this sets it manually.
+        System.setProperty("org.jboss.logging.provider", "slf4j");
         new App().run(args);
     }
 
@@ -34,13 +40,15 @@ public class App extends Application<Config> {
     @Override
     public void run(Config configuration, io.dropwizard.setup.Environment environment) throws Exception {
         // The order in which the following are run is important.
-        Environment.configure(configuration, environment);
+        Environment.configure(environment);
         SpringContexts springContexts = new SpringContexts();
         Servlets servlets = new Servlets(environment.getApplicationContext());
         Filters filters = new Filters(environment.getApplicationContext());
         Listeners listeners = new Listeners(environment.servlets(), springContexts.rootContext);
         springContexts.start(environment, configuration);
-        Resources resources = new Resources(environment.jersey(), servlets.upgradeDispatcherServletHolder);
-        HealthChecks healthChecks = new HealthChecks(environment.healthChecks(), resources);
+        ServletMonitor servletMonitor = new ServletMonitor((servlets.upgradeDispatcherServletHolder));
+        Resources resources = new Resources(environment.jersey(), servletMonitor);
+        HealthChecks.registerHealthChecks(environment.healthChecks(), resources, servletMonitor);
+        AdminTasks.registerAdminTasks(environment);
     }
 }

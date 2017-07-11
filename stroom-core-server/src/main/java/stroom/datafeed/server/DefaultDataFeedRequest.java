@@ -23,7 +23,7 @@ import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
-import stroom.statistic.server.MetaDataStatistic;
+import stroom.internalstatistics.MetaDataStatistic;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamtask.server.StreamTargetStroomStreamHandler;
 import stroom.util.task.ServerTask;
@@ -71,7 +71,7 @@ public class DefaultDataFeedRequest implements DataFeedRequest {
     @Override
     @Insecure
     public void processRequest() {
-        securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER);
+        securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
         try {
             final String feedName = headerMap.get(StroomHeaderArguments.FEED);
 

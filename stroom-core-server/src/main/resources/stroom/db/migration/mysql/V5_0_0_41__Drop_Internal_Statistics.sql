@@ -1,0 +1,31 @@
+UPDATE FOLDER SET NAME = 'Old Internal Statistics' WHERE NAME = 'Internal Statistics';
+
+DELETE FROM STAT_DAT_SRC WHERE NAME IN (
+'Stream Task Queue Size',
+'PipelineStreamProcessor',
+'Node Status-WriteEps',
+'Node Status-ReadEps',
+'Node Status-JvmNonHeapUsedMb',
+'Node Status-JvmNonHeapMaxMb',
+'Node Status-JvmNonHeapComittedMb',
+'Node Status-JvmHeapUsedMb',
+'Node Status-JvmHeapMaxMb',
+'Node Status-JvmHeapComittedMb',
+'Node Status-CpuUser',
+'Node Status-CpuTotal',
+'Node Status-CpuSystem',
+'Node Status-CpuSoftIrq',
+'Node Status-CpuNice',
+'Node Status-CpuIrq',
+'Node Status-CpuIoWait',
+'Node Status-CpuIdle',
+'Meta Data-Streams Received',
+'Meta Data-Stream Size',
+'Meta Data-Bytes Received',
+'Benchmark-Cluster Test',
+'Volume Limit',
+'Volume Used',
+'Volume Free',
+'Volume Total',
+'Volume Use%'
+);

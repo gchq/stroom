@@ -16,16 +16,14 @@
 
 package stroom.pipeline.structure.client.view;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.google.gwt.dom.client.ImageElement;
-import com.google.gwt.event.dom.client.LoadEvent;
-import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RootPanel;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class ImageCache {
     private static Map<String, ImageElement> imageCache = new HashMap<>();
@@ -52,17 +50,14 @@ public class ImageCache {
 
                 // To render images we need to wait for the image to load before
                 // it can be rendered to the canvas.
-                image.addLoadHandler(new LoadHandler() {
-                    @Override
-                    public void onLoad(final LoadEvent event) {
-                        // Remove the image from the root panel.
-                        RootPanel.get().remove(image);
+                image.addLoadHandler(event -> {
+                    // Remove the image from the root panel.
+                    RootPanel.get().remove(image);
 
-                        final ImageElement imageElement = ImageElement.as(image.getElement());
-                        imageCache.put(url, imageElement);
+                    final ImageElement imageElement = ImageElement.as(image.getElement());
+                    imageCache.put(url, imageElement);
 
-                        callback.onLoad(imageElement);
-                    }
+                    callback.onLoad(imageElement);
                 });
 
                 // Add the image to the root panel to get it to load.
@@ -87,17 +82,14 @@ public class ImageCache {
 
                 // To render images we need to wait for the image to load before
                 // it can be rendered to the canvas.
-                image.addLoadHandler(new LoadHandler() {
-                    @Override
-                    public void onLoad(final LoadEvent event) {
-                        // Remove the image from the root panel.
-                        RootPanel.get().remove(image);
+                image.addLoadHandler(event -> {
+                    // Remove the image from the root panel.
+                    RootPanel.get().remove(image);
 
-                        final ImageElement imageElement = ImageElement.as(image.getElement());
-                        imageCache.put(url, imageElement);
+                    final ImageElement imageElement = ImageElement.as(image.getElement());
+                    imageCache.put(url, imageElement);
 
-                        callback.onLoad(imageElement);
-                    }
+                    callback.onLoad(imageElement);
                 });
 
                 // Add the image to the root panel to get it to load.

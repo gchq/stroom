@@ -16,9 +16,9 @@
 
 package stroom.volume.server;
 
-import java.util.List;
-
 import stroom.node.shared.Volume;
+
+import java.util.List;
 
 public interface VolumeSelector {
     String getName();

@@ -1,26 +1,56 @@
 dependencies {
-    compile project(':stroom-core-server')
-    compile project(':stroom-index-server')
-    compile project(':stroom-statistics-server')
-    compile project(':stroom-dashboard-server')
-    compile project(':stroom-security-server')
-
-    // javax.el not provided as no app container in tests.
-    compile 'javax.el:javax.el-api:3.0.0'
-    compile 'org.glassfish.web:javax.el:2.2.6'
-
-    testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
-    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
-    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
-    testCompile project(path: ':stroom-index-server', configuration: 'testArtifacts')
-    testCompile project(path: ':stroom-dashboard-server', configuration: 'testArtifacts')
-    testCompile project(path: ':stroom-security-server', configuration: 'testArtifacts')
-
+    compile project(':stroom-app')
+    permitUnusedDeclared project(':stroom-app')
     // Use default DB config.
     compile project(':stroom-config')
+    permitUnusedDeclared project(':stroom-config')
+    compile project(':stroom-core-server')
+    permitUnusedDeclared project(':stroom-core-server')
+    compile project(':stroom-dashboard-server')
+    permitUnusedDeclared project(':stroom-dashboard-server')
+    compile project(':stroom-index-server')
+    permitUnusedDeclared project(':stroom-index-server')
+    compile project(':stroom-security-server')
+    permitUnusedDeclared project(':stroom-security-server')
+    compile project(':stroom-statistics-server')
+    permitUnusedDeclared project(':stroom-statistics-server')
+
+    testCompile urlDependencies.get(urlLibs.stroomQueryApi)
+    testCompile urlDependencies.get(urlLibs.stroomQueryCommon)
+    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-dashboard-server', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-index-server', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-security-server', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
+
+    testCompile libs.slf4j_api
+    testCompile libs.junit
+
+    testRuntime libs.javax_el
+    //the following logging libs are needed when running junits outside dropwizard
+    testRuntime libs.jcl_over_slf4j
+    testRuntime libs.jul_to_slf4j
+    testRuntime libs.log4j_over_slf4j
+    testRuntime libs.logback_classic
+    testRuntime libs.logback_core
+}
+
+// Integration tests are quite slow so output progress for each test to keep travis alive
+test {
+    afterTest { desc, result -> 
+        println "Executing test ${desc.name} [${desc.className}] with result: ${result.resultType}"
+    }
+
+    //Use full logging for test exceptions so we can see where the failure occurred 
+    testLogging {
+        exceptionFormat = 'full'
+    }
 }
 
 task setupSampleData(type: JavaExec) {
+    dependsOn this:compileJava
+    dependsOn this:compileTestJava
     // We need to set the working directory as the stroom root otherwise
     // setupSampleData won't find 'samples' directories in other modules.
     workingDir '../'

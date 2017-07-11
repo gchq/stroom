@@ -16,7 +16,12 @@
 
 dependencies {
     compile project(':stroom-entity-shared')
-    compile project(':stroom-query-api')
+    compile project(':stroom-util-shared')
+    compile urlDependencies.get(urlLibs.stroomQueryApi)
 
-    compile 'com.google.gwt:gwt-servlet:2.8.0'
+    compile libs.gwt_servlet
+    compile libs.hibernate_core
+    permitUnusedDeclared libs.hibernate_core
+    compile libs.hibernate_jpa_api
+    compile libs.validation_api
 }

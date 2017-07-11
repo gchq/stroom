@@ -1,3 +1,16 @@
 dependencies {
+    compile project(':stroom-entity-shared')
     compile project(':stroom-statistics-api')
+    compile project(':stroom-util-shared')
+
+    compile libs.hibernate_jpa_api
+
+    testCompile libs.junit
+
+    //the following logging libs are needed when running junits outside dropwizard
+    testRuntime libs.jcl_over_slf4j
+    testRuntime libs.jul_to_slf4j
+    testRuntime libs.log4j_over_slf4j
+    testRuntime libs.logback_classic
+    testRuntime libs.logback_core
 }

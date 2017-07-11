@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 
 package stroom.util.zip;
 
+import stroom.util.io.CloseableUtil;
+
 import java.io.IOException;
 import java.io.OutputStream;
-
-import stroom.util.io.CloseableUtil;
 
 public class StroomZipOutputStreamUtil {
     public static void addSimpleEntry(StroomZipOutputStream stroomZipOutputStream, StroomZipEntry entry, byte[] data)

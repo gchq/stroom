@@ -16,7 +16,6 @@
 
 package stroom.widget.util.client;
 
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Timer;
 
 public class DoubleClickTest {

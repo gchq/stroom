@@ -16,15 +16,11 @@
 
 package stroom.process.client.presenter;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.presenter.ConfirmCallback;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.shared.BaseEntity;
@@ -45,19 +41,17 @@ import stroom.process.shared.LoadEntityIdSetAction;
 import stroom.process.shared.SetId;
 import stroom.process.shared.StreamProcessorFilterRow;
 import stroom.process.shared.StreamProcessorRow;
-import stroom.query.api.DocRef;
-import stroom.query.api.ExpressionBuilder;
-import stroom.query.api.ExpressionOperator;
-import stroom.query.api.ExpressionOperator.Op;
-import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.v1.DocRef;
+import stroom.query.api.v1.ExpressionBuilder;
+import stroom.query.api.v1.ExpressionOperator;
+import stroom.query.api.v1.ExpressionOperator.Op;
+import stroom.query.api.v1.ExpressionTerm.Condition;
 import stroom.query.client.ExpressionTreePresenter;
-import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.client.presenter.StreamFilterPresenter;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamType;
-import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.util.shared.SharedMap;
 import stroom.util.shared.SharedObject;
@@ -72,7 +66,6 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.ProcessorView>
@@ -81,7 +74,6 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     private final ExpressionTreePresenter expressionPresenter;
     private final StreamFilterPresenter streamFilterPresenter;
     private final ClientDispatchAsync dispatcher;
-    private final ClientSecurityContext securityContext;
 
     private PipelineEntity pipelineEntity;
     private SharedObject selectedProcessor;
@@ -89,17 +81,17 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     private GlyphButtonView editButton;
     private GlyphButtonView removeButton;
 
+    private boolean allowUpdate;
+
     @Inject
     public ProcessorPresenter(final EventBus eventBus, final ProcessorView view,
                               final ProcessorListPresenter processorListPresenter, final ExpressionTreePresenter expressionPresenter,
-                              final StreamFilterPresenter streamFilterPresenter, final ClientDispatchAsync dispatcher,
-                              final ClientSecurityContext securityContext) {
+                              final StreamFilterPresenter streamFilterPresenter, final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.processorListPresenter = processorListPresenter;
         this.expressionPresenter = expressionPresenter;
         this.streamFilterPresenter = streamFilterPresenter;
         this.dispatcher = dispatcher;
-        this.securityContext = securityContext;
 
         // Stop users from selecting expression items.
         expressionPresenter.setSelectionModel(null);
@@ -111,11 +103,19 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     @Override
     public void read(final BaseEntity entity) {
         processorListPresenter.read(entity);
-
         if (entity instanceof PipelineEntity) {
             this.pipelineEntity = (PipelineEntity) entity;
+        }
+    }
+
+    public void setAllowUpdate(final boolean allowUpdate) {
+        this.allowUpdate = allowUpdate;
+
+        if (this.pipelineEntity != null && allowUpdate) {
             createButtons();
         }
+
+        processorListPresenter.setAllowUpdate(allowUpdate);
     }
 
     private void createButtons() {
@@ -126,28 +126,19 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             editButton.setTitle("Edit Processor");
             removeButton = processorListPresenter.getView().addButton(GlyphIcons.REMOVE);
             removeButton.setTitle("Remove Processor");
-            registerHandler(addButton.addClickHandler(new ClickHandler() {
-                @Override
-                public void onClick(final ClickEvent event) {
-                    if (allowUpdate()) {
-                        addProcessor();
-                    }
+            registerHandler(addButton.addClickHandler(event -> {
+                if (allowUpdate) {
+                    addProcessor();
                 }
             }));
-            registerHandler(editButton.addClickHandler(new ClickHandler() {
-                @Override
-                public void onClick(final ClickEvent event) {
-                    if (allowUpdate()) {
-                        editProcessor();
-                    }
+            registerHandler(editButton.addClickHandler(event -> {
+                if (allowUpdate) {
+                    editProcessor();
                 }
             }));
-            registerHandler(removeButton.addClickHandler(new ClickHandler() {
-                @Override
-                public void onClick(final ClickEvent event) {
-                    if (allowUpdate()) {
-                        removeProcessor();
-                    }
+            registerHandler(removeButton.addClickHandler(event -> {
+                if (allowUpdate) {
+                    removeProcessor();
                 }
             }));
 
@@ -155,23 +146,19 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         }
     }
 
-    private boolean allowUpdate() {
-        return securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION);
-    }
-
     private void enableButtons(final boolean enabled) {
         if (addButton != null) {
-            addButton.setEnabled(allowUpdate());
+            addButton.setEnabled(allowUpdate);
         }
         if (editButton != null) {
-            if (allowUpdate()) {
+            if (allowUpdate) {
                 editButton.setEnabled(enabled);
             } else {
                 editButton.setEnabled(false);
             }
         }
         if (removeButton != null) {
-            if (allowUpdate()) {
+            if (allowUpdate) {
                 removeButton.setEnabled(enabled);
             } else {
                 removeButton.setEnabled(false);
@@ -186,7 +173,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         registerHandler(processorListPresenter.getSelectionModel().addSelectionHandler(event -> {
             updateData();
             if (event.getSelectionType().isDoubleSelect()) {
-                if (allowUpdate()) {
+                if (allowUpdate) {
                     editProcessor();
                 }
             }
@@ -225,14 +212,14 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                 final DocRef dataSourceRef = queryData.getDataSource();
 
                 if (expression != null && dataSourceRef != null) {
-                    dispatcher.execute(new EntityServiceLoadAction<NamedEntity>(dataSourceRef, null), new AsyncCallbackAdaptor<NamedEntity>() {
-                        @Override
-                        public void onSuccess(final NamedEntity result) {
-                            final ExpressionBuilder builder = new ExpressionBuilder(Op.AND);
-                            builder.addTerm("Data Source", Condition.EQUALS, result.getName());
-                            builder.addOperator(expression);
-                            expressionPresenter.read(builder.build());
-                        }
+                    dispatcher.exec(new EntityServiceLoadAction<NamedEntity>(dataSourceRef, null)).onSuccess(result -> {
+                        final ExpressionBuilder builder = new ExpressionBuilder(Op.AND);
+                        builder.addTerm("Data Source", Condition.EQUALS, result.getName());
+
+                        builder.addOperator(expression);
+
+                        expressionPresenter.read(builder.build());
+
                     });
                 } else {
                     expressionPresenter.read(expression);
@@ -243,7 +230,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                 final SetId feedExcludeSetId = new SetId("Feed Exclude", Feed.ENTITY_TYPE);
                 final SetId streamTypeSetId = new SetId("Stream Type", StreamType.ENTITY_TYPE);
 
-                final SharedMap<SetId, EntityIdSet<?>> entitySetMap = new SharedMap<SetId, EntityIdSet<?>>();
+                final SharedMap<SetId, EntityIdSet<?>> entitySetMap = new SharedMap<>();
                 entitySetMap.put(folderSetId, findStreamCriteria.getFolderIdSet());
                 if (findStreamCriteria.getFeeds() != null) {
                     if (findStreamCriteria.getFeeds().getInclude() != null) {
@@ -256,33 +243,30 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                 entitySetMap.put(streamTypeSetId, findStreamCriteria.getStreamTypeIdSet());
 
                 // Load entities.
-                dispatcher.execute(new LoadEntityIdSetAction(entitySetMap),
-                        new AsyncCallbackAdaptor<SharedMap<SetId, DocRefs>>() {
-                            @Override
-                            public void onSuccess(final SharedMap<SetId, DocRefs> result) {
-                                final DocRefs folders = result.get(folderSetId);
-                                final DocRefs feedsInclude = result.get(feedIncludeSetId);
-                                final DocRefs feedsExclude = result.get(feedExcludeSetId);
-                                final DocRefs streamTypes = result.get(streamTypeSetId);
+                dispatcher.exec(new LoadEntityIdSetAction(entitySetMap)).onSuccess(result -> {
+                    final DocRefs folders = result.get(folderSetId);
+                    final DocRefs feedsInclude = result.get(feedIncludeSetId);
+                    final DocRefs feedsExclude = result.get(feedExcludeSetId);
+                    final DocRefs streamTypes = result.get(streamTypeSetId);
 
-                                final ExpressionBuilder operator = new ExpressionBuilder(Op.AND);
-                                addEntityListTerm(operator, folders, "Folder");
-                                addEntityListTerm(operator, feedsInclude, "Feed");
+                    final ExpressionBuilder operator = new ExpressionBuilder(Op.AND);
+                    addEntityListTerm(operator, folders, "Folder");
+                    addEntityListTerm(operator, feedsInclude, "Feed");
 
-                                if (feedsExclude != null && feedsExclude.iterator().hasNext()) {
-                                    final ExpressionBuilder not = operator.addOperator(Op.NOT);
-                                    addEntityListTerm(not, feedsExclude, "Feed");
-                                }
+                    if (feedsExclude != null && feedsExclude.iterator().hasNext()) {
+                        final ExpressionBuilder not = operator.addOperator(Op.NOT);
+                        addEntityListTerm(not, feedsExclude, "Feed");
 
-                                addEntityListTerm(operator, streamTypes, "Stream Type");
-                                addIdTerm(operator, findStreamCriteria.getStreamIdSet(), "Stream Id");
-                                addIdTerm(operator, findStreamCriteria.getParentStreamIdSet(), "Parent Stream Id");
-                                addPeriodTerm(operator, findStreamCriteria.getCreatePeriod(), "Creation time");
-                                addPeriodTerm(operator, findStreamCriteria.getEffectivePeriod(), "Effective time");
+                    }
 
-                                expressionPresenter.read(operator.build());
-                            }
-                        });
+                    addEntityListTerm(operator, streamTypes, "Stream Type");
+                    addIdTerm(operator, findStreamCriteria.getStreamIdSet(), "Stream Id");
+                    addIdTerm(operator, findStreamCriteria.getParentStreamIdSet(), "Parent Stream Id");
+                    addPeriodTerm(operator, findStreamCriteria.getCreatePeriod(), "Creation time");
+                    addPeriodTerm(operator, findStreamCriteria.getEffectivePeriod(), "Effective time");
+
+                    expressionPresenter.read(operator.build());
+                });
             }
         }
     }
@@ -291,18 +275,19 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                                    final String label) {
         if (entities != null) {
             final List<DocRef> list = new ArrayList<>(entities.getDoc());
+            if (list.size() > 0) {
+                if (list.size() > 1) {
+                    final ExpressionBuilder or = operator.addOperator(Op.OR);
 
-            if (list.size() > 1) {
-                final ExpressionBuilder or = operator.addOperator(Op.OR);
+                    list.sort(new EntityReferenceComparator());
+                    for (final DocRef entity : list) {
+                        addEntity(or, entity, label);
+                    }
 
-                Collections.sort(list, new EntityReferenceComparator());
-                for (final DocRef entity : list) {
-                    addEntity(or, entity, label);
+                } else {
+                    final DocRef entity = list.get(0);
+                    addEntity(operator, entity, label);
                 }
-
-            } else if (list.size() > 0) {
-                final DocRef entity = list.get(0);
-                addEntity(operator, entity, label);
             }
         }
     }
@@ -342,15 +327,15 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             final StringBuilder sb = new StringBuilder();
             if (period.getFrom() != null && period.getTo() != null) {
                 condition = Condition.BETWEEN;
-                sb.append(ClientDateUtil.createDateTimeString(period.getFrom()));
+                sb.append(ClientDateUtil.toISOString(period.getFrom()));
                 sb.append(" and ");
-                sb.append(ClientDateUtil.createDateTimeString(period.getTo()));
+                sb.append(ClientDateUtil.toISOString(period.getTo()));
             } else if (period.getFrom() != null) {
                 condition = Condition.GREATER_THAN;
-                sb.append(ClientDateUtil.createDateTimeString(period.getFrom()));
+                sb.append(ClientDateUtil.toISOString(period.getFrom()));
             } else if (period.getTo() != null) {
                 condition = Condition.LESS_THAN;
-                sb.append(ClientDateUtil.createDateTimeString(period.getTo()));
+                sb.append(ClientDateUtil.toISOString(period.getTo()));
             }
 
             operator.addTerm(label, condition, sb.toString());
@@ -361,13 +346,13 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         return processorListPresenter.getSelectionModel();
     }
 
-    public void addProcessor() {
+    private void addProcessor() {
         if (pipelineEntity != null) {
             addOrEditProcessor(null);
         }
     }
 
-    public void editProcessor() {
+    private void editProcessor() {
         if (pipelineEntity != null && selectedProcessor != null) {
             if (selectedProcessor instanceof StreamProcessorFilterRow) {
                 final StreamProcessorFilterRow streamProcessorFilterRow = (StreamProcessorFilterRow) selectedProcessor;
@@ -377,7 +362,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         }
     }
 
-    public void addOrEditProcessor(final StreamProcessorFilter filter) {
+    private void addOrEditProcessor(final StreamProcessorFilter filter) {
         final FindStreamAttributeMapCriteria criteria = new FindStreamAttributeMapCriteria();
 
         if (filter != null && filter.getFindStreamCriteria() != null) {
@@ -397,16 +382,13 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                     if (filter != null) {
                         ConfirmEvent.fire(ProcessorPresenter.this,
                                 "You are about to update an existing filter. Any streams that might now be included by this filter but are older than the current tracker position will not be processed. Are you sure you wish to do this?",
-                                new ConfirmCallback() {
-                                    @Override
-                                    public void onResult(final boolean result) {
-                                        if (result) {
-                                            validateFeed(filter, findStreamCriteria);
-                                        }
+                                result -> {
+                                    if (result) {
+                                        validateFeed(filter, findStreamCriteria);
                                     }
                                 });
                     } else {
-                        validateFeed(filter, findStreamCriteria);
+                        validateFeed(null, findStreamCriteria);
                     }
 
                 } else {
@@ -438,12 +420,9 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                 && findStreamCriteria.obtainFeeds().obtainInclude().getSet().size() == 0
                 && findStreamCriteria.obtainFeeds().obtainExclude().getSet().size() == 0) {
             ConfirmEvent.fire(ProcessorPresenter.this,
-                    "You are about to process all feeds. Are you sure you wish to do this?", new ConfirmCallback() {
-                        @Override
-                        public void onResult(final boolean result) {
-                            if (result) {
-                                validateStreamType(filter, findStreamCriteria);
-                            }
+                    "You are about to process all feeds. Are you sure you wish to do this?", result -> {
+                        if (result) {
+                            validateStreamType(filter, findStreamCriteria);
                         }
                     });
         } else {
@@ -457,12 +436,9 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                 && findStreamCriteria.obtainStreamTypeIdSet().size() == 0) {
             ConfirmEvent.fire(ProcessorPresenter.this,
                     "You are about to process all stream types. Are you sure you wish to do this?",
-                    new ConfirmCallback() {
-                        @Override
-                        public void onResult(final boolean result) {
-                            if (result) {
-                                createOrUpdateProcessor(filter, findStreamCriteria);
-                            }
+                    result -> {
+                        if (result) {
+                            createOrUpdateProcessor(filter, findStreamCriteria);
                         }
                     });
         } else {
@@ -475,63 +451,34 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         if (filter != null) {
             // Now update the processor filter using the find stream criteria.
             filter.setFindStreamCriteria(findStreamCriteria);
-            dispatcher.execute(new EntityServiceSaveAction<StreamProcessorFilter>(filter),
-                    new AsyncCallbackAdaptor<StreamProcessorFilter>() {
-                        @Override
-                        public void onSuccess(final StreamProcessorFilter result) {
-                            refresh(result);
-                            HidePopupEvent.fire(ProcessorPresenter.this, streamFilterPresenter);
-                        }
-                    });
+            dispatcher.exec(new EntityServiceSaveAction<>(filter)).onSuccess(result -> {
+                refresh(result);
+                HidePopupEvent.fire(ProcessorPresenter.this, streamFilterPresenter);
+            });
 
         } else {
             // Now create the processor filter using the find stream criteria.
-            dispatcher.execute(new CreateProcessorAction(DocRefUtil.create(pipelineEntity), findStreamCriteria, false, 10),
-                    new AsyncCallbackAdaptor<StreamProcessorFilter>() {
-                        @Override
-                        public void onSuccess(final StreamProcessorFilter result) {
-                            refresh(result);
-                            HidePopupEvent.fire(ProcessorPresenter.this, streamFilterPresenter);
-                        }
-                    });
+            dispatcher.exec(new CreateProcessorAction(DocRefUtil.create(pipelineEntity), findStreamCriteria, false, 10)).onSuccess(result -> {
+                refresh(result);
+                HidePopupEvent.fire(ProcessorPresenter.this, streamFilterPresenter);
+            });
         }
     }
 
-    public void removeProcessor() {
+    private void removeProcessor() {
         if (selectedProcessor != null) {
             if (selectedProcessor instanceof StreamProcessorRow) {
                 final StreamProcessorRow streamProcessorRow = (StreamProcessorRow) selectedProcessor;
-                ConfirmEvent.fire(this, "Are you sure you want to delete this processor?", new ConfirmCallback() {
-                    @Override
-                    public void onResult(final boolean result) {
-                        if (result) {
-                            dispatcher.execute(
-                                    new EntityServiceDeleteAction<StreamProcessor>(streamProcessorRow.getEntity()),
-                                    new AsyncCallbackAdaptor<StreamProcessor>() {
-                                        @Override
-                                        public void onSuccess(final StreamProcessor result) {
-                                            processorListPresenter.refresh();
-                                        }
-                                    });
-                        }
+                ConfirmEvent.fire(this, "Are you sure you want to delete this processor?", result -> {
+                    if (result) {
+                        dispatcher.exec(new EntityServiceDeleteAction<>(streamProcessorRow.getEntity())).onSuccess(res -> processorListPresenter.refresh());
                     }
                 });
             } else if (selectedProcessor instanceof StreamProcessorFilterRow) {
                 final StreamProcessorFilterRow streamProcessorFilterRow = (StreamProcessorFilterRow) selectedProcessor;
-                ConfirmEvent.fire(this, "Are you sure you want to delete this filter?", new ConfirmCallback() {
-                    @Override
-                    public void onResult(final boolean result) {
-                        if (result) {
-                            dispatcher.execute(
-                                    new EntityServiceDeleteAction<StreamProcessorFilter>(
-                                            streamProcessorFilterRow.getEntity()),
-                                    new AsyncCallbackAdaptor<StreamProcessorFilter>() {
-                                        @Override
-                                        public void onSuccess(final StreamProcessorFilter result) {
-                                            processorListPresenter.refresh();
-                                        }
-                                    });
-                        }
+                ConfirmEvent.fire(this, "Are you sure you want to delete this filter?", result -> {
+                    if (result) {
+                        dispatcher.exec(new EntityServiceDeleteAction<>(streamProcessorFilterRow.getEntity())).onSuccess(res -> processorListPresenter.refresh());
                     }
                 });
             }

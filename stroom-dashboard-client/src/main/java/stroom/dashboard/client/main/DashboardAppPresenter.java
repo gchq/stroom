@@ -31,10 +31,9 @@ import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
 import com.gwtplatform.mvp.client.proxy.RevealRootContentEvent;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.shared.Dashboard;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.EntityServiceLoadAction;
-import stroom.query.api.DocRef;
+import stroom.query.api.v1.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.client.event.CurrentUserChangedEvent;
 import stroom.task.client.TaskEndEvent;
@@ -75,17 +74,9 @@ public class DashboardAppPresenter
 
             } else {
                 final DocRef docRef = new DocRef(type, uuid);
-                dispatcher.execute(new EntityServiceLoadAction<>(docRef, null), new AsyncCallbackAdaptor<Dashboard>() {
-                    @Override
-                    public void onSuccess(final Dashboard dashboard) {
-                        onLoadSuccess(dashboard);
-                    }
-
-                    @Override
-                    public void onFailure(final Throwable throwable) {
-                        onLoadFailure(throwable);
-                    }
-                });
+                dispatcher.exec(new EntityServiceLoadAction<Dashboard>(docRef, null))
+                        .onSuccess(this::onLoadSuccess)
+                        .onFailure(this::onLoadFailure);
             }
         });
 

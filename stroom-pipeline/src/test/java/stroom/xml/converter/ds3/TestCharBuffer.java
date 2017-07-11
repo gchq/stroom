@@ -16,15 +16,14 @@
 
 package stroom.xml.converter.ds3;
 
-import java.io.IOException;
-import java.io.StringReader;
-
-import stroom.util.test.StroomUnitTest;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
+
+import java.io.IOException;
+import java.io.StringReader;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestCharBuffer extends StroomUnitTest {

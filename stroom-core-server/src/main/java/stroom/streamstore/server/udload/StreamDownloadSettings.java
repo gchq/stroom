@@ -16,9 +16,9 @@
 
 package stroom.streamstore.server.udload;
 
-import java.io.Serializable;
-
 import stroom.util.shared.ModelStringUtil;
+
+import java.io.Serializable;
 
 /**
  * Holds the settings for import/export.

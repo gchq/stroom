@@ -16,10 +16,10 @@
 
 package stroom.importexport.server;
 
-import java.util.Set;
-
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.NamedEntity;
+
+import java.util.Set;
 
 public interface EntityPathResolver {
     <E extends NamedEntity> String getEntityPath(String entityType, BaseEntity relative, E entity);

@@ -131,6 +131,10 @@ public final class FileUtil {
         }
     }
 
+    public static void forceDelete(final Path path) {
+        forceDelete(path.toFile());
+    }
+
     public static void forceDelete(final File file) {
         if (file.exists()) {
             if (file.isDirectory()) {

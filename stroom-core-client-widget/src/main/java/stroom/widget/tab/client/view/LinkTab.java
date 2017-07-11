@@ -31,6 +31,10 @@ public class LinkTab extends AbstractTab {
         String background();
 
         String label();
+
+        String hotspot();
+
+        String hotspotVisible();
     }
 
     public interface Resources extends ClientBundle {
@@ -43,6 +47,7 @@ public class LinkTab extends AbstractTab {
     private final Element element;
     private final Element background;
     private final Element label;
+    private final Element hotspot;
 
     public LinkTab(final String text) {
         if (resources == null) {
@@ -63,7 +68,15 @@ public class LinkTab extends AbstractTab {
         label.setInnerText(text);
         element.appendChild(label);
 
+        hotspot = DOM.createDiv();
+        hotspot.setClassName(resources.style().hotspot());
+        element.appendChild(hotspot);
+
         setElement(element);
+    }
+
+    public Element getHotspot() {
+        return hotspot;
     }
 
     @Override
@@ -72,6 +85,14 @@ public class LinkTab extends AbstractTab {
             element.addClassName(resources.style().selected());
         } else {
             element.removeClassName(resources.style().selected());
+        }
+    }
+
+    public void setHighlight(final boolean highlight) {
+        if (highlight) {
+            hotspot.addClassName(resources.style().hotspotVisible());
+        } else {
+            hotspot.removeClassName(resources.style().hotspotVisible());
         }
     }
 

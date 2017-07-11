@@ -31,7 +31,6 @@ import com.gwtplatform.mvp.client.proxy.RevealRootContentEvent;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.KeyboardInterceptor;
 import stroom.core.client.NameTokens;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
 import stroom.security.client.event.EmailResetPasswordEvent;
@@ -45,28 +44,24 @@ public class LoginPresenter extends MyPresenter<LoginPresenter.LoginView, LoginP
 
     @Inject
     public LoginPresenter(final EventBus eventBus, final LoginView view, final LoginProxy proxy,
-            final ClientPropertyCache clientPropertyCache, final KeyboardInterceptor keyboardInterceptor) {
+                          final ClientPropertyCache clientPropertyCache, final KeyboardInterceptor keyboardInterceptor) {
         super(eventBus, view, proxy);
         view.setUiHandlers(this);
 
         // Handle key presses.
         keyboardInterceptor.register(view.asWidget());
 
-        clientPropertyCache.get(new AsyncCallbackAdaptor<ClientProperties>() {
-            @Override
-            public void onSuccess(final ClientProperties result) {
-                view.setHTML(result.get(ClientProperties.LOGIN_HTML));
-                view.setBuildVersion("Build Version: " + result.get(ClientProperties.BUILD_VERSION));
-                view.setBuildDate("Build Date: " + result.get(ClientProperties.BUILD_DATE));
-                view.setUpDate("Up Date: " + result.get(ClientProperties.UP_DATE));
-                view.setNodeName("Node Name: " + result.get(ClientProperties.NODE_NAME));
-            }
+        clientPropertyCache.get()
+                .onSuccess(result -> {
+                    view.setHTML(result.get(ClientProperties.LOGIN_HTML));
+                    view.setBuildVersion("Build Version: " + result.get(ClientProperties.BUILD_VERSION));
+                    view.setBuildDate("Build Date: " + result.get(ClientProperties.BUILD_DATE));
+                    view.setUpDate("Up Date: " + result.get(ClientProperties.UP_DATE));
+                    view.setNodeName("Node Name: " + result.get(ClientProperties.NODE_NAME));
+                })
+                .onFailure(caught -> AlertEvent.fireError(LoginPresenter.this, caught.getMessage(), null));
 
-            @Override
-            public void onFailure(final Throwable caught) {
-                AlertEvent.fireError(LoginPresenter.this, caught.getMessage(), null);
-            }
-        });
+        registerHandler(clientPropertyCache.addPropertyChangeHandler(event -> getView().setBanner(event.getProperties().get(ClientProperties.MAINTENANCE_MESSAGE))));
     }
 
     @ProxyEvent
@@ -125,6 +120,8 @@ public class LoginPresenter extends MyPresenter<LoginPresenter.LoginView, LoginP
     }
 
     public interface LoginView extends View, HasUiHandlers<LoginUiHandlers> {
+        void setBanner(String text);
+
         void setHTML(String html);
 
         void setBuildVersion(String buildVersion);

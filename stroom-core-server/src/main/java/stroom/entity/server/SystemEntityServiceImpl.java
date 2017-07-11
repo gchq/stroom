@@ -16,16 +16,16 @@
 
 package stroom.entity.server;
 
+import event.logging.BaseAdvancedQueryItem;
+import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.shared.Entity;
 import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.BaseEntityService;
+import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.Entity;
 import stroom.entity.shared.FindService;
 import stroom.security.Secured;
 import stroom.security.shared.PermissionNames;
-import event.logging.BaseAdvancedQueryItem;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;

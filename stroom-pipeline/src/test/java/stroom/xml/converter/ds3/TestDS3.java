@@ -16,6 +16,36 @@
 
 package stroom.xml.converter.ds3;
 
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.InputSource;
+import org.xml.sax.XMLReader;
+import stroom.entity.server.util.XMLUtil;
+import stroom.pipeline.server.DefaultLocationFactory;
+import stroom.pipeline.server.LocationFactory;
+import stroom.pipeline.server.StreamLocationFactory;
+import stroom.pipeline.server.errorhandler.ErrorHandlerAdaptor;
+import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
+import stroom.pipeline.server.filter.MergeFilter;
+import stroom.pipeline.server.filter.SchemaFilter;
+import stroom.test.ComparisonHelper;
+import stroom.test.StroomProcessTestFileUtil;
+import stroom.util.io.FileUtil;
+import stroom.util.io.IgnoreCloseInputStream;
+import stroom.util.io.StreamUtil;
+import stroom.util.shared.Indicators;
+import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
+import stroom.xml.converter.SchemaFilterFactory;
+import stroom.xml.converter.ds3.ref.VarMap;
+
+import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.transform.stream.StreamResult;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -31,38 +61,6 @@ import java.io.Writer;
 import java.util.Map.Entry;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-
-import javax.xml.transform.sax.TransformerHandler;
-import javax.xml.transform.stream.StreamResult;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.test.StroomProcessTestFileUtil;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.xml.sax.InputSource;
-import org.xml.sax.XMLReader;
-
-import stroom.entity.server.util.XMLUtil;
-import stroom.pipeline.server.DefaultLocationFactory;
-import stroom.pipeline.server.LocationFactory;
-import stroom.pipeline.server.StreamLocationFactory;
-import stroom.pipeline.server.errorhandler.ErrorHandlerAdaptor;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
-import stroom.pipeline.server.filter.MergeFilter;
-import stroom.pipeline.server.filter.SchemaFilter;
-import stroom.test.ComparisonHelper;
-import stroom.util.io.FileUtil;
-import stroom.util.io.IgnoreCloseInputStream;
-import stroom.util.io.StreamUtil;
-import stroom.util.shared.Indicators;
-import stroom.util.test.StroomUnitTest;
-import stroom.util.test.StroomJUnit4ClassRunner;
-import stroom.xml.converter.SchemaFilterFactory;
-import stroom.xml.converter.ds3.ref.VarMap;
 
 // TODO : Reinstate tests.
 

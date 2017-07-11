@@ -16,12 +16,7 @@
 
 package stroom.pipeline.server.factory;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import stroom.util.spring.StroomSpringProfiles;
 import org.springframework.context.annotation.Profile;
-
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.filter.RecordCountFilter;
 import stroom.pipeline.server.filter.RecordOutputFilter;
@@ -40,6 +35,10 @@ import stroom.pipeline.server.writer.StreamAppender;
 import stroom.pipeline.server.writer.TextWriter;
 import stroom.pipeline.server.writer.XMLWriter;
 import stroom.pipeline.state.PipelineContext;
+import stroom.util.spring.StroomSpringProfiles;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Profile(StroomSpringProfiles.TEST)
 public class MockPipelineElementRegistryFactory implements ElementRegistryFactory, ElementFactory {

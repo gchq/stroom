@@ -28,10 +28,12 @@ import stroom.dashboard.shared.SearchBusPollAction;
 import stroom.dashboard.shared.SearchBusPollResult;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.SearchResponse;
+import stroom.datasource.DataSourceProvider;
+import stroom.datasource.DataSourceProviderRegistry;
 import stroom.logging.SearchEventLog;
-import stroom.query.api.DocRef;
-import stroom.query.api.Param;
-import stroom.query.api.Query;
+import stroom.query.api.v1.DocRef;
+import stroom.query.api.v1.Param;
+import stroom.query.api.v1.Query;
 import stroom.security.SecurityContext;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
@@ -80,7 +82,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
             if (LOGGER.isDebugEnabled()) {
                 final StringBuilder sb = new StringBuilder(
                         "Only the following search queries should be active for session '");
-                sb.append(action.getSessionId());
+                sb.append(action.getUserToken());
                 sb.append("'\n");
                 for (final DashboardQueryKey queryKey : action.getSearchActionMap().keySet()) {
                     sb.append("\t");
@@ -89,7 +91,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
                 LOGGER.debug(sb.toString());
             }
 
-            final String searchSessionId = action.getSessionId() + "_" + action.getApplicationInstanceId();
+            final String searchSessionId = action.getUserToken() + "_" + action.getApplicationInstanceId();
             final ActiveQueries searchSession = searchSessionManager.get(searchSessionId);
             final Map<DashboardQueryKey, SearchResponse> searchResultMap = new HashMap<>();
 
@@ -157,15 +159,13 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
             }
 
             // Get the data source provider for this query.
-            final DataSourceProvider dataSourceProvider = searchDataSourceProviderRegistry.getDataSourceProvider(dataSourceRef);
+            final DataSourceProvider dataSourceProvider = searchDataSourceProviderRegistry
+                    .getDataSourceProvider(dataSourceRef)
+                    .orElseThrow(() ->
+                            new RuntimeException( "No search provider found for '" + dataSourceRef.getType() + "' data source"));
 
-            if (dataSourceProvider == null) {
-                throw new RuntimeException(
-                        "No search provider found for '" + dataSourceRef.getType() + "' data source");
-            }
-
-            stroom.query.api.SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey, searchRequest);
-            stroom.query.api.SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);
+            stroom.query.api.v1.SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey, searchRequest);
+            stroom.query.api.v1.SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);
             result = new SearchResponseMapper().mapResponse(searchResponse);
 
             if (newSearch) {

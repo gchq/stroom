@@ -31,6 +31,7 @@ import stroom.feed.shared.FeedService;
 import stroom.node.shared.Volume;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
+import stroom.security.SecurityContext;
 import stroom.streamstore.server.fs.FileSystemStreamTypeUtil;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
@@ -47,7 +48,8 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorService;
 import stroom.util.zip.HeaderMap;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -62,55 +64,76 @@ public class StreamAttributeMapServiceImpl
         implements StreamAttributeMapService, SupportsCriteriaLogging<FindStreamAttributeMapCriteria> {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeMapServiceImpl.class);
 
-    @Resource(name = "cachedFeedService")
-    private FeedService feedService;
-    @Resource(name = "cachedPipelineEntityService")
-    private PipelineEntityService pipelineEntityService;
-    @Resource(name = "cachedStreamTypeService")
-    private StreamTypeService streamTypeService;
-    @Resource(name = "cachedStreamProcessorService")
-    private StreamProcessorService streamProcessorService;
-    @Resource
-    private StreamStore streamStore;
-    @Resource
-    private StroomEntityManager entityManager;
+    private final FeedService feedService;
+    private final PipelineEntityService pipelineEntityService;
+    private final StreamTypeService streamTypeService;
+    private final StreamProcessorService streamProcessorService;
+    private final StreamStore streamStore;
+    private final StroomEntityManager entityManager;
+    private final StreamAttributeKeyService streamAttributeKeyService;
+    private final StreamMaintenanceService streamMaintenanceService;
+    private final SecurityContext securityContext;
 
-    @Resource
-    private StreamAttributeKeyService streamAttributeKeyService;
-
-    @Resource
-    private StreamMaintenanceService streamMaintenanceService;
+    @Inject
+    StreamAttributeMapServiceImpl(@Named("cachedFeedService") final FeedService feedService,
+                                  @Named("cachedPipelineEntityService") final PipelineEntityService pipelineEntityService,
+                                  @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
+                                  @Named("cachedStreamProcessorService") final StreamProcessorService streamProcessorService,
+                                  final StreamStore streamStore,
+                                  final StroomEntityManager entityManager,
+                                  final StreamAttributeKeyService streamAttributeKeyService,
+                                  final StreamMaintenanceService streamMaintenanceService,
+                                  final SecurityContext securityContext) {
+        this.feedService = feedService;
+        this.pipelineEntityService = pipelineEntityService;
+        this.streamTypeService = streamTypeService;
+        this.streamProcessorService = streamProcessorService;
+        this.streamStore = streamStore;
+        this.entityManager = entityManager;
+        this.streamAttributeKeyService = streamAttributeKeyService;
+        this.streamMaintenanceService = streamMaintenanceService;
+        this.securityContext = securityContext;
+    }
 
     @Override
     public BaseResultList<StreamAttributeMap> find(final FindStreamAttributeMapCriteria criteria)
             throws RuntimeException {
-        // Cache Call
-        final List<StreamAttributeMap> streamMDList = new ArrayList<>();
+        BaseResultList<StreamAttributeMap> result;
 
-        final FindStreamCriteria streamCriteria = new FindStreamCriteria();
-        streamCriteria.copyFrom(criteria.getFindStreamCriteria());
-        streamCriteria.setOrderBy(FindStreamCriteria.ORDER_BY_CREATE_MS, OrderByDirection.DESCENDING);
+        securityContext.elevatePermissions();
+        try {
+            // Cache Call
+            final List<StreamAttributeMap> streamMDList = new ArrayList<>();
 
-        final boolean includeRelations = streamCriteria.getFetchSet().contains(Stream.ENTITY_TYPE);
-        streamCriteria.setFetchSet(new HashSet<>());
-        if (includeRelations) {
-            streamCriteria.getFetchSet().add(Stream.ENTITY_TYPE);
-        }
-        streamCriteria.getFetchSet().add(StreamType.ENTITY_TYPE);
-        // Share the page criteria
-        final BaseResultList<Stream> streamList = streamStore.find(streamCriteria);
+            final FindStreamCriteria streamCriteria = new FindStreamCriteria();
+            streamCriteria.copyFrom(criteria.getFindStreamCriteria());
+            streamCriteria.setOrderBy(FindStreamCriteria.ORDER_BY_CREATE_MS, OrderByDirection.DESCENDING);
 
-        if (streamList.size() > 0) {
-            // Query the database for the attribute values
-            if (criteria.isUseCache()) {
-                loadAttributeMapFromDatabase(criteria, streamMDList, streamList);
-            } else {
-                loadAttributeMapFromFileSystem(criteria, streamMDList, streamList);
+            final boolean includeRelations = streamCriteria.getFetchSet().contains(Stream.ENTITY_TYPE);
+            streamCriteria.setFetchSet(new HashSet<>());
+            if (includeRelations) {
+                streamCriteria.getFetchSet().add(Stream.ENTITY_TYPE);
             }
+            streamCriteria.getFetchSet().add(StreamType.ENTITY_TYPE);
+            // Share the page criteria
+            final BaseResultList<Stream> streamList = streamStore.find(streamCriteria);
+
+            if (streamList.size() > 0) {
+                // Query the database for the attribute values
+                if (criteria.isUseCache()) {
+                    loadAttributeMapFromDatabase(criteria, streamMDList, streamList);
+                } else {
+                    loadAttributeMapFromFileSystem(criteria, streamMDList, streamList);
+                }
+            }
+
+            result = new BaseResultList<>(streamMDList, streamList.getPageResponse().getOffset(),
+                    streamList.getPageResponse().getTotal(), streamList.getPageResponse().isMore());
+        } finally {
+            securityContext.restorePermissions();
         }
 
-        return new BaseResultList<>(streamMDList, streamList.getPageResponse().getOffset(),
-                streamList.getPageResponse().getTotal(), streamList.getPageResponse().isMore());
+        return result;
     }
 
     /**
@@ -173,8 +196,7 @@ public class StreamAttributeMapServiceImpl
 
         // Status is a mandatory search
 
-        @SuppressWarnings("unchecked")
-        final List<Object[]> list = entityManager.executeNativeQueryResultList(sql);
+        @SuppressWarnings("unchecked") final List<Object[]> list = entityManager.executeNativeQueryResultList(sql);
 
         for (final Object[] row : list) {
             final long streamId = ((Number) row[0]).longValue();
@@ -191,7 +213,7 @@ public class StreamAttributeMapServiceImpl
         }
     }
 
-    private void resolveRelations(final FindStreamAttributeMapCriteria criteria, final Stream stream) {
+    private void resolveRelations(final FindStreamAttributeMapCriteria criteria, final Stream stream) throws PermissionException {
         if (criteria.getFetchSet().contains(Feed.ENTITY_TYPE) && stream.getFeed() != null) {
             stream.setFeed(feedService.loadById(stream.getFeed().getId()));
         }
@@ -200,35 +222,35 @@ public class StreamAttributeMapServiceImpl
             stream.setStreamType(streamTypeService.loadById(stream.getStreamType().getId()));
         }
 
-        if (criteria.getFetchSet().contains(StreamProcessor.ENTITY_TYPE)) {
+        StreamProcessor streamProcessor = null;
+        if (criteria.getFetchSet().contains(StreamProcessor.ENTITY_TYPE) && stream.getStreamProcessor() != null) {
             // We will try and load the stream processor but will ignore
             // permission failures as we don't mind users seeing streams even if
             // they do not have visibility of the processor that created the
             // stream.
             try {
-                stream.setStreamProcessor(streamProcessorService.load(stream.getStreamProcessor()));
+                streamProcessor = streamProcessorService.loadByIdInsecure(stream.getStreamProcessor().getId());
+                stream.setStreamProcessor(streamProcessor);
             } catch (final PermissionException e) {
-                stream.setStreamProcessor(null);
-
                 // The current user might not have permission to see this stream
                 // processor.
                 LOGGER.debug(e.getMessage());
             }
         }
 
-        if (stream.getStreamProcessor() != null && criteria.getFetchSet().contains(PipelineEntity.ENTITY_TYPE)) {
+        if (streamProcessor != null && criteria.getFetchSet().contains(PipelineEntity.ENTITY_TYPE)) {
             // We will try and load the pipeline but will ignore permission
             // failures as we don't mind users seeing streams even if they do
             // not have visibility of the pipeline that created the stream.
             try {
-                stream.getStreamProcessor()
-                        .setPipeline(pipelineEntityService.load(stream.getStreamProcessor().getPipeline()));
+                streamProcessor.setPipeline(pipelineEntityService.load(streamProcessor.getPipeline()));
             } catch (final PermissionException e) {
-                stream.getStreamProcessor().setPipeline(null);
+                streamProcessor.setPipeline(null);
 
                 // The current user might not have permission to see this
                 // pipeline.
                 LOGGER.debug(e.getMessage());
+                throw e;
             }
         }
     }
@@ -253,13 +275,19 @@ public class StreamAttributeMapServiceImpl
         for (final StreamVolume streamVolume : volumeList) {
             StreamAttributeMap streamAttributeMap = streamMap.get(streamVolume.getStream());
             if (streamAttributeMap == null) {
-                final Stream stream = streamVolume.getStream();
-                // Resolve Relations
-                resolveRelations(criteria, stream);
+                try {
+                    final Stream stream = streamVolume.getStream();
+                    // Resolve Relations
+                    resolveRelations(criteria, stream);
 
-                streamAttributeMap = new StreamAttributeMap(stream);
-                streamMDList.add(streamAttributeMap);
-                streamMap.put(stream, streamAttributeMap);
+                    streamAttributeMap = new StreamAttributeMap(stream);
+                    streamMDList.add(streamAttributeMap);
+                    streamMap.put(stream, streamAttributeMap);
+                } catch (final PermissionException e) {
+                    // The current user might not have permission to see this
+                    // stream.
+                    LOGGER.debug(e.getMessage());
+                }
             }
 
             final File manifest = FileSystemStreamTypeUtil.createChildStreamFile(streamVolume, StreamType.MANIFEST);

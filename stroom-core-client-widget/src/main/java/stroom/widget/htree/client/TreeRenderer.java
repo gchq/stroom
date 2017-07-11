@@ -16,25 +16,19 @@
 
 package stroom.widget.htree.client;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.dom.client.Style.Cursor;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.MouseMoveEvent;
-import com.google.gwt.event.dom.client.MouseMoveHandler;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionModel;
 import com.google.gwt.view.client.SetSelectionModel;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-
 import stroom.widget.htree.client.treelayout.Bounds;
 import stroom.widget.htree.client.treelayout.TreeForTreeLayout;
 import stroom.widget.htree.client.treelayout.TreeLayout;
 import stroom.widget.util.client.MySingleSelectionModel;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class TreeRenderer<T> {
     public static final String SHADOW_LAYER = "shadow";
@@ -54,7 +48,7 @@ public class TreeRenderer<T> {
     private T lastItemUnderCursor;
 
     public TreeRenderer(final LayeredCanvas canvas, final CellRenderer<T> cellRenderer,
-            final ConnectorRenderer<T> connectorRenderer) {
+                        final ConnectorRenderer<T> connectorRenderer) {
         this.canvas = canvas;
         this.cellRenderer = cellRenderer;
         this.connectorRenderer = connectorRenderer;
@@ -140,102 +134,93 @@ public class TreeRenderer<T> {
             selectedSet = new HashSet<T>(setSelectionModel.getSelectedSet());
 
             final Canvas topCanvas = canvas.getLayer(TreeRenderer.ARROW_LAYER);
-            registerHandler(topCanvas.addClickHandler(new ClickHandler() {
-                @Override
-                public void onClick(final ClickEvent event) {
-                    final double x = event.getX() - PADDING;
-                    final double y = event.getY() - PADDING;
-                    final TreeForTreeLayout<T> tree = treeLayout.getTree();
-                    if (tree != null) {
-                        final T root = tree.getRoot();
-                        if (root != null) {
-                            final T item = getItemAtPos(x, y, root);
-                            if (item != null) {
-                                selectionModel.setSelected(item, true);
+            registerHandler(topCanvas.addClickHandler(event -> {
+                final double x = event.getX() - PADDING;
+                final double y = event.getY() - PADDING;
+                final TreeForTreeLayout<T> tree = treeLayout.getTree();
+                if (tree != null) {
+                    final T root = tree.getRoot();
+                    if (root != null) {
+                        final T item = getItemAtPos(x, y, root);
+                        if (item != null) {
+                            selectionModel.setSelected(item, true);
 
-                            } else if (selectionModel instanceof MySingleSelectionModel<?>) {
-                                final MySingleSelectionModel<T> singleSelectionModel = (MySingleSelectionModel<T>) setSelectionModel;
-                                final T lastSelection = singleSelectionModel.getSelectedObject();
-                                if (lastSelection != null) {
-                                    selectionModel.setSelected(lastSelection, false);
-                                }
+                        } else if (selectionModel instanceof MySingleSelectionModel<?>) {
+                            final MySingleSelectionModel<T> singleSelectionModel = (MySingleSelectionModel<T>) setSelectionModel;
+                            final T lastSelection = singleSelectionModel.getSelectedObject();
+                            if (lastSelection != null) {
+                                selectionModel.setSelected(lastSelection, false);
                             }
                         }
                     }
                 }
             }));
-            registerHandler(topCanvas.addMouseMoveHandler(new MouseMoveHandler() {
-                @Override
-                public void onMouseMove(final MouseMoveEvent event) {
-                    final double x = event.getX() - PADDING;
-                    final double y = event.getY() - PADDING;
-                    final TreeForTreeLayout<T> tree = treeLayout.getTree();
-                    if (tree != null) {
-                        final T root = tree.getRoot();
-                        if (root != null) {
-                            final T item = getItemAtPos(x, y, root);
-                            // Remove highlight from previous item.
-                            if (lastItemUnderCursor != null && !lastItemUnderCursor.equals(item)) {
-                                final boolean selected = setSelectionModel.getSelectedSet()
-                                        .contains(lastItemUnderCursor);
-                                final boolean mouseOver = false;
-                                Bounds bounds = treeLayout.getNodeBounds().get(lastItemUnderCursor);
-                                // The last item might have been removed from
-                                // the
-                                // tree.
-                                if (bounds != null) {
-                                    bounds = pad(bounds);
-                                    cellRenderer.render(bounds, lastItemUnderCursor, mouseOver, selected);
-                                }
-                            }
-
-                            // Highlight new item.
-                            if (item != null && !item.equals(lastItemUnderCursor)) {
-                                final boolean selected = setSelectionModel.getSelectedSet().contains(item);
-                                final boolean mouseOver = true;
-                                Bounds bounds = treeLayout.getNodeBounds().get(item);
+            registerHandler(topCanvas.addMouseMoveHandler(event -> {
+                final double x = event.getX() - PADDING;
+                final double y = event.getY() - PADDING;
+                final TreeForTreeLayout<T> tree = treeLayout.getTree();
+                if (tree != null) {
+                    final T root = tree.getRoot();
+                    if (root != null) {
+                        final T item = getItemAtPos(x, y, root);
+                        // Remove highlight from previous item.
+                        if (lastItemUnderCursor != null && !lastItemUnderCursor.equals(item)) {
+                            final boolean selected = setSelectionModel.getSelectedSet()
+                                    .contains(lastItemUnderCursor);
+                            final boolean mouseOver = false;
+                            Bounds bounds = treeLayout.getNodeBounds().get(lastItemUnderCursor);
+                            // The last item might have been removed from
+                            // the
+                            // tree.
+                            if (bounds != null) {
                                 bounds = pad(bounds);
-                                cellRenderer.render(bounds, item, mouseOver, selected);
+                                cellRenderer.render(bounds, lastItemUnderCursor, mouseOver, selected);
                             }
+                        }
 
-                            // Set new item.
-                            lastItemUnderCursor = item;
+                        // Highlight new item.
+                        if (item != null && !item.equals(lastItemUnderCursor)) {
+                            final boolean selected = setSelectionModel.getSelectedSet().contains(item);
+                            final boolean mouseOver = true;
+                            Bounds bounds = treeLayout.getNodeBounds().get(item);
+                            bounds = pad(bounds);
+                            cellRenderer.render(bounds, item, mouseOver, selected);
+                        }
 
-                            // Set the cursor.
-                            if (item != null) {
-                                topCanvas.getElement().getStyle().setCursor(Cursor.POINTER);
-                            } else {
-                                topCanvas.getElement().getStyle().setCursor(Cursor.DEFAULT);
-                            }
+                        // Set new item.
+                        lastItemUnderCursor = item;
+
+                        // Set the cursor.
+                        if (item != null) {
+                            topCanvas.getElement().getStyle().setCursor(Cursor.POINTER);
+                        } else {
+                            topCanvas.getElement().getStyle().setCursor(Cursor.DEFAULT);
                         }
                     }
                 }
             }));
-            registerHandler(selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-                @Override
-                public void onSelectionChange(final SelectionChangeEvent event) {
-                    // Select items.
-                    for (final T selected : setSelectionModel.getSelectedSet()) {
-                        final boolean alreadySelected = selectedSet.remove(selected);
-                        if (!alreadySelected) {
-                            Bounds bounds = treeLayout.getNodeBounds().get(selected);
-                            bounds = pad(bounds);
-                            cellRenderer.render(bounds, selected, selected.equals(lastItemUnderCursor), true);
-                        }
+            registerHandler(selectionModel.addSelectionChangeHandler(event -> {
+                // Select items.
+                for (final T selected : setSelectionModel.getSelectedSet()) {
+                    final boolean alreadySelected = selectedSet.remove(selected);
+                    if (!alreadySelected) {
+                        Bounds bounds = treeLayout.getNodeBounds().get(selected);
+                        bounds = pad(bounds);
+                        cellRenderer.render(bounds, selected, selected.equals(lastItemUnderCursor), true);
                     }
-
-                    // Deselect everything else from previous selection.
-                    for (final T selected : selectedSet) {
-                        final Bounds bounds = treeLayout.getNodeBounds().get(selected);
-                        if (bounds != null) {
-                            final Bounds paddedBounds = pad(bounds);
-                            cellRenderer.render(paddedBounds, selected, selected.equals(lastItemUnderCursor), false);
-                        }
-                    }
-
-                    // Save current selection.
-                    selectedSet = new HashSet<T>(setSelectionModel.getSelectedSet());
                 }
+
+                // Deselect everything else from previous selection.
+                for (final T selected : selectedSet) {
+                    final Bounds bounds = treeLayout.getNodeBounds().get(selected);
+                    if (bounds != null) {
+                        final Bounds paddedBounds = pad(bounds);
+                        cellRenderer.render(paddedBounds, selected, selected.equals(lastItemUnderCursor), false);
+                    }
+                }
+
+                // Save current selection.
+                selectedSet = new HashSet<T>(setSelectionModel.getSelectedSet());
             }));
         }
     }

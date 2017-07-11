@@ -35,7 +35,6 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.AsyncCallbackAdaptor;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.shared.EntityServiceFindAction;
@@ -49,8 +48,8 @@ import stroom.index.shared.IndexShard;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.streamstore.client.presenter.ActionDataProvider;
+import stroom.streamstore.client.presenter.ColumnSizeConstants;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.VoidResult;
 import stroom.widget.button.client.GlyphButtonView;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.button.client.ImageButtonView;
@@ -140,7 +139,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
 
         // Select Column
         final Column<IndexShard, TickBoxState> column = new Column<IndexShard, TickBoxState>(
-                new TickBoxCell(tickBoxAppearance, false, false)) {
+                TickBoxCell.create(tickBoxAppearance, false, false)) {
             @Override
             public TickBoxState getValue(final IndexShard indexShard) {
                 final boolean match = Boolean.TRUE.equals(criteria.getIndexShardSet().getMatchAll())
@@ -149,7 +148,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
             }
 
         };
-        final Header<TickBoxState> header = new Header<TickBoxState>(new TickBoxCell(tickBoxAppearance, false, false)) {
+        final Header<TickBoxState> header = new Header<TickBoxState>(TickBoxCell.create(tickBoxAppearance, false, false)) {
             @Override
             public TickBoxState getValue() {
                 if (Boolean.TRUE.equals(criteria.getIndexShardSet().getMatchAll())) {
@@ -160,7 +159,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                 return TickBoxState.UNTICK;
             }
         };
-        getView().addColumn(column, header, 15);
+        getView().addColumn(column, header, ColumnSizeConstants.CHECKBOX_COL);
 
         // Add Handlers
         header.setUpdater(value -> {
@@ -208,18 +207,18 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                 TooltipUtil.addRowData(html, "Partition", indexShard.getPartition());
                 if (indexShard.getPartitionFromTime() != null) {
                     TooltipUtil.addRowData(html, "Partition From",
-                            ClientDateUtil.createDateTimeString(indexShard.getPartitionFromTime()));
+                            ClientDateUtil.toISOString(indexShard.getPartitionFromTime()));
                 }
                 if (indexShard.getPartitionToTime() != null) {
                     TooltipUtil.addRowData(html, "Partition To",
-                            ClientDateUtil.createDateTimeString(indexShard.getPartitionToTime()));
+                            ClientDateUtil.toISOString(indexShard.getPartitionToTime()));
                 }
                 TooltipUtil.addRowData(html, "Path", indexShard.getVolume().getPath());
                 TooltipUtil.addRowData(html, "Status", indexShard.getStatus().getDisplayValue());
                 TooltipUtil.addRowData(html, "Document Count", intToString(indexShard.getDocumentCount()));
                 TooltipUtil.addRowData(html, "File Size", indexShard.getFileSizeString());
                 TooltipUtil.addRowData(html, "Bytes Per Document", intToString(indexShard.getBytesPerDocument()));
-                TooltipUtil.addRowData(html, "Commit", ClientDateUtil.createDateTimeString(indexShard.getCommitMs()));
+                TooltipUtil.addRowData(html, "Commit", ClientDateUtil.toISOString(indexShard.getCommitMs()));
                 TooltipUtil.addRowData(html, "Commit Duration",
                         ModelStringUtil.formatDurationString(indexShard.getCommitDurationMs()));
                 TooltipUtil.addRowData(html, "Commit Document Count", intToString(indexShard.getCommitDocumentCount()));
@@ -231,7 +230,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                 ShowPopupEvent.fire(IndexShardPresenter.this, tooltipPresenter, PopupType.POPUP, popupPosition, null);
             }
         };
-        getView().addColumn(infoColumn, "<br/>", 15);
+        getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.GLYPH_COL);
     }
 
     private void addNodeColumn() {
@@ -301,7 +300,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         getView().addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
             @Override
             public String getValue(final IndexShard indexShard) {
-                return ClientDateUtil.createDateTimeString(indexShard.getCommitMs());
+                return ClientDateUtil.toISOString(indexShard.getCommitMs());
             }
         }, "Commit", 150);
     }
@@ -473,38 +472,26 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
 
     private void doFlush() {
         final FlushIndexShardAction action = new FlushIndexShardAction(criteria);
-        dispatcher.execute(action, new AsyncCallbackAdaptor<VoidResult>() {
-            @Override
-            public void onSuccess(final VoidResult result) {
+        dispatcher.exec(action).onSuccess(result ->
                 AlertEvent.fireInfo(IndexShardPresenter.this,
                         "Selected index shards will be flushed. Please be patient as this may take some time.",
-                        () -> refresh());
-            }
-        });
+                        this::refresh));
     }
 
     private void doClose() {
         final CloseIndexShardAction action = new CloseIndexShardAction(criteria);
-        dispatcher.execute(action, new AsyncCallbackAdaptor<VoidResult>() {
-            @Override
-            public void onSuccess(final VoidResult result) {
+        dispatcher.exec(action).onSuccess(result ->
                 AlertEvent.fireInfo(IndexShardPresenter.this,
                         "Selected index shards will be closed. Please be patient as this may take some time.",
-                        () -> refresh());
-            }
-        });
+                        this::refresh));
     }
 
     private void doDelete() {
         final DeleteIndexShardAction action = new DeleteIndexShardAction(criteria);
-        dispatcher.execute(action, new AsyncCallbackAdaptor<VoidResult>() {
-            @Override
-            public void onSuccess(final VoidResult result) {
+        dispatcher.exec(action).onSuccess(result ->
                 AlertEvent.fireInfo(IndexShardPresenter.this,
                         "Selected index shards will be deleted. Please be patient as this may take some time.",
-                        () -> refresh());
-            }
-        });
+                        this::refresh));
     }
 
     public interface Resources extends ClientBundle {

@@ -18,12 +18,9 @@ package stroom.query.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
@@ -33,12 +30,12 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import stroom.datasource.api.DataSourceField;
-import stroom.datasource.api.DataSourceField.DataSourceFieldType;
+import stroom.datasource.api.v1.DataSourceField;
+import stroom.datasource.api.v1.DataSourceField.DataSourceFieldType;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.item.client.ItemListBox;
-import stroom.query.api.DocRef;
-import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.v1.DocRef;
+import stroom.query.api.v1.ExpressionTerm.Condition;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.customdatebox.client.MyDateBox;
 
@@ -141,12 +138,9 @@ public class TermEditor extends Composite {
 
             read(term);
 
-            Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-                @Override
-                public void execute() {
-                    bind();
-                    layout.setVisible(true);
-                }
+            Scheduler.get().scheduleDeferred(() -> {
+                bind();
+                layout.setVisible(true);
             });
 
             editing = true;
@@ -196,7 +190,7 @@ public class TermEditor extends Composite {
                     sb.append(((TextBox) widget).getText());
                     sb.append(",");
                 } else if (widget instanceof MyDateBox) {
-                    sb.append(((MyDateBox) widget).getText());
+                    sb.append(((MyDateBox) widget).getValue());
                     sb.append(",");
                 } else if (widget.equals(dictionaryWidget)) {
                     if (dictionaryPresenter != null) {
@@ -427,29 +421,14 @@ public class TermEditor extends Composite {
     }
 
     private void bind() {
-        final KeyDownHandler keyDownHandler = new KeyDownHandler() {
-            @Override
-            public void onKeyDown(final KeyDownEvent event) {
-                if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-                    if (uiHandlers != null) {
-                        uiHandlers.search();
-                    }
+        final KeyDownHandler keyDownHandler = event -> {
+            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
+                if (uiHandlers != null) {
+                    uiHandlers.search();
                 }
             }
         };
-        final KeyPressHandler keyPressHandler = new KeyPressHandler() {
-            @Override
-            public void onKeyPress(final KeyPressEvent event) {
-                fireDirty();
-            }
-        };
-//        final ValueChangeHandler<Date> dateChangeHandler = new ValueChangeHandler<Date>() {
-//            @Override
-//            public void onValueChange(final ValueChangeEvent<Date> event) {
-//                fireDirty();
-//            }
-//        };
-//        final ValueChangeHandler<String> changeHandler -> {fireDirty()};
+        final KeyPressHandler keyPressHandler = event -> fireDirty();
 
         registerHandler(value.addKeyDownHandler(keyDownHandler));
         registerHandler(value.addKeyPressHandler(keyPressHandler));

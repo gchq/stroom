@@ -16,12 +16,12 @@
 
 package stroom.entity.server.util;
 
-import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocumentEntity;
-import stroom.entity.shared.NamedEntity;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.core.convert.TypeDescriptor;
+import stroom.entity.shared.BaseEntity;
+import stroom.entity.shared.DocumentEntity;
+import stroom.entity.shared.Entity;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -53,13 +53,13 @@ public class BaseEntityBeanWrapper {
     }
 
     @SuppressWarnings("unchecked")
-    public Class<? extends NamedEntity> getPropertyBaseEntityType(String propertyName) {
+    public Class<? extends Entity> getPropertyBaseEntityType(String propertyName) {
         if (isPropertyBaseEntitySet(propertyName)) {
             TypeDescriptor typeDescriptor = beanWrapper.getPropertyTypeDescriptor(propertyName);
-            return (Class<NamedEntity>) typeDescriptor.getElementTypeDescriptor().getType();
+            return (Class<Entity>) typeDescriptor.getElementTypeDescriptor().getType();
 
         }
-        return (Class<NamedEntity>) beanWrapper.getPropertyType(propertyName);
+        return (Class<Entity>) beanWrapper.getPropertyType(propertyName);
     }
 
     @SuppressWarnings("rawtypes")

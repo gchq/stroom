@@ -27,6 +27,9 @@ import com.gwtplatform.mvp.client.proxy.TokenFormatter;
 import stroom.core.client.gin.InactivePlaceManager;
 import stroom.dashboard.client.main.DashboardAppPresenter;
 import stroom.dashboard.client.main.DashboardAppViewImpl;
+import stroom.editor.client.presenter.EditorPresenter;
+import stroom.editor.client.presenter.EditorView;
+import stroom.editor.client.view.EditorViewImpl;
 import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.client.view.EntityTreeViewImpl;
 import stroom.widget.dropdowntree.client.presenter.DropDownPresenter;
@@ -48,5 +51,6 @@ public class DashboardAppModule extends AbstractPresenterModule {
         bindSharedView(DropDownPresenter.DropDrownView.class, DropDownViewImpl.class);
         bindSharedView(DropDownTreePresenter.DropDownTreeView.class, DropDownTreeViewImpl.class);
         bindPresenterWidget(EntityTreePresenter.class, EntityTreePresenter.EntityTreeView.class, EntityTreeViewImpl.class);
+        bindPresenterWidget(EditorPresenter.class, EditorView.class, EditorViewImpl.class);
     }
 }

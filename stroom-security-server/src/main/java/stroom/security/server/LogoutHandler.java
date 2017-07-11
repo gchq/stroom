@@ -16,19 +16,26 @@
 
 package stroom.security.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.security.Insecure;
 import stroom.security.shared.LogoutAction;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
+import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 @TaskHandlerBean(task = LogoutAction.class)
+@Scope(value = StroomScope.TASK)
 @Insecure
 public class LogoutHandler extends AbstractTaskHandler<LogoutAction, VoidResult> {
-    @Resource
-    private AuthenticationService authenticationService;
+    private final AuthenticationService authenticationService;
+
+    @Inject
+    LogoutHandler(final AuthenticationService authenticationService) {
+        this.authenticationService = authenticationService;
+    }
 
     @Override
     public VoidResult exec(final LogoutAction task) {

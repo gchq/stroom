@@ -16,18 +16,16 @@
 
 package stroom.pipeline.state;
 
-import java.io.IOException;
-
-import javax.annotation.Resource;
-
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.spring.StroomScope;
 import stroom.util.zip.HeaderMap;
+
+import javax.annotation.Resource;
+import java.io.IOException;
 
 @Component
 @Scope(value = StroomScope.TASK)

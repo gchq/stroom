@@ -16,6 +16,8 @@
 
 package stroom;
 
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 import stroom.dashboard.spring.DashboardConfiguration;
 import stroom.index.spring.IndexConfiguration;
 import stroom.logging.spring.EventLoggingConfiguration;
@@ -27,14 +29,26 @@ import stroom.spring.*;
 import stroom.statistics.spring.StatisticsConfiguration;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.visualisation.spring.VisualisationConfiguration;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
 
-@ActiveProfiles(value = {StroomSpringProfiles.PROD, StroomSpringProfiles.IT, SecurityConfiguration.MOCK_SECURITY})
-@ContextConfiguration(classes = {ScopeConfiguration.class, PersistenceConfiguration.class,
-        ServerComponentScanTestConfiguration.class, ServerConfiguration.class, CachedServiceConfiguration.class,
-        SecurityConfiguration.class, ScopeTestConfiguration.class, PipelineConfiguration.class,
-        EventLoggingConfiguration.class, IndexConfiguration.class, SearchConfiguration.class, ScriptConfiguration.class,
-        VisualisationConfiguration.class, DashboardConfiguration.class, StatisticsConfiguration.class})
+@ActiveProfiles(value = {
+        StroomSpringProfiles.PROD,
+        StroomSpringProfiles.IT,
+        SecurityConfiguration.MOCK_SECURITY})
+@ContextConfiguration(classes = {
+        DashboardConfiguration.class,
+        EventLoggingConfiguration.class,
+        IndexConfiguration.class,
+        MetaDataStatisticConfiguration.class,
+        PersistenceConfiguration.class,
+        PipelineConfiguration.class,
+        ScopeConfiguration.class,
+        ScopeTestConfiguration.class,
+        ScriptConfiguration.class,
+        SearchConfiguration.class,
+        SecurityConfiguration.class,
+        ServerComponentScanTestConfiguration.class,
+        ServerConfiguration.class,
+        StatisticsConfiguration.class,
+        VisualisationConfiguration.class})
 public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest {
 }

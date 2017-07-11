@@ -16,11 +16,8 @@
 
 package stroom.streamtask.server;
 
-import javax.annotation.Resource;
-
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestScenarioCreator;
 import stroom.entity.shared.Period;
@@ -38,9 +35,9 @@ import stroom.streamtask.shared.StreamTaskService;
 import stroom.streamtask.shared.TaskStatus;
 import stroom.task.server.TaskMonitorImpl;
 
+import javax.annotation.Resource;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 
 public class TestStreamTaskService extends AbstractCoreIntegrationTest {
     @Resource

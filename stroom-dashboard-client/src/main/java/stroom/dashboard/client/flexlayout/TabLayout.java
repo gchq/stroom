@@ -16,22 +16,13 @@
 
 package stroom.dashboard.client.flexlayout;
 
-import com.google.gwt.core.shared.GWT;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
-import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.HandlerRegistrations;
 import stroom.core.client.StroomStyleNames;
 import stroom.dashboard.client.main.Component;
@@ -41,56 +32,67 @@ import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.widget.tab.client.presenter.LayerContainer;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.view.LayerContainerImpl;
-import stroom.widget.tab.client.view.SlideTabBar;
+import stroom.widget.tab.client.view.LinkTabBar;
 
 public class TabLayout extends Composite implements RequiresResize, ProvidesResize {
-    private static Resources resources;
     private final TabLayoutConfig tabLayoutData;
+    private final FlexLayoutChangeHandler changeHandler;
     private final FlowPanel panel;
     private final FlowPanel contentOuter;
     private final FlowPanel contentInner;
     private final FlowPanel barOuter;
-    private final SettingsButton settings;
-    private final SlideTabBar tabBar;
+    private final FlowPanel buttons;
+    private final Button settings;
+    private final Button close;
+    private final LinkTabBar tabBar;
     private final LayerContainer layerContainer;
     private final HandlerRegistrations handlerRegistrations = new HandlerRegistrations();
     private TabVisibility tabVisibility = TabVisibility.SHOW_ALL;
     private boolean tabsVisible = true;
 
-    public TabLayout(final TabLayoutConfig tabLayoutData) {
+    public TabLayout(final TabLayoutConfig tabLayoutData, final FlexLayoutChangeHandler changeHandler) {
         this.tabLayoutData = tabLayoutData;
-
-        if (resources == null) {
-            resources = GWT.create(Resources.class);
-            resources.style().ensureInjected();
-        }
+        this.changeHandler = changeHandler;
 
         panel = new FlowPanel();
-        panel.setStyleName(resources.style().tabLayout());
+        panel.addStyleName("tabLayout");
         initWidget(panel);
 
         contentOuter = new FlowPanel();
-        contentOuter.setStyleName(resources.style().contentOuter());
+        contentOuter.setStyleName("contentOuter");
         panel.add(contentOuter);
 
         contentInner = new FlowPanel();
-        contentInner.setStyleName(resources.style().contentInner() + " " + StroomStyleNames.STROOM_CONTENT);
+        contentInner.setStyleName("contentInner" + " " + StroomStyleNames.STROOM_CONTENT);
         contentOuter.add(contentInner);
 
         barOuter = new FlowPanel();
-        barOuter.setStyleName(resources.style().barOuter());
+        barOuter.setStyleName("barOuter");
         contentInner.add(barOuter);
 
-        tabBar = new SlideTabBar();
-        tabBar.addStyleName(resources.style().barInner());
+        tabBar = new LinkTabBar();
+        tabBar.addStyleName("barInner");
         barOuter.add(tabBar);
 
-        settings = new SettingsButton();
-        contentInner.add(settings);
+        buttons = new FlowPanel();
+        buttons.setStyleName("buttons");
+        contentInner.add(buttons);
+
+        settings = new Button();
+        settings.setStyleName("fa-button");
+        settings.setHTML("<i class=\"face fa fa-cog settingsButton\"></i>");
+        settings.setTitle("Settings");
+        buttons.add(settings);
+
+        close = new Button();
+        close.setStyleName("fa-button");
+        close.setHTML("<i class=\"face fa fa-times closeButton\"></i>");
+        close.setTitle("Close");
+        buttons.add(close);
 
         final LayerContainerImpl layerContainerImpl = new LayerContainerImpl();
         layerContainerImpl.setFade(true);
-        layerContainerImpl.setStyleName(resources.style().content());
+        layerContainerImpl.setStyleName("content");
         contentInner.add(layerContainerImpl);
 
         layerContainer = layerContainerImpl;
@@ -99,22 +101,24 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
     }
 
     public void bind() {
-        handlerRegistrations.add(tabBar.addSelectionHandler(new SelectionHandler<TabData>() {
-            @Override
-            public void onSelection(final SelectionEvent<TabData> event) {
-                selectTab(event.getSelectedItem());
-            }
-        }));
+        handlerRegistrations.add(tabBar.addSelectionHandler(event -> selectTab(event.getSelectedItem())));
 
-        handlerRegistrations.add(settings.addDomHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    final TabData selectedTab = tabBar.getSelectedTab();
-                    if (selectedTab != null && selectedTab instanceof Component) {
-                        final Component component = (Component) selectedTab;
-                        component.showSettings();
-                    }
+        handlerRegistrations.add(settings.addDomHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                final TabData selectedTab = tabBar.getSelectedTab();
+                if (selectedTab != null && selectedTab instanceof Component) {
+                    final Component component = (Component) selectedTab;
+                    component.showSettings();
+                }
+            }
+        }, ClickEvent.getType()));
+
+        handlerRegistrations.add(close.addDomHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                final TabData selectedTab = tabBar.getSelectedTab();
+                if (selectedTab != null && selectedTab instanceof Component) {
+                    final Component component = (Component) selectedTab;
+                    changeHandler.requestTabClose(component.getTabConfig());
                 }
             }
         }, ClickEvent.getType()));
@@ -167,7 +171,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         layerContainer.clear();
     }
 
-    public SlideTabBar getTabBar() {
+    public LinkTabBar getTabBar() {
         return tabBar;
     }
 
@@ -193,60 +197,6 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
     private void setTabsVisibile(final boolean tabsVisible) {
         if (this.tabsVisible != tabsVisible) {
             this.tabsVisible = tabsVisible;
-        }
-    }
-
-    public interface Style extends CssResource {
-        String tabLayout();
-
-        String contentOuter();
-
-        String contentInner();
-
-        String barOuter();
-
-        String barInner();
-
-        String content();
-    }
-
-    public interface Resources extends ClientBundle {
-        @Source("TabLayout.css")
-        Style style();
-    }
-
-    public static class SettingsButton extends Widget {
-        private static Resources resources;
-        private final Element element;
-
-        public SettingsButton() {
-            if (resources == null) {
-                resources = GWT.create(Resources.class);
-                resources.style().ensureInjected();
-            }
-
-            element = DOM.createDiv();
-            element.setClassName(resources.style().settings());
-
-            final Element image = DOM.createDiv();
-            image.setClassName(resources.style().image());
-            element.appendChild(image);
-
-            setElement(element);
-        }
-
-        public interface Style extends CssResource {
-            String settings();
-
-            String image();
-        }
-
-        public interface Resources extends ClientBundle {
-            @Source("settings.png")
-            ImageResource settings();
-
-            @Source("SettingsButton.css")
-            Style style();
         }
     }
 }

@@ -16,7 +16,6 @@
 
 package stroom.node.client;
 
-import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -49,24 +48,18 @@ public class ManageNodeToolsPlugin extends NodeToolsPlugin {
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(Volume.MANAGE_VOLUMES_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
-                    new IconMenuItem(4, GlyphIcons.VOLUMES, GlyphIcons.VOLUMES, "Volumes", null, true, new Command() {
-                        @Override
-                        public void execute() {
-                            final PopupSize popupSize = new PopupSize(600, 400, true);
-                            ShowPopupEvent.fire(ManageNodeToolsPlugin.this, manageVolumesPresenter.get(),
-                                    PopupType.CLOSE_DIALOG, null, popupSize, "Volumes", null, null);
-                        }
+                    new IconMenuItem(4, GlyphIcons.VOLUMES, GlyphIcons.VOLUMES, "Volumes", null, true, () -> {
+                        final PopupSize popupSize = new PopupSize(1000, 600, true);
+                        ShowPopupEvent.fire(ManageNodeToolsPlugin.this, manageVolumesPresenter.get(),
+                                PopupType.CLOSE_DIALOG, null, popupSize, "Volumes", null, null);
                     }));
         }
         if (getSecurityContext().hasAppPermission(GlobalProperty.MANAGE_PROPERTIES_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
-                    new IconMenuItem(5, GlyphIcons.PROPERTIES, GlyphIcons.PROPERTIES, "Properties", null, true, new Command() {
-                        @Override
-                        public void execute() {
-                            final PopupSize popupSize = new PopupSize(800, 600, true);
-                            ShowPopupEvent.fire(ManageNodeToolsPlugin.this, manageGlobalPropertyPresenter.get(),
-                                    PopupType.CLOSE_DIALOG, null, popupSize, "System Properties", null, null);
-                        }
+                    new IconMenuItem(5, GlyphIcons.PROPERTIES, GlyphIcons.PROPERTIES, "Properties", null, true, () -> {
+                        final PopupSize popupSize = new PopupSize(1000, 600, true);
+                        ShowPopupEvent.fire(ManageNodeToolsPlugin.this, manageGlobalPropertyPresenter.get(),
+                                PopupType.CLOSE_DIALOG, null, popupSize, "System Properties", null, null);
                     }));
         }
     }

@@ -17,11 +17,13 @@
 package stroom.streamstore.client.presenter;
 
 public final class ColumnSizeConstants {
+    public static final int CHECKBOX_COL = 16;
+    public static final int GLYPH_COL = 17;
     public static final int ICON_COL = 18;
     public static final int SMALL_COL = 70;
     public static final int MEDIUM_COL = 100;
-    public static final int BIG_COL = 190;
-    public static final int DATE_COL = 170;
+    public static final int BIG_COL = 400;
+    public static final int DATE_COL = 160;
 
     private ColumnSizeConstants() {
         // Constants.

@@ -16,21 +16,10 @@
 
 package stroom.entity.server.util;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.List;
-import java.util.zip.GZIPOutputStream;
-
-import javax.net.ssl.HttpsURLConnection;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-
 import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
@@ -42,6 +31,15 @@ import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamTypeService;
 import stroom.util.date.DateUtil;
 import stroom.util.zip.HeaderMap;
+
+import javax.net.ssl.HttpsURLConnection;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.List;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * <p>

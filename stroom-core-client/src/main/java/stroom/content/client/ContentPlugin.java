@@ -21,7 +21,6 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.core.client.ContentManager;
-import stroom.core.client.ContentManager.CloseCallback;
 import stroom.core.client.ContentManager.CloseHandler;
 import stroom.core.client.presenter.Plugin;
 import stroom.data.table.client.Refreshable;
@@ -34,7 +33,7 @@ public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends Plug
 
     @Inject
     public ContentPlugin(final EventBus eventBus, final ContentManager contentManager,
-            final Provider<P> presenterProvider) {
+                         final Provider<P> presenterProvider) {
         super(eventBus);
         this.contentManager = contentManager;
         this.presenterProvider = presenterProvider;
@@ -47,16 +46,13 @@ public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends Plug
             presenter = presenterProvider.get();
         }
 
-        final CloseHandler closeHandler = new CloseHandler() {
-            @Override
-            public void onCloseRequest(final CloseCallback callback) {
-                // Give the content manager the ok to close the tab.
-                callback.closeTab(true);
+        final CloseHandler closeHandler = callback -> {
+            // Give the content manager the ok to close the tab.
+            callback.closeTab(true);
 
-                // After we close the tab set the presenter back to null so
-                // that we can open it again.
-                presenter = null;
-            }
+            // After we close the tab set the presenter back to null so
+            // that we can open it again.
+            presenter = null;
         };
 
         // Tell the content manager to open the tab.

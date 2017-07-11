@@ -16,11 +16,7 @@
 
 package stroom.widget.valuespinner.client;
 
-import com.google.gwt.event.dom.client.BlurEvent;
-import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.TextBox;
@@ -29,14 +25,11 @@ public class ValueSpinner extends Composite {
     private final Spinner spinner;
     private final TextBox valueBox = new TextBox();
 
-    private final SpinnerEvent.Handler handler = new SpinnerEvent.Handler() {
-        @Override
-        public void onChange(final SpinnerEvent event) {
-            if (getSpinner() != null) {
-                getSpinner().setValue(event.getValue(), false);
-            }
-            valueBox.setText(formatValue(event.getValue()));
+    private final SpinnerEvent.Handler handler = event -> {
+        if (getSpinner() != null) {
+            getSpinner().setValue(event.getValue(), false);
         }
+        valueBox.setText(formatValue(event.getValue()));
     };
 
     private void updateSpinner() {
@@ -60,18 +53,10 @@ public class ValueSpinner extends Composite {
         spinner = new Spinner();
         spinner.addSpinnerHandler(handler);
 
-        valueBox.addBlurHandler(new BlurHandler() {
-            @Override
-            public void onBlur(final BlurEvent event) {
+        valueBox.addBlurHandler(event -> updateSpinner());
+        valueBox.addKeyDownHandler(event -> {
+            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
                 updateSpinner();
-            }
-        });
-        valueBox.addKeyDownHandler(new KeyDownHandler() {
-            @Override
-            public void onKeyDown(final KeyDownEvent event) {
-                if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-                    updateSpinner();
-                }
             }
         });
 

@@ -17,7 +17,6 @@
 package stroom.cache.client.presenter;
 
 import com.google.gwt.cell.client.ButtonCell;
-import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
@@ -35,6 +34,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasRead;
 import stroom.streamstore.client.presenter.ActionDataProvider;
+import stroom.streamstore.client.presenter.ColumnSizeConstants;
 import stroom.widget.button.client.GlyphIcon;
 import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -102,12 +102,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
                 return "Clear";
             }
         };
-        clearColumn.setFieldUpdater(new FieldUpdater<CacheNodeRow, String>() {
-            @Override
-            public void update(final int index, final CacheNodeRow row, final String value) {
-                dispatcher.execute(new CacheClearAction(row.getCacheInfo().getName(), row.getNode()), null);
-            }
-        });
+        clearColumn.setFieldUpdater((index, row, value) -> dispatcher.exec(new CacheClearAction(row.getCacheInfo().getName(), row.getNode())));
         getView().addColumn(clearColumn, "</br>", 50);
 
         getView().addEndColumn(new EndColumn<CacheNodeRow>());
@@ -130,7 +125,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
                         popupPosition, null);
             }
         };
-        getView().addColumn(infoColumn, "<br/>", 17);
+        getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.GLYPH_COL);
     }
 
     private String getInfoHtml(final CacheNodeRow row) {

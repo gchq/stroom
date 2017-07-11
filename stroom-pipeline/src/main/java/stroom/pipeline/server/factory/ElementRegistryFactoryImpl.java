@@ -18,12 +18,12 @@ package stroom.pipeline.server.factory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.spring.StroomBeanStore;
-import stroom.util.task.TaskScopeContextHolder;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
+import stroom.util.spring.StroomBeanStore;
+import stroom.util.task.TaskScopeContextHolder;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;

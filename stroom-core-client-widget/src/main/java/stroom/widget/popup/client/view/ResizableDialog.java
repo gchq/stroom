@@ -27,8 +27,6 @@ import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.dom.client.MouseUpHandler;
-import com.google.gwt.event.logical.shared.ResizeEvent;
-import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
@@ -43,7 +41,6 @@ import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
@@ -145,9 +142,8 @@ public class ResizableDialog extends AbstractPopupPanel {
      * should not be shown until its child widget has been added using
      * {@link #add(Widget)}.
      *
-     * @param autoHide
-     *            <code>true</code> if the dialog should be automatically hidden
-     *            when the user clicks outside of it
+     * @param autoHide <code>true</code> if the dialog should be automatically hidden
+     *                 when the user clicks outside of it
      */
     public ResizableDialog(final PopupUiHandlers popupUiHandlers, final boolean autoHide, final PopupSize popupSize) {
         this(popupUiHandlers, autoHide, true, popupSize);
@@ -158,15 +154,13 @@ public class ResizableDialog extends AbstractPopupPanel {
      * should not be shown until its child widget has been added using
      * {@link #add(Widget)}.
      *
-     * @param autoHide
-     *            <code>true</code> if the dialog should be automatically hidden
-     *            when the user clicks outside of it
-     * @param modal
-     *            <code>true</code> if keyboard and mouse events for widgets not
-     *            contained by the dialog should be ignored
+     * @param autoHide <code>true</code> if the dialog should be automatically hidden
+     *                 when the user clicks outside of it
+     * @param modal    <code>true</code> if keyboard and mouse events for widgets not
+     *                 contained by the dialog should be ignored
      */
     public ResizableDialog(final PopupUiHandlers popupUiHandlers, final boolean autoHide, final boolean modal,
-            final PopupSize popupSize) {
+                           final PopupSize popupSize) {
         super(autoHide, modal);
         RESOURCES.style().ensureInjected();
         this.popupUiHandlers = popupUiHandlers;
@@ -193,12 +187,7 @@ public class ResizableDialog extends AbstractPopupPanel {
         setGlassEnabled(isModal());
 
         if (resizeHandlerRegistration == null) {
-            resizeHandlerRegistration = Window.addResizeHandler(new ResizeHandler() {
-                @Override
-                public void onResize(final ResizeEvent event) {
-                    windowWidth = event.getWidth();
-                }
-            });
+            resizeHandlerRegistration = Window.addResizeHandler(event -> windowWidth = event.getWidth());
         }
         super.show();
     }
@@ -231,14 +220,14 @@ public class ResizableDialog extends AbstractPopupPanel {
         // If we're not yet dragging, only trigger mouse events if the event
         // occurs in the caption wrapper.
         switch (event.getTypeInt()) {
-        case Event.ONMOUSEDOWN:
-        case Event.ONMOUSEUP:
-        case Event.ONMOUSEMOVE:
-        case Event.ONMOUSEOVER:
-        case Event.ONMOUSEOUT:
-            if (!dragging && !isCaptionEvent(event) && !isResizeHandleEvent(event)) {
-                return;
-            }
+            case Event.ONMOUSEDOWN:
+            case Event.ONMOUSEUP:
+            case Event.ONMOUSEMOVE:
+            case Event.ONMOUSEOVER:
+            case Event.ONMOUSEOUT:
+                if (!dragging && !isCaptionEvent(event) && !isResizeHandleEvent(event)) {
+                    return;
+                }
         }
 
         super.onBrowserEvent(event);
@@ -248,10 +237,9 @@ public class ResizableDialog extends AbstractPopupPanel {
      * Called on mouse down in the caption area, begins the dragging loop by
      * turning on event capture.
      *
+     * @param event the mouse down event that triggered dragging
      * @see DOM#setCapture
      * @see #continueDragging
-     * @param event
-     *            the mouse down event that triggered dragging
      */
     protected void beginDragging(final MouseDownEvent event) {
         dragging = true;
@@ -271,10 +259,9 @@ public class ResizableDialog extends AbstractPopupPanel {
      * Called on mouse move in the caption area, continues dragging if it was
      * started by {@link #beginDragging}.
      *
+     * @param event the mouse move event that continues dragging
      * @see #beginDragging
      * @see #endDragging
-     * @param event
-     *            the mouse move event that continues dragging
      */
     protected void continueDragging(final MouseMoveEvent event) {
         if (dragging) {

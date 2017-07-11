@@ -34,8 +34,8 @@ public class FeedExplorerDataProvider extends AbstractExplorerDataProvider<Feed,
     private final FeedService feedService;
 
     @Inject
-    FeedExplorerDataProvider(@Named("cachedFolderService") final FolderService folderService, final FeedService feedService) {
-        super(folderService);
+    FeedExplorerDataProvider(@Named("cachedFolderService") final FolderService cachedFolderService, final FeedService feedService) {
+        super(cachedFolderService);
         this.feedService = feedService;
     }
 

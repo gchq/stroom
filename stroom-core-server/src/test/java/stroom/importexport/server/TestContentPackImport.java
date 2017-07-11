@@ -16,9 +16,17 @@
 
 package stroom.importexport.server;
 
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Matchers;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import stroom.node.server.MockStroomPropertyService;
@@ -55,7 +63,7 @@ public class TestContentPackImport {
 
     static {
         String userHome = System.getProperty("user.home");
-        CONTENT_PACK_DIR = Paths.get(userHome, StroomProperties.USER_CONF_DIR, ContentPackImport.CONTENT_PACK_IMPORT_DIR);
+        CONTENT_PACK_DIR = Paths.get(userHome, StroomProperties.USER_CONF_DIR).resolve(ContentPackImport.CONTENT_PACK_IMPORT_DIR);
     }
 
     Path testPack1 = CONTENT_PACK_DIR.resolve("testPack1.zip");
@@ -66,7 +74,7 @@ public class TestContentPackImport {
     public void setup() throws IOException {
 
         String userHome = System.getProperty("user.home");
-        Path contentPackDir = Paths.get(userHome, StroomProperties.USER_CONF_DIR, ContentPackImport.CONTENT_PACK_IMPORT_DIR);
+        Path contentPackDir = Paths.get(userHome, StroomProperties.USER_CONF_DIR).resolve(ContentPackImport.CONTENT_PACK_IMPORT_DIR);
         Files.createDirectories(contentPackDir);
     }
 
@@ -80,7 +88,7 @@ public class TestContentPackImport {
 
     @Test
     public void testStartup_disabled() throws IOException {
-        ContentPackImport contentPackImport = new ContentPackImport(importExportService,stroomPropertyService, globalPropertyService);
+        ContentPackImport contentPackImport = new ContentPackImport(importExportService, stroomPropertyService);
         stroomPropertyService.setProperty(ContentPackImport.AUTO_IMPORT_ENABLED_PROP_KEY, "false");
 
         StroomTestUtil.touchFile(testPack1);
@@ -92,8 +100,8 @@ public class TestContentPackImport {
     }
 
     @Test
-    public void testStartup_enabledNoFiles(){
-        ContentPackImport contentPackImport = new ContentPackImport(importExportService,stroomPropertyService, globalPropertyService);
+    public void testStartup_enabledNoFiles() {
+        ContentPackImport contentPackImport = new ContentPackImport(importExportService, stroomPropertyService);
         Mockito.when(globalPropertyService.loadByName(ContentPackImport.AUTO_IMPORT_ENABLED_PROP_KEY)).thenReturn(null);
         stroomPropertyService.setProperty(ContentPackImport.AUTO_IMPORT_ENABLED_PROP_KEY, "true");
         contentPackImport.startup();
@@ -102,7 +110,7 @@ public class TestContentPackImport {
 
     @Test
     public void testStartup_enabledThreeFiles() throws IOException {
-        ContentPackImport contentPackImport = new ContentPackImport(importExportService,stroomPropertyService, globalPropertyService);
+        ContentPackImport contentPackImport = new ContentPackImport(importExportService, stroomPropertyService);
         Mockito.when(globalPropertyService.loadByName(ContentPackImport.AUTO_IMPORT_ENABLED_PROP_KEY))
                 .thenReturn(null);
         stroomPropertyService.setProperty(ContentPackImport.AUTO_IMPORT_ENABLED_PROP_KEY, "true");
@@ -112,13 +120,13 @@ public class TestContentPackImport {
         StroomTestUtil.touchFile(testPack3);
 
         contentPackImport.startup();
-        Mockito.verify(importExportService,Mockito.times(1))
-                .performImportWithoutConfirmation(testPack1.toFile());
-        Mockito.verify(importExportService,Mockito.times(1))
-                .performImportWithoutConfirmation(testPack2.toFile());
+        Mockito.verify(importExportService, Mockito.times(1))
+                .performImportWithoutConfirmation(testPack1);
+        Mockito.verify(importExportService, Mockito.times(1))
+                .performImportWithoutConfirmation(testPack2);
         //not a zip extension so should not be called
-        Mockito.verify(importExportService,Mockito.times(0))
-                .performImportWithoutConfirmation(testPack3.toFile());
+        Mockito.verify(importExportService, Mockito.times(0))
+                .performImportWithoutConfirmation(testPack3);
 
         Assert.assertFalse(Files.exists(testPack1));
 
@@ -130,7 +138,7 @@ public class TestContentPackImport {
     @Test
     @StroomExpectedException(exception = RuntimeException.class)
     public void testStartup_failedImport() throws IOException {
-        ContentPackImport contentPackImport = new ContentPackImport(importExportService,stroomPropertyService, globalPropertyService);
+        ContentPackImport contentPackImport = new ContentPackImport(importExportService, stroomPropertyService);
         Mockito.when(globalPropertyService.loadByName(ContentPackImport.AUTO_IMPORT_ENABLED_PROP_KEY))
                 .thenReturn(null);
 
@@ -141,17 +149,11 @@ public class TestContentPackImport {
 
         StroomTestUtil.touchFile(testPack1);
 
-            contentPackImport.startup();
+        contentPackImport.startup();
 
         //File should have moved into the failed dir
         Assert.assertFalse(Files.exists(testPack1));
         Assert.assertTrue(Files.exists(CONTENT_PACK_DIR.resolve(ContentPackImport.FAILED_DIR).resolve(testPack1.getFileName())));
     }
-
-    @Test
-    public void dummyTest(){
-        Assert.assertTrue(true);
-    }
-
 
 }

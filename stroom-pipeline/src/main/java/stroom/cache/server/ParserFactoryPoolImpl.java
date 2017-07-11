@@ -16,14 +16,11 @@
 
 package stroom.cache.server;
 
-import javax.inject.Inject;
-
+import net.sf.ehcache.CacheManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.xml.sax.ErrorHandler;
-
-import stroom.security.Insecure;
 import stroom.entity.shared.VersionedEntityDecorator;
 import stroom.pipeline.server.DefaultLocationFactory;
 import stroom.pipeline.server.LocationFactory;
@@ -33,11 +30,13 @@ import stroom.pipeline.server.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.pool.AbstractPoolCacheBean;
+import stroom.security.Insecure;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 import stroom.xml.converter.ParserFactory;
 import stroom.xml.converter.xmlfragment.XMLFragmentParserFactory;
-import net.sf.ehcache.CacheManager;
+
+import javax.inject.Inject;
 
 @Insecure
 @Component

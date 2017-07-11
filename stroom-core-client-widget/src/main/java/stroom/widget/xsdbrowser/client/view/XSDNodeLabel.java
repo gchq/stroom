@@ -18,12 +18,9 @@ package stroom.widget.xsdbrowser.client.view;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
-import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Label;
-
 import stroom.widget.util.client.DoubleSelectTest;
 
 public class XSDNodeLabel extends Composite implements SelectableItem {
@@ -31,7 +28,7 @@ public class XSDNodeLabel extends Composite implements SelectableItem {
     private boolean selected;
 
     public XSDNodeLabel(final String title, final SelectionMap selectionMap, final XSDModel model, final XSDNode node,
-            final XSDNode refNode) {
+                        final XSDNode refNode) {
         final Label label = new Label(title);
         label.addStyleName("nodeLabel");
         label.getElement().setAttribute("unselectable", "on");
@@ -41,26 +38,18 @@ public class XSDNodeLabel extends Composite implements SelectableItem {
 
         initWidget(label);
 
-        addDomHandler(new ClickHandler() {
-            @Override
-            public void onClick(final ClickEvent event) {
-                XSDNode select = null;
-                if (refNode != null) {
-                    select = refNode;
-                } else {
-                    select = node;
-                }
+        addDomHandler(event -> {
+            XSDNode select = null;
+            if (refNode != null) {
+                select = refNode;
+            } else {
+                select = node;
+            }
 
-                final boolean doubleClick = doubleClickTest.test(select);
-                model.setSelectedItem(select, doubleClick);
-            }
+            final boolean doubleClick = doubleClickTest.test(select);
+            model.setSelectedItem(select, doubleClick);
         }, ClickEvent.getType());
-        addDomHandler(new DoubleClickHandler() {
-            @Override
-            public void onDoubleClick(final DoubleClickEvent event) {
-                model.setSelectedItem(node, true);
-            }
-        }, DoubleClickEvent.getType());
+        addDomHandler(event -> model.setSelectedItem(node, true), DoubleClickEvent.getType());
     }
 
     @Override

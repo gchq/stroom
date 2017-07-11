@@ -17,7 +17,6 @@
 package stroom.dashboard.client.flexlayout;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -41,8 +40,8 @@ import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.data.grid.client.Glass;
 import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.tab.client.view.SlideTab;
-import stroom.widget.tab.client.view.SlideTabBar;
+import stroom.widget.tab.client.view.LinkTab;
+import stroom.widget.tab.client.view.LinkTabBar;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -72,7 +71,8 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
     private boolean draggingTab;
     private Splitter selectedSplitter;
     private boolean clear = true;
-    private MouseTarget currentClosableTarget;
+
+
     private FlexLayoutChangeHandler changeHandler;
     private TabVisibility tabVisibility = TabVisibility.SHOW_ALL;
 
@@ -124,7 +124,6 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
                 // Busy means the mouse is down on a splitter or tab.
                 if (selectedSplitter != null) {
                     moveSplit(event);
-                    setTabCloseActive(null);
 
                 } else if (selection != null) {
                     if (!draggingTab) {
@@ -141,7 +140,6 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
                     if (draggingTab) {
                         final MouseTarget mouseTarget = getMouseTarget(x, y, true);
                         highlightMouseTarget(mouseTarget);
-                        setTabCloseActive(null);
                     }
                 }
 
@@ -166,11 +164,6 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
                 }
             }
             selectedSplitter = splitter;
-
-            // If the mouse is over a close icon then highlight it.
-            final MouseTarget mouseTarget = getMouseTarget(x, y, false);
-            final MouseTarget closeableTarget = getCloseableTarget(mouseTarget, x, y);
-            setTabCloseActive(closeableTarget);
         }
     }
 
@@ -197,11 +190,11 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
         if (selectedSplitter != null) {
             // If we found a splitter as the event target then start split
             // resize handling.
-            startPos = new int[] { x, y };
+            startPos = new int[]{x, y};
             startSplitResize(x, y);
             busy = true;
 
-        } else {
+        } else if (mouseTarget != null) {
             // If the event target was not a splitter then see if it was a tab.
             final TabData tab = mouseTarget.tab;
             if (tab != null && Pos.TAB == mouseTarget.pos) {
@@ -209,7 +202,7 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
                 if (selection != null) {
                     // The event target was a tab so store the start position of
                     // the mouse.
-                    startPos = new int[] { x, y };
+                    startPos = new int[]{x, y};
                     busy = true;
                 }
             }
@@ -420,31 +413,19 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
                 selection.tabWidget.setHighlight(false);
 
             } else {
-                // We need to know what the mouse is over.
-                final MouseTarget closeableTarget = getCloseableTarget(mouseTarget, x, y);
-                if (closeableTarget != null) {
-                    if (currentClosableTarget != null && closeableTarget.tab != null
-                            && currentClosableTarget.tab != null && closeableTarget.tab == currentClosableTarget.tab) {
-                        if (closeableTarget.tab instanceof Component) {
-                            changeHandler.requestTabClose(((Component) closeableTarget.tab).getTabConfig());
-                        }
-                    }
+                // If the event target was not a splitter then see if it was
+                // a tab./
+                final TabData tab = mouseTarget.tab;
+                if (selection.tab.equals(tab)) {
+                    final TabLayout tabLayout = mouseTarget.tabLayout;
+                    final int index = tabLayout.getTabBar().getTabs().indexOf(tab);
+                    if (tabLayout.getTabLayoutData().getSelected() == null
+                            || !tabLayout.getTabLayoutData().getSelected().equals(index)) {
+                        tabLayout.selectTab(index);
+                        tabLayout.getTabLayoutData().setSelected(index);
 
-                } else {
-                    // If the event target was not a splitter then see if it was
-                    // a tab./
-                    final TabData tab = mouseTarget.tab;
-                    if (selection.tab.equals(tab)) {
-                        final TabLayout tabLayout = mouseTarget.tabLayout;
-                        final int index = tabLayout.getTabBar().getTabs().indexOf(tab);
-                        if (tabLayout.getTabLayoutData().getSelected() == null
-                                || !tabLayout.getTabLayoutData().getSelected().equals(index)) {
-                            tabLayout.selectTab(index);
-                            tabLayout.getTabLayoutData().setSelected(index);
-
-                            // Let the handler know the layout is dirty.
-                            changeHandler.onDirty();
-                        }
+                        // Let the handler know the layout is dirty.
+                        changeHandler.onDirty();
                     }
                 }
             }
@@ -499,32 +480,32 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
         }
     }
 
-    private MouseTarget getCloseableTarget(final MouseTarget mouseTarget, final int x, final int y) {
-        if (mouseTarget != null && mouseTarget.tabWidget != null) {
-            final SlideTab tab = mouseTarget.tabWidget;
-            final Element close = tab.getCloseElement();
-            if (x >= close.getAbsoluteLeft() && x <= close.getAbsoluteRight() && y >= close.getAbsoluteTop()
-                    && y <= close.getAbsoluteBottom()) {
-                return mouseTarget;
-            }
-        }
-        return null;
-    }
-
-    private void setTabCloseActive(final MouseTarget closableTarget) {
-        if (closableTarget != currentClosableTarget) {
-            // Make sure no tab has close active.
-            if (currentClosableTarget != null) {
-                currentClosableTarget.tabWidget.setCloseActive(false);
-                currentClosableTarget = null;
-            }
-
-            if (closableTarget != null) {
-                currentClosableTarget = closableTarget;
-                closableTarget.tabWidget.setCloseActive(true);
-            }
-        }
-    }
+//    private MouseTarget getCloseableTarget(final MouseTarget mouseTarget, final int x, final int y) {
+//        if (mouseTarget != null && mouseTarget.tabWidget != null) {
+//            final LinkTab tab = mouseTarget.tabWidget;
+//            final Element close = tab.getCloseElement();
+//            if (x >= close.getAbsoluteLeft() && x <= close.getAbsoluteRight() && y >= close.getAbsoluteTop()
+//                    && y <= close.getAbsoluteBottom()) {
+//                return mouseTarget;
+//            }
+//        }
+//        return null;
+//    }
+//
+//    private void setTabCloseActive(final MouseTarget closableTarget) {
+//        if (closableTarget != currentClosableTarget) {
+//            // Make sure no tab has close active.
+//            if (currentClosableTarget != null) {
+//                currentClosableTarget.tabWidget.setCloseActive(false);
+//                currentClosableTarget = null;
+//            }
+//
+//            if (closableTarget != null) {
+//                currentClosableTarget = closableTarget;
+//                closableTarget.tabWidget.setCloseActive(true);
+//            }
+//        }
+//    }
 
     private void startSplitResize(final int x, final int y) {
         final SplitInfo splitInfo = selectedSplitter.getSplitInfo();
@@ -630,10 +611,8 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
     /**
      * Gets the current target of the mouse.
      *
-     * @param x
-     *            The mouse x coordinate.
-     * @param y
-     *            The mouse y coordinate.
+     * @param x The mouse x coordinate.
+     * @param y The mouse y coordinate.
      * @return An object describing the target layout, tab and target position.
      */
     private MouseTarget getMouseTarget(final int x, final int y, final boolean includeSplitLayout) {
@@ -668,21 +647,16 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
      * Tests the supplied layout to see if it is the current mouse target and
      * returns mouse target if it is.
      *
-     * @param x
-     *            The mouse x coordinate.
-     * @param y
-     *            The mouse y coordinate.
-     * @param splitter
-     *            True if the layout is a splitter. Splitters are targeted
-     *            outside of their rect.
-     * @param layoutData
-     *            The layout data to test to see if it is a target.
-     * @param positionAndSize
-     *            The position and size of the layout being tested.
+     * @param x               The mouse x coordinate.
+     * @param y               The mouse y coordinate.
+     * @param splitter        True if the layout is a splitter. Splitters are targeted
+     *                        outside of their rect.
+     * @param layoutData      The layout data to test to see if it is a target.
+     * @param positionAndSize The position and size of the layout being tested.
      * @return The mouse target if the tested layout is the target, else null.
      */
     private MouseTarget findTargetLayout(final int x, final int y, final boolean splitter,
-            final LayoutConfig layoutData, final PositionAndSize positionAndSize) {
+                                         final LayoutConfig layoutData, final PositionAndSize positionAndSize) {
         final int width = positionAndSize.getWidth();
         final int height = positionAndSize.getHeight();
         final int left = element.getAbsoluteLeft() + positionAndSize.getLeft();
@@ -755,7 +729,7 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
     }
 
     private MouseTarget findTargetTab(final int x, final int y, final LayoutConfig layoutData,
-            final PositionAndSize positionAndSize) {
+                                      final PositionAndSize positionAndSize) {
         final int width = positionAndSize.getWidth();
         final int height = positionAndSize.getHeight();
         final int left = element.getAbsoluteLeft() + positionAndSize.getLeft();
@@ -768,12 +742,12 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
             // Test if the mouse is over a tab.
             final TabLayout tabLayout = layoutToWidgetMap.get(layoutData);
             if (tabLayout != null && tabLayout.getTabBar().getTabs() != null) {
-                final SlideTabBar tabBar = tabLayout.getTabBar();
+                final LinkTabBar tabBar = tabLayout.getTabBar();
                 if (x >= tabBar.getAbsoluteLeft() && x <= tabBar.getAbsoluteLeft() + tabBar.getOffsetWidth()
                         && y >= tabBar.getAbsoluteTop() && y <= tabBar.getAbsoluteTop() + tabBar.getOffsetHeight()) {
                     for (int i = tabBar.getTabs().size() - 1; i >= 0; i--) {
                         final TabData tabData = tabBar.getTabs().get(i);
-                        final SlideTab slideTab = (SlideTab) tabBar.getTab(tabData);
+                        final LinkTab slideTab = (LinkTab) tabBar.getTab(tabData);
                         final Element tabElement = slideTab.getElement();
                         if (x >= tabElement.getAbsoluteLeft()) {
                             if (x <= tabElement.getAbsoluteRight()) {
@@ -800,16 +774,16 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
             final Element tabElement = mouseTarget.tabWidget.getElement();
 
             switch (mouseTarget.pos) {
-            case TAB:
-                marker.show(tabElement.getAbsoluteLeft(), tabElement.getAbsoluteTop(), 4, tabElement.getOffsetHeight());
-                break;
-            case AFTER_TAB:
-                marker.show(tabElement.getAbsoluteLeft() + tabElement.getOffsetWidth(), tabElement.getAbsoluteTop(), 4,
-                        tabElement.getOffsetHeight());
-                break;
-            default:
-                marker.hide();
-                break;
+                case TAB:
+                    marker.show(tabElement.getAbsoluteLeft(), tabElement.getAbsoluteTop(), 4, tabElement.getOffsetHeight());
+                    break;
+                case AFTER_TAB:
+                    marker.show(tabElement.getAbsoluteLeft() + tabElement.getOffsetWidth(), tabElement.getAbsoluteTop(), 4,
+                            tabElement.getOffsetHeight());
+                    break;
+                default:
+                    marker.hide();
+                    break;
             }
 
         } else {
@@ -822,24 +796,24 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
             final int halfHeight = height / 2;
 
             switch (mouseTarget.pos) {
-            case CENTER:
-                marker.show(left, top, width, height);
-                break;
-            case LEFT:
-                marker.show(left, top, halfWidth, height);
-                break;
-            case RIGHT:
-                marker.show(left + halfWidth, top, halfWidth, height);
-                break;
-            case TOP:
-                marker.show(left, top, width, halfHeight);
-                break;
-            case BOTTOM:
-                marker.show(left, top + halfHeight, width, halfHeight);
-                break;
-            default:
-                marker.hide();
-                break;
+                case CENTER:
+                    marker.show(left, top, width, height);
+                    break;
+                case LEFT:
+                    marker.show(left, top, halfWidth, height);
+                    break;
+                case RIGHT:
+                    marker.show(left + halfWidth, top, halfWidth, height);
+                    break;
+                case TOP:
+                    marker.show(left, top, width, halfHeight);
+                    break;
+                case BOTTOM:
+                    marker.show(left, top + halfHeight, width, halfHeight);
+                    break;
+                default:
+                    marker.hide();
+                    break;
             }
         }
     }
@@ -906,12 +880,9 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
             }
 
             // Perform a resize on all child layouts.
-            Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-                @Override
-                public void execute() {
-                    for (final TabLayout w : layoutToWidgetMap.values()) {
-                        w.onResize();
-                    }
+            Scheduler.get().scheduleDeferred(() -> {
+                for (final TabLayout w : layoutToWidgetMap.values()) {
+                    w.onResize();
                 }
             });
         }
@@ -935,13 +906,13 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
     }
 
     private void recalculate(final LayoutConfig layoutData, final int left, final int top, final int width,
-            final int height) {
+                             final int height) {
         recalculateDimension(layoutData, Direction.ACROSS.getDimension(), left, width, true);
         recalculateDimension(layoutData, Direction.DOWN.getDimension(), top, height, true);
     }
 
     private int recalculateDimension(final LayoutConfig layoutData, final int dim, int pos, final int size,
-            final boolean useRemaining) {
+                                     final boolean useRemaining) {
         int containerSize = 0;
 
         if (layoutData != null) {
@@ -1058,7 +1029,7 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
                 final TabLayoutConfig tabLayoutData = (TabLayoutConfig) key;
                 TabLayout tabLayout = layoutToWidgetMap.get(tabLayoutData);
                 if (tabLayout == null) {
-                    tabLayout = new TabLayout(tabLayoutData);
+                    tabLayout = new TabLayout(tabLayoutData, changeHandler);
                     if (tabLayoutData.count() > 0) {
                         for (int i = 0; i < tabLayoutData.count(); i++) {
                             final TabConfig tabData = tabLayoutData.get(i);
@@ -1143,7 +1114,6 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
         clear();
         refresh();
 
-        setTabCloseActive(null);
         changeHandler.onDirty();
     }
 
@@ -1193,10 +1163,10 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
         private final TabLayout tabLayout;
         private final TabData tab;
         private final int tabIndex;
-        private final SlideTab tabWidget;
+        private final LinkTab tabWidget;
 
         public MouseTarget(final LayoutConfig layoutData, final PositionAndSize positionAndSize, final Pos pos,
-                           final TabLayout tabLayout, final TabData tab, final int tabIndex, final SlideTab tabWidget) {
+                           final TabLayout tabLayout, final TabData tab, final int tabIndex, final LinkTab tabWidget) {
             this.layoutData = layoutData;
             this.positionAndSize = positionAndSize;
             this.pos = pos;

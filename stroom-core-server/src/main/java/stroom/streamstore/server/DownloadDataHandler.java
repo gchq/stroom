@@ -16,6 +16,7 @@
 
 package stroom.streamstore.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.logging.StreamEventLog;
 import stroom.security.Secured;
@@ -29,12 +30,14 @@ import stroom.task.server.TaskHandlerBean;
 import stroom.task.server.TaskManager;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
+import stroom.util.spring.StroomScope;
 
 import javax.annotation.Resource;
-import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 
 @TaskHandlerBean(task = DownloadDataAction.class)
+@Scope(StroomScope.TASK)
 @Secured(Stream.EXPORT_DATA_PERMISSION)
 public class DownloadDataHandler extends AbstractTaskHandler<DownloadDataAction, ResourceGeneration> {
     @Resource
@@ -50,10 +53,10 @@ public class DownloadDataHandler extends AbstractTaskHandler<DownloadDataAction,
         try {
             // Import file.
             resourceKey = sessionResourceStore.createTempFile("StroomData.zip");
-            final File file = sessionResourceStore.getTempFile(resourceKey);
+            final Path file = sessionResourceStore.getTempFile(resourceKey);
 
             final StreamDownloadSettings settings = new StreamDownloadSettings();
-            taskManager.exec(new StreamDownloadTask(action.getSessionId(), action.getUserId(), action.getCriteria(),
+            taskManager.exec(new StreamDownloadTask(action.getUserToken(), action.getCriteria(),
                     file, settings));
 
             streamEventLog.exportStream(action.getCriteria(), null);
@@ -62,6 +65,6 @@ public class DownloadDataHandler extends AbstractTaskHandler<DownloadDataAction,
             streamEventLog.exportStream(action.getCriteria(), ex);
             throw EntityServiceExceptionUtil.create(ex);
         }
-        return new ResourceGeneration(resourceKey, new ArrayList<String>());
+        return new ResourceGeneration(resourceKey, new ArrayList<>());
     }
 }

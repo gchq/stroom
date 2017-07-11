@@ -24,7 +24,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-
 import stroom.streamstore.client.presenter.TextPresenter.TextView;
 import stroom.streamstore.client.presenter.TextUiHandlers;
 import stroom.widget.button.client.FabButton;

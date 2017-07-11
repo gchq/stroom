@@ -17,7 +17,6 @@
 package stroom.refdata;
 
 import org.springframework.stereotype.Component;
-
 import stroom.pool.InternPool;
 
 @Component

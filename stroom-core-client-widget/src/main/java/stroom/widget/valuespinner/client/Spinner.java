@@ -19,11 +19,8 @@ package stroom.widget.valuespinner.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
-import com.google.gwt.event.dom.client.MouseOutEvent;
 import com.google.gwt.event.dom.client.MouseOutHandler;
-import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
-import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
@@ -127,35 +124,26 @@ public class Spinner implements HasHandlers {
         }
     };
 
-    private final MouseOverHandler mouseOverHandler = new MouseOverHandler() {
-        @Override
-        public void onMouseOver(final MouseOverEvent event) {
-            if (enabled) {
-                final Image sender = (Image) event.getSource();
-                if (sender == incrementArrow) {
-                    sender.setResource(images.arrowUpHover());
-                } else {
-                    sender.setResource(images.arrowDownHover());
-                }
+    private final MouseOverHandler mouseOverHandler = event -> {
+        if (enabled) {
+            final Image sender = (Image) event.getSource();
+            if (sender == incrementArrow) {
+                sender.setResource(images.arrowUpHover());
+            } else {
+                sender.setResource(images.arrowDownHover());
             }
         }
     };
 
-    private final MouseOutHandler mouseOutHandler = new MouseOutHandler() {
-        @Override
-        public void onMouseOut(final MouseOutEvent event) {
-            if (enabled) {
-                cancelTimer((Widget) event.getSource());
-            }
+    private final MouseOutHandler mouseOutHandler = event -> {
+        if (enabled) {
+            cancelTimer((Widget) event.getSource());
         }
     };
 
-    private final MouseUpHandler mouseUpHandler = new MouseUpHandler() {
-        @Override
-        public void onMouseUp(final MouseUpEvent event) {
-            if (enabled) {
-                cancelTimer((Widget) event.getSource());
-            }
+    private final MouseUpHandler mouseUpHandler = event -> {
+        if (enabled) {
+            cancelTimer((Widget) event.getSource());
         }
     };
 
