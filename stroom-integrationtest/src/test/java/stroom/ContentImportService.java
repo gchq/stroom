@@ -11,26 +11,43 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * This class should be used when integration tests require stroom content. The downloadStroomContent gradle
+ * task that is part of the setupSampleData task should be used when you need stroom content for manual testing
+ * inside stroom
+ */
 @Component
-public class ContentPackImportService {
+public class ContentImportService {
 
    public static final String CONTENT_PACK_IMPORT_DIR = "transientContentPacks";
+
+   private static final Version CORE_XML_SCHEMAS_VERSION = Version.of(1,0);
+   private static final Version EVENT_LOGGING_XML_SCHEMA_VERSION = Version.of(1,0);
+   private static final Version VISUALISATIONS_VERSION = Version.of(3,0,4);
 
    private ImportExportService importExportService;
 
    @Inject
-   public ContentPackImportService(final ImportExportService importExportService) {
+   public ContentImportService(final ImportExportService importExportService) {
       this.importExportService = importExportService;
    }
 
    public void importXmlSchemas() {
      importContentPacks(Arrays.asList(
-             ContentPack.of("core-xml-schemas", Version.of(1,0)),
-             ContentPack.of("event-logging-xml-schema", Version.of(1,0))
+             ContentPack.of("core-xml-schemas", CORE_XML_SCHEMAS_VERSION),
+             ContentPack.of("event-logging-xml-schema", EVENT_LOGGING_XML_SCHEMA_VERSION)
      ));
    }
 
-   private void importContentPacks(final List<ContentPack> packs) {
+   public void importVisualisations() {
+
+      Path contentPackDirPath = getContentPackDirPath();
+
+      Path packPath = VisualisationsDownloader.downloadVisualisations(VISUALISATIONS_VERSION, contentPackDirPath);
+      importExportService.performImportWithoutConfirmation(packPath);
+   }
+
+   public void importContentPacks(final List<ContentPack> packs) {
 
       Path contentPackDirPath = getContentPackDirPath();
 
@@ -45,7 +62,7 @@ public class ContentPackImportService {
       return new File(StroomCoreServerTestFileUtil.getTestResourcesDir(), CONTENT_PACK_IMPORT_DIR).toPath();
    }
 
-   private static class ContentPack {
+   public static class ContentPack {
       private final String name;
       private final Version version;
 

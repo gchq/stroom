@@ -89,7 +89,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
     @Resource
     private IndexShardService indexShardService;
     @Resource
-    private ContentPackImportService contentPackImportService;
+    private ContentImportService contentImportService;
     @Resource
     private StreamAttributeKeyService streamAttributeKeyService;
     @Resource
@@ -245,6 +245,6 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
     // @Override
     @Override
     public void createRequiredXMLSchemas() {
-        contentPackImportService.importXmlSchemas();
+        contentImportService.importXmlSchemas();
     }
 }

@@ -55,7 +55,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
     private CommonTestControl commonTestControl;
 
     @Resource
-    private ContentPackImportService contentPackImportService;
+    private ContentImportService contentImportService;
 
     @BeforeClass
     public static final void beforeClass() throws IOException {
@@ -155,7 +155,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
 
     public void importSchemas(final boolean force) {
         if (force || !XML_SCHEMAS_DOWNLOADED) {
-            contentPackImportService.importXmlSchemas();
+            contentImportService.importXmlSchemas();
             XML_SCHEMAS_DOWNLOADED = true;
         }
     }
