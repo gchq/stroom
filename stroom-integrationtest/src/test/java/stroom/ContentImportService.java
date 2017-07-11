@@ -7,6 +7,8 @@ import stroom.util.shared.Version;
 
 import javax.inject.Inject;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -59,7 +61,14 @@ public class ContentImportService {
    }
 
    private Path getContentPackDirPath() {
-      return new File(StroomCoreServerTestFileUtil.getTestResourcesDir(), CONTENT_PACK_IMPORT_DIR).toPath();
+      Path contentPackDir = new File(StroomCoreServerTestFileUtil.getTestResourcesDir(), CONTENT_PACK_IMPORT_DIR).toPath();
+      try {
+         Files.createDirectories(contentPackDir);
+      } catch (IOException e) {
+         throw new RuntimeException(String.format("Error creating directory %s for content packs",
+                 contentPackDir.toAbsolutePath().toString()), e);
+      }
+      return contentPackDir;
    }
 
    public static class ContentPack {
