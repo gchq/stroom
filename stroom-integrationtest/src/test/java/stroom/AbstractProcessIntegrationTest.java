@@ -16,6 +16,7 @@
 
 package stroom;
 
+import org.junit.Before;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import stroom.dashboard.spring.DashboardConfiguration;
@@ -33,11 +34,28 @@ import stroom.statistics.spring.StatisticsConfiguration;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.visualisation.spring.VisualisationConfiguration;
 
-@ActiveProfiles(value = {StroomSpringProfiles.TEST, StroomSpringProfiles.IT, SecurityConfiguration.MOCK_SECURITY})
-@ContextConfiguration(classes = {ScopeConfiguration.class, PersistenceConfiguration.class,
-        ProcessTestServerComponentScanConfiguration.class, ServerConfiguration.class,
-        SecurityConfiguration.class, ScopeTestConfiguration.class, EventLoggingConfiguration.class,
-        IndexConfiguration.class, SearchConfiguration.class, ScriptConfiguration.class,
-        VisualisationConfiguration.class, DashboardConfiguration.class, StatisticsConfiguration.class})
+@ActiveProfiles(value = {
+        StroomSpringProfiles.TEST,
+        StroomSpringProfiles.IT,
+        SecurityConfiguration.MOCK_SECURITY})
+@ContextConfiguration(classes = {
+        ScopeConfiguration.class,
+        PersistenceConfiguration.class,
+        ProcessTestServerComponentScanConfiguration.class,
+        ServerConfiguration.class,
+        SecurityConfiguration.class,
+        ScopeTestConfiguration.class,
+        EventLoggingConfiguration.class,
+        IndexConfiguration.class,
+        SearchConfiguration.class,
+        ScriptConfiguration.class,
+        VisualisationConfiguration.class,
+        DashboardConfiguration.class,
+        StatisticsConfiguration.class})
 public abstract class AbstractProcessIntegrationTest extends StroomIntegrationTest {
+
+    @Before
+    public void beforeTest() {
+        super.importSchemas(true);
+    }
 }

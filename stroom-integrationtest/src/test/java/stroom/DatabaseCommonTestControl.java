@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,10 +27,8 @@ import stroom.dictionary.shared.Dictionary;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Folder;
-import stroom.entity.shared.ImportState.ImportMode;
 import stroom.entity.shared.Res;
 import stroom.feed.shared.Feed;
-import stroom.importexport.server.ImportExportSerializer;
 import stroom.index.server.IndexShardManager;
 import stroom.index.server.IndexShardWriterImpl;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -50,7 +48,6 @@ import stroom.node.shared.VolumeState;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.XSLT;
-import stroom.policy.shared.Policy;
 import stroom.script.shared.Script;
 import stroom.security.server.DocumentPermission;
 import stroom.security.server.Permission;
@@ -71,12 +68,10 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterTracker;
 import stroom.streamtask.shared.StreamTask;
-import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.visualisation.shared.Visualisation;
 import stroom.xmlschema.shared.XMLSchema;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -93,7 +88,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
     @Resource
     private IndexShardService indexShardService;
     @Resource
-    private ImportExportSerializer importExportSerializer;
+    private ContentImportService contentImportService;
     @Resource
     private StreamAttributeKeyService streamAttributeKeyService;
     @Resource
@@ -251,12 +246,6 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
     // @Override
     @Override
     public void createRequiredXMLSchemas() {
-        // Import schemas if we haven't done so already.
-        final int schemaCount = countEntity(XMLSchema.class);
-        if (schemaCount == 0) {
-            // Import the schemas.
-            final File xsdDir = new File(StroomCoreServerTestFileUtil.getTestResourcesDir(), "samples/config/XML Schemas");
-            importExportSerializer.read(xsdDir.toPath(), null, ImportMode.IGNORE_CONFIRMATION);
-        }
+        contentImportService.importXmlSchemas();
     }
 }

@@ -19,6 +19,7 @@ package stroom.test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.CommonTestControl;
+import stroom.ContentImportService;
 import stroom.dashboard.shared.Dashboard;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
@@ -113,7 +114,8 @@ public final class SetupSampleDataBean {
     private JobService jobService;
     @Resource
     private JobNodeService jobNodeService;
-
+    @Resource
+    private ContentImportService contentImportService;
     @Resource
     private StatisticStoreEntityService statisticsDataSourceService;
 
@@ -157,6 +159,10 @@ public final class SetupSampleDataBean {
             loadDirectory(shutdown, dir);
         }
 
+
+        //Additional content is loaded by the gradle build in task downloadStroomContent
+
+
         generateSampleStatisticsData();
 
         // code to check that the statisticsDataSource objects are stored
@@ -165,7 +171,7 @@ public final class SetupSampleDataBean {
                 .find(FindStatisticsEntityCriteria.instance());
 
         for (final StatisticStoreEntity statisticsDataSource : statisticsDataSources) {
-            LOGGER.info(String.format("Retreiving statisticsDataSource with name: {}, and type: {}",
+            LOGGER.info(String.format("Retrieving statisticsDataSource with name: {}, and type: {}",
                     statisticsDataSource.getName(),
                     statisticsDataSource.getStatisticType()));
         }

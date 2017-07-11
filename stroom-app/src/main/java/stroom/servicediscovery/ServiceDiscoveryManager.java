@@ -19,6 +19,8 @@ import stroom.util.spring.StroomShutdown;
 import javax.inject.Singleton;
 import java.io.Closeable;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -47,7 +49,7 @@ public class ServiceDiscoveryManager implements HasHealthCheck {
     private final List<Consumer<ServiceDiscovery<String>>> curatorStartupListeners = new ArrayList<>();
 
     private volatile HealthCheck.Result health;
-    private final List<Closeable> closeables = new ArrayList<>();
+    private final Deque<Closeable> closeables = new LinkedList<>();
 
     @SuppressWarnings("unused")
     public ServiceDiscoveryManager(final StroomPropertyService stroomPropertyService) {
@@ -88,7 +90,7 @@ public class ServiceDiscoveryManager implements HasHealthCheck {
         CuratorFramework curatorFramework = CuratorFrameworkFactory.newClient(zookeeperUrl, retryPolicy);
         LOGGER.info("Starting Curator client using Zookeeper at '{}'", zookeeperUrl);
         curatorFramework.start();
-        closeables.add(curatorFramework);
+        closeables.push(curatorFramework);
 
         boolean wasSet = curatorFrameworkRef.compareAndSet(null, curatorFramework);
         if (!wasSet) {
@@ -110,7 +112,9 @@ public class ServiceDiscoveryManager implements HasHealthCheck {
 
         try {
             serviceDiscovery.start();
-            closeables.add(serviceDiscovery);
+            //push to the top of the queue to ensure this gets closed before the curator framework else it
+            //won't work as it has no client
+            closeables.push(serviceDiscovery);
             boolean wasSet = serviceDiscoveryRef.compareAndSet(null, serviceDiscovery);
             if (!wasSet) {
                 LOGGER.error("Attempt to set serviceDiscoveryRef when already set");

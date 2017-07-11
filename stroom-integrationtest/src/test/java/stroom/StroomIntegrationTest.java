@@ -49,8 +49,13 @@ public abstract class StroomIntegrationTest implements StroomTest {
 
     private static final boolean TEAR_DOWN_DATABASE_BETWEEEN_TESTS = true;
 
+    private static boolean XML_SCHEMAS_DOWNLOADED = false;
+
     @Resource
     private CommonTestControl commonTestControl;
+
+    @Resource
+    private ContentImportService contentImportService;
 
     @BeforeClass
     public static final void beforeClass() throws IOException {
@@ -92,6 +97,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
 
         onBefore();
     }
+
 
     /**
      * Remove all entities from the database.
@@ -140,6 +146,17 @@ public abstract class StroomIntegrationTest implements StroomTest {
         // one test in this test class.
         if (force || getTestCount() > 1) {
             commonTestControl.setup();
+        }
+    }
+
+    public void importSchemas() {
+        importSchemas(false);
+    }
+
+    public void importSchemas(final boolean force) {
+        if (force || !XML_SCHEMAS_DOWNLOADED) {
+            contentImportService.importXmlSchemas();
+            XML_SCHEMAS_DOWNLOADED = true;
         }
     }
 

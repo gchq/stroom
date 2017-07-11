@@ -1,5 +1,6 @@
 #This is an example of the configuration file ~/.stroom/stroom.conf that sets 
 #various properties for running stroom in development
+#It is also used by travis for configuring stroom's integration tests
 
 #Prevents stroom from prompting for a new password on first login
 stroom.developmentMode=true

@@ -20,6 +20,7 @@ import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.AbstractCoreIntegrationTest;
+import stroom.ContentImportService;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.ImportState.ImportMode;
@@ -108,6 +109,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private StreamTypeService streamTypeService;
     @Resource
     private ImportExportSerializer importExportSerializer;
+    @Resource
+    private ContentImportService contentImportService;
 
     protected void testTranslationTask(final boolean translate, final boolean compareOutput) {
         final List<Exception> exceptions = new ArrayList<>();
@@ -120,6 +123,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         FileUtil.mkdirs(outputDir);
 
         importExportSerializer.read(configDir.toPath(), null, ImportMode.IGNORE_CONFIRMATION);
+
+        contentImportService.importXmlSchemas();
 
         // Process reference data.
         processData(inputDir, outputDir, true, compareOutput, exceptions);

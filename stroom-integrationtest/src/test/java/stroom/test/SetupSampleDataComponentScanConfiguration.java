@@ -35,8 +35,6 @@ import stroom.entity.server.MockDocumentEntityService;
 import stroom.entity.server.MockEntityService;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.feed.server.MockFeedService;
-import stroom.importexport.server.MockImportExportSerializer;
-import stroom.importexport.server.MockImportExportService;
 import stroom.index.server.MockIndexService;
 import stroom.index.server.MockIndexShardService;
 import stroom.index.server.MockIndexShardWriter;
@@ -100,8 +98,6 @@ import stroom.xmlschema.server.MockXMLSchemaService;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockMetaMapFactory.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockHttpServletRequest.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockHttpServletResponse.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockImportExportSerializer.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockImportExportService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockIndexService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockIndexShardManager.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockIndexShardService.class),
