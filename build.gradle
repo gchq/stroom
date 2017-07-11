@@ -21,9 +21,15 @@ apply plugin: 'gchq.urldependencies'
 //if the project has a value for the passed property (i.e from the cmd line via -PpropName=xxx)
 //use that, else use a default value
 ext.getPropertyOrDefault = { propName, defaultValue -> 
-    return project.hasProperty(propName) ? 
-        project.getProperty(propName) : 
-        defaultValue
+    def val;
+    if (project.hasProperty(propName) && project.getProperty(propName) != "unspecified") {
+        val = project.getProperty(propName)
+        println "Using propery $propName with value $val"
+    } else {
+        val = defaultValue
+        println "Propery $propName has no value, using default value $val"
+    }
+    return val;
 }
 
 ext.gwtCompilerProps = [
@@ -38,7 +44,7 @@ ext.gwtCompilerProps = [
 //version numbers for libs that share version numbers, e.g. dropwizard-*, or for github repo release versions
 ext.versions = [
     //----------Stroom-----------------
-    stroom: '6.0-beta.1-SNAPSHOT',
+    stroom: getPropertyOrDefault('version', 'SNAPSHOT'),
 
     //------Stroom-repos---------------
     eventLogging: 'v3.1.0',
@@ -203,6 +209,7 @@ allprojects {
     apply plugin: 'maven-publish'
 
     group = 'stroom'
+    //version = getPropertyOrDefault('version', 'SNAPSHOT')
     version = versions.stroom
 }
 

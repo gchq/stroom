@@ -9,7 +9,7 @@ jar {
     manifest {
         attributes(
                 "Implementation-Title": "Stroom",
-                "Implementation-Version": version,
+                "Implementation-Version": versions.stroom,
                 "Main-Class" : "stroom.startup.App"
         )
     }
