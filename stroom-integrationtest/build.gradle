@@ -40,6 +40,11 @@ dependencies {
 test {
     afterTest { desc, result -> 
         println "Executing test ${desc.name} [${desc.className}] with result: ${result.resultType}"
+
+    }
+
+    testLogging {
+        exceptionFormat = 'full'
     }
 }
 
