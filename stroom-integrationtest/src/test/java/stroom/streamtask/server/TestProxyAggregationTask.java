@@ -353,6 +353,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         printWriter.println("Feed:" + eventFeed.getName());
         printWriter.println("Proxy:ProxyTest");
         printWriter.println("Compression:Zip");
+        printWriter.println("ReceivedTime:2010-01-01T00:00:00.000Z");
         printWriter.flush();
         zipOutputStream.closeEntry();
         zipOutputStream.putNextEntry(new ZipEntry("file1.dat"));
@@ -375,6 +376,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         PrintWriter printWriter = new PrintWriter(zipOutputStream);
         printWriter.println("Feed:" + eventFeed.getName());
         printWriter.println("Proxy:ProxyTest");
+        printWriter.println("ReceivedTime:2010-01-01T00:00:00.000Z");
         printWriter.flush();
         zipOutputStream.closeEntry();
         zipOutputStream.putNextEntry(new ZipEntry(StroomZipFile.SINGLE_DATA_ENTRY.getFullName()));
