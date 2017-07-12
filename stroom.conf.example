@@ -27,3 +27,7 @@ stroom.statistics.sql.jdbcDriverClassName=com.mysql.jdbc.Driver
 stroom.statistics.sql.jdbcDriverUrl=jdbc:mysql://localhost:3308/statistics?useUnicode=yes&characterEncoding=UTF-8
 stroom.statistics.sql.jdbcDriverUsername=stroomuser
 stroom.statistics.sql.jdbcDriverPassword=stroompassword1
+
+#Authentication properties
+stroom.auth.jwt.secret=CHANGE_ME
+stroom.auth.jwt.issuer=stroom
