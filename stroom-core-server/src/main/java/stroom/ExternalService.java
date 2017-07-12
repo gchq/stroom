@@ -1,14 +1,15 @@
 package stroom;
 
 import com.google.common.base.Preconditions;
+import io.vavr.Tuple2;
 import org.apache.curator.x.discovery.ProviderStrategy;
 import org.apache.curator.x.discovery.strategies.RandomStrategy;
 import org.apache.curator.x.discovery.strategies.StickyStrategy;
 import stroom.util.config.StroomProperties;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Stream;
 
 /**
@@ -18,7 +19,7 @@ import java.util.stream.Stream;
  */
 public enum ExternalService {
     //stroom index involves multiple calls to fetch the data iteratively so must be sticky
-    INDEX("index", new StickyStrategy<>(new RandomStrategy<>())),
+    INDEX("stroomIndex", new StickyStrategy<>(new RandomStrategy<>())),
     //stroom stats returns all results in one go so is stateless and can use a random strategy
     STROOM_STATS("stroomStats", new RandomStrategy<>()),
     //sql statistics returns all results in one go so is stateless and can use a random strategy
@@ -33,33 +34,38 @@ public enum ExternalService {
     private static final String VERSION_SUFFIX = ".version";
     private static final String DOC_REF_TYPE_SUFFIX = ".docRefType";
 
+    //The serviceKey is a stroom specific abstraction of the service name, allowing the name to be set in properties
+    //rather than hardcoded here.  The name that corresponds the serviceKey is what Curator registers services against.
     private final String serviceKey;
     private final ProviderStrategy<String> providerStrategy;
 
     /**
      * This maps doc ref types to services. I.e. if someone has the doc ref type they can get an ExternalService.
      */
-    private static Map<String, ExternalService> docRefTypeToServiceMap = new HashMap<>();
+    private static ConcurrentMap<String, ExternalService> docRefTypeToServiceMap = new ConcurrentHashMap<>();
 
     ExternalService(final String serviceKey, final ProviderStrategy<String> providerStrategy) {
         this.serviceKey = serviceKey;
         this.providerStrategy = providerStrategy;
     }
 
-    static {
-        Stream.of(ExternalService.values())
-                .forEach(externalService -> {
-                    String docRefType = StroomProperties.getProperty(
-                            PROP_KEY_PREFIX + externalService.getServiceKey() + DOC_REF_TYPE_SUFFIX);
-                    if (docRefType != null && !docRefType.isEmpty()) {
-                        docRefTypeToServiceMap.put(docRefType, externalService);
-                    }
-                });
-    }
-
     public static Optional<ExternalService> getExternalService(final String docRefType) {
         Preconditions.checkNotNull(docRefType);
-        return Optional.ofNullable(docRefTypeToServiceMap.get(docRefType));
+
+        //lazy population of the map
+        ExternalService requestedExternalService = docRefTypeToServiceMap.computeIfAbsent(docRefType, k ->
+                Stream.of(ExternalService.values())
+                        .map(externalService -> {
+                            String type = StroomProperties.getProperty(
+                                    PROP_KEY_PREFIX + externalService.getServiceKey() + DOC_REF_TYPE_SUFFIX);
+                            return new Tuple2<>(externalService, type);
+                        })
+                        .filter(tuple2 -> tuple2._2().equals(docRefType))
+                        .map(Tuple2::_1)
+                        .findFirst()
+                        .orElse(null)
+        );
+        return Optional.ofNullable(requestedExternalService);
     }
 
     /**
@@ -76,7 +82,6 @@ public enum ExternalService {
     }
 
     public String getVersionedServiceName() {
-        String baseServiceName = getBaseServiceName();
         return getBaseServiceName() + "-v" + getVersion();
     }
 
