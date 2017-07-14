@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#343** : Fixed login expiry issue.
 
+* Issue **#345** : Allowed for multi depth config content import.
+
 ## [v5.0-beta.39] - 2017-07-09
 
 * Issue **#341** : Fixed arg in SQL.
