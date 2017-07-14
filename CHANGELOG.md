@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.40] - 2017-07-14
+
 * Issue **#343** : Fixed login expiry issue.
 
 * Issue **#345** : Allowed for multi depth config content import.
@@ -497,7 +499,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.39...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.40...HEAD
+[v5.0-beta.40]: https://github.com/gchq/stroom/compare/v5.0-beta.39...v5.0-beta.40
 [v5.0-beta.39]: https://github.com/gchq/stroom/compare/v5.0-beta.38...v5.0-beta.39
 [v5.0-beta.38]: https://github.com/gchq/stroom/compare/v5.0-beta.37...v5.0-beta.38
 [v5.0-beta.37]: https://github.com/gchq/stroom/compare/v5.0-beta.36...v5.0-beta.37
