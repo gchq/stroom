@@ -16,9 +16,11 @@
 
 package stroom.internalstatistics;
 
+import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
+import stroom.feed.MetaMap;
 import stroom.feed.MetaMap;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsFacadeFactory;
@@ -46,7 +48,13 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
     /**
      * @return build the STAT or return null for not valid
      */
-    private InternalStatisticEvent buildStatisticEvent(final MetaDataStatisticTemplate template, final MetaMap metaData) {
+    private InternalStatisticEvent buildStatisticEvent(final MetaDataStatisticTemplate template,
+                                                       final MetaMap metaData) {
+        Preconditions.checkNotNull(template);
+        Preconditions.checkNotNull(template.getTimeMsAttribute());
+        Preconditions.checkNotNull(template.getKey());
+        Preconditions.checkNotNull(metaData);
+
         Long timeMs = null;
         final String timeValue = metaData.get(template.getTimeMsAttribute());
         if (StringUtils.hasText(timeValue)) {
@@ -56,6 +64,9 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
                 // Quit!
                 return null;
             }
+        } else {
+            LOGGER.error("HeaderMap [{}] has no time attribute, unable to create stat", metaData);
+            return null;
         }
 
         final Map<String, String> statisticTags = new HashMap<>();
@@ -97,10 +108,10 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
                 if (statisticEvent != null) {
                     internalStatisticsFacadeFactory.create().putEvent(statisticEvent);
                 } else {
-                    LOGGER.trace("recordStatistics() - abort {}", metaData);
+                    LOGGER.trace("recordStatistics() - abort {} {}", metaData, template);
                 }
             } catch (final Exception ex) {
-                LOGGER.error("recordStatistics() - abort {}", metaData, ex);
+                LOGGER.error("recordStatistics() - abort {} {}", metaData, template, ex);
             }
         }
     }

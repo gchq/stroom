@@ -841,15 +841,15 @@
 
         <!-- Stroom-Index -->
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.services.index.name"/>
-            <property name="value" value="index"/>
+            <property name="name" value="stroom.services.stroomIndex.name"/>
+            <property name="value" value="stroom-index"/>
             <property name="description"
                       value="Name of the index service" />
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.services.index.version"/>
+            <property name="name" value="stroom.services.stroomIndex.version"/>
             <property name="value" value="1"/>
             <property name="description"
                       value="Version of the index service" />
@@ -857,8 +857,8 @@
             <property name="requireUiRestart" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.services.index.docRefType"/>
-            <property name="value" value="index"/>
+            <property name="name" value="stroom.services.stroomIndex.docRefType"/>
+            <property name="value" value="Index"/>
             <property name="description"
                       value="The entity type for the index service" />
             <property name="editable" value="true"/>
@@ -936,7 +936,7 @@
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.services.stroomStats.docRefType"/>
-            <property name="value" value="stroom-stats"/>
+            <property name="value" value="StroomStatsStore"/>
             <property name="description"
                       value="The entity type for the stroom-stats service" />
             <property name="editable" value="true"/>
@@ -960,7 +960,8 @@
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
-        <!-- SQL Statistcis -->
+
+        <!-- SQL Statistics -->
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.services.sqlStatistics.name"/>
             <property name="value" value="sql_statistics"/>
@@ -979,7 +980,7 @@
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.services.sqlStatistics.docRefType"/>
-            <property name="value" value="sql_statistics"/>
+            <property name="value" value="StatisticStore"/>
             <property name="description"
                       value="The entity type for the sql statistics service" />
             <property name="editable" value="true"/>

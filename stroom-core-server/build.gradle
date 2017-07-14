@@ -47,6 +47,7 @@ dependencies {
     compile libs.flyway_core
     compile libs.hsqldb
     permitUnusedDeclared libs.hsqldb
+    compile libs.vavr
 
     compile libs.c3p0
     compile libs.spring_tx

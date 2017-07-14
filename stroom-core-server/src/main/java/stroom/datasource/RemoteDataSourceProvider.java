@@ -69,18 +69,24 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
     }
 
     private <T> T post(final Object request, String path, final Class<T> responseClass) {
-        Client client = ClientBuilder.newClient(new ClientConfig().register(LoggingFeature.class));
-        WebTarget webTarget = client.target(url).path(path);
+        try {
+            LOGGER.trace("Sending request {} to {}", request, path);
+            Client client = ClientBuilder.newClient(new ClientConfig().register(LoggingFeature.class));
+            WebTarget webTarget = client.target(url).path(path);
 
-        Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-        invocationBuilder.header(HttpHeaders.AUTHORIZATION, securityContext.getToken());
-        Response response = invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON));
+            Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
+            invocationBuilder.header(HttpHeaders.AUTHORIZATION, securityContext.getToken());
+            Response response = invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON));
 
-        if (HttpServletResponse.SC_OK == response.getStatus()) {
-            return response.readEntity(responseClass);
+            if (HttpServletResponse.SC_OK == response.getStatus()) {
+                return response.readEntity(responseClass);
+            }
+
+            throw new RuntimeException(String.format("Error %s sending request %s to %s: %s",
+                    response.getStatus(), request, webTarget.getUri(), response.getStatusInfo().getReasonPhrase()));
+        } catch (RuntimeException e) {
+            throw new RuntimeException(String.format("Error sending request %s to %s", request, path), e);
         }
-
-        throw new RuntimeException("Error " + response.getStatus() + ": " + response.getStatusInfo().getReasonPhrase());
     }
 
     @Override

@@ -23,6 +23,7 @@ import stroom.query.api.v1.SearchRequest;
 import stroom.query.api.v1.SearchResponse;
 
 public interface DataSourceProvider {
+
     DataSource getDataSource(DocRef docRef);
 
     SearchResponse search(SearchRequest request);
