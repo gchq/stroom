@@ -157,9 +157,26 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
             map.put(importState.getDocRef(), importState);
         }
 
+        // Get paths to all content.
+        final List<Path> allContent = new ArrayList<>();
+        for (final String entityType : classTypeMap.getEntityTypeList()) {
+            allContent.addAll(getPaths(dir, entityType));
+        }
+
+        // Figure out the minimum path depth used.
+        final int[] startDepth = {Integer.MAX_VALUE};
+        allContent.forEach(p -> {
+            final Path relativePath = dir.relativize(p);
+            startDepth[0] = Math.min(startDepth[0], relativePath.getNameCount());
+        });
+        int depth = startDepth[0];
+        if (depth > 0) {
+            depth--;
+        }
+
         // Import
         for (final String entityType : classTypeMap.getEntityTypeList()) {
-            performImport(dir, entityType, map, importMode);
+            performImport(dir, depth, entityType, map, importMode);
         }
 
         // Rebuild the list
@@ -176,10 +193,45 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
         });
     }
 
+    private List<Path> getPaths(final Path dir,
+                                final String entityType) {
+        // Look for matching files
+        final String match = "." + entityType + ".";
+        List<Path> paths = Collections.emptyList();
+        try (final Stream<Path> stream = Files.walk(dir)) {
+            final Set<Path> set = stream
+                    .filter(p -> p.getFileName().toString().contains(match))
+                    .map(p -> {
+                        String name = p.getFileName().toString();
+                        name = name.substring(0, name.indexOf(match) + match.length() - 1);
+                        return p.getParent().resolve(name);
+                    })
+                    .collect(Collectors.toSet());
+            try (Stream<Path> s = set.stream()) {
+                paths = s
+                        .sorted(Comparator.comparingInt(Path::getNameCount))
+                        .collect(Collectors.toList());
+            }
+        } catch (final IOException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+
+        return paths;
+    }
+
+    /**
+     * Public for testing.
+     */
+    public <E extends DocumentEntity> void performImport(final Path dir,
+                                                         final String entityType, final Map<DocRef, ImportState> confirmMap,
+                                                         final ImportMode importMode) {
+        performImport(dir, 0, entityType, confirmMap, importMode);
+    }
+
     /**
      * Import a config type
      */
-    public <E extends DocumentEntity> void performImport(final Path dir,
+    private <E extends DocumentEntity> void performImport(final Path dir, final int startDepth,
                                                          final String entityType, final Map<DocRef, ImportState> confirmMap,
                                                          final ImportMode importMode) {
         init();
@@ -212,7 +264,20 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
                 ImportState importState = null;
 
                 try {
-                    final Path relativePath = dir.relativize(path);
+                    // Resolve relative path from the identified depth of this import content.
+                    Path parent = dir;
+                    Path relative = parent.relativize(path);
+
+                    final int count = relative.getNameCount();
+                    for (int i = 0; i < startDepth && i < count + 1; i++) {
+                        final Path subPath = relative.getName(0);
+                        parent = parent.resolve(subPath);
+                        relative = relative.subpath(1, relative.getNameCount());
+                    }
+
+                    final Path parentPath = parent;
+                    final Path relativePath = relative;
+
                     final String sourcePath = relativePath.toString().substring(0, relativePath.toString().lastIndexOf("."));
 
                     LOGGER.debug("Importing " + entityType + " '" + sourcePath + "'");
@@ -229,7 +294,7 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
 
                         parts.forEach(part -> {
                             try {
-                                final String key = dir.relativize(part).toString();
+                                final String key = parentPath.relativize(part).toString();
                                 final String content = new String(Files.readAllBytes(part), Charset.forName("UTF-8"));
                                 dataMap.put(key, content);
                             } catch (final Throwable e) {
