@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#343** : Fixed login expiry issue.
+
 ## [v5.0-beta.39] - 2017-07-09
 
 * Issue **#341** : Fixed arg in SQL.
