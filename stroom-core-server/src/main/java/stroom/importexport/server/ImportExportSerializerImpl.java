@@ -215,7 +215,7 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
                     final Path relativePath = dir.relativize(path);
                     final String sourcePath = relativePath.toString().substring(0, relativePath.toString().lastIndexOf("."));
 
-                    LOGGER.info("Importing " + entityType + " '" + sourcePath + "'");
+                    LOGGER.debug("Importing " + entityType + " '" + sourcePath + "'");
 
                     // Find all of the files associated with this document config.
                     final String matchingConfig = relativePath.getFileName().toString();
@@ -534,7 +534,7 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
     }
 
     private void performExport(final Path dir, final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) throws IOException {
-        LOGGER.info("Exporting: " + docRef);
+        LOGGER.debug("Exporting: " + docRef);
 
         // TODO : In v6 get the folder structure from the explorer tree service and not the entity service.
         final Entity entity = genericEntityService.loadByUuid(docRef.getType(), docRef.getUuid(), RESOURCE_FETCH_SET);
