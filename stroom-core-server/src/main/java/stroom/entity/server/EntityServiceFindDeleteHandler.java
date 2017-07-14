@@ -22,7 +22,7 @@ import event.logging.Query.Advanced;
 import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.EntityServiceFindDeleteAction;
-import stroom.logging.EntityEventLog;
+import stroom.dashboard.server.logging.EntityEventLog;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedLong;

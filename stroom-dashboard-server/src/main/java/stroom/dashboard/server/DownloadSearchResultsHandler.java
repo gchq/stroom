@@ -22,7 +22,7 @@ import stroom.dashboard.shared.DownloadSearchResultsAction;
 import stroom.dashboard.shared.Search;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
-import stroom.logging.SearchEventLog;
+import stroom.dashboard.server.logging.SearchEventLog;
 import stroom.security.Secured;
 import stroom.servlet.SessionResourceStore;
 import stroom.task.server.AbstractTaskHandler;

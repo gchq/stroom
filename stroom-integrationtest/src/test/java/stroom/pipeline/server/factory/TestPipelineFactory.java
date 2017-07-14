@@ -18,7 +18,7 @@ package stroom.pipeline.server.factory;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractProcessIntegrationTest;
+import stroom.test.AbstractProcessIntegrationTest;
 import stroom.pipeline.server.PipelineMarshaller;
 import stroom.pipeline.shared.PipelineDataMerger;
 import stroom.pipeline.shared.PipelineEntity;

@@ -18,7 +18,7 @@ package stroom.statistics.common;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.datasource.api.v1.DataSource;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;

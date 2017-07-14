@@ -20,7 +20,7 @@ import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import stroom.StroomIntegrationTest;
+import stroom.test.StroomIntegrationTest;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.test.IntegrationTest;
 import stroom.util.test.StroomSpringJUnit4ClassRunner;

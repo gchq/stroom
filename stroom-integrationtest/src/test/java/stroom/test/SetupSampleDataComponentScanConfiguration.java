@@ -80,7 +80,47 @@ import stroom.xmlschema.server.MockXMLSchemaService;
  * component scan as configurations should be specified explicitly.
  */
 @Configuration
-@ComponentScan(basePackages = {"stroom"}, excludeFilters = {
+@ComponentScan(basePackages = {
+        "stroom.cache",
+        "stroom.cluster",
+        "stroom.datafeed",
+        "stroom.datasource",
+        "stroom.db",
+        "stroom.dictionary",
+        "stroom.dispatch",
+        "stroom.entity",
+        "stroom.explorer",
+        "stroom.feed",
+        "stroom.folder",
+        "stroom.importexport",
+        "stroom.internalstatistics",
+        "stroom.io",
+        "stroom.jobsystem",
+        "stroom.kafka",
+        "stroom.lifecycle",
+        "stroom.logging",
+        "stroom.node",
+        "stroom.pipeline",
+        "stroom.policy",
+        "stroom.pool",
+        "stroom.process",
+        "stroom.proxy",
+        "stroom.query",
+        "stroom.resource",
+        "stroom.servicediscovery",
+        "stroom.servlet",
+        "stroom.spring",
+        "stroom.streamstore",
+        "stroom.streamtask",
+        "stroom.task",
+        "stroom.test",
+        "stroom.upgrade",
+        "stroom.util",
+        "stroom.volume",
+        "stroom.xmlschema"
+}, excludeFilters = {
+        // Exclude other configurations that might be found accidentally during
+        // a component scan as configurations should be specified explicitly.
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),
 
         // We need test volumes.

@@ -19,7 +19,7 @@ package stroom.streamstore.server.fs;
 import org.hibernate.LazyInitializationException;
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.entity.server.util.PeriodUtil;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;

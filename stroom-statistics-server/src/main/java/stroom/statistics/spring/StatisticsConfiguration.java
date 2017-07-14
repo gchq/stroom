@@ -22,7 +22,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.FilterType;
 import stroom.node.server.GlobalProperties;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.Version;
@@ -34,6 +36,12 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 
 @Configuration
+@ComponentScan(basePackages = {
+        "stroom.statistics"
+}, excludeFilters = {
+        // Exclude other configurations that might be found accidentally during
+        // a component scan as configurations should be specified explicitly.
+        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class), })
 public class StatisticsConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsConfiguration.class);
 

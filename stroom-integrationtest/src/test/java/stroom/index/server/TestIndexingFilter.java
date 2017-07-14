@@ -24,7 +24,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.xml.sax.SAXException;
-import stroom.AbstractProcessIntegrationTest;
+import stroom.test.AbstractProcessIntegrationTest;
 import stroom.feed.shared.Feed;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;

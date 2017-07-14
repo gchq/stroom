@@ -17,8 +17,8 @@
 package stroom.jobsystem.server;
 
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestControl;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestControl;
 import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobNode;
 import stroom.jobsystem.shared.JobNodeService;

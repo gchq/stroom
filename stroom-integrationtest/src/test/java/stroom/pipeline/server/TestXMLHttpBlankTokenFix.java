@@ -19,7 +19,7 @@ package stroom.pipeline.server;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-import stroom.AbstractProcessIntegrationTest;
+import stroom.test.AbstractProcessIntegrationTest;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;

@@ -38,7 +38,45 @@ import stroom.streamtask.server.StreamProcessorTaskFactory;
  * component scan as configurations should be specified explicitly.
  */
 @Configuration
-@ComponentScan(basePackages = { "stroom" }, excludeFilters = {
+@ComponentScan(basePackages = {
+        "stroom.cache",
+        "stroom.cluster",
+        "stroom.datafeed",
+        "stroom.datasource",
+        "stroom.db",
+        "stroom.dictionary",
+        "stroom.dispatch",
+        "stroom.entity",
+        "stroom.explorer",
+        "stroom.feed",
+        "stroom.folder",
+        "stroom.importexport",
+        "stroom.internalstatistics",
+        "stroom.io",
+        "stroom.jobsystem",
+        "stroom.kafka",
+        "stroom.lifecycle",
+        "stroom.logging",
+        "stroom.node",
+        "stroom.policy",
+        "stroom.pool",
+        "stroom.process",
+        "stroom.proxy",
+        "stroom.query",
+        "stroom.resource",
+        "stroom.search",
+        "stroom.servicediscovery",
+        "stroom.servlet",
+        "stroom.spring",
+        "stroom.streamstore",
+        "stroom.streamtask",
+        "stroom.task",
+        "stroom.test",
+        "stroom.upgrade",
+        "stroom.util",
+        "stroom.volume",
+        "stroom.xmlschema"
+}, excludeFilters = {
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),
 
         // Exclude these so we get the mocks instead.

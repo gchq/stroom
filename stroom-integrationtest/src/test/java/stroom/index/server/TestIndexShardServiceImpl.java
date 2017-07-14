@@ -18,7 +18,7 @@ package stroom.index.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.entity.shared.Sort.Direction;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;

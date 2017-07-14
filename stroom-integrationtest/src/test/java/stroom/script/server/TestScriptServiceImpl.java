@@ -18,7 +18,7 @@ package stroom.script.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.entity.shared.Res;
 import stroom.script.shared.Script;
 import stroom.script.shared.ScriptService;

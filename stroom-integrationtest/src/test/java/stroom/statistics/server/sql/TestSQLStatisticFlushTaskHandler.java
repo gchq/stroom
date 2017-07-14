@@ -20,7 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.AbstractCoreIntegrationTest;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.statistics.server.sql.exception.StatisticsEventValidationException;

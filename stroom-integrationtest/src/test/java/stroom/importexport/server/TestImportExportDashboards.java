@@ -18,8 +18,8 @@ package stroom.importexport.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestControl;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestControl;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardConfig;

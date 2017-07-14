@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
-import stroom.logging.AuthenticationEventLog;
+import stroom.dashboard.server.logging.AuthenticationEventLog;
 import stroom.node.server.StroomPropertyService;
 import stroom.security.Insecure;
 import stroom.security.Secured;

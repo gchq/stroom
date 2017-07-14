@@ -27,7 +27,7 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityReferenceFindAction;
 import stroom.entity.shared.ResultList;
 import stroom.entity.shared.SharedDocRef;
-import stroom.logging.EntityEventLog;
+import stroom.dashboard.server.logging.EntityEventLog;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;

@@ -24,7 +24,7 @@ import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.ResultList;
-import stroom.logging.EntityEventLog;
+import stroom.dashboard.server.logging.EntityEventLog;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedObject;

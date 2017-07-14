@@ -16,12 +16,10 @@
 
 package stroom.headless;
 
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import stroom.security.SecurityContext;
 
 @Component
-@Profile("Headless")
 public class HeadlessSecurityContext implements SecurityContext {
     @Override
     public void pushUser(final String name) {

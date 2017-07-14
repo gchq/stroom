@@ -18,8 +18,7 @@ package stroom.search;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonIndexingTest;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.dashboard.shared.DataSourceFieldsMap;
 import stroom.datasource.api.v1.DataSourceField;
 import stroom.datasource.api.v1.DataSourceField.DataSourceFieldType;

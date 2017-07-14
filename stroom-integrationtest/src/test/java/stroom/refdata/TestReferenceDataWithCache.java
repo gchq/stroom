@@ -21,7 +21,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
-import stroom.AbstractCoreIntegrationTest;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.cache.CacheManagerAutoCloseable;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.FolderService;

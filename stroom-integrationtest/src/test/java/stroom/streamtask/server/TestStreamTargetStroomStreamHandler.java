@@ -18,7 +18,7 @@ package stroom.streamtask.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractProcessIntegrationTest;
+import stroom.test.AbstractProcessIntegrationTest;
 import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;

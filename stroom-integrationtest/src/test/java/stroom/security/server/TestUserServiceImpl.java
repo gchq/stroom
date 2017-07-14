@@ -18,7 +18,7 @@ package stroom.security.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserRef;
 import stroom.util.test.FileSystemTestUtil;

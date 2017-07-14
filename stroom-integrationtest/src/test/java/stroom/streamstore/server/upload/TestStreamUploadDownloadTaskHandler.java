@@ -18,8 +18,8 @@ package stroom.streamstore.server.upload;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestScenarioCreator;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestScenarioCreator;
 import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
 import stroom.proxy.repo.StroomZipFile;

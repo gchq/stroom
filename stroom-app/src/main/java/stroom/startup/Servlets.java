@@ -68,6 +68,7 @@ public class Servlets {
                 "                stroom.spring.ServerConfiguration,\n" +
                 "                stroom.spring.CachedServiceConfiguration,\n" +
                 "                stroom.logging.spring.EventLoggingConfiguration,\n" +
+                "                stroom.pipeline.spring.PipelineConfiguration,\n" +
                 "                stroom.index.spring.IndexConfiguration,\n" +
                 "                stroom.search.spring.SearchConfiguration,\n" +
                 "                stroom.script.spring.ScriptConfiguration,\n" +

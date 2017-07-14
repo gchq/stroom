@@ -18,7 +18,7 @@ package stroom.importexport.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.entity.shared.FolderService;
 import stroom.entity.shared.ImportState;
 import stroom.feed.shared.FeedService;

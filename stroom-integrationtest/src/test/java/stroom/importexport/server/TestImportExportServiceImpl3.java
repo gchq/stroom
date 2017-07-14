@@ -18,8 +18,8 @@ package stroom.importexport.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestScenarioCreator;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestScenarioCreator;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;

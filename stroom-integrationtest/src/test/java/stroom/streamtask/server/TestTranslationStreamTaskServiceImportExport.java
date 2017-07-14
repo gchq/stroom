@@ -18,7 +18,7 @@ package stroom.streamtask.server;
 
 import org.junit.Ignore;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
+import stroom.test.AbstractCoreIntegrationTest;
 
 @Ignore("TODO 2015-10-21: Restore tests or delete.")
 public class TestTranslationStreamTaskServiceImportExport extends AbstractCoreIntegrationTest {

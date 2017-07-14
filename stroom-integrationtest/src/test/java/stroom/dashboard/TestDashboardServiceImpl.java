@@ -17,7 +17,7 @@
 package stroom.dashboard;
 
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardConfig;

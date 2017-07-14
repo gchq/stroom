@@ -20,7 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.After;
 import org.junit.Before;
-import stroom.AbstractProcessIntegrationTest;
+import stroom.test.AbstractProcessIntegrationTest;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;

@@ -24,7 +24,7 @@ import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityServiceCreateAction;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.SharedDocRef;
-import stroom.logging.EntityEventLog;
+import stroom.dashboard.server.logging.EntityEventLog;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;

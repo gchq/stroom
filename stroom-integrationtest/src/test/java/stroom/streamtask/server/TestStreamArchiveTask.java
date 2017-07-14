@@ -18,9 +18,9 @@ package stroom.streamtask.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestControl;
-import stroom.CommonTestScenarioCreator;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestControl;
+import stroom.test.CommonTestScenarioCreator;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.jobsystem.server.MockTask;

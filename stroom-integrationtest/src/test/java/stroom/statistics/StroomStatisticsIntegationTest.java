@@ -18,7 +18,7 @@ package stroom.statistics;
 
 import org.junit.runner.RunWith;
 import org.springframework.test.context.ContextConfiguration;
-import stroom.StroomIntegrationTest;
+import stroom.test.StroomIntegrationTest;
 import stroom.util.test.StroomSpringJUnit4ClassRunner;
 
 @RunWith(StroomSpringJUnit4ClassRunner.class)

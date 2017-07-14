@@ -53,8 +53,8 @@ import java.util.Properties;
  */
 @Configuration
 @EnableWebMvc
-@ComponentScan(basePackages = {"stroom"}, excludeFilters = {
-        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
+//@ComponentScan(basePackages = {"stroom"}, excludeFilters = {
+//        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
 public class CoreClientConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(CoreClientConfiguration.class);
 

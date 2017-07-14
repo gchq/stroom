@@ -18,7 +18,6 @@ package stroom.search;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.CommonIndexingTest;
 import stroom.dictionary.shared.Dictionary;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.entity.shared.DocRefUtil;

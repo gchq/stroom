@@ -18,7 +18,7 @@ package stroom.importexport.server;
 
 import org.springframework.context.annotation.Scope;
 import stroom.importexport.shared.ExportConfigAction;
-import stroom.logging.ImportExportEventLog;
+import stroom.dashboard.server.logging.ImportExportEventLog;
 import stroom.security.Secured;
 import stroom.servlet.SessionResourceStore;
 import stroom.task.server.AbstractTaskHandler;

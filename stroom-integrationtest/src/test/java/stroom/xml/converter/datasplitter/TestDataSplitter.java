@@ -19,7 +19,7 @@ package stroom.xml.converter.datasplitter;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-import stroom.AbstractProcessIntegrationTest;
+import stroom.test.AbstractProcessIntegrationTest;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.test.StroomProcessTestFileUtil;

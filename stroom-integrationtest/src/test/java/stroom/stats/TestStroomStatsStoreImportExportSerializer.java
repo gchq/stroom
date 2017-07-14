@@ -18,7 +18,7 @@ package stroom.stats;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.entity.shared.*;
 import stroom.importexport.server.ImportExportSerializer;
 import stroom.query.api.v1.DocRef;

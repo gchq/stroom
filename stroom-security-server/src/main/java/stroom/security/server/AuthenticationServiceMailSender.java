@@ -23,7 +23,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.stereotype.Component;
-import stroom.logging.AuthenticationEventLog;
+import stroom.dashboard.server.logging.AuthenticationEventLog;
 import stroom.security.shared.UserRef;
 import stroom.servlet.HttpServletRequestHolder;
 

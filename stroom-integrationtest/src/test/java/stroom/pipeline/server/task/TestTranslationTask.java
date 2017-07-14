@@ -18,8 +18,8 @@ package stroom.pipeline.server.task;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractProcessIntegrationTest;
-import stroom.CommonTranslationTest;
+import stroom.test.AbstractProcessIntegrationTest;
+import stroom.test.CommonTranslationTest;
 import stroom.streamstore.server.MockStreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;

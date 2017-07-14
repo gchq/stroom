@@ -22,7 +22,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import stroom.StroomIntegrationTest;
+import stroom.test.StroomIntegrationTest;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
 import stroom.feed.shared.FeedService;

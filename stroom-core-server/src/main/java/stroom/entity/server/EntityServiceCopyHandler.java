@@ -24,7 +24,7 @@ import stroom.entity.shared.EntityServiceCopyAction;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
-import stroom.logging.EntityEventLog;
+import stroom.dashboard.server.logging.EntityEventLog;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;

@@ -25,7 +25,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.EntityServiceFindSummaryAction;
 import stroom.entity.shared.ResultList;
 import stroom.entity.shared.SummaryDataRow;
-import stroom.logging.EntityEventLog;
+import stroom.dashboard.server.logging.EntityEventLog;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;

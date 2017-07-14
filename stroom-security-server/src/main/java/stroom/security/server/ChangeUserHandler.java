@@ -17,7 +17,7 @@
 package stroom.security.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.logging.AuthorisationEventLog;
+import stroom.dashboard.server.logging.AuthorisationEventLog;
 import stroom.security.Secured;
 import stroom.security.shared.ChangeSet;
 import stroom.security.shared.ChangeUserAction;

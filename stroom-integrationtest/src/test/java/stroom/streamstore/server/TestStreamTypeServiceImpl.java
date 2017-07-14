@@ -18,7 +18,7 @@ package stroom.streamstore.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamType.Purpose;

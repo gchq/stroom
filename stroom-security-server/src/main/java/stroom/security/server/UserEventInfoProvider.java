@@ -25,7 +25,7 @@ import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.Entity;
 import stroom.entity.shared.FolderService;
-import stroom.logging.EventInfoProvider;
+import stroom.dashboard.server.logging.EventInfoProvider;
 import stroom.security.shared.FindUserCriteria;
 
 import javax.annotation.Resource;

@@ -18,8 +18,8 @@ package stroom.xmlschema.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestControl;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestControl;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XMLSchema;
 import stroom.xmlschema.shared.XMLSchemaService;

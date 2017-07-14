@@ -20,7 +20,7 @@ import com.codahale.metrics.health.HealthCheckRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
-import stroom.logging.LogLevelInspector;
+import stroom.dashboard.server.logging.LogLevelInspector;
 import stroom.resources.HasHealthCheck;
 import stroom.servicediscovery.ServiceDiscoveryManager;
 import stroom.servicediscovery.ServiceDiscoveryRegistrar;

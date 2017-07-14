@@ -18,7 +18,7 @@ package stroom.node.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.NodeService;
 

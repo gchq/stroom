@@ -16,7 +16,7 @@
 
 package stroom.search;
 
-import stroom.AbstractCoreIntegrationTest;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.query.SearchResponseCreator;
 import stroom.query.api.v1.SearchRequest;
 import stroom.query.api.v1.SearchResponse;

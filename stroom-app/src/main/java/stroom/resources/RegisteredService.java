@@ -1,6 +1,6 @@
 package stroom.resources;
 
-import stroom.ExternalService;
+import stroom.servicediscovery.ExternalService;
 
 /**
  * Defines the versioned services that stroom will present externally

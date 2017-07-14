@@ -22,7 +22,7 @@ import stroom.entity.shared.EntityServiceException;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.io.StreamCloser;
-import stroom.logging.StreamEventLog;
+import stroom.dashboard.server.logging.StreamEventLog;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.server.errorhandler.ProcessException;

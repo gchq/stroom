@@ -24,7 +24,7 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.logging.StreamEventLog;
+import stroom.dashboard.server.logging.StreamEventLog;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.PropertyMap;
 import stroom.util.shared.ResourceKey;
