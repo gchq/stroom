@@ -42,6 +42,7 @@ import stroom.util.io.StreamUtil;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomSpringProfiles;
+import stroom.util.task.ExternalShutdownController;
 import stroom.util.task.TaskScopeRunnable;
 import stroom.util.thread.ThreadScopeRunnable;
 import stroom.util.zip.StroomZipFile;
@@ -142,19 +143,21 @@ public class Headless extends AbstractCommandLineTool {
     @Override
     public void run() {
         try {
-            StroomProperties.setProperty("stroom.jpaHbm2DdlAuto", "update", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.jpaHbm2DdlAuto", "update", Source.TEST);
 
-            StroomProperties.setProperty("stroom.jdbcDriverClassName", "org.hsqldb.jdbcDriver", Source.TEST);
-            StroomProperties.setProperty("stroom.jpaDialect", "org.hibernate.dialect.HSQLDialect", Source.TEST);
-            StroomProperties.setProperty("stroom.jdbcDriverUrl", "jdbc:hsqldb:file:${stroom.temp}/stroom/HSQLDB.DAT;shutdown=true", Source.TEST);
-            StroomProperties.setProperty("stroom.jdbcDriverUsername", "sa", Source.TEST);
-            StroomProperties.setProperty("stroom.jdbcDriverPassword", "", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.jdbcDriverClassName", "org.hsqldb.jdbcDriver", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.jpaDialect", "org.hibernate.dialect.HSQLDialect", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.jdbcDriverUrl", "jdbc:hsqldb:file:${stroom.temp}/stroom/HSQLDB.DAT;shutdown=true", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.jdbcDriverUsername", "sa", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.jdbcDriverPassword", "", Source.TEST);
 
-            StroomProperties.setProperty("stroom.statistics.sql.jdbcDriverClassName", "org.hsqldb.jdbcDriver", Source.TEST);
-            StroomProperties.setProperty("stroom.statistics.sql.jpaDialect", "org.hibernate.dialect.HSQLDialect", Source.TEST);
-            StroomProperties.setProperty("stroom.statistics.sql.jdbcDriverUrl", "jdbc:hsqldb:file:${stroom.temp}/statistics/HSQLDB.DAT;shutdown=true", Source.TEST);
-            StroomProperties.setProperty("stroom.statistics.sql.jdbcDriverUsername", "sa", Source.TEST);
-            StroomProperties.setProperty("stroom.statistics.sql.jdbcDriverPassword", "", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.statistics.sql.jdbcDriverClassName", "org.hsqldb.jdbcDriver", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.statistics.sql.jpaDialect", "org.hibernate.dialect.HSQLDialect", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.statistics.sql.jdbcDriverUrl", "jdbc:hsqldb:file:${stroom.temp}/statistics/HSQLDB.DAT;shutdown=true", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.statistics.sql.jdbcDriverUsername", "sa", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.statistics.sql.jdbcDriverPassword", "", Source.TEST);
+
+            StroomProperties.setOverrideProperty("stroom.lifecycle.enabled", "false", Source.TEST);
 
             new TaskScopeRunnable(GenericServerTask.create("Headless Stroom", null)) {
                 @Override
@@ -169,6 +172,8 @@ public class Headless extends AbstractCommandLineTool {
             }.run();
         } finally {
             StroomProperties.removeOverrides();
+
+            ExternalShutdownController.shutdown();
         }
     }
 
