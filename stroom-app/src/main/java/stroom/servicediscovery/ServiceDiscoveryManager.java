@@ -72,7 +72,12 @@ public class ServiceDiscoveryManager {
     }
 
     public void registerStartupListener(final Consumer<ServiceDiscovery<String>> listener) {
-        curatorStartupListeners.add(Preconditions.checkNotNull(listener));
+        if (serviceDiscoveryRef.get() != null) {
+            //already started so call the listener now
+            listener.accept(serviceDiscoveryRef.get());
+        } else {
+            curatorStartupListeners.add(Preconditions.checkNotNull(listener));
+        }
     }
 
 
