@@ -15,10 +15,12 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 @Component
@@ -112,12 +114,28 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer, HasHealthCheck 
                             }
                         })
                         .map(serviceInstance -> new Tuple2<>(serviceInstance.getName(), serviceInstance.buildUriSpec()))
-                        .collect(Collectors.groupingBy(Tuple2::_1, Collectors.mapping(Tuple2::_2, Collectors.toList())));
+                        .collect(Collectors.groupingBy(
+                                Tuple2::_1,
+                                TreeMap::new,
+                                Collectors.mapping(Tuple2::_2, Collectors.toList())));
 
-                return HealthCheck.Result.builder()
-                        .healthy()
-                        .withMessage("Service discoverer running")
-                        .withDetail("discovered-service-instances", serviceInstanceMap)
+                //ensure the instances are sorted in a sensible way
+                serviceInstanceMap.values().forEach(Collections::sort);
+
+                long deadServiceCount = serviceInstanceMap.entrySet().stream()
+                        .filter(entry -> entry.getValue().isEmpty())
+                        .count();
+
+                HealthCheck.ResultBuilder builder = HealthCheck.Result.builder();
+
+                if (deadServiceCount > 0) {
+                    builder.unhealthy()
+                            .withMessage("%s service(s) have no registered instances");
+                } else {
+                    builder.healthy()
+                            .withMessage("All external services available");
+                }
+                return builder.withDetail("discovered-service-instances", serviceInstanceMap)
                         .build();
 
             } catch (Exception e) {
