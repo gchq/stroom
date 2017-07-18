@@ -19,15 +19,30 @@ import java.util.stream.Stream;
  */
 public enum ExternalService {
     //stroom index involves multiple calls to fetch the data iteratively so must be sticky
-    INDEX("stroomIndex", new StickyStrategy<>(new RandomStrategy<>())),
+    INDEX(
+            "stroomIndex",
+            Type.CLIENT_AND_SERVER,
+            new StickyStrategy<>(new RandomStrategy<>())),
     //stroom stats returns all results in one go so is stateless and can use a random strategy
-    STROOM_STATS("stroomStats", new RandomStrategy<>()),
+    STROOM_STATS(
+            "stroomStats",
+            Type.CLIENT,
+            new RandomStrategy<>()),
     //sql statistics returns all results in one go so is stateless and can use a random strategy
-    SQL_STATISTICS("sqlStatistics", new RandomStrategy<>()),
+    SQL_STATISTICS(
+            "sqlStatistics",
+            Type.CLIENT_AND_SERVER,
+            new RandomStrategy<>()),
     //stateless so random strategy
-    AUTHENTICATION("authentication", new RandomStrategy<>()),
+    AUTHENTICATION(
+            "authentication",
+            Type.CLIENT_AND_SERVER,
+            new RandomStrategy<>()),
     //stateless so random strategy
-    AUTHORISATION("authorisation", new RandomStrategy<>());
+    AUTHORISATION(
+            "authorisation",
+            Type.CLIENT_AND_SERVER,
+            new RandomStrategy<>());
 
     private static final String PROP_KEY_PREFIX = "stroom.services.";
     private static final String NAME_SUFFIX = ".name";
@@ -37,15 +52,26 @@ public enum ExternalService {
     //The serviceKey is a stroom specific abstraction of the service name, allowing the name to be set in properties
     //rather than hardcoded here.  The name that corresponds the serviceKey is what Curator registers services against.
     private final String serviceKey;
+    private final Type type;
     private final ProviderStrategy<String> providerStrategy;
+
+    public enum Type {
+        //This application is a client to the service
+        CLIENT,
+        //This application offers this service
+        SERVER,
+        //This application offers this service and is a client to it
+        CLIENT_AND_SERVER
+    }
 
     /**
      * This maps doc ref types to services. I.e. if someone has the doc ref type they can get an ExternalService.
      */
     private static ConcurrentMap<String, ExternalService> docRefTypeToServiceMap = new ConcurrentHashMap<>();
 
-    ExternalService(final String serviceKey, final ProviderStrategy<String> providerStrategy) {
+    ExternalService(final String serviceKey, final Type type, final ProviderStrategy<String> providerStrategy) {
         this.serviceKey = serviceKey;
+        this.type = type;
         this.providerStrategy = providerStrategy;
     }
 
@@ -73,7 +99,8 @@ public enum ExternalService {
      */
     public String getBaseServiceName() {
         String propKey = PROP_KEY_PREFIX + serviceKey + NAME_SUFFIX;
-        return Preconditions.checkNotNull(StroomProperties.getProperty(propKey), "Property %s does not have a value but should", propKey);
+        return Preconditions.checkNotNull(StroomProperties.getProperty(propKey),
+                "Property %s does not have a value but should", propKey);
     }
 
     public int getVersion() {
@@ -96,4 +123,7 @@ public enum ExternalService {
         return serviceKey;
     }
 
+    public Type getType() {
+        return type;
+    }
 }

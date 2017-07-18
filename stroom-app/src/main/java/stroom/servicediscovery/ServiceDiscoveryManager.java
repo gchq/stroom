@@ -1,6 +1,5 @@
 package stroom.servicediscovery;
 
-import com.codahale.metrics.health.HealthCheck;
 import com.google.common.base.Preconditions;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
@@ -44,7 +43,6 @@ public class ServiceDiscoveryManager {
     private final AtomicReference<ServiceDiscovery<String>> serviceDiscoveryRef = new AtomicReference<>();
     private final List<Consumer<ServiceDiscovery<String>>> curatorStartupListeners = new ArrayList<>();
 
-    private volatile HealthCheck.Result health;
     private final Deque<Closeable> closeables = new LinkedList<>();
 
     @SuppressWarnings("unused")
@@ -53,7 +51,6 @@ public class ServiceDiscoveryManager {
         this.stroomPropertyService = stroomPropertyService;
         this.zookeeperUrl = stroomPropertyService.getProperty(PROP_KEY_ZOOKEEPER_QUORUM);
 
-        health = HealthCheck.Result.unhealthy("Initialising Curator Connection...");
 
         //try and start the connection with ZK in another thread to prevent connection problems from stopping the bean
         //creation and application startup, then start ServiceDiscovery and notify any listeners
@@ -62,7 +59,6 @@ public class ServiceDiscoveryManager {
                 .thenRun(this::notifyListeners)
                 .exceptionally(throwable -> {
                     LOGGER.error("Error initialising service discovery", throwable);
-                    health = HealthCheck.Result.unhealthy("Failed to initialise service discovery due to error: " + throwable.getMessage());
                     return null;
                 });
     }
@@ -97,7 +93,6 @@ public class ServiceDiscoveryManager {
         if (!wasSet) {
             LOGGER.error("Attempt to set curatorFrameworkRef when already set");
         } else {
-            health = HealthCheck.Result.unhealthy("Curator client started, initialising service discovery...");
             LOGGER.info("Started Curator client using Zookeeper at '{}'", zookeeperUrl);
         }
     }

@@ -65,12 +65,14 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer, HasHealthCheck 
     private void initProviders(final ServiceDiscovery<String> serviceDiscovery) {
 
         //Attempt to create ServiceProviders for each of the ExternalServices
-        Arrays.stream(ExternalService.values()).forEach(externalService -> {
-            ServiceProvider<String> serviceProvider = createProvider(serviceDiscovery, externalService);
-            LOGGER.debug("Adding service provider {}", externalService.getVersionedServiceName());
-            serviceProviders.put(externalService, serviceProvider);
-        });
-
+        Arrays.stream(ExternalService.values())
+                .filter(externalService -> externalService.getType().equals(ExternalService.Type.CLIENT) ||
+                        externalService.getType().equals(ExternalService.Type.CLIENT_AND_SERVER))
+                .forEach(externalService -> {
+                    ServiceProvider<String> serviceProvider = createProvider(serviceDiscovery, externalService);
+                    LOGGER.debug("Adding service provider {}", externalService.getVersionedServiceName());
+                    serviceProviders.put(externalService, serviceProvider);
+                });
     }
 
     private ServiceProvider<String> createProvider(final ServiceDiscovery<String> serviceDiscovery, final ExternalService externalService) {
