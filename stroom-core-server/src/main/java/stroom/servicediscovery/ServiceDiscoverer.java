@@ -4,6 +4,9 @@ import org.apache.curator.x.discovery.ServiceInstance;
 
 import java.util.Optional;
 
+/**
+ * Interface for obtaining instances of discoverable services that have been defined in {@link ExternalService}
+ */
 public interface ServiceDiscoverer {
 
     /**

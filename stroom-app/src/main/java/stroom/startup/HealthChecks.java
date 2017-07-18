@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import stroom.dashboard.server.logging.LogLevelInspector;
 import stroom.resources.HasHealthCheck;
-import stroom.servicediscovery.ServiceDiscoveryManager;
+import stroom.servicediscovery.ServiceDiscoverer;
 import stroom.servicediscovery.ServiceDiscoveryRegistrar;
 
 import java.util.function.Consumer;
@@ -57,7 +57,7 @@ public class HealthChecks {
 
         return (applicationContext) -> {
             registerServiceDiscoveryRegistrar(applicationContext, healthCheckRegistry);
-            registerServiceDiscoveryManager(applicationContext, healthCheckRegistry);
+            registerServiceDiscoverer(applicationContext, healthCheckRegistry);
         };
     }
 
@@ -71,14 +71,14 @@ public class HealthChecks {
         healthCheckRegistry.register(name, serviceDiscoveryRegistrar.getHealthCheck());
     }
 
-    private static void registerServiceDiscoveryManager(final ApplicationContext applicationContext,
-                                                        final HealthCheckRegistry healthCheckRegistry) {
+    private static void registerServiceDiscoverer(final ApplicationContext applicationContext,
+                                                  final HealthCheckRegistry healthCheckRegistry) {
 
-        ServiceDiscoveryManager serviceDiscoveryManager = applicationContext.getBean(ServiceDiscoveryManager.class);
-        String name = serviceDiscoveryManager.getClass().getName() + HEALTH_CHECK_SUFFIX;
+        ServiceDiscoverer serviceDiscoverer = applicationContext.getBean(ServiceDiscoverer.class);
+        String name = serviceDiscoverer.getClass().getName() + HEALTH_CHECK_SUFFIX;
         LOGGER.debug("Registering heath check {}", name);
 
-        healthCheckRegistry.register(name, serviceDiscoveryManager.getHealthCheck());
+        healthCheckRegistry.register(name, ((HasHealthCheck) serviceDiscoverer).getHealthCheck());
     }
 
     private static void registerLogLevels(final HealthCheckRegistry healthCheckRegistry) {

@@ -2,7 +2,6 @@ package stroom.servicediscovery;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.common.base.Preconditions;
-import io.vavr.Tuple2;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -13,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;
-import stroom.resources.HasHealthCheck;
 import stroom.util.spring.StroomShutdown;
 
 import javax.inject.Singleton;
@@ -22,16 +20,14 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 @Component
 @Singleton
-public class ServiceDiscoveryManager implements HasHealthCheck {
+public class ServiceDiscoveryManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryManager.class);
 
@@ -149,36 +145,6 @@ public class ServiceDiscoveryManager implements HasHealthCheck {
                 }
             }
         });
-    }
-
-    public HealthCheck.Result getHealth() {
-        ServiceDiscovery<String> serviceDiscovery = serviceDiscoveryRef.get();
-        if (serviceDiscovery != null) {
-            try {
-                List<String> services = new ArrayList<>(serviceDiscovery.queryForNames());
-
-                Map<String, List<String>> serviceInstanceMap = Preconditions.checkNotNull(services).stream()
-                        .flatMap(serviceName -> {
-                            try {
-                                return serviceDiscovery.queryForInstances(serviceName).stream();
-                            } catch (Exception e) {
-                                throw new RuntimeException("Error getting service instances for " + serviceName);
-                            }
-                        })
-                        .map(serviceInstance -> new Tuple2<>(serviceInstance.getName(), serviceInstance.buildUriSpec()))
-                        .collect(Collectors.groupingBy(Tuple2::_1, Collectors.mapping(Tuple2::_2, Collectors.toList())));
-
-                return HealthCheck.Result.builder()
-                        .healthy()
-                        .withMessage("Service discovery running")
-                        .withDetail("service-instances", serviceInstanceMap)
-                        .build();
-
-            } catch (Exception e) {
-                return HealthCheck.Result.unhealthy("Error while querying available services, %s", e.getMessage());
-            }
-        }
-        return HealthCheck.Result.unhealthy("ServiceDiscovery is null");
     }
 
 }

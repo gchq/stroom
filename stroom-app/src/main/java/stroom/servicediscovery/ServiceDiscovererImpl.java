@@ -1,25 +1,29 @@
 package stroom.servicediscovery;
 
 import com.codahale.metrics.health.HealthCheck;
+import io.vavr.Tuple2;
 import org.apache.curator.x.discovery.ServiceDiscovery;
 import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.curator.x.discovery.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import stroom.resources.HasHealthCheck;
 import stroom.util.spring.StroomShutdown;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
 @Singleton
-public class ServiceDiscovererImpl implements ServiceDiscoverer {
+public class ServiceDiscovererImpl implements ServiceDiscoverer, HasHealthCheck {
 
     private final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscovererImpl.class);
 
@@ -32,6 +36,7 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
     private Map<ExternalService, ServiceProvider<String>> serviceProviders = new HashMap<>();
 
     @SuppressWarnings("unused")
+    @Inject
     public ServiceDiscovererImpl(final ServiceDiscoveryManager serviceDiscoveryManager) {
 
         //create the service providers once service discovery has started up
@@ -97,17 +102,24 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
             return HealthCheck.Result.unhealthy("No service providers found");
         } else {
             try {
-                String providers = serviceProviders.entrySet().stream()
-                        .map(entry -> {
+                Map<String, List<String>> serviceInstanceMap = serviceProviders.entrySet().stream()
+                        .flatMap(entry -> {
                             try {
-                                return entry.getKey().getVersionedServiceName() + " - " + entry.getValue().getAllInstances().size();
+                                return entry.getValue().getAllInstances().stream();
                             } catch (Exception e) {
                                 throw new RuntimeException(String.format("Error querying instances for service %s",
                                         entry.getKey().getVersionedServiceName()), e);
                             }
                         })
-                        .collect(Collectors.joining(","));
-                return HealthCheck.Result.healthy("Running. Services providers: " + providers);
+                        .map(serviceInstance -> new Tuple2<>(serviceInstance.getName(), serviceInstance.buildUriSpec()))
+                        .collect(Collectors.groupingBy(Tuple2::_1, Collectors.mapping(Tuple2::_2, Collectors.toList())));
+
+                return HealthCheck.Result.builder()
+                        .healthy()
+                        .withMessage("Service discoverer running")
+                        .withDetail("discovered-service-instances", serviceInstanceMap)
+                        .build();
+
             } catch (Exception e) {
                 return HealthCheck.Result.unhealthy("Error getting service provider details, error: " + e.getCause().getMessage());
             }
