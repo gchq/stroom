@@ -113,7 +113,7 @@ public class DBRealm extends AuthenticatingRealm {
 
         if (user != null) {
             check(user);
-            return new SimpleAuthenticationInfo(user, user.getPasswordHash(), getName());
+            return new SimpleAuthenticationInfo(UserRefFactory.create(user), user.getPasswordHash(), getName());
         }
 
         return null;
