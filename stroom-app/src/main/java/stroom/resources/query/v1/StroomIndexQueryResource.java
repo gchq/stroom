@@ -47,7 +47,7 @@ public class StroomIndexQueryResource implements QueryResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Path(QueryResource.DATASOURCE_ENDPOINT)
+    @Path(QueryResource.DATA_SOURCE_ENDPOINT)
     @Timed
     public DataSource getDataSource(final DocRef docRef) {
         final Index index = indexService.loadByUuid(docRef.getUuid());

@@ -39,6 +39,11 @@ import javax.ws.rs.core.Response;
 
 public class RemoteDataSourceProvider implements DataSourceProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(RemoteDataSourceProvider.class);
+
+    private static final String DATA_SOURCE_ENDPOINT = "/dataSource";
+    private static final String SEARCH_ENDPOINT = "/search";
+    private static final String DESTROY_ENDPOINT = "/destroy";
+
     private final SecurityContext securityContext;
     private final String url;
 
@@ -53,19 +58,19 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
     public DataSource getDataSource(final DocRef docRef) {
         LOGGER.trace("getDataSource() called for docRef {} on url {}", docRef, url);
         //TODO this needs to be backed by a short life cache to avoid repeated trips over the net
-        return post(docRef, "dataSource", DataSource.class);
+        return post(docRef, DATA_SOURCE_ENDPOINT, DataSource.class);
     }
 
     @Override
     public SearchResponse search(final SearchRequest request) {
         LOGGER.trace("search() called for request {} on url {}", request, url);
-        return post(request, "search", SearchResponse.class);
+        return post(request, SEARCH_ENDPOINT, SearchResponse.class);
     }
 
     @Override
     public Boolean destroy(final QueryKey queryKey) {
         LOGGER.trace("destroy() called for queryKey {} on url {}", queryKey, url);
-        return post(queryKey, "destroy", Boolean.class);
+        return post(queryKey, DESTROY_ENDPOINT, Boolean.class);
     }
 
     private <T> T post(final Object request, String path, final Class<T> responseClass) {
