@@ -75,7 +75,8 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer, HasHealthCheck 
                 });
     }
 
-    private ServiceProvider<String> createProvider(final ServiceDiscovery<String> serviceDiscovery, final ExternalService externalService) {
+    private ServiceProvider<String> createProvider(final ServiceDiscovery<String> serviceDiscovery,
+                                                   final ExternalService externalService) {
         ServiceProvider<String> provider = serviceDiscovery.serviceProviderBuilder()
                 .serviceName(externalService.getVersionedServiceName())
                 .providerStrategy(externalService.getProviderStrategy())
@@ -141,7 +142,8 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer, HasHealthCheck 
                         .build();
 
             } catch (Exception e) {
-                return HealthCheck.Result.unhealthy("Error getting service provider details, error: " + e.getCause().getMessage());
+                return HealthCheck.Result.unhealthy("Error getting service provider details, error: " +
+                        e.getCause().getMessage());
             }
         }
     }
