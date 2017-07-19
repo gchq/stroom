@@ -72,8 +72,9 @@ public class DBRealm extends AuthenticatingRealm {
 
     @Override
     public boolean supports(final AuthenticationToken token) {
-        return token != null
-                && (token instanceof UsernamePasswordToken || token instanceof CertificateAuthenticationToken);
+        return token != null && (token instanceof UsernamePasswordToken ||
+                token instanceof CertificateAuthenticationToken ||
+                token instanceof JWTAuthenticationToken);
     }
 
     @Override
