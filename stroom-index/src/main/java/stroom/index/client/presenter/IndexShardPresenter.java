@@ -23,7 +23,6 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -73,10 +72,6 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         ImageResource flush();
 
         ImageResource flushDisabled();
-
-        ImageResource close();
-
-        ImageResource closeDisabled();
     }
 
     private final TooltipPresenter tooltipPresenter;
@@ -86,7 +81,6 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     private ResultList<IndexShard> resultList = null;
     private final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
     private final ImageButtonView buttonFlush;
-    private final ImageButtonView buttonClose;
     private final GlyphButtonView buttonDelete;
     private Index index;
     private boolean readOnly;
@@ -101,7 +95,6 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         this.securityContext = securityContext;
 
         buttonFlush = getView().addButton("Flush Selected Shards", resources.flush(), resources.flushDisabled(), false);
-        buttonClose = getView().addButton("Close Selected Shards", resources.close(), resources.closeDisabled(), false);
         buttonDelete = getView().addButton(GlyphIcons.DELETE);
         buttonDelete.setTitle("Delete Selected Shards");
 
@@ -116,11 +109,6 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                 flush();
             }
         }));
-        registerHandler(buttonClose.addClickHandler(event -> {
-            if (NativeEvent.BUTTON_LEFT == event.getNativeButton()) {
-                close();
-            }
-        }));
         registerHandler(buttonDelete.addClickHandler(event -> {
             if (NativeEvent.BUTTON_LEFT == event.getNativeButton()) {
                 delete();
@@ -131,7 +119,6 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     private void enableButtons() {
         final boolean enabled = !readOnly && (criteria.getIndexShardSet().size() > 0 || Boolean.TRUE.equals(criteria.getIndexShardSet().getMatchAll())) && securityContext.hasAppPermission(IndexShard.MANAGE_INDEX_SHARDS_PERMISSION);
         buttonFlush.setEnabled(enabled);
-        buttonClose.setEnabled(enabled);
         buttonDelete.setEnabled(allowDelete && enabled);
     }
 

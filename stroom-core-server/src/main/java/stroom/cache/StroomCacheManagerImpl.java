@@ -85,20 +85,9 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
 
             if (include) {
                 final Ehcache cache = cacheManager.getEhcache(cacheName);
-                if (cache != null) {
-                    final Statistics stats = cache.getStatistics();
-
-                    if (stats != null) {
-                        final CacheInfo info = new CacheInfo(stats.getAssociatedCacheName(), stats.getCacheHits(),
-                                stats.getOnDiskHits(), stats.getOffHeapHits(), stats.getInMemoryHits(),
-                                stats.getCacheMisses(), stats.getOnDiskMisses(), stats.getOffHeapMisses(),
-                                stats.getInMemoryMisses(), stats.getObjectCount(), stats.getAverageGetTime(),
-                                stats.getEvictionCount(), stats.getMemoryStoreObjectCount(),
-                                stats.getOffHeapStoreObjectCount(), stats.getDiskStoreObjectCount(),
-                                stats.getSearchesPerSecond(), stats.getAverageSearchTime(), stats.getWriterQueueSize());
-
-                        list.add(info);
-                    }
+                final CacheInfo info = CacheUtil.getInfo(cache);
+                if (info != null) {
+                    list.add(info);
                 }
             }
         }
@@ -114,7 +103,7 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
         for (final String cacheName : cacheNames) {
             final Ehcache cache = cacheManager.getEhcache(cacheName);
             if (cache != null) {
-                cache.removeAll();
+                CacheUtil.clear(cache);
             }
         }
     }
@@ -129,7 +118,7 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
             final String cacheName = cacheInfo.getName();
             final Ehcache cache = cacheManager.getEhcache(cacheName);
             if (cache != null) {
-                cache.removeAll();
+                CacheUtil.clear(cache);
             } else {
                 LOGGER.error("Unable to find cache with name '" + cacheName + "'");
             }

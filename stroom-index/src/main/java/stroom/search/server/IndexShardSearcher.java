@@ -16,12 +16,15 @@
 
 package stroom.search.server;
 
+import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
 
 import stroom.index.shared.IndexShard;
 
+import java.io.IOException;
+
 public interface IndexShardSearcher {
-    void open();
+    void open() throws CorruptIndexException, IOException;
 
     void close();
 

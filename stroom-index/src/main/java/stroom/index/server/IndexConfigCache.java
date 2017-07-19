@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 
 package stroom.index.server;
 
-import org.apache.lucene.document.Document;
-import stroom.index.shared.IndexShardKey;
+import stroom.cache.CacheBean;
+import stroom.entity.shared.DocRef;
 
-public interface Indexer {
-    void addDocument(IndexShardKey key, Document document);
+public interface IndexConfigCache extends CacheBean<DocRef, IndexConfig> {
+    IndexConfig getOrCreate(DocRef key);
 }

@@ -18,6 +18,7 @@ package stroom.pipeline.server.factory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
@@ -32,6 +33,7 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.data.PipelineData;
 import net.sf.ehcache.CacheManager;
+import stroom.util.shared.Task;
 
 @Insecure
 @Component
@@ -50,13 +52,12 @@ public class PipelineDataCacheImpl extends AbstractCacheBean<VersionedEntityDeco
     }
 
     @Override
-    public PipelineData get(final PipelineEntity pipelineEntity) {
+    public PipelineData getOrCreate(final PipelineEntity pipelineEntity) {
         final VersionedEntityDecorator<PipelineEntity> key = new VersionedEntityDecorator<>(pipelineEntity);
-        return get(key);
+        return computeIfAbsent(key, this::create);
     }
 
-    @Override
-    public PipelineData create(final VersionedEntityDecorator<PipelineEntity> key) {
+    private PipelineData create(final VersionedEntityDecorator<PipelineEntity> key) {
         final PipelineEntity pipelineEntity = key.getEntity();
         final List<PipelineEntity> pipelines = pipelineStackLoader.loadPipelineStack(pipelineEntity);
         // Iterate over the pipeline list reading the deepest ancestor first.

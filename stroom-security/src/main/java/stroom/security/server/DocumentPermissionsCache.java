@@ -56,8 +56,11 @@ public class DocumentPermissionsCache extends AbstractCacheBean<DocRef, Document
         setMaxLiveTime(30, TimeUnit.MINUTES);
     }
 
-    @Override
-    protected DocumentPermissions create(final DocRef document) {
+    DocumentPermissions getOrCreate(final DocRef key) {
+        return computeIfAbsent(key, this::create);
+    }
+
+    private DocumentPermissions create(final DocRef document) {
         return documentPermissionService.getPermissionsForDocument(document);
     }
 

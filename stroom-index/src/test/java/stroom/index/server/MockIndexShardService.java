@@ -39,14 +39,11 @@ import java.io.File;
 @Component("indexShardService")
 public class MockIndexShardService extends MockEntityService<IndexShard, FindIndexShardCriteria>
         implements IndexShardService {
-    @Resource
-    private NodeCache nodeCache;
-
     @Override
     public IndexShard createIndexShard(final IndexShardKey indexShardKey, final Node ownerNode) {
         final IndexShard indexShard = new IndexShard();
         indexShard.setVolume(
-                Volume.create(nodeCache.getDefaultNode(), FileUtil.getTempDir().getAbsolutePath(), VolumeType.PUBLIC));
+                Volume.create(ownerNode, FileUtil.getTempDir().getAbsolutePath(), VolumeType.PUBLIC));
         indexShard.setIndex(indexShardKey.getIndex());
         indexShard.setPartition(indexShardKey.getPartition());
         indexShard.setPartitionFromTime(indexShardKey.getPartitionFromTime());
@@ -61,7 +58,7 @@ public class MockIndexShardService extends MockEntityService<IndexShard, FindInd
 
     @Override
     public BaseResultList<IndexShard> find(final FindIndexShardCriteria criteria) throws RuntimeException {
-        final BaseResultList<IndexShard> results = new BaseResultList<IndexShard>();
+        final BaseResultList<IndexShard> results = new BaseResultList<>();
         for (final IndexShard indexShard : map.values()) {
             boolean include = true;
 

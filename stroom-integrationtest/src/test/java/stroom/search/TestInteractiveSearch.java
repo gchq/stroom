@@ -18,7 +18,6 @@
 
 package stroom.search;
 
-import org.joda.time.DateTimeZone;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
@@ -113,8 +112,8 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
     public void positiveCaseInsensitiveTestMultiComponent() {
         final ExpressionOperator expression = buildExpression("UserId", "user5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description", "e0567");
-        final String[] compoentIds = new String[] { "table-1", "table-2" };
-        test(expression, 5, compoentIds, true);
+        final String[] componentIds = new String[]{"table-1", "table-2"};
+        test(expression, 5, componentIds, true);
     }
 
     /**
@@ -124,8 +123,8 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
     public void positiveCaseInsensitiveTestWithoutExtraction() {
         final ExpressionOperator expression = buildExpression("UserId", "user5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description", "e0567");
-        final String[] compoentIds = new String[] { "table-1" };
-        test(expression, 5, compoentIds, false);
+        final String[] componentIds = new String[]{"table-1"};
+        test(expression, 5, componentIds, false);
     }
 
     /**
@@ -137,7 +136,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
                 "2016-01-02T00:00:00.000Z", "Description", "e0567");
         test(expression, 25);
     }
-
+    
     /**
      * Negative test for case sensitive field.
      */
@@ -461,18 +460,18 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
     }
 
     private void test(final ExpressionOperator expressionIn, final int expectResultCount) {
-        final String[] componentIds = new String[] { "table-1" };
+        final String[] componentIds = new String[]{"table-1"};
         test(expressionIn, expectResultCount, componentIds, true);
     }
 
     private void test(final ExpressionOperator expressionIn, final int expectResultCount, final String[] componentIds,
-            final boolean extractValues) {
+                      final boolean extractValues) {
         testInteractive(expressionIn, expectResultCount, componentIds, extractValues);
         testEvents(expressionIn, expectResultCount);
     }
 
     private void testInteractive(final ExpressionOperator expressionIn, final int expectResultCount,
-            final String[] componentIds, final boolean extractValues) {
+                                 final String[] componentIds, final boolean extractValues) {
         // ADDED THIS SECTION TO TEST SPRING VALUE INJECTION.
         StroomProperties.setOverrideProperty("stroom.search.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
         StroomProperties.setOverrideProperty("stroom.search.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
@@ -678,7 +677,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
     }
 
     private ExpressionOperator buildExpression(final String userField, final String userTerm, final String from,
-            final String to, final String wordsField, final String wordsTerm) {
+                                               final String to, final String wordsField, final String wordsTerm) {
         final ExpressionTerm userId = new ExpressionTerm();
         userId.setField(userField);
         userId.setCondition(Condition.CONTAINS);
@@ -703,7 +702,7 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
     }
 
     private ExpressionOperator buildInExpression(final String userField, final String userTerm, final String from,
-            final String to, final String wordsField, final String wordsTerm) {
+                                                 final String to, final String wordsField, final String wordsTerm) {
         final ExpressionTerm userId = new ExpressionTerm();
         userId.setField(userField);
         userId.setCondition(Condition.CONTAINS);

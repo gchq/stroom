@@ -29,6 +29,7 @@ import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.IndexShardService;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -37,7 +38,15 @@ public class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
     @Resource
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Resource
+    private IndexShardService indexShardService;
+    @Resource
     private IndexShardManager indexShardManager;
+    @Resource
+    private IndexShardKeyCache indexShardKeyCache;
+    @Resource
+    private IndexShardWriterCache indexShardWriterCache;
+    @Resource
+    private Indexer indexer;
     @Resource
     private CommonTestControl commonTestControl;
 
@@ -58,13 +67,15 @@ public class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
 
         final Index index1 = commonTestScenarioCreator.createIndex("TEST_2010");
         final IndexShardKey indexShardKey1 = IndexShardKeyUtil.createTestKey(index1);
+        final IndexShard indexShard1 = indexShardKeyCache.getOrCreate(indexShardKey1);
 
         final Index index2 = commonTestScenarioCreator.createIndex("TEST_2011");
         final IndexShardKey indexShardKey2 = IndexShardKeyUtil.createTestKey(index2);
+        final IndexShard indexShard2 = indexShardKeyCache.getOrCreate(indexShardKey2);
 
         // Create 2 writers in the pool.
-        final IndexShardWriter writer1 = indexShardManager.get(indexShardKey1);
-        final IndexShardWriter writer2 = indexShardManager.get(indexShardKey2);
+        final IndexShardWriter writer1 = indexShardWriterCache.getOrCreate(indexShard1);
+        final IndexShardWriter writer2 = indexShardWriterCache.getOrCreate(indexShard2);
 
         // Assert that there are 2 writers in the pool.
         Assert.assertEquals(2, commonTestControl.countEntity(IndexShard.class));
@@ -72,43 +83,62 @@ public class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
         criteria.getIndexIdSet().setMatchAll(true);
 
-        Assert.assertEquals(0, writer1.getDocumentCount());
-        Assert.assertEquals(0, writer1.getIndexShard().getDocumentCount());
+        checkDocCount(0, writer1);
+        checkDocCount(0, indexShard1);
         writer1.addDocument(document);
-        Assert.assertEquals(1, writer1.getDocumentCount());
-        Assert.assertEquals(0, writer1.getIndexShard().getDocumentCount());
+        checkDocCount(1, writer1);
+        checkDocCount(0, indexShard1);
         indexShardManager.findFlush(criteria);
-        Assert.assertEquals(1, writer1.getDocumentCount());
-        Assert.assertEquals(1, writer1.getIndexShard().getDocumentCount());
+        checkDocCount(1, writer1);
+        checkDocCount(1, indexShard1);
 
         writer1.addDocument(document);
-        Assert.assertEquals(2, writer1.getDocumentCount());
-        Assert.assertEquals(1, writer1.getIndexShard().getDocumentCount());
+        checkDocCount(2, writer1);
+        checkDocCount(1, indexShard1);
         indexShardManager.findFlush(criteria);
-        Assert.assertEquals(2, writer1.getDocumentCount());
-        Assert.assertEquals(2, writer1.getIndexShard().getDocumentCount());
+        checkDocCount(2, writer1);
+        checkDocCount(2, indexShard1);
 
-        Assert.assertEquals(0, writer2.getDocumentCount());
-        Assert.assertEquals(0, writer2.getIndexShard().getDocumentCount());
+        checkDocCount(0, writer2);
+        checkDocCount(0, indexShard2);
         writer2.addDocument(document);
-        Assert.assertEquals(1, writer2.getDocumentCount());
-        Assert.assertEquals(0, writer2.getIndexShard().getDocumentCount());
-        indexShardManager.findClose(criteria);
-        Assert.assertEquals(1, writer2.getDocumentCount());
-        Assert.assertEquals(1, writer2.getIndexShard().getDocumentCount());
+        checkDocCount(1, writer2);
+        checkDocCount(0, indexShard2);
+        indexShardManager.findFlush(criteria);
+        checkDocCount(1, writer2);
+        checkDocCount(1, indexShard2);
 
+        // Close writer1 by removing the writer from the cache.
+        indexShardWriterCache.remove(indexShard1);
         // Make sure that writer1 was closed.
-        Assert.assertFalse(IndexShardStatus.OPEN.equals(writer1.getStatus()));
+        Assert.assertFalse(compareStatus(IndexShardStatus.OPEN, indexShard1));
 
         // Make sure that adding to writer1 reopens the index.
-        indexShardManager.addDocument(indexShardKey1, document);
-        Assert.assertTrue(IndexShardStatus.OPEN.equals(writer1.getStatus()));
+        final IndexShard test = indexShardService.load(indexShard1);
+        indexer.addDocument(indexShardKey1, document);
+        Assert.assertTrue(compareStatus(IndexShardStatus.OPEN, indexShard1));
 
         // Close indexes again.
-        indexShardManager.findClose(criteria);
+        indexShardWriterCache.clear();
 
         // Make sure that writer1 was closed.
-        Assert.assertFalse(IndexShardStatus.OPEN.equals(writer1.getStatus()));
+        Assert.assertFalse(compareStatus(IndexShardStatus.OPEN, indexShard1));
+        // Make sure that writer2 was closed.
+        Assert.assertFalse(compareStatus(IndexShardStatus.OPEN, indexShard2));
+    }
+
+    private void checkDocCount(final int expected, final IndexShardWriter indexShardWriter) {
+        Assert.assertEquals(expected, indexShardWriter.getDocumentCount());
+    }
+
+    private void checkDocCount(final int expected, final IndexShard indexShard) {
+        final IndexShard loaded = indexShardService.load(indexShard);
+        Assert.assertEquals(expected, loaded.getDocumentCount());
+    }
+
+    private boolean compareStatus(final IndexShardStatus expected, final IndexShard indexShard) {
+        final IndexShard loaded = indexShardService.load(indexShard);
+        return expected.equals(loaded.getStatus());
     }
 
     @Test
@@ -123,39 +153,53 @@ public class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
                 commonTestScenarioCreator.createIndexFields(), 10);
 
         final IndexShardKey indexShardKey1 = IndexShardKeyUtil.createTestKey(index1);
+        IndexShard indexShard1 = indexShardKeyCache.getOrCreate(indexShardKey1);
 
-        final IndexShardWriter writer1 = indexShardManager.get(indexShardKey1);
+        final IndexShardWriter writer1 = indexShardWriterCache.getOrCreate(indexShard1);
 
         for (int i = 0; i < 10; i++) {
-            Assert.assertFalse(writer1.isFull());
-            Assert.assertEquals(writer1, indexShardManager.get(indexShardKey1));
-            indexShardManager.addDocument(indexShardKey1, document);
+            Assert.assertEquals(writer1, indexShardWriterCache.getOrCreate(indexShard1));
+            indexer.addDocument(indexShardKey1, document);
         }
 
         // Make sure the writer is full.
-        Assert.assertTrue(writer1.isFull());
+        try {
+            writer1.addDocument(document);
+            Assert.fail();
+        } catch (final IndexException e) {
+            // Expected.
+        }
+
         // Make sure the writer is still open.
-        Assert.assertTrue(IndexShardStatus.OPEN.equals(writer1.getStatus()));
+        indexShard1 = indexShardService.load(indexShard1);
+        Assert.assertTrue(IndexShardStatus.OPEN.equals(indexShard1.getStatus()));
 
         // Now push the writer over the edge so we get a new writer.
-        indexShardManager.addDocument(indexShardKey1, document);
+        indexer.addDocument(indexShardKey1, document);
 
         // Get the new writer.
-        final IndexShardWriter writer2 = indexShardManager.get(indexShardKey1);
+        IndexShard indexShard2 = indexShardKeyCache.getOrCreate(indexShardKey1);
+        Assert.assertNotEquals(indexShard1, indexShard2);
+        final IndexShardWriter writer2 = indexShardWriterCache.getOrCreate(indexShard2);
 
         // Make sure the writers are not the same.
         Assert.assertNotEquals(writer1, writer2);
 
         for (int i = 1; i < 10; i++) {
-            Assert.assertFalse(writer2.isFull());
-            Assert.assertEquals(writer2, indexShardManager.get(indexShardKey1));
-            indexShardManager.addDocument(indexShardKey1, document);
+            Assert.assertEquals(writer2, indexShardWriterCache.getOrCreate(indexShard2));
+            indexer.addDocument(indexShardKey1, document);
         }
 
         // Make sure the writer is full.
-        Assert.assertTrue(writer2.isFull());
-        // Make sure the writer is still open.
-        Assert.assertTrue(IndexShardStatus.OPEN.equals(writer2.getStatus()));
+        try {
+            writer2.addDocument(document);
+            Assert.fail();
+        } catch (final IndexException e) {
+            // Expected.
+        }
 
+        // Make sure the writer is still open.
+        indexShard2 = indexShardService.load(indexShard2);
+        Assert.assertTrue(IndexShardStatus.OPEN.equals(indexShard2.getStatus()));
     }
 }

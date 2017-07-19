@@ -216,7 +216,7 @@ class SecurityContextImpl implements SecurityContext {
 
         // See if the user belongs to a group that has permission.
         if (!result) {
-            final List<UserRef> userGroups = userGroupsCache.get(userRef);
+            final List<UserRef> userGroups = userGroupsCache.getOrCreate(userRef);
             result = hasUserGroupsAppPermission(userGroups, permission);
         }
 
@@ -236,7 +236,7 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     private boolean hasUserAppPermission(final UserRef userRef, final String permission) {
-        final UserAppPermissions userAppPermissions = userAppPermissionsCache.get(userRef);
+        final UserAppPermissions userAppPermissions = userAppPermissionsCache.getOrCreate(userRef);
         if (userAppPermissions != null) {
             return userAppPermissions.getUserPermissons().contains(permission);
         }
@@ -277,7 +277,7 @@ class SecurityContextImpl implements SecurityContext {
 
         // See if the user belongs to a group that has permission.
         if (!result) {
-            final List<UserRef> userGroups = userGroupsCache.get(userRef);
+            final List<UserRef> userGroups = userGroupsCache.getOrCreate(userRef);
             result = hasUserGroupsDocumentPermission(userGroups, docRef, permission);
         }
 
@@ -297,7 +297,7 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     private boolean hasUserDocumentPermission(final UserRef userRef, final DocRef docRef, final String permission) {
-        final DocumentPermissions documentPermissions = documentPermissionsCache.get(docRef);
+        final DocumentPermissions documentPermissions = documentPermissionsCache.getOrCreate(docRef);
         if (documentPermissions != null) {
             final Set<String> permissions = documentPermissions.getPermissionsForUser(userRef);
             if (permissions != null) {
