@@ -26,7 +26,7 @@ public enum RegisteredService {
     }
 
     public String getVersionedPath() {
-        return subPath + "/" + version;
+        return subPath + "/v" + version;
     }
 
     public String getSubPath() {
