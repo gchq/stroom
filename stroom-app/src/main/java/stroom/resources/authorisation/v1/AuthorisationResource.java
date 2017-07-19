@@ -32,7 +32,14 @@ public class AuthorisationResource {
                 authorisationRequest.getDocRef().getType(),
                 authorisationRequest.getDocRef().getUuid(),
                 authorisationRequest.getPermissions());
-        return result ? Response.ok().build() : Response.status(Response.Status.UNAUTHORIZED).build();
+
+        return result
+                ? Response
+                    .ok()
+                    .build()
+                : Response
+                    .status(Response.Status.UNAUTHORIZED)
+                    .build();
     }
 
     public void setAuthorisationService(AuthorisationService authorisationService) {
