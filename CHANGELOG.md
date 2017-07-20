@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
-* Issue **346** : Improved multi depth config content import.
+* Issue **#342** : Changed the way indexing is performed to ensure index readers reference open writers correctly.
+
+* Issue **#346** : Improved multi depth config content import.
 
 ## [v5.0-beta.40] - 2017-07-14
 
