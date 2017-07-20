@@ -38,7 +38,7 @@
   <parent>
     <groupId>stroom</groupId>
     <artifactId>stroom</artifactId>
-    <version>5.0-beta.40</version>
+    <version>5.0-beta.41</version>
   </parent>
 
   <artifactId>stroom-integrationtest</artifactId>

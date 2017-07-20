@@ -9,9 +9,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.41] - 2017-07-20
+
 * Issue **#342** : Changed the way indexing is performed to ensure index readers reference open writers correctly.
 
 * Issue **#346** : Improved multi depth config content import.
+
+* Issue **#328** : You can now delete corrupt shards from the UI.
 
 ## [v5.0-beta.40] - 2017-07-14
 
@@ -503,7 +507,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.40...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.41...HEAD
+[v5.0-beta.41]: https://github.com/gchq/stroom/compare/v5.0-beta.40...v5.0-beta.41
 [v5.0-beta.40]: https://github.com/gchq/stroom/compare/v5.0-beta.39...v5.0-beta.40
 [v5.0-beta.39]: https://github.com/gchq/stroom/compare/v5.0-beta.38...v5.0-beta.39
 [v5.0-beta.38]: https://github.com/gchq/stroom/compare/v5.0-beta.37...v5.0-beta.38
