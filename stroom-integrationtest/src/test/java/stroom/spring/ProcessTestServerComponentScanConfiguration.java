@@ -47,7 +47,7 @@ import stroom.security.server.UserServiceImpl;
 import stroom.statistics.server.common.MetaDataStatisticImpl;
 import stroom.statistics.server.common.StatisticEventStoreFactoryImpl;
 import stroom.streamstore.server.MockStreamTypeService;
-import stroom.streamstore.server.DataRetentionExecutor;
+import stroom.policy.server.DataRetentionExecutor;
 import stroom.streamstore.server.StreamAttributeKeyServiceImpl;
 import stroom.streamstore.server.StreamTypeServiceImpl;
 import stroom.streamstore.server.fs.DataRetentionTransactionHelper;

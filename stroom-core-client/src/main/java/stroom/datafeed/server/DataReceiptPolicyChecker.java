@@ -25,11 +25,11 @@ import stroom.query.shared.ExpressionItem;
 import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.ExpressionTerm;
 import stroom.query.shared.IndexField;
-import stroom.streamstore.server.DataReceiptService;
+import stroom.policy.server.DataReceiptService;
 import stroom.streamstore.server.ExpressionMatcher;
-import stroom.streamstore.shared.DataReceiptAction;
-import stroom.streamstore.shared.DataReceiptPolicy;
-import stroom.streamstore.shared.DataReceiptRule;
+import stroom.policy.shared.DataReceiptAction;
+import stroom.policy.shared.DataReceiptPolicy;
+import stroom.policy.shared.DataReceiptRule;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

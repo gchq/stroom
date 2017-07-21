@@ -1,6 +1,6 @@
 package stroom.streamstore.server;
 
-import stroom.streamstore.shared.DataRetentionRule;
+import stroom.policy.shared.DataRetentionRule;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;

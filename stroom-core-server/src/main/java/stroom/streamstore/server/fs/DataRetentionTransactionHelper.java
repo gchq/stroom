@@ -33,7 +33,7 @@ import stroom.query.shared.ExpressionTerm;
 import stroom.query.shared.IndexField;
 import stroom.streamstore.server.ExpressionMatcher;
 import stroom.streamstore.server.StreamFields;
-import stroom.streamstore.shared.DataRetentionRule;
+import stroom.policy.shared.DataRetentionRule;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamProcessor;

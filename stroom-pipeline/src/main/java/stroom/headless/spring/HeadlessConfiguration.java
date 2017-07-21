@@ -29,7 +29,6 @@ import org.springframework.context.annotation.FilterType;
 @Configuration
 @ComponentScan(basePackages = {
         "stroom.cache",
-        "stroom.datafeed",
         "stroom.dictionary",
         "stroom.entity",
         "stroom.feed",

@@ -75,6 +75,7 @@
   <inherits name="stroom.statistics.Statistics" />
   <inherits name="stroom.benchmark.Benchmark" />
   <inherits name="stroom.streamstore.StreamStore" />
+  <inherits name="stroom.policy.Policy" />
   <inherits name="stroom.streamtask.StreamTask" />
   <inherits name="stroom.task.Task" />
   <inherits name="stroom.pipeline.Pipeline" />

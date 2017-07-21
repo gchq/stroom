@@ -55,6 +55,7 @@ import stroom.monitoring.client.gin.MonitoringGinjector;
 import stroom.monitoring.client.gin.MonitoringModule;
 import stroom.pipeline.client.gin.PipelineGinjector;
 import stroom.pipeline.client.gin.PipelineModule;
+import stroom.policy.client.gin.PolicyModule;
 import stroom.query.client.QueryModule;
 import stroom.script.client.gin.ScriptGinjector;
 import stroom.script.client.gin.ScriptModule;
@@ -77,7 +78,7 @@ import stroom.xmlschema.client.gin.XMLSchemaModule;
 
 @GinModules({ClientDispatchModule.class, AppModule.class, PopupModule.class, AlertModule.class, WelcomeModule.class,
         SecurityModule.class, EntityModule.class, PluginsModule.class, FolderModule.class, TaskModule.class,
-        QueryModule.class, StreamStoreModule.class, FeedModule.class, PipelineModule.class, DictionaryModule.class,
+        QueryModule.class, StreamStoreModule.class, PolicyModule.class, FeedModule.class, PipelineModule.class, DictionaryModule.class,
         XMLSchemaModule.class, MonitoringModule.class, CacheModule.class, IndexModule.class,
         StatisticsModule.class, DashboardModule.class, VisModule.class, ScriptModule.class, VisualisationModule.class,
         ImportExportConfigModule.class})

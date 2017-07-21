@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.streamstore.shared.DataRetentionRule;
+import stroom.policy.shared.DataRetentionRule;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeMap;

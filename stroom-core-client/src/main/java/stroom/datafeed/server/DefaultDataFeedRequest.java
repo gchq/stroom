@@ -29,7 +29,7 @@ import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.statistic.server.MetaDataStatistic;
 import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.shared.DataReceiptAction;
+import stroom.policy.shared.DataReceiptAction;
 import stroom.streamtask.server.StreamTargetStroomStreamHandler;
 import stroom.util.task.ServerTask;
 import stroom.util.thread.ThreadLocalBuffer;
