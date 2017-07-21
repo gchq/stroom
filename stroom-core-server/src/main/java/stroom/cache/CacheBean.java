@@ -19,7 +19,4 @@ package stroom.cache;
 import stroom.entity.shared.Clearable;
 
 public interface CacheBean<K, V> extends Clearable {
-    V get(K key);
-
-    void remove(K key);
 }

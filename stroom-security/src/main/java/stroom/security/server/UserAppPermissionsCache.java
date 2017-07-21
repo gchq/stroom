@@ -29,6 +29,7 @@ import stroom.security.shared.UserRef;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -49,8 +50,11 @@ public class UserAppPermissionsCache extends AbstractCacheBean<UserRef, UserAppP
         setMaxLiveTime(30, TimeUnit.MINUTES);
     }
 
-    @Override
-    protected UserAppPermissions create(final UserRef user) {
+    UserAppPermissions getOrCreate(final UserRef key) {
+        return computeIfAbsent(key, this::create);
+    }
+
+    private UserAppPermissions create(final UserRef user) {
         return userAppPermissionService.getPermissionsForUser(user);
     }
 

@@ -19,6 +19,7 @@ package stroom.search.server;
 import java.io.File;
 import java.io.IOException;
 
+import org.apache.lucene.index.CorruptIndexException;
 import stroom.util.logging.StroomLogger;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
@@ -62,7 +63,7 @@ public class IndexShardSearcherImpl implements IndexShardSearcher {
     }
 
     @Override
-    public void open() {
+    public void open() throws CorruptIndexException, IOException {
         // First try and open the reader with the current writer if one is in
         // use. If a writer is available this will give us the benefit of being
         // able to search documents that have not yet been flushed to disk.
@@ -77,35 +78,30 @@ public class IndexShardSearcherImpl implements IndexShardSearcher {
         // If we failed to open a reader with an existing writer then just try
         // and use the index shard directory.
         if (indexReader == null) {
-            try {
-                final File dir = IndexShardUtil.getIndexDir(indexShard);
+            final File dir = IndexShardUtil.getIndexDir(indexShard);
 
-                if (dir == null || !dir.isDirectory()) {
-                    throw new SearchException("Index directory not found for searching: " + dir.getAbsolutePath());
+            if (dir == null || !dir.isDirectory()) {
+                throw new SearchException("Index directory not found for searching: " + dir.getAbsolutePath());
+            }
+
+            directory = new NIOFSDirectory(dir, NoLockFactory.getNoLockFactory());
+
+            indexReader = DirectoryReader.open(directory);
+
+            // Check the document count in the index matches the DB.
+            final int actualDocumentCount = indexReader.numDocs();
+            if (indexShard.getDocumentCount() != actualDocumentCount) {
+                // We should only worry about document mismatch if the shard
+                // is closed. However the shard
+                // may still have been written to since we got this
+                // reference.
+                if (IndexShardStatus.CLOSED.equals(indexShard.getStatus())) {
+                    LOGGER.warn("open() - Mismatch document count.  Index says " + actualDocumentCount + " DB says "
+                            + indexShard.getDocumentCount());
+                } else if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("open() - Mismatch document count.  Index says " + actualDocumentCount
+                            + " DB says " + indexShard.getDocumentCount());
                 }
-
-                directory = new NIOFSDirectory(dir, NoLockFactory.getNoLockFactory());
-
-                indexReader = DirectoryReader.open(directory);
-
-                // Check the document count in the index matches the DB.
-                final int actualDocumentCount = indexReader.numDocs();
-                if (indexShard.getDocumentCount() != actualDocumentCount) {
-                    // We should only worry about document mismatch if the shard
-                    // is closed. However the shard
-                    // may still have been written to since we got this
-                    // reference.
-                    if (IndexShardStatus.CLOSED.equals(indexShard.getStatus())) {
-                        LOGGER.warn("open() - Mismatch document count.  Index says " + actualDocumentCount + " DB says "
-                                + indexShard.getDocumentCount());
-                    } else if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("open() - Mismatch document count.  Index says " + actualDocumentCount
-                                + " DB says " + indexShard.getDocumentCount());
-                    }
-                }
-            } catch (final IOException e) {
-                LOGGER.error(e.getMessage());
-                throw SearchException.wrap(e);
             }
         }
     }

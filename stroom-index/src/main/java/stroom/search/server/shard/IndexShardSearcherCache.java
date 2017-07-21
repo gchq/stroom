@@ -27,7 +27,8 @@ import net.sf.ehcache.event.CacheEventListenerAdapter;
 import org.apache.lucene.index.IndexWriter;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
-import stroom.index.server.Indexer;
+import stroom.index.server.IndexShardWriter;
+import stroom.index.server.IndexShardWriterCache;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardService;
 import stroom.search.server.IndexShardSearcher;
@@ -57,7 +58,7 @@ public class IndexShardSearcherCache implements InitializingBean {
         private volatile ConcurrentLinkedQueue<Throwable> exceptions;
         private volatile boolean cached;
         private volatile boolean open;
-        private volatile IndexWriter indexWriter;
+        private volatile IndexShardWriter indexShardWriter;
 
         public IndexShardSearcherPool(final IndexShard indexShard) {
             this.indexShard = indexShard;
@@ -99,18 +100,18 @@ public class IndexShardSearcherCache implements InitializingBean {
         }
 
         private synchronized void open() {
-            IndexWriter indexWriter = null;
+            IndexShardWriter indexShardWriter = null;
             Exception writerException = null;
 
             // Get the current writer for this index shard.
             try {
-                indexWriter = indexer.getWriter(indexShard);
+                indexShardWriter = indexShardWriterCache.getQuiet(indexShard);
             } catch (final Exception e) {
                 writerException = e;
             }
 
             // See if the writer has changed since we created this searcher.
-            if (indexWriter != this.indexWriter) {
+            if (indexShardWriter != this.indexShardWriter) {
                 // If the writer has changed and this searcher is still open then close this searcher so it can be
                 // opened again using the current writer.
                 if (open) {
@@ -118,7 +119,7 @@ public class IndexShardSearcherCache implements InitializingBean {
                 }
 
                 // Assign the current writer.
-                this.indexWriter = indexWriter;
+                this.indexShardWriter = indexShardWriter;
 
                 // Reset any exceptions.
                 exceptions = null;
@@ -126,6 +127,11 @@ public class IndexShardSearcherCache implements InitializingBean {
 
             if (!open && !hasExceptions()) {
                 try {
+                    IndexWriter indexWriter = null;
+                    if (indexShardWriter != null) {
+                        indexWriter = indexShardWriter.getWriter();
+                    }
+
                     indexShardSearcher = new IndexShardSearcherImpl(indexShard, indexWriter);
 
                     if (writerException != null) {
@@ -164,16 +170,16 @@ public class IndexShardSearcherCache implements InitializingBean {
 
     public static final int MAX_OPEN_SHARDS = 2;
 
-    private final Indexer indexer;
+    private final IndexShardWriterCache indexShardWriterCache;
     private final CacheManager cacheManager;
 
     private final Cache cache;
     private final SelfPopulatingCache selfPopulatingCache;
 
     @Inject
-    public IndexShardSearcherCache(final Indexer indexer,
+    public IndexShardSearcherCache(final IndexShardWriterCache indexShardWriterCache,
                                    final IndexShardService indexShardService, final CacheManager cacheManager) {
-        this.indexer = indexer;
+        this.indexShardWriterCache = indexShardWriterCache;
         this.cacheManager = cacheManager;
 
         final CacheConfiguration cacheConfiguration = new CacheConfiguration("Index Shard Searcher Cache",

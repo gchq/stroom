@@ -21,6 +21,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
+import stroom.cache.StroomCacheManager;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.Query;
 import stroom.dictionary.shared.Dictionary;
@@ -32,8 +33,6 @@ import stroom.entity.shared.Res;
 import stroom.feed.shared.Feed;
 import stroom.importexport.server.ImportExportSerializer;
 import stroom.index.server.IndexShardManager;
-import stroom.index.server.IndexShardWriterImpl;
-import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardService;
@@ -54,8 +53,8 @@ import stroom.policy.shared.Policy;
 import stroom.script.shared.Script;
 import stroom.security.server.DocumentPermission;
 import stroom.security.server.Permission;
-import stroom.security.server.UserGroupUser;
 import stroom.security.server.User;
+import stroom.security.server.UserGroupUser;
 import stroom.statistics.shared.StatisticStore;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
@@ -106,7 +105,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
     @Resource
     private LifecycleServiceImpl lifecycleServiceImpl;
     @Resource
-    private CacheManager cacheManager;
+    private StroomCacheManager cacheManager;
 
     private ApplicationContext applicationContext;
 
@@ -150,13 +149,8 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
 
         // Make sure we don't delete database entries without clearing the pool.
         indexShardManager.shutdown();
+        indexShardManager.deleteFromDisk();
 
-        for (final IndexShard indexShard : indexShardService.find(new FindIndexShardCriteria())) {
-            final IndexShardWriterImpl writer = new IndexShardWriterImpl(indexShardService, null, indexShard.getIndex(),
-                    indexShard);
-            writer.delete();
-            writer.deleteFromDisk();
-        }
         deleteEntity(IndexShard.class);
         deleteEntity(Index.class);
 
@@ -203,7 +197,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
         deleteEntity(Rack.class);
 
         databaseCommonTestControlTransactionHelper.clearContext();
-        cacheManager.clearAll();
+        cacheManager.clear();
 
         final Map<String, Clearable> clearableBeanMap = applicationContext.getBeansOfType(Clearable.class, false,
                 false);

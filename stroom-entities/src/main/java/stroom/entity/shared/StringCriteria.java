@@ -23,7 +23,7 @@ import java.util.List;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 
-public class StringCriteria implements Serializable, HasIsConstrained, Clearable {
+public class StringCriteria implements Serializable, HasIsConstrained, Clearable, Copyable<StringCriteria> {
     private static final long serialVersionUID = 4737939969786534908L;
 
     public enum MatchStyle {
@@ -141,6 +141,15 @@ public class StringCriteria implements Serializable, HasIsConstrained, Clearable
 
     public void setMatchNull(final Boolean matchNull) {
         this.matchNull = matchNull;
+    }
+
+    @Override
+    public void copyFrom(final StringCriteria other) {
+        this.string = other.string;
+        this.stringUpper = other.stringUpper;
+        this.matchStyle = other.matchStyle;
+        this.caseInsensitive = other.caseInsensitive;
+        this.matchNull = other.matchNull;
     }
 
     @Override

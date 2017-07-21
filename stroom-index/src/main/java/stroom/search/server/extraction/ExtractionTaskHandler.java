@@ -137,7 +137,7 @@ public class ExtractionTaskHandler extends AbstractTaskHandler<ExtractionTask, V
             }
 
             // Create the parser.
-            final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+            final PipelineData pipelineData = pipelineDataCache.getOrCreate(pipelineEntity);
             final Pipeline pipeline = pipelineFactory.create(pipelineData);
             if (pipeline == null) {
                 throw new SearchException("Unable to create parser for pipeline: " + pipelineRef);

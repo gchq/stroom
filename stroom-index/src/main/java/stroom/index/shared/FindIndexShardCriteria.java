@@ -21,6 +21,7 @@ import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityMatcher;
 import stroom.entity.shared.Range;
+import stroom.entity.shared.StringCriteria;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
@@ -36,6 +37,7 @@ public class FindIndexShardCriteria extends BaseCriteria implements EntityMatche
     private EntityIdSet<Index> indexIdSet = new EntityIdSet<Index>();
     private EntityIdSet<IndexShard> indexShardSet = new EntityIdSet<IndexShard>();
     private CriteriaSet<IndexShardStatus> indexShardStatusSet = new CriteriaSet<IndexShardStatus>();
+    private StringCriteria partition = new StringCriteria();
 
     public FindIndexShardCriteria() {
         // Default constructor necessary for GWT serialisation.
@@ -49,6 +51,7 @@ public class FindIndexShardCriteria extends BaseCriteria implements EntityMatche
         indexIdSet.copyFrom(criteria.indexIdSet);
         indexShardSet.copyFrom(criteria.indexShardSet);
         indexShardStatusSet.copyFrom(criteria.indexShardStatusSet);
+        partition.copyFrom(criteria.partition);
     }
 
     public CriteriaSet<IndexShardStatus> getIndexShardStatusSet() {
@@ -79,6 +82,10 @@ public class FindIndexShardCriteria extends BaseCriteria implements EntityMatche
         return volumeIdSet;
     }
 
+    public StringCriteria getPartition() {
+        return partition;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
@@ -101,7 +108,9 @@ public class FindIndexShardCriteria extends BaseCriteria implements EntityMatche
         if (!indexShardSet.isMatch(indexShard)) {
             return false;
         }
-        return indexShardStatusSet.isMatch(indexShard.getStatus());
-
+        if (!indexShardStatusSet.isMatch(indexShard.getStatus())) {
+            return false;
+        }
+        return partition.isMatch(indexShard.getPartition());
     }
 }

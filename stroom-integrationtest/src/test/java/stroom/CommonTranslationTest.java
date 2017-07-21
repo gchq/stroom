@@ -25,6 +25,7 @@ import java.util.Set;
 
 import javax.annotation.Resource;
 
+import org.springframework.context.annotation.Profile;
 import stroom.test.StroomProcessTestFileUtil;
 import org.junit.Assert;
 import org.springframework.stereotype.Component;
@@ -40,8 +41,10 @@ import stroom.streamtask.server.StreamTaskCreator;
 import stroom.streamtask.shared.StreamTask;
 import stroom.task.server.TaskManager;
 import stroom.task.server.TaskMonitorImpl;
+import stroom.util.spring.StroomSpringProfiles;
 
 @Component
+@Profile(StroomSpringProfiles.IT)
 public class CommonTranslationTest {
     private static final String DIR = "CommonTranslationTest/";
 

@@ -21,6 +21,7 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
+import org.springframework.context.annotation.Profile;
 import stroom.test.StroomProcessTestFileUtil;
 import org.junit.Assert;
 import org.springframework.stereotype.Component;
@@ -32,11 +33,13 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.streamstore.server.tools.StoreCreationTool;
 import stroom.streamtask.server.StreamProcessorTaskExecutor;
 import stroom.util.shared.Severity;
+import stroom.util.spring.StroomSpringProfiles;
 
 /**
  * Class to create test data for use in all search tests.
  */
 @Component
+@Profile(StroomSpringProfiles.IT)
 public class CommonIndexingTest {
     private static final int N1 = 1;
     private static final int N4 = 4;

@@ -46,7 +46,7 @@ public class FetchAllDocumentPermissionsHandler
     @Override
     public DocumentPermissions exec(final FetchAllDocumentPermissionsAction action) {
         if (securityContext.hasDocumentPermission(action.getDocRef().getType(), action.getDocRef().getUuid(), DocumentPermissionNames.OWNER)) {
-            return documentPermissionsCache.get(action.getDocRef());
+            return documentPermissionsCache.getOrCreate(action.getDocRef());
         }
 
         throw new EntityServiceException("You do not have sufficient privileges to fetch permissions for this document");

@@ -57,8 +57,7 @@ public class EffectiveStreamCache extends AbstractCacheBean<EffectiveStreamKey, 
         setMaxLiveTime(10, TimeUnit.MINUTES);
     }
 
-    @Override
-    public TreeSet<EffectiveStream> get(final EffectiveStreamKey effectiveStreamKey) {
+    public TreeSet<EffectiveStream> getOrCreate(final EffectiveStreamKey effectiveStreamKey) {
         if (effectiveStreamKey.getFeed() == null) {
             throw new ProcessException("No feed has been specified for reference data lookup");
         }
@@ -66,11 +65,10 @@ public class EffectiveStreamCache extends AbstractCacheBean<EffectiveStreamKey, 
             throw new ProcessException("No stream type has been specified for reference data lookup");
         }
 
-        return super.get(effectiveStreamKey);
+        return computeIfAbsent(effectiveStreamKey, this::create);
     }
 
-    @Override
-    protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
+    TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
         TreeSet<EffectiveStream> effectiveStreamSet = null;
 
         try {

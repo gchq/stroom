@@ -83,14 +83,16 @@ public class TestIndexShardPoolImpl2 extends StroomUnitTest {
         };
 
         try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
-            final IndexShardManagerImpl indexShardManager = new IndexShardManagerImpl(cacheManager, null, null,
-                    mockIndexShardService, new NodeCache(defaultNode), null) {
-                @Override
-                protected void destroy(final IndexShardKey key, final IndexShardWriter value) {
-                    checkedLimit.decrement();
-                    super.destroy(key, value);
-                }
-            };
+//            final IndexShardManagerImpl indexShardManager = new IndexShardManagerImpl(cacheManager, null, null,
+//                    mockIndexShardService, new NodeCache(defaultNode), null) {
+//                @Override
+//                protected void destroy(final IndexShardKey key, final IndexShardWriter value) {
+//                    checkedLimit.decrement();
+//                    super.destroy(key, value);
+//                }
+//            };
+
+            final Indexer indexer = new MockIndexer();
 
             final Index index = new Index();
             index.setId(1);
@@ -107,7 +109,7 @@ public class TestIndexShardPoolImpl2 extends StroomUnitTest {
                         final Field field = FieldFactory.create(indexField, "test");
                         final Document document = new Document();
                         document.add(field);
-                        indexShardManager.addDocument(indexShardKey, document);
+                        indexer.addDocument(indexShardKey, document);
                     }
                 });
             }

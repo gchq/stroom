@@ -16,31 +16,33 @@
 
 package stroom.index.server;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexWriter;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.IndexShard.IndexShardStatus;
+import stroom.index.shared.IndexShardService;
+import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomSpringProfiles;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import javax.inject.Inject;
+import java.util.List;
+import java.util.Set;
 
 @Profile(StroomSpringProfiles.TEST)
 @Component("indexShardManager")
-public class MockIndexShardManager implements IndexShardManager, Indexer {
-    private final Map<IndexShardKey, IndexShardWriter> writers = new HashMap<>();
+public class MockIndexShardManager implements IndexShardManager {
+//    private final IndexShardService indexShardService;
+//    private final IndexShardWriterCache indexShardWriterCache;
+//
+//    @Inject
+//    MockIndexShardManager(final IndexShardService indexShardService, final IndexShardWriterCache indexShardWriterCache) {
+//        this.indexShardService = indexShardService;
+//        this.indexShardWriterCache = indexShardWriterCache;
+//    }
 
     @Override
     public Long findFlush(final FindIndexShardCriteria criteria) {
-        return null;
-    }
-
-    @Override
-    public Long findClose(final FindIndexShardCriteria criteria) {
         return null;
     }
 
@@ -50,45 +52,51 @@ public class MockIndexShardManager implements IndexShardManager, Indexer {
     }
 
     @Override
-    public void addDocument(final IndexShardKey key, final Document document) {
-        try {
-            get(key).addDocument(document);
-        } catch (final IOException e) {
-            throw new IndexException(e.getMessage(), e);
-        }
+    public IndexShard load(final IndexShard indexShard) {
+        return indexShard;
     }
 
     @Override
-    public IndexShardWriter get(final IndexShardKey key) {
-        return writers.computeIfAbsent(key, k -> new MockIndexShardWriter());
+    public void setStatus(final long indexShardId, final IndexShardStatus status) {
+//        synchronized(this) {
+//            final IndexShard indexShard = indexShardService.loadById(indexShardId);
+//            indexShard.setStatus(status);
+//            indexShardService.save(indexShard);
+//        }
     }
 
     @Override
-    public void remove(final IndexShardKey key) {
-        writers.remove(key);
-    }
-
-    public Map<IndexShardKey, IndexShardWriter> getWriters() {
-        return writers;
+    public void update(final long indexShardId, final Integer documentCount, final Long commitDurationMs, final Long commitMs, final Long fileSize) {
+//        synchronized(this) {
+//            final IndexShard indexShard = indexShardService.loadById(indexShardId);
+//
+//            if (documentCount != null) {
+//                indexShard.setDocumentCount(documentCount);
+//                indexShard.setCommitDocumentCount(documentCount - indexShard.getDocumentCount());
+//            }
+//            if (commitDurationMs != null) {
+//                indexShard.setCommitDurationMs(commitDurationMs);
+//            }
+//            if (commitMs != null) {
+//                indexShard.setCommitMs(commitMs);
+//            }
+//            if (fileSize != null) {
+//                indexShard.setFileSize(fileSize);
+//            }
+//
+//            indexShardService.save(indexShard);
+//        }
     }
 
     @Override
-    public IndexWriter getWriter(final IndexShard indexShard) {
-        return null;
+    public void checkRetention() {
     }
 
     @Override
-    public void flushAll() {
-        for (final IndexShardWriter writer : writers.values()) {
-            writer.flush();
-        }
+    public void deleteFromDisk() {
     }
 
     @Override
     public void shutdown() {
-    }
-
-    public void clear() {
-        writers.clear();
     }
 }

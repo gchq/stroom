@@ -16,6 +16,7 @@
 
 package stroom.streamstore.server.tools;
 
+import org.springframework.context.annotation.Profile;
 import stroom.CommonTestControl;
 import stroom.CommonTestScenarioCreator;
 import stroom.entity.shared.BaseResultList;
@@ -62,6 +63,7 @@ import stroom.util.io.StreamUtil;
 import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.springframework.stereotype.Component;
+import stroom.util.spring.StroomSpringProfiles;
 
 import javax.annotation.Resource;
 import java.io.ByteArrayInputStream;
@@ -76,6 +78,7 @@ import java.util.Set;
  * A tool used to add data to a stream store.
  */
 @Component
+@Profile(StroomSpringProfiles.IT)
 public final class StoreCreationTool {
     private static final int OLD_YEAR = 2006;
     private static final File eventDataPipeline = StroomCoreServerTestFileUtil

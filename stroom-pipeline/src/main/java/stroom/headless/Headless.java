@@ -19,6 +19,7 @@ package stroom.headless;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import stroom.entity.server.util.XMLUtil;
+import stroom.headless.spring.HeadlessConfiguration;
 import stroom.importexport.server.ImportExportService;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Volume;
@@ -32,19 +33,20 @@ import stroom.proxy.repo.StroomZipNameSet;
 import stroom.proxy.repo.StroomZipRepository;
 import stroom.spring.PersistenceConfiguration;
 import stroom.spring.ScopeConfiguration;
-import stroom.spring.ServerComponentScanConfiguration;
 import stroom.spring.ServerConfiguration;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskManager;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.config.StroomProperties;
+import stroom.util.config.StroomProperties.Source;
 import stroom.util.io.FileUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomSpringProfiles;
+import stroom.util.task.ExternalShutdownController;
 import stroom.util.task.TaskScopeRunnable;
 import stroom.util.thread.ThreadScopeRunnable;
 
@@ -142,17 +144,39 @@ public class Headless extends AbstractCommandLineTool {
 
     @Override
     public void run() {
-        new TaskScopeRunnable(GenericServerTask.create("Headless Stroom", null)) {
-            @Override
-            protected void exec() {
-                new ThreadScopeRunnable() {
-                    @Override
-                    protected void exec() {
-                        process();
-                    }
-                }.run();
-            }
-        }.run();
+        try {
+            StroomProperties.setOverrideProperty("stroom.jpaHbm2DdlAuto", "update", Source.TEST);
+
+            StroomProperties.setOverrideProperty("stroom.jdbcDriverClassName", "org.hsqldb.jdbcDriver", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.jpaDialect", "org.hibernate.dialect.HSQLDialect", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.jdbcDriverUrl", "jdbc:hsqldb:file:${stroom.temp}/stroom/HSQLDB.DAT;shutdown=true", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.jdbcDriverUsername", "sa", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.jdbcDriverPassword", "", Source.TEST);
+
+            StroomProperties.setOverrideProperty("stroom.statistics.sql.jdbcDriverClassName", "org.hsqldb.jdbcDriver", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.statistics.sql.jpaDialect", "org.hibernate.dialect.HSQLDialect", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.statistics.sql.jdbcDriverUrl", "jdbc:hsqldb:file:${stroom.temp}/statistics/HSQLDB.DAT;shutdown=true", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.statistics.sql.jdbcDriverUsername", "sa", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.statistics.sql.jdbcDriverPassword", "", Source.TEST);
+
+            StroomProperties.setOverrideProperty("stroom.lifecycle.enabled", "false", Source.TEST);
+
+            new TaskScopeRunnable(GenericServerTask.create("Headless Stroom", null)) {
+                @Override
+                protected void exec() {
+                    new ThreadScopeRunnable() {
+                        @Override
+                        protected void exec() {
+                            process();
+                        }
+                    }.run();
+                }
+            }.run();
+        } finally {
+            StroomProperties.removeOverrides();
+
+            ExternalShutdownController.shutdown();
+        }
     }
 
     private void process() {
@@ -266,10 +290,10 @@ public class Headless extends AbstractCommandLineTool {
     }
 
     private ApplicationContext buildAppContext() {
-        System.setProperty("spring.profiles.active", StroomSpringProfiles.PROD + ",Headless");
+        System.setProperty("spring.profiles.active", StroomSpringProfiles.PROD + ", Headless");
         final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-                ScopeConfiguration.class, PersistenceConfiguration.class, ServerComponentScanConfiguration.class,
-                ServerConfiguration.class, PipelineConfiguration.class);
+                ScopeConfiguration.class, PersistenceConfiguration.class,
+                ServerConfiguration.class, PipelineConfiguration.class, HeadlessConfiguration.class);
         return context;
     }
 

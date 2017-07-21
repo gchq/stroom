@@ -28,6 +28,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.AbstractCacheBean;
 
+import java.util.function.Function;
+
 public abstract class AbstractPoolCacheBean<K, V> extends AbstractCacheBean<K, ObjectPool<PoolItem<K, V>>>
         implements PoolBean<K, V> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractPoolCacheBean.class);
@@ -38,8 +40,15 @@ public abstract class AbstractPoolCacheBean<K, V> extends AbstractCacheBean<K, O
         super(cacheManager, name, MAX_CACHE_ENTRIES);
     }
 
-    @Override
-    protected ObjectPool<PoolItem<K, V>> create(final K key) {
+    public ObjectPool<PoolItem<K, V>> getOrCreate(final K key) {
+        return computeIfAbsent(key, this::create);
+    }
+
+    private ObjectPool<PoolItem<K, V>> getOrCreateQuiet(final K key) {
+        return computeIfAbsentQuiet(key, this::create);
+    }
+
+    private ObjectPool<PoolItem<K, V>> create(final K key) {
         final GenericObjectPoolConfig config = new GenericObjectPoolConfig();
         config.setMaxTotal(1000);
         config.setMaxIdle(1000);
@@ -60,7 +69,7 @@ public abstract class AbstractPoolCacheBean<K, V> extends AbstractCacheBean<K, O
                 return new PoolItem<>(key, createValue(key));
             }
 
-            final ObjectPool<PoolItem<K, V>> pool = get(key);
+            final ObjectPool<PoolItem<K, V>> pool = getOrCreate(key);
             return pool.borrowObject();
         } catch (final Exception e) {
             LOGGER.debug(e.getMessage(), e);
@@ -73,7 +82,7 @@ public abstract class AbstractPoolCacheBean<K, V> extends AbstractCacheBean<K, O
         if (usePool) {
             try {
                 final K key = poolItem.getKey();
-                final ObjectPool<PoolItem<K, V>> pool = getQuiet(key);
+                final ObjectPool<PoolItem<K, V>> pool = getOrCreateQuiet(key);
                 if (pool != null) {
                     pool.returnObject(poolItem);
                 }

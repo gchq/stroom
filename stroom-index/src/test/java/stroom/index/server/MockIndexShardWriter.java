@@ -19,94 +19,61 @@ package stroom.index.server;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexableField;
-import stroom.index.shared.Index;
-import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShard.IndexShardStatus;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class MockIndexShardWriter implements IndexShardWriter {
-    private final List<Document> documents = new ArrayList<Document>();
+    //    private final IndexShardManager indexShardManager;
+    private final List<Document> documents = new ArrayList<>();
     private static AtomicLong idGen = new AtomicLong();
-    private IndexShardStatus status = IndexShardStatus.CLOSED;
+    private final long indexShardId;
 
-    @Override
-    public boolean open(final boolean create) {
-        setStatus(IndexShardStatus.OPEN);
-        return true;
-    }
+    private final int maxDocumentCount;
+    private final AtomicInteger documentCount = new AtomicInteger();
 
-    @Override
-    public IndexShard getIndexShard() {
-        final IndexShard indexShard = new IndexShard();
-        indexShard.setId(idGen.getAndIncrement());
-        return indexShard;
-    }
+    MockIndexShardWriter(final int maxDocumentCount) {
+//        this.indexShardManager = indexShardManager;
+        indexShardId = idGen.getAndIncrement();
+//        indexShardManager.setStatus(indexShardId, IndexShardStatus.OPEN);
 
-    @Override
-    public void destroy() {
-        close();
-    }
+        this.maxDocumentCount = maxDocumentCount;
 
-    @Override
-    public boolean close() {
-        setStatus(IndexShardStatus.CLOSED);
-        return true;
-    }
-
-    @Override
-    public void check() {
-    }
-
-    @Override
-    public boolean delete() {
-        setStatus(IndexShardStatus.DELETED);
-        return true;
-    }
-
-    @Override
-    public boolean deleteFromDisk() {
-        return false;
+//
+//        switch (indexShard.getStatus()) {
+//            case DELETED:
+//                throw new IndexException("Attempt to open an index shard that is deleted");
+//            case CORRUPT:
+//                throw new IndexException("Attempt to open an index shard that is corrupt");
+//            case FINAL:
+//                throw new IndexException("Attempt to open an index shard that is final");
+//        }
     }
 
     @Override
     public void addDocument(final Document document) {
-        // Create a new document and copy the fields.
-        final Document doc = new Document();
-        for (final IndexableField field : document.getFields()) {
-            doc.add(field);
+        try {
+            if (documentCount.getAndIncrement() >= maxDocumentCount) {
+                throw new IndexException("Shard is full");
+            }
+
+            // Create a new document and copy the fields.
+            final Document doc = new Document();
+            for (final IndexableField field : document.getFields()) {
+                doc.add(field);
+            }
+            documents.add(doc);
+
+        } catch (final Throwable e) {
+            documentCount.decrementAndGet();
+            throw e;
         }
-        documents.add(doc);
     }
 
-    @Override
-    public void updateIndex(final Index index) {
-    }
-
-    @Override
-    public boolean flush() {
-        return true;
-    }
-
-    public List<Document> getDocuments() {
+    List<Document> getDocuments() {
         return documents;
-    }
-
-    @Override
-    public int getDocumentCount() {
-        return documents.size();
-    }
-
-    @Override
-    public boolean isFull() {
-        return false;
-    }
-
-    @Override
-    public String getPartition() {
-        return null;
     }
 
     @Override
@@ -115,12 +82,19 @@ public class MockIndexShardWriter implements IndexShardWriter {
     }
 
     @Override
-    public IndexShardStatus getStatus() {
-        return status;
+    public int getDocumentCount() {
+        return documents.size();
     }
 
     @Override
-    public void setStatus(final IndexShardStatus status) {
-        this.status = status;
+    public void updateIndexConfig(final IndexConfig indexConfig) {
+    }
+
+    @Override
+    public void flush() {
+    }
+
+    @Override
+    public void destroy() {
     }
 }

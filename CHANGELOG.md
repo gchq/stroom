@@ -17,6 +17,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
+
+
+## [v5.0-beta.41] - 2017-07-20
+
+* Issue **#342** : Changed the way indexing is performed to ensure index readers reference open writers correctly.
+
+* Issue **#346** : Improved multi depth config content import.
+
+* Issue **#328** : You can now delete corrupt shards from the UI.
+
+## [v5.0-beta.40] - 2017-07-14
+
+* Issue **#343** : Fixed login expiry issue.
+
+* Issue **#345** : Allowed for multi depth config content import.
+
 ## [v5.0-beta.39] - 2017-07-09
 
 * Issue **#341** : Fixed arg in SQL.
@@ -503,7 +519,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 [Unreleased]: https://github.com/gchq/stroom/compare/v5.1-alpha.2...HEAD
 [v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
-[v5.1-alpha.1]: https://github.com/gchq/stroom/compare/v5.0-beta.39...v5.1-alpha.1
+[v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
+
+[v5.0-beta.41]: https://github.com/gchq/stroom/compare/v5.0-beta.40...v5.0-beta.41
+[v5.0-beta.40]: https://github.com/gchq/stroom/compare/v5.0-beta.39...v5.0-beta.40
 [v5.0-beta.39]: https://github.com/gchq/stroom/compare/v5.0-beta.38...v5.0-beta.39
 [v5.0-beta.38]: https://github.com/gchq/stroom/compare/v5.0-beta.37...v5.0-beta.38
 [v5.0-beta.37]: https://github.com/gchq/stroom/compare/v5.0-beta.36...v5.0-beta.37

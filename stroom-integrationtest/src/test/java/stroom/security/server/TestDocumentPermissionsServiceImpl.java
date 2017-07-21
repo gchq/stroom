@@ -155,11 +155,11 @@ public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationT
 
         final Set<UserRef> allUsers = new HashSet<>();
         allUsers.add(user);
-        allUsers.addAll(userGroupsCache.get(user));
+        allUsers.addAll(userGroupsCache.getOrCreate(user));
 
         final Set<String> combinedPermissions = new HashSet<>();
         for (final UserRef userRef : allUsers) {
-            final DocumentPermissions documentPermissions = documentPermissionsCache.get(docRef);
+            final DocumentPermissions documentPermissions = documentPermissionsCache.getOrCreate(docRef);
             final Set<String> userPermissions = documentPermissions.getPermissionsForUser(userRef);
             combinedPermissions.addAll(userPermissions);
         }

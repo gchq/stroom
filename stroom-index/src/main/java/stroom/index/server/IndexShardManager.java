@@ -16,18 +16,29 @@
 
 package stroom.index.server;
 
-import stroom.cache.CacheBean;
-import stroom.entity.shared.FindCloseService;
 import stroom.entity.shared.FindDeleteService;
 import stroom.entity.shared.FindFlushService;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.Index;
+import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShard.IndexShardStatus;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * API into our index shard manager.
  */
-public interface IndexShardManager extends Indexer, CacheBean<IndexShardKey, IndexShardWriter>, FindDeleteService<FindIndexShardCriteria>, FindCloseService<FindIndexShardCriteria>, FindFlushService<FindIndexShardCriteria> {
+public interface IndexShardManager extends FindDeleteService<FindIndexShardCriteria>, FindFlushService<FindIndexShardCriteria> {
+    void setStatus(long indexShardId, IndexShardStatus status);
+
+    void update(long indexShardId, Integer documentCount, Long commitDurationMs, Long commitMs, Long fileSize);
+
+    IndexShard load(IndexShard indexShard);
+
     void shutdown();
 
-    void flushAll();
+    void deleteFromDisk();
+
+    void checkRetention();
 }

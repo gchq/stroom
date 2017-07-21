@@ -65,14 +65,12 @@ public class IndexSettingsPresenter extends MyPresenterWidget<IndexSettingsPrese
     }
 
     private final IndexVolumeListPresenter indexVolumeListPresenter;
-    private final ClientDispatchAsync dispatcher;
 
     @Inject
     public IndexSettingsPresenter(final EventBus eventBus, final IndexSettingsView view,
-            final IndexVolumeListPresenter indexVolumeListPresenter, final ClientDispatchAsync dispatcher) {
+            final IndexVolumeListPresenter indexVolumeListPresenter) {
         super(eventBus, view);
         this.indexVolumeListPresenter = indexVolumeListPresenter;
-        this.dispatcher = dispatcher;
 
         view.setUiHandlers(this);
         view.getRetentionAge().addItems(SupportedRetentionAge.values());
