@@ -33,7 +33,7 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.CloseableUtil;
 import stroom.util.logging.StroomLogger;
-import stroom.util.zip.MetaMapFactory;
+import stroom.proxy.repo.MetaMapFactory;
 import stroom.util.zip.StroomHeaderArguments;
 
 import java.io.ByteArrayOutputStream;

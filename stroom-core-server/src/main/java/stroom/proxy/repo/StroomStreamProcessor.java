@@ -31,7 +31,6 @@ import stroom.util.io.InitialByteArrayOutputStream.BufferPos;
 import stroom.util.io.StreamProgressMonitor;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.StroomLogger;
-import stroom.util.zip.MetaMapFactory;
 import stroom.util.zip.StroomHeaderArguments;
 import stroom.util.zip.StroomStatusCode;
 import stroom.util.zip.StroomStreamException;

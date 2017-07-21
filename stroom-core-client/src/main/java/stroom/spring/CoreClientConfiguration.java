@@ -42,7 +42,7 @@ import stroom.util.config.StroomProperties;
 import stroom.util.logging.StroomLogger;
 import stroom.util.thread.ThreadLocalBuffer;
 import stroom.feed.MetaMap;
-import stroom.util.zip.MetaMapFactory;
+import stroom.proxy.repo.MetaMapFactory;
 
 import java.util.Properties;
 
