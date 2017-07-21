@@ -23,7 +23,7 @@ public class ContentImportService {
     public static final String CONTENT_PACK_IMPORT_DIR = "transientContentPacks";
 
     private static final Version CORE_XML_SCHEMAS_VERSION = Version.of(1, 0);
-    private static final Version EVENT_LOGGING_XML_SCHEMA_VERSION = Version.of(1, 0);
+    private static final Version EVENT_LOGGING_XML_SCHEMA_VERSION = Version.of(3, 1, 1);
     private static final Version VISUALISATIONS_VERSION = Version.of(3, 0, 4);
 
     private ImportExportService importExportService;

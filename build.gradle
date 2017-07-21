@@ -199,7 +199,7 @@ ext.contentPacks = [
     'internal-statistics-sql': 'v2.0',
     'internal-dashboards': 'v1.1',
     'stroom-101': 'v1.0',
-    'event-logging-xml-schema': 'v1.0'
+    'event-logging-xml-schema': 'v3.1.1'
 ]
 
 task wrapper(type: Wrapper) {
