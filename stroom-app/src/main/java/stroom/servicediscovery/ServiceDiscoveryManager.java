@@ -87,6 +87,12 @@ public class ServiceDiscoveryManager {
         CuratorFramework curatorFramework = CuratorFrameworkFactory.newClient(zookeeperUrl, retryPolicy);
         LOGGER.info("Starting Curator client using Zookeeper at '{}'", zookeeperUrl);
         curatorFramework.start();
+        try {
+            curatorFramework.blockUntilConnected();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Thread interrupted waiting for connection to zookeeper");
+        }
         closeables.push(curatorFramework);
 
         boolean wasSet = curatorFrameworkRef.compareAndSet(null, curatorFramework);
