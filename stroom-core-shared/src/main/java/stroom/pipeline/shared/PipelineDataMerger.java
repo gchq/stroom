@@ -34,15 +34,21 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 public class PipelineDataMerger {
+    private static final String SOURCE = "Source";
+    private static final PipelineElement SOURCE_ELEMENT = new PipelineElement(SOURCE, SOURCE);
+    private static final Set<String> POSSIBLE_ROOT_ELEMENTS = new HashSet<>(Arrays.asList("Reader", "InvalidXMLCharFilterReader", "InvalidCharFilterReader", "BadTextXMLFilterReader", "BOMRemovalFilterInput", "XMLParser", "XMLFragmentParser", "JSONParser", "DSParser", "CombinedParser", "RollingFileAppender", "RollingStreamAppender", "FileAppender", "StreamAppender", "HDFSFileAppender", "TestAppender"));
+
     private final Map<String, PipelineElement> allElementMap = new HashMap<>();
     private final Map<String, PipelineElement> elementMap = new HashMap<>();
     private final Map<String, Map<String, PipelineProperty>> propertyMap = new HashMap<>();
     private final Map<String, Map<String, List<PipelineReference>>> pipelineReferenceMap = new HashMap<>();
     private final Map<String, List<PipelineLink>> linkMap = new HashMap<>();
-    private final List<PipelineElement> sourceList = new ArrayList<>();
 
     public static Map<String, PipelineElementType> createElementMap() {
-        return new HashMap<>();
+        final Map<String, PipelineElementType> map = new HashMap<>();
+        // Ensure we always have a source element to link from.
+        map.put(SOURCE, SOURCE_ELEMENT.getElementType());
+        return map;
     }
 
     public PipelineDataMerger() {
@@ -75,8 +81,14 @@ public class PipelineDataMerger {
             }
         }
 
-        // Create a set of potential source elements, i.e. elements with no links to them.
-        final Set<String> sourceIds = new HashSet<>(elementMap.keySet());
+        // Ensure the config stack gives us source elements.
+        Map<String, PipelineElement> unlinkedElements = null;
+        if (configStack.size() > 0 && !allElementMap.containsKey(SOURCE)) {
+            unlinkedElements = new HashMap<>(elementMap);
+            // Ensure that there is a source element.
+            elementMap.put(SOURCE, SOURCE_ELEMENT);
+            allElementMap.put(SOURCE, SOURCE_ELEMENT);
+        }
 
         // Now we have a set of elements merge everything else.
         for (final PipelineData pipelineData : configStack) {
@@ -128,8 +140,10 @@ public class PipelineDataMerger {
 
                 // Merge links.
                 for (final PipelineLink link : pipelineData.getLinks().getAdd()) {
-                    // If an element is linked to (even by an element that has been removed) then the element is not to be considered a source.
-                    sourceIds.remove(link.getTo());
+                    if (unlinkedElements != null) {
+                        // If an element is linked to (even by an element that has been removed) then the element is not to be considered a source.
+                        unlinkedElements.remove(link.getTo());
+                    }
 
                     final PipelineElement fromElement = elementMap.get(link.getFrom());
                     final PipelineElement toElement = elementMap.get(link.getTo());
@@ -176,15 +190,15 @@ public class PipelineDataMerger {
             }
         }
 
-        // Turn the set of source ids into a list of elements.
-        sourceList.clear();
-        for (final String sourceId : sourceIds) {
-            sourceList.add(elementMap.get(sourceId));
+        // Make sure that the source element provides links to unlinked elements if it is not already determined to be the source element.
+        if (!linkMap.containsKey(SOURCE) && unlinkedElements != null) {
+            unlinkedElements.values().stream()
+                    .filter(element -> POSSIBLE_ROOT_ELEMENTS.contains(element.getType()))
+                    .forEach(element -> {
+                        final PipelineLink pipelineLink = new PipelineLink(SOURCE, element.getId());
+                        linkMap.computeIfAbsent(SOURCE, k -> new ArrayList<>()).add(pipelineLink);
+                    });
         }
-    }
-
-    public List<PipelineElement> getSources() {
-        return sourceList;
     }
 
     public Map<String, PipelineElement> getElements() {
