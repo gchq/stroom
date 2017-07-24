@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#350** : Removed 'Advanced Mode' from pipeline structure editor as it is no longer very useful.
 
+* Issue **#349** : Improved index searcher cache to ensure searchers are not affected by writers closing.
+
 ## [v5.0-beta.41] - 2017-07-20
 
 * Issue **#342** : Changed the way indexing is performed to ensure index readers reference open writers correctly.
