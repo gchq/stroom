@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#347** : Added a 'Source' node to pipelines to establish a proper root for a pipeline rather than an assumed one based on elements with no parent.
+
 ## [v5.0-beta.41] - 2017-07-20
 
 * Issue **#342** : Changed the way indexing is performed to ensure index readers reference open writers correctly.
