@@ -65,11 +65,6 @@
         vertical-align: top;
         }
 
-        .tickBox {
-        vertical-align: top;
-        margin-top: 1px;
-        }
-
         .viewSource {
         position: absolute;
         right: 4px;
@@ -88,8 +83,6 @@
                 </g:FlowPanel>
                 <g:Label text="Inherit From: " styleName="gwt-Label {style.label}"/>
                 <g:SimplePanel ui:field="inherit"/>
-                <g:Label text="Advanced Mode: " styleName="gwt-Label {style.label}"/>
-                <t:TickBox ui:field="advancedMode" addStyleNames="{style.tickBox}"/>
                 <g:Hyperlink ui:field="viewSource" text="View Source" addStyleNames="{style.viewSource}"/>
             </g:FlowPanel>
         </g:north>
