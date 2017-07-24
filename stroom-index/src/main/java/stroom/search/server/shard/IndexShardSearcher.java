@@ -14,23 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.search.server;
+package stroom.search.server.shard;
 
-import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
-
+import org.apache.lucene.index.IndexWriter;
+import stroom.cache.AbstractCacheBean.Destroyable;
 import stroom.index.shared.IndexShard;
 
-import java.io.IOException;
-
-public interface IndexShardSearcher {
-    void open() throws CorruptIndexException, IOException;
-
-    void close();
+public interface IndexShardSearcher extends Destroyable {
+    IndexWriter getWriter();
 
     IndexReader getReader();
-
-    int getDocumentCount();
 
     IndexShard getIndexShard();
 }

@@ -27,8 +27,6 @@ import stroom.index.server.LuceneVersionUtil;
 import stroom.index.shared.IndexShard;
 import stroom.node.server.StroomPropertyService;
 import stroom.pipeline.server.errorhandler.TerminatedException;
-import stroom.search.server.IndexShardSearcher;
-import stroom.search.server.shard.IndexShardSearcherCache.IndexShardSearcherPool;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskHandlerBean;
@@ -70,14 +68,7 @@ public class IndexShardSearchTaskHandler extends AbstractTaskHandler<IndexShardS
             if (!taskMonitor.isTerminated()) {
                 taskMonitor.info("Searching shard " + task.getShardNumber() + " of " + task.getShardTotal() + " (id="
                         + task.getIndexShardId() + ")");
-
-                IndexShardSearcherPool pool = null;
-                try {
-                    pool = indexShardSearcherCache.getOrCreate(task.getIndexShardId());
-                    searchPool(pool, task);
-                } finally {
-                    copyPoolExceptions(task, pool);
-                }
+                searchPool(task);
             }
         } finally {
             task.getResultReceiver().complete(task.getIndexShardId());
@@ -86,38 +77,20 @@ public class IndexShardSearchTaskHandler extends AbstractTaskHandler<IndexShardS
         return VoidResult.INSTANCE;
     }
 
-    private void searchPool(final IndexShardSearcherPool pool, final IndexShardSearchTask task) {
+    private void searchPool(final IndexShardSearchTask task) {
         try {
-            if (pool == null) {
-                error(task, "Null searcher", null);
+            // Borrow a searcher from this pool.
+            final IndexShardSearcher indexShardSearcher = indexShardSearcherCache.borrowSearcher(task.getIndexShardId());
+            try {
+                searchShard(task, indexShardSearcher);
+            } catch (final Throwable t) {
+                error(task, t.getMessage(), t);
 
-            } else if (!pool.hasExceptions()) {
-                // Borrow a searcher from this pool.
-                final IndexShardSearcher indexShardSearcher = pool.borrowObject();
-                try {
-                    // Exceptions might have been created when the searcher was
-                    // borrowed from the pool.
-                    if (!pool.hasExceptions()) {
-                        searchShard(task, indexShardSearcher);
-                    }
-                } catch (final Throwable t) {
-                    error(task, t.getMessage(), t);
-
-                } finally {
-                    pool.returnObject(indexShardSearcher);
-                }
+            } finally {
+                indexShardSearcherCache.returnSearcher(indexShardSearcher);
             }
         } catch (final Throwable t) {
             error(task, t.getMessage(), t);
-        }
-    }
-
-    private void copyPoolExceptions(final IndexShardSearchTask task, final IndexShardSearcherPool pool) {
-        if (pool != null && pool.hasExceptions()) {
-            // If any exceptions were added to the pool then copy them out here.
-            for (final Throwable t : pool.getExceptions()) {
-                error(task, t.getMessage(), t);
-            }
         }
     }
 

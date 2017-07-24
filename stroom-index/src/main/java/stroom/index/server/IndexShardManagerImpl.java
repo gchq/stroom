@@ -64,7 +64,6 @@ import java.util.concurrent.locks.Lock;
  * Pool API into open index shards.
  */
 @Component
-@Profile(StroomSpringProfiles.PROD)
 @Secured(IndexShard.MANAGE_INDEX_SHARDS_PERMISSION)
 public class IndexShardManagerImpl implements IndexShardManager {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardManagerImpl.class);
@@ -125,7 +124,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
                         final Iterator<IndexShard> iter = shards.iterator();
                         while (!task.isTerminated() && iter.hasNext()) {
                             final IndexShard shard = iter.next();
-                            final IndexShardWriter writer = indexShardWriterCache.getQuiet(shard);
+                            final IndexShardWriter writer = indexShardWriterCache.getQuiet(shard.getId());
                             try {
                                 if (writer != null) {
                                     LOGGER.debug(() -> "deleteLogicallyDeleted() - Unable to delete index shard " + shard.getId() + " as it is currently in use");
@@ -231,7 +230,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
                     try {
                         switch (action) {
                             case FLUSH:
-                                final IndexShardWriter indexShardWriter = indexShardWriterCache.getQuiet(shard);
+                                final IndexShardWriter indexShardWriter = indexShardWriterCache.getQuiet(shard.getId());
                                 if (indexShardWriter != null) {
                                     LOGGER.debug(() -> action.getActivity() + " index shard " + shard.getId());
                                     shardCount.incrementAndGet();
@@ -297,13 +296,13 @@ public class IndexShardManagerImpl implements IndexShardManager {
     }
 
     @Override
-    public IndexShard load(final IndexShard indexShard) {
+    public IndexShard load(final long indexShardId) {
         // Allow the thing to run without a service (e.g. benchmark mode)
         if (indexShardService != null) {
-            final Lock lock = shardUpdateLocks.getLockForKey(indexShard.getId());
+            final Lock lock = shardUpdateLocks.getLockForKey(indexShardId);
             lock.lock();
             try {
-                return indexShardService.load(indexShard);
+                return indexShardService.loadById(indexShardId);
             } finally {
                 lock.unlock();
             }

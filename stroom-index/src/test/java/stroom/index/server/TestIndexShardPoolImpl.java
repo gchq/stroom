@@ -162,8 +162,7 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
 
             final IndexShardKeyCache indexShardKeyCache = new MockIndexShardKeyCache(mockIndexShardService);
             final IndexShardWriterCache indexShardWriterCache = new MockIndexShardWriterCache(maxDocumentsPerIndexShard);
-            final IndexShardManager indexShardManager = new MockIndexShardManager();
-            final Indexer indexer = new IndexerImpl(indexShardKeyCache, indexShardWriterCache, indexShardManager);
+            final Indexer indexer = new IndexerImpl(indexShardKeyCache, indexShardWriterCache, null);
 
             indexShardsCreated.set(0);
             failedThreads.set(0);

@@ -74,8 +74,8 @@ public class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         final IndexShard indexShard2 = indexShardKeyCache.getOrCreate(indexShardKey2);
 
         // Create 2 writers in the pool.
-        final IndexShardWriter writer1 = indexShardWriterCache.getOrCreate(indexShard1);
-        final IndexShardWriter writer2 = indexShardWriterCache.getOrCreate(indexShard2);
+        final IndexShardWriter writer1 = indexShardWriterCache.getOrCreate(indexShard1.getId());
+        final IndexShardWriter writer2 = indexShardWriterCache.getOrCreate(indexShard2.getId());
 
         // Assert that there are 2 writers in the pool.
         Assert.assertEquals(2, commonTestControl.countEntity(IndexShard.class));
@@ -109,7 +109,7 @@ public class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         checkDocCount(1, indexShard2);
 
         // Close writer1 by removing the writer from the cache.
-        indexShardWriterCache.remove(indexShard1);
+        indexShardWriterCache.remove(indexShard1.getId());
         // Make sure that writer1 was closed.
         Assert.assertFalse(compareStatus(IndexShardStatus.OPEN, indexShard1));
 
@@ -155,10 +155,10 @@ public class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         final IndexShardKey indexShardKey1 = IndexShardKeyUtil.createTestKey(index1);
         IndexShard indexShard1 = indexShardKeyCache.getOrCreate(indexShardKey1);
 
-        final IndexShardWriter writer1 = indexShardWriterCache.getOrCreate(indexShard1);
+        final IndexShardWriter writer1 = indexShardWriterCache.getOrCreate(indexShard1.getId());
 
         for (int i = 0; i < 10; i++) {
-            Assert.assertEquals(writer1, indexShardWriterCache.getOrCreate(indexShard1));
+            Assert.assertEquals(writer1, indexShardWriterCache.getOrCreate(indexShard1.getId()));
             indexer.addDocument(indexShardKey1, document);
         }
 
@@ -180,13 +180,13 @@ public class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         // Get the new writer.
         IndexShard indexShard2 = indexShardKeyCache.getOrCreate(indexShardKey1);
         Assert.assertNotEquals(indexShard1, indexShard2);
-        final IndexShardWriter writer2 = indexShardWriterCache.getOrCreate(indexShard2);
+        final IndexShardWriter writer2 = indexShardWriterCache.getOrCreate(indexShard2.getId());
 
         // Make sure the writers are not the same.
         Assert.assertNotEquals(writer1, writer2);
 
         for (int i = 1; i < 10; i++) {
-            Assert.assertEquals(writer2, indexShardWriterCache.getOrCreate(indexShard2));
+            Assert.assertEquals(writer2, indexShardWriterCache.getOrCreate(indexShard2.getId()));
             indexer.addDocument(indexShardKey1, document);
         }
 

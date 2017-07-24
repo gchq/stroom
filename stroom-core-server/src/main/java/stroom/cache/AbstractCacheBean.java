@@ -83,6 +83,14 @@ public abstract class AbstractCacheBean<K, V> implements CacheBean<K, V> {
         cacheManager.addCache(ehcache);
     }
 
+    protected long getMaxCacheEntries() {
+        return selfPopulatingCache.getCacheConfiguration().getMaxEntriesLocalHeap();
+    }
+
+    protected void setMaxCacheEntries(final long maxCacheEntries) {
+        selfPopulatingCache.getCacheConfiguration().setMaxEntriesLocalHeap(maxCacheEntries);
+    }
+
     public V computeIfAbsent(final K key, final Function<? super K, ? extends V> mappingFunction) {
         return getValue(selfPopulatingCache.get(new Mapping<K, V>(key, mappingFunction)));
     }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.search.server;
+package stroom.search.server.shard;
 
 import java.util.List;
 
@@ -33,6 +33,7 @@ import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardService;
 import stroom.query.shared.IndexConstants;
+import stroom.search.server.SimpleCollector;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.fs.serializable.RASegmentInputStream;
@@ -72,7 +73,6 @@ public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {
                 System.out.println("");
                 System.out.println("Searching Index " + IndexShardUtil.getIndexDir(indexShard));
                 final SimpleCollector simpleCollector = new SimpleCollector();
-                indexShardSearcher.open();
                 final IndexReader reader = indexShardSearcher.getReader();
                 final IndexSearcher searcher = new IndexSearcher(reader);
                 searcher.search(query, simpleCollector);
@@ -100,7 +100,7 @@ public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {
                     System.out.println("\tNo Matches");
                 }
                 System.out.println("");
-                indexShardSearcher.close();
+                indexShardSearcher.destroy();
             } catch (final Exception ex) {
                 ex.printStackTrace();
             }

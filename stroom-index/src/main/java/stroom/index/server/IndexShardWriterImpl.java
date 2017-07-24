@@ -137,7 +137,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                         LOGGER.debug("Checking index - " + indexShard);
                     }
                     // Mark the index as closed.
-                    indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSED);
+                    setStatus(indexShardId, IndexShardStatus.CLOSED);
 
                     if (LOGGER.isDebugEnabled()) {
                         LOGGER.debug("Opening " + indexShard);
@@ -214,16 +214,16 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                     }
 
                     // We have opened the index so update the DB object.
-                    indexShardManager.setStatus(indexShardId, IndexShardStatus.OPEN);
+                    setStatus(indexShardId, IndexShardStatus.OPEN);
 
                 } catch (final LockObtainFailedException t) {
                     LOGGER.warn(t.getMessage());
                     // Something went wrong.
-                    indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSED);
+                    setStatus(indexShardId, IndexShardStatus.CLOSED);
                 } catch (final Throwable t) {
                     LOGGER.error(t.getMessage(), t);
                     // Something went wrong.
-                    indexShardManager.setStatus(indexShardId, IndexShardStatus.CORRUPT);
+                    setStatus(indexShardId, IndexShardStatus.CORRUPT);
                 }
 
             } catch (final Throwable t) {
@@ -354,7 +354,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                     updateShardInfo(startTime);
 
                     // Update the shard status.
-                    indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSED);
+                    setStatus(indexShardId, IndexShardStatus.CLOSED);
                 }
             }
         } finally {
@@ -378,7 +378,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
             // Update the size of the index.
             final Long fileSize = calcFileSize();
 
-            indexShardManager.update(indexShardId, lastDocumentCount, lastCommitDurationMs, lastCommitMs, fileSize);
+            update(indexShardId, lastDocumentCount, lastCommitDurationMs, lastCommitMs, fileSize);
         } catch (final Exception e) {
             LOGGER.error("updateShard()", e);
         }
@@ -421,5 +421,17 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     @Override
     public int getDocumentCount() {
         return documentCount.get();
+    }
+
+    private void setStatus(final long indexShardId, final IndexShardStatus status) {
+        if (indexShardManager != null) {
+            indexShardManager.setStatus(indexShardId, status);
+        }
+    }
+
+    private void update(final long indexShardId, final Integer documentCount, final Long commitDurationMs, final Long commitMs, final Long fileSize) {
+        if (indexShardManager != null) {
+            indexShardManager.update(indexShardId, documentCount, commitDurationMs, commitMs, fileSize);
+        }
     }
 }

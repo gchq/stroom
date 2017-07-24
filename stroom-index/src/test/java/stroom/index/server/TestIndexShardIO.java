@@ -22,13 +22,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShardService;
 import stroom.node.shared.Volume;
 import stroom.query.shared.IndexField;
 import stroom.query.shared.IndexFields;
 import stroom.query.shared.IndexFieldsMap;
-import stroom.search.server.IndexShardSearcher;
-import stroom.search.server.IndexShardSearcherImpl;
+import stroom.search.server.shard.IndexShardSearcher;
+import stroom.search.server.shard.IndexShardSearcherImpl;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
@@ -43,7 +42,7 @@ public class TestIndexShardIO extends StroomUnitTest {
 //    private static final IndexShardService INDEX_SHARD_SERVICE = new MockIndexShardService();
     private static final IndexFields INDEX_FIELDS = IndexFields.createStreamIndexFields();
 //    private static final IndexShardWriterCache INDEX_SHARD_WRITER_CACHE = new MockIndexShardWriterCache();
-    private static final IndexShardManager INDEX_SHARD_MANAGER = new MockIndexShardManager();
+//    private static final IndexShardManager INDEX_SHARD_MANAGER = new MockIndexShardManager();
     private static final IndexConfig INDEX_CONFIG;
 
     static {
@@ -84,7 +83,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         FileSystemUtil.deleteDirectory(dir);
 
         for (int i = 1; i <= 10; i++) {
-            final IndexShardWriter writer = new IndexShardWriterImpl(INDEX_SHARD_MANAGER, INDEX_CONFIG, idx1);
+            final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, idx1);
             writer.flush();
             writer.addDocument(buildDocument(i));
             writer.flush();
@@ -112,15 +111,14 @@ public class TestIndexShardIO extends StroomUnitTest {
         FileSystemUtil.deleteDirectory(dir);
 
         for (int i = 1; i <= 10; i++) {
-            final IndexShardWriter writer = new IndexShardWriterImpl(INDEX_SHARD_MANAGER, INDEX_CONFIG, idx1);
+            final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, idx1);
             writer.addDocument(buildDocument(i));
             writer.destroy();
             Assert.assertEquals(i, writer.getDocumentCount());
 
             final IndexShardSearcher searcher = new IndexShardSearcherImpl(idx1);
-            searcher.open();
             Assert.assertEquals(i, searcher.getReader().maxDoc());
-            searcher.close();
+            searcher.destroy();
         }
     }
 
@@ -142,7 +140,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         final File dir = IndexShardUtil.getIndexDir(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
-        final IndexShardWriter writer = new IndexShardWriterImpl(INDEX_SHARD_MANAGER, INDEX_CONFIG, idx1);
+        final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, idx1);
 
         for (int i = 1; i <= 10; i++) {
             writer.addDocument(buildDocument(i));
@@ -171,7 +169,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         final File dir = IndexShardUtil.getIndexDir(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
-        final IndexShardWriter writer = new IndexShardWriterImpl(INDEX_SHARD_MANAGER, INDEX_CONFIG, idx1);
+        final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, idx1);
 
         for (int i = 1; i <= 10; i++) {
             writer.addDocument(buildDocument(i));
@@ -202,7 +200,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         final File dir = IndexShardUtil.getIndexDir(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
-        final IndexShardWriter writer = new IndexShardWriterImpl(INDEX_SHARD_MANAGER, INDEX_CONFIG, idx1);
+        final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, idx1);
 
         Long lastSize = null;
 

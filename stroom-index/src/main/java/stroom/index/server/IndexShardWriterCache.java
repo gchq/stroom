@@ -25,12 +25,12 @@ import stroom.index.shared.IndexShardKey;
 /**
  * API into our index shard writer cache.
  */
-public interface IndexShardWriterCache extends CacheBean<IndexShard, IndexShardWriter> {
-    IndexShardWriter getOrCreate(IndexShard key);
+public interface IndexShardWriterCache extends CacheBean<Long, IndexShardWriter> {
+    IndexShardWriter getOrCreate(Long indexShardId);
 
-    IndexShardWriter getQuiet(IndexShard key);
+    IndexShardWriter getQuiet(Long indexShardId);
 
-    void remove(IndexShard key);
+    void remove(Long indexShardId);
 
     void flushAll();
 }
