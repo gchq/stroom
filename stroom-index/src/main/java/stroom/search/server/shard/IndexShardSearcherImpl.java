@@ -54,7 +54,7 @@ public class IndexShardSearcherImpl implements IndexShardSearcher {
         this(indexShard, null);
     }
 
-    public IndexShardSearcherImpl(final IndexShard indexShard, final IndexWriter indexWriter) {
+    IndexShardSearcherImpl(final IndexShard indexShard, final IndexWriter indexWriter) {
         this.indexShard = indexShard;
         this.indexWriter = indexWriter;
 
@@ -175,7 +175,7 @@ public class IndexShardSearcherImpl implements IndexShardSearcher {
         return indexWriter;
     }
 
-    public synchronized boolean incrementInUse() {
+    synchronized boolean incrementInUse() {
         if (destroy.get()) {
             return false;
         }
@@ -184,7 +184,7 @@ public class IndexShardSearcherImpl implements IndexShardSearcher {
         return true;
     }
 
-    public synchronized void decrementInUse() {
+    synchronized void decrementInUse() {
         inUse.decrementAndGet();
         if (destroy.get()) {
             destroy();
