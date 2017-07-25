@@ -26,9 +26,8 @@ import stroom.test.DatabaseCommonTestControl;
 import stroom.cluster.server.ClusterNodeManagerImpl;
 import stroom.dashboard.server.QueryServiceImpl;
 import stroom.dictionary.DictionaryServiceImpl;
-import stroom.entity.shared.FolderService;
 import stroom.feed.server.FeedServiceImpl;
-import stroom.feed.shared.FeedService;
+import stroom.feed.server.MockFeedService;
 import stroom.folder.server.FolderServiceImpl;
 import stroom.internalstatistics.MetaDataStatisticImpl;
 import stroom.jobsystem.server.ClusterLockServiceImpl;
@@ -40,18 +39,20 @@ import stroom.node.server.GlobalPropertyServiceImpl;
 import stroom.node.server.NodeConfigImpl;
 import stroom.node.server.NodeServiceImpl;
 import stroom.node.server.RecordCountServiceImpl;
+import stroom.pipeline.server.MockPipelineEntityService;
 import stroom.pipeline.server.PipelineEntityServiceImpl;
 import stroom.pipeline.server.TextConverterServiceImpl;
 import stroom.pipeline.server.XSLTServiceImpl;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.resource.server.ResourceStoreImpl;
+import stroom.security.server.MockFolderService;
 import stroom.security.server.UserServiceImpl;
 import stroom.streamstore.server.DataRetentionExecutor;
 import stroom.streamstore.server.StreamAttributeKeyServiceImpl;
 import stroom.streamstore.server.StreamTypeServiceImpl;
 import stroom.streamstore.server.fs.DataRetentionTransactionHelper;
 import stroom.streamstore.server.fs.FileSystemStreamStore;
-import stroom.streamstore.shared.StreamTypeService;
+import stroom.streamtask.server.MockStreamProcessorFilterService;
+import stroom.streamtask.server.MockStreamProcessorService;
 import stroom.streamtask.server.StreamProcessorFilterServiceImpl;
 import stroom.streamtask.server.StreamProcessorServiceImpl;
 import stroom.streamtask.server.StreamProcessorTaskFactory;
@@ -173,32 +174,32 @@ public class ProcessTestServerComponentScanConfiguration {
     }
 
     @Bean(name = "cachedFolderService")
-    public FolderService getCachedFolderService(final FolderService folderService) {
+    public MockFolderService getCachedFolderService(final MockFolderService folderService) {
         return folderService;
     }
 
     @Bean(name = "cachedStreamTypeService")
-    public StreamTypeService getCachedStreamTypeService(final StreamTypeService streamTypeService) {
+    public MockStreamTypeService getCachedStreamTypeService(final MockStreamTypeService streamTypeService) {
         return streamTypeService;
     }
 
     @Bean(name = "cachedFeedService")
-    public FeedService getCachedFeedService(final FeedService feedService) {
+    public MockFeedService getCachedFeedService(final MockFeedService feedService) {
         return feedService;
     }
 
     @Bean(name = "cachedPipelineEntityService")
-    public PipelineEntityService getCachedPipelineEntityService(final PipelineEntityService pipelineEntityService) {
+    public MockPipelineEntityService getCachedPipelineEntityService(final MockPipelineEntityService pipelineEntityService) {
         return pipelineEntityService;
     }
 
     @Bean(name = "cachedStreamProcessorService")
-    public StreamProcessorService getCachedStreamProcessorService(final StreamProcessorService streamProcessorService) {
+    public MockStreamProcessorService getCachedStreamProcessorService(final MockStreamProcessorService streamProcessorService) {
         return streamProcessorService;
     }
 
     @Bean(name = "cachedStreamProcessorFilterService")
-    public StreamProcessorFilterService getCachedStreamProcessorFilterService(final StreamProcessorFilterService streamProcessorFilterService) {
+    public MockStreamProcessorFilterService getCachedStreamProcessorFilterService(final MockStreamProcessorFilterService streamProcessorFilterService) {
         return streamProcessorFilterService;
     }
 }

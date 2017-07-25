@@ -205,7 +205,7 @@ public class ReferenceData {
         final EffectiveStreamKey effectiveStreamKey = new EffectiveStreamKey(pipelineReference.getFeed(),
                 pipelineReference.getStreamType(), baseTime);
         // Try and fetch a tree set of effective streams for this key.
-        final TreeSet<EffectiveStream> streamSet = effectiveStreamCache.get(effectiveStreamKey);
+        final TreeSet<EffectiveStream> streamSet = effectiveStreamCache.getOrCreate(effectiveStreamKey);
 
         if (streamSet != null && streamSet.size() > 0) {
             // Try and find the stream before the requested time that is less
@@ -237,7 +237,7 @@ public class ReferenceData {
         // If we didn't get a local cache then look in the pool.
         if (mapStore == null) {
             // Get the map store cache associated with this effective feed.
-            mapStore = mapStoreCache.get(mapStoreCacheKey);
+            mapStore = mapStoreCache.getOrCreate(mapStoreCacheKey);
             // Cache this item locally for use later on.
             localMapStoreCache.put(mapStoreCacheKey, mapStore);
         }

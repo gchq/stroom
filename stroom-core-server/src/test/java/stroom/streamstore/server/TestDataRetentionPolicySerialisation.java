@@ -22,8 +22,8 @@ import stroom.query.api.v1.ExpressionBuilder;
 import stroom.query.api.v1.ExpressionOperator;
 import stroom.query.api.v1.ExpressionOperator.Op;
 import stroom.query.api.v1.ExpressionTerm.Condition;
-import stroom.streamstore.shared.DataRetentionPolicy;
-import stroom.streamstore.shared.DataRetentionRule;
+import stroom.policy.shared.DataRetentionPolicy;
+import stroom.policy.shared.DataRetentionRule;
 import stroom.streamstore.shared.TimeUnit;
 
 import javax.xml.bind.JAXBContext;

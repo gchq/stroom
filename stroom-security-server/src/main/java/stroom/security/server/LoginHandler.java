@@ -50,7 +50,10 @@ public class LoginHandler extends AbstractTaskHandler<LoginAction, UserAndPermis
         }
 
         final User user = userService.loadByUuid(userRef.getUuid());
-        final Integer daysToExpiry = getDaysToExpiry(user.getPasswordExpiryMs());
+        Integer daysToExpiry = null;
+        if (user.isLoginExpiry()) {
+            daysToExpiry = getDaysToExpiry(user.getPasswordExpiryMs());
+        }
         return new UserAndPermissions(userRef, userAndPermissionsHelper.get(userRef), daysToExpiry);
     }
 

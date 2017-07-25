@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server;
+package stroom.policy.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.streamstore.shared.DataRetentionPolicy;
-import stroom.streamstore.shared.FetchDataRetentionPolicyAction;
+import stroom.policy.shared.DataRetentionPolicy;
+import stroom.policy.shared.FetchDataRetentionPolicyAction;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;

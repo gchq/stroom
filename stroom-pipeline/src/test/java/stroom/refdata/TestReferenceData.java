@@ -72,7 +72,7 @@ public class TestReferenceData extends StroomUnitTest {
         try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
             final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null) {
                 @Override
-                public TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
+                TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                     return streamSet;
                 }
             };

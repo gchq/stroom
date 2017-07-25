@@ -32,6 +32,7 @@ import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFieldType;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexService;
+import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.pipeline.server.PipelineMarshaller;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
@@ -65,7 +66,9 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
     @Resource
     private FeedHolder feedHolder;
     @Resource
-    private MockIndexShardManager indexShardManager;
+    private MockIndexShardWriterCache indexShardWriterCache;
+    @Resource
+    private MockIndexShardKeyCache indexShardKeyCache;
     @Resource
     private IndexService indexService;
     @Resource
@@ -78,7 +81,7 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
     @Before
     @After
     public void clear() {
-        indexShardManager.clear();
+        indexShardWriterCache.clear();
     }
 
     @Test
@@ -198,7 +201,7 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
         pipelineEntity = pipelineEntityService.save(pipelineEntity);
 
         // Create the parser.
-        final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+        final PipelineData pipelineData = pipelineDataCache.getOrCreate(pipelineEntity);
         final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
         feedHolder.setFeed(new Feed());
@@ -214,12 +217,13 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
         // Wrote anything ?
         final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
-        if (indexShardManager.getWriters().size() > 0) {
-            Assert.assertEquals(1, indexShardManager.getWriters().size());
-            Assert.assertTrue(indexShardManager.getWriters().containsKey(indexShardKey));
+        if (indexShardWriterCache.getWriters().size() > 0) {
+            Assert.assertEquals(1, indexShardWriterCache.getWriters().size());
+            final IndexShard indexShard = indexShardKeyCache.getOrCreate(indexShardKey);
+            Assert.assertTrue(indexShardWriterCache.getWriters().containsKey(indexShard.getId()));
 
             // Get a writer from the pool.
-            for (final IndexShardWriter writer : indexShardManager.getWriters().values()) {
+            for (final IndexShardWriter writer : indexShardWriterCache.getWriters().values()) {
                 return ((MockIndexShardWriter) writer).getDocuments();
             }
         }

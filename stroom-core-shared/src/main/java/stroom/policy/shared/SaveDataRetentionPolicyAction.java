@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.shared;
+package stroom.policy.shared;
 
 import stroom.entity.shared.Action;
 

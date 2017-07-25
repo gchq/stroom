@@ -16,24 +16,19 @@
 
 package stroom.security.server;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.JWTCreationException;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.UnavailableSecurityManagerException;
 import org.apache.shiro.session.InvalidSessionException;
 import org.apache.shiro.subject.Subject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionException;
 import stroom.entity.server.GenericEntityService;
+import stroom.entity.shared.DocRef;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityService;
-import stroom.query.api.v1.DocRef;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.security.server.exception.AuthenticationServiceException;
@@ -43,6 +38,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
 import stroom.security.spring.SecurityConfiguration;
+import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
@@ -55,7 +51,7 @@ import java.util.Set;
 @Profile(SecurityConfiguration.PROD_SECURITY)
 @Scope(value = StroomScope.PROTOTYPE, proxyMode = ScopedProxyMode.INTERFACES)
 class SecurityContextImpl implements SecurityContext {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SecurityContextImpl.class);
+    private static final StroomLogger LOGGER = StroomLogger.getLogger(SecurityContextImpl.class);
 
     private final DocumentPermissionsCache documentPermissionsCache;
     private final UserGroupsCache userGroupsCache;
@@ -63,7 +59,6 @@ class SecurityContextImpl implements SecurityContext {
     private final UserService userService;
     private final DocumentPermissionService documentPermissionService;
     private final GenericEntityService genericEntityService;
-    private final JWTService jwtService;
 
     private static final String INTERNAL = "INTERNAL";
     private static final String SYSTEM = "system";
@@ -71,21 +66,13 @@ class SecurityContextImpl implements SecurityContext {
     private static final UserRef INTERNAL_PROCESSING_USER = new UserRef(User.ENTITY_TYPE, "0", INTERNAL, false, true);
 
     @Inject
-    SecurityContextImpl(
-            final DocumentPermissionsCache documentPermissionsCache,
-            final UserGroupsCache userGroupsCache,
-            final UserAppPermissionsCache userAppPermissionsCache,
-            final UserService userService,
-            final DocumentPermissionService documentPermissionService,
-            final GenericEntityService genericEntityService,
-            final JWTService jwtService) {
+    SecurityContextImpl(final DocumentPermissionsCache documentPermissionsCache, final UserGroupsCache userGroupsCache, final UserAppPermissionsCache userAppPermissionsCache, final UserService userService, final DocumentPermissionService documentPermissionService, final GenericEntityService genericEntityService) {
         this.documentPermissionsCache = documentPermissionsCache;
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
         this.userService = userService;
         this.documentPermissionService = documentPermissionService;
         this.genericEntityService = genericEntityService;
-        this.jwtService = jwtService;
     }
 
     @Override
@@ -177,11 +164,6 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     @Override
-    public String getToken() {
-        return jwtService.getTokenFor(getUserId());
-    }
-
-    @Override
     public boolean isLoggedIn() {
         return getUserRef() != null;
     }
@@ -234,7 +216,7 @@ class SecurityContextImpl implements SecurityContext {
 
         // See if the user belongs to a group that has permission.
         if (!result) {
-            final List<UserRef> userGroups = userGroupsCache.get(userRef);
+            final List<UserRef> userGroups = userGroupsCache.getOrCreate(userRef);
             result = hasUserGroupsAppPermission(userGroups, permission);
         }
 
@@ -254,7 +236,7 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     private boolean hasUserAppPermission(final UserRef userRef, final String permission) {
-        final UserAppPermissions userAppPermissions = userAppPermissionsCache.get(userRef);
+        final UserAppPermissions userAppPermissions = userAppPermissionsCache.getOrCreate(userRef);
         if (userAppPermissions != null) {
             return userAppPermissions.getUserPermissons().contains(permission);
         }
@@ -295,7 +277,7 @@ class SecurityContextImpl implements SecurityContext {
 
         // See if the user belongs to a group that has permission.
         if (!result) {
-            final List<UserRef> userGroups = userGroupsCache.get(userRef);
+            final List<UserRef> userGroups = userGroupsCache.getOrCreate(userRef);
             result = hasUserGroupsDocumentPermission(userGroups, docRef, permission);
         }
 
@@ -315,7 +297,7 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     private boolean hasUserDocumentPermission(final UserRef userRef, final DocRef docRef, final String permission) {
-        final DocumentPermissions documentPermissions = documentPermissionsCache.get(docRef);
+        final DocumentPermissions documentPermissions = documentPermissionsCache.getOrCreate(docRef);
         if (documentPermissions != null) {
             final Set<String> permissions = documentPermissions.getPermissionsForUser(userRef);
             if (permissions != null) {

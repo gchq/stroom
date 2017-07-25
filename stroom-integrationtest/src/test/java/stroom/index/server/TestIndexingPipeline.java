@@ -19,14 +19,16 @@ package stroom.index.server;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexService;
-import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.IndexShard;
 import stroom.pipeline.server.PipelineMarshaller;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
@@ -64,7 +66,7 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
     @Resource
     private ErrorReceiverProxy errorReceiver;
     @Resource
-    private MockIndexShardManager indexShardManager;
+    private MockIndexShardWriterCache indexShardWriterCache;
     @Resource
     private PipelineEntityService pipelineEntityService;
     @Resource
@@ -77,7 +79,7 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
     @Before
     @After
     public void clear() {
-        indexShardManager.clear();
+        indexShardWriterCache.clear();
     }
 
     @Test
@@ -118,17 +120,17 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
         pipelineEntity = pipelineEntityService.save(pipelineEntity);
 
         // Create the parser.
-        final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+        final PipelineData pipelineData = pipelineDataCache.getOrCreate(pipelineEntity);
         final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
         final InputStream inputStream = StroomProcessTestFileUtil.getInputStream(SAMPLE_INDEX_INPUT);
         pipeline.process(inputStream);
 
         // Make sure we only used one writer.
-        Assert.assertEquals(1, indexShardManager.getWriters().size());
+        Assert.assertEquals(1, indexShardWriterCache.getWriters().size());
 
         // Get the writer from the pool.
-        final Map<IndexShardKey, IndexShardWriter> writers = indexShardManager.getWriters();
+        final Map<Long, IndexShardWriter> writers = indexShardWriterCache.getWriters();
         final MockIndexShardWriter writer = (MockIndexShardWriter) writers.values().iterator().next();
 
         // Check that we indexed 4 documents.

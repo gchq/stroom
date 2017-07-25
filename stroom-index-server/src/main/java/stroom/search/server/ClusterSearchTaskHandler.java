@@ -1,42 +1,41 @@
 /*
- * Copyright 2017 Crown Copyright
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  * Copyright 2017 Crown Copyright
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package stroom.search.server;
 
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
+import org.springframework.util.StringUtils;
 import stroom.dashboard.expression.FieldIndexMap;
 import stroom.dictionary.shared.DictionaryService;
+import stroom.entity.shared.DocRef;
 import stroom.index.shared.Index;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFieldsMap;
 import stroom.index.shared.IndexService;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.MessageUtil;
 import stroom.pipeline.server.errorhandler.TerminatedException;
-import stroom.query.Coprocessor;
-import stroom.query.CoprocessorSettings;
-import stroom.query.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.query.api.v1.DocRef;
-import stroom.query.api.v1.ExpressionOperator;
-import stroom.query.api.v1.Param;
+import stroom.query.shared.CoprocessorSettings;
+import stroom.query.shared.ExpressionOperator;
+import stroom.query.shared.IndexField;
+import stroom.query.shared.IndexFieldsMap;
+import stroom.query.shared.Search;
 import stroom.search.server.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.search.server.extraction.ExtractionTaskExecutor;
 import stroom.search.server.extraction.ExtractionTaskProducer;
@@ -57,14 +56,15 @@ import stroom.task.server.TaskHandlerBean;
 import stroom.task.server.TaskManager;
 import stroom.task.server.TaskTerminatedException;
 import stroom.util.config.PropertyUtil;
+import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Location;
+import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -87,7 +87,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
     private static final int DEFAULT_MAX_STORED_DATA_QUEUE_SIZE = 1000000;
     private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterSearchTaskHandler.class);
+    private static final StroomLogger LOGGER = StroomLogger.getLogger(ClusterSearchTaskHandler.class);
     private static final long ONE_SECOND = TimeUnit.SECONDS.toNanos(1);
     private final TaskManager taskManager;
     private final IndexService indexService;
@@ -113,19 +113,19 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
 
     @Inject
     ClusterSearchTaskHandler(final TaskManager taskManager,
-                             final IndexService indexService,
-                             final DictionaryService dictionaryService,
-                             final TaskMonitor taskMonitor,
-                             final CoprocessorFactory coprocessorFactory,
-                             final IndexShardSearchTaskExecutor indexShardSearchTaskExecutor,
-                             final IndexShardSearchTaskProperties indexShardSearchTaskProperties,
-                             final IndexShardSearcherCache indexShardSearcherCache,
-                             final ExtractionTaskExecutor extractionTaskExecutor,
-                             final ExtractionTaskProperties extractionTaskProperties,
-                             final StreamStore streamStore,
-                             final SecurityContext securityContext,
-                             @Value("#{propertyConfigurer.getProperty('stroom.search.maxBooleanClauseCount')}") final String maxBooleanClauseCount,
-                             @Value("#{propertyConfigurer.getProperty('stroom.search.maxStoredDataQueueSize')}") final String maxStoredDataQueueSize) {
+                                    final IndexService indexService,
+                                    final DictionaryService dictionaryService,
+                                    final TaskMonitor taskMonitor,
+                                    final CoprocessorFactory coprocessorFactory,
+                                    final IndexShardSearchTaskExecutor indexShardSearchTaskExecutor,
+                                    final IndexShardSearchTaskProperties indexShardSearchTaskProperties,
+                                    final IndexShardSearcherCache indexShardSearcherCache,
+                                    final ExtractionTaskExecutor extractionTaskExecutor,
+                                    final ExtractionTaskProperties extractionTaskProperties,
+                                    final StreamStore streamStore,
+                                    final SecurityContext securityContext,
+                                    @Value("#{propertyConfigurer.getProperty('stroom.search.maxBooleanClauseCount')}") final String maxBooleanClauseCount,
+                                    @Value("#{propertyConfigurer.getProperty('stroom.search.maxStoredDataQueueSize')}") final String maxStoredDataQueueSize) {
         this.taskManager = taskManager;
         this.indexService = indexService;
         this.dictionaryService = dictionaryService;
@@ -151,13 +151,13 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                 taskMonitor.info("Initialising...");
 
                 this.task = task;
-                final stroom.query.api.v1.Query query = task.getQuery();
+                final Search search = task.getSearch();
 
                 try {
                     final long frequency = task.getResultSendFrequency();
 
                     // Reload the index.
-                    index = indexService.loadByUuid(query.getDataSource().getUuid());
+                    index = indexService.loadByUuid(search.getDataSourceRef().getUuid());
 
                     // Make sure we have a search index.
                     if (index == null) {
@@ -183,8 +183,8 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                     // coprocessors need us to extract data.
                     boolean filterStreams = false;
 
-                    Map<CoprocessorKey, Coprocessor> coprocessorMap = null;
-                    Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap = null;
+                    Map<Integer, Coprocessor<?>> coprocessorMap = null;
+                    Map<DocRef, Set<Coprocessor<?>>> extractionCoprocessorsMap = null;
 
                     final FieldIndexMap extractionFieldIndexMap = new FieldIndexMap(true);
 
@@ -199,8 +199,8 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                         coprocessorMap = new HashMap<>();
                         extractionCoprocessorsMap = new HashMap<>();
 
-                        for (final Entry<CoprocessorKey, CoprocessorSettings> entry : task.getCoprocessorMap().entrySet()) {
-                            final CoprocessorKey coprocessorId = entry.getKey();
+                        for (final Entry<Integer, CoprocessorSettings> entry : task.getCoprocessorMap().entrySet()) {
+                            final Integer coprocessorId = entry.getKey();
                             final CoprocessorSettings coprocessorSettings = entry.getValue();
 
                             // Figure out where the fields required by this
@@ -211,15 +211,8 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                                 fieldIndexMap = extractionFieldIndexMap;
                             }
 
-                            // Create a parameter map.
-                            final Map<String, String> paramMap = Collections.emptyMap();
-                            if (query.getParams() != null) {
-                                for (final Param param : query.getParams()) {
-                                    paramMap.put(param.getKey(), param.getValue());
-                                }
-                            }
-                            final Coprocessor coprocessor = coprocessorFactory.create(
-                                    coprocessorSettings, fieldIndexMap, paramMap, taskMonitor);
+                            final Coprocessor<?> coprocessor = coprocessorFactory.create(
+                                    coprocessorSettings, fieldIndexMap, search.getParamMap(), taskMonitor);
 
                             if (coprocessor != null) {
                                 coprocessorMap.put(coprocessorId, coprocessor);
@@ -233,7 +226,12 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                                     filterStreams = true;
                                 }
 
-                                extractionCoprocessorsMap.computeIfAbsent(pipelineRef, k -> new HashSet<>()).add(coprocessor);
+                                Set<Coprocessor<?>> extractionCoprocessors = extractionCoprocessorsMap.get(pipelineRef);
+                                if (extractionCoprocessors == null) {
+                                    extractionCoprocessors = new HashSet<>();
+                                    extractionCoprocessorsMap.put(pipelineRef, extractionCoprocessors);
+                                }
+                                extractionCoprocessors.add(coprocessor);
                             }
                         }
                     }
@@ -244,7 +242,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                     taskManager.execAsync(senderTask);
 
                     taskMonitor.info("Searching...");
-                    search(task, query, storedFieldNames, filterStreams, indexFieldsMap, extractionFieldIndexMap,
+                    search(task, search, storedFieldNames, filterStreams, indexFieldsMap, extractionFieldIndexMap,
                             extractionCoprocessorsMap);
 
                 } catch (final Throwable t) {
@@ -273,19 +271,19 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
         }
     }
 
-    private void search(final ClusterSearchTask task, final stroom.query.api.v1.Query query, final String[] storedFieldNames,
+    private void search(final ClusterSearchTask task, final Search search, final String[] storedFieldNames,
                         final boolean filterStreams, final IndexFieldsMap indexFieldsMap,
                         final FieldIndexMap extractionFieldIndexMap,
-                        final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap) {
+                        final Map<DocRef, Set<Coprocessor<?>>> extractionCoprocessorsMap) {
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Incoming search request:\n" + query.getExpression().toString());
+            LOGGER.debug("Incoming search request:\n" + search.getExpression().toString());
         }
 
         try {
             if (extractionCoprocessorsMap != null && extractionCoprocessorsMap.size() > 0
                     && task.getShards().size() > 0) {
                 // Make sure we are searching a specific index.
-                if (query.getExpression() == null) {
+                if (search.getExpression() == null) {
                     throw new SearchException("Search expression has not been set");
                 }
 
@@ -297,7 +295,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                         SearchExpressionQuery searchExpressionQuery = queryMap.get(luceneVersion);
                         if (searchExpressionQuery == null) {
                             // Get a query for the required lucene version.
-                            searchExpressionQuery = getQuery(luceneVersion, query.getExpression(), indexFieldsMap);
+                            searchExpressionQuery = getQuery(luceneVersion, search.getExpression(), indexFieldsMap);
                             queryMap.put(luceneVersion, searchExpressionQuery);
                         }
 
@@ -309,14 +307,14 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                         SearchExpressionQuery query = null;
                         try {
                             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
-                                    dictionaryService, indexFieldsMap, maxBooleanClauseCount, task.getDateTimeLocale(), task.getNow());
+                                    dictionaryService, indexFieldsMap, maxBooleanClauseCount, search.getDateTimeLocale(), task.getNow());
                             query = searchExpressionQueryBuilder.buildQuery(version, expression);
 
                             // Make sure the query was created successfully.
                             if (query.getQuery() == null) {
-                                throw new SearchException("Failed to build LUCENE query given expression");
+                                throw new SearchException("Failed to build Lucene query given expression");
                             } else if (LOGGER.isDebugEnabled()) {
-                                LOGGER.debug("Lucence Query is " + query.toString());
+                                LOGGER.debug("Lucene Query is " + query.toString());
                             }
                         } catch (final Exception e) {
                             error(e.getMessage(), e);
@@ -403,12 +401,12 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
         }
     }
 
-    private void transfer(final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap,
+    private void transfer(final Map<DocRef, Set<Coprocessor<?>>> extractionCoprocessorsMap,
                           final IndexShardSearchTaskProducer indexShardSearchTaskProducer) {
         // If we aren't required to filter streams and aren't using pipelines to
         // feed data to coprocessors then just do a simple data transfer to the
         // coprocessors.
-        final Set<Coprocessor> coprocessors = extractionCoprocessorsMap.get(null);
+        final Set<Coprocessor<?>> coprocessors = extractionCoprocessorsMap.get(null);
         boolean complete = false;
         List<String[]> list = null;
 
@@ -440,7 +438,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                         throw new TerminatedException();
                     }
 
-                    for (final Coprocessor coprocessor : coprocessors) {
+                    for (final Coprocessor<?> coprocessor : coprocessors) {
                         coprocessor.receive(values);
                     }
                 }
@@ -455,7 +453,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
     @Override
     public void log(final Severity severity, final Location location, final String elementId, final String message,
                     final Throwable e) {
-        LOGGER.debug(e.getMessage(), e);
+        LOGGER.debug(e, e);
 
         if (e == null || !(e instanceof TaskTerminatedException)) {
             final String msg = MessageUtil.getMessage(message, e);

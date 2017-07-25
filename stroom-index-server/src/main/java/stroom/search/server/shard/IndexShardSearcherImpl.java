@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.search.server;
+package stroom.search.server.shard;
 
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
@@ -28,64 +28,61 @@ import stroom.index.server.AbstractIndexShard;
 import stroom.index.server.IndexShardUtil;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
+import stroom.search.server.SearchException;
 
+import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class IndexShardSearcherImpl implements IndexShardSearcher {
-    private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardSearcherImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractIndexShard.class);
 
     private final IndexShard indexShard;
-    private final IndexWriter indexWriter;
+
     /**
      * Lucene stuff
      */
-    private Directory directory;
-    private IndexReader indexReader;
+    private final Directory directory;
+    private final IndexWriter indexWriter;
+    private final IndexReader indexReader;
+
+    private final AtomicInteger inUse = new AtomicInteger();
+    private final AtomicBoolean destroy = new AtomicBoolean();
 
     public IndexShardSearcherImpl(final IndexShard indexShard) {
         this(indexShard, null);
     }
 
-    public IndexShardSearcherImpl(final IndexShard indexShard, final IndexWriter indexWriter) {
+    IndexShardSearcherImpl(final IndexShard indexShard, final IndexWriter indexWriter) {
         this.indexShard = indexShard;
         this.indexWriter = indexWriter;
-    }
 
-    @Override
-    public IndexReader getReader() {
-        if (indexReader == null) {
-            throw new SearchException("Index is not open for searching");
-        }
-        return indexReader;
-    }
+        Directory directory = null;
+        IndexReader indexReader = null;
 
-    @Override
-    public void open() {
-        // First try and open the reader with the current writer if one is in
-        // use. If a writer is available this will give us the benefit of being
-        // able to search documents that have not yet been flushed to disk.
-        if (indexReader == null && indexWriter != null) {
-            try {
-                indexReader = openWithWriter(indexWriter);
-            } catch (final Exception e) {
-                LOGGER.error(e.getMessage());
+        try {
+            // First try and open the reader with the current writer if one is in
+            // use. If a writer is available this will give us the benefit of being
+            // able to search documents that have not yet been flushed to disk.
+            if (indexWriter != null) {
+                try {
+                    indexReader = openWithWriter(indexWriter);
+                } catch (final Exception e) {
+                    LOGGER.error(e.getMessage());
+                }
             }
-        }
 
-        // If we failed to open a reader with an existing writer then just try
-        // and use the index shard directory.
-        if (indexReader == null) {
-            try {
-                final Path dir = IndexShardUtil.getIndexPath(indexShard);
+            // If we failed to open a reader with an existing writer then just try
+            // and use the index shard directory.
+            if (indexReader == null) {
+                final File dir = IndexShardUtil.getIndexDir(indexShard);
 
-                if (dir == null || !Files.isDirectory(dir)) {
-                    throw new SearchException("Index directory not found for searching: " + dir.toAbsolutePath().toString());
+                if (!dir.isDirectory()) {
+                    throw new SearchException("Index directory not found for searching: " + dir.getAbsolutePath());
                 }
 
-                directory = new NIOFSDirectory(dir, NoLockFactory.INSTANCE);
-
+                directory = new NIOFSDirectory(dir, NoLockFactory.getNoLockFactory());
                 indexReader = DirectoryReader.open(directory);
 
                 // Check the document count in the index matches the DB.
@@ -103,11 +100,21 @@ public class IndexShardSearcherImpl implements IndexShardSearcher {
                                 + " DB says " + indexShard.getDocumentCount());
                     }
                 }
-            } catch (final IOException e) {
-                LOGGER.error(e.getMessage());
-                throw SearchException.wrap(e);
             }
+        } catch (final IOException e) {
+            throw new SearchException(e.getMessage(), e);
         }
+
+        this.directory = directory;
+        this.indexReader = indexReader;
+    }
+
+    @Override
+    public IndexReader getReader() {
+        if (indexReader == null) {
+            throw new SearchException("Index is not open for searching");
+        }
+        return indexReader;
     }
 
     private IndexReader openWithWriter(final IndexWriter indexWriter) throws IOException {
@@ -127,47 +134,60 @@ public class IndexShardSearcherImpl implements IndexShardSearcher {
     }
 
     @Override
-    public void close() {
-        try {
-            if (indexReader != null) {
-                indexReader.close();
-            }
-        } catch (final IOException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw SearchException.wrap(e);
-        } finally {
-            indexReader = null;
-
+    public synchronized void destroy() {
+        destroy.set(true);
+        if (inUse.compareAndSet(0, 0)) {
             try {
-                if (directory != null) {
-                    directory.close();
+                try {
+                    if (indexReader != null) {
+                        indexReader.close();
+                    }
+                } finally {
+                    if (directory != null) {
+                        directory.close();
+                    }
                 }
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
                 throw SearchException.wrap(e);
-            } finally {
-                directory = null;
             }
         }
     }
 
-    @Override
-    public String toString() {
-        final StringBuilder builder = new StringBuilder();
-        builder.append("indexShard=");
-        builder.append(indexShard);
-        builder.append(", documentCount=");
-        builder.append(indexShard.getDocumentCount());
-        return builder.toString();
+    public boolean destroyed() {
+        return destroy.get();
     }
 
     @Override
-    public int getDocumentCount() {
-        return indexShard.getDocumentCount();
+    public String toString() {
+        return "indexShard=" +
+                indexShard +
+                ", documentCount=" +
+                indexShard.getDocumentCount();
     }
 
     @Override
     public IndexShard getIndexShard() {
         return indexShard;
+    }
+
+    public IndexWriter getWriter() {
+        return indexWriter;
+    }
+
+    synchronized boolean incrementInUse() {
+        if (destroy.get()) {
+            return false;
+        }
+
+        inUse.incrementAndGet();
+        return true;
+    }
+
+    synchronized void decrementInUse() {
+        inUse.decrementAndGet();
+        if (destroy.get()) {
+            destroy();
+        }
     }
 }

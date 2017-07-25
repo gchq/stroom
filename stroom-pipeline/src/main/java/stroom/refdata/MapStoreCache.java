@@ -41,7 +41,7 @@ public final class MapStoreCache extends AbstractCacheBean<MapStoreCacheKey, Map
 
     @Inject
     public MapStoreCache(final CacheManager cacheManager, final ReferenceDataLoader referenceDataLoader,
-            final MapStoreInternPool internPool) {
+                         final MapStoreInternPool internPool) {
         super(cacheManager, "Reference Data - Map Store Cache", MAX_CACHE_ENTRIES);
         this.referenceDataLoader = referenceDataLoader;
         this.internPool = internPool;
@@ -49,8 +49,11 @@ public final class MapStoreCache extends AbstractCacheBean<MapStoreCacheKey, Map
         setMaxLiveTime(10, TimeUnit.MINUTES);
     }
 
-    @Override
-    public MapStore create(final MapStoreCacheKey mapStoreCacheKey) {
+    public MapStore getOrCreate(final MapStoreCacheKey key) {
+        return computeIfAbsent(key, this::create);
+    }
+
+    private MapStore create(final MapStoreCacheKey mapStoreCacheKey) {
         MapStore mapStore = null;
 
         try {

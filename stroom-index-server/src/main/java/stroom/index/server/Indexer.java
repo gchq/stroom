@@ -17,12 +17,8 @@
 package stroom.index.server;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexWriter;
-import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 
 public interface Indexer {
     void addDocument(IndexShardKey key, Document document);
-
-    IndexWriter getWriter(final IndexShard indexShard);
 }

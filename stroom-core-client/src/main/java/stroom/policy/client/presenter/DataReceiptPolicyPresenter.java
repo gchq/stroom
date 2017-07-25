@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,9 +32,9 @@ import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
-import stroom.streamstore.shared.DataReceiptPolicy;
-import stroom.streamstore.shared.FetchDataReceiptPolicyAction;
-import stroom.streamstore.shared.SaveDataReceiptPolicyAction;
+import stroom.policy.shared.DataReceiptPolicy;
+import stroom.policy.shared.FetchDataReceiptPolicyAction;
+import stroom.policy.shared.SaveDataReceiptPolicyAction;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;

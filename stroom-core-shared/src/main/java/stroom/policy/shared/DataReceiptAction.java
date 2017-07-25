@@ -1,4 +1,4 @@
-package stroom.streamstore.shared;
+package stroom.policy.shared;
 
 import stroom.util.shared.HasDisplayValue;
 

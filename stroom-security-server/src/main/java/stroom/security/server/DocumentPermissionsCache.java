@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ import stroom.cache.AbstractCacheBean;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventBus;
 import stroom.entity.server.event.EntityEventHandler;
+import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityAction;
-import stroom.query.api.v1.DocRef;
 import stroom.security.shared.DocumentPermissions;
 
 import javax.inject.Inject;
@@ -56,8 +56,11 @@ public class DocumentPermissionsCache extends AbstractCacheBean<DocRef, Document
         setMaxLiveTime(30, TimeUnit.MINUTES);
     }
 
-    @Override
-    protected DocumentPermissions create(final DocRef document) {
+    DocumentPermissions getOrCreate(final DocRef key) {
+        return computeIfAbsent(key, this::create);
+    }
+
+    private DocumentPermissions create(final DocRef document) {
         return documentPermissionService.getPermissionsForDocument(document);
     }
 

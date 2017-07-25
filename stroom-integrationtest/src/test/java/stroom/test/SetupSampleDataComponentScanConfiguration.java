@@ -38,7 +38,6 @@ import stroom.feed.server.MockFeedService;
 import stroom.index.server.MockIndexService;
 import stroom.index.server.MockIndexShardService;
 import stroom.index.server.MockIndexShardWriter;
-import stroom.index.server.MockIndexShardManager;
 import stroom.jobsystem.server.MockClusterLockService;
 import stroom.jobsystem.server.MockJobManager;
 import stroom.jobsystem.server.MockJobNodeService;
@@ -139,7 +138,6 @@ import stroom.xmlschema.server.MockXMLSchemaService;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockHttpServletRequest.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockHttpServletResponse.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockIndexService.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockIndexShardManager.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockIndexShardService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockIndexShardWriter.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockJobManager.class),

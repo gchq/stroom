@@ -22,8 +22,8 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.datasource.api.v1.DataSourceField.DataSourceFieldType;
 import stroom.item.client.ItemListBox;
+import stroom.query.shared.IndexFieldType;
 import stroom.policy.client.presenter.FieldEditPresenter.FieldEditView;
 
 public class FieldEditViewImpl extends ViewImpl implements FieldEditView {
@@ -33,7 +33,7 @@ public class FieldEditViewImpl extends ViewImpl implements FieldEditView {
     private final Widget widget;
 
     @UiField
-    ItemListBox<DataSourceFieldType> type;
+    ItemListBox<IndexFieldType> type;
     @UiField
     TextBox name;
 
@@ -41,7 +41,7 @@ public class FieldEditViewImpl extends ViewImpl implements FieldEditView {
     public FieldEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
 
-        type.addItems(DataSourceFieldType.values());
+        type.addItems(IndexFieldType.values());
     }
 
     @Override
@@ -50,22 +50,22 @@ public class FieldEditViewImpl extends ViewImpl implements FieldEditView {
     }
 
     @Override
-    public DataSourceFieldType getType() {
+    public IndexFieldType getFieldUse() {
         return type.getSelectedItem();
     }
 
     @Override
-    public void setType(final DataSourceFieldType type) {
-        this.type.setSelectedItem(type);
+    public void setFieldUse(final IndexFieldType fieldUse) {
+        type.setSelectedItem(fieldUse);
     }
 
     @Override
-    public String getName() {
+    public String getFieldName() {
         return name.getText();
     }
 
     @Override
-    public void setName(final String name) {
-        this.name.setText(name);
+    public void setFieldName(final String fieldName) {
+        name.setText(fieldName);
     }
 }

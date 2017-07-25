@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server;
+package stroom.policy.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,9 +23,10 @@ import org.springframework.stereotype.Component;
 import stroom.entity.shared.Period;
 import stroom.jobsystem.server.ClusterLockService;
 import stroom.jobsystem.server.JobTrackedSchedule;
+import stroom.streamstore.server.DataRetentionAgeUtil;
 import stroom.streamstore.server.fs.DataRetentionTransactionHelper;
-import stroom.streamstore.shared.DataRetentionPolicy;
-import stroom.streamstore.shared.DataRetentionRule;
+import stroom.policy.shared.DataRetentionPolicy;
+import stroom.policy.shared.DataRetentionRule;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;

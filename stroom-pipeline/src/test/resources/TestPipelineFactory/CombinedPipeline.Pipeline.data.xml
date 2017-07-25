@@ -3,6 +3,10 @@
    <elements>
       <add>
          <element>
+            <id>Source</id>
+            <type>Source</type>
+         </element>
+         <element>
             <id>combinedParser</id>
             <type>CombinedParser</type>
          </element>
@@ -122,6 +126,14 @@
    </properties>
    <links>
       <add>
+         <link>
+            <from>Source</from>
+            <to>combinedParser</to>
+         </link>
+         <link>
+            <from>Source</from>
+            <to>fileAppender2</to>
+         </link>
          <link>
             <from>combinedParser</from>
             <to>readRecordCountFilter</to>

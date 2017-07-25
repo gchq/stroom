@@ -32,10 +32,11 @@ import stroom.feed.shared.FeedService;
 import stroom.node.shared.Volume;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
+import stroom.policy.server.DataRetentionService;
 import stroom.security.SecurityContext;
 import stroom.streamstore.server.fs.FileSystemStreamTypeUtil;
-import stroom.streamstore.shared.DataRetentionPolicy;
-import stroom.streamstore.shared.DataRetentionRule;
+import stroom.policy.shared.DataRetentionPolicy;
+import stroom.policy.shared.DataRetentionRule;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
@@ -53,6 +54,7 @@ import stroom.feed.MetaMap;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -73,7 +75,7 @@ public class StreamAttributeMapServiceImpl
     private final StreamTypeService streamTypeService;
     private final StreamProcessorService streamProcessorService;
     private final StreamStore streamStore;
-    private final DataRetentionService dataRetentionService;
+    private final Provider<DataRetentionService> dataRetentionServiceProvider;
     private final DictionaryService dictionaryService;
     private final StroomEntityManager entityManager;
     private final StreamAttributeKeyService streamAttributeKeyService;
@@ -86,7 +88,7 @@ public class StreamAttributeMapServiceImpl
                                   @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
                                   @Named("cachedStreamProcessorService") final StreamProcessorService streamProcessorService,
                                   final StreamStore streamStore,
-                                  final DataRetentionService dataRetentionService,
+                                  final Provider<DataRetentionService> dataRetentionServiceProvider,
                                   final DictionaryService dictionaryService,
                                   final StroomEntityManager entityManager,
                                   final StreamAttributeKeyService streamAttributeKeyService,
@@ -97,7 +99,7 @@ public class StreamAttributeMapServiceImpl
         this.streamTypeService = streamTypeService;
         this.streamProcessorService = streamProcessorService;
         this.streamStore = streamStore;
-        this.dataRetentionService = dataRetentionService;
+        this.dataRetentionServiceProvider = dataRetentionServiceProvider;
         this.dictionaryService = dictionaryService;
         this.entityManager = entityManager;
         this.streamAttributeKeyService = streamAttributeKeyService;
@@ -131,17 +133,21 @@ public class StreamAttributeMapServiceImpl
             if (streamList.size() > 0) {
                 // Create a data retention rule decorator for adding data retention information to returned stream attribute maps.
                 List<DataRetentionRule> rules = Collections.emptyList();
-                final DataRetentionPolicy dataRetentionPolicy = dataRetentionService.load();
-                if (dataRetentionPolicy != null && dataRetentionPolicy.getRules() != null) {
-                    rules = dataRetentionPolicy.getRules();
-                }
-                final StreamAttributeMapRetentionRuleDecorator ruleDecorator = new StreamAttributeMapRetentionRuleDecorator(dictionaryService, rules);
 
-                // Query the database for the attribute values
-                if (criteria.isUseCache()) {
-                    loadAttributeMapFromDatabase(criteria, streamMDList, streamList, ruleDecorator);
-                } else {
-                    loadAttributeMapFromFileSystem(criteria, streamMDList, streamList, ruleDecorator);
+                final DataRetentionService dataRetentionService = dataRetentionServiceProvider.get();
+                if (dataRetentionService != null) {
+                    final DataRetentionPolicy dataRetentionPolicy = dataRetentionService.load();
+                    if (dataRetentionPolicy != null && dataRetentionPolicy.getRules() != null) {
+                        rules = dataRetentionPolicy.getRules();
+                    }
+                    final StreamAttributeMapRetentionRuleDecorator ruleDecorator = new StreamAttributeMapRetentionRuleDecorator(dictionaryService, rules);
+
+                    // Query the database for the attribute values
+                    if (criteria.isUseCache()) {
+                        loadAttributeMapFromDatabase(criteria, streamMDList, streamList, ruleDecorator);
+                    } else {
+                        loadAttributeMapFromFileSystem(criteria, streamMDList, streamList, ruleDecorator);
+                    }
                 }
             }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,37 +21,38 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.index.shared.Index;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShardService;
 import stroom.node.shared.Volume;
-import stroom.search.server.IndexShardSearcher;
-import stroom.search.server.IndexShardSearcherImpl;
+import stroom.query.shared.IndexField;
+import stroom.query.shared.IndexFields;
+import stroom.query.shared.IndexFieldsMap;
+import stroom.search.server.shard.IndexShardSearcher;
+import stroom.search.server.shard.IndexShardSearcherImpl;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.HashSet;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestIndexShardIO extends StroomUnitTest {
-    private static IndexShardService service = new MockIndexShardService();
-    private static IndexFields indexFields = IndexFields.createStreamIndexFields();
+
+//    private static final IndexShardService INDEX_SHARD_SERVICE = new MockIndexShardService();
+    private static final IndexFields INDEX_FIELDS = IndexFields.createStreamIndexFields();
+//    private static final IndexShardWriterCache INDEX_SHARD_WRITER_CACHE = new MockIndexShardWriterCache();
+//    private static final IndexShardManager INDEX_SHARD_MANAGER = new MockIndexShardManager();
+    private static final IndexConfig INDEX_CONFIG;
 
     static {
-        indexFields.add(IndexField.createField("Id"));
-        indexFields.add(IndexField.createField("Test"));
-        indexFields.add(IndexField.createField("Id2"));
-    }
+        INDEX_FIELDS.add(IndexField.createField("Id"));
+        INDEX_FIELDS.add(IndexField.createField("Test"));
+        INDEX_FIELDS.add(IndexField.createField("Id2"));
 
-    public static void main(final String[] args) {
-        for (final Object s : System.getProperties().keySet()) {
-            System.out.println(s + "=" + System.getProperty((String) s));
-        }
+        final Index index = new Index();
+        index.setName("Test");
+        INDEX_CONFIG = new IndexConfig(index, INDEX_FIELDS, new IndexFieldsMap(INDEX_FIELDS));
     }
 
     private Document buildDocument(final int id) {
@@ -78,18 +79,16 @@ public class TestIndexShardIO extends StroomUnitTest {
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
         // Clean up from previous tests.
-        final Path dir = IndexShardUtil.getIndexPath(idx1);
+        final File dir = IndexShardUtil.getIndexDir(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
         for (int i = 1; i <= 10; i++) {
-            final boolean first = i == 1;
-            final IndexShardWriter writer = new IndexShardWriterImpl(service, indexFields, index, idx1);
-            writer.open(first);
+            final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, idx1);
             writer.flush();
             writer.addDocument(buildDocument(i));
             writer.flush();
-            Assert.assertEquals(i, idx1.getDocumentCount());
-            writer.close();
+            Assert.assertEquals(i, writer.getDocumentCount());
+            writer.destroy();
         }
     }
 
@@ -108,23 +107,18 @@ public class TestIndexShardIO extends StroomUnitTest {
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
         // Clean up from previous tests.
-        final Path dir = IndexShardUtil.getIndexPath(idx1);
+        final File dir = IndexShardUtil.getIndexDir(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
-        final IndexShardWriter writer = new IndexShardWriterImpl(service, indexFields, index, idx1);
-
         for (int i = 1; i <= 10; i++) {
-            final boolean create = i == 1;
-            writer.open(create);
+            final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, idx1);
             writer.addDocument(buildDocument(i));
-            Assert.assertEquals(i - 1, idx1.getDocumentCount());
-            writer.close();
-            Assert.assertEquals(i, idx1.getDocumentCount());
+            writer.destroy();
+            Assert.assertEquals(i, writer.getDocumentCount());
 
             final IndexShardSearcher searcher = new IndexShardSearcherImpl(idx1);
-            searcher.open();
             Assert.assertEquals(i, searcher.getReader().maxDoc());
-            searcher.close();
+            searcher.destroy();
         }
     }
 
@@ -143,19 +137,18 @@ public class TestIndexShardIO extends StroomUnitTest {
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
         // Clean up from previous tests.
-        final Path dir = IndexShardUtil.getIndexPath(idx1);
+        final File dir = IndexShardUtil.getIndexDir(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
-        final IndexShardWriter writer = new IndexShardWriterImpl(service, indexFields, index, idx1);
-        writer.open(true);
+        final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, idx1);
 
         for (int i = 1; i <= 10; i++) {
             writer.addDocument(buildDocument(i));
             writer.flush();
-            Assert.assertEquals(i, idx1.getDocumentCount());
+            Assert.assertEquals(i, writer.getDocumentCount());
         }
 
-        writer.close();
+        writer.destroy();
     }
 
     @Test
@@ -173,20 +166,18 @@ public class TestIndexShardIO extends StroomUnitTest {
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
         // Clean up from previous tests.
-        final Path dir = IndexShardUtil.getIndexPath(idx1);
+        final File dir = IndexShardUtil.getIndexDir(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
-        final IndexShardWriter writer = new IndexShardWriterImpl(service, indexFields, index, idx1);
-        writer.open(true);
+        final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, idx1);
 
         for (int i = 1; i <= 10; i++) {
             writer.addDocument(buildDocument(i));
-            Assert.assertEquals("No docs flushed ", i - 1, idx1.getDocumentCount());
             writer.flush();
-            Assert.assertEquals("No docs flushed ", i, idx1.getDocumentCount());
+            Assert.assertEquals("No docs flushed ", i, writer.getDocumentCount());
         }
 
-        writer.close();
+        writer.destroy();
     }
 
     @Test
@@ -206,11 +197,10 @@ public class TestIndexShardIO extends StroomUnitTest {
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
         // Clean up from previous tests.
-        final Path dir = IndexShardUtil.getIndexPath(idx1);
+        final File dir = IndexShardUtil.getIndexDir(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
-        final IndexShardWriterImpl writer = new IndexShardWriterImpl(service, indexFields, index, idx1);
-        writer.open(true);
+        final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, idx1);
 
         Long lastSize = null;
 
@@ -218,7 +208,7 @@ public class TestIndexShardIO extends StroomUnitTest {
 
         for (int i = 1; i <= 100; i++) {
             writer.addDocument(buildDocument(i));
-            writer.sync();
+//            writer.sync();
             // System.out.println(writer.getIndexWriter().ramSizeInBytes());
 
             final Long newSize = idx1.getFileSize();
@@ -237,10 +227,16 @@ public class TestIndexShardIO extends StroomUnitTest {
         // Assert.assertEquals("Some flush happened before we expected it "
         // + flushSet, 0, flushSet.size());
 
-        writer.close();
+        writer.destroy();
         Assert.assertTrue("Expected not to flush", flushSet.isEmpty());
         // Assert.assertEquals("Expected to flush every 2048 docs...","[2048,
         // 6144, 4096, 8192]",
         // flushSet.toString());
+    }
+
+    public static void main(final String[] args) {
+        for (final Object s : System.getProperties().keySet()) {
+            System.out.println(s + "=" + System.getProperty((String) s));
+        }
     }
 }

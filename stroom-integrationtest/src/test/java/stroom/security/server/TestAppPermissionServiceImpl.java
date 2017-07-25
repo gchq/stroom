@@ -160,11 +160,11 @@ public class TestAppPermissionServiceImpl extends AbstractCoreIntegrationTest {
 
         final Set<UserRef> allUsers = new HashSet<>();
         allUsers.add(user);
-        allUsers.addAll(userGroupsCache.get(user));
+        allUsers.addAll(userGroupsCache.getOrCreate(user));
 
         final Set<String> combinedPermissions = new HashSet<>();
         for (final UserRef userRef : allUsers) {
-            final UserAppPermissions userAppPermissions = userAppPermissionsCache.get(userRef);
+            final UserAppPermissions userAppPermissions = userAppPermissionsCache.getOrCreate(userRef);
             final Set<String> userPermissions = userAppPermissions.getUserPermissons();
             combinedPermissions.addAll(userPermissions);
         }

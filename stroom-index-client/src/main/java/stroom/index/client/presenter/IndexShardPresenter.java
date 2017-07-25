@@ -38,7 +38,6 @@ import stroom.entity.client.presenter.HasPermissionCheck;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.ResultList;
-import stroom.index.shared.CloseIndexShardAction;
 import stroom.index.shared.DeleteIndexShardAction;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.FlushIndexShardAction;
@@ -72,7 +71,6 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     private ResultList<IndexShard> resultList = null;
     private final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
     private final ButtonView buttonFlush;
-    private final ButtonView buttonClose;
     private final ButtonView buttonDelete;
     private Index index;
     private boolean readOnly;
@@ -89,7 +87,6 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         this.securityContext = securityContext;
 
         buttonFlush = getView().addButton(SvgPresets.SHARD_FLUSH);
-        buttonClose = getView().addButton(SvgPresets.SHARD_CLOSE);
         buttonDelete = getView().addButton(SvgPresets.DELETE);
         buttonDelete.setTitle("Delete Selected Shards");
 
@@ -104,11 +101,6 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                 flush();
             }
         }));
-        registerHandler(buttonClose.addClickHandler(event -> {
-            if (NativeEvent.BUTTON_LEFT == event.getNativeButton()) {
-                close();
-            }
-        }));
         registerHandler(buttonDelete.addClickHandler(event -> {
             if (NativeEvent.BUTTON_LEFT == event.getNativeButton()) {
                 delete();
@@ -119,7 +111,6 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     private void enableButtons() {
         final boolean enabled = !readOnly && (criteria.getIndexShardSet().size() > 0 || Boolean.TRUE.equals(criteria.getIndexShardSet().getMatchAll())) && securityContext.hasAppPermission(IndexShard.MANAGE_INDEX_SHARDS_PERMISSION);
         buttonFlush.setEnabled(enabled);
-        buttonClose.setEnabled(enabled);
         buttonDelete.setEnabled(allowDelete && enabled);
     }
 
@@ -429,31 +420,6 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         }
     }
 
-    private void close() {
-        if (Boolean.TRUE.equals(criteria.getIndexShardSet().getMatchAll())) {
-            ConfirmEvent.fire(this, "Are you sure you want to close the selected index shards?", result -> {
-                if (result) {
-                    ConfirmEvent.fire(IndexShardPresenter.this,
-                            "You have selected to close all filtered index shards! Are you absolutely sure you want to do this?",
-                            result1 -> {
-                                if (result1) {
-                                    doClose();
-                                }
-                            });
-                }
-            });
-        } else if (criteria.getIndexShardSet().isConstrained()) {
-            ConfirmEvent.fire(this, "Are you sure you want to close the selected index shards?", result -> {
-                if (result) {
-                    doClose();
-                }
-            });
-
-        } else {
-            AlertEvent.fireWarn(this, "No index shards have been selected for closing!", null);
-        }
-    }
-
     private void delete() {
         if (Boolean.TRUE.equals(criteria.getIndexShardSet().getMatchAll())) {
             ConfirmEvent.fire(this, "Are you sure you want to delete the selected index shards?",
@@ -486,14 +452,6 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         dispatcher.exec(action).onSuccess(result ->
                 AlertEvent.fireInfo(IndexShardPresenter.this,
                         "Selected index shards will be flushed. Please be patient as this may take some time.",
-                        this::refresh));
-    }
-
-    private void doClose() {
-        final CloseIndexShardAction action = new CloseIndexShardAction(criteria);
-        dispatcher.exec(action).onSuccess(result ->
-                AlertEvent.fireInfo(IndexShardPresenter.this,
-                        "Selected index shards will be closed. Please be patient as this may take some time.",
                         this::refresh));
     }
 

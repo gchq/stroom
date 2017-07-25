@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,18 @@
  * limitations under the License.
  */
 
-package stroom.search.server;
+package stroom.policy.shared;
 
-import org.apache.lucene.index.IndexReader;
-import stroom.index.shared.IndexShard;
+import stroom.entity.shared.Action;
 
-public interface IndexShardSearcher {
-    void open();
+public class FetchDataRetentionPolicyAction extends Action<DataRetentionPolicy> {
+    private static final long serialVersionUID = 6648093324274652291L;
 
-    void close();
+    public FetchDataRetentionPolicyAction() {
+    }
 
-    IndexReader getReader();
-
-    int getDocumentCount();
-
-    IndexShard getIndexShard();
+    @Override
+    public String getTaskName() {
+        return "Fetch Data Retention Policy";
+    }
 }

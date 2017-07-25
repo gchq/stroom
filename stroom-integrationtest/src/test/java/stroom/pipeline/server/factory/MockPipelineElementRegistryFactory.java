@@ -16,6 +16,11 @@
 
 package stroom.pipeline.server.factory;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import stroom.pipeline.server.source.SourceElement;
+import stroom.util.spring.StroomSpringProfiles;
 import org.springframework.context.annotation.Profile;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.filter.RecordCountFilter;
@@ -46,6 +51,7 @@ public class MockPipelineElementRegistryFactory implements ElementRegistryFactor
 
     public MockPipelineElementRegistryFactory() {
         final List<Class<?>> elementClasses = new ArrayList<>();
+        elementClasses.add(SourceElement.class);
         elementClasses.add(CombinedParser.class);
         elementClasses.add(DSParser.class);
         elementClasses.add(JSONParser.class);

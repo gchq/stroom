@@ -60,6 +60,14 @@ public class PipelineElement implements Comparable<PipelineElement>, SharedObjec
     @XmlElement(required = true)
     private String type;
 
+    public PipelineElement() {
+    }
+
+    public PipelineElement(final String id, final String type) {
+        this.id = id;
+        this.type = type;
+    }
+
     public String getId() {
         return id;
     }

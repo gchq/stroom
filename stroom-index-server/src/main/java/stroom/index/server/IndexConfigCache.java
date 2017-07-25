@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.shared;
+package stroom.index.server;
 
-import stroom.entity.shared.Action;
+import stroom.cache.CacheBean;
+import stroom.entity.shared.DocRef;
 
-public class FetchDataReceiptPolicyAction extends Action<DataReceiptPolicy> {
-    private static final long serialVersionUID = 1131164657465601115L;
-
-    public FetchDataReceiptPolicyAction() {
-    }
-
-    @Override
-    public String getTaskName() {
-        return "Fetch Data Receipt Policy";
-    }
+public interface IndexConfigCache extends CacheBean<DocRef, IndexConfig> {
+    IndexConfig getOrCreate(DocRef key);
 }

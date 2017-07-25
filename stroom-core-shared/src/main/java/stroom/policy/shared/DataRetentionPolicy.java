@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.shared;
+package stroom.policy.shared;
 
-import stroom.datasource.api.v1.DataSourceField;
 import stroom.util.shared.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -28,36 +27,23 @@ import javax.xml.bind.annotation.XmlType;
 import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "DataReceiptPolicy", propOrder = {"fields", "rules"})
-@XmlRootElement(name = "dataReceiptPolicy")
-public class DataReceiptPolicy implements SharedObject {
-    private static final long serialVersionUID = -7268301402378907741L;
-
-    @XmlElement(name = "fields")
-    private List<DataSourceField> fields;
+@XmlType(name = "DataRetentionPolicy", propOrder = {"rules"})
+@XmlRootElement(name = "dataRetentionPolicy")
+public class DataRetentionPolicy implements SharedObject {
     @XmlElement(name = "rule")
-    private List<DataReceiptRule> rules;
+    private List<DataRetentionRule> rules;
     @XmlTransient
     private int version;
 
-    public DataReceiptPolicy() {
+    public DataRetentionPolicy() {
         // Default constructor for GWT serialisation.
     }
 
-    public DataReceiptPolicy(final List<DataSourceField> fields, final List<DataReceiptRule> rules) {
-        this.fields = fields;
+    public DataRetentionPolicy(final List<DataRetentionRule> rules) {
         this.rules = rules;
     }
 
-    public List<DataSourceField> getFields() {
-        return fields;
-    }
-
-    public void setFields(final List<DataSourceField> fields) {
-        this.fields = fields;
-    }
-
-    public List<DataReceiptRule> getRules() {
+    public List<DataRetentionRule> getRules() {
         return rules;
     }
 
@@ -74,16 +60,13 @@ public class DataReceiptPolicy implements SharedObject {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        final DataReceiptPolicy that = (DataReceiptPolicy) o;
+        final DataRetentionPolicy that = (DataRetentionPolicy) o;
 
-        if (fields != null ? !fields.equals(that.fields) : that.fields != null) return false;
         return rules != null ? rules.equals(that.rules) : that.rules == null;
     }
 
     @Override
     public int hashCode() {
-        int result = fields != null ? fields.hashCode() : 0;
-        result = 31 * result + (rules != null ? rules.hashCode() : 0);
-        return result;
+        return rules != null ? rules.hashCode() : 0;
     }
 }

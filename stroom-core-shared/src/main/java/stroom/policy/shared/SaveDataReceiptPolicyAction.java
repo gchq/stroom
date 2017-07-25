@@ -14,18 +14,29 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.shared;
+package stroom.policy.shared;
 
 import stroom.entity.shared.Action;
 
-public class FetchDataRetentionPolicyAction extends Action<DataRetentionPolicy> {
-    private static final long serialVersionUID = 6648093324274652291L;
+public class SaveDataReceiptPolicyAction extends Action<DataReceiptPolicy> {
+    private static final long serialVersionUID = 1966204124382806515L;
 
-    public FetchDataRetentionPolicyAction() {
+    private DataReceiptPolicy dataReceiptPolicy;
+
+    public SaveDataReceiptPolicyAction() {
+        // Default constructor for GWT serialisation.
+    }
+
+    public SaveDataReceiptPolicyAction(final DataReceiptPolicy dataReceiptPolicy) {
+        this.dataReceiptPolicy = dataReceiptPolicy;
+    }
+
+    public DataReceiptPolicy getDataReceiptPolicy() {
+        return dataReceiptPolicy;
     }
 
     @Override
     public String getTaskName() {
-        return "Fetch Data Retention Policy";
+        return "Save Data Receipt Policy";
     }
 }

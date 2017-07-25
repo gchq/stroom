@@ -25,28 +25,52 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.core.client.event.DirtyKeyDownHander;
+
+import stroom.index.shared.Index;
+import stroom.index.shared.Index.PartitionBy;
+import stroom.app.client.event.DirtyKeyDownHander;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
-import stroom.index.shared.Index;
-import stroom.index.shared.Index.PartitionBy;
 import stroom.item.client.ItemListBox;
 import stroom.pipeline.shared.SupportedRetentionAge;
 
 public class IndexSettingsPresenter extends MyPresenterWidget<IndexSettingsPresenter.IndexSettingsView>
         implements HasRead<Index>, HasWrite<Index>, HasDirtyHandlers, IndexSettingsUiHandlers {
+    public interface IndexSettingsView extends View, HasUiHandlers<IndexSettingsUiHandlers> {
+        TextArea getDescription();
+
+        int getMaxDocsPerShard();
+
+        void setMaxDocsPerShard(int maxDocsPerShard);
+
+        int getShardsPerPartition();
+
+        void setShardsPerPartition(int shardsPerPartition);
+
+        int getPartitionSize();
+
+        void setPartitionSize(int size);
+
+        PartitionBy getPartitionBy();
+
+        void setPartitionBy(PartitionBy partitionBy);
+
+        ItemListBox<SupportedRetentionAge> getRetentionAge();
+
+        void setVolumeList(View view);
+    }
+
     private final IndexVolumeListPresenter indexVolumeListPresenter;
-    private final ClientDispatchAsync dispatcher;
+
     @Inject
     public IndexSettingsPresenter(final EventBus eventBus, final IndexSettingsView view,
-            final IndexVolumeListPresenter indexVolumeListPresenter, final ClientDispatchAsync dispatcher) {
+            final IndexVolumeListPresenter indexVolumeListPresenter) {
         super(eventBus, view);
         this.indexVolumeListPresenter = indexVolumeListPresenter;
-        this.dispatcher = dispatcher;
 
         view.setUiHandlers(this);
         view.getRetentionAge().addItems(SupportedRetentionAge.values());
@@ -107,29 +131,5 @@ public class IndexSettingsPresenter extends MyPresenterWidget<IndexSettingsPrese
     @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
-    }
-
-    public interface IndexSettingsView extends View, HasUiHandlers<IndexSettingsUiHandlers> {
-        TextArea getDescription();
-
-        int getMaxDocsPerShard();
-
-        void setMaxDocsPerShard(int maxDocsPerShard);
-
-        int getShardsPerPartition();
-
-        void setShardsPerPartition(int shardsPerPartition);
-
-        int getPartitionSize();
-
-        void setPartitionSize(int size);
-
-        PartitionBy getPartitionBy();
-
-        void setPartitionBy(PartitionBy partitionBy);
-
-        ItemListBox<SupportedRetentionAge> getRetentionAge();
-
-        void setVolumeList(View view);
     }
 }

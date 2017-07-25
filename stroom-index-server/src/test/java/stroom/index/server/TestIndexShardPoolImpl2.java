@@ -16,26 +16,26 @@
 
 package stroom.index.server;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import stroom.cache.CacheManagerAutoCloseable;
 import stroom.index.shared.Index;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
+import stroom.query.shared.IndexField;
+import stroom.query.shared.IndexFields;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.concurrent.SimpleExecutor;
-import stroom.util.test.CheckedLimit;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
+import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.CheckedLimit;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -77,20 +77,22 @@ public class TestIndexShardPoolImpl2 extends StroomUnitTest {
                 indexShard.setVolume(
                         Volume.create(defaultNode, getCurrentTestDir().getAbsolutePath(), VolumeType.PUBLIC));
                 indexShard.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
-                FileSystemUtil.deleteContents(IndexShardUtil.getIndexPath(indexShard));
+                FileSystemUtil.deleteContents(IndexShardUtil.getIndexDir(indexShard));
                 return indexShard;
             }
         };
 
         try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
-            final IndexShardManagerImpl indexShardManager = new IndexShardManagerImpl(cacheManager, null, null,
-                    mockIndexShardService, new NodeCache(defaultNode), null) {
-                @Override
-                protected void destroy(final IndexShardKey key, final IndexShardWriter value) {
-                    checkedLimit.decrement();
-                    super.destroy(key, value);
-                }
-            };
+//            final IndexShardManagerImpl indexShardManager = new IndexShardManagerImpl(cacheManager, null, null,
+//                    mockIndexShardService, new NodeCache(defaultNode), null) {
+//                @Override
+//                protected void destroy(final IndexShardKey key, final IndexShardWriter value) {
+//                    checkedLimit.decrement();
+//                    super.destroy(key, value);
+//                }
+//            };
+
+            final Indexer indexer = new MockIndexer();
 
             final Index index = new Index();
             index.setId(1);
@@ -107,7 +109,7 @@ public class TestIndexShardPoolImpl2 extends StroomUnitTest {
                         final Field field = FieldFactory.create(indexField, "test");
                         final Document document = new Document();
                         document.add(field);
-                        indexShardManager.addDocument(indexShardKey, document);
+                        indexer.addDocument(indexShardKey, document);
                     }
                 });
             }

@@ -26,6 +26,7 @@ import stroom.feed.MetaMap;
 import stroom.proxy.repo.MetaMapFactory;
 import stroom.streamstore.server.MockStreamStore;
 import stroom.util.thread.ThreadLocalBuffer;
+import stroom.proxy.repo.MetaMapFactory;
 
 /**
  * @Configuration specific to TesetDataFeedServiceImpl.

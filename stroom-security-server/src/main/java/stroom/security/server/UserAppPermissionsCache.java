@@ -22,13 +22,14 @@ import stroom.cache.AbstractCacheBean;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventBus;
 import stroom.entity.server.event.EntityEventHandler;
+import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityAction;
-import stroom.query.api.v1.DocRef;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -41,7 +42,7 @@ public class UserAppPermissionsCache extends AbstractCacheBean<UserRef, UserAppP
 
     @Inject
     UserAppPermissionsCache(final CacheManager cacheManager,
-                            final UserAppPermissionService userAppPermissionService, final Provider<EntityEventBus> eventBusProvider) {
+                                   final UserAppPermissionService userAppPermissionService, final Provider<EntityEventBus> eventBusProvider) {
         super(cacheManager, "User App Permissions Cache", MAX_CACHE_ENTRIES);
         this.userAppPermissionService = userAppPermissionService;
         this.eventBusProvider = eventBusProvider;
@@ -49,8 +50,11 @@ public class UserAppPermissionsCache extends AbstractCacheBean<UserRef, UserAppP
         setMaxLiveTime(30, TimeUnit.MINUTES);
     }
 
-    @Override
-    protected UserAppPermissions create(final UserRef user) {
+    UserAppPermissions getOrCreate(final UserRef key) {
+        return computeIfAbsent(key, this::create);
+    }
+
+    private UserAppPermissions create(final UserRef user) {
         return userAppPermissionService.getPermissionsForUser(user);
     }
 

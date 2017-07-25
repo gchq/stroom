@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,12 +21,12 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.query.api.v1.DocRef;
-import stroom.query.api.v1.ExpressionBuilder;
-import stroom.query.api.v1.ExpressionOperator;
-import stroom.query.api.v1.ExpressionOperator.Op;
+import stroom.entity.shared.DocRef;
+import stroom.query.shared.ExpressionBuilder;
+import stroom.query.shared.ExpressionOperator;
+import stroom.query.shared.ExpressionOperator.Op;
 import stroom.policy.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
-import stroom.streamstore.shared.DataRetentionRule;
+import stroom.policy.shared.DataRetentionRule;
 import stroom.streamstore.shared.FetchFieldsAction;
 import stroom.streamstore.shared.TimeUnit;
 
@@ -43,7 +43,7 @@ public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionR
         this.editExpressionPresenter = editExpressionPresenter;
         view.setExpressionView(editExpressionPresenter.getView());
 
-        dispatcher.exec(new FetchFieldsAction()).onSuccess(result -> editExpressionPresenter.init(dispatcher, new DocRef("STREAM_STORE", "STREAM_STORE"), result.getFields()));
+        dispatcher.exec(new FetchFieldsAction()).onSuccess(result -> editExpressionPresenter.init(dispatcher, new DocRef("STREAM_STORE", "STREAM_STORE"), result.getIndexFields()));
     }
 
     void read(final DataRetentionRule rule) {

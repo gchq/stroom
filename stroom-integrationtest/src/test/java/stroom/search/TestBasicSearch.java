@@ -30,7 +30,8 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.index.server.FieldFactory;
 import stroom.index.server.IndexShardKeyUtil;
-import stroom.index.server.IndexShardManager;
+import stroom.index.server.IndexShardWriterCache;
+import stroom.index.server.Indexer;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
@@ -39,8 +40,8 @@ import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexShardService;
-import stroom.search.server.IndexShardSearcher;
-import stroom.search.server.IndexShardSearcherImpl;
+import stroom.search.server.shard.IndexShardSearcher;
+import stroom.search.server.shard.IndexShardSearcherImpl;
 import stroom.search.server.MaxHitCollector;
 
 import javax.annotation.Resource;
@@ -49,7 +50,9 @@ import java.util.List;
 
 public class TestBasicSearch extends AbstractCoreIntegrationTest {
     @Resource
-    private IndexShardManager indexShardManager;
+    private Indexer indexer;
+    @Resource
+    private IndexShardWriterCache indexShardWriterCache;
     @Resource
     private IndexShardService indexShardService;
     @Resource
@@ -84,10 +87,10 @@ public class TestBasicSearch extends AbstractCoreIntegrationTest {
             document.add(testFld);
             document.add(nonStoredFld);
 
-            indexShardManager.addDocument(indexShardKey, document);
+            indexer.addDocument(indexShardKey, document);
         }
 
-        indexShardManager.flushAll();
+        indexShardWriterCache.flushAll();
 
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
         criteria.getIndexIdSet().add(index);
@@ -103,7 +106,6 @@ public class TestBasicSearch extends AbstractCoreIntegrationTest {
 
         final IndexReader[] searchables = new IndexReader[readers.length];
         for (i = 0; i < readers.length; i++) {
-            readers[i].open();
             searchables[i] = readers[i].getReader();
         }
         final MultiReader multiReader = new MultiReader(searchables);
@@ -137,7 +139,7 @@ public class TestBasicSearch extends AbstractCoreIntegrationTest {
 
         // Close readers.
         for (final IndexShardSearcher reader : readers) {
-            reader.close();
+            reader.destroy();
         }
     }
 }

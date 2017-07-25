@@ -14,30 +14,30 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.server;
+package stroom.policy.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.streamstore.shared.DataReceiptPolicy;
-import stroom.streamstore.shared.FetchDataReceiptPolicyAction;
+import stroom.policy.shared.DataReceiptPolicy;
+import stroom.policy.shared.SaveDataReceiptPolicyAction;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = FetchDataReceiptPolicyAction.class)
+@TaskHandlerBean(task = SaveDataReceiptPolicyAction.class)
 @Scope(StroomScope.TASK)
-public class FetchDataReceiptPolicyHandler extends AbstractTaskHandler<FetchDataReceiptPolicyAction, DataReceiptPolicy> {
+public class SaveDataReceiptPolicyHandler extends AbstractTaskHandler<SaveDataReceiptPolicyAction, DataReceiptPolicy> {
     private final DataReceiptService dataReceiptService;
 
 
     @Inject
-    FetchDataReceiptPolicyHandler(final DataReceiptService dataReceiptService) {
+    SaveDataReceiptPolicyHandler(final DataReceiptService dataReceiptService) {
         this.dataReceiptService = dataReceiptService;
     }
 
     @Override
-    public DataReceiptPolicy exec(final FetchDataReceiptPolicyAction task) {
-        return dataReceiptService.load();
+    public DataReceiptPolicy exec(final SaveDataReceiptPolicyAction task) {
+        return dataReceiptService.save(task.getDataReceiptPolicy());
     }
 }

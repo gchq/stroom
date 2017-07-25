@@ -16,14 +16,15 @@
 
 package stroom.proxy.repo;
 
+import java.util.Enumeration;
+import java.util.StringTokenizer;
+
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import stroom.feed.MetaMap;
 import stroom.util.zip.StroomHeaderArguments;
-
-import javax.servlet.http.HttpServletRequest;
-import java.util.Enumeration;
-import java.util.StringTokenizer;
 
 public class MetaMapFactory {
     public MetaMap create() {

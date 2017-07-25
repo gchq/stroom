@@ -16,8 +16,6 @@
 
 package stroom.index.server;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import stroom.entity.server.MockEntityService;
 import stroom.entity.shared.BaseResultList;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -31,38 +29,36 @@ import stroom.node.shared.Volume.VolumeType;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.spring.StroomSpringProfiles;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.File;
 
 @Profile(StroomSpringProfiles.TEST)
 @Component("indexShardService")
 public class MockIndexShardService extends MockEntityService<IndexShard, FindIndexShardCriteria>
         implements IndexShardService {
-    @Resource
-    private NodeCache nodeCache;
-
     @Override
     public IndexShard createIndexShard(final IndexShardKey indexShardKey, final Node ownerNode) {
         final IndexShard indexShard = new IndexShard();
         indexShard.setVolume(
-                Volume.create(nodeCache.getDefaultNode(), FileUtil.getTempDir().getAbsolutePath(), VolumeType.PUBLIC));
+                Volume.create(ownerNode, FileUtil.getTempDir().getAbsolutePath(), VolumeType.PUBLIC));
         indexShard.setIndex(indexShardKey.getIndex());
         indexShard.setPartition(indexShardKey.getPartition());
         indexShard.setPartitionFromTime(indexShardKey.getPartitionFromTime());
         indexShard.setPartitionToTime(indexShardKey.getPartitionToTime());
         final IndexShard il = save(indexShard);
-        final Path indexPath = IndexShardUtil.getIndexPath(indexShard);
-        if (Files.isDirectory(indexPath)) {
-            FileSystemUtil.deleteContents(indexPath);
+        final File indexDir = IndexShardUtil.getIndexDir(indexShard);
+        if (indexDir.isDirectory()) {
+            FileSystemUtil.deleteContents(indexDir);
         }
         return il;
     }
 
     @Override
     public BaseResultList<IndexShard> find(final FindIndexShardCriteria criteria) throws RuntimeException {
-        final BaseResultList<IndexShard> results = new BaseResultList<IndexShard>();
+        final BaseResultList<IndexShard> results = new BaseResultList<>();
         for (final IndexShard indexShard : map.values()) {
             boolean include = true;
 
