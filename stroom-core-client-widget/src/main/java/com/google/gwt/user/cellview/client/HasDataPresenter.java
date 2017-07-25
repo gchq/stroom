@@ -134,7 +134,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
         this.display = display;
         this.view = view;
         this.keyProvider = keyProvider;
-        this.state = new DefaultState<T>(pageSize);
+        this.state = new DefaultState<>(pageSize);
     }
 
     /**
@@ -630,7 +630,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
         }
 
         // Return the ranges.
-        final List<Range> toRet = new ArrayList<Range>();
+        final List<Range> toRet = new ArrayList<>();
         if (rangeStart0 != -1) {
             final int rangeLength0 = rangeEnd0 - rangeStart0;
             toRet.add(new Range(rangeStart0, rangeLength0));
@@ -650,7 +650,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
     private PendingState<T> ensurePendingState() {
         // Create the pending state if needed.
         if (pendingState == null) {
-            pendingState = new PendingState<T>(state);
+            pendingState = new PendingState<>(state);
         }
 
         // Schedule a command to resolve the pending state. If a command is
@@ -874,7 +874,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
         // the pending state and compare them to the status in the old state. If
         // we know longer have a SelectionModel but had selected rows, we still
         // need to update the rows.
-        final Set<Integer> newlySelectedRows = new HashSet<Integer>();
+        final Set<Integer> newlySelectedRows = new HashSet<>();
         try {
             for (int i = pageStart; i < pageStart + rowDataCount; i++) {
                 // Check the new selection state.
@@ -1340,8 +1340,8 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
      * @param <T> the data type of the presenter
      */
     private static class DefaultState<T> implements State<T> {
-        final List<T> rowData = new ArrayList<T>();
-        final Set<Integer> selectedRows = new HashSet<Integer>();
+        final List<T> rowData = new ArrayList<>();
+        final Set<Integer> selectedRows = new HashSet<>();
         int keyboardSelectedRow = 0;
         T keyboardSelectedRowValue = null;
         int pageSize;
@@ -1433,7 +1433,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
         /**
          * The list of ranges that have been replaced.
          */
-        private final List<Range> replacedRanges = new ArrayList<Range>();
+        private final List<Range> replacedRanges = new ArrayList<>();
         /**
          * A boolean indicating that the user has keyboard selected a new row.
          */

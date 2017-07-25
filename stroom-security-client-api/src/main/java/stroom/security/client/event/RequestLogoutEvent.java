@@ -29,7 +29,7 @@ public class RequestLogoutEvent extends GwtEvent<RequestLogoutEvent.Handler> {
 
     public static Type<Handler> getType() {
         if (TYPE == null) {
-            TYPE = new GwtEvent.Type<Handler>();
+            TYPE = new GwtEvent.Type<>();
         }
         return TYPE;
     }

@@ -23,7 +23,7 @@ import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.StepType;
 
 public class StepControlEvent extends GwtEvent<StepControlEvent.StepControlHandler> {
-    private static final Type<StepControlHandler> TYPE = new Type<StepControlHandler>();
+    private static final Type<StepControlHandler> TYPE = new Type<>();
     private final StepType stepType;
     private final StepLocation stepLocation;
 

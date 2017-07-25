@@ -304,7 +304,7 @@ public class IndexShard extends AuditedEntity {
         // Corrupt - Used to mark shard has been corrupted
         CORRUPT("Corrupt", 666);
 
-        public static final PrimitiveValueConverter<IndexShardStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<IndexShardStatus>(
+        public static final PrimitiveValueConverter<IndexShardStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
                 IndexShardStatus.values());
 
         private final String displayValue;

@@ -34,7 +34,7 @@ public class StatisticsDataSourcePresenter extends EntityEditTabPresenter<LinkTa
     private static final TabData FIELDS = new TabDataImpl("Fields");
     private static final TabData CUSTOM_ROLLUPS = new TabDataImpl("Custom Roll-ups");
 
-    private final TabContentProvider<StatisticStoreEntity> tabContentProvider = new TabContentProvider<StatisticStoreEntity>();
+    private final TabContentProvider<StatisticStoreEntity> tabContentProvider = new TabContentProvider<>();
 
     @Inject
     public StatisticsDataSourcePresenter(final EventBus eventBus, final LinkTabPanelView view,

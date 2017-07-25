@@ -32,7 +32,7 @@ public class VisFunctionCache {
     private final EventBus eventBus;
     private final HandlerRegistry handlerRegistry = new HandlerRegistry();
 
-    private final Map<DocRef, VisFunction> map = new HashMap<DocRef, VisFunction>();
+    private final Map<DocRef, VisFunction> map = new HashMap<>();
     private int functionNo;
 
     @Inject

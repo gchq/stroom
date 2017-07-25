@@ -37,7 +37,7 @@ public class OpenExplorerTabEvent extends GwtEvent<OpenExplorerTabEvent.Handler>
 
     public static Type<Handler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<Handler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }

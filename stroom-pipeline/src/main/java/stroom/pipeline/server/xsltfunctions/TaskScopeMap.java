@@ -26,7 +26,7 @@ import java.util.Map;
 @Component
 @Scope(value = StroomScope.TASK)
 public class TaskScopeMap {
-    private final Map<String, String> map = new HashMap<String, String>();
+    private final Map<String, String> map = new HashMap<>();
 
     public void put(final String key, final String value) {
         map.put(key, value);

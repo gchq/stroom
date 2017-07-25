@@ -72,7 +72,7 @@ public class LoggerPrintStream extends PrintStream {
 
     public void addWatchTerm(String watchTerm) {
         if (watchTerms == null) {
-            watchTerms = new ConcurrentHashMap<String, AtomicInteger>();
+            watchTerms = new ConcurrentHashMap<>();
         }
         watchTerms.put(watchTerm, new AtomicInteger(0));
     }

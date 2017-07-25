@@ -131,7 +131,7 @@ public class TreeRenderer<T> {
     private void bind() {
         if (selectionModel != null) {
             final SetSelectionModel<T> setSelectionModel = (SetSelectionModel<T>) selectionModel;
-            selectedSet = new HashSet<T>(setSelectionModel.getSelectedSet());
+            selectedSet = new HashSet<>(setSelectionModel.getSelectedSet());
 
             final Canvas topCanvas = canvas.getLayer(TreeRenderer.ARROW_LAYER);
             registerHandler(topCanvas.addClickHandler(event -> {
@@ -220,14 +220,14 @@ public class TreeRenderer<T> {
                 }
 
                 // Save current selection.
-                selectedSet = new HashSet<T>(setSelectionModel.getSelectedSet());
+                selectedSet = new HashSet<>(setSelectionModel.getSelectedSet());
             }));
         }
     }
 
     private void registerHandler(final HandlerRegistration handlerRegistration) {
         if (reg == null) {
-            reg = new HashSet<HandlerRegistration>();
+            reg = new HashSet<>();
         }
         reg.add(handlerRegistration);
     }

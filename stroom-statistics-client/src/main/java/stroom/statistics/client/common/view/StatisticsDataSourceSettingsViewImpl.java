@@ -47,16 +47,16 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
 
     @Inject
     public StatisticsDataSourceSettingsViewImpl(final Binder binder) {
-        statisticType = new ItemListBox<StatisticType>();
+        statisticType = new ItemListBox<>();
         statisticType.addItem(StatisticType.COUNT);
         statisticType.addItem(StatisticType.VALUE);
 
-        rollUpType = new ItemListBox<StatisticRollUpType>();
+        rollUpType = new ItemListBox<>();
         rollUpType.addItem(StatisticRollUpType.NONE);
         rollUpType.addItem(StatisticRollUpType.ALL);
         rollUpType.addItem(StatisticRollUpType.CUSTOM);
 
-        precision = new ItemListBox<EventStoreTimeIntervalEnum>();
+        precision = new ItemListBox<>();
         precision.addItem(EventStoreTimeIntervalEnum.SECOND);
         precision.addItem(EventStoreTimeIntervalEnum.MINUTE);
         precision.addItem(EventStoreTimeIntervalEnum.HOUR);

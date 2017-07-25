@@ -37,7 +37,7 @@ public class FieldCell extends CompositeCell<Field> {
     }
 
     public static FieldCell create(final FieldsManager fieldsManager) {
-        final List<HasCell<Field, ?>> cells = new ArrayList<HasCell<Field, ?>>();
+        final List<HasCell<Field, ?>> cells = new ArrayList<>();
 
         final Column<Field, String> name = new Column<Field, String>(new FieldEditTextCell(fieldsManager)) {
             @Override

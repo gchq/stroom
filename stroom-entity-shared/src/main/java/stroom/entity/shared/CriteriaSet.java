@@ -47,7 +47,7 @@ public class CriteriaSet<T>
     private Set<T> set;
 
     public CriteriaSet() {
-        this(new HashSet<T>());
+        this(new HashSet<>());
     }
 
     public CriteriaSet(final Set<T> set) {

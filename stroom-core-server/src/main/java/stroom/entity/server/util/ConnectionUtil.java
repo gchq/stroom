@@ -110,7 +110,7 @@ public class ConnectionUtil {
     public static List<Long> executeInsert(final Connection connection, final String sql, final List<Object> args)
             throws SQLException {
         LOGGER.debug(">>> {}", sql);
-        final List<Long> keyList = new ArrayList<Long>();
+        final List<Long> keyList = new ArrayList<>();
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         try (PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             PreparedStatementUtil.setArguments(preparedStatement, args);

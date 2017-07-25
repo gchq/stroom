@@ -34,7 +34,7 @@ public class StroomStatsStorePresenter extends EntityEditTabPresenter<LinkTabPan
     private static final TabData FIELDS = new TabDataImpl("Fields");
     private static final TabData CUSTOM_ROLLUPS = new TabDataImpl("Custom Roll-ups");
 
-    private final TabContentProvider<StroomStatsStoreEntity> tabContentProvider = new TabContentProvider<StroomStatsStoreEntity>();
+    private final TabContentProvider<StroomStatsStoreEntity> tabContentProvider = new TabContentProvider<>();
 
     @Inject
     public StroomStatsStorePresenter(final EventBus eventBus, final LinkTabPanelView view,

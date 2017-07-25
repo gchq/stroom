@@ -279,7 +279,7 @@ public class StroomProperties {
 
                         // Create the cyclic check set if we haven't already.
                         if (checkSet == null) {
-                            checkSet = new HashSet<String>();
+                            checkSet = new HashSet<>();
 
                             if (propertyName != null) {
                                 checkSet.add(propertyName);
@@ -509,7 +509,7 @@ public class StroomProperties {
     }
 
     private static class PropertyMap {
-        private final Map<String, StroomProperty> map = new ConcurrentHashMap<String, StroomProperty>();
+        private final Map<String, StroomProperty> map = new ConcurrentHashMap<>();
 
         public StroomProperty get(final String key) {
             return map.get(key);
@@ -537,7 +537,7 @@ public class StroomProperties {
 
         @Override
         public String toString() {
-            final List<StroomProperty> list = new ArrayList<StroomProperty>(map.values());
+            final List<StroomProperty> list = new ArrayList<>(map.values());
             Collections.sort(list);
             final StringBuilder sb = new StringBuilder();
             for (final StroomProperty prop : list) {

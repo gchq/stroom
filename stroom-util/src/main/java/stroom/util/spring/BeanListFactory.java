@@ -34,7 +34,7 @@ public class BeanListFactory {
     }
 
     public List<Object> create() {
-        List<Object> list = new ArrayList<Object>();
+        List<Object> list = new ArrayList<>();
         if (beanList != null && stroomBeanStore != null) {
             for (String name : beanList) {
                 list.add(stroomBeanStore.getBean(name));

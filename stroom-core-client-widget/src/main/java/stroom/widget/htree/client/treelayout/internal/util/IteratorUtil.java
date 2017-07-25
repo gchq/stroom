@@ -48,7 +48,7 @@ public class IteratorUtil {
      * @return a reverse {@link Iterator} of the list
      */
     public static <T> Iterator<T> createReverseIterator(List<T> list) {
-        return new ReverseIterator<T>(list);
+        return new ReverseIterator<>(list);
     }
 
     private static class ReverseIterator<T> implements Iterator<T> {

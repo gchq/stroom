@@ -64,7 +64,7 @@ public class SessionListServlet extends HttpServlet {
             throws ServletException, IOException {
         response.setContentType("text/html");
 
-        final List<List<String>> table = new ArrayList<List<String>>();
+        final List<List<String>> table = new ArrayList<>();
 
         final SessionListAction sessionListAction = new SessionListAction();
         sessionListAction.setId(TaskIdFactory.create());
@@ -82,7 +82,7 @@ public class SessionListServlet extends HttpServlet {
                     suffix = "</b>";
                 }
             }
-            final ArrayList<String> row = new ArrayList<String>();
+            final ArrayList<String> row = new ArrayList<>();
             row.add(DateUtil.createNormalDateTimeString(sessionDetails.getLastAccessedMs()));
             row.add(DateUtil.createNormalDateTimeString(sessionDetails.getCreateMs()));
             row.add(sessionDetails.getUserName());

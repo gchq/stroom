@@ -45,7 +45,7 @@ public class RolledUpStatisticEvent implements Iterable<TimeAgnosticStatisticEve
      */
     public RolledUpStatisticEvent(StatisticEvent originalStatisticEvent) {
         this.originalStatisticEvent = originalStatisticEvent;
-        this.tagListPermutations = new ArrayList<List<StatisticTag>>();
+        this.tagListPermutations = new ArrayList<>();
         this.tagListPermutations.add(originalStatisticEvent.getTagList());
     }
 

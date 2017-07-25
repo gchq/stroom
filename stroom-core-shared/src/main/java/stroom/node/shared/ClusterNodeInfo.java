@@ -31,7 +31,7 @@ public class ClusterNodeInfo implements SharedObject {
     private String upDate;
     private String nodeName;
     private String clusterURL;
-    private List<ClusterNodeInfoItem> itemList = new ArrayList<ClusterNodeInfoItem>();
+    private List<ClusterNodeInfoItem> itemList = new ArrayList<>();
 
     public ClusterNodeInfo() {
         // Default constructor necessary for GWT serialisation.

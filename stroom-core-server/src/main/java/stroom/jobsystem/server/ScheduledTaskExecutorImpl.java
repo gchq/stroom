@@ -43,8 +43,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Component
 public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(ScheduledTaskExecutorImpl.class);
-    private final ConcurrentHashMap<StroomBeanMethod, AtomicBoolean> runningMap = new ConcurrentHashMap<StroomBeanMethod, AtomicBoolean>();
-    private final ConcurrentHashMap<StroomBeanMethod, Scheduler> schedulerMap = new ConcurrentHashMap<StroomBeanMethod, Scheduler>();
+    private final ConcurrentHashMap<StroomBeanMethod, AtomicBoolean> runningMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<StroomBeanMethod, Scheduler> schedulerMap = new ConcurrentHashMap<>();
     @Resource
     private StroomBeanStore stroomBeanStore;
     @Resource

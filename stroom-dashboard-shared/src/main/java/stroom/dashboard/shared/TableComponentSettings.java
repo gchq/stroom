@@ -78,7 +78,7 @@ public class TableComponentSettings extends ComponentSettings {
 
     public void addField(final Field field) {
         if (fields == null) {
-            fields = new ArrayList<Field>();
+            fields = new ArrayList<>();
         }
 
         fields.add(field);
@@ -86,7 +86,7 @@ public class TableComponentSettings extends ComponentSettings {
 
     public void addField(final int index, final Field field) {
         if (fields == null) {
-            fields = new ArrayList<Field>();
+            fields = new ArrayList<>();
         }
 
         fields.add(index, field);

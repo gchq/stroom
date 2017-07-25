@@ -45,7 +45,7 @@ public abstract class EntityServiceFindSummaryActionDataProvider<C extends BaseC
 
     public void setCriteria(final C criteria) {
         if (findAction == null) {
-            findAction = new EntityServiceFindSummaryAction<C>(criteria);
+            findAction = new EntityServiceFindSummaryAction<>(criteria);
         } else {
             findAction.setCriteria(criteria);
         }

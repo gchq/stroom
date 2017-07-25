@@ -29,7 +29,7 @@ public final class SetUtil {
         if (varargs == null || varargs.length == 0) {
             return null;
         } else {
-            return new HashSet<T>(Arrays.asList(varargs));
+            return new HashSet<>(Arrays.asList(varargs));
         }
     }
 
@@ -38,6 +38,6 @@ public final class SetUtil {
             return null;
         }
 
-        return new HashSet<T>(set);
+        return new HashSet<>(set);
     }
 }

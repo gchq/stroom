@@ -87,10 +87,10 @@ public class TestStreamProcessorFilterService extends AbstractCoreIntegrationTes
         streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 10, new FindStreamCriteria());
         Assert.assertEquals(2, streamProcessorFilterService.find(findStreamProcessorFilterCriteria).size());
 
-        findStreamProcessorFilterCriteria.setPriorityRange(new Range<Integer>(10, null));
+        findStreamProcessorFilterCriteria.setPriorityRange(new Range<>(10, null));
         Assert.assertEquals(1, streamProcessorFilterService.find(findStreamProcessorFilterCriteria).size());
 
-        findStreamProcessorFilterCriteria.setPriorityRange(new Range<Integer>(1, null));
+        findStreamProcessorFilterCriteria.setPriorityRange(new Range<>(1, null));
         Assert.assertEquals(2, streamProcessorFilterService.find(findStreamProcessorFilterCriteria).size());
     }
 

@@ -51,7 +51,7 @@ public class RemoteServiceHandlerAdapter extends RemoteServiceServlet implements
     // jar. If you change where the webapp/ui files are stored, which is currently 'ui', then this path must change too.
     private static final String GWT_RPC_PATH = "/ui/stroom/%s.gwt.rpc";
     private static final long serialVersionUID = -7421136737990135393L;
-    private static ThreadLocal<Object> handlerHolder = new ThreadLocal<Object>();
+    private static ThreadLocal<Object> handlerHolder = new ThreadLocal<>();
     private transient ServletContext servletContext;
 
     @Resource

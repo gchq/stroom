@@ -27,8 +27,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 public class SQLStatisticAggregateMap {
-    private final Map<SQLStatKey, MutableLong> countMap = new HashMap<SQLStatKey, MutableLong>();
-    private final Map<SQLStatKey, Double> valueMap = new HashMap<SQLStatKey, Double>();
+    private final Map<SQLStatKey, MutableLong> countMap = new HashMap<>();
+    private final Map<SQLStatKey, Double> valueMap = new HashMap<>();
 
     public void addRolledUpEvent(final RolledUpStatisticEvent rolledUpStatisticEvent, long precisionMs)
             throws StatisticsEventValidationException {

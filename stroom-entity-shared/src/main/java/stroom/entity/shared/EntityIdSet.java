@@ -31,11 +31,11 @@ public class EntityIdSet<T extends BaseEntity> extends CriteriaSet<Long> {
     private static final long serialVersionUID = 1L;
 
     public EntityIdSet() {
-        super(new TreeSet<Long>());
+        super(new TreeSet<>());
     }
 
     public EntityIdSet(final Set<T> es) {
-        super(new TreeSet<Long>());
+        super(new TreeSet<>());
         for (final T e : es) {
             add(e);
         }

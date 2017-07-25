@@ -27,7 +27,7 @@ public class RefParser {
     private static final char ARRAY_END = ']';
 
     public List<RefFactory> parse(final String reference) {
-        final List<RefFactory> sections = new ArrayList<RefFactory>();
+        final List<RefFactory> sections = new ArrayList<>();
 
         if (reference != null && reference.length() > 0) {
             final char[] chars = reference.toCharArray();

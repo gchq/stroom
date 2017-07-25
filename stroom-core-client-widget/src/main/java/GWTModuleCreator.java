@@ -37,7 +37,7 @@ public class GWTModuleCreator {
         sb.append("  <!-- Import Stroom widgets -->\n");
 
         final File rootDir = new File(System.getProperty("user.home") + "/workspace/trunk/stroom-ui-mvp/src");
-        final List<String> modules = new ArrayList<String>();
+        final List<String> modules = new ArrayList<>();
         processDir(rootDir, rootDir.getAbsolutePath(), modules);
         Collections.sort(modules);
 

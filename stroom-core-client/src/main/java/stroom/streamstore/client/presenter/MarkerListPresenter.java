@@ -49,14 +49,14 @@ import java.util.HashSet;
 import java.util.List;
 
 public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>> {
-    private static HashSet<Severity> ALL_SEVERITIES = new HashSet<Severity>(Arrays.asList(Severity.SEVERITIES));
+    private static HashSet<Severity> ALL_SEVERITIES = new HashSet<>(Arrays.asList(Severity.SEVERITIES));
 
     private HashSet<Severity> expandedSeverities;
     private DataPresenter dataPresenter;
 
     @Inject
     public MarkerListPresenter(final EventBus eventBus) {
-        super(eventBus, new DataGridViewImpl<Marker>(false, DataGridViewImpl.DEFAULT_LIST_PAGE_SIZE, null));
+        super(eventBus, new DataGridViewImpl<>(false, DataGridViewImpl.DEFAULT_LIST_PAGE_SIZE, null));
 
         addExpanderColumn();
         addSeverityColumn();
@@ -65,7 +65,7 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
         addLine();
         addCol();
         addMessage();
-        getView().addEndColumn(new EndColumn<Marker>());
+        getView().addEndColumn(new EndColumn<>());
     }
 
     private void addExpanderColumn() {
@@ -262,7 +262,7 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
     }
 
     public void resetExpandedSeverities() {
-        expandedSeverities = new HashSet<Severity>(ALL_SEVERITIES);
+        expandedSeverities = new HashSet<>(ALL_SEVERITIES);
     }
 
     public void setDataPresenter(final DataPresenter dataPresenter) {

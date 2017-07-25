@@ -47,7 +47,7 @@ public class TestTaskScope {
 
     @Test
     public void testThreading() {
-        final ArrayDeque<Thread> deque = new ArrayDeque<Thread>();
+        final ArrayDeque<Thread> deque = new ArrayDeque<>();
         for (int i = 0; i < 1; i++) {
             final Thread t = new Thread(new Runnable() {
                 @Override

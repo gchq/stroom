@@ -76,7 +76,7 @@ public class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatist
             LOGGER.info("Flushing statistics (batch size={})", batchSizetoUse);
             taskMonitor.info("Flushing statistics (batch size={})", batchSizetoUse);
 
-            final List<SQLStatisticValueSourceDO> batchInsert = new ArrayList<SQLStatisticValueSourceDO>();
+            final List<SQLStatisticValueSourceDO> batchInsert = new ArrayList<>();
             // Store all aggregated entries.
             for (final Entry<SQLStatKey, MutableLong> entry : map.countEntrySet()) {
                 if (!taskMonitor.isTerminated()) {
@@ -161,7 +161,7 @@ public class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatist
                     successfullInserts = ((BatchUpdateException) e).getUpdateCounts();
                 }
 
-                final List<SQLStatisticValueSourceDO> revisedBatch = new ArrayList<SQLStatisticValueSourceDO>();
+                final List<SQLStatisticValueSourceDO> revisedBatch = new ArrayList<>();
 
                 for (int i = 0, lenBatch = batchInsert.size(), lenArr = successfullInserts.length; i < lenBatch; i++) {
                     if (i < lenArr && successfullInserts[i] == 1) {

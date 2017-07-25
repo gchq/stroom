@@ -206,7 +206,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
     public void createStreamAttributeKeys() {
         final BaseResultList<StreamAttributeKey> list = streamAttributeKeyService
                 .find(new FindStreamAttributeKeyCriteria());
-        final HashSet<String> existingItems = new HashSet<String>();
+        final HashSet<String> existingItems = new HashSet<>();
         for (final StreamAttributeKey streamAttributeKey : list) {
             existingItems.add(streamAttributeKey.getName());
         }

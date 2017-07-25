@@ -69,7 +69,7 @@ class FetchCacheNodeRowHandler extends AbstractTaskHandler<FetchCacheNodeRowActi
                 TargetType.ACTIVE);
 
         // Sort the list of node names.
-        final List<Node> nodes = new ArrayList<Node>(collector.getTargetNodes());
+        final List<Node> nodes = new ArrayList<>(collector.getTargetNodes());
         Collections.sort(nodes, (o1, o2) -> {
             if (o1.getName() == null || o2.getName() == null) {
                 return 0;

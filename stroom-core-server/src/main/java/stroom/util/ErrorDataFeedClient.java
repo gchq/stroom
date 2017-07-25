@@ -64,7 +64,7 @@ public final class ErrorDataFeedClient {
 
     public static void main(final String[] args) {
         try {
-            final HashMap<String, String> argsMap = new HashMap<String, String>();
+            final HashMap<String, String> argsMap = new HashMap<>();
             for (int i = 0; i < args.length; i++) {
                 final String[] split = args[i].split("=");
                 if (split.length > 1) {

@@ -170,7 +170,7 @@ public class StroomStatsStoreEntityData implements SharedObject {
                             + ") that don't exist in the statistic fields list (" + fieldPositionMap.keySet() + ")");
         }
 
-        final List<Integer> rolledUpFieldPositions = new ArrayList<Integer>();
+        final List<Integer> rolledUpFieldPositions = new ArrayList<>();
         for (final String rolledUpField : rolledUpFieldNames) {
             rolledUpFieldPositions.add(getFieldPositionInList(rolledUpField));
         }

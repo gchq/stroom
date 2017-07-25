@@ -58,7 +58,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     @Inject
     public IndexFieldListPresenter(final EventBus eventBus,
                                    final IndexFieldEditPresenter indexFieldEditPresenter) {
-        super(eventBus, new DataGridViewImpl<IndexField>(true, true));
+        super(eventBus, new DataGridViewImpl<>(true, true));
         this.indexFieldEditPresenter = indexFieldEditPresenter;
 
         newButton = getView().addButton(SvgPresets.NEW_ITEM);
@@ -143,7 +143,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
         addTermVectorColumn();
         addAnalyzerColumn();
         addCaseSensitiveColumn();
-        getView().addEndColumn(new EndColumn<IndexField>());
+        getView().addEndColumn(new EndColumn<>());
     }
 
     private void addNameColumn() {

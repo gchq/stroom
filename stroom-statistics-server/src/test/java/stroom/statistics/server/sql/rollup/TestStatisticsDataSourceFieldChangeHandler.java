@@ -41,19 +41,19 @@ public class TestStatisticsDataSourceFieldChangeHandler extends StroomUnitTest {
         final StatisticField fieldC = new StatisticField("C");
         final StatisticField fieldD = new StatisticField("D");
 
-        final CustomRollUpMask mask1 = new CustomRollUpMask(new ArrayList<Integer>());
-        final CustomRollUpMask mask2 = new CustomRollUpMask(new ArrayList<Integer>(Arrays.asList(0, 1, 2)));
-        final CustomRollUpMask mask3 = new CustomRollUpMask(new ArrayList<Integer>(Arrays.asList(0)));
-        final CustomRollUpMask mask4 = new CustomRollUpMask(new ArrayList<Integer>(Arrays.asList(1)));
-        final CustomRollUpMask mask5 = new CustomRollUpMask(new ArrayList<Integer>(Arrays.asList(2)));
+        final CustomRollUpMask mask1 = new CustomRollUpMask(new ArrayList<>());
+        final CustomRollUpMask mask2 = new CustomRollUpMask(new ArrayList<>(Arrays.asList(0, 1, 2)));
+        final CustomRollUpMask mask3 = new CustomRollUpMask(new ArrayList<>(Arrays.asList(0)));
+        final CustomRollUpMask mask4 = new CustomRollUpMask(new ArrayList<>(Arrays.asList(1)));
+        final CustomRollUpMask mask5 = new CustomRollUpMask(new ArrayList<>(Arrays.asList(2)));
 
-        final List<StatisticField> oldFields = new ArrayList<StatisticField>(Arrays.asList(fieldB, fieldC, fieldD));
-        final Set<CustomRollUpMask> oldMasks = new HashSet<CustomRollUpMask>(
+        final List<StatisticField> oldFields = new ArrayList<>(Arrays.asList(fieldB, fieldC, fieldD));
+        final Set<CustomRollUpMask> oldMasks = new HashSet<>(
                 Arrays.asList(mask1, mask2, mask3, mask4, mask5));
 
         final StatisticsDataSourceData oldData = new StatisticsDataSourceData(oldFields, oldMasks);
 
-        final List<StatisticField> newFields = new ArrayList<StatisticField>(Arrays.asList(fieldA, fieldB, fieldD));
+        final List<StatisticField> newFields = new ArrayList<>(Arrays.asList(fieldA, fieldB, fieldD));
 
         final StatisticsDataSourceData newData = new StatisticsDataSourceData(newFields);
 
@@ -68,10 +68,10 @@ public class TestStatisticsDataSourceFieldChangeHandler extends StroomUnitTest {
 
         Assert.assertEquals(4, result.getCustomRollUpMasks().size());
 
-        final CustomRollUpMask newMask1 = new CustomRollUpMask(new ArrayList<Integer>());
-        final CustomRollUpMask newMask2 = new CustomRollUpMask(new ArrayList<Integer>(Arrays.asList(1, 2)));
-        final CustomRollUpMask newMask3 = new CustomRollUpMask(new ArrayList<Integer>(Arrays.asList(1)));
-        final CustomRollUpMask newMask5 = new CustomRollUpMask(new ArrayList<Integer>(Arrays.asList(2)));
+        final CustomRollUpMask newMask1 = new CustomRollUpMask(new ArrayList<>());
+        final CustomRollUpMask newMask2 = new CustomRollUpMask(new ArrayList<>(Arrays.asList(1, 2)));
+        final CustomRollUpMask newMask3 = new CustomRollUpMask(new ArrayList<>(Arrays.asList(1)));
+        final CustomRollUpMask newMask5 = new CustomRollUpMask(new ArrayList<>(Arrays.asList(2)));
 
         Assert.assertTrue(result.getCustomRollUpMasks().contains(newMask1));
         Assert.assertTrue(result.getCustomRollUpMasks().contains(newMask2));

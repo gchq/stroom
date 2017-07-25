@@ -22,7 +22,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class StreamTaskQueue {
-    private final LinkedBlockingDeque<StreamTask> queue = new LinkedBlockingDeque<StreamTask>();
+    private final LinkedBlockingDeque<StreamTask> queue = new LinkedBlockingDeque<>();
     private final AtomicBoolean filling = new AtomicBoolean();
 
     public StreamTask poll() {

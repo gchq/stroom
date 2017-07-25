@@ -29,7 +29,7 @@ public class FindFeedCriteria extends FindDocumentEntityCriteria {
     public static final String FIELD_CLASSIFICATION = "Classification";
     private static final long serialVersionUID = 1L;
     private Boolean reference;
-    private EntityIdSet<Feed> feedIdSet = new EntityIdSet<Feed>();
+    private EntityIdSet<Feed> feedIdSet = new EntityIdSet<>();
 
     public FindFeedCriteria() {
         // Default constructor necessary for GWT serialisation.

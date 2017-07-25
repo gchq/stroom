@@ -35,7 +35,7 @@ public class BeforeRevealMenubarEvent extends GwtEvent<BeforeRevealMenubarEvent.
 
     public static Type<Handler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<Handler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }

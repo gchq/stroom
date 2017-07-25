@@ -58,14 +58,14 @@ public class StatisticsDataSourceData implements SharedObject {
 
     // cache the positions of the
     @XmlTransient
-    private Map<String, Integer> fieldPositionMap = new HashMap<String, Integer>();
+    private Map<String, Integer> fieldPositionMap = new HashMap<>();
 
     public StatisticsDataSourceData() {
-        this(new ArrayList<StatisticField>(), new HashSet<CustomRollUpMask>());
+        this(new ArrayList<>(), new HashSet<>());
     }
 
     public StatisticsDataSourceData(final List<StatisticField> statisticFields) {
-        this(new ArrayList<StatisticField>(statisticFields), new HashSet<CustomRollUpMask>());
+        this(new ArrayList<>(statisticFields), new HashSet<>());
     }
 
     public StatisticsDataSourceData(final List<StatisticField> statisticFields,
@@ -99,7 +99,7 @@ public class StatisticsDataSourceData implements SharedObject {
 
     public void addStatisticField(final StatisticField statisticField) {
         if (statisticFields == null) {
-            statisticFields = new ArrayList<StatisticField>();
+            statisticFields = new ArrayList<>();
         }
         // prevent duplicates
         if (!statisticFields.contains(statisticField)) {
@@ -130,7 +130,7 @@ public class StatisticsDataSourceData implements SharedObject {
 
     public void addCustomRollUpMask(final CustomRollUpMask customRollUpMask) {
         if (customRollUpMasks == null) {
-            customRollUpMasks = new HashSet<CustomRollUpMask>();
+            customRollUpMasks = new HashSet<>();
         }
 
         customRollUpMasks.add(customRollUpMask);
@@ -172,7 +172,7 @@ public class StatisticsDataSourceData implements SharedObject {
                             + ") that don't exist in the statistic fields list (" + fieldPositionMap.keySet() + ")");
         }
 
-        final List<Integer> rolledUpFieldPositions = new ArrayList<Integer>();
+        final List<Integer> rolledUpFieldPositions = new ArrayList<>();
         for (final String rolledUpField : rolledUpFieldNames) {
             rolledUpFieldPositions.add(getFieldPositionInList(rolledUpField));
         }
@@ -216,7 +216,7 @@ public class StatisticsDataSourceData implements SharedObject {
 
     private void sortFieldListAndCachePositions() {
         // de-dup the list
-        Set<StatisticField> tempSet = new HashSet<StatisticField>(statisticFields);
+        Set<StatisticField> tempSet = new HashSet<>(statisticFields);
         statisticFields.clear();
         statisticFields.addAll(tempSet);
         tempSet = null;
@@ -231,13 +231,13 @@ public class StatisticsDataSourceData implements SharedObject {
     }
 
     public StatisticsDataSourceData deepCopy() {
-        final List<StatisticField> newFieldList = new ArrayList<StatisticField>();
+        final List<StatisticField> newFieldList = new ArrayList<>();
 
         for (final StatisticField statisticField : statisticFields) {
             newFieldList.add(statisticField.deepCopy());
         }
 
-        final Set<CustomRollUpMask> newMaskList = new HashSet<CustomRollUpMask>();
+        final Set<CustomRollUpMask> newMaskList = new HashSet<>();
 
         for (final CustomRollUpMask customRollUpMask : customRollUpMasks) {
             newMaskList.add(customRollUpMask.deepCopy());

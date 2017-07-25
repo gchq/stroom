@@ -67,7 +67,7 @@ public class TestStatisticsDataSource {
 
         Assert.assertEquals(
                 Arrays.asList(new StatisticField(FIELD1), new StatisticField(FIELD2), new StatisticField(FIELD3)),
-                new ArrayList<StatisticField>(sds.getStatisticDataSourceDataObject().getStatisticFields()));
+                new ArrayList<>(sds.getStatisticDataSourceDataObject().getStatisticFields()));
 
         Assert.assertEquals(Arrays.asList(FIELD1, FIELD2, FIELD3), getFieldNames(sds));
 
@@ -111,7 +111,7 @@ public class TestStatisticsDataSource {
     }
 
     private List<String> getFieldNames(final StatisticStoreEntity sds) {
-        final List<String> list = new ArrayList<String>();
+        final List<String> list = new ArrayList<>();
         for (final StatisticField statisticField : sds.getStatisticDataSourceDataObject().getStatisticFields()) {
             list.add(statisticField.getFieldName());
         }
@@ -150,7 +150,7 @@ public class TestStatisticsDataSource {
     public void testIsRollUpCombinationSupported_emptyList() throws Exception {
         final StatisticStoreEntity sds = buildStatisticsDataSource(true);
 
-        Assert.assertTrue(sds.isRollUpCombinationSupported(new HashSet<String>()));
+        Assert.assertTrue(sds.isRollUpCombinationSupported(new HashSet<>()));
     }
 
     @Test
@@ -159,7 +159,7 @@ public class TestStatisticsDataSource {
 
         sds.setRollUpType(StatisticRollUpType.ALL);
 
-        Assert.assertTrue(sds.isRollUpCombinationSupported(new HashSet<String>(Arrays.asList(FIELD1))));
+        Assert.assertTrue(sds.isRollUpCombinationSupported(new HashSet<>(Arrays.asList(FIELD1))));
     }
 
     @Test
@@ -168,7 +168,7 @@ public class TestStatisticsDataSource {
 
         sds.setRollUpType(StatisticRollUpType.NONE);
 
-        Assert.assertFalse(sds.isRollUpCombinationSupported(new HashSet<String>(Arrays.asList(FIELD1))));
+        Assert.assertFalse(sds.isRollUpCombinationSupported(new HashSet<>(Arrays.asList(FIELD1))));
     }
 
     @Test
@@ -178,14 +178,14 @@ public class TestStatisticsDataSource {
         sds.setRollUpType(StatisticRollUpType.CUSTOM);
 
         // check it copes in or out of order
-        Assert.assertTrue(sds.isRollUpCombinationSupported(new HashSet<String>(Arrays.asList(FIELD1, FIELD2, FIELD3))));
-        Assert.assertTrue(sds.isRollUpCombinationSupported(new HashSet<String>(Arrays.asList(FIELD2, FIELD3, FIELD1))));
+        Assert.assertTrue(sds.isRollUpCombinationSupported(new HashSet<>(Arrays.asList(FIELD1, FIELD2, FIELD3))));
+        Assert.assertTrue(sds.isRollUpCombinationSupported(new HashSet<>(Arrays.asList(FIELD2, FIELD3, FIELD1))));
 
         // check the other valid combinations
-        Assert.assertTrue(sds.isRollUpCombinationSupported(new HashSet<String>(Arrays.asList(FIELD1, FIELD2))));
-        Assert.assertTrue(sds.isRollUpCombinationSupported(new HashSet<String>(Arrays.asList(FIELD1))));
+        Assert.assertTrue(sds.isRollUpCombinationSupported(new HashSet<>(Arrays.asList(FIELD1, FIELD2))));
+        Assert.assertTrue(sds.isRollUpCombinationSupported(new HashSet<>(Arrays.asList(FIELD1))));
 
-        Assert.assertFalse(sds.isRollUpCombinationSupported(new HashSet<String>(Arrays.asList(FIELD3))));
+        Assert.assertFalse(sds.isRollUpCombinationSupported(new HashSet<>(Arrays.asList(FIELD3))));
     }
 
     private StatisticStoreEntity buildStatisticsDataSource(final boolean addFields) {

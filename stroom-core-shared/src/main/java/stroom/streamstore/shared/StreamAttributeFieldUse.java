@@ -25,7 +25,7 @@ public enum StreamAttributeFieldUse implements HasDisplayValue, HasPrimitiveValu
             true), COUNT_IN_DURATION_FIELD("Count in Duration", 5, true), SIZE_FIELD("Size", 6,
             true), DURATION_FIELD("Duration", 7, true);
 
-    public static final PrimitiveValueConverter<StreamAttributeFieldUse> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<StreamAttributeFieldUse>(
+    public static final PrimitiveValueConverter<StreamAttributeFieldUse> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
             StreamAttributeFieldUse.values());
     private final String displayValue;
     private final byte primitiveValue;

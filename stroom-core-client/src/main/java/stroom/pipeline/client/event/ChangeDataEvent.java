@@ -28,12 +28,12 @@ public class ChangeDataEvent<T> extends GwtEvent<ChangeDataEvent.ChangeDataHandl
     }
 
     public static <T> void fire(final HasChangeDataHandlers<T> source, final T data) {
-        source.fireEvent(new ChangeDataEvent<T>(data));
+        source.fireEvent(new ChangeDataEvent<>(data));
     }
 
     public static Type<ChangeDataHandler<?>> getType() {
         if (TYPE == null) {
-            TYPE = new Type<ChangeDataHandler<?>>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }

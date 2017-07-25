@@ -45,7 +45,7 @@ import java.util.List;
 import java.util.Map;
 
 public class StreamRelationListPresenter extends AbstractStreamListPresenter {
-    private final Map<Long, StreamAttributeMap> streamMap = new HashMap<Long, StreamAttributeMap>();
+    private final Map<Long, StreamAttributeMap> streamMap = new HashMap<>();
     private int maxDepth = -1;
 
     private Column<StreamAttributeMap, Expander> expanderColumn;
@@ -98,7 +98,7 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
 
         // Now use the root streams and attach child streams to them.
         maxDepth = -1;
-        final List<StreamAttributeMap> newData = new ArrayList<StreamAttributeMap>();
+        final List<StreamAttributeMap> newData = new ArrayList<>();
         addChildren(null, data, newData, 0);
 
         // Set the width of the expander column so that all expanders
@@ -109,7 +109,7 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
             getView().setColumnWidth(expanderColumn, 0, Unit.PX);
         }
 
-        final ResultList<StreamAttributeMap> processed = new BaseResultList<StreamAttributeMap>(newData,
+        final ResultList<StreamAttributeMap> processed = new BaseResultList<>(newData,
                 Long.valueOf(data.getStart()), Long.valueOf(data.getSize()), !data.isExact());
         return super.onProcessData(processed);
     }
@@ -175,7 +175,7 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
         addAttributeColumn("Info", StreamAttributeConstants.REC_INFO, 40);
         addAttributeColumn("Retention", StreamAttributeConstants.RETENTION_AGE, ColumnSizeConstants.SMALL_COL);
 
-        getView().addEndColumn(new EndColumn<StreamAttributeMap>());
+        getView().addEndColumn(new EndColumn<>());
     }
 
     private Expander buildExpander(final StreamAttributeMap row) {

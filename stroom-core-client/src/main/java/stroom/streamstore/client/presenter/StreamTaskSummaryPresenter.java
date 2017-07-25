@@ -51,7 +51,7 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
     @Inject
     public StreamTaskSummaryPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
                                       final TooltipPresenter tooltipPresenter) {
-        super(eventBus, new DataGridViewImpl<SummaryDataRow>(true, false));
+        super(eventBus, new DataGridViewImpl<>(true, false));
 
         // Info column.
         final InfoColumn<SummaryDataRow> infoColumn = new InfoColumn<SummaryDataRow>() {
@@ -124,7 +124,7 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
                     }
                 }, "Count", 100);
 
-        getView().addEndColumn(new EndColumn<SummaryDataRow>());
+        getView().addEndColumn(new EndColumn<>());
 
         this.dataProvider = new EntityServiceFindSummaryActionDataProvider<FindStreamTaskCriteria>(dispatcher,
                 getView()) {

@@ -51,7 +51,7 @@ public class EntityServiceFindActionDataProvider<C extends BaseCriteria, E exten
 
     public void setCriteria(final C criteria) {
         if (findAction == null) {
-            findAction = new EntityServiceFindAction<C, E>(criteria);
+            findAction = new EntityServiceFindAction<>(criteria);
         } else {
             findAction.setCriteria(criteria);
         }

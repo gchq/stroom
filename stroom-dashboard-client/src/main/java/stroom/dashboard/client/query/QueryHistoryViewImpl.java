@@ -37,7 +37,7 @@ public class QueryHistoryViewImpl extends ViewImpl implements QueryHistoryView {
 
     @Inject
     public QueryHistoryViewImpl(final Binder binder) {
-        cellList = new CustomCellList<QueryEntity>(new QueryCell());
+        cellList = new CustomCellList<>(new QueryCell());
         widget = binder.createAndBindUi(this);
     }
 

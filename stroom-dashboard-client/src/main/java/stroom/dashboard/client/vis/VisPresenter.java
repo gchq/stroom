@@ -387,7 +387,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     private void loadScripts(final VisFunction function, final DocRef scriptRef) {
         function.setStatus(LoadStatus.LOADING_SCRIPT);
 
-        final Set<String> fetchSet = new HashSet<String>();
+        final Set<String> fetchSet = new HashSet<>();
 
         final FetchScriptAction fetchScriptAction = new FetchScriptAction(scriptRef,
                 scriptCache.getLoadedScripts(), fetchSet);

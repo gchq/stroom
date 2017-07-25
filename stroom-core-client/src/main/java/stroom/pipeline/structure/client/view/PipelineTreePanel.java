@@ -62,17 +62,17 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
             final Context2d arrowContext = canvas.getLayer(TreeRenderer.ARROW_LAYER).getContext2d();
 
             cellRenderer = new PipelineElementRenderer(boxPanel, pipelineElementBoxFactory);
-            final ConnectorRenderer<PipelineElement> connectorRenderer = new ArrowConnectorRenderer<PipelineElement>(
+            final ConnectorRenderer<PipelineElement> connectorRenderer = new ArrowConnectorRenderer<>(
                     arrowContext);
 
             // setup the tree layout configuration
-            final DefaultConfiguration<PipelineElement> layoutConfig = new DefaultConfiguration<PipelineElement>(
+            final DefaultConfiguration<PipelineElement> layoutConfig = new DefaultConfiguration<>(
                     HORIZONTAL_SEPARATION, VERTICAL_SEPARATION, Location.Left, AlignmentInLevel.TowardsRoot);
             final NodeExtentProvider<PipelineElement> extentProvider = cellRenderer;
 
-            treeLayout = new AbegoTreeLayout<PipelineElement>(extentProvider, layoutConfig);
+            treeLayout = new AbegoTreeLayout<>(extentProvider, layoutConfig);
 
-            renderer = new TreeRenderer2<PipelineElement>(canvas, cellRenderer, connectorRenderer);
+            renderer = new TreeRenderer2<>(canvas, cellRenderer, connectorRenderer);
             renderer.setTreeLayout(treeLayout);
 
             setAbsoluteLeftTop(canvas.getElement());

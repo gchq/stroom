@@ -173,7 +173,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                                 mapStoreHolder.getMapStoreBuilder().setEvents(map, rangeFrom.toString(), eventList,
                                         overrideExistingValues);
                             } else {
-                                mapStoreHolder.getMapStoreBuilder().setEvents(map, new Range<Long>(rangeFrom, rangeTo),
+                                mapStoreHolder.getMapStoreBuilder().setEvents(map, new Range<>(rangeFrom, rangeTo),
                                         eventList, overrideExistingValues);
                             }
                         }

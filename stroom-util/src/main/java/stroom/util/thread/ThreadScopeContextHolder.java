@@ -20,7 +20,7 @@ package stroom.util.thread;
  * Class to control access to the thread scope context.
  */
 public class ThreadScopeContextHolder {
-    private static final ThreadLocal<ThreadScopeContext> THREAD_LOCAL = new ThreadLocal<ThreadScopeContext>();
+    private static final ThreadLocal<ThreadScopeContext> THREAD_LOCAL = new ThreadLocal<>();
 
     /**
      * Get the current context if there is one or throws an illegal state

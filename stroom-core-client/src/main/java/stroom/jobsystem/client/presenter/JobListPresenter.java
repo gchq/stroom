@@ -52,9 +52,9 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
     @Inject
     public JobListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
                             final TooltipPresenter tooltipPresenter) {
-        super(eventBus, new DataGridViewImpl<Job>(true));
+        super(eventBus, new DataGridViewImpl<>(true));
 
-        jobSaver = new SaveQueue<Job>(dispatcher);
+        jobSaver = new SaveQueue<>(dispatcher);
 
         getView().addColumn(new InfoHelpLinkColumn<Job>() {
             @Override
@@ -94,7 +94,7 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
         };
         enabledColumn.setFieldUpdater((index, row, value) -> {
             final boolean newValue = value.toBoolean();
-            jobSaver.save(new EntitySaveTask<Job>(new EntityRow<Job>(row)) {
+            jobSaver.save(new EntitySaveTask<Job>(new EntityRow<>(row)) {
                 @Override
                 protected void setValue(final Job entity) {
                     entity.setEnabled(newValue);
@@ -113,13 +113,13 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
             }
         }, "Description", 800);
 
-        getView().addEndColumn(new EndColumn<Job>());
+        getView().addEndColumn(new EndColumn<>());
 
         this.dataProvider = new EntityServiceFindActionDataProvider<FindJobCriteria, Job>(dispatcher, getView()) {
             // Add in extra blank item
             @Override
             protected ResultList<Job> processData(final ResultList<Job> data) {
-                final List<Job> rtnList = new ArrayList<Job>();
+                final List<Job> rtnList = new ArrayList<>();
 
                 boolean done = false;
                 for (int i = 0; i < data.size(); i++) {
@@ -130,7 +130,7 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
                     }
                 }
 
-                return new BaseResultList<Job>(rtnList, 0L, (long) rtnList.size(), false);
+                return new BaseResultList<>(rtnList, 0L, (long) rtnList.size(), false);
 
             }
         };

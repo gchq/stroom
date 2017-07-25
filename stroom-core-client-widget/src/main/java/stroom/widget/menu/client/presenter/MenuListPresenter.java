@@ -116,7 +116,7 @@ public class MenuListPresenter extends MenuPresenter {
                             }
                         };
 
-                        final List<Element> autoHidePartners = new ArrayList<Element>();
+                        final List<Element> autoHidePartners = new ArrayList<>();
 
                         // Add parent auto hide partners.
                         if (MenuListPresenter.this.autoHidePartners != null

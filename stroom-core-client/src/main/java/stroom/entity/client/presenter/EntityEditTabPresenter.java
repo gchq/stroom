@@ -45,7 +45,7 @@ import java.util.List;
 
 public abstract class EntityEditTabPresenter<V extends LinkTabPanelView, E extends NamedEntity>
         extends EntityEditPresenter<V, E> implements EntityTabData, Refreshable, HasType {
-    private final List<TabData> tabs = new ArrayList<TabData>();
+    private final List<TabData> tabs = new ArrayList<>();
     private final ButtonView saveButton;
     private final ButtonView saveAsButton;
     private TabData selectedTab;

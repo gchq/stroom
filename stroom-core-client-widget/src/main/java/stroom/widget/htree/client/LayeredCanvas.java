@@ -27,7 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class LayeredCanvas extends FlowPanel {
-    private Map<String, Canvas> layerMap = new HashMap<String, Canvas>();
+    private Map<String, Canvas> layerMap = new HashMap<>();
     private int width = 100;
     private int height = 100;
 

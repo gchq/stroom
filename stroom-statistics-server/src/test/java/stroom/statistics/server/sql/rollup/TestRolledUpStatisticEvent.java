@@ -32,7 +32,7 @@ import static org.junit.Assert.assertTrue;
 public class TestRolledUpStatisticEvent extends StroomUnitTest {
     private static final double JUNIT_DOUBLE_EQUALITY_DELTA = 0.001;
 
-    private final List<StatisticTag> tags = new ArrayList<StatisticTag>();
+    private final List<StatisticTag> tags = new ArrayList<>();
     private StatisticEvent event;
 
     @Test

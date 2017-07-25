@@ -25,7 +25,7 @@ public class DisplayValueConverter<E extends HasDisplayValue> {
     private Map<String, E> map;
 
     public DisplayValueConverter(E[] values) {
-        map = new HashMap<String, E>(values.length);
+        map = new HashMap<>(values.length);
         for (E value : values) {
             map.put(value.getDisplayValue(), value);
         }

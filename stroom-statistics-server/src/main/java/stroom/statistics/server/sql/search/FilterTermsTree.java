@@ -111,7 +111,7 @@ public class FilterTermsTree {
      */
     public static class OperatorNode implements PrintableNode {
         private FilterOperationMode filterOperationMode;
-        private List<PrintableNode> children = new ArrayList<PrintableNode>();
+        private List<PrintableNode> children = new ArrayList<>();
 
         /**
          * Need to supply a list of children as there is no point in creating an

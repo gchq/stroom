@@ -38,7 +38,7 @@ public class FieldAddPresenter extends MyPresenterWidget<CellTableView<Field>> i
 
     @Inject
     public FieldAddPresenter(final EventBus eventBus) {
-        super(eventBus, new ScrollableCellTableViewImpl<Field>(true, GWT.create(HoverResources.class)));
+        super(eventBus, new ScrollableCellTableViewImpl<>(true, GWT.create(HoverResources.class)));
         final Column<Field, String> textColumn = new Column<Field, String>(new TextCell()) {
             @Override
             public String getValue(final Field field) {

@@ -23,7 +23,7 @@ import java.util.List;
 
 @XmlRootElement(name = "parameters")
 public class ParameterFile {
-    List<Parameter> parameter = new ArrayList<Parameter>();
+    List<Parameter> parameter = new ArrayList<>();
 
     @XmlElement
     public List<Parameter> getParameter() {

@@ -43,7 +43,7 @@ public class QueryFavouritesViewImpl extends ViewImpl implements QueryFavourites
 
     @Inject
     public QueryFavouritesViewImpl(final Binder binder) {
-        cellList = new CustomCellList<QueryEntity>(new QueryCell());
+        cellList = new CustomCellList<>(new QueryCell());
         widget = binder.createAndBindUi(this);
     }
 

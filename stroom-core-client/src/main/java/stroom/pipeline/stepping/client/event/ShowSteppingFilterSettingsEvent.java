@@ -44,7 +44,7 @@ public class ShowSteppingFilterSettingsEvent
 
     public static Type<ShowSteppingFilterSettingsHandler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<ShowSteppingFilterSettingsHandler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }

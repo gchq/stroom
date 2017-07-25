@@ -69,7 +69,7 @@ public class MonitorImpl implements Monitor {
         terminateHandlersLock.lock();
         try {
             if (terminateHandlers == null) {
-                terminateHandlers = new ArrayList<TerminateHandler>();
+                terminateHandlers = new ArrayList<>();
             }
 
             terminateHandlers.add(handler);

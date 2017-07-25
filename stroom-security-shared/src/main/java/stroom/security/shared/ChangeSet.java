@@ -24,8 +24,8 @@ import java.util.Set;
 public class ChangeSet<T> implements SharedObject {
     private static final long serialVersionUID = -1740543177783532223L;
 
-    private Set<T> addSet = new HashSet<T>();
-    private Set<T> removeSet = new HashSet<T>();
+    private Set<T> addSet = new HashSet<>();
+    private Set<T> removeSet = new HashSet<>();
 
     public ChangeSet() {
         // Default constructor necessary for GWT serialisation.

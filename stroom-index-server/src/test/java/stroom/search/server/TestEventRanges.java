@@ -37,7 +37,7 @@ public class TestEventRanges extends StroomUnitTest {
     public void test() {
         final InclusiveRanges ref = new InclusiveRanges();
 
-        final List<Long> segs = new ArrayList<Long>();
+        final List<Long> segs = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
             segs.add(Long.valueOf(i));
         }

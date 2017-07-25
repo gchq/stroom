@@ -30,7 +30,7 @@ public class SQLTagValueWhereClauseConverter {
     private static final EnumMap<FilterOperationMode, String> OPERATOR_TO_SQL_TERM_MAP;
 
     static {
-        OPERATOR_TO_SQL_TERM_MAP = new EnumMap<FilterOperationMode, String>(FilterOperationMode.class);
+        OPERATOR_TO_SQL_TERM_MAP = new EnumMap<>(FilterOperationMode.class);
         OPERATOR_TO_SQL_TERM_MAP.put(FilterOperationMode.AND, "AND");
         OPERATOR_TO_SQL_TERM_MAP.put(FilterOperationMode.OR, "OR");
         OPERATOR_TO_SQL_TERM_MAP.put(FilterOperationMode.NOT, "NOT");

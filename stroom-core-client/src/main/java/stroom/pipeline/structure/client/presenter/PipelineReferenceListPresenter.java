@@ -68,8 +68,8 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
     private final ButtonView addButton;
     private final ButtonView editButton;
     private final ButtonView removeButton;
-    private final Map<PipelineReference, State> referenceStateMap = new HashMap<PipelineReference, State>();
-    private final List<PipelineReference> references = new ArrayList<PipelineReference>();
+    private final Map<PipelineReference, State> referenceStateMap = new HashMap<>();
+    private final List<PipelineReference> references = new ArrayList<>();
     private final Provider<NewPipelineReferencePresenter> newPipelineReferencePresenter;
     private Map<PipelineElementType, Map<String, PipelinePropertyType>> allPropertyTypes;
     private PipelineEntity pipeline;
@@ -79,7 +79,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
     @Inject
     public PipelineReferenceListPresenter(final EventBus eventBus,
                                           final Provider<NewPipelineReferencePresenter> newPipelineReferencePresenter) {
-        super(eventBus, new DataGridViewImpl<PipelineReference>(true));
+        super(eventBus, new DataGridViewImpl<>(true));
         this.newPipelineReferencePresenter = newPipelineReferencePresenter;
 
 //        selectionModel = new MySingleSelectionModel<PipelineReference>();
@@ -188,7 +188,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
     }
 
     private void addEndColumn() {
-        getView().addEndColumn(new EndColumn<PipelineReference>());
+        getView().addEndColumn(new EndColumn<>());
     }
 
     private SafeHtml getSafeHtmlWithState(final PipelineReference pipelineReference, final String string) {

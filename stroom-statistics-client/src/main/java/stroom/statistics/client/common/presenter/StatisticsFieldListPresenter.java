@@ -56,7 +56,7 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
     @Inject
     public StatisticsFieldListPresenter(final EventBus eventBus,
                                         final StatisticsFieldEditPresenter statisticsFieldEditPresenter, final ClientDispatchAsync dispatcher) {
-        super(eventBus, new DataGridViewImpl<StatisticField>(true, true));
+        super(eventBus, new DataGridViewImpl<>(true, true));
         this.statisticsFieldEditPresenter = statisticsFieldEditPresenter;
 
         newButton = getView().addButton(SvgPresets.NEW_ITEM);
@@ -113,7 +113,7 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
 
     private void addColumns() {
         addNameColumn();
-        getView().addEndColumn(new EndColumn<StatisticField>());
+        getView().addEndColumn(new EndColumn<>());
     }
 
     private void addNameColumn() {
@@ -162,7 +162,7 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
             // make a copy of the list of stat fields and remove the one we are
             // editing so we can check the new value
             // is not already in the list
-            final List<StatisticField> otherFields = new ArrayList<StatisticField>(
+            final List<StatisticField> otherFields = new ArrayList<>(
                     statisticsDataSourceData.getStatisticFields());
             otherFields.remove(statisticField);
 
@@ -213,10 +213,10 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
 
     public void refresh() {
         if (statisticsDataSourceData == null) {
-            statisticsDataSourceData = new StatisticsDataSourceData(new ArrayList<StatisticField>());
+            statisticsDataSourceData = new StatisticsDataSourceData(new ArrayList<>());
         }
 
-        getView().setRowData(0, new ArrayList<StatisticField>(statisticsDataSourceData.getStatisticFields()));
+        getView().setRowData(0, new ArrayList<>(statisticsDataSourceData.getStatisticFields()));
         getView().setRowCount(statisticsDataSourceData.getStatisticFields().size(), true);
     }
 

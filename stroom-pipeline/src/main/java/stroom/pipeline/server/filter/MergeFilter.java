@@ -29,7 +29,7 @@ import java.util.Deque;
  * Merges XML that has been split into separate XML instances.
  */
 public class MergeFilter extends AbstractXMLFilter {
-    private final Deque<StartPrefixMapping> prefixDeque = new ArrayDeque<StartPrefixMapping>();
+    private final Deque<StartPrefixMapping> prefixDeque = new ArrayDeque<>();
     private boolean started;
     private int depth;
     private StartElement root;

@@ -130,7 +130,7 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
      * @return The next task or null if there are currently no more tasks.
      */
     private List<StreamProcessorTaskExecutor> processAll() {
-        final List<StreamProcessorTaskExecutor> results = new ArrayList<StreamProcessorTaskExecutor>();
+        final List<StreamProcessorTaskExecutor> results = new ArrayList<>();
         List<StreamTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getDefaultNode(), 100);
         while (streamTasks.size() > 0) {
             for (final StreamTask streamTask : streamTasks) {
@@ -340,7 +340,7 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
                         FORMAT_DEFINITION, XSLT_HOST_NAME_TO_IP, reference);
             }
 
-            final Set<Feed> referenceFeeds = new HashSet<Feed>();
+            final Set<Feed> referenceFeeds = new HashSet<>();
             referenceFeeds.add(hostNameToIP);
 
             for (int i = 0; i < NO_OF_EVENT_FILES; i++) {

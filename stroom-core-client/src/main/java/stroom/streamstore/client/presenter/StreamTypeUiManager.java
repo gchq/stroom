@@ -31,7 +31,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public class StreamTypeUiManager {
-    private List<StreamType> streamTypeList = new ArrayList<StreamType>();
+    private List<StreamType> streamTypeList = new ArrayList<>();
 
     @Inject
     public StreamTypeUiManager(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
@@ -49,7 +49,7 @@ public class StreamTypeUiManager {
     }
 
     public List<StreamType> getRawStreamTypeList() {
-        final List<StreamType> rtn = new ArrayList<StreamType>();
+        final List<StreamType> rtn = new ArrayList<>();
         for (final StreamType streamType : streamTypeList) {
             if (streamType.isStreamTypeRaw()) {
                 rtn.add(streamType);
@@ -60,7 +60,7 @@ public class StreamTypeUiManager {
     }
 
     public List<StreamType> getProcessedStreamTypeList() {
-        final List<StreamType> rtn = new ArrayList<StreamType>();
+        final List<StreamType> rtn = new ArrayList<>();
         for (final StreamType streamType : streamTypeList) {
             if (streamType.isStreamTypeProcessed()) {
                 rtn.add(streamType);
@@ -71,7 +71,7 @@ public class StreamTypeUiManager {
     }
 
     public List<StreamType> getRootStreamTypeList() {
-        final List<StreamType> rtnList = new ArrayList<StreamType>();
+        final List<StreamType> rtnList = new ArrayList<>();
         for (final StreamType streamType : streamTypeList) {
             if (!streamType.isStreamTypeChild()) {
                 rtnList.add(streamType);

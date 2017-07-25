@@ -56,7 +56,7 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
     private final ButtonView newButton;
     private final ButtonView removeButton;
     private final ButtonView autoGenerateButton;
-    private final List<Column<MaskHolder, ?>> columns = new ArrayList<Column<MaskHolder, ?>>();
+    private final List<Column<MaskHolder, ?>> columns = new ArrayList<>();
     private final ClientDispatchAsync dispatcher;
     private MaskHolder selectedElement;
     private StatisticStoreEntity statisticsDataSource;
@@ -66,7 +66,7 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
     @Inject
     public StatisticsCustomMaskListPresenter(final EventBus eventBus,
                                              final ClientDispatchAsync dispatcher) {
-        super(eventBus, new DataGridViewImpl<MaskHolder>(true, true));
+        super(eventBus, new DataGridViewImpl<>(true, true));
 
         newButton = getView().addButton(SvgPresets.NEW_ITEM);
         newButton.setTitle("New roll-up permutation");
@@ -125,7 +125,7 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
             addStatFieldColumn(fieldPos++, statisticField.getFieldName());
         }
 
-        final EndColumn<MaskHolder> endColumn = new EndColumn<MaskHolder>();
+        final EndColumn<MaskHolder> endColumn = new EndColumn<>();
 
         getView().addEndColumn(endColumn);
 

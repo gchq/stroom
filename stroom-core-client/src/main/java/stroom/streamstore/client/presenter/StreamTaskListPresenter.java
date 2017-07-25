@@ -56,7 +56,7 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
     @Inject
     public StreamTaskListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
                                    final TooltipPresenter tooltipPresenter) {
-        super(eventBus, new DataGridViewImpl<StreamTask>(false));
+        super(eventBus, new DataGridViewImpl<>(false));
 
         // Info column.
         getView().addColumn(new InfoColumn<StreamTask>() {
@@ -179,9 +179,9 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
                     }
                 }, "End Time", ColumnSizeConstants.DATE_COL);
 
-        getView().addEndColumn(new EndColumn<StreamTask>());
+        getView().addEndColumn(new EndColumn<>());
 
-        this.dataProvider = new EntityServiceFindActionDataProvider<FindStreamTaskCriteria, StreamTask>(dispatcher,
+        this.dataProvider = new EntityServiceFindActionDataProvider<>(dispatcher,
                 getView());
     }
 
@@ -232,7 +232,7 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
     }
 
     public void clear() {
-        getView().setRowData(0, new ArrayList<StreamTask>(0));
+        getView().setRowData(0, new ArrayList<>(0));
         getView().setRowCount(0, true);
     }
 

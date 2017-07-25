@@ -62,9 +62,9 @@ public abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends S
             final DefaultClusterResultCollector<ResultList<TaskProgress>> collector = dispatchHelper
                     .execAsync(clusterTask, TargetType.ACTIVE);
 
-            final List<TaskProgress> totalList = new ArrayList<TaskProgress>();
-            final Map<TaskId, TaskProgress> totalMap = new HashMap<TaskId, TaskProgress>();
-            final Map<TaskId, List<TaskProgress>> totalChildMap = new HashMap<TaskId, List<TaskProgress>>();
+            final List<TaskProgress> totalList = new ArrayList<>();
+            final Map<TaskId, TaskProgress> totalMap = new HashMap<>();
+            final Map<TaskId, List<TaskProgress>> totalChildMap = new HashMap<>();
 
             for (final Entry<Node, ClusterCallEntry<ResultList<TaskProgress>>> entry : collector.getResponseMap()
                     .entrySet()) {
@@ -76,8 +76,8 @@ public abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends S
                 }
             }
 
-            final List<TaskProgress> sortedRootNodes = new ArrayList<TaskProgress>();
-            final List<TaskProgress> additionList = new ArrayList<TaskProgress>();
+            final List<TaskProgress> sortedRootNodes = new ArrayList<>();
+            final List<TaskProgress> additionList = new ArrayList<>();
             for (final TaskProgress taskProgress : totalList) {
                 final TaskId taskId = taskProgress.getId();
                 TaskProgress child = taskProgress;
@@ -120,7 +120,7 @@ public abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends S
                             // parent.
                             List<TaskProgress> childList = totalChildMap.get(parentId);
                             if (childList == null) {
-                                childList = new ArrayList<TaskProgress>();
+                                childList = new ArrayList<>();
                                 totalChildMap.put(parentId, childList);
                             }
                             childList.add(child);
@@ -145,7 +145,7 @@ public abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends S
             }
             totalList.addAll(additionList);
 
-            final List<TaskProgress> rtnList = new ArrayList<TaskProgress>();
+            final List<TaskProgress> rtnList = new ArrayList<>();
 
             sortTaskProgressList(sortedRootNodes);
             for (final TaskProgress taskProgress : sortedRootNodes) {

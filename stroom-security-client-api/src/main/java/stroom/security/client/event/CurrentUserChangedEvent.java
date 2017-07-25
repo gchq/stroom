@@ -29,7 +29,7 @@ public class CurrentUserChangedEvent extends GwtEvent<CurrentUserChangedEvent.Cu
 
     public static GwtEvent.Type<CurrentUserChangedHandler> getType() {
         if (TYPE == null) {
-            TYPE = new GwtEvent.Type<CurrentUserChangedHandler>();
+            TYPE = new GwtEvent.Type<>();
         }
         return TYPE;
     }

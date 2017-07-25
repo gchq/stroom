@@ -32,7 +32,7 @@ import java.util.HashMap;
 public class TaskTypeCell extends AbstractInputCell<TaskType, TaskType> {
     private final JobType[] options;
     private String button = null;
-    private HashMap<JobType, Integer> indexForOption = new HashMap<JobType, Integer>();
+    private HashMap<JobType, Integer> indexForOption = new HashMap<>();
 
     /**
      * Construct a new {@link SelectionCell} with the specified options.

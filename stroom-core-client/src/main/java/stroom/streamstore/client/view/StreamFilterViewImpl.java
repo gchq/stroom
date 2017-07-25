@@ -82,7 +82,7 @@ public class StreamFilterViewImpl extends ViewImpl implements StreamFilterView {
     MyDateBox statusTo;
     @Inject
     public StreamFilterViewImpl(final Binder binder) {
-        streamListFilterTemplate = new ItemListBox<StreamListFilterTemplate>("");
+        streamListFilterTemplate = new ItemListBox<>("");
         streamListFilterTemplate.addItems(StreamListFilterTemplate.values());
         streamStatus = new ItemListBox<>("Any");
 

@@ -53,7 +53,7 @@ public class IncludeExcludeEntityIdSet<T extends BaseEntity>
 
     public EntityIdSet<T> obtainInclude() {
         if (getInclude() == null) {
-            setInclude(new EntityIdSet<T>());
+            setInclude(new EntityIdSet<>());
         }
         return getInclude();
     }
@@ -69,7 +69,7 @@ public class IncludeExcludeEntityIdSet<T extends BaseEntity>
 
     public EntityIdSet<T> obtainExclude() {
         if (getExclude() == null) {
-            setExclude(new EntityIdSet<T>());
+            setExclude(new EntityIdSet<>());
         }
         return getExclude();
     }

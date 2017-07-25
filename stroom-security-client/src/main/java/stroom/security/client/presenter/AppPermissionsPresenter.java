@@ -49,7 +49,7 @@ public class AppPermissionsPresenter extends
     @Inject
     public AppPermissionsPresenter(final EventBus eventBus,
                                    final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext) {
-        super(eventBus, new DataGridViewImpl<String>());
+        super(eventBus, new DataGridViewImpl<>());
         this.dispatcher = dispatcher;
         this.securityContext = securityContext;
 
@@ -64,7 +64,7 @@ public class AppPermissionsPresenter extends
     private void refresh() {
         if (relatedUser == null) {
             userAppPermissions = null;
-            final List<String> features = new ArrayList<String>();
+            final List<String> features = new ArrayList<>();
             getView().setRowData(0, features);
             getView().setRowCount(features.size(), true);
 

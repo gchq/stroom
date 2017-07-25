@@ -72,7 +72,7 @@ public class VisFunction {
 
     public void addStatusHandler(final StatusHandler handler) {
         if (statusHandlers == null) {
-            statusHandlers = new HashSet<StatusHandler>();
+            statusHandlers = new HashSet<>();
         }
         statusHandlers.add(handler);
         handler.onChange(this);

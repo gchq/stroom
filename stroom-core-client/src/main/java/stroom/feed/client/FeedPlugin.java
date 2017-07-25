@@ -36,7 +36,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class FeedPlugin extends EntityPlugin<Feed> {
-    public static final Set<String> FETCH_SET = new HashSet<String>(Arrays.asList(StreamType.ENTITY_TYPE));
+    public static final Set<String> FETCH_SET = new HashSet<>(Arrays.asList(StreamType.ENTITY_TYPE));
     private final Provider<FeedPresenter> editorProvider;
 
     @Inject

@@ -56,7 +56,7 @@ public class XMLRecordEmitter extends XMLFilterAdaptor implements HasElementId {
             .newInstance();
     private final MyWriter outputStreamWriter = new MyWriter(1000);
     private final List<DestinationProvider> appenders;
-    private final List<StartPrefixMapping> prefixList = new ArrayList<StartPrefixMapping>();
+    private final List<StartPrefixMapping> prefixList = new ArrayList<>();
     private LocationFactory locationFactory;
     private String id;
 

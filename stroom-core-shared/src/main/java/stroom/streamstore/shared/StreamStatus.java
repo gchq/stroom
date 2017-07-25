@@ -35,7 +35,7 @@ public enum StreamStatus implements HasDisplayValue, HasPrimitiveValue {
      */
     DELETED("Deleted", 99);
 
-    public static final PrimitiveValueConverter<StreamStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<StreamStatus>(
+    public static final PrimitiveValueConverter<StreamStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
             StreamStatus.values());
 
     private final String displayValue;

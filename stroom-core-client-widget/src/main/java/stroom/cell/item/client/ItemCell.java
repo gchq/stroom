@@ -52,7 +52,7 @@ public class ItemCell<V extends HasDisplayValue> extends AbstractInputCell<V, V>
         if (template == null) {
             template = GWT.create(Template.class);
         }
-        this.options = new ArrayList<V>(options);
+        this.options = new ArrayList<>(options);
         int index = 0;
         for (final V option : options) {
             indexForOption.put(option, index++);

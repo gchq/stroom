@@ -77,7 +77,7 @@ public class ImportConfigConfirmPresenter extends
         this.tooltipPresenter = tooltipPresenter;
         this.dispatcher = dispatcher;
 
-        this.dataGridView = new DataGridViewImpl<ImportState>(false,
+        this.dataGridView = new DataGridViewImpl<>(false,
                 DataGridViewImpl.MASSIVE_LIST_PAGE_SIZE);
         view.setDataGridView(dataGridView);
 
@@ -151,7 +151,7 @@ public class ImportConfigConfirmPresenter extends
         addTypeColumn();
         addSourcePathColumn();
         addDestPathColumn();
-        dataGridView.addEndColumn(new EndColumn<ImportState>());
+        dataGridView.addEndColumn(new EndColumn<>());
     }
 
     private void addSelectedColumn() {

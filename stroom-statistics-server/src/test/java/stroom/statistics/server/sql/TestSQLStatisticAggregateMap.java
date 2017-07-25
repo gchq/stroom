@@ -429,7 +429,7 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
     }
 
     private List<StatisticTag> buildTagList(final String valueSuffix) {
-        final List<StatisticTag> tagList = new ArrayList<StatisticTag>();
+        final List<StatisticTag> tagList = new ArrayList<>();
 
         tagList.add(new StatisticTag(TAG1_NAME, TAG1_VALUE + valueSuffix));
         tagList.add(new StatisticTag(TAG2_NAME, TAG2_VALUE + valueSuffix));
@@ -443,7 +443,7 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
 
         final StatisticsDataSourceData statisticFields = new StatisticsDataSourceData();
 
-        final List<StatisticField> fields = new ArrayList<StatisticField>();
+        final List<StatisticField> fields = new ArrayList<>();
 
         fields.add(new StatisticField(TAG1_NAME));
         fields.add(new StatisticField(TAG2_NAME));

@@ -23,7 +23,7 @@ public class PrimitiveValueConverter<E extends HasPrimitiveValue> {
     private Map<Byte, E> map;
 
     public PrimitiveValueConverter(E[] values) {
-        map = new HashMap<Byte, E>(values.length);
+        map = new HashMap<>(values.length);
         for (E value : values) {
             map.put(value.getPrimitiveValue(), value);
         }

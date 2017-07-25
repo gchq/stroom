@@ -35,7 +35,7 @@ import java.util.ArrayDeque;
 public class StroomHibernateJpaVendorAdapter extends HibernateJpaVendorAdapter {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomHibernateJpaVendorAdapter.class);
 
-    static ThreadLocal<ArrayDeque<StackTraceElement[]>> threadTransactionStack = new ThreadLocal<ArrayDeque<StackTraceElement[]>>();
+    static ThreadLocal<ArrayDeque<StackTraceElement[]>> threadTransactionStack = new ThreadLocal<>();
     private HibernateJpaDialect jpaDialect = new StroomHibernateJpaDialect();
 
     @Override

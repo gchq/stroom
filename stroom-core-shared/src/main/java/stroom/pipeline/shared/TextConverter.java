@@ -115,7 +115,7 @@ public class TextConverter extends DocumentEntity implements Copyable<TextConver
     public enum TextConverterType implements HasDisplayValue, HasPrimitiveValue {
         NONE("None", 0, "txt"), DATA_SPLITTER("Data Splitter", 1, "xml"), XML_FRAGMENT("XML Fragment", 3, "xml");
 
-        public static final PrimitiveValueConverter<TextConverterType> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<TextConverterType>(
+        public static final PrimitiveValueConverter<TextConverterType> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
                 TextConverterType.values());
 
         // Add fudge to cope with old DATA_SPLITTER_2 enumeration that mapped to

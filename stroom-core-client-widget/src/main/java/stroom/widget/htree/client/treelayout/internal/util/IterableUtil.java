@@ -53,7 +53,7 @@ public class IterableUtil {
             return list;
         }
 
-        return new ReverseIterable<T>(list);
+        return new ReverseIterable<>(list);
     }
 
     private static class ReverseIterable<T> implements Iterable<T> {

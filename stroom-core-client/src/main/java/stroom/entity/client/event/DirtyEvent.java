@@ -34,7 +34,7 @@ public class DirtyEvent extends GwtEvent<DirtyEvent.DirtyHandler> {
 
     public static Type<DirtyHandler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<DirtyHandler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }

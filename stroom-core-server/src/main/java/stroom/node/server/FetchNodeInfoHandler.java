@@ -73,7 +73,7 @@ class FetchNodeInfoHandler extends AbstractTaskHandler<FetchNodeInfoAction, Resu
             return o1.getName().compareToIgnoreCase(o2.getName());
         });
 
-        final ArrayList<NodeInfoResult> responseList = new ArrayList<NodeInfoResult>();
+        final ArrayList<NodeInfoResult> responseList = new ArrayList<>();
         for (final Node node : allNodes) {
             final ClusterCallEntry<NodeInfoResult> response = collector.getResponse(node);
             // Get or create result.

@@ -53,6 +53,6 @@ public class StreamListPresenter extends AbstractStreamListPresenter {
         addAttributeColumn("Info", StreamAttributeConstants.REC_INFO, 40);
         addAttributeColumn("Retention", StreamAttributeConstants.RETENTION_AGE, ColumnSizeConstants.SMALL_COL);
 
-        getView().addEndColumn(new EndColumn<StreamAttributeMap>());
+        getView().addEndColumn(new EndColumn<>());
     }
 }

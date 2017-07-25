@@ -76,13 +76,13 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
 
     private void createList(final boolean enabled) {
         if (enabled) {
-            selectionModel = new MySingleSelectionModel<DocRef>();
-            list = new CellTableViewImpl<DocRef>(true, GWT.create(DefaultResources.class));
+            selectionModel = new MySingleSelectionModel<>();
+            list = new CellTableViewImpl<>(true, GWT.create(DefaultResources.class));
 
             registerHandler(selectionModel.addSelectionChangeHandler(event -> enableButtons()));
         } else {
             selectionModel = null;
-            list = new CellTableViewImpl<DocRef>(false, GWT.create(DisabledResources.class));
+            list = new CellTableViewImpl<>(false, GWT.create(DisabledResources.class));
         }
 
         // Text.

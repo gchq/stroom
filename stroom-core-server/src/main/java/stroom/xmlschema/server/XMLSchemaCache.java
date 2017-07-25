@@ -40,8 +40,8 @@ public class XMLSchemaCache implements EntityEvent.Handler {
     private static final long TEN_MINUTES = 1000 * 60 * 10;
     private static final FindXMLSchemaCriteria ALL = new FindXMLSchemaCriteria();
     private final XMLSchemaService xmlSchemaService;
-    private final List<ClearHandler> clearHandlers = new ArrayList<ClearHandler>();
-    private final Map<FindXMLSchemaCriteria, SchemaSet> schemaSets = new ConcurrentHashMap<FindXMLSchemaCriteria, SchemaSet>();
+    private final List<ClearHandler> clearHandlers = new ArrayList<>();
+    private final Map<FindXMLSchemaCriteria, SchemaSet> schemaSets = new ConcurrentHashMap<>();
     private volatile long lastClearTime;
     @Inject
     public XMLSchemaCache(final XMLSchemaService xmlSchemaService) {
@@ -81,10 +81,10 @@ public class XMLSchemaCache implements EntityEvent.Handler {
                 // Get a list of matching schemas.
                 final List<XMLSchema> xmlSchemas = xmlSchemaService.find(criteria);
 
-                final Map<String, List<XMLSchema>> schemaNameMap = new HashMap<String, List<XMLSchema>>();
-                final Map<String, List<XMLSchema>> schemaNamespaceURIMap = new HashMap<String, List<XMLSchema>>();
-                final Map<String, List<XMLSchema>> schemaSystemIdMap = new HashMap<String, List<XMLSchema>>();
-                final List<String> systemIdList = new ArrayList<String>(xmlSchemas.size());
+                final Map<String, List<XMLSchema>> schemaNameMap = new HashMap<>();
+                final Map<String, List<XMLSchema>> schemaNamespaceURIMap = new HashMap<>();
+                final Map<String, List<XMLSchema>> schemaSystemIdMap = new HashMap<>();
+                final List<String> systemIdList = new ArrayList<>(xmlSchemas.size());
 
                 for (final XMLSchema xmlSchema : xmlSchemas) {
                     addToMap(schemaNameMap, xmlSchema.getName(), xmlSchema);

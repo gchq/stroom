@@ -51,7 +51,7 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 
     private Element divElement;
 
-    private HashMap<Integer, AceRange> markers = new HashMap<Integer, AceRange>();
+    private HashMap<Integer, AceRange> markers = new HashMap<>();
 
     private AceSelection selection = null;
 

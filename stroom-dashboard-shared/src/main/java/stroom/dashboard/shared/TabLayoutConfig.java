@@ -61,7 +61,7 @@ public class TabLayoutConfig extends LayoutConfig {
 
     public void add(final TabConfig tab) {
         if (tabs == null) {
-            tabs = new ArrayList<TabConfig>();
+            tabs = new ArrayList<>();
         }
         tabs.add(tab);
         tab.setParent(this);
@@ -69,7 +69,7 @@ public class TabLayoutConfig extends LayoutConfig {
 
     public void add(final int index, final TabConfig tab) {
         if (tabs == null) {
-            tabs = new ArrayList<TabConfig>();
+            tabs = new ArrayList<>();
         }
         if (index <= tabs.size()) {
             tabs.add(index, tab);

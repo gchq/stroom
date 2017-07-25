@@ -38,7 +38,7 @@ import java.util.TreeMap;
 @Scope(value = StroomScope.TASK)
 public class RecordErrorReceiver implements ErrorReceiver, ErrorStatistics {
     public static final int MAX_TOTAL_WRITTEN_MARKERS = 1000;
-    private Map<Severity, StoredErrorStats> statsMap = new TreeMap<Severity, StoredErrorStats>();
+    private Map<Severity, StoredErrorStats> statsMap = new TreeMap<>();
     @Resource
     private ErrorWriterProxy errorWriter;
 

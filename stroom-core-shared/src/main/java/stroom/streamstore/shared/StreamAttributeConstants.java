@@ -44,7 +44,7 @@ public class StreamAttributeConstants {
     public static final Map<String, StreamAttributeFieldUse> SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP;
 
     static {
-        final HashMap<String, StreamAttributeFieldUse> map = new HashMap<String, StreamAttributeFieldUse>();
+        final HashMap<String, StreamAttributeFieldUse> map = new HashMap<>();
         map.put(REC_READ, StreamAttributeFieldUse.COUNT_IN_DURATION_FIELD);
         map.put(REC_WRITE, StreamAttributeFieldUse.COUNT_IN_DURATION_FIELD);
         map.put(REC_INFO, StreamAttributeFieldUse.COUNT_IN_DURATION_FIELD);

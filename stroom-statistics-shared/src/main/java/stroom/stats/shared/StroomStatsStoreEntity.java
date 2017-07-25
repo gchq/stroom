@@ -214,7 +214,7 @@ public class StroomStatsStoreEntity extends DocumentEntity {
     @Transient
     public List<String> getFieldNames() {
         if (stroomStatsStoreDataObject != null) {
-            final List<String> fieldNames = new ArrayList<String>();
+            final List<String> fieldNames = new ArrayList<>();
             for (final StatisticField statisticField : stroomStatsStoreDataObject.getStatisticFields()) {
                 fieldNames.add(statisticField.getFieldName());
             }

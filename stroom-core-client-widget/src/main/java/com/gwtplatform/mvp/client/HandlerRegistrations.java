@@ -25,7 +25,7 @@ public class HandlerRegistrations implements HandlerRegistration {
     private final List<HandlerRegistration> handlerRegistrations;
 
     public HandlerRegistrations() {
-        handlerRegistrations = new ArrayList<HandlerRegistration>();
+        handlerRegistrations = new ArrayList<>();
     }
 
     public void add(final HandlerRegistration handlerRegistration) {

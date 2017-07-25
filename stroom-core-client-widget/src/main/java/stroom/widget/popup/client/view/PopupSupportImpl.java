@@ -61,7 +61,7 @@ public class PopupSupportImpl implements PopupSupport {
 
     private void addAutoHidePartner(final Element element) {
         if (autoHidePartners == null) {
-            autoHidePartners = new ArrayList<Element>();
+            autoHidePartners = new ArrayList<>();
         }
         autoHidePartners.add(element);
     }

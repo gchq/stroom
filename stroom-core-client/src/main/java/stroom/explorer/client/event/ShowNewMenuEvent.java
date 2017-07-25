@@ -38,7 +38,7 @@ public class ShowNewMenuEvent extends GwtEvent<ShowNewMenuEvent.Handler> {
 
     public static Type<Handler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<Handler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }

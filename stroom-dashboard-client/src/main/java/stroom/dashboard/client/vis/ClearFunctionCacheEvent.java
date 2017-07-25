@@ -31,7 +31,7 @@ public class ClearFunctionCacheEvent extends GwtEvent<ClearFunctionCacheEvent.Ha
 
     public static Type<Handler> getType() {
         if (TYPE == null) {
-            TYPE = new GwtEvent.Type<Handler>();
+            TYPE = new GwtEvent.Type<>();
         }
         return TYPE;
     }

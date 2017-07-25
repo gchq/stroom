@@ -63,7 +63,7 @@ public abstract class CurveTabLayoutPresenter<P extends Proxy<?>> extends MyPres
     }
 
     public void clear() {
-        final List<TabData> copy = new ArrayList<TabData>(getView().getTabBar().getTabs());
+        final List<TabData> copy = new ArrayList<>(getView().getTabBar().getTabs());
         for (final TabData tabData : copy) {
             remove(tabData);
         }

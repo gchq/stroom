@@ -75,7 +75,7 @@ public class TimeAgnosticStatisticEvent implements Serializable {
         // build a new list object, sort it and make it unmodifiable
         // or just return an unmodifiable empty list
         if (tagList != null) {
-            final List<StatisticTag> tempTagList = new ArrayList<StatisticTag>(tagList);
+            final List<StatisticTag> tempTagList = new ArrayList<>(tagList);
 
             return Collections.unmodifiableList(tempTagList);
         } else {
@@ -84,7 +84,7 @@ public class TimeAgnosticStatisticEvent implements Serializable {
     }
 
     private Map<String, Integer> buildTagPositionMap() {
-        final Map<String, Integer> tagPositionMap = new HashMap<String, Integer>();
+        final Map<String, Integer> tagPositionMap = new HashMap<>();
         if (tagList != null) {
             int i = 0;
             for (final StatisticTag tag : tagList) {

@@ -58,7 +58,7 @@ public class FieldListPresenter extends MyPresenterWidget<DataGridView<DataSourc
     @Inject
     public FieldListPresenter(final EventBus eventBus,
                               final FieldEditPresenter fieldEditPresenter) {
-        super(eventBus, new DataGridViewImpl<DataSourceField>(true, true));
+        super(eventBus, new DataGridViewImpl<>(true, true));
         this.fieldEditPresenter = fieldEditPresenter;
 
         newButton = getView().addButton(SvgPresets.NEW_ITEM);
@@ -137,7 +137,7 @@ public class FieldListPresenter extends MyPresenterWidget<DataGridView<DataSourc
     private void addColumns() {
         addNameColumn();
         addTypeColumn();
-        getView().addEndColumn(new EndColumn<DataSourceField>());
+        getView().addEndColumn(new EndColumn<>());
     }
 
     private void addNameColumn() {

@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class VarMap {
-    private final Map<String, Var> map = new HashMap<String, Var>();
+    private final Map<String, Var> map = new HashMap<>();
 
     /**
      * Register a var node with it's id.

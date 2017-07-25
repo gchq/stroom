@@ -30,7 +30,7 @@ import java.util.Set;
 @Component
 public class DistributedTaskFactoryBeanRegistry {
     private static final Logger LOGGER = LoggerFactory.getLogger(DistributedTaskFactoryBeanRegistry.class);
-    private Map<String, String> factoryMap = new HashMap<String, String>();
+    private Map<String, String> factoryMap = new HashMap<>();
     @Resource
     private StroomBeanStore stroomBeanStore;
 

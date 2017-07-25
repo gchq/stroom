@@ -32,7 +32,7 @@ public class ScriptCache {
     private final EventBus eventBus;
     private final HandlerRegistry handlerRegistry = new HandlerRegistry();
 
-    private final Set<DocRef> loadedScripts = new HashSet<DocRef>();
+    private final Set<DocRef> loadedScripts = new HashSet<>();
 
     @Inject
     public ScriptCache(final EventBus eventBus) {

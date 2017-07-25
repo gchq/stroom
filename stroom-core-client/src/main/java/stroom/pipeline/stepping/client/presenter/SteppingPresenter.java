@@ -75,7 +75,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     private final StepLocationPresenter stepLocationPresenter;
     private final StepControlPresenter stepControlPresenter;
     private final ClientDispatchAsync dispatcher;
-    private final Map<String, ElementPresenter> editorMap = new HashMap<String, ElementPresenter>();
+    private final Map<String, ElementPresenter> editorMap = new HashMap<>();
     private final PipelineModel pipelineModel;
     private final ButtonView saveButton;
     private boolean foundRecord;

@@ -29,7 +29,7 @@ import java.util.List;
 public class TestExecutionProfilerTopN extends StroomUnitTest {
     @Test
     public void test() {
-        final List<ExecutionProfiler> list = new ArrayList<ExecutionProfiler>();
+        final List<ExecutionProfiler> list = new ArrayList<>();
         list.add(new SimpleExecutionProfiler(10));
         list.add(new SimpleExecutionProfiler(1));
         list.add(new SimpleExecutionProfiler(5));

@@ -80,7 +80,7 @@ public abstract class ManageEntityEditPresenter<V extends View, E extends NamedE
 
         if (entity.isPersistent()) {
             // Reload it so we always have the latest version
-            final EntityServiceLoadAction<E> action = new EntityServiceLoadAction<E>(DocRefUtil.create(entity),
+            final EntityServiceLoadAction<E> action = new EntityServiceLoadAction<>(DocRefUtil.create(entity),
                     getEntityFetchSet());
             dispatcher.exec(action).onSuccess(result -> {
                 setEntity(result);

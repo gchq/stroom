@@ -70,7 +70,7 @@ public class SplitLayoutConfig extends LayoutConfig {
 
     public void add(final LayoutConfig child) {
         if (children == null) {
-            children = new ArrayList<LayoutConfig>();
+            children = new ArrayList<>();
         }
         children.add(child);
         child.setParent(this);
@@ -78,7 +78,7 @@ public class SplitLayoutConfig extends LayoutConfig {
 
     public void add(final int index, final LayoutConfig child) {
         if (children == null) {
-            children = new ArrayList<LayoutConfig>();
+            children = new ArrayList<>();
         }
         if (index <= children.size()) {
             children.add(index, child);

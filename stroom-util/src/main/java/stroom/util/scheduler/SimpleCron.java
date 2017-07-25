@@ -53,7 +53,7 @@ public class SimpleCron {
             throw new MalformedCronException("Cron expression must contain 3 parts");
         }
 
-        cronParts = new ArrayList<CronPart>(3);
+        cronParts = new ArrayList<>(3);
         cronParts.add(new CronPart(Calendar.MINUTE, parts[0]));
         cronParts.add(new CronPart(Calendar.HOUR_OF_DAY, parts[1]));
         cronParts.add(new CronPart(Calendar.DAY_OF_MONTH, parts[2]));

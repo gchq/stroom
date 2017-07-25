@@ -145,7 +145,7 @@ public class ScriptPresenter extends EntityEditTabPresenter<LinkTabPanelView, Sc
         if (!loadedResource) {
             final Set<String> fetchSet = new HashSet<>();
             fetchSet.add(Script.FETCH_RESOURCE);
-            final EntityServiceLoadAction<Script> action = new EntityServiceLoadAction<Script>(DocRefUtil.create(getEntity()),
+            final EntityServiceLoadAction<Script> action = new EntityServiceLoadAction<>(DocRefUtil.create(getEntity()),
                     fetchSet);
             dispatcher.exec(action).onSuccess(script -> {
                 resource = script.getResource();

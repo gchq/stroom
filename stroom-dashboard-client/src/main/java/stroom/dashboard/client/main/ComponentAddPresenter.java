@@ -40,7 +40,7 @@ public class ComponentAddPresenter extends MyPresenterWidget<CellTableView<Compo
 
     @Inject
     public ComponentAddPresenter(final EventBus eventBus) {
-        super(eventBus, new CellTableViewImpl<ComponentType>(true, (Resources) GWT.create(HoverResources.class)));
+        super(eventBus, new CellTableViewImpl<>(true, (Resources) GWT.create(HoverResources.class)));
         // // Icon.
         // final Column<ElementType, ImageResource> iconColumn = new
         // Column<ElementType, ImageResource>(

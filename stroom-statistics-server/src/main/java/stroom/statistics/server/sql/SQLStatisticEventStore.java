@@ -653,7 +653,7 @@ public class SQLStatisticEventStore implements Statistics {
 
     private StatisticDataSet performStatisticQuery(final StatisticStoreEntity dataSource,
                                                    final FindEventCriteria criteria) {
-        final Set<StatisticDataPoint> dataPoints = new HashSet<StatisticDataPoint>();
+        final Set<StatisticDataPoint> dataPoints = new HashSet<>();
 
         // TODO need to fingure out how we get the precision
         final StatisticDataSet statisticDataSet = new StatisticDataSet(dataSource.getName(),
@@ -713,7 +713,7 @@ public class SQLStatisticEventStore implements Statistics {
      */
     private List<StatisticTag> extractStatisticTagsFromColumn(final String columnValue) {
         final String[] tokens = columnValue.split(SQLStatisticConstants.NAME_SEPARATOR);
-        final List<StatisticTag> statisticTags = new ArrayList<StatisticTag>();
+        final List<StatisticTag> statisticTags = new ArrayList<>();
 
         if (tokens.length == 1) {
             // no separators so there are no tags

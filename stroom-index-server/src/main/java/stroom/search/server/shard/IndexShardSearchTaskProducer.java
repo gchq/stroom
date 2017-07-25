@@ -38,7 +38,7 @@ public class IndexShardSearchTaskProducer extends AbstractTaskProducer {
     private final IndexShardSearcherCache indexShardSearcherCache;
     private final ErrorReceiver errorReceiver;
 
-    private final Queue<IndexShardSearchTask> taskQueue = new ConcurrentLinkedQueue<IndexShardSearchTask>();
+    private final Queue<IndexShardSearchTask> taskQueue = new ConcurrentLinkedQueue<>();
     private final int tasksCreated;
     private final AtomicInteger tasksRequested = new AtomicInteger();
     private final AtomicInteger tasksCompleted = new AtomicInteger();

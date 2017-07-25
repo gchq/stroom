@@ -28,8 +28,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class TabContentProvider<E> implements HasRead<E>, HasWrite<E>, HasPermissionCheck {
-    private final Map<TabData, Provider<?>> tabProviders = new HashMap<TabData, Provider<?>>();
-    private final Map<TabData, PresenterWidget<?>> presenterCache = new HashMap<TabData, PresenterWidget<?>>();
+    private final Map<TabData, Provider<?>> tabProviders = new HashMap<>();
+    private final Map<TabData, PresenterWidget<?>> presenterCache = new HashMap<>();
 
     private Set<PresenterWidget<?>> usedPresenters;
     private Set<TabData> dirtyTabs;
@@ -58,7 +58,7 @@ public class TabContentProvider<E> implements HasRead<E>, HasWrite<E>, HasPermis
                     hasDirtyHandlers.addDirtyHandler(event -> {
                         if (event.isDirty()) {
                             if (dirtyTabs == null) {
-                                dirtyTabs = new HashSet<TabData>();
+                                dirtyTabs = new HashSet<>();
                             }
 
                             dirtyTabs.add(tab);
@@ -124,7 +124,7 @@ public class TabContentProvider<E> implements HasRead<E>, HasWrite<E>, HasPermis
             hasRead.read(entity);
 
             if (usedPresenters == null) {
-                usedPresenters = new HashSet<PresenterWidget<?>>();
+                usedPresenters = new HashSet<>();
             }
             usedPresenters.add(presenter);
         }

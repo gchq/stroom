@@ -72,7 +72,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
     @Inject
     public PropertyListPresenter(final EventBus eventBus,
                                  final Provider<NewPropertyPresenter> newPropertyPresenter) {
-        super(eventBus, new DataGridViewImpl<PipelineProperty>(true));
+        super(eventBus, new DataGridViewImpl<>(true));
         this.newPropertyPresenter = newPropertyPresenter;
 
         editButton = getView().addButton(SvgPresets.EDIT);
@@ -290,7 +290,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
     }
 
     private void addEndColumn() {
-        getView().addEndColumn(new EndColumn<PipelineProperty>());
+        getView().addEndColumn(new EndColumn<>());
     }
 
     public void setPipeline(final PipelineEntity pipelineEntity) {
@@ -302,7 +302,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
     }
 
     public void setCurrentElement(final PipelineElement currentElement) {
-        final List<PipelineProperty> defaultProperties = new ArrayList<PipelineProperty>();
+        final List<PipelineProperty> defaultProperties = new ArrayList<>();
         if (currentElement != null && allPropertyTypes != null) {
             final Map<String, PipelinePropertyType> propertyTypes = allPropertyTypes
                     .get(currentElement.getElementType());

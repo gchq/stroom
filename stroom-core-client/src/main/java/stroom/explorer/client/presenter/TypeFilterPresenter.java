@@ -47,12 +47,12 @@ import java.util.Set;
 
 public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<DocumentType>>
         implements HasDataSelectionHandlers<TypeFilterPresenter> {
-    private final Set<String> selected = new HashSet<String>();
+    private final Set<String> selected = new HashSet<>();
     private final EventBus eventBus;
 
     @Inject
     public TypeFilterPresenter(final EventBus eventBus) {
-        super(eventBus, new CellTableViewImpl<DocumentType>(false, (Resources) GWT.create(BasicResources.class)));
+        super(eventBus, new CellTableViewImpl<>(false, (Resources) GWT.create(BasicResources.class)));
         this.eventBus = eventBus;
 
         // Checked.

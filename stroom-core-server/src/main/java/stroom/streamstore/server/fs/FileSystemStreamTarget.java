@@ -43,7 +43,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamTarget.class);
     private final Set<StreamVolume> metaDataVolume;
     private final StreamType streamType;
-    private final List<FileSystemStreamTarget> childrenAccessed = new ArrayList<FileSystemStreamTarget>();
+    private final List<FileSystemStreamTarget> childrenAccessed = new ArrayList<>();
     private Stream stream;
     private boolean closed = false;
     private boolean append = false;

@@ -34,7 +34,7 @@ public class ManageEntityListPresenter<C extends BaseCriteria, E extends BaseEnt
 
     @Inject
     public ManageEntityListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
-        super(eventBus, new DataGridViewImpl<E>(true));
+        super(eventBus, new DataGridViewImpl<>(true));
     }
 
 //    public ImageButtonView addButton(final String title, final ImageResource enabledImage,

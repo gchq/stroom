@@ -211,7 +211,7 @@ public class TestIndexShardIO extends StroomUnitTest {
 
         Long lastSize = null;
 
-        final HashSet<Integer> flushSet = new HashSet<Integer>();
+        final HashSet<Integer> flushSet = new HashSet<>();
 
         for (int i = 1; i <= 100; i++) {
             writer.addDocument(buildDocument(i));

@@ -29,12 +29,12 @@ import stroom.node.shared.Volume;
 public class FindIndexShardCriteria extends BaseCriteria implements EntityMatcher<IndexShard> {
     public static final String FIELD_PARTITION = "Partition";
     private static final long serialVersionUID = 3552286394659242683L;
-    private Range<Integer> documentCountRange = new Range<Integer>();
-    private EntityIdSet<Node> nodeIdSet = new EntityIdSet<Node>();
-    private EntityIdSet<Volume> volumeIdSet = new EntityIdSet<Volume>();
-    private EntityIdSet<Index> indexIdSet = new EntityIdSet<Index>();
-    private EntityIdSet<IndexShard> indexShardSet = new EntityIdSet<IndexShard>();
-    private CriteriaSet<IndexShardStatus> indexShardStatusSet = new CriteriaSet<IndexShardStatus>();
+    private Range<Integer> documentCountRange = new Range<>();
+    private EntityIdSet<Node> nodeIdSet = new EntityIdSet<>();
+    private EntityIdSet<Volume> volumeIdSet = new EntityIdSet<>();
+    private EntityIdSet<Index> indexIdSet = new EntityIdSet<>();
+    private EntityIdSet<IndexShard> indexShardSet = new EntityIdSet<>();
+    private CriteriaSet<IndexShardStatus> indexShardStatusSet = new CriteriaSet<>();
     private StringCriteria partition = new StringCriteria();
 
     public FindIndexShardCriteria() {

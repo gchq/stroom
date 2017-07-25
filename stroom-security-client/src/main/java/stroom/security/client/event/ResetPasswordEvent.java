@@ -36,7 +36,7 @@ public class ResetPasswordEvent extends GwtEvent<ResetPasswordHandler> {
 
     public static Type<ResetPasswordHandler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<ResetPasswordHandler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }

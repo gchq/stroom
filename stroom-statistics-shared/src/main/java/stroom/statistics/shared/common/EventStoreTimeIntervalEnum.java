@@ -42,8 +42,8 @@ public enum EventStoreTimeIntervalEnum implements HasDisplayValue {
     // Fifty two Weekly with 364 1day column intervals
     DAY(31_449_600_000L, 86_400_000L, "Day", "d");
 
-    private static final Map<Long, EventStoreTimeIntervalEnum> fromColumnIntervalMap = new HashMap<Long, EventStoreTimeIntervalEnum>();
-    private static final Map<String, EventStoreTimeIntervalEnum> fromShortnameMap = new HashMap<String, EventStoreTimeIntervalEnum>();
+    private static final Map<Long, EventStoreTimeIntervalEnum> fromColumnIntervalMap = new HashMap<>();
+    private static final Map<String, EventStoreTimeIntervalEnum> fromShortnameMap = new HashMap<>();
 
     static {
         for (final EventStoreTimeIntervalEnum interval : values()) {

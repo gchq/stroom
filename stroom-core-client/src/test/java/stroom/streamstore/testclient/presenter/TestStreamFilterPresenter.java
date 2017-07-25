@@ -30,19 +30,19 @@ public class TestStreamFilterPresenter {
     @Test
     public void testParse() {
         doTestParse("1", Arrays.asList(1L));
-        doTestParse("", new HashSet<Long>());
-        doTestParse(" ", new HashSet<Long>());
+        doTestParse("", new HashSet<>());
+        doTestParse(" ", new HashSet<>());
         doTestParse("1 ", Arrays.asList(1L));
         doTestParse("1 , 2", Arrays.asList(1L, 2L));
         doTestParse("1  ,  4", Arrays.asList(1L, 4L));
     }
 
     public void doTestParse(final String text, final Collection<Long> ids) {
-        final EntityIdSet<Stream> streamIdSet = new EntityIdSet<Stream>();
+        final EntityIdSet<Stream> streamIdSet = new EntityIdSet<>();
         StreamFilterPresenter.stringToIdSet(text, streamIdSet);
-        Assert.assertEquals(new HashSet<Long>(ids), streamIdSet.getSet());
+        Assert.assertEquals(new HashSet<>(ids), streamIdSet.getSet());
         final String newString = StreamFilterPresenter.idSetToString(streamIdSet);
         StreamFilterPresenter.stringToIdSet(newString, streamIdSet);
-        Assert.assertEquals(new HashSet<Long>(ids), streamIdSet.getSet());
+        Assert.assertEquals(new HashSet<>(ids), streamIdSet.getSet());
     }
 }

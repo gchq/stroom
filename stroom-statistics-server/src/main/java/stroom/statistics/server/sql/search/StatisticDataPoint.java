@@ -110,7 +110,7 @@ public class StatisticDataPoint {
     }
 
     public Map<String, String> getTagsAsMap() {
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new HashMap<>();
         for (StatisticTag tag : tags) {
             map.put(tag.getTag(), tag.getValue());
         }

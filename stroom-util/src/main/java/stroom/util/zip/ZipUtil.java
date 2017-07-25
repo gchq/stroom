@@ -195,7 +195,7 @@ public final class ZipUtil {
     }
 
     public static Map<String, Long> pathSize(final File zipFile) throws IOException {
-        final Map<String, Long> pathMap = new HashMap<String, Long>();
+        final Map<String, Long> pathMap = new HashMap<>();
         ZipFile zipFile2 = null;
         try {
             zipFile2 = new ZipFile(zipFile);

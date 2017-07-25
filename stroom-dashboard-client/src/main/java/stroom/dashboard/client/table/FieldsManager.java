@@ -260,7 +260,7 @@ public class FieldsManager implements HeadingListener {
     }
 
     private void updateMenuItems(final Field field) {
-        final List<Item> menuItems = new ArrayList<Item>();
+        final List<Item> menuItems = new ArrayList<>();
         final Set<Item> highlights = new HashSet<>();
 
         // Create expression menu.
@@ -295,7 +295,7 @@ public class FieldsManager implements HeadingListener {
     }
 
     private Item createSortMenu(final Field field, final Set<Item> highlights) {
-        final List<Item> menuItems = new ArrayList<Item>();
+        final List<Item> menuItems = new ArrayList<>();
         menuItems.add(
                 createSortOption(field, highlights, 0, resources.sortaz(), "Sort A to Z", SortDirection.ASCENDING));
         menuItems.add(
@@ -318,7 +318,7 @@ public class FieldsManager implements HeadingListener {
     }
 
     private Item createGroupByMenu(final Field field, final Set<Item> highlights) {
-        final List<Item> menuItems = new ArrayList<Item>();
+        final List<Item> menuItems = new ArrayList<>();
         final int maxGroup = fixGroups(tableSettings.getFields());
         for (int i = 0; i < maxGroup; i++) {
             final int group = i;
@@ -387,13 +387,13 @@ public class FieldsManager implements HeadingListener {
 
     private int fixGroups(final List<Field> fields) {
         // Make a map that groups fields by group depth.
-        final Map<Integer, List<Field>> map = new HashMap<Integer, List<Field>>();
+        final Map<Integer, List<Field>> map = new HashMap<>();
         for (final Field field : fields) {
             final Integer group = field.getGroup();
             if (group != null) {
                 List<Field> groupedFields = map.get(group);
                 if (groupedFields == null) {
-                    groupedFields = new ArrayList<Field>();
+                    groupedFields = new ArrayList<>();
                     map.put(group, groupedFields);
                 }
 
@@ -402,7 +402,7 @@ public class FieldsManager implements HeadingListener {
         }
 
         // Fix group depths and add fields to grouped fields list.
-        final List<Integer> depths = new ArrayList<Integer>(map.keySet());
+        final List<Integer> depths = new ArrayList<>(map.keySet());
         Collections.sort(depths);
 
         for (int i = 0; i < depths.size(); i++) {

@@ -36,7 +36,7 @@ public abstract class AbstractUserListPresenter extends MyPresenterWidget<UserLi
     public AbstractUserListPresenter(final EventBus eventBus, final UserListView userListView) {
         super(eventBus, userListView);
 
-        dataGridView = new DataGridViewImpl<UserRef>(true);
+        dataGridView = new DataGridViewImpl<>(true);
         userListView.setDatGridView(dataGridView);
         userListView.setUiHandlers(this);
 
@@ -68,7 +68,7 @@ public abstract class AbstractUserListPresenter extends MyPresenterWidget<UserLi
             }
         }, "Name", 350);
 
-        dataGridView.addEndColumn(new EndColumn<UserRef>());
+        dataGridView.addEndColumn(new EndColumn<>());
     }
 
 //    public ImageButtonView addButton(final String title, final ImageResource enabledImage,

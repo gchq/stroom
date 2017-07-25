@@ -94,7 +94,7 @@ public class ActionDataProvider<R extends SharedObject> extends AsyncDataProvide
         }
 
         if (noConstraint) {
-            updateRowData(0, new ArrayList<R>());
+            updateRowData(0, new ArrayList<>());
             updateRowCount(0, true);
             fetching = false;
             return false;

@@ -77,7 +77,7 @@ public class StreamMapCreator {
 
     public HashMap<Long, List<Event>> createEventMap(final List<String[]> storedDataList) {
         // Put the events into a map to group them by stream id.
-        final Map<Long, List<Event>> storedDataMap = new HashMap<Long, List<Event>>();
+        final Map<Long, List<Event>> storedDataMap = new HashMap<>();
         for (final String[] storedData : storedDataList) {
             final Long longStreamId = getLong(storedData, streamIdIndex);
             final Long longEventId = getLong(storedData, eventIdIndex);
@@ -87,7 +87,7 @@ public class StreamMapCreator {
             if (longStreamId != null && longEventId != null && include) {
                 List<Event> events = storedDataMap.get(longStreamId);
                 if (events == null) {
-                    events = new ArrayList<Event>();
+                    events = new ArrayList<>();
                     storedDataMap.put(longStreamId, events);
                 }
                 events.add(new Event(longEventId, storedData));
@@ -96,7 +96,7 @@ public class StreamMapCreator {
 
         // Filter the streams by ones that should be visible to the current
         // user.
-        final HashMap<Long, List<Event>> filteredDataMap = new HashMap<Long, List<Event>>();
+        final HashMap<Long, List<Event>> filteredDataMap = new HashMap<>();
         for (final Entry<Long, List<Event>> entry : storedDataMap.entrySet()) {
             final Long streamId = entry.getKey();
             Stream stream = null;

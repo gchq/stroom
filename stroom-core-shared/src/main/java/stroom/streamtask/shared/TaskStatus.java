@@ -33,7 +33,7 @@ public enum TaskStatus implements HasDisplayValue, HasPrimitiveValue {
     ASSIGNED("Assigned", 2), PROCESSING("Processing", 3), COMPLETE("Complete", 10), FAILED("Failed",
             22), DELETED("Deleted", 99);
 
-    public static final PrimitiveValueConverter<TaskStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<TaskStatus>(
+    public static final PrimitiveValueConverter<TaskStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
             TaskStatus.values());
 
     private final String displayValue;

@@ -38,7 +38,7 @@ public class FeedPresenter extends EntityEditTabPresenter<LinkTabPanelView, Feed
     // private static final Tab MONITORING = new Tab("Monitoring");
     private static final TabData TASKS = new TabDataImpl("Active Tasks");
 
-    private final TabContentProvider<Feed> tabContentProvider = new TabContentProvider<Feed>();
+    private final TabContentProvider<Feed> tabContentProvider = new TabContentProvider<>();
 
     @Inject
     public FeedPresenter(final EventBus eventBus, final ClientSecurityContext securityContext,

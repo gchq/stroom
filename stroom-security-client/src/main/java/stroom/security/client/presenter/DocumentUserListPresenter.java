@@ -73,7 +73,7 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
     }
 
     public void refresh() {
-        final List<UserRef> users = new ArrayList<UserRef>();
+        final List<UserRef> users = new ArrayList<>();
         for (final UserRef user : documentPermissions.getUserPermissions().keySet()) {
             if (user.isGroup() == group) {
                 if (filter == null) {

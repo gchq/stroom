@@ -67,15 +67,15 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
     public NodeMonitoringPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
                                    final TooltipPresenter tooltipPresenter,
                                    final Provider<NodeEditPresenter> nodeEditPresenterProvider) {
-        super(eventBus, new DataGridViewImpl<NodeInfoResult>(true));
+        super(eventBus, new DataGridViewImpl<>(true));
         this.dispatcher = dispatcher;
         this.tooltipPresenter = tooltipPresenter;
         this.nodeEditPresenterProvider = nodeEditPresenterProvider;
         initTableColumns();
-        dataProvider = new ActionDataProvider<NodeInfoResult>(dispatcher, action);
+        dataProvider = new ActionDataProvider<>(dispatcher, action);
         dataProvider.addDataDisplay(getView().getDataDisplay());
 
-        saveQueue = new SaveQueue<Node>(dispatcher);
+        saveQueue = new SaveQueue<>(dispatcher);
 
         editButton = getView().addButton(SvgPresets.EDIT);
         editButton.setTitle("Edit Node");
@@ -258,7 +258,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
 
         getView().addColumn(enabledColumn, "Enabled", 60);
 
-        getView().addEndColumn(new EndColumn<NodeInfoResult>());
+        getView().addEndColumn(new EndColumn<>());
     }
 
     private void onEdit(final NodeInfoResult nodeInfo) {

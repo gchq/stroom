@@ -165,7 +165,7 @@ public class BasicTableSettingsPresenter
         }
 
         final String[] parts = string.split(",");
-        final List<Integer> list = new ArrayList<Integer>();
+        final List<Integer> list = new ArrayList<>();
         for (final String part : parts) {
             try {
                 list.add(Integer.parseInt(part.trim()));

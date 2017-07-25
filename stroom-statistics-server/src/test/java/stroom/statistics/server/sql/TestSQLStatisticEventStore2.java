@@ -67,7 +67,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
         final List<TimeAgnosticStatisticEvent> timeAgnosticStatisticEvents = new ArrayList<>();
 
         // define all the tag/value perms we expect to get back
-        final List<List<StatisticTag>> expectedTagPerms = new ArrayList<List<StatisticTag>>();
+        final List<List<StatisticTag>> expectedTagPerms = new ArrayList<>();
         expectedTagPerms
                 .add(Arrays.asList(new StatisticTag(TAG1_NAME, TAG1_VALUE), new StatisticTag(TAG2_NAME, TAG2_VALUE)));
         expectedTagPerms.add(
@@ -115,10 +115,10 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
         Assert.assertEquals(3, rolledUpStatisticEvent.getPermutationCount());
 
-        final List<TimeAgnosticStatisticEvent> timeAgnosticStatisticEvents = new ArrayList<TimeAgnosticStatisticEvent>();
+        final List<TimeAgnosticStatisticEvent> timeAgnosticStatisticEvents = new ArrayList<>();
 
         // define all the tag/value perms we expect to get back
-        final List<List<StatisticTag>> expectedTagPerms = new ArrayList<List<StatisticTag>>();
+        final List<List<StatisticTag>> expectedTagPerms = new ArrayList<>();
 
         // nothing rolled up
         expectedTagPerms
@@ -161,7 +161,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
     @Test
     public void testGenerateTagRollUpsNoTags() {
-        final StatisticEvent event = buildEvent(new ArrayList<StatisticTag>());
+        final StatisticEvent event = buildEvent(new ArrayList<>());
 
         final StatisticStoreEntity statisticsDataSource = buildStatisticDataSource();
 
@@ -215,7 +215,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
     }
 
     private List<StatisticTag> buildTagList() {
-        final List<StatisticTag> tagList = new ArrayList<StatisticTag>();
+        final List<StatisticTag> tagList = new ArrayList<>();
 
         tagList.add(new StatisticTag(TAG1_NAME, TAG1_VALUE));
         tagList.add(new StatisticTag(TAG2_NAME, TAG2_VALUE));
@@ -232,7 +232,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
         final StatisticsDataSourceData statisticsDataSourceData = new StatisticsDataSourceData();
 
-        final List<StatisticField> fields = new ArrayList<StatisticField>();
+        final List<StatisticField> fields = new ArrayList<>();
 
         fields.add(new StatisticField(TAG1_NAME));
         fields.add(new StatisticField(TAG2_NAME));
@@ -241,7 +241,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
         // add the custom rollup masks, which only come into play if the type is
         // CUSTOM
-        statisticsDataSourceData.addCustomRollUpMask(new CustomRollUpMask(new ArrayList<Integer>())); // no
+        statisticsDataSourceData.addCustomRollUpMask(new CustomRollUpMask(new ArrayList<>())); // no
         // tags
         statisticsDataSourceData.addCustomRollUpMask(new CustomRollUpMask(Arrays.asList(0, 1))); // tags
         // 1&2

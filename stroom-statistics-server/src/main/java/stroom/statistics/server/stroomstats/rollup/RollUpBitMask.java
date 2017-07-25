@@ -57,12 +57,12 @@ public class RollUpBitMask {
     // eternal static cache of the different permutations that have been asked
     // for so far. Objects are tiny so the
     // memory footprint should be low.
-    private static final Map<Integer, Set<List<Boolean>>> permsMap = new HashMap<Integer, Set<List<Boolean>>>();
-    private static final Map<SortedSet<Integer>, RollUpBitMask> positionListToObjectMap = new HashMap<SortedSet<Integer>, RollUpBitMask>();
+    private static final Map<Integer, Set<List<Boolean>>> permsMap = new HashMap<>();
+    private static final Map<SortedSet<Integer>, RollUpBitMask> positionListToObjectMap = new HashMap<>();
 
     static {
         // add the case of no rollups to the map
-        positionListToObjectMap.put(new TreeSet<Integer>(), ZERO_MASK);
+        positionListToObjectMap.put(new TreeSet<>(), ZERO_MASK);
     }
 
     private final short mask;
@@ -122,7 +122,7 @@ public class RollUpBitMask {
 
         final List<String> allTagsList = Arrays.asList(allTags.split(","));
         final List<String> rolledUpTagsList = Arrays.asList(rolledUpTags.split(","));
-        final List<Integer> rolledUpTagPositions = new ArrayList<Integer>();
+        final List<Integer> rolledUpTagPositions = new ArrayList<>();
 
         Collections.sort(allTagsList);
 
@@ -176,7 +176,7 @@ public class RollUpBitMask {
      * positions.
      */
     public static RollUpBitMask fromTagPositions(final List<Integer> tagPositions) {
-        return fromTagPositions(new TreeSet<Integer>(tagPositions));
+        return fromTagPositions(new TreeSet<>(tagPositions));
     }
 
     /**
@@ -274,7 +274,7 @@ public class RollUpBitMask {
      * of possible bit masks for that number of tags
      */
     public static Set<RollUpBitMask> getRollUpBitMasks(final int tagCount) {
-        final Set<RollUpBitMask> masks = new HashSet<RollUpBitMask>();
+        final Set<RollUpBitMask> masks = new HashSet<>();
 
         final Set<List<Boolean>> perms = getRollUpPermutationsAsBooleans(tagCount);
 
@@ -315,10 +315,10 @@ public class RollUpBitMask {
     public static Set<List<Integer>> getRollUpPermutationsAsPositions(final int tagCount) {
         final Set<List<Boolean>> resultSet = getRollUpPermutationsAsBooleans(tagCount);
 
-        final Set<List<Integer>> perms = new HashSet<List<Integer>>();
+        final Set<List<Integer>> perms = new HashSet<>();
 
         for (final List<Boolean> perm : resultSet) {
-            perms.add(new ArrayList<Integer>(buildPositionList(perm)));
+            perms.add(new ArrayList<>(buildPositionList(perm)));
         }
 
         return perms;
@@ -329,7 +329,7 @@ public class RollUpBitMask {
      * of true values, i.e. [0,2]
      */
     private static SortedSet<Integer> buildPositionList(final List<Boolean> perm) {
-        final SortedSet<Integer> tagPositions = new TreeSet<Integer>();
+        final SortedSet<Integer> tagPositions = new TreeSet<>();
 
         if (perm != null) {
             int pos = 0;
@@ -370,12 +370,12 @@ public class RollUpBitMask {
                     MASK_LENGTH));
         }
 
-        final Set<List<Boolean>> resultSet = new HashSet<List<Boolean>>();
+        final Set<List<Boolean>> resultSet = new HashSet<>();
 
         if (tagCount == 0) {
             resultSet.add(Arrays.asList(Boolean.FALSE));
         } else {
-            permute(new ArrayList<Boolean>(), tagCount, resultSet);
+            permute(new ArrayList<>(), tagCount, resultSet);
         }
 
         return resultSet;
@@ -420,7 +420,7 @@ public class RollUpBitMask {
         if (iterations == 0) {
             // got to the end so add soFar to the result set
 
-            resultSet.add(new ArrayList<Boolean>(soFar));
+            resultSet.add(new ArrayList<>(soFar));
 
         } else {
             permute(addToList(soFar, false), iterations - 1, resultSet);
@@ -430,7 +430,7 @@ public class RollUpBitMask {
     }
 
     private static List<Boolean> addToList(final List<Boolean> list, final Boolean element) {
-        final List<Boolean> tempList = new ArrayList<Boolean>(list);
+        final List<Boolean> tempList = new ArrayList<>(list);
 
         tempList.add(element);
         return tempList;
@@ -442,7 +442,7 @@ public class RollUpBitMask {
      * 2 are rolled up
      */
     public SortedSet<Integer> getTagPositions() {
-        final SortedSet<Integer> tagPositions = new TreeSet<Integer>();
+        final SortedSet<Integer> tagPositions = new TreeSet<>();
 
         populateTagPositionCollection(tagPositions);
 
@@ -450,7 +450,7 @@ public class RollUpBitMask {
     }
 
     public List<Integer> getTagPositionsAsList() {
-        final List<Integer> tagPositions = new ArrayList<Integer>();
+        final List<Integer> tagPositions = new ArrayList<>();
 
         populateTagPositionCollection(tagPositions);
 
@@ -475,7 +475,7 @@ public class RollUpBitMask {
         // being on the right.
         final String bitMask = Integer.toBinaryString(mask);
 
-        final List<Boolean> booleanMask = new ArrayList<Boolean>();
+        final List<Boolean> booleanMask = new ArrayList<>();
 
         for (int strPos = bitMask.length() - 1; strPos >= 0; strPos--) {
             booleanMask.add(bitMask.charAt(strPos) == '1');
@@ -510,7 +510,7 @@ public class RollUpBitMask {
     public RollUpBitMask convert(final Map<Integer, Integer> newToOldFieldPositionMap) {
         Preconditions.checkNotNull(newToOldFieldPositionMap);
 
-        final Set<Integer> rolledUpFieldPositions = new HashSet<Integer>();
+        final Set<Integer> rolledUpFieldPositions = new HashSet<>();
 
         for (final Integer newPos : newToOldFieldPositionMap.keySet()) {
             // work out what the old field position was
@@ -523,7 +523,7 @@ public class RollUpBitMask {
             }
         }
 
-        return RollUpBitMask.fromTagPositions(new TreeSet<Integer>(rolledUpFieldPositions));
+        return RollUpBitMask.fromTagPositions(new TreeSet<>(rolledUpFieldPositions));
     }
 
     public short asShort() {

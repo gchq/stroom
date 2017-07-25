@@ -56,7 +56,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
     @Inject
     public CacheNodeListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
                                   final TooltipPresenter tooltipPresenter) {
-        super(eventBus, new DataGridViewImpl<CacheNodeRow>(false));
+        super(eventBus, new DataGridViewImpl<>(false));
         this.dispatcher = dispatcher;
         this.tooltipPresenter = tooltipPresenter;
 
@@ -105,7 +105,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
         clearColumn.setFieldUpdater((index, row, value) -> dispatcher.exec(new CacheClearAction(row.getCacheInfo().getName(), row.getNode())));
         getView().addColumn(clearColumn, "</br>", 50);
 
-        getView().addEndColumn(new EndColumn<CacheNodeRow>());
+        getView().addEndColumn(new EndColumn<>());
     }
 
     private void addInfoColumn() {
@@ -175,7 +175,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
             action.setCacheName(entity.getCacheName());
 
             if (dataProvider == null) {
-                dataProvider = new ActionDataProvider<CacheNodeRow>(dispatcher, action);
+                dataProvider = new ActionDataProvider<>(dispatcher, action);
                 dataProvider.addDataDisplay(getView().getDataDisplay());
             }
 

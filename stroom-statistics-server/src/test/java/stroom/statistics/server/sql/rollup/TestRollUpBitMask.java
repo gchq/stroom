@@ -34,7 +34,7 @@ import java.util.SortedSet;
 public class TestRollUpBitMask extends StroomUnitTest {
     @Test
     public void testHex() {
-        final RollUpBitMask rowKeyBitMap = RollUpBitMask.fromTagPositions(new ArrayList<Integer>());
+        final RollUpBitMask rowKeyBitMap = RollUpBitMask.fromTagPositions(new ArrayList<>());
 
         final byte[] bytes = rowKeyBitMap.asBytes();
 
@@ -298,7 +298,7 @@ public class TestRollUpBitMask extends StroomUnitTest {
 
     @Test
     public void testConvert_AddedTags() throws Exception {
-        final Map<Integer, Integer> newToOldPosMap = new HashMap<Integer, Integer>();
+        final Map<Integer, Integer> newToOldPosMap = new HashMap<>();
 
         // [a,c] => [a,b,c,d] (added pos 1 and 3)
 
@@ -325,7 +325,7 @@ public class TestRollUpBitMask extends StroomUnitTest {
 
     @Test
     public void testConvert_RemovedTags() throws Exception {
-        final Map<Integer, Integer> newToOldPosMap = new HashMap<Integer, Integer>();
+        final Map<Integer, Integer> newToOldPosMap = new HashMap<>();
 
         // [a,b,c,d] => [b,d] (removed pos 1 and 3)
 
@@ -357,7 +357,7 @@ public class TestRollUpBitMask extends StroomUnitTest {
 
     @Test
     public void testConvert_ReOrdered() throws Exception {
-        final Map<Integer, Integer> newToOldPosMap = new HashMap<Integer, Integer>();
+        final Map<Integer, Integer> newToOldPosMap = new HashMap<>();
 
         // [a,b,c] => [b,c,a]
 

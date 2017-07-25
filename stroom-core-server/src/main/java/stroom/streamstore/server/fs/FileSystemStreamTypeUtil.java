@@ -73,7 +73,7 @@ public class FileSystemStreamTypeUtil {
      * </p>
      */
     public static List<File> findChildStreamFileList(final File parent) {
-        List<File> kids = new ArrayList<File>();
+        List<File> kids = new ArrayList<>();
         for (StreamType type : StreamType.initialValues()) {
             if (type.isStreamTypeChild()) {
                 File child = createChildStreamFile(parent, type);
@@ -94,7 +94,7 @@ public class FileSystemStreamTypeUtil {
             throw new IllegalArgumentException("Must Have a non-null stream type");
         }
         IOException ioEx = null;
-        Set<OutputStream> outputStreamSet = new HashSet<OutputStream>();
+        Set<OutputStream> outputStreamSet = new HashSet<>();
         if (FileStoreType.bgz.equals(streamType.getFileStoreType())) {
             for (File file : fileSet) {
                 try {

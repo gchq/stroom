@@ -31,7 +31,7 @@ public class ClearScriptCacheEvent extends GwtEvent<ClearScriptCacheEvent.Handle
 
     public static Type<Handler> getType() {
         if (TYPE == null) {
-            TYPE = new GwtEvent.Type<Handler>();
+            TYPE = new GwtEvent.Type<>();
         }
         return TYPE;
     }

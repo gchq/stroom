@@ -239,7 +239,7 @@ public class StatisticStoreEntity extends DocumentEntity implements StatisticSto
     @Transient
     public List<String> getFieldNames() {
         if (statisticsDataSourceDataObject != null) {
-            final List<String> fieldNames = new ArrayList<String>();
+            final List<String> fieldNames = new ArrayList<>();
             for (final StatisticField statisticField : statisticsDataSourceDataObject.getStatisticFields()) {
                 fieldNames.add(statisticField.getFieldName());
             }

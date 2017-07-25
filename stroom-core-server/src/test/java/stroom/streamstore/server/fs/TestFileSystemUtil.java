@@ -149,7 +149,7 @@ public class TestFileSystemUtil extends StroomUnitTest {
         final File dir2 = new File(getCurrentTestDir(), FileSystemTestUtil.getUniqueTestString());
         final File file1 = new File(dir1, "test.dat");
         final File file2 = new File(dir2, "test.dat");
-        final HashSet<File> files = new HashSet<File>();
+        final HashSet<File> files = new HashSet<>();
         files.add(file1);
         files.add(file2);
 

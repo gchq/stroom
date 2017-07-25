@@ -34,7 +34,7 @@ import java.util.List;
 public class ScriptListPresenter extends MyPresenterWidget<DataGridView<DocRef>> {
     @Inject
     public ScriptListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
-        super(eventBus, new DataGridViewImpl<DocRef>(true, true));
+        super(eventBus, new DataGridViewImpl<>(true, true));
 
         // Add a border to the list.
         BorderUtil.addBorder(getWidget().getElement());
@@ -54,7 +54,7 @@ public class ScriptListPresenter extends MyPresenterWidget<DataGridView<DocRef>>
             }
         };
         getView().addResizableColumn(nameColumn, "Name", 250);
-        getView().addEndColumn(new EndColumn<DocRef>());
+        getView().addEndColumn(new EndColumn<>());
     }
 
     public void setData(final List<DocRef> scripts) {

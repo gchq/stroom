@@ -213,7 +213,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                 // Get local reference to list in case it is swapped out.
                 final List<StreamProcessorFilter> filters = prioritisedFiltersRef.get();
                 if (filters != null && filters.size() > 0) {
-                    assignedStreamTasks = new ArrayList<StreamTask>(count);
+                    assignedStreamTasks = new ArrayList<>(count);
 
                     int index = 0;
                     while (assignedStreamTasks.size() < count && index < filters.size()) {

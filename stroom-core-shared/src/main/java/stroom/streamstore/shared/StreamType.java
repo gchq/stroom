@@ -234,7 +234,7 @@ public class StreamType extends NamedEntity implements HasPrimitiveValue {
     public enum Purpose implements HasPrimitiveValue {
         META(0, true), INDEX(1, true), CONTEXT(2, true), RAW(10, false), PROCESSED(11, false), ERROR(50, false);
 
-        public static final PrimitiveValueConverter<Purpose> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<Purpose>(
+        public static final PrimitiveValueConverter<Purpose> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
                 Purpose.values());
         private final byte primitiveValue;
         private final boolean nested;

@@ -108,7 +108,7 @@ public class FilterTermsTreeBuilder {
                     } else {
                         // multiple values in the IN list so convert it into a
                         // set of EQUALS terms under and OR node
-                        final List<PrintableNode> orTermNodes = new ArrayList<PrintableNode>();
+                        final List<PrintableNode> orTermNodes = new ArrayList<>();
 
                         for (final String value : values) {
                             orTermNodes.add(convertTermNode(

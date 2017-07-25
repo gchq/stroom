@@ -294,7 +294,7 @@ public final class ComparisonHelper {
         boolean inAttribute = false;
         boolean inQuotes = false;
 
-        final List<String> attributes = new ArrayList<String>();
+        final List<String> attributes = new ArrayList<>();
         final StringBuilder attribute = new StringBuilder();
 
         while (true) {

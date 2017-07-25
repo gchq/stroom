@@ -246,7 +246,7 @@ public class Volume extends AuditedEntity {
     public enum VolumeType implements HasDisplayValue, HasPrimitiveValue {
         PUBLIC("Public", 0), PRIVATE("Private", 1);
 
-        public static final PrimitiveValueConverter<VolumeType> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<VolumeType>(
+        public static final PrimitiveValueConverter<VolumeType> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
                 VolumeType.values());
         private final String displayValue;
         private final byte primitiveValue;
@@ -273,7 +273,7 @@ public class Volume extends AuditedEntity {
         // accessible for reading.
         CLOSED("Closed", 3); // Data has been removed and the volume is closed.
 
-        public static final PrimitiveValueConverter<VolumeUseStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<VolumeUseStatus>(
+        public static final PrimitiveValueConverter<VolumeUseStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
                 VolumeUseStatus.values());
 
         private final String displayValue;

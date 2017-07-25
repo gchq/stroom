@@ -100,7 +100,7 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
         while (!ranOutOfItems) {
             final FindStreamAttributeValueCriteria criteria = new FindStreamAttributeValueCriteria();
 
-            final ArrayList<AsyncFlush> batchInsert = new ArrayList<AsyncFlush>();
+            final ArrayList<AsyncFlush> batchInsert = new ArrayList<>();
             AsyncFlush item = null;
             while ((item = queue.poll()) != null && batchInsert.size() < BATCH_SIZE) {
                 batchInsert.add(item);

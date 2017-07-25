@@ -33,14 +33,14 @@ public class MonitorInfoUtil {
             return "";
         }
 
-        final Set<Monitor> allMonitors = new HashSet<Monitor>();
+        final Set<Monitor> allMonitors = new HashSet<>();
 
         // Build a tree map.
-        final Map<Monitor, List<Monitor>> map = new HashMap<Monitor, List<Monitor>>();
+        final Map<Monitor, List<Monitor>> map = new HashMap<>();
         for (final Monitor monitor : monitors) {
             List<Monitor> children = map.get(monitor.getParent());
             if (children == null) {
-                children = new ArrayList<Monitor>();
+                children = new ArrayList<>();
                 map.put(monitor.getParent(), children);
             }
             children.add(monitor);
@@ -51,7 +51,7 @@ public class MonitorInfoUtil {
 
         // Get a list of monitors that have no parent monitor or who have a
         // parent monitor that no longer seems to exist.
-        final List<Monitor> roots = new ArrayList<Monitor>();
+        final List<Monitor> roots = new ArrayList<>();
         for (final Entry<Monitor, List<Monitor>> entry : map.entrySet()) {
             final Monitor parent = entry.getKey();
             final List<Monitor> children = entry.getValue();

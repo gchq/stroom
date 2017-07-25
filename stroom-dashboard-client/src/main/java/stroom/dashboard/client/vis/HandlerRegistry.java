@@ -35,7 +35,7 @@ public class HandlerRegistry {
 
     public void registerHandler(final HandlerRegistration handlerRegistration) {
         if (handlerRegistrations == null) {
-            handlerRegistrations = new ArrayList<HandlerRegistration>();
+            handlerRegistrations = new ArrayList<>();
         }
         handlerRegistrations.add(handlerRegistration);
     }

@@ -11,7 +11,7 @@ import java.util.List;
 public class AceSelection {
     private final JavaScriptObject selection;
     private final AceSelectionListener rootListener;
-    private final List<AceSelectionListener> subListeners = new ArrayList<AceSelectionListener>();
+    private final List<AceSelectionListener> subListeners = new ArrayList<>();
 
     /**
      * Constructor for AceSelection

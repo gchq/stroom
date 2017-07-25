@@ -572,7 +572,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         final stroom.query.client.Item selectedItem = getSelectedItem();
         final boolean hasSelection = selectedItem != null;
 
-        final List<Item> menuItems = new ArrayList<Item>();
+        final List<Item> menuItems = new ArrayList<>();
         menuItems.add(new IconMenuItem(1, SvgPresets.ADD, SvgPresets.ADD, "Add Term", null, true, () -> addTerm()));
         menuItems.add(new IconMenuItem(2, SvgPresets.OPERATOR, SvgPresets.OPERATOR, "Add Operator", null,
                 true, () -> addOperator()));

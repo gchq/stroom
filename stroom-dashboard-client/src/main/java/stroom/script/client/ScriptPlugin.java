@@ -32,7 +32,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ScriptPlugin extends EntityPlugin<Script> {
-    public static final Set<String> FETCH_SET = new HashSet<String>();
+    public static final Set<String> FETCH_SET = new HashSet<>();
 
     private final Provider<ScriptPresenter> editorProvider;
 

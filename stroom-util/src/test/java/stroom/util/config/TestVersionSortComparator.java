@@ -53,7 +53,7 @@ public class TestVersionSortComparator {
     }
 
     public void doTest(List<String> testCase, List<String> expectedList) {
-        List<String> sortList = new ArrayList<String>();
+        List<String> sortList = new ArrayList<>();
         sortList.addAll(testCase);
         Collections.sort(sortList, new VersionSortComparator());
 

@@ -30,7 +30,7 @@ import java.util.Set;
  * @param <E> type of set
  */
 public class RoundRobinSet<E extends SharedObject> extends AbstractCollection<E> implements Set<E> {
-    private ArrayList<E> realList = new ArrayList<E>();
+    private ArrayList<E> realList = new ArrayList<>();
     private int startCursor = 0;
 
     /**

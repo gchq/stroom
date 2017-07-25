@@ -28,7 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class PostMessage {
-    private static final Map<Integer, FrameListener> frameListeners = new HashMap<Integer, FrameListener>();
+    private static final Map<Integer, FrameListener> frameListeners = new HashMap<>();
     private static PostMessage instance;
 
     private PostMessage() {

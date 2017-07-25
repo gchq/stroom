@@ -33,7 +33,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class TickList<T extends TickBox> extends Composite implements HasSelectionHandlers<Set<T>> {
-    private final Set<T> items = new HashSet<T>();
+    private final Set<T> items = new HashSet<>();
     @UiField
     FlowPanel list;
     // If we are set with selected items before we have populated our list then
@@ -97,7 +97,7 @@ public class TickList<T extends TickBox> extends Composite implements HasSelecti
     }
 
     public Set<T> getSelectedItems() {
-        final Set<T> selectedItems = new HashSet<T>();
+        final Set<T> selectedItems = new HashSet<>();
         for (final T tickBox : items) {
             if (tickBox.getBooleanValue()) {
                 selectedItems.add(tickBox);

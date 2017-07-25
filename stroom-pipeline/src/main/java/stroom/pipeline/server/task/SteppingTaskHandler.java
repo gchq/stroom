@@ -404,14 +404,14 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
 
             // Find streams.
             final List<Stream> allStreamList = streamStore.find(criteria);
-            allStreamIdList = new ArrayList<Long>(allStreamList.size());
+            allStreamIdList = new ArrayList<>(allStreamList.size());
             for (final Stream stream : allStreamList) {
                 allStreamIdList.add(stream.getId());
             }
 
             if (criteria.getStreamIdSet() == null || Boolean.TRUE.equals(criteria.getStreamIdSet().getMatchAll())) {
                 // If we are including all tasks then don't filter the list.
-                filteredList = new ArrayList<Long>(allStreamList.size());
+                filteredList = new ArrayList<>(allStreamList.size());
                 for (final Stream stream : allStreamList) {
                     filteredList.add(stream.getId());
                 }

@@ -245,7 +245,7 @@ public class FindStreamCriteria extends BaseCriteria
 
     public IncludeExcludeEntityIdSet<Feed> getFeeds() {
         if (feedIdSet != null) {
-            feeds = new IncludeExcludeEntityIdSet<Feed>();
+            feeds = new IncludeExcludeEntityIdSet<>();
             feeds.setInclude(feedIdSet);
             this.feedIdSet = null;
         }
@@ -259,13 +259,13 @@ public class FindStreamCriteria extends BaseCriteria
 
     public IncludeExcludeEntityIdSet<Feed> obtainFeeds() {
         if (feedIdSet != null) {
-            feeds = new IncludeExcludeEntityIdSet<Feed>();
+            feeds = new IncludeExcludeEntityIdSet<>();
             feeds.setInclude(feedIdSet);
             this.feedIdSet = null;
         }
 
         if (feeds == null) {
-            feeds = new IncludeExcludeEntityIdSet<Feed>();
+            feeds = new IncludeExcludeEntityIdSet<>();
         }
         return feeds;
     }

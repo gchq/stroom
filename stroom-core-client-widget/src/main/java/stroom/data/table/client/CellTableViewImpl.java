@@ -55,7 +55,7 @@ public class CellTableViewImpl<R> extends ViewImpl implements CellTableView<R> {
     }
 
     public CellTableViewImpl(final boolean supportsSelection, final Resources resources) {
-        cellTable = new CellTable<R>(DataGridViewImpl.DEFAULT_LIST_PAGE_SIZE, resources);
+        cellTable = new CellTable<>(DataGridViewImpl.DEFAULT_LIST_PAGE_SIZE, resources);
         cellTable.setWidth("100%");
 
         cellTable.setLoadingIndicator(null);
@@ -75,7 +75,7 @@ public class CellTableViewImpl<R> extends ViewImpl implements CellTableView<R> {
     @Override
     public void setSupportsSelection(final boolean supportsSelection) {
         if (supportsSelection) {
-            cellTable.setSelectionModel(new MySingleSelectionModel<R>());
+            cellTable.setSelectionModel(new MySingleSelectionModel<>());
             cellTable.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
             cellTable.getRowContainer().getStyle().setCursor(Cursor.POINTER);
         } else {

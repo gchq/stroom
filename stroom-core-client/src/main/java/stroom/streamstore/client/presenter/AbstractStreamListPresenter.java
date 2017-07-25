@@ -73,7 +73,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
     //    private final MySingleSelectionModel<StreamAttributeMap> selectionModel = new MySingleSelectionModel<StreamAttributeMap>();
     // private final EntityIdSet<Stream> masterEntityIdSet = new
     // EntityIdSet<Stream>();
-    private final EntityIdSet<Stream> entityIdSet = new EntityIdSet<Stream>();
+    private final EntityIdSet<Stream> entityIdSet = new EntityIdSet<>();
     private final ClientDispatchAsync dispatcher;
     protected EntityServiceFindActionDataProvider<FindStreamAttributeMapCriteria, StreamAttributeMap> dataProvider;
     private ResultList<StreamAttributeMap> resultList = null;
@@ -81,7 +81,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
     public AbstractStreamListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
                                        final TooltipPresenter tooltipPresenter, final ClientSecurityContext securityContext,
                                        final boolean allowSelectAll) {
-        super(eventBus, new DataGridViewImpl<StreamAttributeMap>(true));
+        super(eventBus, new DataGridViewImpl<>(true));
         this.tooltipPresenter = tooltipPresenter;
         this.dispatcher = dispatcher;
         this.securityContext = securityContext;
@@ -154,7 +154,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
 
             if (entityIdSet.getIdSet() != null && entityIdSet.getIdSet().size() > 0) {
                 final Boolean oldMatchAll = entityIdSet.getMatchAll();
-                final Set<Long> oldIdSet = new HashSet<Long>(entityIdSet.getIdSet());
+                final Set<Long> oldIdSet = new HashSet<>(entityIdSet.getIdSet());
                 entityIdSet.clear();
                 entityIdSet.setMatchAll(oldMatchAll);
                 if (data != null) {
@@ -352,7 +352,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         TooltipUtil.addHeading(html, "Attributes");
 
         try {
-            final List<String> keys = new ArrayList<String>(row.getAttributeKeySet());
+            final List<String> keys = new ArrayList<>(row.getAttributeKeySet());
 
             Collections.sort(keys);
 
@@ -454,7 +454,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
     }
 
     protected Set<Long> getResultStreamIdSet() {
-        final HashSet<Long> rtn = new HashSet<Long>();
+        final HashSet<Long> rtn = new HashSet<>();
         if (resultList != null) {
             for (final StreamAttributeMap e : resultList) {
                 rtn.add(e.getStream().getId());

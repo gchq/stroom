@@ -32,7 +32,7 @@ public class LoginEvent extends GwtEvent<LoginEvent.LoginHandler> {
 
     public static Type<LoginHandler> getType() {
         if (TYPE == null) {
-            TYPE = new GwtEvent.Type<LoginHandler>();
+            TYPE = new GwtEvent.Type<>();
         }
         return TYPE;
     }

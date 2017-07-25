@@ -193,7 +193,7 @@ public class XSDNode implements Comparable<XSDNode> {
     }
 
     private List<XSDNode> getChildTypes(final XSDNode node) {
-        final List<XSDNode> typeNodes = new ArrayList<XSDNode>();
+        final List<XSDNode> typeNodes = new ArrayList<>();
 
         // Get child nodes for complex context.
         for (final XSDNode child : node.getChildNodes(XSDTypeFilter.COMPLEX_CONTENT_FILTER, true)) {

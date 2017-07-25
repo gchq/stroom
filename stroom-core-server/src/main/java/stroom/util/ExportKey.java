@@ -31,7 +31,7 @@ import java.util.HashMap;
  */
 public class ExportKey {
     public static void main(String[] args) throws Exception {
-        HashMap<String, String> argsMap = new HashMap<String, String>();
+        HashMap<String, String> argsMap = new HashMap<>();
         for (int i = 0; i < args.length; i++) {
             String[] split = args[i].split("=");
             if (split.length > 1) {

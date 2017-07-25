@@ -34,7 +34,7 @@ import java.util.Set;
 
 public class ExplorerTabPanePresenter extends CurveTabLayoutPresenter<ExplorerTabPanePresenter.ExplorerTabPaneProxy>
         implements OpenExplorerTabEvent.Handler, CloseExplorerTabEvent.Handler {
-    private final Set<TabData> openItems = new HashSet<TabData>();
+    private final Set<TabData> openItems = new HashSet<>();
 
     @Inject
     public ExplorerTabPanePresenter(final EventBus eventBus, final CurveTabLayoutView view,

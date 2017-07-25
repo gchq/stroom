@@ -27,7 +27,7 @@ public class TaskScopeContextHolder {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskScopeContextHolder.class);
 
 
-    private static final ThreadLocal<TaskScopeContext> THREAD_LOCAL_CONTEXT = new InheritableThreadLocal<TaskScopeContext>();
+    private static final ThreadLocal<TaskScopeContext> THREAD_LOCAL_CONTEXT = new InheritableThreadLocal<>();
 
     /**
      * Get the current context if there is one or throws an illegal state

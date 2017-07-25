@@ -43,7 +43,7 @@ public class TestRoundRobinSet extends StroomUnitTest {
      */
     @Test
     public void test() {
-        final RoundRobinSet<RoundRobinSetTestObject> rrList = new RoundRobinSet<RoundRobinSetTestObject>();
+        final RoundRobinSet<RoundRobinSetTestObject> rrList = new RoundRobinSet<>();
         rrList.add(new RoundRobinSetTestObject(1));
         rrList.add(new RoundRobinSetTestObject(2));
         rrList.add(new RoundRobinSetTestObject(N3));
@@ -58,7 +58,7 @@ public class TestRoundRobinSet extends StroomUnitTest {
 
     @Test
     public void testSync() throws InterruptedException {
-        final RoundRobinSet<RoundRobinSetTestObject> rrList = new RoundRobinSet<RoundRobinSetTestObject>();
+        final RoundRobinSet<RoundRobinSetTestObject> rrList = new RoundRobinSet<>();
         rrList.add(new RoundRobinSetTestObject(1));
         rrList.add(new RoundRobinSetTestObject(2));
         rrList.add(new RoundRobinSetTestObject(N3));

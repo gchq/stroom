@@ -120,7 +120,7 @@ public class DocumentPermissionsTabPresenter
                     final UserRef selected = selectUserPresenter.getSelectionModel().getSelected();
                     if (selected != null) {
                         if (documentPermissions.getUserPermissions().get(selected) == null) {
-                            documentPermissions.getUserPermissions().put(selected, new HashSet<String>());
+                            documentPermissions.getUserPermissions().put(selected, new HashSet<>());
                             userListPresenter.getSelectionModel().setSelected(selected);
                             refreshUserList();
                         }
@@ -165,7 +165,7 @@ public class DocumentPermissionsTabPresenter
             getView().setUsersLabelText("Users:");
         }
 
-        final List<String> permissions = new ArrayList<String>();
+        final List<String> permissions = new ArrayList<>();
         for (final String permission : documentPermissions.getAllPermissions()) {
             if (!permission.startsWith("Create")) {
                 permissions.add(permission);

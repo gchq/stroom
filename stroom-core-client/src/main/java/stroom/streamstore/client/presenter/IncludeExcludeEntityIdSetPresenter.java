@@ -72,7 +72,7 @@ public class IncludeExcludeEntityIdSetPresenter<T extends BaseEntity>
     }
 
     private void createList() {
-        list = new CellTableViewImpl<String>(false, GWT.create(DisabledResources.class));
+        list = new CellTableViewImpl<>(false, GWT.create(DisabledResources.class));
 
         // Text.
         final Column<String, String> textColumn = new Column<String, String>(new TextCell()) {
@@ -90,7 +90,7 @@ public class IncludeExcludeEntityIdSetPresenter<T extends BaseEntity>
                      final IncludeExcludeEntityIdSet<T> includeExcludeEntityIdSet) {
         this.type = type;
         this.groupedEntity = groupedEntity;
-        this.includeExcludeEntityIdSet = new IncludeExcludeEntityIdSet<T>();
+        this.includeExcludeEntityIdSet = new IncludeExcludeEntityIdSet<>();
         this.includeExcludeEntityIdSet.copyFrom(includeExcludeEntityIdSet);
 
         updateList();
@@ -105,7 +105,7 @@ public class IncludeExcludeEntityIdSetPresenter<T extends BaseEntity>
             // Load the entities.
             final SetId includeSetId = new SetId("include", type);
             final SetId excludeSetId = new SetId("exclude", type);
-            final SharedMap<SetId, EntityIdSet<?>> loadMap = new SharedMap<SetId, EntityIdSet<?>>();
+            final SharedMap<SetId, EntityIdSet<?>> loadMap = new SharedMap<>();
 
             if (includeExcludeEntityIdSet.getInclude() != null) {
                 loadMap.put(includeSetId, includeExcludeEntityIdSet.getInclude());
@@ -119,7 +119,7 @@ public class IncludeExcludeEntityIdSetPresenter<T extends BaseEntity>
                 final DocRefs included = result.get(includeSetId);
                 final DocRefs excluded = result.get(excludeSetId);
 
-                data = new ArrayList<String>();
+                data = new ArrayList<>();
                 if (included != null && included.getDoc().size() > 0) {
                     final List<DocRef> refs = new ArrayList<>(included.getDoc());
                     Collections.sort(refs, new EntityReferenceComparator());
@@ -139,7 +139,7 @@ public class IncludeExcludeEntityIdSetPresenter<T extends BaseEntity>
                 refresh();
             });
         } else {
-            this.data = new ArrayList<String>();
+            this.data = new ArrayList<>();
             refresh();
         }
     }

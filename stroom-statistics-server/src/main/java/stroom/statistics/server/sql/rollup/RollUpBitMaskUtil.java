@@ -34,7 +34,7 @@ public class RollUpBitMaskUtil {
      * @return A new {@link RollUpBitMask} object
      */
     public static RollUpBitMask fromSortedTagList(final List<StatisticTag> tags) {
-        final SortedSet<Integer> tagPositions = new TreeSet<Integer>();
+        final SortedSet<Integer> tagPositions = new TreeSet<>();
         int pos = 0;
         if (tags != null) {
             for (final StatisticTag tag : tags) {

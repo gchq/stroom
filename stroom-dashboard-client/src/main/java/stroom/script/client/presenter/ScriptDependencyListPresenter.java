@@ -136,11 +136,11 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
 
     private void refresh() {
         if (scripts != null) {
-            final List<DocRef> list = new ArrayList<DocRef>(scripts.getDoc());
+            final List<DocRef> list = new ArrayList<>(scripts.getDoc());
             Collections.sort(list, DocRef::compareTo);
             scriptListPresenter.setData(list);
         } else {
-            scriptListPresenter.setData(new ArrayList<DocRef>());
+            scriptListPresenter.setData(new ArrayList<>());
         }
     }
 

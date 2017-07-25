@@ -31,7 +31,7 @@ public enum StatisticType implements HasDisplayValue, HasPrimitiveValue, Seriali
     COUNT("Count", 1),
     VALUE("Value", 2);
 
-    public static final PrimitiveValueConverter<StatisticType> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<StatisticType>(
+    public static final PrimitiveValueConverter<StatisticType> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
             StatisticType.values());
     private final String displayValue;
     private final byte primitiveValue;

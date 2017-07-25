@@ -36,7 +36,7 @@ public class ChangePasswordEvent extends GwtEvent<ChangePasswordEvent.ChangePass
 
     public static Type<ChangePasswordHandler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<ChangePasswordHandler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }

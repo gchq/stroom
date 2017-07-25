@@ -45,7 +45,7 @@ public class Configure extends AbstractCommandLineTool {
     private boolean readParameter = true;
     private boolean exitOnError = true;
 
-    private List<File> processFile = new ArrayList<File>();
+    private List<File> processFile = new ArrayList<>();
     private ParameterFile parameterFile;
 
     public static void printUsage() {
