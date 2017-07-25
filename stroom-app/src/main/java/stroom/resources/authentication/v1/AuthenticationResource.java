@@ -22,7 +22,7 @@ import java.util.Optional;
 
 /**
  * This is used for unsecured authentication requests.
- *
+ * <p>
  * It is explicitly excluded from the Shiro filter in SecurityConfiguration.shiroFilter().
  */
 @Path(ResourcePaths.AUTHENTICATION + ResourcePaths.V1)
@@ -32,6 +32,23 @@ public class AuthenticationResource implements NamedResource {
 
     private AuthenticationService authenticationService;
     private JWTService jwtService;
+
+    private static Optional<UsernamePasswordToken> extractCredentialsFromHeader(ContainerRequest request) {
+        try {
+            String authorizationHeader = request.getHeaderString("Authorization");
+            if (Strings.isNullOrEmpty(authorizationHeader) || !authorizationHeader.contains("Basic")) {
+                return Optional.empty();
+            } else {
+                String credentials = Base64.decodeToString(authorizationHeader.substring(6));
+                String[] splitCredentials = credentials.split(":");
+                UsernamePasswordToken usernamePasswordToken = new UsernamePasswordToken(splitCredentials[0], splitCredentials[1]);
+                return Optional.of(usernamePasswordToken);
+            }
+        } catch (Exception e) {
+            // For example if the username/password pair is badly formed and splitting fails.
+            return Optional.empty();
+        }
+    }
 
     @GET
     @Path("/getToken")
@@ -74,22 +91,5 @@ public class AuthenticationResource implements NamedResource {
 
     public void setJwtService(JWTService jwtService) {
         this.jwtService = jwtService;
-    }
-
-    private static Optional<UsernamePasswordToken> extractCredentialsFromHeader(ContainerRequest request) {
-        try {
-            String authorizationHeader = request.getHeaderString("Authorization");
-            if (Strings.isNullOrEmpty(authorizationHeader) || !authorizationHeader.contains("Basic")) {
-                return Optional.empty();
-            } else {
-                String credentials = Base64.decodeToString(authorizationHeader.substring(6));
-                String[] splitCredentials = credentials.split(":");
-                UsernamePasswordToken usernamePasswordToken = new UsernamePasswordToken(splitCredentials[0], splitCredentials[1]);
-                return Optional.of(usernamePasswordToken);
-            }
-        } catch (Exception e) {
-            // For example if the username/password pair is badly formed and splitting fails.
-            return Optional.empty();
-        }
     }
 }

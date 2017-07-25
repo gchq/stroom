@@ -26,7 +26,7 @@ import stroom.util.shared.Severity;
 public final class FatalErrorReceiver implements ErrorReceiver {
     @Override
     public void log(final Severity severity, final Location location, final String elementId, final String message,
-            final Throwable e) {
+                    final Throwable e) {
         throw ProcessException.wrap(message, e);
     }
 }

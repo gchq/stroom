@@ -32,7 +32,7 @@ import java.util.List;
 
 public class QueryDataLogUtil {
     public static void appendExpressionItem(final List<BaseAdvancedQueryItem> items,
-            final DictionaryService dictionaryService, final ExpressionItem item) {
+                                            final DictionaryService dictionaryService, final ExpressionItem item) {
         if (item == null) {
             return;
         }
@@ -47,56 +47,56 @@ public class QueryDataLogUtil {
                 String value = expressionTerm.getValue();
 
                 switch (expressionTerm.getCondition()) {
-                case EQUALS:
-                    appendTerm(items, field, TermCondition.EQUALS, value);
-                    break;
-                case CONTAINS:
-                    appendTerm(items, field, TermCondition.CONTAINS, value);
-                    break;
-                case GREATER_THAN:
-                    appendTerm(items, field, TermCondition.GREATER_THAN, value);
-                    break;
-                case GREATER_THAN_OR_EQUAL_TO:
-                    appendTerm(items, field, TermCondition.GREATER_THAN_EQUAL_TO, value);
-                    break;
-                case LESS_THAN:
-                    appendTerm(items, field, TermCondition.LESS_THAN, value);
-                    break;
-                case LESS_THAN_OR_EQUAL_TO:
-                    appendTerm(items, field, TermCondition.LESS_THAN_EQUAL_TO, value);
-                    break;
-                case BETWEEN:
-                    appendTerm(items, field, TermCondition.CONTAINS, value);
-                    break;
-                case IN:
-                    appendTerm(items, field, TermCondition.CONTAINS, value);
-                    break;
-                case IN_DICTIONARY:
-                    if (dictionaryService != null) {
-                        final FindDictionaryCriteria dictionaryCriteria = new FindDictionaryCriteria();
-                        dictionaryCriteria.getName().setString(expressionTerm.getValue());
-                        final List<Dictionary> dictionaries = dictionaryService.find(dictionaryCriteria);
-                        if (dictionaries != null && dictionaries.size() > 0) {
-                            final Dictionary dictionary = dictionaries.get(0);
-                            final String words = dictionary.getData();
-                            if (words != null) {
-                                value += " (" + words + ")";
-                            }
-                        }
-
+                    case EQUALS:
+                        appendTerm(items, field, TermCondition.EQUALS, value);
+                        break;
+                    case CONTAINS:
                         appendTerm(items, field, TermCondition.CONTAINS, value);
+                        break;
+                    case GREATER_THAN:
+                        appendTerm(items, field, TermCondition.GREATER_THAN, value);
+                        break;
+                    case GREATER_THAN_OR_EQUAL_TO:
+                        appendTerm(items, field, TermCondition.GREATER_THAN_EQUAL_TO, value);
+                        break;
+                    case LESS_THAN:
+                        appendTerm(items, field, TermCondition.LESS_THAN, value);
+                        break;
+                    case LESS_THAN_OR_EQUAL_TO:
+                        appendTerm(items, field, TermCondition.LESS_THAN_EQUAL_TO, value);
+                        break;
+                    case BETWEEN:
+                        appendTerm(items, field, TermCondition.CONTAINS, value);
+                        break;
+                    case IN:
+                        appendTerm(items, field, TermCondition.CONTAINS, value);
+                        break;
+                    case IN_DICTIONARY:
+                        if (dictionaryService != null) {
+                            final FindDictionaryCriteria dictionaryCriteria = new FindDictionaryCriteria();
+                            dictionaryCriteria.getName().setString(expressionTerm.getValue());
+                            final List<Dictionary> dictionaries = dictionaryService.find(dictionaryCriteria);
+                            if (dictionaries != null && dictionaries.size() > 0) {
+                                final Dictionary dictionary = dictionaries.get(0);
+                                final String words = dictionary.getData();
+                                if (words != null) {
+                                    value += " (" + words + ")";
+                                }
+                            }
 
-                    } else {
-                        appendTerm(items, field, TermCondition.CONTAINS, "dictionary: " + value);
-                    }
-                    break;
+                            appendTerm(items, field, TermCondition.CONTAINS, value);
+
+                        } else {
+                            appendTerm(items, field, TermCondition.CONTAINS, "dictionary: " + value);
+                        }
+                        break;
                 }
             }
         }
     }
 
     private static void appendOperator(final List<BaseAdvancedQueryItem> items,
-            final DictionaryService dictionaryService, final ExpressionOperator exp) {
+                                       final DictionaryService dictionaryService, final ExpressionOperator exp) {
         BaseAdvancedQueryOperator operator;
         if (exp.getOp() == Op.NOT) {
             operator = new BaseAdvancedQueryOperator.Not();

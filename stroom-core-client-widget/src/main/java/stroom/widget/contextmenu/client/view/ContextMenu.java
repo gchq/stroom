@@ -26,17 +26,8 @@ import com.google.gwt.user.client.ui.SimplePanel;
 
 public class ContextMenu extends DecoratedPopupPanel {
     private static final Binder binder = GWT.create(Binder.class);
-
-    interface Binder extends UiBinder<FlowPanel, ContextMenu> {
-    }
-
-    interface Style extends CssResource {
-        String separator();
-    }
-
     @UiField
     Style style;
-
     private FlowPanel layout;
 
     public ContextMenu() {
@@ -53,5 +44,12 @@ public class ContextMenu extends DecoratedPopupPanel {
         final SimplePanel separator = new SimplePanel();
         separator.setStyleName(style.separator());
         layout.add(separator);
+    }
+
+    interface Binder extends UiBinder<FlowPanel, ContextMenu> {
+    }
+
+    interface Style extends CssResource {
+        String separator();
     }
 }

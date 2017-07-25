@@ -46,8 +46,7 @@ public class RASegmentOutputStream extends OutputStream implements SegmentOutput
      * Create a default segment output stream for a given target (creates a
      * child stream for you).
      *
-     * @param streamTarget
-     *            to write the data to.
+     * @param streamTarget to write the data to.
      */
     public RASegmentOutputStream(final StreamTarget streamTarget) throws IOException {
         this(streamTarget.getOutputStream(), streamTarget.addChildStream(StreamType.SEGMENT_INDEX).getOutputStream());
@@ -77,8 +76,7 @@ public class RASegmentOutputStream extends OutputStream implements SegmentOutput
      * All bytes written between the start of the output or the last boundary
      * will be considered a segment by the <code>SegmentInputStream</code>.
      *
-     * @param position
-     *            The byte position of the end of the segment.
+     * @param position The byte position of the end of the segment.
      */
     @Override
     public void addSegment(final long position) throws IOException {
@@ -126,16 +124,12 @@ public class RASegmentOutputStream extends OutputStream implements SegmentOutput
      * Writes <code>len</code> bytes from the specified byte array starting at
      * offset <code>off</code> to the data output stream.
      *
-     * @param b
-     *            the data.
-     * @param off
-     *            the start offset in the data.
-     * @param len
-     *            the number of bytes to write.
-     * @exception IOException
-     *                if an I/O error occurs. In particular, an
-     *                <code>IOException</code> is thrown if the output stream is
-     *                closed.
+     * @param b   the data.
+     * @param off the start offset in the data.
+     * @param len the number of bytes to write.
+     * @throws IOException if an I/O error occurs. In particular, an
+     *                     <code>IOException</code> is thrown if the output stream is
+     *                     closed.
      */
     @Override
     public void write(final byte[] b, final int off, final int len) throws IOException {
@@ -156,12 +150,10 @@ public class RASegmentOutputStream extends OutputStream implements SegmentOutput
     /**
      * Writes the specified byte to the data output stream.
      *
-     * @param b
-     *            the <code>byte</code>.
-     * @exception IOException
-     *                if an I/O error occurs. In particular, an
-     *                <code>IOException</code> may be thrown if the output
-     *                stream has been closed.
+     * @param b the <code>byte</code>.
+     * @throws IOException if an I/O error occurs. In particular, an
+     *                     <code>IOException</code> may be thrown if the output
+     *                     stream has been closed.
      */
     @Override
     public void write(final int b) throws IOException {

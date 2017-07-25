@@ -37,14 +37,6 @@ public class FileSystemIterator implements Iterator<File>, Iterable<File> {
     private Iterator<File> fileIterator = null;
     private FileSystemIterator subDirIterator = null;
 
-    /**
-     * Build a pattern for an extension like "zip". to match anything ending
-     * with *.zip
-     */
-    public static Pattern buildSimpleExtensionPattern(String suffix) {
-        return Pattern.compile(".*\\." + suffix);
-    }
-
     public FileSystemIterator(File dir, Pattern afileMatch) {
         this.root = dir;
         this.fileMatch = afileMatch;
@@ -69,6 +61,14 @@ public class FileSystemIterator implements Iterator<File>, Iterable<File> {
 
         Collections.sort(dirList);
         Collections.sort(fileList);
+    }
+
+    /**
+     * Build a pattern for an extension like "zip". to match anything ending
+     * with *.zip
+     */
+    public static Pattern buildSimpleExtensionPattern(String suffix) {
+        return Pattern.compile(".*\\." + suffix);
     }
 
     private Iterator<File> getDirIterator() {

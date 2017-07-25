@@ -36,6 +36,39 @@ public class LoggerPrintStream extends PrintStream {
      * This logger can also look out for lines being written in the log.
      */
     private Map<String, AtomicInteger> watchTerms;
+    private Logger logger;
+    private boolean debug;
+    private LoggerBuffer loggerBuffer;
+
+    public LoggerPrintStream(Logger logger, boolean debug) throws UnsupportedEncodingException {
+        this(logger, debug, new LoggerBuffer());
+    }
+    public LoggerPrintStream(Logger logger) throws UnsupportedEncodingException {
+        this(logger, true, new LoggerBuffer());
+    }
+    private LoggerPrintStream(Logger logger, boolean debug, LoggerBuffer os) throws UnsupportedEncodingException {
+        super(os, false, StreamUtil.DEFAULT_CHARSET_NAME);
+        this.logger = logger;
+        this.debug = debug;
+        this.loggerBuffer = os;
+        this.loggerBuffer.parent = this;
+    }
+
+    public static LoggerPrintStream create(Logger logger, boolean debug) {
+        try {
+            return new LoggerPrintStream(logger, debug);
+        } catch (UnsupportedEncodingException useEx) {
+            throw new RuntimeException(useEx);
+        }
+    }
+
+    public static LoggerPrintStream create(Logger logger) {
+        try {
+            return new LoggerPrintStream(logger);
+        } catch (UnsupportedEncodingException useEx) {
+            throw new RuntimeException(useEx);
+        }
+    }
 
     public void addWatchTerm(String watchTerm) {
         if (watchTerms == null) {
@@ -49,6 +82,35 @@ public class LoggerPrintStream extends PrintStream {
             return watchTerms.get(watchTerm).get();
         }
         return 0;
+    }
+
+    // kill the return chars and write to log4j
+    void doFlush() {
+        if (logger != null && loggerBuffer != null) {
+            if ((logger.isDebugEnabled() && debug) || logger.isInfoEnabled() && !debug) {
+                String logLine = new String(loggerBuffer.toByteArray(), StreamUtil.DEFAULT_CHARSET);
+                if (logLine.endsWith("\n")) {
+                    logLine = logLine.substring(0, logLine.length() - 1);
+                }
+                if (logLine.length() > 0) {
+                    // Any watch Terms
+                    if (watchTerms != null) {
+                        for (Entry<String, AtomicInteger> watchTerm : watchTerms.entrySet()) {
+                            int startIndex = -1;
+                            while ((startIndex = logLine.indexOf(watchTerm.getKey(), startIndex + 1)) != -1) {
+                                watchTerm.getValue().incrementAndGet();
+                            }
+                        }
+                    }
+                    if (debug) {
+                        logger.debug(logLine);
+                    } else {
+                        logger.info(logLine);
+                    }
+                }
+            }
+            loggerBuffer.reset();
+        }
     }
 
     static class LoggerBuffer extends ByteArrayOutputStream {
@@ -81,71 +143,6 @@ public class LoggerPrintStream extends PrintStream {
         public synchronized void write(int b) {
             super.write(b);
             flush();
-        }
-    }
-
-    private Logger logger;
-    private boolean debug;
-    private LoggerBuffer loggerBuffer;
-
-    public LoggerPrintStream(Logger logger, boolean debug) throws UnsupportedEncodingException {
-        this(logger, debug, new LoggerBuffer());
-    }
-
-    public LoggerPrintStream(Logger logger) throws UnsupportedEncodingException {
-        this(logger, true, new LoggerBuffer());
-    }
-
-    public static LoggerPrintStream create(Logger logger, boolean debug) {
-        try {
-            return new LoggerPrintStream(logger, debug);
-        } catch (UnsupportedEncodingException useEx) {
-            throw new RuntimeException(useEx);
-        }
-    }
-
-    public static LoggerPrintStream create(Logger logger) {
-        try {
-            return new LoggerPrintStream(logger);
-        } catch (UnsupportedEncodingException useEx) {
-            throw new RuntimeException(useEx);
-        }
-    }
-
-    private LoggerPrintStream(Logger logger, boolean debug, LoggerBuffer os) throws UnsupportedEncodingException {
-        super(os, false, StreamUtil.DEFAULT_CHARSET_NAME);
-        this.logger = logger;
-        this.debug = debug;
-        this.loggerBuffer = os;
-        this.loggerBuffer.parent = this;
-    }
-
-    // kill the return chars and write to log4j
-    void doFlush() {
-        if (logger != null && loggerBuffer != null) {
-            if ((logger.isDebugEnabled() && debug) || logger.isInfoEnabled() && !debug) {
-                String logLine = new String(loggerBuffer.toByteArray(), StreamUtil.DEFAULT_CHARSET);
-                if (logLine.endsWith("\n")) {
-                    logLine = logLine.substring(0, logLine.length() - 1);
-                }
-                if (logLine.length() > 0) {
-                    // Any watch Terms
-                    if (watchTerms != null) {
-                        for (Entry<String, AtomicInteger> watchTerm : watchTerms.entrySet()) {
-                            int startIndex = -1;
-                            while ((startIndex = logLine.indexOf(watchTerm.getKey(), startIndex + 1)) != -1) {
-                                watchTerm.getValue().incrementAndGet();
-                            }
-                        }
-                    }
-                    if (debug) {
-                        logger.debug(logLine);
-                    } else {
-                        logger.info(logLine);
-                    }
-                }
-            }
-            loggerBuffer.reset();
         }
     }
 

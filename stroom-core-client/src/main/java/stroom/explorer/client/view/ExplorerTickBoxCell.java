@@ -22,62 +22,10 @@ import stroom.explorer.shared.ExplorerData;
 import stroom.util.client.ImageUtil;
 
 public class ExplorerTickBoxCell extends AbstractCell<ExplorerData> {
-    public interface Style extends CssResource {
-        /**
-         * The path to the default CSS styles used by this resource.
-         */
-        String DEFAULT_CSS = "stroom/explorer/client/view/ExplorerTickBoxCell.css";
-
-        String outer();
-
-        String expander();
-
-        String expanderIcon();
-
-        String tickBox();
-
-        String icon();
-
-        String text();
-    }
-
-    interface Resources extends ClientBundle {
-        @Source(Style.DEFAULT_CSS)
-        Style style();
-    }
-
-    interface Template extends SafeHtmlTemplates {
-//        @Template("<div class=\"{0}\" style=\"width:{1}px\"></div>")
-//        SafeHtml indent(String indentClass, int indent);
-
-        @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
-        SafeHtml expander(String iconClass, SafeStyles styles, SafeHtml icon);
-
-        @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml tickBox(String iconClass, SafeHtml icon);
-
-        @Template("<img class=\"{0}\" src=\"{1}\" />")
-        SafeHtml icon(String iconClass, SafeUri iconUrl);
-
-        @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml text(String textClass, SafeHtml text);
-
-        @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml outer(String outerClass, SafeHtml content);
-
-        /**
-         * The wrapper around the image vertically aligned to the middle.
-         */
-        @Template("")
-        SafeHtml imageWrapperMiddle(SafeStyles styles, SafeHtml image);
-    }
-
     private static Template template;
     private static Resources resources;
-
     private final SelectionModel<ExplorerData> selectionModel;
     private TickBoxCell tickBoxCell;
-
     public ExplorerTickBoxCell(final SelectionModel<ExplorerData> selectionModel) {
         this.selectionModel = selectionModel;
 
@@ -177,5 +125,55 @@ public class ExplorerTickBoxCell extends AbstractCell<ExplorerData> {
                 return TickBoxState.UNTICK;
             }
         }
+    }
+
+    public interface Style extends CssResource {
+        /**
+         * The path to the default CSS styles used by this resource.
+         */
+        String DEFAULT_CSS = "stroom/explorer/client/view/ExplorerTickBoxCell.css";
+
+        String outer();
+
+        String expander();
+
+        String expanderIcon();
+
+        String tickBox();
+
+        String icon();
+
+        String text();
+    }
+
+    interface Resources extends ClientBundle {
+        @Source(Style.DEFAULT_CSS)
+        Style style();
+    }
+
+    interface Template extends SafeHtmlTemplates {
+//        @Template("<div class=\"{0}\" style=\"width:{1}px\"></div>")
+//        SafeHtml indent(String indentClass, int indent);
+
+        @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
+        SafeHtml expander(String iconClass, SafeStyles styles, SafeHtml icon);
+
+        @Template("<div class=\"{0}\">{1}</div>")
+        SafeHtml tickBox(String iconClass, SafeHtml icon);
+
+        @Template("<img class=\"{0}\" src=\"{1}\" />")
+        SafeHtml icon(String iconClass, SafeUri iconUrl);
+
+        @Template("<div class=\"{0}\">{1}</div>")
+        SafeHtml text(String textClass, SafeHtml text);
+
+        @Template("<div class=\"{0}\">{1}</div>")
+        SafeHtml outer(String outerClass, SafeHtml content);
+
+        /**
+         * The wrapper around the image vertically aligned to the middle.
+         */
+        @Template("")
+        SafeHtml imageWrapperMiddle(SafeStyles styles, SafeHtml image);
     }
 }

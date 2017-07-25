@@ -29,22 +29,6 @@ import stroom.svg.client.Icon;
 import stroom.svg.client.SvgIcon;
 
 public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.WelcomeView> {
-    public interface WelcomeView extends View {
-        void setHTML(String html);
-
-        HasText getBuildVersion();
-
-        HasText getBuildDate();
-
-        HasText getUpDate();
-
-        HasText getNodeName();
-
-        HasText getUserName();
-
-        HasText getRoleName();
-    }
-
     public static final String WELCOME = "Welcome";
 
     @Inject
@@ -76,5 +60,21 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
     @Override
     public String getLabel() {
         return WELCOME;
+    }
+
+    public interface WelcomeView extends View {
+        void setHTML(String html);
+
+        HasText getBuildVersion();
+
+        HasText getBuildDate();
+
+        HasText getUpDate();
+
+        HasText getNodeName();
+
+        HasText getUserName();
+
+        HasText getRoleName();
     }
 }

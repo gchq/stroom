@@ -32,6 +32,7 @@ public class ProcessorViewImpl extends ViewImpl implements ProcessorView {
     ResizeSimplePanel processorList;
     @UiField
     SimplePanel details;
+
     @Inject
     public ProcessorViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);

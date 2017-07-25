@@ -42,10 +42,8 @@ import java.util.ArrayList;
  */
 @Component(ExportConfigServlet.BEAN_NAME)
 public class ExportConfigServlet extends HttpServlet {
-    private static final long serialVersionUID = -4533441835216235920L;
-
     public static final String BEAN_NAME = "exportConfigServlet";
-
+    private static final long serialVersionUID = -4533441835216235920L;
     private static final String PROPERTY = "stroom.export.enabled";
 
     private final transient ImportExportService importExportService;

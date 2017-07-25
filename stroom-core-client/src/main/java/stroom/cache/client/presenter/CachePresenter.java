@@ -28,13 +28,8 @@ import stroom.svg.client.SvgPresets;
 public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView> {
     public static final String LIST = "LIST";
     public static final String NODE_LIST = "NODE_LIST";
-
-    public interface CacheView extends View {
-    }
-
     private final CacheListPresenter cacheListPresenter;
     private final CacheNodeListPresenter cacheNodeListPresenter;
-
     @Inject
     public CachePresenter(final EventBus eventBus, final CacheView view, final CacheListPresenter cacheListPresenter,
                           final CacheNodeListPresenter cacheNodeListPresenter, final ClientDispatchAsync dispatcher) {
@@ -65,5 +60,8 @@ public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView
     @Override
     public String getLabel() {
         return "Caches";
+    }
+
+    public interface CacheView extends View {
     }
 }

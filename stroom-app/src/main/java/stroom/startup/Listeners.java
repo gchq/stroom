@@ -26,7 +26,7 @@ public class Listeners {
     final ContextLoaderListener rootContextListener;
     final SessionListListener sessionListListener;
 
-    public Listeners(ServletEnvironment servletEnvironment, AnnotationConfigWebApplicationContext rootContext){
+    public Listeners(ServletEnvironment servletEnvironment, AnnotationConfigWebApplicationContext rootContext) {
         rootContextListener = new ContextLoaderListener(rootContext);
         servletEnvironment.addServletListeners(rootContextListener);
 

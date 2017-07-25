@@ -55,10 +55,8 @@ public class DataReceiptPolicyPresenter extends ContentTabPresenter<LinkTabPanel
 
     private final TabContentProvider<DataReceiptPolicy> tabContentProvider = new TabContentProvider<>();
     private final ClientDispatchAsync dispatcher;
-
-    private DataReceiptPolicy policy;
-
     private final List<TabData> tabs = new ArrayList<>();
+    private DataReceiptPolicy policy;
     private ButtonView saveButton;
     private String lastLabel;
     private ButtonPanel leftButtons;

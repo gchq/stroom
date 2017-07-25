@@ -40,9 +40,9 @@ import java.util.HashSet;
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestIndexShardIO extends StroomUnitTest {
 
-//    private static final IndexShardService INDEX_SHARD_SERVICE = new MockIndexShardService();
+    //    private static final IndexShardService INDEX_SHARD_SERVICE = new MockIndexShardService();
     private static final IndexFields INDEX_FIELDS = IndexFields.createStreamIndexFields();
-//    private static final IndexShardWriterCache INDEX_SHARD_WRITER_CACHE = new MockIndexShardWriterCache();
+    //    private static final IndexShardWriterCache INDEX_SHARD_WRITER_CACHE = new MockIndexShardWriterCache();
 //    private static final IndexShardManager INDEX_SHARD_MANAGER = new MockIndexShardManager();
     private static final IndexConfig INDEX_CONFIG;
 
@@ -54,6 +54,12 @@ public class TestIndexShardIO extends StroomUnitTest {
         final Index index = new Index();
         index.setName("Test");
         INDEX_CONFIG = new IndexConfig(index, INDEX_FIELDS, new IndexFieldsMap(INDEX_FIELDS));
+    }
+
+    public static void main(final String[] args) {
+        for (final Object s : System.getProperties().keySet()) {
+            System.out.println(s + "=" + System.getProperty((String) s));
+        }
     }
 
     private Document buildDocument(final int id) {
@@ -233,11 +239,5 @@ public class TestIndexShardIO extends StroomUnitTest {
         // Assert.assertEquals("Expected to flush every 2048 docs...","[2048,
         // 6144, 4096, 8192]",
         // flushSet.toString());
-    }
-
-    public static void main(final String[] args) {
-        for (final Object s : System.getProperties().keySet()) {
-            System.out.println(s + "=" + System.getProperty((String) s));
-        }
     }
 }

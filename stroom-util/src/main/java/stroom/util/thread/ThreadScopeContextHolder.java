@@ -22,10 +22,6 @@ package stroom.util.thread;
 public class ThreadScopeContextHolder {
     private static final ThreadLocal<ThreadScopeContext> THREAD_LOCAL = new ThreadLocal<ThreadScopeContext>();
 
-    public static void setContext(final ThreadScopeContext context) {
-        THREAD_LOCAL.set(context);
-    }
-
     /**
      * Get the current context if there is one or throws an illegal state
      * exception. This should be used when a context is expected to already
@@ -37,6 +33,10 @@ public class ThreadScopeContextHolder {
             throw new IllegalStateException("No thread scope context active");
         }
         return context;
+    }
+
+    public static void setContext(final ThreadScopeContext context) {
+        THREAD_LOCAL.set(context);
     }
 
     /**

@@ -25,15 +25,6 @@ import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter.TooltipView;
 
 public class TooltipViewImpl extends ViewImpl implements TooltipView {
-    public interface Style extends CssResource {
-        String tooltip();
-    }
-
-    public interface Resources extends ClientBundle {
-        @Source("Tooltip.css")
-        Style style();
-    }
-
     private static Resources resources;
     private final HTML content;
 
@@ -60,5 +51,14 @@ public class TooltipViewImpl extends ViewImpl implements TooltipView {
     @Override
     public void setText(final String text) {
         content.setText(text);
+    }
+
+    public interface Style extends CssResource {
+        String tooltip();
+    }
+
+    public interface Resources extends ClientBundle {
+        @Source("Tooltip.css")
+        Style style();
     }
 }

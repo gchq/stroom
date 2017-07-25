@@ -31,9 +31,9 @@ public class ManageGlobalPropertyPresenter extends ManageEntityPresenter<FindGlo
 
     @Inject
     public ManageGlobalPropertyPresenter(final EventBus eventBus, final ManageEntityView view,
-            final ManageGlobalPropertyListPresenter listPresenter,
-            final Provider<ManageGlobalPropertyEditPresenter> editProvider,
-            final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext) {
+                                         final ManageGlobalPropertyListPresenter listPresenter,
+                                         final Provider<ManageGlobalPropertyEditPresenter> editProvider,
+                                         final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext) {
         super(eventBus, view, listPresenter, editProvider, null, dispatcher);
         this.manageGlobalPropertyListPresenter = listPresenter;
     }

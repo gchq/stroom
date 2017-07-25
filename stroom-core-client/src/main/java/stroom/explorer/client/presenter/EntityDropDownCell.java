@@ -70,7 +70,7 @@ public class EntityDropDownCell extends DropDownCell<DocRef> {
         if (selection == null || !(selection instanceof EntityData)) {
             setValue(null);
         } else {
-            setValue(((EntityData)selection).getDocRef());
+            setValue(((EntityData) selection).getDocRef());
         }
     }
 }

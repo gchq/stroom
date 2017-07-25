@@ -20,17 +20,15 @@ import stroom.entity.shared.Action;
 
 public class ResetPasswordAction extends Action<UserRef> {
     private static final long serialVersionUID = -6740095230475597845L;
+    private UserRef user;
+    private String password;
 
     public ResetPasswordAction() {
     }
-
     public ResetPasswordAction(final UserRef user, String password) {
         this.user = user;
         this.password = password;
     }
-
-    private UserRef user;
-    private String password;
 
     public UserRef getUser() {
         return user;

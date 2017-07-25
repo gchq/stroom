@@ -35,10 +35,8 @@ public final class PipelineElementRenderer
         implements CellRenderer2<PipelineElement>, NodeExtentProvider<PipelineElement> {
     private final PipelineElementBoxFactory pipelineElementBoxFactory;
     private final FlowPanel panel;
-
-    private SelectionModel<PipelineElement> selectionModel;
-
     private final List<PipelineElementBox> boxes = new ArrayList<PipelineElementBox>();
+    private SelectionModel<PipelineElement> selectionModel;
 
     public PipelineElementRenderer(final FlowPanel panel, final PipelineElementBoxFactory pipelineElementBoxFactory) {
         this.panel = panel;

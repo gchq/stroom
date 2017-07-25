@@ -37,6 +37,20 @@ import java.util.ListIterator;
  * Util (general purpose) methods dealing with {@link Iterator}.
  */
 public class IteratorUtil {
+    /**
+     * Returns an {@link Iterator} iterating the given list from the end to the
+     * start.
+     * <p>
+     * I.e. the iterator does the reverse of the {@link List#iterator()}.
+     *
+     * @param <T>
+     * @param list
+     * @return a reverse {@link Iterator} of the list
+     */
+    public static <T> Iterator<T> createReverseIterator(List<T> list) {
+        return new ReverseIterator<T>(list);
+    }
+
     private static class ReverseIterator<T> implements Iterator<T> {
         private ListIterator<T> listIterator;
 
@@ -58,19 +72,5 @@ public class IteratorUtil {
         public void remove() {
             listIterator.remove();
         }
-    }
-
-    /**
-     * Returns an {@link Iterator} iterating the given list from the end to the
-     * start.
-     * <p>
-     * I.e. the iterator does the reverse of the {@link List#iterator()}.
-     *
-     * @param <T>
-     * @param list
-     * @return a reverse {@link Iterator} of the list
-     */
-    public static <T> Iterator<T> createReverseIterator(List<T> list) {
-        return new ReverseIterator<T>(list);
     }
 }

@@ -26,12 +26,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class FindTaskProgressCriteria extends FindNamedEntityCriteria implements Comparator<TaskProgress> {
-    private static final long serialVersionUID = 2014515855795611224L;
-
     public static final String FIELD_USER = "User";
     public static final String FIELD_SUBMIT_TIME = "Submit Time";
     public static final String FIELD_AGE = "Age";
-
+    private static final long serialVersionUID = 2014515855795611224L;
     private FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
     private String sessionId;
     private Set<TaskProgress> expandedTasks;

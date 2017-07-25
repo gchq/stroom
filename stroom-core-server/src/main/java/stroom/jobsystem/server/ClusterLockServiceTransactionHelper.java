@@ -34,11 +34,9 @@ import java.util.Set;
 @Component
 public class ClusterLockServiceTransactionHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockServiceTransactionHelper.class);
-
+    private final Set<String> registeredLockSet = new HashSet<>();
     @Resource
     private StroomEntityManager entityManager;
-
-    private final Set<String> registeredLockSet = new HashSet<>();
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void checkLockCreated(final String name) {

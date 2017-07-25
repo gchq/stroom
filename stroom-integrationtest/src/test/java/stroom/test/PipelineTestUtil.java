@@ -42,7 +42,7 @@ public final class PipelineTestUtil {
     }
 
     public static PipelineEntity createTestPipeline(final PipelineEntityService pipelineEntityService, final PipelineMarshaller pipelineMarshaller, final DocRef folder, final String name,
-            final String description, final String data) {
+                                                    final String description, final String data) {
         PipelineEntity pipelineEntity = pipelineEntityService.create(folder, name);
         pipelineEntity.setName(name);
         pipelineEntity.setDescription(description);

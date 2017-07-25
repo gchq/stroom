@@ -54,6 +54,9 @@ public class TestMultiServiceInternalStatisticsFacade {
     @Captor
     private ArgumentCaptor<Map<DocRef, List<InternalStatisticEvent>>> argCaptor2;
 
+    private static InternalStatisticEvent createEvent(final String key, final Long timeMs) {
+        return InternalStatisticEvent.createPlusOneCountStat(key, timeMs, null);
+    }
 
     @Test
     public void putEvents() throws Exception {
@@ -104,10 +107,6 @@ public class TestMultiServiceInternalStatisticsFacade {
                 .containsExactly(DOC_REF_A2);
         Assertions.assertThat(argCaptor2.getValue().get(DOC_REF_A2))
                 .containsExactly(EVENT_A601, EVENT_A602, EVENT_A603);
-    }
-
-    private static InternalStatisticEvent createEvent(final String key, final Long timeMs) {
-        return InternalStatisticEvent.createPlusOneCountStat(key, timeMs, null);
     }
 
 }

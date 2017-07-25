@@ -94,8 +94,7 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
      * Tests that valid streams are all processed and put into the processed and
      * raw stores and that no streams end up in the error store.
      *
-     * @throws Exception
-     *             Could be thrown.
+     * @throws Exception Could be thrown.
      */
     @Test
     public void testTranslationTaskFactory() throws Exception {
@@ -185,8 +184,7 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
      * Tests that invalid streams are processed but errors are recorded against
      * them.
      *
-     * @throws Exception
-     *             Could be thrown.
+     * @throws Exception Could be thrown.
      */
     @Test
     public void testInvalidData() throws Exception {
@@ -220,8 +218,7 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
      * Tests that invalid streams are processed but errors are recorded against
      * them.
      *
-     * @throws Exception
-     *             Could be thrown.
+     * @throws Exception Could be thrown.
      */
     @Test
     public void testEmptyData() throws Exception {
@@ -253,8 +250,7 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     /**
      * Tests that invalid xslt causes all tasks to fail.
      *
-     * @throws Exception
-     *             Could be thrown.
+     * @throws Exception Could be thrown.
      */
     @Test
     public void testInvalidXSLT() throws Exception {
@@ -326,8 +322,7 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     /**
      * Creates a data store duplicating the file found in data.
      *
-     * @param data
-     *            The path of the data to replicate.
+     * @param data The path of the data to replicate.
      */
     private void createStore(final File data, final File reference, final File xslt) {
         try {

@@ -35,19 +35,16 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
 
     private final TreePanel<E> treePanel;
     private final TreePanel<E> subTreePanel;
-
+    private final FlowPanel layoutPanel;
     private Box<E> box;
     private Box<E> targetBox;
     private int startX = -1;
     private int startY = -1;
     private int offsetX = -1;
     private int offsetY = -1;
-
     private Element mouseDownElement;
     private boolean allowDragging;
     private boolean dragging;
-
-    private final FlowPanel layoutPanel;
 
     public DraggableTreePanel(final TreePanel<E> treePanel, final TreePanel<E> subTreePanel) {
         this.treePanel = treePanel;

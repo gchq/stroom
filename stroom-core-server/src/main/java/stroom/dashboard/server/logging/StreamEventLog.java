@@ -134,7 +134,7 @@ public class StreamEventLog {
     }
 
     private event.logging.Object createStreamObject(final Stream stream, final Feed feed,
-            final StreamType streamType) {
+                                                    final StreamType streamType) {
         final event.logging.Object object = new event.logging.Object();
         object.setType("Stream");
         object.setId(String.valueOf(stream.getId()));

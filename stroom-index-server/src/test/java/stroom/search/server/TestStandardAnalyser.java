@@ -57,7 +57,7 @@ public class TestStandardAnalyser {
 
         final CharTermAttribute termAtt = stream.addAttribute(CharTermAttribute.class);
 
-        for (;;) {
+        for (; ; ) {
             if (!hasMoreTokens)
                 break;
 

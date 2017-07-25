@@ -43,12 +43,13 @@ public class DataSourceProviderRegistry {
 
     /**
      * Gets a valid instance of a {@link DataSourceProvider} by querying service discovery
+     *
      * @param docRefType The docRef type to get a data source provider for
      * @return A remote data source provider that can handle docRefs of the passed type. Will return
      * an empty optional for two reasons:
      * There may be no services that can handle the passed docRefType.
      * The service has no instances that are up and enabled.
-     *
+     * <p>
      * The returned {@link DataSourceProvider} should be used and then thrown away, not cached or held.
      */
     public Optional<DataSourceProvider> getDataSourceProvider(final String docRefType) {
@@ -64,6 +65,7 @@ public class DataSourceProviderRegistry {
 
     /**
      * Gets a valid instance of a {@link RemoteDataSourceProvider} by querying service discovery
+     *
      * @param dataSourceRef The docRef to get a data source provider for
      * @return A remote data source provider that can handle the passed docRef. Will return
      * an empty optional for two reasons:

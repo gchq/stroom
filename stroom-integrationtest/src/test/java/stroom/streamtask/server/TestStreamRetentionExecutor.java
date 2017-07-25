@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 
 public class TestStreamRetentionExecutor extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestStreamRetentionExecutor.class);
-
+    private static final int RETENTION_PERIOD_DAYS = 1;
     @Resource
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Resource
@@ -50,8 +50,6 @@ public class TestStreamRetentionExecutor extends AbstractCoreIntegrationTest {
     private FeedService feedService;
     @Resource
     private StreamRetentionExecutor streamRetentionExecutor;
-
-    private static final int RETENTION_PERIOD_DAYS = 1;
 
     @Test
     public void testMultipleRuns() {

@@ -12,10 +12,8 @@ import java.nio.file.Path;
 
 public class ContentPackDownloader extends AbstractContentDownloader {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ContentPackDownloader.class);
-
     public static final String URL_PREFIX = "https://github.com/gchq/stroom-content/releases/download/";
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(ContentPackDownloader.class);
 
     public static Path downloadContentPack(final String contentPackName, final Version version, final Path destDir) {
         return downloadContentPack(contentPackName, version, destDir, ConflictMode.KEEP_EXISTING);

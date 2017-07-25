@@ -19,10 +19,8 @@ package stroom.explorer.shared;
 import stroom.util.shared.SharedObject;
 
 public class DocumentType implements SharedObject {
-    private static final long serialVersionUID = -7826692935161793565L;
-
     public static final String DOC_IMAGE_URL = "document/";
-
+    private static final long serialVersionUID = -7826692935161793565L;
     private int priority;
     private String type;
     private String displayType;

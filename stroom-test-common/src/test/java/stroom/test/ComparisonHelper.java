@@ -37,9 +37,8 @@ import java.util.List;
  * Provides methods that are used by multiple tests.
  */
 public final class ComparisonHelper {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ComparisonHelper.class);
-
     public static final String OUTPUT_EXTENSION = ".out";
+    private static final Logger LOGGER = LoggerFactory.getLogger(ComparisonHelper.class);
 
     private ComparisonHelper() {
         // Hidden constructor as utility class.
@@ -108,14 +107,6 @@ public final class ComparisonHelper {
         return str.substring(start, end);
     }
 
-    private static class Filter implements FileFilter {
-        @Override
-        public boolean accept(final File file) {
-            return !file.getName().startsWith(".");
-
-        }
-    }
-
     public static void compareDirs(final File in, final File out) {
         final File[] inFiles = in.listFiles(new Filter());
         final File[] outFiles = out.listFiles(new Filter());
@@ -158,7 +149,7 @@ public final class ComparisonHelper {
     }
 
     public static void compareFiles(final File expectedFile, final File actualFile, final boolean ignoreWhitespace,
-            final boolean xml) {
+                                    final boolean xml) {
         try {
             compare(expectedFile, actualFile, ignoreWhitespace, xml);
         } catch (final Exception e) {
@@ -167,7 +158,7 @@ public final class ComparisonHelper {
     }
 
     public static void compare(final File expectedFile, final File actualFile, final boolean ignoreWhitespace,
-            final boolean xml) {
+                               final boolean xml) {
         // Make sure both files exist.
         if (!expectedFile.isFile()) {
             throw new RuntimeException(
@@ -207,21 +198,21 @@ public final class ComparisonHelper {
     }
 
     public static void compareStreams(final InputStream is1, final InputStream is2, final boolean ignoreWhitespace,
-            final boolean xml) {
+                                      final boolean xml) {
         if (!doCompareReaders(new InputStreamReader(is1), new InputStreamReader(is2), ignoreWhitespace, xml)) {
             Assert.fail("Content is not the same");
         }
     }
 
     public static void compareReaders(final Reader reader1, final Reader reader2, final boolean ignoreWhitespace,
-            final boolean xml) {
+                                      final boolean xml) {
         if (!doCompareReaders(reader1, reader2, ignoreWhitespace, xml)) {
             Assert.fail("Content is not the same");
         }
     }
 
     private static boolean doCompareReaders(final Reader reader1, final Reader reader2, final boolean ignoreWhitespace,
-            final boolean xml) {
+                                            final boolean xml) {
         try {
             // Comparing XML is more expensive so disable it for now as tests
             // pass without comparing as XML.
@@ -362,5 +353,13 @@ public final class ComparisonHelper {
 
     private static boolean isCharNothing(final char c) {
         return c == ' ' || c == '\n';
+    }
+
+    private static class Filter implements FileFilter {
+        @Override
+        public boolean accept(final File file) {
+            return !file.getName().startsWith(".");
+
+        }
     }
 }

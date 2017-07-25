@@ -39,7 +39,7 @@ public class StroomStatsStoreEntityData implements SharedObject {
     /**
      * Should be a SortedSet but GWT doesn't support that. Contents should be
      * sorted and not contain duplicates
-     *
+     * <p>
      * XMLTransient to force JAXB to use the setter
      */
 
@@ -48,7 +48,7 @@ public class StroomStatsStoreEntityData implements SharedObject {
 
     /**
      * Held in a set to prevent duplicates.
-     *
+     * <p>
      * XMLTransient to force JAXB to use the setter
      */
     @XmlTransient

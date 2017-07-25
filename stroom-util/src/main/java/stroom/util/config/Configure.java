@@ -48,6 +48,15 @@ public class Configure extends AbstractCommandLineTool {
     private List<File> processFile = new ArrayList<File>();
     private ParameterFile parameterFile;
 
+    public static void printUsage() {
+        System.out.println(
+                "java stroom.util.config.Configure parameterFile=<parameter file> processFile=<comma delimited files to process>");
+    }
+
+    public static void main(String[] args) throws Exception {
+        new Configure().doMain(args);
+    }
+
     public void setParameterFile(String parameterFile) {
         this.parameterFilePath = parameterFile;
     }
@@ -62,11 +71,6 @@ public class Configure extends AbstractCommandLineTool {
 
     public void setExitOnError(boolean exitOnError) {
         this.exitOnError = exitOnError;
-    }
-
-    public static void printUsage() {
-        System.out.println(
-                "java stroom.util.config.Configure parameterFile=<parameter file> processFile=<comma delimited files to process>");
     }
 
     public void marshal(ParameterFile data, OutputStream outputStream) {
@@ -168,7 +172,7 @@ public class Configure extends AbstractCommandLineTool {
         newFile.delete();
         int replaceCount = 0;
         try (BufferedReader buffReader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
-                BufferedWriter buffWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(newFile)))) {
+             BufferedWriter buffWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(newFile)))) {
             String line = null;
             int lineCount = 0;
             while ((line = buffReader.readLine()) != null) {
@@ -247,10 +251,6 @@ public class Configure extends AbstractCommandLineTool {
         }
         System.out.println();
         System.out.println();
-    }
-
-    public static void main(String[] args) throws Exception {
-        new Configure().doMain(args);
     }
 
 }

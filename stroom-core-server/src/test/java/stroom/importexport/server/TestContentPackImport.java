@@ -45,20 +45,6 @@ import java.nio.file.Paths;
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestContentPackImport {
 
-    //This is needed as you can't have to RunWith annotations
-    //so this is the same as @RunWith(MockitoJUnitRunner.class)
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
-
-    @Mock
-    ImportExportService importExportService;
-    MockStroomPropertyService stroomPropertyService = new MockStroomPropertyService();
-    @Mock
-    GlobalPropertyService globalPropertyService;
-
-    @Captor
-    ArgumentCaptor<GlobalProperty> globalPropArgCaptor;
-
     static Path CONTENT_PACK_DIR;
 
     static {
@@ -66,6 +52,17 @@ public class TestContentPackImport {
         CONTENT_PACK_DIR = Paths.get(userHome, StroomProperties.USER_CONF_DIR).resolve(ContentPackImport.CONTENT_PACK_IMPORT_DIR);
     }
 
+    //This is needed as you can't have to RunWith annotations
+    //so this is the same as @RunWith(MockitoJUnitRunner.class)
+    @Rule
+    public MockitoRule mockitoRule = MockitoJUnit.rule();
+    @Mock
+    ImportExportService importExportService;
+    MockStroomPropertyService stroomPropertyService = new MockStroomPropertyService();
+    @Mock
+    GlobalPropertyService globalPropertyService;
+    @Captor
+    ArgumentCaptor<GlobalProperty> globalPropArgCaptor;
     Path testPack1 = CONTENT_PACK_DIR.resolve("testPack1.zip");
     Path testPack2 = CONTENT_PACK_DIR.resolve("testPack2.zip");
     Path testPack3 = CONTENT_PACK_DIR.resolve("testPack3.badExtension");

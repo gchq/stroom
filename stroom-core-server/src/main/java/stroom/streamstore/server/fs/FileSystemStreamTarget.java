@@ -41,29 +41,16 @@ import java.util.stream.Collectors;
  */
 public final class FileSystemStreamTarget implements StreamTarget {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamTarget.class);
-
+    private final Set<StreamVolume> metaDataVolume;
+    private final StreamType streamType;
+    private final List<FileSystemStreamTarget> childrenAccessed = new ArrayList<FileSystemStreamTarget>();
     private Stream stream;
     private boolean closed = false;
     private boolean append = false;
-    private final Set<StreamVolume> metaDataVolume;
-
-    private final StreamType streamType;
     private MetaMap attributeMap = null;
-
     private OutputStream outputStream;
     private Set<File> files;
-
     private FileSystemStreamTarget parent;
-
-    private final List<FileSystemStreamTarget> childrenAccessed = new ArrayList<FileSystemStreamTarget>();
-
-    /**
-     * Creates a new file system stream target.
-     */
-    public static FileSystemStreamTarget create(final Stream stream, final Set<StreamVolume> metaDataVolume,
-                                                final StreamType streamType, final boolean append) {
-        return new FileSystemStreamTarget(stream, metaDataVolume, streamType, append);
-    }
 
     private FileSystemStreamTarget(final Stream requestMetaData, final Set<StreamVolume> metaDataVolume,
                                    final StreamType streamType, final boolean append) {
@@ -86,6 +73,14 @@ public final class FileSystemStreamTarget implements StreamTarget {
         this.files = aFiles;
 
         validate();
+    }
+
+    /**
+     * Creates a new file system stream target.
+     */
+    public static FileSystemStreamTarget create(final Stream stream, final Set<StreamVolume> metaDataVolume,
+                                                final StreamType streamType, final boolean append) {
+        return new FileSystemStreamTarget(stream, metaDataVolume, streamType, append);
     }
 
     private void validate() {

@@ -21,8 +21,6 @@ import stroom.util.shared.SharedObject;
 import java.util.HashMap;
 
 public class ClientProperties implements SharedObject {
-    private static final long serialVersionUID = 8717922468620533698L;
-
     public static final String LOGIN_HTML = "stroom.loginHTML";
     public static final String WELCOME_HTML = "stroom.welcomeHTML";
     public static final String ABOUT_HTML = "stroom.aboutHTML";
@@ -30,7 +28,6 @@ public class ClientProperties implements SharedObject {
     public static final String BUILD_VERSION = "buildVersion";
     public static final String NODE_NAME = "stroom.node";
     public static final String UP_DATE = "upDate";
-
     public static final String MAINTENANCE_MESSAGE = "stroom.maintenance.message";
     public static final String MAX_RESULTS = "stroom.search.maxResults";
     public static final String PROCESS_TIME_LIMIT = "stroom.search.process.defaultTimeLimit";
@@ -39,7 +36,7 @@ public class ClientProperties implements SharedObject {
     public static final String NAME_PATTERN = "stroom.namePattern";
     public static final String LABEL_COLOURS = "stroom.theme.labelColours";
     public static final String HELP_URL = "stroom.helpUrl";
-
+    private static final long serialVersionUID = 8717922468620533698L;
     private HashMap<String, String> map;
 
     public ClientProperties() {

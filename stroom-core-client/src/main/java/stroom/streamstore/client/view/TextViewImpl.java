@@ -29,17 +29,12 @@ import stroom.streamstore.client.presenter.TextUiHandlers;
 import stroom.widget.button.client.FabButton;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
-public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers>implements TextView {
-    public interface Binder extends UiBinder<Widget, TextViewImpl> {
-    }
-
+public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements TextView {
     private final Widget widget;
-
     @UiField
     ResizeSimplePanel textContainer;
     @UiField
     FabButton playButton;
-
     @Inject
     public TextViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -65,5 +60,8 @@ public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers>implements T
         if (getUiHandlers() != null) {
             getUiHandlers().beginStepping();
         }
+    }
+
+    public interface Binder extends UiBinder<Widget, TextViewImpl> {
     }
 }

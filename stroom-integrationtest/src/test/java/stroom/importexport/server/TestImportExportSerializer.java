@@ -70,7 +70,7 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
     private DocRefs buildFindFolderCriteria() {
         final DocRefs criteria = new DocRefs();
-        criteria.add(new DocRef(Folder.ENTITY_TYPE,"0", "System"));
+        criteria.add(new DocRef(Folder.ENTITY_TYPE, "0", "System"));
         return criteria;
     }
 

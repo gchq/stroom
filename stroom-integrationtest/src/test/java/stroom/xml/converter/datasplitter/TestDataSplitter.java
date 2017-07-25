@@ -41,8 +41,7 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
     /**
      * Tests a basic CSV file.
      *
-     * @throws Exception
-     *             Might be thrown while performing the test.
+     * @throws Exception Might be thrown while performing the test.
      */
     @Test
     public void testBasicCSV() throws Exception {
@@ -62,8 +61,7 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
     /**
      * Tests a sample network monitoring CSV file.
      *
-     * @throws Exception
-     *             Might be thrown while performing the test.
+     * @throws Exception Might be thrown while performing the test.
      */
     @Test
     public void testNetworkMonitoringSample() throws Exception {
@@ -77,8 +75,7 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
      * Tests a sample network monitoring CSV file and tries to transform it with
      * XSL.
      *
-     * @throws Exception
-     *             Might be thrown while performing the test.
+     * @throws Exception Might be thrown while performing the test.
      */
     @Test
     public void testNetworkMonitoringSampleWithXSL() throws Exception {
@@ -91,8 +88,7 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
      * Tests a sample network monitoring CSV file and tries to transform it with
      * XSL.
      *
-     * @throws Exception
-     *             Might be thrown while performing the test.
+     * @throws Exception Might be thrown while performing the test.
      */
     @Test
     public void testDS3NetworkMonitoringSampleWithXSL() throws Exception {
@@ -104,8 +100,7 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
     /**
      * First stage ref data change.
      *
-     * @throws Exception
-     *             NA
+     * @throws Exception NA
      */
     @Test
     public void testRefDataCSV() throws Exception {
@@ -118,8 +113,7 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
     /**
      * Tests a sample ref data CSV file and tries to transform it with XSL.
      *
-     * @throws Exception
-     *             Might be thrown while performing the test.
+     * @throws Exception Might be thrown while performing the test.
      */
     @Test
     public void testRefDataCSVWithXSL() throws Exception {
@@ -130,7 +124,7 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
     }
 
     private String runF2XTest(final TextConverterType textConverterType, final String textConverterLocation,
-            final InputStream inputStream) {
+                              final InputStream inputStream) {
         validate(textConverterType, textConverterLocation);
 
         final F2XTestUtil f2xTestUtil = beanStore.getBean(F2XTestUtil.class);
@@ -139,8 +133,8 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
     }
 
     private String runFullTest(final Feed feed, final TextConverterType textConverterType,
-            final String textConverterLocation, final String xsltLocation, final String dataLocation,
-            final int expectedWarnings) {
+                               final String textConverterLocation, final String xsltLocation, final String dataLocation,
+                               final int expectedWarnings) {
         validate(textConverterType, textConverterLocation);
 
         try {

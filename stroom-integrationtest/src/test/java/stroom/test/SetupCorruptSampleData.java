@@ -36,6 +36,17 @@ import stroom.util.spring.StroomSpringProfiles;
 public final class SetupCorruptSampleData extends AbstractCommandLineTool {
     private ApplicationContext appContext;
 
+    /**
+     * Main.
+     *
+     * @param args NA
+     * @throws Exception NA
+     */
+    public static void main(final String[] args) throws Exception {
+        final SetupCorruptSampleData setupSampleData = new SetupCorruptSampleData();
+        setupSampleData.doMain(args);
+    }
+
     public ApplicationContext getAppContext() {
         return appContext;
     }
@@ -45,9 +56,9 @@ public final class SetupCorruptSampleData extends AbstractCommandLineTool {
         FileSystemUtil.deleteContents(FileUtil.getTempDir());
 
         System.setProperty("spring.profiles.active", StroomSpringProfiles.TEST);
-        final String[] context = new String[] { "classpath:META-INF/spring/stroomCoreServerContext.xml",
+        final String[] context = new String[]{"classpath:META-INF/spring/stroomCoreServerContext.xml",
                 "classpath:META-INF/spring/stroomDatabaseCommonTestControl.xml",
-                "classpath:META-INF/spring/stroomCoreServerLocalTestingContext.xml" };
+                "classpath:META-INF/spring/stroomCoreServerLocalTestingContext.xml"};
         appContext = new ClassPathXmlApplicationContext(context);
 
         // Force nodes to be created
@@ -72,18 +83,5 @@ public final class SetupCorruptSampleData extends AbstractCommandLineTool {
         streamStore.closeStreamTarget(target);
 
         commonTestControl.shutdown();
-    }
-
-    /**
-     * Main.
-     *
-     * @param args
-     *            NA
-     * @throws Exception
-     *             NA
-     */
-    public static void main(final String[] args) throws Exception {
-        final SetupCorruptSampleData setupSampleData = new SetupCorruptSampleData();
-        setupSampleData.doMain(args);
     }
 }

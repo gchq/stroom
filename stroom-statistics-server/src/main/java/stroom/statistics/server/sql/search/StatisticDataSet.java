@@ -41,7 +41,7 @@ public class StatisticDataSet implements Iterable<StatisticDataPoint> {
     }
 
     public StatisticDataSet(final String statisticName, final StatisticType statisticType, final long precisionMs,
-            final Set<StatisticDataPoint> statisticDataPoints) {
+                            final Set<StatisticDataPoint> statisticDataPoints) {
         for (StatisticDataPoint dataPoint : statisticDataPoints) {
             if (!statisticType.equals(dataPoint.getStatisticType())) {
                 throw new RuntimeException(

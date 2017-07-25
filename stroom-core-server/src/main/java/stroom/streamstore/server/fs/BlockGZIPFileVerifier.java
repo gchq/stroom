@@ -45,36 +45,20 @@ public class BlockGZIPFileVerifier {
     private long dataLength;
     private long eof;
 
-    RandomAccessFile getRaFile() {
-        return raFile;
-    }
-
-    /**
-     * Class to interface a stream to a random access file.
-     */
-    class RAInputStreamAdaptor extends InputStream {
-        @Override
-        public int read() throws IOException {
-            return getRaFile().read();
-        }
-
-        @Override
-        public int read(final byte[] b) throws IOException {
-            return getRaFile().read(b);
-        }
-
-        @Override
-        public int read(final byte[] b, final int off, final int len) throws IOException {
-            return getRaFile().read(b, off, len);
-        }
-    }
-
     /**
      * Constructor to open a Block GZIP File.
      */
     public BlockGZIPFileVerifier(final File bgz) throws IOException {
         raFile = new RandomAccessFile(bgz, BlockGZIPConstants.READ_ONLY);
         stream = new RAInputStreamAdaptor();
+    }
+
+    public static void main(String[] args) throws IOException {
+        new BlockGZIPFileVerifier(new File(args[0])).verify();
+    }
+
+    RandomAccessFile getRaFile() {
+        return raFile;
     }
 
     /**
@@ -237,8 +221,24 @@ public class BlockGZIPFileVerifier {
         }
     }
 
-    public static void main(String[] args) throws IOException {
-        new BlockGZIPFileVerifier(new File(args[0])).verify();
+    /**
+     * Class to interface a stream to a random access file.
+     */
+    class RAInputStreamAdaptor extends InputStream {
+        @Override
+        public int read() throws IOException {
+            return getRaFile().read();
+        }
+
+        @Override
+        public int read(final byte[] b) throws IOException {
+            return getRaFile().read(b);
+        }
+
+        @Override
+        public int read(final byte[] b, final int off, final int len) throws IOException {
+            return getRaFile().read(b, off, len);
+        }
     }
 
 }

@@ -70,34 +70,6 @@ import java.util.List;
 @TaskHandlerBean(task = HeadlessTranslationTask.class)
 @Scope(StroomScope.TASK)
 public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTranslationTask, VoidResult> {
-    private static class BasicInputStreamProvider implements StreamSourceInputStreamProvider {
-        private final StreamSourceInputStream inputStream;
-
-        public BasicInputStreamProvider(final InputStream inputStream, final long size) {
-            this.inputStream = new StreamSourceInputStream(inputStream, size);
-        }
-
-        @Override
-        public long getStreamCount() throws IOException {
-            return 1;
-        }
-
-        @Override
-        public StreamSourceInputStream getStream(final long streamNo) throws IOException {
-            return inputStream;
-        }
-
-        @Override
-        public RASegmentInputStream getSegmentInputStream(final long streamNo) throws IOException {
-            return null;
-        }
-
-        @Override
-        public void close() throws IOException {
-            inputStream.close();
-        }
-    }
-
     @Resource
     private PipelineFactory pipelineFactory;
     @Resource
@@ -275,6 +247,34 @@ public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<Headless
             if (errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics) {
                 ((ErrorStatistics) errorReceiverProxy.getErrorReceiver()).checkRecord(-1);
             }
+        }
+    }
+
+    private static class BasicInputStreamProvider implements StreamSourceInputStreamProvider {
+        private final StreamSourceInputStream inputStream;
+
+        public BasicInputStreamProvider(final InputStream inputStream, final long size) {
+            this.inputStream = new StreamSourceInputStream(inputStream, size);
+        }
+
+        @Override
+        public long getStreamCount() throws IOException {
+            return 1;
+        }
+
+        @Override
+        public StreamSourceInputStream getStream(final long streamNo) throws IOException {
+            return inputStream;
+        }
+
+        @Override
+        public RASegmentInputStream getSegmentInputStream(final long streamNo) throws IOException {
+            return null;
+        }
+
+        @Override
+        public void close() throws IOException {
+            inputStream.close();
         }
     }
 }

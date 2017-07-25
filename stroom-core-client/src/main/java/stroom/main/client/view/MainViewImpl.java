@@ -33,11 +33,7 @@ import stroom.main.client.presenter.MainPresenter.SpinnerDisplay;
 import stroom.util.shared.EqualsUtil;
 
 public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
-    public interface Binder extends UiBinder<Widget, MainViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     SimplePanel banner;
     @UiField
@@ -48,15 +44,12 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     SimplePanel topPanel;
     @UiField
     ResizeLayoutPanel contentPanel;
-
     private View maximisedView;
     private int splitPos = 300;
-
     private MySplitLayoutPanel splitPanel;
     private Widget westWidget;
     private Widget centerWidget;
     private String currentBanner;
-
     @Inject
     public MainViewImpl(final Binder binder) {
         this.widget = binder.createAndBindUi(this);
@@ -151,5 +144,8 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
                 banner.getElement().setInnerText(text);
             }
         }
+    }
+
+    public interface Binder extends UiBinder<Widget, MainViewImpl> {
     }
 }

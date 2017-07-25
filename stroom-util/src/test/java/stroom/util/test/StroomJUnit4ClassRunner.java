@@ -36,6 +36,23 @@ public class StroomJUnit4ClassRunner extends BlockJUnit4ClassRunner {
         super(clazz);
     }
 
+    static void runChildBefore(final BlockJUnit4ClassRunner runner, final FrameworkMethod method,
+                               final RunNotifier notifier) {
+        final StroomExpectedException stroomExpectedException = method.getAnnotation(StroomExpectedException.class);
+        if (stroomExpectedException != null) {
+//            StroomJunitConsoleAppender.setExpectedException(stroomExpectedException.exception());
+            LOGGER.info(">>> {}.  Expecting Exceptions {}", method.getMethod(), stroomExpectedException.exception());
+        } else {
+            LOGGER.info(">>> {}", method.getMethod());
+        }
+
+    }
+
+    static void runChildAfter(final BlockJUnit4ClassRunner runner, final FrameworkMethod method,
+                              final RunNotifier notifier, final LogExecutionTime logExecutionTime) {
+        LOGGER.info("<<< {} took {}", method.getMethod(), logExecutionTime);
+    }
+
     @Override
     public void run(final RunNotifier notifier) {
         try {
@@ -85,22 +102,5 @@ public class StroomJUnit4ClassRunner extends BlockJUnit4ClassRunner {
         }
 
         ExternalShutdownController.shutdown();
-    }
-
-    static void runChildBefore(final BlockJUnit4ClassRunner runner, final FrameworkMethod method,
-            final RunNotifier notifier) {
-        final StroomExpectedException stroomExpectedException = method.getAnnotation(StroomExpectedException.class);
-        if (stroomExpectedException != null) {
-//            StroomJunitConsoleAppender.setExpectedException(stroomExpectedException.exception());
-            LOGGER.info(">>> {}.  Expecting Exceptions {}", method.getMethod(), stroomExpectedException.exception());
-        } else {
-            LOGGER.info(">>> {}", method.getMethod());
-        }
-
-    }
-
-    static void runChildAfter(final BlockJUnit4ClassRunner runner, final FrameworkMethod method,
-            final RunNotifier notifier, final LogExecutionTime logExecutionTime) {
-        LOGGER.info("<<< {} took {}", method.getMethod(), logExecutionTime);
     }
 }

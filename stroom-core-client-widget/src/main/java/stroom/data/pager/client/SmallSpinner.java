@@ -24,17 +24,6 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.SvgButton;
 
 public class SmallSpinner extends Composite {
-    public interface Style extends CssResource {
-        String smallSpinner();
-
-        String spinning();
-    }
-
-    public interface Resources extends ClientBundle {
-        @Source("SmallSpinner.css")
-        Style style();
-    }
-
     private static Resources resources;
 
     public SmallSpinner() {
@@ -55,5 +44,16 @@ public class SmallSpinner extends Composite {
         } else {
             getElement().removeClassName(resources.style().spinning());
         }
+    }
+
+    public interface Style extends CssResource {
+        String smallSpinner();
+
+        String spinning();
+    }
+
+    public interface Resources extends ClientBundle {
+        @Source("SmallSpinner.css")
+        Style style();
     }
 }

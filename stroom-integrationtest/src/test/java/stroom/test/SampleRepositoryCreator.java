@@ -43,10 +43,6 @@ public final class SampleRepositoryCreator {
     private final ImportExportSerializer importExportSerializer;
     private final File testDir;
 
-    public ApplicationContext getAppContext() {
-        return appContext;
-    }
-
     public SampleRepositoryCreator() {
         FileSystemUtil.deleteContents(FileUtil.getTempDir());
 
@@ -68,6 +64,21 @@ public final class SampleRepositoryCreator {
         importExportSerializer = appContext.getBean(ImportExportSerializer.class);
 
         testDir = new File(StroomCoreServerTestFileUtil.getTestResourcesDir(), "samples/config");
+    }
+
+    /**
+     * Main.
+     *
+     * @param args NA
+     * @throws Exception NA
+     */
+    public static void main(final String[] args) throws Exception {
+        final SampleRepositoryCreator setupSampleData = new SampleRepositoryCreator();
+        setupSampleData.run(true);
+    }
+
+    public ApplicationContext getAppContext() {
+        return appContext;
     }
 
     public void run(final boolean shutdown) throws IOException {
@@ -104,16 +115,5 @@ public final class SampleRepositoryCreator {
         if (shutdown) {
             commonTestControl.shutdown();
         }
-    }
-
-    /**
-     * Main.
-     *
-     * @param args NA
-     * @throws Exception NA
-     */
-    public static void main(final String[] args) throws Exception {
-        final SampleRepositoryCreator setupSampleData = new SampleRepositoryCreator();
-        setupSampleData.run(true);
     }
 }

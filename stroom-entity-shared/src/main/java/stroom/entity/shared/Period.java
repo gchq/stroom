@@ -23,7 +23,7 @@ import java.util.Date;
  * Class that represents a period. May have null upper or lower bounds to
  * indicate before or after a time rather than between 2 times.
  * </p>
- *
+ * <p>
  * <p>
  * The upper bound is not part of the period. E.g. 1/1/2001 to 1/1/2002 does not
  * include 1/1/2002.

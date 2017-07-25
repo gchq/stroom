@@ -29,10 +29,6 @@ public class TaskScopeContextHolder {
 
     private static final ThreadLocal<TaskScopeContext> THREAD_LOCAL_CONTEXT = new InheritableThreadLocal<TaskScopeContext>();
 
-    private static void setContext(final TaskScopeContext context) {
-        THREAD_LOCAL_CONTEXT.set(context);
-    }
-
     /**
      * Get the current context if there is one or throws an illegal state
      * exception. This should be used when a context is expected to already
@@ -44,6 +40,10 @@ public class TaskScopeContextHolder {
             throw new IllegalStateException("No task scope context active");
         }
         return context;
+    }
+
+    private static void setContext(final TaskScopeContext context) {
+        THREAD_LOCAL_CONTEXT.set(context);
     }
 
     /**

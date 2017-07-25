@@ -24,17 +24,17 @@ import org.springframework.context.annotation.FilterType;
 
 /**
  * Defines the component scanning required for the server module.
- *
+ * <p>
  * Defined separately from the main configuration so it can be easily
  * overridden.
  */
 @Configuration
-@ComponentScan(basePackages = { "stroom.pipeline", "stroom.refdata", "stroom.cache",
-        "stroom.resource", "stroom.xml", "stroom.benchmark" }, excludeFilters = {
-                // Exclude other configurations that might be found accidentally
-                // during a component scan as configurations should be specified
-                // explicitly.
-                @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class), })
+@ComponentScan(basePackages = {"stroom.pipeline", "stroom.refdata", "stroom.cache",
+        "stroom.resource", "stroom.xml", "stroom.benchmark"}, excludeFilters = {
+        // Exclude other configurations that might be found accidentally
+        // during a component scan as configurations should be specified
+        // explicitly.
+        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
 public class PipelineConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineConfiguration.class);
 

@@ -70,6 +70,22 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
         // Default constructor necessary for GWT serialisation.
     }
 
+    private IndexField(final IndexFieldType fieldType, final String fieldName, final AnalyzerType analyzerType,
+                       final boolean caseSensitive, final boolean stored, final boolean indexed, final boolean termPositions,
+                       final List<Condition> supportedConditions) {
+        setFieldType(fieldType);
+        setFieldName(fieldName);
+        setAnalyzerType(analyzerType);
+        setCaseSensitive(caseSensitive);
+        setStored(stored);
+        setIndexed(indexed);
+        setTermPositions(termPositions);
+
+        if (supportedConditions != null) {
+            this.supportedConditions = new ArrayList<>(supportedConditions);
+        }
+    }
+
     public static IndexField createField(final String fieldName) {
         return createField(fieldName, AnalyzerType.ALPHA_NUMERIC, false, false, true, false);
     }
@@ -114,22 +130,6 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
                                     final boolean termPositions, final List<Condition> supportedConditions) {
         return new IndexField(fieldType, fieldName, analyzerType, caseSensitive, stored, indexed, termPositions,
                 supportedConditions);
-    }
-
-    private IndexField(final IndexFieldType fieldType, final String fieldName, final AnalyzerType analyzerType,
-                       final boolean caseSensitive, final boolean stored, final boolean indexed, final boolean termPositions,
-                       final List<Condition> supportedConditions) {
-        setFieldType(fieldType);
-        setFieldName(fieldName);
-        setAnalyzerType(analyzerType);
-        setCaseSensitive(caseSensitive);
-        setStored(stored);
-        setIndexed(indexed);
-        setTermPositions(termPositions);
-
-        if (supportedConditions != null) {
-            this.supportedConditions = new ArrayList<>(supportedConditions);
-        }
     }
 
     public IndexFieldType getFieldType() {

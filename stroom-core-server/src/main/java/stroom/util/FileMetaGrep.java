@@ -26,17 +26,9 @@ import java.io.IOException;
 import java.util.Map;
 
 public class FileMetaGrep extends AbstractCommandLineTool {
-    private String[] repoPathParts = null;
     Map<String, String> matchMap;
+    private String[] repoPathParts = null;
     private String feedId;
-
-    public void setRepoPath(String repoPath) {
-        this.repoPathParts = repoPath.split("/");
-    }
-
-    public void setFeedId(String feedId) {
-        this.feedId = feedId;
-    }
 
     public FileMetaGrep(String[] args) throws Exception {
         matchMap = ArgsUtil.parse(args);
@@ -44,6 +36,18 @@ public class FileMetaGrep extends AbstractCommandLineTool {
         matchMap.remove("feedId");
 
         doMain(args);
+    }
+
+    public static void main(String[] args) throws Exception {
+        new FileMetaGrep(args);
+    }
+
+    public void setRepoPath(String repoPath) {
+        this.repoPathParts = repoPath.split("/");
+    }
+
+    public void setFeedId(String feedId) {
+        this.feedId = feedId;
     }
 
     @Override
@@ -143,10 +147,6 @@ public class FileMetaGrep extends AbstractCommandLineTool {
         }
 
         return true;
-    }
-
-    public static void main(String[] args) throws Exception {
-        new FileMetaGrep(args);
     }
 
 }

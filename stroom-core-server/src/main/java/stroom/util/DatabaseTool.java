@@ -34,6 +34,10 @@ public class DatabaseTool extends AbstractCommandLineTool {
     private String jdbcDriverPassword;
     private Connection connection;
 
+    public static void main(final String[] args) throws Exception {
+        new DatabaseTool().doMain(args);
+    }
+
     @Override
     public void run() {
         try {
@@ -69,10 +73,6 @@ public class DatabaseTool extends AbstractCommandLineTool {
             ConnectionUtil.close(connection);
             connection = null;
         }
-    }
-
-    public static void main(final String[] args) throws Exception {
-        new DatabaseTool().doMain(args);
     }
 
     public String getJdbcDriverClassName() {

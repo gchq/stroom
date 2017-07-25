@@ -50,7 +50,14 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
     private final Map<TabData, AbstractTab> tabWidgetMap = new HashMap<TabData, AbstractTab>();
     private final List<TabData> tabPriority = new ArrayList<TabData>();
     private final List<TabData> tabs = new ArrayList<TabData>();
+    private final DoubleClickTest doubleClickTest = new DoubleClickTest();
     private TabData selectedTab;
+    private int overflowTabCount;
+    private TabListPresenter tabItemListPresenter;
+    private PopupSupport popupSupport;
+    private Object currentTargetObject;
+    private AbstractTabSelector tabSelector;
+    private List<Element> separators;
 
     public AbstractTabBar() {
         sinkEvents(Event.ONMOUSEDOWN | Event.ONMOUSEUP | Event.ONMOUSEOVER | Event.ONMOUSEOUT);
@@ -63,15 +70,6 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
     }
 
     protected abstract AbstractTabSelector createTabSelector();
-
-    private int overflowTabCount;
-    private TabListPresenter tabItemListPresenter;
-    private PopupSupport popupSupport;
-
-    private Object currentTargetObject;
-    private final DoubleClickTest doubleClickTest = new DoubleClickTest();
-    private AbstractTabSelector tabSelector;
-    private List<Element> separators;
 
     @Override
     public void addTab(final TabData tabData) {

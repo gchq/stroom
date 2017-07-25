@@ -33,16 +33,11 @@ import stroom.util.shared.HasReadOnly;
 
 public class PipelineSettingsViewImpl extends ViewWithUiHandlers<PipelineSettingsUiHandlers>
         implements PipelineSettingsView, HasReadOnly {
-    public interface Binder extends UiBinder<Widget, PipelineSettingsViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     TextArea description;
     @UiField
     ItemListBox<PipelineEntity.PipelineType> type;
-
     @Inject
     public PipelineSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -69,6 +64,11 @@ public class PipelineSettingsViewImpl extends ViewWithUiHandlers<PipelineSetting
     }
 
     @Override
+    public void setType(final PipelineEntity.PipelineType type) {
+        this.type.setSelectedItem(type);
+    }
+
+    @Override
     public void clearTypes() {
         type.clear();
     }
@@ -76,11 +76,6 @@ public class PipelineSettingsViewImpl extends ViewWithUiHandlers<PipelineSetting
     @Override
     public void addType(final PipelineEntity.PipelineType type) {
         this.type.addItem(type);
-    }
-
-    @Override
-    public void setType(final PipelineEntity.PipelineType type) {
-        this.type.setSelectedItem(type);
     }
 
     @UiHandler("description")
@@ -106,5 +101,8 @@ public class PipelineSettingsViewImpl extends ViewWithUiHandlers<PipelineSetting
     public void setReadOnly(final boolean readOnly) {
         type.setEnabled(!readOnly);
         description.setEnabled(!readOnly);
+    }
+
+    public interface Binder extends UiBinder<Widget, PipelineSettingsViewImpl> {
     }
 }

@@ -138,22 +138,22 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         testCriteria(findStreamCriteria, 0);
     }
 
-	@Test
-	public void testFeedFindAll() throws Exception {
-		final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
-		findStreamCriteria.obtainFeeds().obtainInclude().add(feed1);
-		findStreamCriteria.obtainFeeds().obtainInclude().add(feed2);
-		testCriteria(findStreamCriteria, 2);
-	}
+    @Test
+    public void testFeedFindAll() throws Exception {
+        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
+        findStreamCriteria.obtainFeeds().obtainInclude().add(feed1);
+        findStreamCriteria.obtainFeeds().obtainInclude().add(feed2);
+        testCriteria(findStreamCriteria, 2);
+    }
 
-	@Test
-	public void testFeedFindSome() throws Exception {
-		final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
-		findStreamCriteria.setPageRequest(new PageRequest(0L, 1));
-		findStreamCriteria.obtainFeeds().obtainInclude().add(feed1);
-		findStreamCriteria.obtainFeeds().obtainInclude().add(feed2);
-		testCriteria(findStreamCriteria, 1);
-	}
+    @Test
+    public void testFeedFindSome() throws Exception {
+        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
+        findStreamCriteria.setPageRequest(new PageRequest(0L, 1));
+        findStreamCriteria.obtainFeeds().obtainInclude().add(feed1);
+        findStreamCriteria.obtainFeeds().obtainInclude().add(feed2);
+        testCriteria(findStreamCriteria, 1);
+    }
 
     @Test
     public void testFeedFindNone() throws Exception {
@@ -606,7 +606,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     }
 
     private Stream buildRefData(final String feed, final int year, final int month, final StreamType type,
-            final boolean lock) throws IOException {
+                                final boolean lock) throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
         final Feed sample = setupFeed(feed);
@@ -744,8 +744,8 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
      * Test.
      */
     @Test
-    @StroomExpectedException(exception = { FileNotFoundException.class, StreamException.class, IOException.class,
-            RuntimeException.class })
+    @StroomExpectedException(exception = {FileNotFoundException.class, StreamException.class, IOException.class,
+            RuntimeException.class})
     public void testIOErrors() throws Exception {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 

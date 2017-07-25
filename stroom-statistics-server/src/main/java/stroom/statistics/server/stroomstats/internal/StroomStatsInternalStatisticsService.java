@@ -33,10 +33,9 @@ import java.util.TimeZone;
 @Component
 public class StroomStatsInternalStatisticsService implements InternalStatisticsService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(StroomStatsInternalStatisticsService.class);
-
     static final String PROP_KEY_DOC_REF_TYPE = "stroom.services.stroomStats.docRefType";
     static final String PROP_KEY_PREFIX_KAFKA_TOPICS = "stroom.services.stroomStats.kafkaTopics.";
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomStatsInternalStatisticsService.class);
     private static final Class<Statistics> STATISTICS_CLASS = Statistics.class;
     private static final TimeZone TIME_ZONE_UTC = TimeZone.getTimeZone(ZoneId.from(ZoneOffset.UTC));
 

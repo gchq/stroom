@@ -50,8 +50,7 @@ public class TestTranslationTaskContextAndFlattening extends AbstractProcessInte
     /**
      * Tests Task with a valid resource and feed.
      *
-     * @throws Exception
-     *             Could be thrown.
+     * @throws Exception Could be thrown.
      */
     @Test
     public void test() throws Exception {

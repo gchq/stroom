@@ -35,7 +35,7 @@ public class TreeRenderer2<T> {
     private TreeLayout<T> treeLayout;
 
     public TreeRenderer2(final LayeredCanvas canvas, final CellRenderer2<T> cellRenderer,
-            final ConnectorRenderer<T> connectorRenderer) {
+                         final ConnectorRenderer<T> connectorRenderer) {
         this.canvas = canvas;
         this.cellRenderer = cellRenderer;
         this.connectorRenderer = connectorRenderer;

@@ -38,7 +38,7 @@ import stroom.login.client.presenter.LoginPresenter;
 import stroom.login.client.presenter.LoginUiHandlers;
 import stroom.util.shared.EqualsUtil;
 
-public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers>implements LoginPresenter.LoginView {
+public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implements LoginPresenter.LoginView {
     private final Widget widget;
 
     @UiField

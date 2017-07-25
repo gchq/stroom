@@ -138,7 +138,7 @@ public class FileSystemStreamTypeUtil {
      * <p>
      * Build a file base name.
      * </p>
-     *
+     * <p>
      * <p>
      * [feedid]_[streamid]
      * </p>

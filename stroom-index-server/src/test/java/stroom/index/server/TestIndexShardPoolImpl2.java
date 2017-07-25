@@ -41,6 +41,10 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestIndexShardPoolImpl2 extends StroomUnitTest {
+    public static int getRandomNumber(final int size) {
+        return (int) Math.floor((Math.random() * size));
+    }
+
     @Before
     public void before() {
         FileSystemUtil.deleteContents(new File(getCurrentTestDir(), "index"));
@@ -107,9 +111,5 @@ public class TestIndexShardPoolImpl2 extends StroomUnitTest {
         } catch (final Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         }
-    }
-
-    public static int getRandomNumber(final int size) {
-        return (int) Math.floor((Math.random() * size));
     }
 }

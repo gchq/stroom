@@ -43,6 +43,7 @@ public class BasicVisSettingsViewImpl extends ViewWithUiHandlers<BasicVisSetting
     ItemListBox<Component> table;
     @UiField
     SimplePanel visualisation;
+
     @Inject
     public BasicVisSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);

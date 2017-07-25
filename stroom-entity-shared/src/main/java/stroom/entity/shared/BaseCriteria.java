@@ -29,10 +29,8 @@ import java.util.Set;
  */
 public abstract class BaseCriteria implements SharedObject {
 
-    private static final long serialVersionUID = 779306892977183446L;
-
     public static final String FIELD_ID = "Id";
-
+    private static final long serialVersionUID = 779306892977183446L;
     private PageRequest pageRequest = null;
     private Set<String> fetchSet = new HashSet<>();
     private List<Sort> sortList;

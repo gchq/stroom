@@ -32,23 +32,6 @@ public class ValueSpinner extends Composite {
         valueBox.setText(formatValue(event.getValue()));
     };
 
-    private void updateSpinner() {
-        final String newText = valueBox.getText();
-        final long value = spinner.getValue();
-        try {
-            final long newValue = parseValue(newText);
-            if (newValue != value) {
-                if (spinner.isConstrained() && (newValue > spinner.getMax() || newValue < spinner.getMin())) {
-                    valueBox.setText(formatValue(value));
-                } else {
-                    spinner.setValue(newValue, true);
-                }
-            }
-        } catch (final NumberFormatException e) {
-            valueBox.setText(formatValue(value));
-        }
-    }
-
     public ValueSpinner() {
         spinner = new Spinner();
         spinner.addSpinnerHandler(handler);
@@ -71,6 +54,23 @@ public class ValueSpinner extends Composite {
         layout.add(arrowsPanel);
 
         initWidget(layout);
+    }
+
+    private void updateSpinner() {
+        final String newText = valueBox.getText();
+        final long value = spinner.getValue();
+        try {
+            final long newValue = parseValue(newText);
+            if (newValue != value) {
+                if (spinner.isConstrained() && (newValue > spinner.getMax() || newValue < spinner.getMin())) {
+                    valueBox.setText(formatValue(value));
+                } else {
+                    spinner.setValue(newValue, true);
+                }
+            }
+        } catch (final NumberFormatException e) {
+            valueBox.setText(formatValue(value));
+        }
     }
 
     /**
@@ -97,8 +97,7 @@ public class ValueSpinner extends Composite {
     /**
      * Sets whether this widget is enabled.
      *
-     * @param enabled
-     *            true to enable the widget, false to disable it
+     * @param enabled true to enable the widget, false to disable it
      */
     public void setEnabled(final boolean enabled) {
         spinner.setEnabled(enabled);
@@ -106,8 +105,7 @@ public class ValueSpinner extends Composite {
     }
 
     /**
-     * @param value
-     *            the value to format
+     * @param value the value to format
      * @return the formatted value
      */
     protected String formatValue(final long value) {
@@ -115,8 +113,7 @@ public class ValueSpinner extends Composite {
     }
 
     /**
-     * @param value
-     *            the value to parse
+     * @param value the value to parse
      * @return the parsed value
      */
     protected long parseValue(final String value) {
@@ -139,12 +136,12 @@ public class ValueSpinner extends Composite {
         spinner.setMinStep(minStep);
     }
 
+    public int getValue() {
+        return (int) getSpinner().getValue();
+    }
+
     public void setValue(final long value) {
         spinner.setValue(value, false);
         valueBox.setText(formatValue(value));
-    }
-
-    public int getValue() {
-        return (int) getSpinner().getValue();
     }
 }

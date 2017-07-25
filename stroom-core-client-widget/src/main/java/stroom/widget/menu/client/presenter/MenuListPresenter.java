@@ -35,10 +35,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MenuListPresenter extends MenuPresenter {
+    private final Provider<MenuListPresenter> menuListPresenterProvider;
     private MenuListPresenter currentMenu;
     private MenuItem currentItem;
     private MenuListPresenter parent;
-    private final Provider<MenuListPresenter> menuListPresenterProvider;
     private List<Element> autoHidePartners;
 
     @Inject
@@ -178,12 +178,12 @@ public class MenuListPresenter extends MenuPresenter {
         this.parent = parent;
     }
 
-    public void setAutoHidePartners(final List<Element> autoHidePartners) {
-        this.autoHidePartners = autoHidePartners;
-    }
-
     public List<Element> getAutoHidePartners() {
         return autoHidePartners;
+    }
+
+    public void setAutoHidePartners(final List<Element> autoHidePartners) {
+        this.autoHidePartners = autoHidePartners;
     }
 
     @Override

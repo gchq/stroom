@@ -116,8 +116,8 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
 
             // Add multiple reference data items to prove that looping over maps
             // works.
-            addData(referenceData, pipeline1, new String[] { "SID_TO_PF_1", "SID_TO_PF_2" });
-            addData(referenceData, pipeline2, new String[] { "SID_TO_PF_3", "SID_TO_PF_4" });
+            addData(referenceData, pipeline1, new String[]{"SID_TO_PF_1", "SID_TO_PF_2"});
+            addData(referenceData, pipeline2, new String[]{"SID_TO_PF_3", "SID_TO_PF_4"});
             checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_1");
             checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_2");
             checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_3");
@@ -151,7 +151,7 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     }
 
     private void checkData(final ReferenceData data, final List<PipelineReference> referenceFeedSet,
-            final ErrorReceiver errorReceiver, final String mapName) {
+                           final ErrorReceiver errorReceiver, final String mapName) {
         Assert.assertEquals("B1111", getStringFromEvents(data.getValue(referenceFeedSet, errorReceiver,
                 DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.111Z"), mapName, "user1")));
         Assert.assertEquals("B1111", getStringFromEvents(data.getValue(referenceFeedSet, errorReceiver,

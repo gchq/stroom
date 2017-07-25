@@ -38,8 +38,7 @@ public class CharBuffer implements CharSequence, Serializable {
     /**
      * Create a buffer with a specified initial size.
      *
-     * @param initialSize
-     *            The initial size of the buffer.
+     * @param initialSize The initial size of the buffer.
      */
     public CharBuffer(final int initialSize) {
         buffer = new char[initialSize];
@@ -235,7 +234,7 @@ public class CharBuffer implements CharSequence, Serializable {
             if (len1 != len2) {
                 return false;
             }
-            for (int i = start, j = cb.start; i < len1;) {
+            for (int i = start, j = cb.start; i < len1; ) {
                 if (buffer[i++] != cb.buffer[j++]) {
                     return false;
                 }

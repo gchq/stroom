@@ -69,7 +69,7 @@ public class MonitorInfoUtil {
     }
 
     private static void addLevel(final StringBuilder sb, final Map<Monitor, List<Monitor>> map,
-            final List<Monitor> list, final String prefix) {
+                                 final List<Monitor> list, final String prefix) {
         if (list != null && list.size() > 0) {
             for (final Monitor monitor : list) {
                 // Indent the message if needed.

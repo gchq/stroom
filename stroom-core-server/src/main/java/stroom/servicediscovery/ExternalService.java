@@ -48,26 +48,15 @@ public enum ExternalService {
     private static final String NAME_SUFFIX = ".name";
     private static final String VERSION_SUFFIX = ".version";
     private static final String DOC_REF_TYPE_SUFFIX = ".docRefType";
-
+    /**
+     * This maps doc ref types to services. I.e. if someone has the doc ref type they can get an ExternalService.
+     */
+    private static ConcurrentMap<String, ExternalService> docRefTypeToServiceMap = new ConcurrentHashMap<>();
     //The serviceKey is a stroom specific abstraction of the service name, allowing the name to be set in properties
     //rather than hardcoded here.  The name that corresponds the serviceKey is what Curator registers services against.
     private final String serviceKey;
     private final Type type;
     private final ProviderStrategy<String> providerStrategy;
-
-    public enum Type {
-        //This application is a client to the service
-        CLIENT,
-        //This application offers this service
-        SERVER,
-        //This application offers this service and is a client to it
-        CLIENT_AND_SERVER
-    }
-
-    /**
-     * This maps doc ref types to services. I.e. if someone has the doc ref type they can get an ExternalService.
-     */
-    private static ConcurrentMap<String, ExternalService> docRefTypeToServiceMap = new ConcurrentHashMap<>();
 
     ExternalService(final String serviceKey, final Type type, final ProviderStrategy<String> providerStrategy) {
         this.serviceKey = serviceKey;
@@ -125,5 +114,14 @@ public enum ExternalService {
 
     public Type getType() {
         return type;
+    }
+
+    public enum Type {
+        //This application is a client to the service
+        CLIENT,
+        //This application offers this service
+        SERVER,
+        //This application offers this service and is a client to it
+        CLIENT_AND_SERVER
     }
 }

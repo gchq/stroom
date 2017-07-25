@@ -69,14 +69,10 @@ class IndexingFilter extends AbstractXMLFilter {
     private final Indexer indexer;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final IndexConfigCache indexConfigCache;
-
+    private final CharBuffer debugBuffer = new CharBuffer(10);
     private IndexFieldsMap indexFieldsMap;
-
     private Index index;
     private IndexShardKey indexShardKey;
-
-    private final CharBuffer debugBuffer = new CharBuffer(10);
-
     private Document document;
 
     private int fieldsIndexed = 0;

@@ -28,10 +28,6 @@ import stroom.pipeline.stepping.client.presenter.StepControlEvent.StepControlHan
 
 public class StepLocationPresenter extends MyPresenterWidget<StepLocationPresenter.StepLocationView>
         implements StepLocationUIHandlers {
-    public interface StepLocationView extends View, HasUiHandlers<StepLocationUIHandlers> {
-        void setStepLocation(StepLocation stepLocation);
-    }
-
     @Inject
     public StepLocationPresenter(final EventBus eventBus, final StepLocationView view) {
         super(eventBus, view);
@@ -49,5 +45,9 @@ public class StepLocationPresenter extends MyPresenterWidget<StepLocationPresent
 
     public HandlerRegistration addStepControlHandler(final StepControlHandler handler) {
         return addHandlerToSource(StepControlEvent.getType(), handler);
+    }
+
+    public interface StepLocationView extends View, HasUiHandlers<StepLocationUIHandlers> {
+        void setStepLocation(StepLocation stepLocation);
     }
 }

@@ -33,7 +33,7 @@ public class Highlight implements Serializable, Comparable<Highlight> {
     }
 
     public Highlight(final int streamFrom, final int lineFrom, final int colFrom, final int streamTo, final int lineTo,
-            final int colTo) {
+                     final int colTo) {
         this.streamFrom = streamFrom;
         this.lineFrom = lineFrom;
         this.colFrom = colFrom;

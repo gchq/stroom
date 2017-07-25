@@ -49,8 +49,6 @@ import java.util.Map.Entry;
  * See <a href="package-summary.html">this summary</a> to get an overview how to
  * use TreeLayout.
  *
- *
- *
  * @param <TreeNode>
  */
 public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
@@ -76,9 +74,9 @@ public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
      * "gapBetweenNodes".
      */
 
-    private TreeForTreeLayout<TreeNode> tree;
     private final NodeExtentProvider<TreeNode> nodeExtentProvider;
     private final Configuration<TreeNode> configuration;
+    private TreeForTreeLayout<TreeNode> tree;
     private double boundsLeft = Double.MAX_VALUE;
     private double boundsRight = Double.MIN_VALUE;
     private double boundsTop = Double.MAX_VALUE;
@@ -103,7 +101,7 @@ public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
      * {@link Configuration} must be given.
      */
     public AbegoTreeLayout(final NodeExtentProvider<TreeNode> nodeExtentProvider,
-            final Configuration<TreeNode> configuration) {
+                           final Configuration<TreeNode> configuration) {
         this.nodeExtentProvider = nodeExtentProvider;
         this.configuration = configuration;
     }
@@ -297,39 +295,13 @@ public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
     // ------------------------------------------------------------------------
     // NormalizedPosition
 
-    /**
-     * The algorithm calculates the position starting with the root at 0. I.e.
-     * the left children will get negative positions. However we want the result
-     * to be normalized to (0,0).
-     * <p>
-     * {@link NormalizedPosition} will normalize the position (given relative to
-     * the root position), taking the current bounds into account. This way the
-     * left most node bounds will start at x = 0, the top most node bounds at y
-     * = 0.
-     */
-    private class NormalizedPosition extends Point {
-        public NormalizedPosition(final double x_relativeToRoot, final double y_relativeToRoot) {
-            super(x_relativeToRoot, y_relativeToRoot);
-        }
-
-        @Override
-        public double getX() {
-            return super.getX() - boundsLeft;
-        }
-
-        @Override
-        public double getY() {
-            return super.getY() - boundsTop;
-        }
-    }
-
-    // ------------------------------------------------------------------------
-    // The Algorithm
-
     private double getMod(final TreeNode node) {
         final Double d = mod.get(node);
         return d != null ? d.doubleValue() : 0;
     }
+
+    // ------------------------------------------------------------------------
+    // The Algorithm
 
     private void setMod(final TreeNode node, final double d) {
         mod.put(node, d);
@@ -406,10 +378,8 @@ public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
     }
 
     /**
-     * @param node
-     *            [tree.isChildOfParent(node, parentNode)]
-     * @param parentNode
-     *            parent of node
+     * @param node       [tree.isChildOfParent(node, parentNode)]
+     * @param parentNode parent of node
      * @return
      */
     private int getNumber(final TreeNode node, final TreeNode parentNode) {
@@ -433,7 +403,7 @@ public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
      * @return the greatest distinct ancestor of vIMinus and its right neighbor v
      */
     private TreeNode ancestor(final TreeNode vIMinus, final TreeNode v, final TreeNode parentOfV,
-            final TreeNode defaultAncestor) {
+                              final TreeNode defaultAncestor) {
         final TreeNode ancestor = getAncestor(vIMinus);
 
         // when the ancestor of vIMinus is a sibling of v (i.e. has the same
@@ -485,14 +455,12 @@ public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
      *
      * @param v
      * @param defaultAncestor
-     * @param leftSibling
-     *            [nullable] the left sibling v, if there is any
-     * @param parentOfV
-     *            the parent of v
+     * @param leftSibling     [nullable] the left sibling v, if there is any
+     * @param parentOfV       the parent of v
      * @return the (possibly changes) defaultAncestor
      */
     private TreeNode apportion(final TreeNode v, TreeNode defaultAncestor, final TreeNode leftSibling,
-            final TreeNode parentOfV) {
+                               final TreeNode parentOfV) {
         final TreeNode w = leftSibling;
         if (w == null) {
             // v has no left sibling
@@ -556,9 +524,7 @@ public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
     }
 
     /**
-     *
-     * @param v
-     *            [!tree.isLeaf(v)]
+     * @param v [!tree.isLeaf(v)]
      */
     private void executeShifts(final TreeNode v) {
         double shift = 0;
@@ -577,8 +543,7 @@ public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
      * motivation).
      *
      * @param v
-     * @param leftSibling
-     *            [nullable] the left sibling v, if there is any
+     * @param leftSibling [nullable] the left sibling v, if there is any
      */
     private void firstWalk(final TreeNode v, final TreeNode leftSibling) {
         if (tree.isLeaf(v)) {
@@ -682,15 +647,41 @@ public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
         return nodeBounds;
     }
 
-    // ------------------------------------------------------------------------
-    // checkTree
-
     private void addUniqueNodes(final Map<TreeNode, TreeNode> nodes, final TreeNode newNode) {
         if (nodes.put(newNode, newNode) != null) {
             throw new RuntimeException("Node used more than once in tree: " + newNode);
         }
         for (final TreeNode n : tree.getChildren(newNode)) {
             addUniqueNodes(nodes, n);
+        }
+    }
+
+    // ------------------------------------------------------------------------
+    // checkTree
+
+    /**
+     * The algorithm calculates the position starting with the root at 0. I.e.
+     * the left children will get negative positions. However we want the result
+     * to be normalized to (0,0).
+     * <p>
+     * {@link NormalizedPosition} will normalize the position (given relative to
+     * the root position), taking the current bounds into account. This way the
+     * left most node bounds will start at x = 0, the top most node bounds at y
+     * = 0.
+     */
+    private class NormalizedPosition extends Point {
+        public NormalizedPosition(final double x_relativeToRoot, final double y_relativeToRoot) {
+            super(x_relativeToRoot, y_relativeToRoot);
+        }
+
+        @Override
+        public double getX() {
+            return super.getX() - boundsLeft;
+        }
+
+        @Override
+        public double getY() {
+            return super.getY() - boundsTop;
         }
     }
 }

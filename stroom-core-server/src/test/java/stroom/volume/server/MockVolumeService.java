@@ -35,21 +35,21 @@ public class MockVolumeService extends MockEntityService<Volume, FindVolumeCrite
         return null;
     }
 
-	@Override
-	public Set<Volume> getIndexVolumeSet(final Node node, final Set<Volume> allowedVolumes) {
-		return null;
-	}
+    @Override
+    public Set<Volume> getIndexVolumeSet(final Node node, final Set<Volume> allowedVolumes) {
+        return null;
+    }
 
-	@Override
-	public void flush() {
-	}
+    @Override
+    public void flush() {
+    }
 
-	@Override
-	public void clear() {
-	}
+    @Override
+    public void clear() {
+    }
 
-	@Override
-	public Class<Volume> getEntityClass() {
-		return Volume.class;
-	}
+    @Override
+    public Class<Volume> getEntityClass() {
+        return Volume.class;
+    }
 }

@@ -60,6 +60,8 @@ public class DS3Parser extends AbstractParser {
 
     private static final Attributes EMPTY_ATTS = new AttributesImpl();
     private static final AttributesImpl ROOT_ATTS = new AttributesImpl();
+    private static final Logger LOGGER = LoggerFactory.getLogger(DS3Parser.class);
+    private static final int RECOVERY_MODE = -99;
 
     static {
         ROOT_ATTS.addAttribute(EMPTY_STRING, XMLNS, XMLNS, XML_TYPE_STRING, NAMESPACE);
@@ -69,21 +71,14 @@ public class DS3Parser extends AbstractParser {
         ROOT_ATTS.addAttribute(EMPTY_STRING, XML_ATTRIBUTE_VERSION, XML_ATTRIBUTE_VERSION, XML_TYPE_STRING, VERSION);
     }
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DS3Parser.class);
     private final DataAttributes dataAttributes = new DataAttributes();
-
-    private static final int RECOVERY_MODE = -99;
-
-    private boolean inRecord;
-
     private final Root root;
     private final int minBuffer;
     private final int maxBuffer;
-    private DS3Reader reader;
-
-    private ScheduledExecutorService profilingExecutor;
-
     private final CharBuffer messageBuffer = new CharBuffer();
+    private boolean inRecord;
+    private DS3Reader reader;
+    private ScheduledExecutorService profilingExecutor;
     private ErrorHandlerAdaptor errorHandlerAdaptor;
 
     public DS3Parser(final Root root, final int minBuffer, final int maxBuffer) {
@@ -96,14 +91,10 @@ public class DS3Parser extends AbstractParser {
      * Parses a flat file and produces SAX events according to the feed
      * definition.
      *
-     * @param input
-     *            The flat input source to process.
-     * @throws IOException
-     *             Could be thrown reading the stream.
-     * @throws SAXException
-     *             Not be thrown as we are not reading an XML file just using
-     *             the XMLReader interface.
-     *
+     * @param input The flat input source to process.
+     * @throws IOException  Could be thrown reading the stream.
+     * @throws SAXException Not be thrown as we are not reading an XML file just using
+     *                      the XMLReader interface.
      * @see org.xml.sax.XMLReader#parse(org.xml.sax.InputSource)
      */
     @Override
@@ -161,7 +152,7 @@ public class DS3Parser extends AbstractParser {
     }
 
     private void process(final Node parent, final Buffer buffer, final Match parentMatch, final int parentMatchCount,
-            final int level, final MatchOrder matchOrder, final boolean ignoreErrors) throws IOException, SAXException {
+                         final int level, final MatchOrder matchOrder, final boolean ignoreErrors) throws IOException, SAXException {
         int advance = 1;
         boolean firstPass = true;
         int matchCount = 0;
@@ -234,8 +225,8 @@ public class DS3Parser extends AbstractParser {
     }
 
     private int processExpression(final Expression expression, final Buffer buffer, final int parentMatchCount,
-            final int matchCount, final int level, final MatchOrder matchOrder, final boolean ignoreErrors)
-                    throws IOException, SAXException {
+                                  final int matchCount, final int level, final MatchOrder matchOrder, final boolean ignoreErrors)
+            throws IOException, SAXException {
         int start = -1;
         int end = -1;
 
@@ -426,7 +417,7 @@ public class DS3Parser extends AbstractParser {
      * reference from another node in the case of var elements.
      */
     private void storeData(final StoreNode node, final Buffer buffer, final Match parentMatch,
-            final int parentMatchCount) throws IOException, SAXException {
+                           final int parentMatchCount) throws IOException, SAXException {
         final int referencedGroups[] = node.getAllReferencedGroups();
 
         // Store value for future use.
@@ -486,7 +477,7 @@ public class DS3Parser extends AbstractParser {
     }
 
     private void processGroup(final Group node, final Buffer buffer, final Match parentMatch,
-            final int parentMatchCount, final int level) throws IOException, SAXException {
+                              final int parentMatchCount, final int level) throws IOException, SAXException {
         // Pull back the stored value.
         Buffer subBuffer = node.lookupValue(parentMatchCount);
         if (subBuffer != null) {
@@ -518,8 +509,8 @@ public class DS3Parser extends AbstractParser {
      * stored match.
      */
     private void processData(final StoreNode node, final Buffer buffer, final Match parentMatch,
-            final int parentMatchCount, final int level, final MatchOrder matchOrder, final boolean ignoreErrors)
-                    throws IOException, SAXException {
+                             final int parentMatchCount, final int level, final MatchOrder matchOrder, final boolean ignoreErrors)
+            throws IOException, SAXException {
         boolean outputEndElement = false;
         if (node.getNodeType() == NodeType.DATA) {
             final Data data = (Data) node;

@@ -34,7 +34,7 @@ import java.io.Reader;
 @Component
 @Scope("prototype")
 @ConfigurableElement(type = "InvalidXMLCharFilterReader", category = Category.READER, roles = {
-        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.ROLE_READER }, icon = ElementIcons.STREAM)
+        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.ROLE_READER}, icon = ElementIcons.STREAM)
 public class InvalidXMLCharFilterReaderElement extends AbstractReaderElement {
     private final ErrorReceiver errorReceiver;
 

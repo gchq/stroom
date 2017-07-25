@@ -27,16 +27,11 @@ import stroom.item.client.ItemListBox;
 import stroom.policy.client.presenter.FieldEditPresenter.FieldEditView;
 
 public class FieldEditViewImpl extends ViewImpl implements FieldEditView {
-    public interface Binder extends UiBinder<Widget, FieldEditViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     ItemListBox<DataSourceFieldType> type;
     @UiField
     TextBox name;
-
     @Inject
     public FieldEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -67,5 +62,8 @@ public class FieldEditViewImpl extends ViewImpl implements FieldEditView {
     @Override
     public void setName(final String name) {
         this.name.setText(name);
+    }
+
+    public interface Binder extends UiBinder<Widget, FieldEditViewImpl> {
     }
 }

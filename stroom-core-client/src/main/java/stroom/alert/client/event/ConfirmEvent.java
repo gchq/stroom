@@ -23,12 +23,7 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import stroom.alert.client.presenter.ConfirmCallback;
 
 public class ConfirmEvent extends CommonAlertEvent<ConfirmEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onConfirm(ConfirmEvent event);
-    }
-
     public static GwtEvent.Type<Handler> TYPE;
-
     private final ConfirmCallback callback;
 
     private ConfirmEvent(final SafeHtml message, final Level level, final ConfirmCallback callback) {
@@ -71,5 +66,9 @@ public class ConfirmEvent extends CommonAlertEvent<ConfirmEvent.Handler> {
 
     public ConfirmCallback getCallback() {
         return callback;
+    }
+
+    public interface Handler extends EventHandler {
+        void onConfirm(ConfirmEvent event);
     }
 }

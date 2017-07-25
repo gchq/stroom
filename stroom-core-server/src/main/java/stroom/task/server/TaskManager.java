@@ -34,6 +34,7 @@ public interface TaskManager extends FindService<TaskProgress, FindTaskProgressC
 
     /**
      * Get an executor for use in places where we don't want to use tasks and task handlers.
+     *
      * @return An executor.
      */
     Executor getExecutor();
@@ -41,8 +42,7 @@ public interface TaskManager extends FindService<TaskProgress, FindTaskProgressC
     /**
      * Execute a task synchronously.
      *
-     * @param task
-     *            The task to execute.
+     * @param task The task to execute.
      * @return The result of the task execution.
      */
     <R> R exec(Task<R> task);
@@ -51,19 +51,16 @@ public interface TaskManager extends FindService<TaskProgress, FindTaskProgressC
      * Execute a task asynchronously without expecting to handle any result via
      * a callback.
      *
-     * @param task
-     *            The task to execute asynchronously.
+     * @param task The task to execute asynchronously.
      */
     <R> void execAsync(Task<R> task);
 
     /**
      * Execute a task asynchronously with a callback to receive results.
      *
-     * @param task
-     *            The task to execute asynchronously.
-     * @param callback
-     *            The callback that will receive results from the task
-     *            execution.
+     * @param task     The task to execute asynchronously.
+     * @param callback The callback that will receive results from the task
+     *                 execution.
      */
     <R> void execAsync(Task<R> task, TaskCallback<R> callback);
 
@@ -71,23 +68,18 @@ public interface TaskManager extends FindService<TaskProgress, FindTaskProgressC
      * Execute a task asynchronously without expecting to handle any result via
      * a callback.
      *
-     * @param task
-     *            The task to execute asynchronously.
-     * @param threadPool
-     *            The thread pool to use for execution.
+     * @param task       The task to execute asynchronously.
+     * @param threadPool The thread pool to use for execution.
      */
     <R> void execAsync(Task<R> task, ThreadPool threadPool);
 
     /**
      * Execute a task asynchronously with a callback to receive results.
      *
-     * @param task
-     *            The task to execute asynchronously.
-     * @param callback
-     *            The callback that will receive results from the task
-     *            execution.
-     * @param threadPool
-     *            The thread pool to use for execution.
+     * @param task       The task to execute asynchronously.
+     * @param callback   The callback that will receive results from the task
+     *                   execution.
+     * @param threadPool The thread pool to use for execution.
      */
     <R> void execAsync(Task<R> task, TaskCallback<R> callback, ThreadPool threadPool);
 

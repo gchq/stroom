@@ -22,9 +22,9 @@ import stroom.util.shared.HashCodeBuilder;
 import java.lang.reflect.Method;
 
 public class StroomBeanMethod {
+    private final Method beanMethod;
     private String beanName;
     private Class<?> beanClass;
-    private final Method beanMethod;
 
     public StroomBeanMethod(final String beanName, final Method beanMethod) {
         this.beanName = beanName;

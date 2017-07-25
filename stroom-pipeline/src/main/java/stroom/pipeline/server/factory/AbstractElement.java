@@ -36,12 +36,12 @@ public abstract class AbstractElement implements Element {
     }
 
     @Override
-    public void setElementId(final String elementId) {
-        this.elementId = elementId;
+    public String getElementId() {
+        return elementId;
     }
 
     @Override
-    public String getElementId() {
-        return elementId;
+    public void setElementId(final String elementId) {
+        this.elementId = elementId;
     }
 }

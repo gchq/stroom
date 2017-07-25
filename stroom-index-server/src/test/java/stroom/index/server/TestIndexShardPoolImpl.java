@@ -47,9 +47,15 @@ import java.util.concurrent.atomic.AtomicLong;
 @RunWith(MockitoJUnitRunner.class)
 public class TestIndexShardPoolImpl extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestIndexShardPoolImpl.class);
-
+    static AtomicLong indexShardId = new AtomicLong(0);
+    AtomicInteger indexShardsCreated = new AtomicInteger(0);
+    AtomicInteger failedThreads = new AtomicInteger(0);
     @Mock
     private NodeCache nodeCache;
+
+    public static int getRandomNumber(final int size) {
+        return (int) Math.floor((Math.random() * size));
+    }
 
     @Before
     public void init() {
@@ -86,14 +92,6 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
 
         Assert.assertTrue("Expected 20 to 22 but was " + size, size >= 20 && size <= 22);
     }
-
-    public static int getRandomNumber(final int size) {
-        return (int) Math.floor((Math.random() * size));
-    }
-
-    static AtomicLong indexShardId = new AtomicLong(0);
-    AtomicInteger indexShardsCreated = new AtomicInteger(0);
-    AtomicInteger failedThreads = new AtomicInteger(0);
 
     private void doTest(final int threadSize, final int jobSize, final int numberOfIndexes,
                         final int shardsPerPartition, final int maxDocumentsPerIndexShard) throws InterruptedException {

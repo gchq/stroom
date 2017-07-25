@@ -22,12 +22,7 @@ import com.google.gwt.event.shared.HasHandlers;
 import stroom.widget.menu.client.presenter.MenuItems;
 
 public class BeforeRevealMenubarEvent extends GwtEvent<BeforeRevealMenubarEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onReveal(BeforeRevealMenubarEvent event);
-    }
-
     private static Type<Handler> TYPE;
-
     private final MenuItems menuItems;
 
     private BeforeRevealMenubarEvent(final MenuItems menuItems) {
@@ -57,5 +52,9 @@ public class BeforeRevealMenubarEvent extends GwtEvent<BeforeRevealMenubarEvent.
 
     public MenuItems getMenuItems() {
         return menuItems;
+    }
+
+    public interface Handler extends EventHandler {
+        void onReveal(BeforeRevealMenubarEvent event);
     }
 }

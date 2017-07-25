@@ -33,6 +33,7 @@ public class ScriptSettingsViewImpl extends ViewImpl implements ScriptSettingsVi
     TextArea description;
     @UiField
     ResizeSimplePanel dependencies;
+
     @Inject
     public ScriptSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);

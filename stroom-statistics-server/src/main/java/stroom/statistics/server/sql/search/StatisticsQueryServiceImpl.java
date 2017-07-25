@@ -60,6 +60,31 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
         this.sqlStatisticEventStore = sqlStatisticEventStore;
     }
 
+    public static Coprocessor createCoprocessor(final CoprocessorSettings settings,
+                                                final FieldIndexMap fieldIndexMap,
+                                                final Map<String, String> paramMap,
+                                                final HasTerminate taskMonitor) {
+        if (settings instanceof TableCoprocessorSettings) {
+            final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) settings;
+            final TableCoprocessor tableCoprocessor = new TableCoprocessor(tableCoprocessorSettings,
+                    fieldIndexMap, taskMonitor, paramMap);
+            return tableCoprocessor;
+        }
+        return null;
+    }
+
+    private static String getPrecision(StatisticDataPoint statisticDataPoint) {
+
+        final EventStoreTimeIntervalEnum interval = EventStoreTimeIntervalEnum.fromColumnInterval(
+                statisticDataPoint.getPrecisionMs());
+        if (interval != null) {
+            return interval.longName();
+        } else {
+            // could be a precision that doesn't match one of our interval sizes
+            return "-";
+        }
+    }
+
     @Override
     public DataSource getDataSource(final DocRef docRef) {
         return statisticsDataSourceProvider.getDataSource(docRef);
@@ -186,19 +211,6 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
         };
     }
 
-    public static Coprocessor createCoprocessor(final CoprocessorSettings settings,
-                                                final FieldIndexMap fieldIndexMap,
-                                                final Map<String, String> paramMap,
-                                                final HasTerminate taskMonitor) {
-        if (settings instanceof TableCoprocessorSettings) {
-            final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) settings;
-            final TableCoprocessor tableCoprocessor = new TableCoprocessor(tableCoprocessorSettings,
-                    fieldIndexMap, taskMonitor, paramMap);
-            return tableCoprocessor;
-        }
-        return null;
-    }
-
     private SearchResponse buildEmptyResponse(final String errorMessage) {
         return buildEmptyResponse(Collections.singletonList(errorMessage));
     }
@@ -209,17 +221,5 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
                 Collections.emptyList(),
                 errorMessages,
                 true);
-    }
-
-    private static String getPrecision(StatisticDataPoint statisticDataPoint) {
-
-        final EventStoreTimeIntervalEnum interval = EventStoreTimeIntervalEnum.fromColumnInterval(
-                statisticDataPoint.getPrecisionMs());
-        if (interval != null) {
-            return interval.longName();
-        } else {
-            // could be a precision that doesn't match one of our interval sizes
-            return "-";
-        }
     }
 }

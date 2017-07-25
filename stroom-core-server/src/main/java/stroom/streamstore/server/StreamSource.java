@@ -32,7 +32,7 @@ import java.io.InputStream;
 public interface StreamSource extends Closeable {
     /**
      * @return a type associated with the stream. Used to differentiate between
-     *         child streams ("ctx", "idx", etc).
+     * child streams ("ctx", "idx", etc).
      */
     StreamType getType();
 
@@ -56,8 +56,7 @@ public interface StreamSource extends Closeable {
      * does not exist. Some streams a null file means empty where as others mean
      * not stream. The STORE_LAZY map in FileSystem util governs this.
      *
-     * @param type
-     *            to get
+     * @param type to get
      * @return back the child stream based on type
      */
     StreamSource getChildStream(StreamType type);

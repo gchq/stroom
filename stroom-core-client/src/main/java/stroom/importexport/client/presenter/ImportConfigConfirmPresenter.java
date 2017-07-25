@@ -62,18 +62,9 @@ import java.util.List;
 public class ImportConfigConfirmPresenter extends
         MyPresenter<ImportConfigConfirmPresenter.ImportConfigConfirmView, ImportConfigConfirmPresenter.ImportConfirmProxy>
         implements ImportConfigConfirmEvent.Handler, PopupUiHandlers {
-    public interface ImportConfigConfirmView extends View {
-        void setDataGridView(View view);
-    }
-
-    @ProxyCodeSplit
-    public interface ImportConfirmProxy extends Proxy<ImportConfigConfirmPresenter> {
-    }
-
     private final TooltipPresenter tooltipPresenter;
     private final DataGridView<ImportState> dataGridView;
     private final ClientDispatchAsync dispatcher;
-
     private ResourceKey resourceKey;
     private List<ImportState> confirmList;
 
@@ -363,5 +354,13 @@ public class ImportConfigConfirmPresenter extends
 
         // ClearScriptCacheEvent.fire(this);
         // ClearFunctionCacheEvent.fire(this);
+    }
+
+    public interface ImportConfigConfirmView extends View {
+        void setDataGridView(View view);
+    }
+
+    @ProxyCodeSplit
+    public interface ImportConfirmProxy extends Proxy<ImportConfigConfirmPresenter> {
     }
 }

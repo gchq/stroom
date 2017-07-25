@@ -293,7 +293,7 @@ public class IndexShard extends AuditedEntity {
         CLOSED("Closed", 0),
         // Open - We are writing to it (maybe index or merge)
         OPEN("Open", 1),
-//        // Final - used to mark that a shard is full or will no longer be used.
+        //        // Final - used to mark that a shard is full or will no longer be used.
 //        FINAL("Final", 3),
 //        // Closing - We are in the process of closing the index shard.
 //        CLOSING("Closing", 10),

@@ -33,18 +33,10 @@ public class StroomKafkaProducer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomKafkaProducer.class);
     private static final int TIME_BETWEEN_INIT_ATTEMPS_MS = 30_000;
-
-    public enum FlushMode {
-        FLUSH_ON_SEND,
-        NO_FLUSH
-    }
-
     private final String bootstrapServers;
-
     //instance of a kafka producer that will be shared by all threads
     private volatile Producer<String, String> producer = null;
     private volatile Instant timeOfLastFailedInitAttempt = Instant.EPOCH;
-
     public StroomKafkaProducer(
             @Value("#{propertyConfigurer.getProperty('stroom.kafka.bootstrap.servers')}") final String bootstrapServers) {
 
@@ -144,5 +136,10 @@ public class StroomKafkaProducer {
                 LOGGER.error("Error closing kafka producer", e);
             }
         }
+    }
+
+    public enum FlushMode {
+        FLUSH_ON_SEND,
+        NO_FLUSH
     }
 }

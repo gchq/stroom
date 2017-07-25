@@ -37,26 +37,6 @@ import com.google.gwt.safehtml.shared.UriUtils;
 import stroom.svg.client.SvgPreset;
 
 public class SvgCell extends AbstractCell<SvgPreset> {
-    public interface Style extends CssResource {
-        String DEFAULT_CSS = "SvgCell.css";
-
-        String icon();
-
-        String face();
-
-        String disabled();
-    }
-
-    public interface Resources extends ClientBundle {
-        @Source(Style.DEFAULT_CSS)
-        Style style();
-    }
-
-    interface Template extends SafeHtmlTemplates {
-        @Template("<img class=\"{0}\" style=\"{1}\" src=\"{2}\"/>")
-        SafeHtml icon(String className, SafeStyles style, SafeUri url);
-    }
-
     private static Resources resources;
     private static Template template;
 
@@ -111,5 +91,25 @@ public class SvgCell extends AbstractCell<SvgPreset> {
 
             sb.append(template.icon(className, builder.toSafeStyles(), UriUtils.fromString(value.getUrl())));
         }
+    }
+
+    public interface Style extends CssResource {
+        String DEFAULT_CSS = "SvgCell.css";
+
+        String icon();
+
+        String face();
+
+        String disabled();
+    }
+
+    public interface Resources extends ClientBundle {
+        @Source(Style.DEFAULT_CSS)
+        Style style();
+    }
+
+    interface Template extends SafeHtmlTemplates {
+        @Template("<img class=\"{0}\" style=\"{1}\" src=\"{2}\"/>")
+        SafeHtml icon(String className, SafeStyles style, SafeUri url);
     }
 }

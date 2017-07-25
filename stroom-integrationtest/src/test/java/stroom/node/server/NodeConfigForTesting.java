@@ -54,7 +54,7 @@ public class NodeConfigForTesting implements NodeConfig {
 
     @Inject
     public NodeConfigForTesting(final NodeService nodeService, final VolumeService volumeService,
-            final StroomEntityManager stroomEntityManager) {
+                                final StroomEntityManager stroomEntityManager) {
         this.nodeService = nodeService;
         this.volumeService = volumeService;
         this.stroomEntityManager = stroomEntityManager;

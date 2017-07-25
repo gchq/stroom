@@ -37,11 +37,9 @@ public interface SegmentInputStream extends IInputStream {
      * this input stream.
      *
      * @return The total number of segments that can be read from this input
-     *         stream.
-     *
-     * @throws IOException
-     *             Could be thrown when trying to determine how many segments
-     *             there are.
+     * stream.
+     * @throws IOException Could be thrown when trying to determine how many segments
+     *                     there are.
      */
     long count() throws IOException;
 

@@ -35,14 +35,9 @@ import stroom.widget.customdatebox.client.DateBoxView;
 import stroom.widget.customdatebox.client.MyDateBox;
 
 public class StreamFilterViewImpl extends ViewImpl implements StreamFilterView {
-    public interface Binder extends UiBinder<Widget, StreamFilterViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField(provided = true)
     ItemListBox<StreamListFilterTemplate> streamListFilterTemplate;
-
     @UiField
     DockLayoutPanel layout;
     @UiField
@@ -85,7 +80,6 @@ public class StreamFilterViewImpl extends ViewImpl implements StreamFilterView {
     MyDateBox statusFrom;
     @UiField
     MyDateBox statusTo;
-
     @Inject
     public StreamFilterViewImpl(final Binder binder) {
         streamListFilterTemplate = new ItemListBox<StreamListFilterTemplate>("");
@@ -217,5 +211,8 @@ public class StreamFilterViewImpl extends ViewImpl implements StreamFilterView {
     @Override
     public ItemListBox<StreamStatus> getStreamStatus() {
         return streamStatus;
+    }
+
+    public interface Binder extends UiBinder<Widget, StreamFilterViewImpl> {
     }
 }

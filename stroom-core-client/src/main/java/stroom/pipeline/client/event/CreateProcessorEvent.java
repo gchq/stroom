@@ -22,12 +22,7 @@ import com.google.gwt.event.shared.HasHandlers;
 import stroom.streamtask.shared.StreamProcessorFilter;
 
 public class CreateProcessorEvent extends GwtEvent<CreateProcessorEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onCreate(CreateProcessorEvent event);
-    }
-
     private static Type<Handler> TYPE;
-
     private final StreamProcessorFilter streamProcessorFilter;
 
     private CreateProcessorEvent(final StreamProcessorFilter streamProcessorFilter) {
@@ -57,5 +52,9 @@ public class CreateProcessorEvent extends GwtEvent<CreateProcessorEvent.Handler>
 
     public StreamProcessorFilter getStreamProcessorFilter() {
         return streamProcessorFilter;
+    }
+
+    public interface Handler extends EventHandler {
+        void onCreate(CreateProcessorEvent event);
     }
 }

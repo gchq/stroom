@@ -23,19 +23,19 @@ public class FindGlobalPropertyCriteria extends FindNamedEntityCriteria {
     private static final long serialVersionUID = 1451984883275627717L;
     private boolean addDefault = true;
 
+    public static FindGlobalPropertyCriteria create(final String name) {
+        FindGlobalPropertyCriteria criteria = new FindGlobalPropertyCriteria();
+        criteria.setName(new StringCriteria(name, null));
+        return criteria;
+
+    }
+
     public boolean isAddDefault() {
         return addDefault;
     }
 
     public void setAddDefault(boolean addDefault) {
         this.addDefault = addDefault;
-    }
-
-    public static FindGlobalPropertyCriteria create(final String name) {
-        FindGlobalPropertyCriteria criteria = new FindGlobalPropertyCriteria();
-        criteria.setName(new StringCriteria(name, null));
-        return criteria;
-
     }
 
 }

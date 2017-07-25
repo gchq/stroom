@@ -26,16 +26,11 @@ import stroom.cache.client.presenter.CachePresenter.CacheView;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 public class CacheViewImpl extends ViewImpl implements CacheView {
-    public interface Binder extends UiBinder<Widget, CacheViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     ResizeSimplePanel cacheList;
     @UiField
     ResizeSimplePanel cacheNodeList;
-
     @Inject
     public CacheViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -53,5 +48,8 @@ public class CacheViewImpl extends ViewImpl implements CacheView {
         } else if (CachePresenter.NODE_LIST.equals(slot)) {
             cacheNodeList.setWidget(content);
         }
+    }
+
+    public interface Binder extends UiBinder<Widget, CacheViewImpl> {
     }
 }

@@ -49,14 +49,14 @@ public class FindStreamTypeCriteria extends FindNamedEntityCriteria {
         return purpose;
     }
 
+    public void setPurpose(final CriteriaSet<Purpose> purpose) {
+        this.purpose = purpose;
+    }
+
     public CriteriaSet<Purpose> obtainPurpose() {
         if (purpose == null) {
             purpose = new CriteriaSet<>();
         }
         return purpose;
-    }
-
-    public void setPurpose(final CriteriaSet<Purpose> purpose) {
-        this.purpose = purpose;
     }
 }

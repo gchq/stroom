@@ -67,11 +67,11 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     private final TooltipPresenter tooltipPresenter;
     private final ClientDispatchAsync dispatcher;
     private final ClientSecurityContext securityContext;
-    private ActionDataProvider<IndexShard> dataProvider;
-    private ResultList<IndexShard> resultList = null;
     private final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
     private final ButtonView buttonFlush;
     private final ButtonView buttonDelete;
+    private ActionDataProvider<IndexShard> dataProvider;
+    private ResultList<IndexShard> resultList = null;
     private Index index;
     private boolean readOnly;
     private boolean allowDelete;

@@ -22,26 +22,13 @@ package stroom.editor.client.model;
  * structure.
  */
 public class XmlFormatter {
-    /**
-     * The different fragment types of an XML instance.
-     */
-    private enum ElementType {
-        DOCTYPE, START, END, EMPTY, PI, COMMENT, CONTENT
-    }
-
-    private enum CommentState {
-        START, CONTENT, END
-    }
-
     private static final String DOCTYPE_START = "<!DOCTYPE";
     private static final String EMPTY_ELEMENT_END = "/>";
     private static final String END_ELEMENT_START = "</";
     private static final String PI_START = "<?";
     private static final String COMMENT_START = "<!--";
     private static final String INDENT = "  ";
-
     private int depth;
-
     private ElementType elementType;
     private ElementType nextElementType;
     private ElementType lastElementType;
@@ -49,11 +36,9 @@ public class XmlFormatter {
     private boolean inAttValue;
     private boolean lastCharWasSpace;
     private CommentState commentState;
-
     private char[] arr;
     private int pos;
     private int elementStartPos;
-
     private boolean inEntity;
     private StringBuilder output;
 
@@ -451,5 +436,16 @@ public class XmlFormatter {
 //            default:
         output.append(c);
 //        }
+    }
+
+    /**
+     * The different fragment types of an XML instance.
+     */
+    private enum ElementType {
+        DOCTYPE, START, END, EMPTY, PI, COMMENT, CONTENT
+    }
+
+    private enum CommentState {
+        START, CONTENT, END
     }
 }

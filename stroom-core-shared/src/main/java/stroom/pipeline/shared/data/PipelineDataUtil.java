@@ -81,7 +81,7 @@ public class PipelineDataUtil {
     }
 
     public static PipelineReference createReference(final String element, final String name,
-            final PipelineEntity pipeline, final Feed feed, final String streamType) {
+                                                    final PipelineEntity pipeline, final Feed feed, final String streamType) {
         final PipelineReference pipelineReference = new PipelineReference();
         pipelineReference.setElement(element);
         pipelineReference.setName(name);

@@ -27,27 +27,7 @@ import stroom.pipeline.shared.data.PipelineElement;
 import stroom.svg.client.SvgIcon;
 
 public class PipelineElementBox extends Box<PipelineElement> {
-    public interface Style extends CssResource {
-        String DEFAULT = "PipelineElementBox.css";
-
-        String background();
-
-        String backgroundSelected();
-
-        String hotspot();
-
-        String image();
-
-        String label();
-    }
-
-    public interface Resources extends ClientBundle {
-        @Source(Style.DEFAULT)
-        Style style();
-    }
-
     private static Resources resources;
-
     private final PipelineElement pipelineElement;
 
     public PipelineElementBox(final PipelineElement pipelineElement, final SvgIcon icon) {
@@ -96,5 +76,24 @@ public class PipelineElementBox extends Box<PipelineElement> {
     @Override
     public PipelineElement getItem() {
         return pipelineElement;
+    }
+
+    public interface Style extends CssResource {
+        String DEFAULT = "PipelineElementBox.css";
+
+        String background();
+
+        String backgroundSelected();
+
+        String hotspot();
+
+        String image();
+
+        String label();
+    }
+
+    public interface Resources extends ClientBundle {
+        @Source(Style.DEFAULT)
+        Style style();
     }
 }

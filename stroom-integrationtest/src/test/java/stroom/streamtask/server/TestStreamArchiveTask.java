@@ -49,7 +49,7 @@ import java.util.List;
 
 /**
  * Test the archiving stuff.
- *
+ * <p>
  * Create some old files and make sure they get archived.
  */
 public class TestStreamArchiveTask extends AbstractCoreIntegrationTest {

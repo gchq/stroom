@@ -22,7 +22,6 @@ import stroom.entity.shared.FindNamedEntityCriteria;
  * Criteria object used to fetch a job that matches the parameters specified.
  */
 public class FindJobCriteria extends FindNamedEntityCriteria {
-    private static final long serialVersionUID = 3995637015554049174L;
-
     public static final String FIELD_ADVANCED = "Advanced";
+    private static final long serialVersionUID = 3995637015554049174L;
 }

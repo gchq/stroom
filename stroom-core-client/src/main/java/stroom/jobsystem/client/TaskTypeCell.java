@@ -30,11 +30,9 @@ import stroom.jobsystem.shared.TaskType;
 import java.util.HashMap;
 
 public class TaskTypeCell extends AbstractInputCell<TaskType, TaskType> {
-    private String button = null;
-
-    private HashMap<JobType, Integer> indexForOption = new HashMap<JobType, Integer>();
-
     private final JobType[] options;
+    private String button = null;
+    private HashMap<JobType, Integer> indexForOption = new HashMap<JobType, Integer>();
 
     /**
      * Construct a new {@link SelectionCell} with the specified options.

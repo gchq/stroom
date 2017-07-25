@@ -28,12 +28,13 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter.DropDownTreeView;
 import stroom.widget.dropdowntree.client.presenter.DropDownTreeUiHandlers;
 
-public class DropDownTreeViewImpl extends ViewWithUiHandlers<DropDownTreeUiHandlers>implements DropDownTreeView {
+public class DropDownTreeViewImpl extends ViewWithUiHandlers<DropDownTreeUiHandlers> implements DropDownTreeView {
     private final Widget widget;
     @UiField
     QuickFilter nameFilter;
     @UiField
     SimplePanel treeContainer;
+
     @Inject
     public DropDownTreeViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);

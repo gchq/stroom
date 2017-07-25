@@ -28,8 +28,8 @@ import org.springframework.context.annotation.FilterType;
  * component scan as configurations should be specified explicitly.
  */
 @Configuration
-@ComponentScan(basePackages = { "stroom.visualisation.server", "stroom.visualisation.shared" }, excludeFilters = {
-        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class), })
+@ComponentScan(basePackages = {"stroom.visualisation.server", "stroom.visualisation.shared"}, excludeFilters = {
+        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
 public class VisualisationConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(VisualisationConfiguration.class);
 

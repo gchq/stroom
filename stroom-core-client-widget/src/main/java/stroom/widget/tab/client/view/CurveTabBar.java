@@ -24,17 +24,7 @@ import com.google.gwt.user.client.DOM;
 import stroom.widget.tab.client.presenter.TabData;
 
 public class CurveTabBar extends AbstractTabBar {
-    public interface Style extends CssResource {
-        String curveTabBar();
-    }
-
-    public interface Resources extends ClientBundle {
-        @Source("CurveTabBar.css")
-        Style style();
-    }
-
     private static Resources resources;
-
     private final Element element;
 
     public CurveTabBar() {
@@ -62,5 +52,14 @@ public class CurveTabBar extends AbstractTabBar {
     @Override
     protected int getTabGap() {
         return -10;
+    }
+
+    public interface Style extends CssResource {
+        String curveTabBar();
+    }
+
+    public interface Resources extends ClientBundle {
+        @Source("CurveTabBar.css")
+        Style style();
     }
 }

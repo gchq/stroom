@@ -35,11 +35,11 @@ public class AuthorisationResource {
 
         return result
                 ? Response
-                    .ok()
-                    .build()
+                .ok()
+                .build()
                 : Response
-                    .status(Response.Status.UNAUTHORIZED)
-                    .build();
+                .status(Response.Status.UNAUTHORIZED)
+                .build();
     }
 
     public void setAuthorisationService(AuthorisationService authorisationService) {

@@ -61,7 +61,7 @@ public class ConnectionUtil {
             throw new RuntimeException(ex);
         }
 
-        LOGGER.info("Connecting to database using classname: {}, url: {}, username: {}", new Object[] {driverClassname, driverUrl,
+        LOGGER.info("Connecting to database using classname: {}, url: {}, username: {}", new Object[]{driverClassname, driverUrl,
                 driverUsername});
 
         return DriverManager.getConnection(driverUrl, driverUsername, driverPassword);
@@ -79,7 +79,7 @@ public class ConnectionUtil {
 
     public static boolean tableExists(final Connection connection, final String tableName) throws SQLException {
         final DatabaseMetaData databaseMetaData = connection.getMetaData();
-        final ResultSet resultSet = databaseMetaData.getTables(null, null, tableName, new String[] { "TABLE" });
+        final ResultSet resultSet = databaseMetaData.getTables(null, null, tableName, new String[]{"TABLE"});
         final boolean hasTable = resultSet.next();
         resultSet.close();
         return hasTable;
@@ -157,9 +157,9 @@ public class ConnectionUtil {
 
     @SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static BaseResultList<SummaryDataRow> executeQuerySummaryDataResult(final Connection connection,
-            final String sql, final int numberKeys, final List<Object> args,
-            final List<? extends HasPrimitiveValue> stats,
-            final PrimitiveValueConverter<? extends HasPrimitiveValue> converter) throws SQLException {
+                                                                               final String sql, final int numberKeys, final List<Object> args,
+                                                                               final List<? extends HasPrimitiveValue> stats,
+                                                                               final PrimitiveValueConverter<? extends HasPrimitiveValue> converter) throws SQLException {
         LOGGER.debug(">>> {}", sql);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         final ArrayList<SummaryDataRow> summaryData = new ArrayList<>();
@@ -192,7 +192,7 @@ public class ConnectionUtil {
 
     @SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static ResultSet executeQueryResultSet(final Connection connection, final String sql,
-            final List<Object> args) throws SQLException {
+                                                  final List<Object> args) throws SQLException {
         LOGGER.debug(">>> {}", sql);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         try {
@@ -211,7 +211,7 @@ public class ConnectionUtil {
     }
 
     private static void log(final LogExecutionTime logExecutionTime, final Object result, final String sql,
-            final List<Object> args) {
+                            final List<Object> args) {
         final long time = logExecutionTime.getDuration();
         if (LOGGER.isDebugEnabled() || time > 1000) {
             final String message = "<<< " + sql + " " + args + " took " + ModelStringUtil.formatDurationString(time)

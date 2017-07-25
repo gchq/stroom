@@ -37,11 +37,6 @@ public class MockHttpServletResponse implements HttpServletResponse {
     }
 
     @Override
-    public void setStatus(final int arg0) {
-        resposeCode = arg0;
-    }
-
-    @Override
     public void addCookie(final Cookie arg0) {
     }
 
@@ -120,6 +115,11 @@ public class MockHttpServletResponse implements HttpServletResponse {
     @Override
     public int getStatus() {
         return 0;
+    }
+
+    @Override
+    public void setStatus(final int arg0) {
+        resposeCode = arg0;
     }
 
     @Override

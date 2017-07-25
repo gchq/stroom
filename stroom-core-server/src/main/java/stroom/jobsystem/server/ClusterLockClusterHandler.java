@@ -31,40 +31,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @TaskHandlerBean(task = ClusterLockClusterTask.class)
 @Scope(value = StroomScope.SINGLETON)
 public class ClusterLockClusterHandler extends AbstractTaskHandler<ClusterLockClusterTask, SharedBoolean> {
-    private static class Lock {
-        private final ClusterLockKey clusterLockKey;
-        private volatile long refreshTime;
-
-        public Lock(final ClusterLockKey clusterLockKey) {
-            this.clusterLockKey = clusterLockKey;
-            refresh();
-        }
-
-        public void refresh() {
-            this.refreshTime = System.currentTimeMillis();
-        }
-
-        @Override
-        public String toString() {
-            final StringBuilder sb = new StringBuilder();
-            append(sb);
-            return sb.toString();
-        }
-
-        public void append(final StringBuilder sb) {
-            final long age = System.currentTimeMillis() - refreshTime;
-
-            clusterLockKey.append(sb);
-            sb.append(" age=");
-            sb.append(ModelStringUtil.formatDurationString(age));
-        }
-    }
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockClusterHandler.class);
-
     // 10 min
     public static final long TEN_MINUTES = 10 * 60 * 1000;
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockClusterHandler.class);
     private final ConcurrentHashMap<String, Lock> lockMap = new ConcurrentHashMap<>();
 
     @Override
@@ -73,15 +42,15 @@ public class ClusterLockClusterHandler extends AbstractTaskHandler<ClusterLockCl
 
         final ClusterLockKey clusterLockKey = task.getKey();
         switch (task.getLockStyle()) {
-        case Try:
-            success = tryLock(clusterLockKey);
-            break;
-        case Release:
-            success = release(clusterLockKey);
-            break;
-        case KeepAlive:
-            success = keepAlive(clusterLockKey);
-            break;
+            case Try:
+                success = tryLock(clusterLockKey);
+                break;
+            case Release:
+                success = release(clusterLockKey);
+                break;
+            case KeepAlive:
+                success = keepAlive(clusterLockKey);
+                break;
         }
 
         return new SharedBoolean(success);
@@ -90,11 +59,10 @@ public class ClusterLockClusterHandler extends AbstractTaskHandler<ClusterLockCl
     /**
      * Try and lock with the supplied key.
      *
-     * @param clusterLockKey
-     *            The key to try and lock with.
+     * @param clusterLockKey The key to try and lock with.
      * @return Return true if we managed to obtain a lock with the supplied key,
-     *         return false if this lock is already owned by another
-     *         node/process.
+     * return false if this lock is already owned by another
+     * node/process.
      */
     private boolean tryLock(final ClusterLockKey clusterLockKey) {
         boolean success = false;
@@ -128,11 +96,10 @@ public class ClusterLockClusterHandler extends AbstractTaskHandler<ClusterLockCl
     /**
      * Try and release a lock with the supplied key.
      *
-     * @param clusterLockKey
-     *            The key to try and release an associated lock with.
+     * @param clusterLockKey The key to try and release an associated lock with.
      * @return Return true if we managed to release a lock with the supplied
-     *         key, return false if no lock could be found for this key or if
-     *         the lock is owned by another node/process.
+     * key, return false if no lock could be found for this key or if
+     * the lock is owned by another node/process.
      */
     private boolean release(final ClusterLockKey clusterLockKey) {
         boolean success = false;
@@ -171,11 +138,10 @@ public class ClusterLockClusterHandler extends AbstractTaskHandler<ClusterLockCl
     /**
      * Try and keep alive a lock with the supplied key.
      *
-     * @param clusterLockKey
-     *            The key to try and keep alive an associated lock with.
+     * @param clusterLockKey The key to try and keep alive an associated lock with.
      * @return Return true if we managed to keep alive a lock with the supplied
-     *         key, return false if no lock could be found for this key or if
-     *         the lock is owned by another node/process.
+     * key, return false if no lock could be found for this key or if
+     * the lock is owned by another node/process.
      */
     private boolean keepAlive(final ClusterLockKey clusterLockKey) {
         boolean success = false;
@@ -240,7 +206,7 @@ public class ClusterLockClusterHandler extends AbstractTaskHandler<ClusterLockCl
     }
 
     private void debug(final String message, final ClusterLockKey clusterLockKey, final Lock lock,
-            final Boolean success) {
+                       final Boolean success) {
         if (LOGGER.isDebugEnabled()) {
             final StringBuilder sb = new StringBuilder();
             sb.append(message);
@@ -259,7 +225,7 @@ public class ClusterLockClusterHandler extends AbstractTaskHandler<ClusterLockCl
     }
 
     private void appendStatus(final StringBuilder sb, final ClusterLockKey clusterLockKey, final Lock lock,
-            final Boolean success) {
+                              final Boolean success) {
         if (clusterLockKey != null) {
             sb.append(" key=(");
             clusterLockKey.append(sb);
@@ -273,6 +239,35 @@ public class ClusterLockClusterHandler extends AbstractTaskHandler<ClusterLockCl
         if (success != null) {
             sb.append(" success=");
             sb.append(success);
+        }
+    }
+
+    private static class Lock {
+        private final ClusterLockKey clusterLockKey;
+        private volatile long refreshTime;
+
+        public Lock(final ClusterLockKey clusterLockKey) {
+            this.clusterLockKey = clusterLockKey;
+            refresh();
+        }
+
+        public void refresh() {
+            this.refreshTime = System.currentTimeMillis();
+        }
+
+        @Override
+        public String toString() {
+            final StringBuilder sb = new StringBuilder();
+            append(sb);
+            return sb.toString();
+        }
+
+        public void append(final StringBuilder sb) {
+            final long age = System.currentTimeMillis() - refreshTime;
+
+            clusterLockKey.append(sb);
+            sb.append(" age=");
+            sb.append(ModelStringUtil.formatDurationString(age));
         }
     }
 }

@@ -43,136 +43,35 @@ import java.util.List;
 @Component
 @Transactional
 public class SQLStatisticAggregationTransactionHelper {
-    private final DataSource statisticsDataSource;
-    private final StroomDatabaseInfo stroomDatabaseInfo;
-    private final StroomPropertyService stroomPropertyService;
-
-    @Inject
-    public SQLStatisticAggregationTransactionHelper(@Named("statisticsDataSource") final DataSource statisticsDataSource, final StroomDatabaseInfo stroomDatabaseInfo, final StroomPropertyService stroomPropertyService) {
-        this.statisticsDataSource = statisticsDataSource;
-        this.stroomDatabaseInfo = stroomDatabaseInfo;
-        this.stroomPropertyService = stroomPropertyService;
-    }
-
-    public static final long round(final long timeMs, final int precision) {
-        final long scale = (long) Math.pow(10, precision);
-        return ((timeMs) / scale) * scale;
-    }
-
     public static final long NEWEST_SENSIBLE_STAT_AGE = DateUtil.parseNormalDateTimeString("9999-01-01T00:00:00.000Z");
-
-    public static class AggregateConfig {
-        // How
-        private final long ageMs;
-        private final byte precision;
-        private final byte lastPrecision;
-        private final StatisticType valueType;
-        private final SimpleCronScheduler simpleCronScheduler;
-
-        public AggregateConfig(final StatisticType valueType, final long ageMs, final byte precision,
-                               final byte lastPrecision, final String simpleCronExpression) {
-            this.valueType = valueType;
-            this.ageMs = ageMs;
-            this.precision = precision;
-            this.lastPrecision = lastPrecision;
-            this.simpleCronScheduler = new SimpleCronScheduler(simpleCronExpression);
-        }
-
-        public long getAgeMs() {
-            return ageMs;
-        }
-
-        public byte getPrecision() {
-            return precision;
-        }
-
-        public byte getSQLPrecision() {
-            return (byte) (-1 * precision);
-        }
-
-        public byte getLastPrecision() {
-            return lastPrecision;
-        }
-
-        public StatisticType getValueType() {
-            return valueType;
-        }
-
-        public long doGetAggregateToMs(final long timeNow) {
-            if (ageMs == -1) {
-                return NEWEST_SENSIBLE_STAT_AGE;
-            }
-            final long scale = (long) Math.pow(10, precision);
-            final long roundedValue = ((timeNow - ageMs) / scale) * scale;
-            return roundedValue;
-        }
-
-        public Long getAggregateToMs(final Long timeNowOverride) {
-            return doGetAggregateToMs(timeNowOverride);
-        }
-
-        public SimpleCronScheduler getSimpleCronScheduler() {
-            return simpleCronScheduler;
-        }
-
-        public boolean execute(final long timeNow) {
-            return simpleCronScheduler.execute(timeNow);
-        }
-
-        @Override
-        public String toString() {
-            final StringBuilder builder = new StringBuilder();
-            builder.append("age=");
-            builder.append(ModelStringUtil.formatDurationString(ageMs));
-            builder.append(",precision=");
-            builder.append(precision);
-            builder.append("(e.g.");
-            final long eg = (long) Math.pow(10, precision);
-            builder.append(eg);
-            builder.append("(e.g.");
-            builder.append(ModelStringUtil.formatDurationString(eg));
-            builder.append(")");
-            builder.append(",simpleCronScheduler=");
-            builder.append(simpleCronScheduler);
-            return builder.toString();
-        }
-
-    }
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticAggregationTransactionHelper.class);
-
     // /**
     // * The number of records to add to the aggregate from the aggregate source
     // * table on each pass
     // */
     // private static final int AGGREGATE_INCREMENT = 10000;
     public static final byte DEFAULT_PRECISION = 0;
-
-    private static final String AGGREGATE = "AGGREGATE";
     public static final long MS_HOUR = 1000 * 60 * 60;
     public static final long MS_DAY = MS_HOUR * 24;
     public static final long MS_MONTH = 31 * MS_DAY;
-
     public static final String AGGREGATE_MAX_ID = "SELECT MAX(" + SQLStatisticNames.ID + ") FROM "
             + SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME;
     public static final String AGGREGATE_MIN_ID = "SELECT MIN(" + SQLStatisticNames.ID + ") FROM "
             + SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME;
-
     public static final String TRUNCATE_TABLE_SQL = "TRUNCATE TABLE ";
     public static final String CLEAR_TABLE_SQL = "DELETE FROM ";
-
-    // @formatter:off
-
+    public static final byte MONTH_PRECISION = (byte) Math.floor(Math.log10(MS_MONTH));
+    public static final byte DAY_PRECISION = (byte) Math.floor(Math.log10(MS_DAY));
+    public static final byte HOUR_PRECISION = (byte) Math.floor(Math.log10(MS_HOUR));
+    private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticAggregationTransactionHelper.class);
+    private static final String AGGREGATE = "AGGREGATE";
     private static final String AGGREGATE_COUNT = new StringBuilder()
             .append("SELECT COUNT(*) ")
             .append("FROM SQL_STAT_VAL_SRC ")
             .toString();
-
     private static final String DELETE_OLD_STATS = new StringBuilder()
             .append("DELETE FROM SQL_STAT_VAL ")
             .append("WHERE TIME_MS < ? ")
             .toString();
-
     // Mark a batch of n records as 'processing' so we can work on them in
     // isolation
     private static final String STAGE1_MARK_PROCESSING = new StringBuilder()
@@ -182,6 +81,7 @@ public class SQLStatisticAggregationTransactionHelper {
             .append("LIMIT ? ")
             .toString();
 
+    // @formatter:off
     private static final String STAGE1_AGGREGATE_SOURCE_KEY = new StringBuilder()
             .append("INSERT INTO SQL_STAT_KEY (NAME, VER) ")
             .append("SELECT ")
@@ -192,7 +92,6 @@ public class SQLStatisticAggregationTransactionHelper {
             .append("WHERE SSVS.PROCESSING = 1 ")
             .append("AND SSK.ID IS NULL")
             .toString();
-
     // grab the oldest n records from SVS and aggregate those records with the
     // right time range
     // then outer join them to any existing SV records and add the values
@@ -243,17 +142,12 @@ public class SQLStatisticAggregationTransactionHelper {
             .append("   VAL = AGG.VAL, ")
             .append("   CT = AGG.CT ")
             .toString();
-
-    //TODO The last line of the above sql "CT = AGG.CT" causes the upsert to never update when run against mysql 5.7.18
-    //but works fine on 5.5. and 5.6. It also works fine on MariaDB 10.2.5.
-
     private static final String STAGE1_AGGREGATE_DELETE_SOURCE = new StringBuilder()
             .append("DELETE FROM SQL_STAT_VAL_SRC ")
             .append("WHERE PROCESSING = 1 ")
             .append("AND TIME_MS < ? ")
             .append("AND VAL_TP = ?")
             .toString();
-
     // Find if records exist in STAT_VAL older than a given age for a given
     // precision
     private static final String STAGE2_FIND_ROWS_TO_MOVE = new StringBuilder()
@@ -266,7 +160,6 @@ public class SQLStatisticAggregationTransactionHelper {
             .append("       AND SSV.PRES = ? ") // old PRES
             .append("       AND SSV.VAL_TP = ? ")
             .append("   ) ").toString();
-
     // Copy stats from one precision to a coarser precision, aggregating them
     // with any stats
     // in the target precision if there are any
@@ -314,6 +207,8 @@ public class SQLStatisticAggregationTransactionHelper {
             .append("   CT = AGG.CT ")
             .toString();
 
+    //TODO The last line of the above sql "CT = AGG.CT" causes the upsert to never update when run against mysql 5.7.18
+    //but works fine on 5.5. and 5.6. It also works fine on MariaDB 10.2.5.
     // Delete records from STAT_VAL older than a certain threshold for a given
     // precision
     private static final String STAGE2_AGGREGATE_DELETE_OLD_PRECISION = new StringBuilder()
@@ -322,43 +217,11 @@ public class SQLStatisticAggregationTransactionHelper {
             .append("AND PRES = ? ")
             .append("AND VAL_TP = ?")
             .toString();
+    private final DataSource statisticsDataSource;
+    private final StroomDatabaseInfo stroomDatabaseInfo;
+    private final StroomPropertyService stroomPropertyService;
 
     // @formatter:on
-
-    protected Connection getConnection() throws SQLException {
-        return statisticsDataSource.getConnection();
-    }
-
-    protected int doAggregateSQL_Update(final Connection connection, final TaskMonitor taskMonitor, final String prefix,
-                                        final String sql, final List<Object> args) throws SQLException {
-        final LogExecutionTime time = new LogExecutionTime();
-        final String trace = SqlUtil.buildSQLTrace(sql, args);
-
-        taskMonitor.info("{}\n {}", prefix, trace);
-
-        final int count = ConnectionUtil.executeUpdate(connection, sql, args);
-
-        logDebug("doAggretateSQL - {} - {} in {} - {}", prefix, ModelStringUtil.formatCsv(count), time, trace);
-        return count;
-    }
-
-    protected long doLongSelect(final Connection connection, final TaskMonitor taskMonitor, final String prefix,
-                                final String sql, final List<Object> args) throws SQLException {
-        final LogExecutionTime time = new LogExecutionTime();
-        final String trace = SqlUtil.buildSQLTrace(sql, args);
-
-        taskMonitor.info("{}\n {}", prefix, trace);
-
-        final long result = ConnectionUtil.executeQueryLongResult(connection, sql, args);
-
-        logDebug("doAggretateSQL - {} - {} in {} - {}", prefix, ModelStringUtil.formatCsv(result), time, trace);
-        return result;
-    }
-
-    public static final byte MONTH_PRECISION = (byte) Math.floor(Math.log10(MS_MONTH));
-    public static final byte DAY_PRECISION = (byte) Math.floor(Math.log10(MS_DAY));
-    public static final byte HOUR_PRECISION = (byte) Math.floor(Math.log10(MS_HOUR));
-
     private final AggregateConfig[] aggregateConfig = new AggregateConfig[]{
             // Stuff Older than a month move to month precision
 
@@ -389,6 +252,48 @@ public class SQLStatisticAggregationTransactionHelper {
             new AggregateConfig(StatisticType.VALUE, -1, DEFAULT_PRECISION, DEFAULT_PRECISION, "* * *"),
 
     };
+
+    @Inject
+    public SQLStatisticAggregationTransactionHelper(@Named("statisticsDataSource") final DataSource statisticsDataSource, final StroomDatabaseInfo stroomDatabaseInfo, final StroomPropertyService stroomPropertyService) {
+        this.statisticsDataSource = statisticsDataSource;
+        this.stroomDatabaseInfo = stroomDatabaseInfo;
+        this.stroomPropertyService = stroomPropertyService;
+    }
+
+    public static final long round(final long timeMs, final int precision) {
+        final long scale = (long) Math.pow(10, precision);
+        return ((timeMs) / scale) * scale;
+    }
+
+    protected Connection getConnection() throws SQLException {
+        return statisticsDataSource.getConnection();
+    }
+
+    protected int doAggregateSQL_Update(final Connection connection, final TaskMonitor taskMonitor, final String prefix,
+                                        final String sql, final List<Object> args) throws SQLException {
+        final LogExecutionTime time = new LogExecutionTime();
+        final String trace = SqlUtil.buildSQLTrace(sql, args);
+
+        taskMonitor.info("{}\n {}", prefix, trace);
+
+        final int count = ConnectionUtil.executeUpdate(connection, sql, args);
+
+        logDebug("doAggretateSQL - {} - {} in {} - {}", prefix, ModelStringUtil.formatCsv(count), time, trace);
+        return count;
+    }
+
+    protected long doLongSelect(final Connection connection, final TaskMonitor taskMonitor, final String prefix,
+                                final String sql, final List<Object> args) throws SQLException {
+        final LogExecutionTime time = new LogExecutionTime();
+        final String trace = SqlUtil.buildSQLTrace(sql, args);
+
+        taskMonitor.info("{}\n {}", prefix, trace);
+
+        final long result = ConnectionUtil.executeQueryLongResult(connection, sql, args);
+
+        logDebug("doAggretateSQL - {} - {} in {} - {}", prefix, ModelStringUtil.formatCsv(result), time, trace);
+        return result;
+    }
 
     public AggregateConfig[] getAggregateConfig() {
         return aggregateConfig;
@@ -657,5 +562,83 @@ public class SQLStatisticAggregationTransactionHelper {
             LOGGER.error("Clearing table {}", tableName, sqlException);
             throw sqlException;
         }
+    }
+
+    public static class AggregateConfig {
+        // How
+        private final long ageMs;
+        private final byte precision;
+        private final byte lastPrecision;
+        private final StatisticType valueType;
+        private final SimpleCronScheduler simpleCronScheduler;
+
+        public AggregateConfig(final StatisticType valueType, final long ageMs, final byte precision,
+                               final byte lastPrecision, final String simpleCronExpression) {
+            this.valueType = valueType;
+            this.ageMs = ageMs;
+            this.precision = precision;
+            this.lastPrecision = lastPrecision;
+            this.simpleCronScheduler = new SimpleCronScheduler(simpleCronExpression);
+        }
+
+        public long getAgeMs() {
+            return ageMs;
+        }
+
+        public byte getPrecision() {
+            return precision;
+        }
+
+        public byte getSQLPrecision() {
+            return (byte) (-1 * precision);
+        }
+
+        public byte getLastPrecision() {
+            return lastPrecision;
+        }
+
+        public StatisticType getValueType() {
+            return valueType;
+        }
+
+        public long doGetAggregateToMs(final long timeNow) {
+            if (ageMs == -1) {
+                return NEWEST_SENSIBLE_STAT_AGE;
+            }
+            final long scale = (long) Math.pow(10, precision);
+            final long roundedValue = ((timeNow - ageMs) / scale) * scale;
+            return roundedValue;
+        }
+
+        public Long getAggregateToMs(final Long timeNowOverride) {
+            return doGetAggregateToMs(timeNowOverride);
+        }
+
+        public SimpleCronScheduler getSimpleCronScheduler() {
+            return simpleCronScheduler;
+        }
+
+        public boolean execute(final long timeNow) {
+            return simpleCronScheduler.execute(timeNow);
+        }
+
+        @Override
+        public String toString() {
+            final StringBuilder builder = new StringBuilder();
+            builder.append("age=");
+            builder.append(ModelStringUtil.formatDurationString(ageMs));
+            builder.append(",precision=");
+            builder.append(precision);
+            builder.append("(e.g.");
+            final long eg = (long) Math.pow(10, precision);
+            builder.append(eg);
+            builder.append("(e.g.");
+            builder.append(ModelStringUtil.formatDurationString(eg));
+            builder.append(")");
+            builder.append(",simpleCronScheduler=");
+            builder.append(simpleCronScheduler);
+            return builder.toString();
+        }
+
     }
 }

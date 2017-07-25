@@ -44,10 +44,10 @@ public class TestXPathFilter extends StroomUnitTest {
     private static final String INPUT = "TestTranslationStepping/1.xml";
     private static final SAXParserFactory PARSER_FACTORY;
 
-	static {
-		PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
-		PARSER_FACTORY.setNamespaceAware(true);
-	}
+    static {
+        PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
+        PARSER_FACTORY.setNamespaceAware(true);
+    }
 
     @Test
     public void test() throws Exception {
@@ -104,28 +104,28 @@ public class TestXPathFilter extends StroomUnitTest {
         final List<NodeInfo> nodes = (List<NodeInfo>) result;
         if (nodes.size() > 0) {
             switch (xPathFilter.getMatchType()) {
-            case EXISTS:
-                return true;
+                case EXISTS:
+                    return true;
 
-            case CONTAINS:
-                for (int i = 0; i < nodes.size(); i++) {
-                    final NodeInfo node = nodes.get(i);
-                    if (contains(node.getStringValue(), xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
-                        return true;
+                case CONTAINS:
+                    for (int i = 0; i < nodes.size(); i++) {
+                        final NodeInfo node = nodes.get(i);
+                        if (contains(node.getStringValue(), xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
+                            return true;
+                        }
                     }
-                }
-                break;
+                    break;
 
-            case EQUALS:
-                for (int i = 0; i < nodes.size(); i++) {
-                    final NodeInfo node = nodes.get(i);
-                    if (equals(node.getStringValue(), xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
-                        return true;
+                case EQUALS:
+                    for (int i = 0; i < nodes.size(); i++) {
+                        final NodeInfo node = nodes.get(i);
+                        if (equals(node.getStringValue(), xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
+                            return true;
+                        }
                     }
-                }
-                break;
-            case UNIQUE:
-                return true;
+                    break;
+                case UNIQUE:
+                    return true;
             }
         }
 

@@ -24,10 +24,6 @@ import stroom.util.test.StroomUnitTest;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestRingBuffer extends StroomUnitTest {
-    private enum Mode {
-        STRING, CHAR_ARRAY, UNSAFE_COPY, COPY
-    }
-
     @Test
     public void testString() {
         test(Mode.STRING);
@@ -388,20 +384,24 @@ public class TestRingBuffer extends StroomUnitTest {
 
     private String getString(final RingBuffer buffer, final Mode mode) {
         switch (mode) {
-        case STRING:
-            return buffer.toString();
+            case STRING:
+                return buffer.toString();
 
-        case CHAR_ARRAY:
-            final char[] chars = buffer.toCharArray();
-            return new String(chars, 0, chars.length);
+            case CHAR_ARRAY:
+                final char[] chars = buffer.toCharArray();
+                return new String(chars, 0, chars.length);
 
-        case UNSAFE_COPY:
-            return buffer.unsafeCopy().toString();
+            case UNSAFE_COPY:
+                return buffer.unsafeCopy().toString();
 
-        case COPY:
-            return buffer.copy().toString();
+            case COPY:
+                return buffer.copy().toString();
         }
 
         return null;
+    }
+
+    private enum Mode {
+        STRING, CHAR_ARRAY, UNSAFE_COPY, COPY
     }
 }

@@ -41,19 +41,16 @@ public class RollingStreamDestination extends RollingDestination {
     private final StreamTarget streamTarget;
     private final String nodeName;
     private final long creationTime;
-
+    private final ByteCountOutputStream outputStream;
+    private final AtomicLong recordCount = new AtomicLong();
     private volatile long lastFlushTime;
     private byte[] footer;
-
     private volatile boolean rolled;
-
-    private final ByteCountOutputStream outputStream;
     private RASegmentOutputStream segmentOutputStream;
-    private final AtomicLong recordCount = new AtomicLong();
 
     public RollingStreamDestination(final StreamKey key, final long frequency, final long maxSize,
-            final StreamStore streamStore, final StreamTarget streamTarget, final String nodeName,
-            final long creationTime) throws IOException {
+                                    final StreamStore streamStore, final StreamTarget streamTarget, final String nodeName,
+                                    final long creationTime) throws IOException {
         this.key = key;
 
         this.frequency = frequency;

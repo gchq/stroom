@@ -146,8 +146,6 @@ import java.util.HashMap;
  * </p>
  */
 public class NPEventListNamePool implements Serializable {
-    private static final long serialVersionUID = 2014345361495591413L;
-
     /**
      * FP_MASK is a mask used to obtain a fingerprint from a nameCode. Given a
      * nameCode nc, the fingerprint is <code>nc & NamePool.FP_MASK</code>. (In
@@ -163,68 +161,25 @@ public class NPEventListNamePool implements Serializable {
      * </p>
      */
     public static final int FP_MASK = 0xfffff;
-
     // Since fingerprints in the range 0-1023 belong to predefined names,
     // user-defined names will always have a fingerprint above this range, which
     // can be tested by a mask.
     public static final int USER_DEFINED_MASK = 0xffc00;
-
     // Limit: maximum number of prefixes allowed for one URI
     public static final int MAX_PREFIXES_PER_URI = 1023;
-
+    private static final long serialVersionUID = 2014345361495591413L;
     private static final int NULL_CODE = 0;
     private static final int XML_CODE = 1;
     private static final int XSLT_CODE = 2;
     private static final int SAXON_CODE = 3;
     private static final int SCHEMA_CODE = 4;
     private static final int XSI_CODE = 5;
-
-    /**
-     * Internal structure of a NameEntry, the entry on the hash chain of names.
-     */
-    private static class NameEntry implements Serializable {
-        private static final long serialVersionUID = 8411087666788132364L;
-
-        String localName;
-        short uriCode;
-        NameEntry nextEntry; // link to next NameEntry with the same hashcode
-
-        /**
-         * Create a NameEntry for a QName
-         *
-         * @param uriCode   the numeric code representing the namespace URI
-         * @param localName the local part of the QName
-         */
-        public NameEntry(short uriCode, String localName) {
-            this.uriCode = uriCode;
-            this.localName = localName.intern();
-            nextEntry = null;
-        }
-
-        /**
-         * Create a copy of a NameEntry, as well as the chain of NameEntries
-         * starting from this NameEntry
-         *
-         * @return the copy of the chain
-         */
-        public NameEntry copy() {
-            NameEntry n = new NameEntry(uriCode, localName);
-            if (nextEntry != null) {
-                n.nextEntry = nextEntry.copy();
-            }
-            return n;
-        }
-
-    }
-
     NameEntry[] hashslots = new NameEntry[1024];
-
     String[] prefixes = new String[100];
     short prefixesUsed = 0;
     String[] uris = new String[100];
     short[][] prefixCodesForUri = new short[100][0];
     short urisUsed = 0;
-
     // General purpose cache for data held by clients of the namePool
     private HashMap<Class<?>, Object> clientData;
 
@@ -259,6 +214,103 @@ public class NPEventListNamePool implements Serializable {
         prefixesUsed = 6;
         urisUsed = 6;
 
+    }
+
+    /**
+     * Search an array of shorts (e.g. prefix codes) for a given value
+     *
+     * @param codes the array to be searched
+     * @param value the value being sought
+     * @return the position of the first occurrence of the value in the array,
+     * or -1 if not found
+     */
+    private static int search(short[] codes, short value) {
+        for (int i = 0; i < codes.length; i++) {
+            if (codes[i] == value) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public static short getStandardURICode(int fingerprint) {
+        int c = fingerprint >> 7;
+        switch (c) {
+            case 0:
+                return NULL_CODE;
+            case 1:
+                return XSLT_CODE;
+            case 2:
+                return SAXON_CODE;
+            case 3:
+                return XML_CODE;
+            case 4:
+                return SCHEMA_CODE;
+            case 5:
+                return XSI_CODE;
+            default:
+                return -1;
+        }
+    }
+
+    /**
+     * Get the prefix index from a namecode
+     *
+     * @param nameCode the name code
+     * @return the prefix index. A value of zero means the name is unprefixed
+     * (which in the case of an attribute, means that it is in the null
+     * namespace)
+     */
+    public static int getPrefixIndex(int nameCode) {
+        return (nameCode >> 20) & 0x3ff;
+    }
+
+    /**
+     * Determine whether a given namecode has a non-empty prefix (and therefore,
+     * in the case of attributes, whether the name is in a non-null namespace
+     *
+     * @param nameCode the name code to be tested
+     * @return true if the name has a non-empty prefix
+     */
+    public static boolean isPrefixed(int nameCode) {
+        return (nameCode & 0x3ff00000) != 0;
+    }
+
+    /**
+     * Parse a Clark-format expanded name, returning the URI and local name
+     *
+     * @param expandedName the name in Clark notation, that is "localname" or
+     *                     "{uri}localName"
+     * @return an array of two strings, the URI and the local name respectively
+     */
+    public static String[] parseClarkName(String expandedName) {
+        String namespace;
+        String localName;
+        if (expandedName.charAt(0) == '{') {
+            int closeBrace = expandedName.indexOf('}');
+            if (closeBrace < 0) {
+                throw new IllegalArgumentException("No closing '}' in Clark name");
+            }
+            namespace = expandedName.substring(1, closeBrace);
+            if (closeBrace == expandedName.length()) {
+                throw new IllegalArgumentException("Missing local part in Clark name");
+            }
+            localName = expandedName.substring(closeBrace + 1);
+        } else {
+            namespace = "";
+            localName = expandedName;
+        }
+        return new String[]{namespace, localName};
+    }
+
+    /**
+     * Internal error: name not found in namepool (Usual cause is allocating a
+     * name code from one name pool and trying to find it in another)
+     *
+     * @param nameCode the absent name code
+     */
+    private static void unknownNameCode(int nameCode) {
+        throw new IllegalArgumentException("Unknown name code " + nameCode);
     }
 
     /**
@@ -379,23 +431,6 @@ public class NPEventListNamePool implements Serializable {
     }
 
     /**
-     * Search an array of shorts (e.g. prefix codes) for a given value
-     *
-     * @param codes the array to be searched
-     * @param value the value being sought
-     * @return the position of the first occurrence of the value in the array,
-     * or -1 if not found
-     */
-    private static int search(short[] codes, short value) {
-        for (int i = 0; i < codes.length; i++) {
-            if (codes[i] == value) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    /**
      * Get the namespace code allocated to a given namecode.
      *
      * @param namecode a code identifying an expanded QName, e.g. of an element or
@@ -424,49 +459,6 @@ public class NPEventListNamePool implements Serializable {
         int prefixIndex = (namecode >> 20) & 0x3ff;
         int prefixCode = getPrefixCodeWithIndex(uriCode, prefixIndex);
         return (prefixCode << 16) + uriCode;
-    }
-
-    public static short getStandardURICode(int fingerprint) {
-        int c = fingerprint >> 7;
-        switch (c) {
-            case 0:
-                return NULL_CODE;
-            case 1:
-                return XSLT_CODE;
-            case 2:
-                return SAXON_CODE;
-            case 3:
-                return XML_CODE;
-            case 4:
-                return SCHEMA_CODE;
-            case 5:
-                return XSI_CODE;
-            default:
-                return -1;
-        }
-    }
-
-    /**
-     * Get the prefix index from a namecode
-     *
-     * @param nameCode the name code
-     * @return the prefix index. A value of zero means the name is unprefixed
-     * (which in the case of an attribute, means that it is in the null
-     * namespace)
-     */
-    public static int getPrefixIndex(int nameCode) {
-        return (nameCode >> 20) & 0x3ff;
-    }
-
-    /**
-     * Determine whether a given namecode has a non-empty prefix (and therefore,
-     * in the case of attributes, whether the name is in a non-null namespace
-     *
-     * @param nameCode the name code to be tested
-     * @return true if the name has a non-empty prefix
-     */
-    public static boolean isPrefixed(int nameCode) {
-        return (nameCode & 0x3ff00000) != 0;
     }
 
     /**
@@ -890,43 +882,6 @@ public class NPEventListNamePool implements Serializable {
     }
 
     /**
-     * Parse a Clark-format expanded name, returning the URI and local name
-     *
-     * @param expandedName the name in Clark notation, that is "localname" or
-     *                     "{uri}localName"
-     * @return an array of two strings, the URI and the local name respectively
-     */
-    public static String[] parseClarkName(String expandedName) {
-        String namespace;
-        String localName;
-        if (expandedName.charAt(0) == '{') {
-            int closeBrace = expandedName.indexOf('}');
-            if (closeBrace < 0) {
-                throw new IllegalArgumentException("No closing '}' in Clark name");
-            }
-            namespace = expandedName.substring(1, closeBrace);
-            if (closeBrace == expandedName.length()) {
-                throw new IllegalArgumentException("Missing local part in Clark name");
-            }
-            localName = expandedName.substring(closeBrace + 1);
-        } else {
-            namespace = "";
-            localName = expandedName;
-        }
-        return new String[]{namespace, localName};
-    }
-
-    /**
-     * Internal error: name not found in namepool (Usual cause is allocating a
-     * name code from one name pool and trying to find it in another)
-     *
-     * @param nameCode the absent name code
-     */
-    private static void unknownNameCode(int nameCode) {
-        throw new IllegalArgumentException("Unknown name code " + nameCode);
-    }
-
-    /**
      * Get a fingerprint for the name with a given uri and local name. These
      * must be present in the NamePool. The fingerprint has the property that if
      * two fingerprint are the same, the names are the same (ie. same local name
@@ -1127,6 +1082,44 @@ public class NPEventListNamePool implements Serializable {
         }
         System.err.println("NamePool contents: " + entries + " entries in " + slots + " chains. " + +prefixesUsed
                 + " prefixes, " + urisUsed + " URIs");
+    }
+
+    /**
+     * Internal structure of a NameEntry, the entry on the hash chain of names.
+     */
+    private static class NameEntry implements Serializable {
+        private static final long serialVersionUID = 8411087666788132364L;
+
+        String localName;
+        short uriCode;
+        NameEntry nextEntry; // link to next NameEntry with the same hashcode
+
+        /**
+         * Create a NameEntry for a QName
+         *
+         * @param uriCode   the numeric code representing the namespace URI
+         * @param localName the local part of the QName
+         */
+        public NameEntry(short uriCode, String localName) {
+            this.uriCode = uriCode;
+            this.localName = localName.intern();
+            nextEntry = null;
+        }
+
+        /**
+         * Create a copy of a NameEntry, as well as the chain of NameEntries
+         * starting from this NameEntry
+         *
+         * @return the copy of the chain
+         */
+        public NameEntry copy() {
+            NameEntry n = new NameEntry(uriCode, localName);
+            if (nextEntry != null) {
+                n.nextEntry = nextEntry.copy();
+            }
+            return n;
+        }
+
     }
 
     /**

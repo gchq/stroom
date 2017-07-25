@@ -33,7 +33,7 @@ public class UploadDataAction extends Action<ResourceKey> {
     }
 
     public UploadDataAction(final ResourceKey resourceKey, final DocRef feed, final DocRef streamType,
-            final Long effectiveMs, final String metaData, final String fileName) {
+                            final Long effectiveMs, final String metaData, final String fileName) {
         this.key = resourceKey;
         this.feed = feed;
         this.streamType = streamType;

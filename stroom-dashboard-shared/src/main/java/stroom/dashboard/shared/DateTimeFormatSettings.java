@@ -26,7 +26,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "dateTimeFormatSettings", propOrder = { "pattern", "timeZone" })
+@XmlType(name = "dateTimeFormatSettings", propOrder = {"pattern", "timeZone"})
 public class DateTimeFormatSettings implements FormatSettings {
     public static final String DEFAULT_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
     private static final long serialVersionUID = 9145624653060319801L;

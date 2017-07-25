@@ -36,10 +36,10 @@ public class DashboardConfig implements SharedObject {
     @XmlElement(name = "parameters")
     private String parameters;
     @XmlElementWrapper(name = "components")
-    @XmlElements({ @XmlElement(name = "component", type = ComponentConfig.class) })
+    @XmlElements({@XmlElement(name = "component", type = ComponentConfig.class)})
     private List<ComponentConfig> components;
-    @XmlElements({ @XmlElement(name = "splitLayout", type = SplitLayoutConfig.class),
-            @XmlElement(name = "tabLayout", type = TabLayoutConfig.class) })
+    @XmlElements({@XmlElement(name = "splitLayout", type = SplitLayoutConfig.class),
+            @XmlElement(name = "tabLayout", type = TabLayoutConfig.class)})
     private LayoutConfig layout;
     @XmlElement(name = "tabVisibility")
     private TabVisibility tabVisibility = TabVisibility.SHOW_ALL;

@@ -60,6 +60,10 @@ public class SimpleExecutor {
         this.createStack = new RuntimeException();
     }
 
+    public static final void defaultShortSleep() {
+        ThreadUtil.sleep(THREAD_SLEEP_MS);
+    }
+
     /**
      * Submit a job
      */
@@ -128,8 +132,7 @@ public class SimpleExecutor {
     /**
      * Stop and wait for shutdown.
      *
-     * @param now
-     *            don't wait for pending jobs to start
+     * @param now don't wait for pending jobs to start
      */
     public void stop(boolean now) {
         if (now) {
@@ -169,9 +172,5 @@ public class SimpleExecutor {
     @Override
     public String toString() {
         return "SimpleExecutor(" + threadCount + ") progress=" + executorCompleteCount + "/" + executorSubmitCount;
-    }
-
-    public static final void defaultShortSleep() {
-        ThreadUtil.sleep(THREAD_SLEEP_MS);
     }
 }

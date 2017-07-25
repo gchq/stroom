@@ -27,16 +27,14 @@ import java.util.Set;
  * A set that on calling iterator you get back the items in a different round
  * robin order.
  *
- * @param <E>
- *            type of set
+ * @param <E> type of set
  */
-public class RoundRobinSet<E extends SharedObject> extends AbstractCollection<E>implements Set<E> {
+public class RoundRobinSet<E extends SharedObject> extends AbstractCollection<E> implements Set<E> {
     private ArrayList<E> realList = new ArrayList<E>();
     private int startCursor = 0;
 
     /**
      * @return if added
-     *
      * @see java.util.AbstractCollection#add(java.lang.Object)
      */
     @Override

@@ -32,15 +32,13 @@ import java.util.Map;
 public class Filters {
 
     private static final String MATCH_ALL_PATHS = "/*";
-
-    private MutableServletContextHandler servletContextHandler;
-
     final FilterHolder upgradeFilterHolder;
     final FilterHolder threadScopeContextFilterHolder;
     final FilterHolder rejectPostFilterHolder;
     final FilterHolder clusterCallCertificateRequiredFilterHolder;
     final FilterHolder exportCertificateRequiredFilterHolder;
     final FilterHolder shiroFilterHolder;
+    private MutableServletContextHandler servletContextHandler;
 
     public Filters(MutableServletContextHandler servletContextHandler) throws ClassNotFoundException {
         this.servletContextHandler = servletContextHandler;

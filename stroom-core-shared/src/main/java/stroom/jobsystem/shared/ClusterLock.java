@@ -29,15 +29,12 @@ import javax.persistence.UniqueConstraint;
  * This class controls the cluster-wide properties of a job.
  */
 @Entity
-@Table(name = "CLSTR_LK", uniqueConstraints = @UniqueConstraint(columnNames = { SQLNameConstants.NAME }) )
+@Table(name = "CLSTR_LK", uniqueConstraints = @UniqueConstraint(columnNames = {SQLNameConstants.NAME}))
 public class ClusterLock extends BaseEntitySmall {
-    private static final long serialVersionUID = -2692414627588961565L;
-
     public static final String TABLE_NAME = SQLNameConstants.CLUSTER + SEP + SQLNameConstants.LOCK;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-
     public static final String ENTITY_TYPE = "ClusterLock";
-
+    private static final long serialVersionUID = -2692414627588961565L;
     private String name;
 
     @Column(name = SQLNameConstants.NAME, nullable = false)

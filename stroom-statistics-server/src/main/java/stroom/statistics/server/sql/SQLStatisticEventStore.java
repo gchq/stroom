@@ -98,6 +98,11 @@ public class SQLStatisticEventStore implements Statistics {
             + "AND V." + SQLStatisticNames.TIME_MS + " < ?";
 
     // @formatter:on
+    private final StatisticStoreValidator statisticsDataSourceValidator;
+    private final StatisticStoreCache statisticsDataSourceCache;
+    private final SQLStatisticCache statisticCache;
+    private final DataSource statisticsDataSource;
+    private final StroomPropertyService propertyService;
     /**
      * SQL for testing querying the stat/tag names
      * <p>
@@ -118,13 +123,7 @@ public class SQLStatisticEventStore implements Statistics {
     private long poolAgeMsThreshold = DEFAULT_AGE_MS_THRESHOLD;
     private long aggregatorSizeThreshold = DEFAULT_SIZE_THRESHOLD;
     private int poolSize = DEFAULT_POOL_SIZE;
-
     private GenericObjectPool<SQLStatisticAggregateMap> objectPool;
-    private final StatisticStoreValidator statisticsDataSourceValidator;
-    private final StatisticStoreCache statisticsDataSourceCache;
-    private final SQLStatisticCache statisticCache;
-    private final DataSource statisticsDataSource;
-    private final StroomPropertyService propertyService;
 
     @Inject
     SQLStatisticEventStore(final StatisticStoreValidator statisticsDataSourceValidator,

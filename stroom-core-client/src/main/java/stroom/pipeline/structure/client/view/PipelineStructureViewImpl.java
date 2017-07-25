@@ -36,11 +36,7 @@ import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStructureUiHandlers>
         implements PipelineStructureView {
-    public interface Binder extends UiBinder<Widget, PipelineStructureViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField(provided = true)
     SvgButton add;
     @UiField(provided = true)
@@ -57,7 +53,6 @@ public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStruct
     ResizeSimplePanel pipelineReferences;
     @UiField
     Hyperlink viewSource;
-
     @Inject
     public PipelineStructureViewImpl(final Binder binder) {
         add = SvgButton.create(SvgPresets.ADD);
@@ -138,5 +133,8 @@ public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStruct
                 getUiHandlers().viewSource();
             }
         }
+    }
+
+    public interface Binder extends UiBinder<Widget, PipelineStructureViewImpl> {
     }
 }

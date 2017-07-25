@@ -131,8 +131,7 @@ public interface AppGinjector extends
         VisGinjector,
         VisualisationGinjector,
         WelcomeGinjector,
-        XMLSchemaGinjector
-{
+        XMLSchemaGinjector {
     // Default implementation of standard resources
     EventBus getEventBus();
 

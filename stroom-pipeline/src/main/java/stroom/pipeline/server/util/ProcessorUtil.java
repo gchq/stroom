@@ -34,8 +34,8 @@ import java.util.List;
 
 public class ProcessorUtil {
     public static void processCombined(final InputStream inputStream, final ErrorReceiverProxy errorReceiverProxy,
-            final XMLFilter filter, final LocationFactoryProxy locationFactory,
-            final ParserFactoryPool parserFactoryPool, final TextConverterService textConverterService) {
+                                       final XMLFilter filter, final LocationFactoryProxy locationFactory,
+                                       final ParserFactoryPool parserFactoryPool, final TextConverterService textConverterService) {
         final CombinedParser parser = new CombinedParser(errorReceiverProxy, locationFactory, parserFactoryPool,
                 textConverterService);
         doProcess(filter, inputStream, errorReceiverProxy, parser);
@@ -43,14 +43,14 @@ public class ProcessorUtil {
     }
 
     public static void processXml(final InputStream inputStream, final ErrorReceiverProxy errorReceiverProxy,
-            final XMLFilter filter, final LocationFactoryProxy locationFactory) {
+                                  final XMLFilter filter, final LocationFactoryProxy locationFactory) {
         final XMLParser parser = new XMLParser(errorReceiverProxy, locationFactory);
         doProcess(filter, inputStream, errorReceiverProxy, parser);
 
     }
 
     private static void doProcess(final Target target, final InputStream inputStream,
-            final ErrorReceiverProxy errorReceiverProxy, final AbstractParser parser) {
+                                  final ErrorReceiverProxy errorReceiverProxy, final AbstractParser parser) {
         final ProcessorFactory processorFactory = new SimpleProcessorFactory(errorReceiverProxy);
 
         parser.setTarget(target);

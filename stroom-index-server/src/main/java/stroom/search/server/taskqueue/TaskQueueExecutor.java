@@ -52,7 +52,7 @@ public class TaskQueueExecutor {
         }
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings({"unchecked", "rawtypes"})
     protected void execNextTask() {
         final int taskCount = currentlyExecuting.getAndIncrement();
         if (taskCount < concurrency) {

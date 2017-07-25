@@ -42,12 +42,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPOutputStream;
 
 public class BenchmarkDataFeed {
-    private static class DataFeedResult {
-        public int response;
-        public long time;
-        public String message;
-    }
-
+    private final AtomicInteger connectedCount = new AtomicInteger(0);
+    private final AtomicInteger sendingCount = new AtomicInteger(0);
+    private final AtomicLong sendSize = new AtomicLong(0);
     private String serverUrl = "http://somehost/stroom/datafeed";
     private String feed = "TEST_FEED";
     private String compression = "None";
@@ -55,15 +52,9 @@ public class BenchmarkDataFeed {
     private int batchSize = 10;
     private Long batchFileSize = 1000L;
     private int batchChunkedLength = -1;
-    private final AtomicInteger connectedCount = new AtomicInteger(0);
-    private final AtomicInteger sendingCount = new AtomicInteger(0);
-    private final AtomicLong sendSize = new AtomicLong(0);
-
     private ExecutorService threadPoolExecutor;
-
     private long batchStartTime;
     private long batchStopTime;
-
     private ConcurrentLinkedQueue<DataFeedResult> batchResults;
 
     public static void main(final String[] args) throws IOException {
@@ -404,5 +395,11 @@ public class BenchmarkDataFeed {
             statusConfig();
             statusBatch();
         }
+    }
+
+    private static class DataFeedResult {
+        public int response;
+        public long time;
+        public String message;
     }
 }

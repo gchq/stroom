@@ -32,16 +32,11 @@ import stroom.widget.button.client.SvgButton;
 
 public class IncludeExcludeEntityIdSetViewImpl extends ViewWithUiHandlers<IncludeExcludeEntityIdSetUiHandlers>
         implements IncludeExcludeEntityIdSetView {
-    public interface Binder extends UiBinder<Widget, IncludeExcludeEntityIdSetViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField(provided = true)
     SvgButton edit;
     @UiField
     ScrollPanel list;
-
     @Inject
     public IncludeExcludeEntityIdSetViewImpl(final Binder binder) {
         edit = SvgButton.create(SvgPresets.EDIT);
@@ -68,5 +63,8 @@ public class IncludeExcludeEntityIdSetViewImpl extends ViewWithUiHandlers<Includ
         if (getUiHandlers() != null) {
             getUiHandlers().onEdit();
         }
+    }
+
+    public interface Binder extends UiBinder<Widget, IncludeExcludeEntityIdSetViewImpl> {
     }
 }

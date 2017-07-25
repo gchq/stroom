@@ -197,11 +197,11 @@ public class TestStatisticsDataSource {
             statisticsDataSourceData.addStatisticField(new StatisticField(FIELD1));
 
             statisticsDataSourceData.addCustomRollUpMask(new CustomRollUpMask(Arrays.asList(0, 1, 2))); // fields
-                                                                                                        // 1,2,3
+            // 1,2,3
             statisticsDataSourceData.addCustomRollUpMask(new CustomRollUpMask(Arrays.asList(0, 1))); // fields
-                                                                                                        // 1,2
+            // 1,2
             statisticsDataSourceData.addCustomRollUpMask(new CustomRollUpMask(Arrays.asList(0))); // field
-                                                                                                    // 1
+            // 1
             statisticsDataSourceData.addCustomRollUpMask(new CustomRollUpMask(Collections.emptyList()));
         }
 

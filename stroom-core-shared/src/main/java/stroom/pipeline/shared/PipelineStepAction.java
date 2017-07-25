@@ -28,7 +28,9 @@ import java.util.Map.Entry;
 public class PipelineStepAction extends Action<SteppingResult> {
     private static final long serialVersionUID = 111359625573465578L;
 
-    /** This is what chooses the input to the translation. */
+    /**
+     * This is what chooses the input to the translation.
+     */
     private FindStreamCriteria criteria;
     private StreamType childStreamType;
     private StepLocation stepLocation;
@@ -87,8 +89,7 @@ public class PipelineStepAction extends Action<SteppingResult> {
     }
 
     /**
-     * @param stepType
-     *            the stepType to set.
+     * @param stepType the stepType to set.
      */
     public void setStepType(final StepType stepType) {
         this.stepType = stepType;

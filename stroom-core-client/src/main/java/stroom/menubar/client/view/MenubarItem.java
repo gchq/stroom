@@ -36,18 +36,12 @@ import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.widget.menu.client.presenter.MenuItemPresenter.MenuItemView;
 
 public class MenubarItem extends ViewImpl implements MenuItemView {
-    public interface Binder extends UiBinder<Widget, MenubarItem> {
-    }
-
     private final Widget widget;
-
-    private boolean enabled;
-
     @UiField
     SimplePanel background;
     @UiField
     Label text;
-
+    private boolean enabled;
     @Inject
     public MenubarItem(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -105,5 +99,8 @@ public class MenubarItem extends ViewImpl implements MenuItemView {
     @Override
     public void fireEvent(final GwtEvent<?> event) {
         widget.fireEvent(event);
+    }
+
+    public interface Binder extends UiBinder<Widget, MenubarItem> {
     }
 }

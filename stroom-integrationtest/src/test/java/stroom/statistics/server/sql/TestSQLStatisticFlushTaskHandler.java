@@ -37,18 +37,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestSQLStatisticFlushTaskHandler.class);
     @Resource
     private DataSource statisticsDataSource;
     @Resource
     private SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService;
-
     @Resource
     private SQLStatisticAggregationManager sqlStatisticAggregationManager;
-
     @Resource
     private StroomDatabaseInfo stroomDatabaseInfo;
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestSQLStatisticFlushTaskHandler.class);
 
     @Test(expected = StatisticsEventValidationException.class)
     public void testExec_tenGoodRowsTwoBad() throws Exception {

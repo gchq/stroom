@@ -29,7 +29,7 @@ import stroom.xml.event.np.NPEventList;
 public class Lookup extends AbstractLookup {
     @Override
     protected Sequence doLookup(final XPathContext context, final String map, final String key, final long eventTime,
-            final boolean ignoreWarnings, final StringBuilder lookupIdentifier) throws XPathException {
+                                final boolean ignoreWarnings, final StringBuilder lookupIdentifier) throws XPathException {
         final SequenceMaker sequenceMaker = new SequenceMaker(context);
         final NPEventList eventList = (NPEventList) getReferenceData(map, key, eventTime, lookupIdentifier);
         if (eventList != null) {

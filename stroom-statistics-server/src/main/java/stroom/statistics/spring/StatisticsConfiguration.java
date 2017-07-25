@@ -41,7 +41,7 @@ import java.sql.Statement;
 }, excludeFilters = {
         // Exclude other configurations that might be found accidentally during
         // a component scan as configurations should be specified explicitly.
-        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class), })
+        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
 public class StatisticsConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsConfiguration.class);
 

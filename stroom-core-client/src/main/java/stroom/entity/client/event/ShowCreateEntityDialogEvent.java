@@ -27,6 +27,7 @@ public class ShowCreateEntityDialogEvent extends GwtEvent<ShowCreateEntityDialog
     private final String entityType;
     private final String entityDisplayType;
     private final boolean allowNullFolder;
+
     private ShowCreateEntityDialogEvent(final ExplorerData selected, final String entityType, final String entityDisplayType, final boolean allowNullFolder) {
         this.selected = selected;
         this.entityType = entityType;

@@ -20,28 +20,33 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class DataSelectionEvent<I> extends GwtEvent<DataSelectionEvent.DataSelectionHandler<I>> {
-    public interface DataSelectionHandler<I> extends EventHandler {
-        void onSelection(DataSelectionEvent<I> event);
-    }
-
     /**
      * Handler type.
      */
     private static Type<DataSelectionHandler<?>> TYPE;
+    private final I selectedItem;
+    private final boolean doubleSelect;
+
+    /**
+     * Creates a new selection event.
+     *
+     * @param selectedItem selected item
+     */
+    private DataSelectionEvent(final I selectedItem, final boolean doubleSelect) {
+        this.selectedItem = selectedItem;
+        this.doubleSelect = doubleSelect;
+    }
 
     /**
      * Fires a selection event on all registered handlers in the handler
      * manager.If no such handlers exist, this method will do nothing.
      *
-     * @param <I>
-     *            the selected item type
-     * @param source
-     *            the source of the handlers
-     * @param selectedItem
-     *            the selected item
+     * @param <I>          the selected item type
+     * @param source       the source of the handlers
+     * @param selectedItem the selected item
      */
     public static <I> void fire(final HasDataSelectionHandlers<I> source, final I selectedItem,
-            final boolean doubleSelect) {
+                                final boolean doubleSelect) {
         if (TYPE != null) {
             final DataSelectionEvent<I> event = new DataSelectionEvent<>(selectedItem, doubleSelect);
             source.fireEvent(event);
@@ -60,23 +65,9 @@ public class DataSelectionEvent<I> extends GwtEvent<DataSelectionEvent.DataSelec
         return TYPE;
     }
 
-    private final I selectedItem;
-    private final boolean doubleSelect;
-
-    /**
-     * Creates a new selection event.
-     *
-     * @param selectedItem
-     *            selected item
-     */
-    private DataSelectionEvent(final I selectedItem, final boolean doubleSelect) {
-        this.selectedItem = selectedItem;
-        this.doubleSelect = doubleSelect;
-    }
-
     // The instance knows its BeforeSelectionHandler is of type I, but the TYPE
     // field itself does not, so we have to do an unsafe cast here.
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings({"unchecked", "rawtypes"})
     @Override
     public final Type<DataSelectionHandler<I>> getAssociatedType() {
         return (Type) TYPE;
@@ -102,5 +93,9 @@ public class DataSelectionEvent<I> extends GwtEvent<DataSelectionEvent.DataSelec
     @Override
     protected void dispatch(final DataSelectionHandler<I> handler) {
         handler.onSelection(this);
+    }
+
+    public interface DataSelectionHandler<I> extends EventHandler {
+        void onSelection(DataSelectionEvent<I> event);
     }
 }

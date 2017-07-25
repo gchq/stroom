@@ -24,12 +24,14 @@ import java.util.List;
 public abstract class AbstractExplorerTree extends Composite {
     /**
      * Called by the model after refresh to select the initial item.
+     *
      * @param selection
      */
     abstract void setInitialSelectedItem(ExplorerData selection);
 
     /**
      * Called by the model on refresh to set data.
+     *
      * @param rows
      */
     abstract void setData(List<ExplorerData> rows);

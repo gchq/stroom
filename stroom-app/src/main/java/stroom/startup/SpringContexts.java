@@ -35,7 +35,7 @@ public class SpringContexts {
         // We don't need to register @Configuration classes here because they're loaded in SpringContexts.newUpgradeDispatcherServlet(...)
     }
 
-    public void start(Environment environment, Config configuration){
+    public void start(Environment environment, Config configuration) {
         // We need to set the servlet context otherwise there will be no default servlet handling.
         applicationContext.setServletContext(environment.getApplicationContext().getServletContext());
 

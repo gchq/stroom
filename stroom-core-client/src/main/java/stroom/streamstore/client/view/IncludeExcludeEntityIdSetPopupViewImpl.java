@@ -26,16 +26,11 @@ import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.streamstore.client.presenter.IncludeExcludeEntityIdSetPopupPresenter.IncludeExcludeEntityIdSetPopupView;
 
 public class IncludeExcludeEntityIdSetPopupViewImpl extends ViewImpl implements IncludeExcludeEntityIdSetPopupView {
-    public interface Binder extends UiBinder<Widget, IncludeExcludeEntityIdSetPopupViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     FlowPanel includes;
     @UiField
     FlowPanel excludes;
-
     @Inject
     public IncludeExcludeEntityIdSetPopupViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -58,5 +53,8 @@ public class IncludeExcludeEntityIdSetPopupViewImpl extends ViewImpl implements 
         final Widget w = view.asWidget();
         w.setSize("100%", "100%");
         excludes.add(w);
+    }
+
+    public interface Binder extends UiBinder<Widget, IncludeExcludeEntityIdSetPopupViewImpl> {
     }
 }

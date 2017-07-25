@@ -59,18 +59,13 @@ public abstract class AbstractParser implements XMLReader {
     }
 
     @Override
-    public void setDTDHandler(final DTDHandler handler) {
-        // Not implemented.
-    }
-
-    @Override
     public DTDHandler getDTDHandler() {
         // Not implemented.
         return null;
     }
 
     @Override
-    public void setEntityResolver(final EntityResolver resolver) {
+    public void setDTDHandler(final DTDHandler handler) {
         // Not implemented.
     }
 
@@ -81,13 +76,18 @@ public abstract class AbstractParser implements XMLReader {
     }
 
     @Override
-    public void setErrorHandler(final ErrorHandler handler) {
-        errorHandler = handler;
+    public void setEntityResolver(final EntityResolver resolver) {
+        // Not implemented.
     }
 
     @Override
     public ErrorHandler getErrorHandler() {
         return errorHandler;
+    }
+
+    @Override
+    public void setErrorHandler(final ErrorHandler handler) {
+        errorHandler = handler;
     }
 
     @Override

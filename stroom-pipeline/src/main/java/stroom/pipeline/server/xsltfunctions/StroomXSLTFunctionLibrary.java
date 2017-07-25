@@ -39,49 +39,49 @@ public class StroomXSLTFunctionLibrary {
         this.config = config;
         try {
             register("bitmap-lookup",
-                    BitmapLookup.class, 2, 4, new SequenceType[] { SequenceType.SINGLE_STRING,
-                            SequenceType.SINGLE_STRING, SequenceType.OPTIONAL_STRING, SequenceType.OPTIONAL_BOOLEAN },
+                    BitmapLookup.class, 2, 4, new SequenceType[]{SequenceType.SINGLE_STRING,
+                            SequenceType.SINGLE_STRING, SequenceType.OPTIONAL_STRING, SequenceType.OPTIONAL_BOOLEAN},
                     SequenceType.NODE_SEQUENCE);
-            register("classification", Classification.class, 0, 0, new SequenceType[] {}, SequenceType.SINGLE_STRING);
-            register("current-time", CurrentTime.class, 0, 0, new SequenceType[] {}, SequenceType.SINGLE_STRING);
-            register("current-user", CurrentUser.class, 0, 0, new SequenceType[] {}, SequenceType.SINGLE_STRING);
-            register("dictionary", Dictionary.class, 1, 1, new SequenceType[] { SequenceType.SINGLE_STRING },
+            register("classification", Classification.class, 0, 0, new SequenceType[]{}, SequenceType.SINGLE_STRING);
+            register("current-time", CurrentTime.class, 0, 0, new SequenceType[]{}, SequenceType.SINGLE_STRING);
+            register("current-user", CurrentUser.class, 0, 0, new SequenceType[]{}, SequenceType.SINGLE_STRING);
+            register("dictionary", Dictionary.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING},
                     SequenceType.OPTIONAL_STRING);
 
             // TODO : Deprecate
-            register("feed-attribute", Meta.class, 1, 1, new SequenceType[] { SequenceType.SINGLE_STRING },
+            register("feed-attribute", Meta.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING},
                     SequenceType.OPTIONAL_STRING);
 
-            register("feed-name", FeedName.class, 0, 0, new SequenceType[] {}, SequenceType.SINGLE_STRING);
+            register("feed-name", FeedName.class, 0, 0, new SequenceType[]{}, SequenceType.SINGLE_STRING);
             register("format-date", FormatDate.class, 1, 5,
-                    new SequenceType[] { SequenceType.SINGLE_STRING, SequenceType.OPTIONAL_STRING,
-                            SequenceType.OPTIONAL_STRING, SequenceType.OPTIONAL_STRING, SequenceType.OPTIONAL_STRING },
+                    new SequenceType[]{SequenceType.SINGLE_STRING, SequenceType.OPTIONAL_STRING,
+                            SequenceType.OPTIONAL_STRING, SequenceType.OPTIONAL_STRING, SequenceType.OPTIONAL_STRING},
                     SequenceType.SINGLE_STRING);
-            register("get", Get.class, 1, 1, new SequenceType[] { SequenceType.SINGLE_STRING },
+            register("get", Get.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING},
                     SequenceType.OPTIONAL_STRING);
-            register("json-to-xml", JsonToXml.class, 1, 1, new SequenceType[] { SequenceType.SINGLE_STRING },
+            register("json-to-xml", JsonToXml.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING},
                     SequenceType.NODE_SEQUENCE);
             register("log", Log.class, 2, 2,
-                    new SequenceType[] { SequenceType.SINGLE_STRING, SequenceType.SINGLE_STRING },
+                    new SequenceType[]{SequenceType.SINGLE_STRING, SequenceType.SINGLE_STRING},
                     SequenceType.EMPTY_SEQUENCE);
             register(
-                    "lookup", Lookup.class, 2, 4, new SequenceType[] { SequenceType.SINGLE_STRING,
-                            SequenceType.SINGLE_STRING, SequenceType.OPTIONAL_STRING, SequenceType.OPTIONAL_BOOLEAN },
+                    "lookup", Lookup.class, 2, 4, new SequenceType[]{SequenceType.SINGLE_STRING,
+                            SequenceType.SINGLE_STRING, SequenceType.OPTIONAL_STRING, SequenceType.OPTIONAL_BOOLEAN},
                     SequenceType.NODE_SEQUENCE);
-            register("meta", Meta.class, 1, 1, new SequenceType[] { SequenceType.SINGLE_STRING },
+            register("meta", Meta.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING},
                     SequenceType.OPTIONAL_STRING);
-            register("numeric-ip", NumericIP.class, 1, 1, new SequenceType[] { SequenceType.SINGLE_STRING },
+            register("numeric-ip", NumericIP.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING},
                     SequenceType.SINGLE_STRING);
-            register("random", Random.class, 0, 0, new SequenceType[] {}, SequenceType.SINGLE_DOUBLE);
-            register("search-id", SearchId.class, 0, 0, new SequenceType[] {}, SequenceType.SINGLE_STRING);
-            register("stream-id", StreamId.class, 0, 0, new SequenceType[] {}, SequenceType.SINGLE_STRING);
-            register("hex-to-dec", HexToDec.class, 1, 1, new SequenceType[] { SequenceType.SINGLE_STRING },
+            register("random", Random.class, 0, 0, new SequenceType[]{}, SequenceType.SINGLE_DOUBLE);
+            register("search-id", SearchId.class, 0, 0, new SequenceType[]{}, SequenceType.SINGLE_STRING);
+            register("stream-id", StreamId.class, 0, 0, new SequenceType[]{}, SequenceType.SINGLE_STRING);
+            register("hex-to-dec", HexToDec.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING},
                     SequenceType.SINGLE_STRING);
-            register("hex-to-oct", HexToOct.class, 1, 1, new SequenceType[] { SequenceType.SINGLE_STRING },
+            register("hex-to-oct", HexToOct.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING},
                     SequenceType.SINGLE_STRING);
-            register("pipeline-name", PipelineName.class, 0, 0, new SequenceType[] {}, SequenceType.SINGLE_STRING);
+            register("pipeline-name", PipelineName.class, 0, 0, new SequenceType[]{}, SequenceType.SINGLE_STRING);
             register("put", Put.class, 2, 2,
-                    new SequenceType[] { SequenceType.SINGLE_STRING, SequenceType.SINGLE_STRING },
+                    new SequenceType[]{SequenceType.SINGLE_STRING, SequenceType.SINGLE_STRING},
                     SequenceType.EMPTY_SEQUENCE);
 
         } catch (final XPathException e) {
@@ -91,7 +91,7 @@ public class StroomXSLTFunctionLibrary {
 
     private <T extends StroomExtensionFunctionCall> void register(final String functionName, final Class<T> clazz,
                                                                   final int minArgs, final int maxArgs, final SequenceType[] argTypes, final SequenceType resultType)
-                    throws XPathException {
+            throws XPathException {
         final DelegateExtensionFunctionDefinition function = new DelegateExtensionFunctionDefinition(this, functionName,
                 minArgs, maxArgs, argTypes, resultType, clazz);
 

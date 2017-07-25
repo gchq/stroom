@@ -44,6 +44,29 @@ public class TestSearchRequestMapper {
     @InjectMocks
     private SearchRequestMapper searchRequestMapper;
 
+    private static void verify_Search_to_Query_mapping(Search search, Query query) {
+        assertThat(search.getDataSourceRef(), equalTo(query.getDataSource()));
+        assertThat(search.getExpression(), equalTo(query.getExpression()));
+        assertThat(search.getParamMap().size(), equalTo(query.getParams().size()));
+        assertThat(search.getParamMap().get("param1"), equalTo(query.getParams().get(0).getValue())); // 'param1' is the key from SearchRequestTestData.dashboardSearchRequest()
+    }
+
+    private static void verify_ComponentResultRequest_to_ResultRequest_mappings(
+            Map<String, ComponentResultRequest> componentResultRequestMap,
+            List<ResultRequest> resultRequests) {
+
+        assertThat(componentResultRequestMap.size(), equalTo(resultRequests.size()));
+        assertThat("componentSettingsMapKey", equalTo(resultRequests.get(0).getComponentId()));
+        assertThat(componentResultRequestMap.get("componentSettingsMapKey").wantsData(), equalTo(resultRequests.get(0).getFetchData()));
+
+        TableResultRequest tableResultRequest = ((TableResultRequest) componentResultRequestMap.get("componentSettingsMapKey"));
+        ResultRequest resultRequest = resultRequests.get(0);
+        assertThat(tableResultRequest.getRequestedRange().getOffset().toString(), equalTo(resultRequest.getRequestedRange().getOffset().toString()));
+        assertThat(tableResultRequest.getRequestedRange().getLength().toString(), equalTo(resultRequest.getRequestedRange().getLength().toString()));
+        assertThat(tableResultRequest.getOpenGroups(), equalTo(resultRequest.getOpenGroups())); // No test data for this at the moment
+        //TODO many more properties to check
+    }
+
     @Test
     public void testSearchRequestMapper() {
         // Given
@@ -59,29 +82,6 @@ public class TestSearchRequestMapper {
         verify_ComponentResultRequest_to_ResultRequest_mappings(
                 dashboardSearchRequest.getComponentResultRequests(),
                 mappedApiSearchRequest.getResultRequests());
-        //TODO many more properties to check
-    }
-
-    private static void verify_Search_to_Query_mapping(Search search, Query query){
-        assertThat(search.getDataSourceRef(), equalTo(query.getDataSource()));
-        assertThat(search.getExpression(), equalTo(query.getExpression()));
-        assertThat(search.getParamMap().size(), equalTo(query.getParams().size()));
-        assertThat(search.getParamMap().get("param1"), equalTo(query.getParams().get(0).getValue())); // 'param1' is the key from SearchRequestTestData.dashboardSearchRequest()
-    }
-
-    private static void verify_ComponentResultRequest_to_ResultRequest_mappings(
-            Map<String, ComponentResultRequest> componentResultRequestMap,
-            List<ResultRequest> resultRequests){
-
-        assertThat(componentResultRequestMap.size(), equalTo(resultRequests.size()));
-        assertThat("componentSettingsMapKey", equalTo(resultRequests.get(0).getComponentId()));
-        assertThat(componentResultRequestMap.get("componentSettingsMapKey").wantsData(), equalTo(resultRequests.get(0).getFetchData()));
-
-        TableResultRequest tableResultRequest = ((TableResultRequest)componentResultRequestMap.get("componentSettingsMapKey"));
-        ResultRequest resultRequest = resultRequests.get(0);
-        assertThat(tableResultRequest.getRequestedRange().getOffset().toString(), equalTo(resultRequest.getRequestedRange().getOffset().toString()));
-        assertThat(tableResultRequest.getRequestedRange().getLength().toString(), equalTo(resultRequest.getRequestedRange().getLength().toString()));
-        assertThat(tableResultRequest.getOpenGroups(), equalTo(resultRequest.getOpenGroups())); // No test data for this at the moment
         //TODO many more properties to check
     }
 

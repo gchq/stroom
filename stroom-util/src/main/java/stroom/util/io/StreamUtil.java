@@ -46,6 +46,7 @@ public final class StreamUtil {
     public static final Charset DEFAULT_CHARSET = Charset.forName(DEFAULT_CHARSET_NAME);
     public static final Locale DEFAULT_LOCALE = Locale.ENGLISH;
     private static final ByteSlice ZERO_BYTES = new ByteSlice(new byte[0]);
+
     private StreamUtil() {
         // NA Utility
     }

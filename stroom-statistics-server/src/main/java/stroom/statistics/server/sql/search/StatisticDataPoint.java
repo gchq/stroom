@@ -41,45 +41,37 @@ public class StatisticDataPoint {
     private final StatisticType statisticType;
     private final Map<String, String> tagToValueMap;
 
-    /**
-     * Constructor for a value type statistic data point
-     *
-     * @param timeMs
-     *            The timestamp of the aggregated data point
-     * @param tags
-     *            The list of tav/value pairs that qualify the data point
-     * @param value
-     *            The mean value of the data point in this time period
-     * @param count
-     *            The count of the number of statistic events that have happened
-     *            in this period
-     * @param minValue
-     *            The min value in this time period
-     * @param maxValue
-     *            The max value in this time period
-     * @return A populated {@link StatisticDataPoint} instance
-     */
-    public static StatisticDataPoint valueInstance(final long timeMs, final long precisionMs,
-            final List<StatisticTag> tags, final double value, final long count, final double minValue,
-            final double maxValue) {
-        return new StatisticDataPoint(timeMs, precisionMs, tags, count, value, minValue, maxValue, StatisticType.VALUE);
+    private StatisticDataPoint(final long timeMs, final long precisionMs, final List<StatisticTag> tags,
+                               final Long count, final Double value, final double minValue, final double maxValue,
+                               StatisticType statisticType) {
+        this.timeMs = timeMs;
+        this.precisionMs = precisionMs;
+        this.tags = tags == null ? Collections.emptyList() : tags;
+        this.count = count;
+        this.value = value;
+        this.minValue = minValue;
+        this.maxValue = maxValue;
+        this.statisticType = statisticType;
+        this.tagToValueMap = new HashMap<>();
+        this.tags.forEach(statisticTag -> tagToValueMap.put(statisticTag.getTag(), statisticTag.getValue()));
     }
 
     /**
-     * Constructor for a count type statistic data point
+     * Constructor for a value type statistic data point
      *
-     * @param timeMs
-     *            The timestamp of the aggregated data point
-     * @param tags
-     *            The list of tav/value pairs that qualify the data point
-     * @param count
-     *            The count of the number of statistic events that have happened
-     *            in this period
+     * @param timeMs   The timestamp of the aggregated data point
+     * @param tags     The list of tav/value pairs that qualify the data point
+     * @param value    The mean value of the data point in this time period
+     * @param count    The count of the number of statistic events that have happened
+     *                 in this period
+     * @param minValue The min value in this time period
+     * @param maxValue The max value in this time period
      * @return A populated {@link StatisticDataPoint} instance
      */
-    public static StatisticDataPoint countInstance(final long timeMs, final long precisionMs,
-            final List<StatisticTag> tags, final long count) {
-        return new StatisticDataPoint(timeMs, precisionMs, tags, count, 0D, 0, 0, StatisticType.COUNT);
+    public static StatisticDataPoint valueInstance(final long timeMs, final long precisionMs,
+                                                   final List<StatisticTag> tags, final double value, final long count, final double minValue,
+                                                   final double maxValue) {
+        return new StatisticDataPoint(timeMs, precisionMs, tags, count, value, minValue, maxValue, StatisticType.VALUE);
     }
 
     // private StatisticDataPoint() {
@@ -91,19 +83,18 @@ public class StatisticDataPoint {
     // this.maxValue = 0;
     // }
 
-    private StatisticDataPoint(final long timeMs, final long precisionMs, final List<StatisticTag> tags,
-            final Long count, final Double value, final double minValue, final double maxValue,
-            StatisticType statisticType) {
-        this.timeMs = timeMs;
-        this.precisionMs = precisionMs;
-        this.tags = tags == null ? Collections.emptyList() : tags;
-        this.count = count;
-        this.value = value;
-        this.minValue = minValue;
-        this.maxValue = maxValue;
-        this.statisticType = statisticType;
-        this.tagToValueMap = new HashMap<>();
-            this.tags.forEach(statisticTag -> tagToValueMap.put(statisticTag.getTag(), statisticTag.getValue()));
+    /**
+     * Constructor for a count type statistic data point
+     *
+     * @param timeMs The timestamp of the aggregated data point
+     * @param tags   The list of tav/value pairs that qualify the data point
+     * @param count  The count of the number of statistic events that have happened
+     *               in this period
+     * @return A populated {@link StatisticDataPoint} instance
+     */
+    public static StatisticDataPoint countInstance(final long timeMs, final long precisionMs,
+                                                   final List<StatisticTag> tags, final long count) {
+        return new StatisticDataPoint(timeMs, precisionMs, tags, count, 0D, 0, 0, StatisticType.COUNT);
     }
 
     public long getTimeMs() {

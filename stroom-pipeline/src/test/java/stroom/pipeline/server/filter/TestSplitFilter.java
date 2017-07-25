@@ -124,7 +124,7 @@ public class TestSplitFilter extends StroomUnitTest {
     }
 
     private void testXMLSplitter(final int splitDepth, final int splitCount, final String inputPath,
-            final String expectedXml, final String expectedSax) throws Exception {
+                                 final String expectedXml, final String expectedSax) throws Exception {
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
         final SplitFilter splitter = new SplitFilter();

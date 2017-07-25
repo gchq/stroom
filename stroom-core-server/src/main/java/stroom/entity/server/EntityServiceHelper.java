@@ -68,7 +68,7 @@ public class EntityServiceHelper<E extends Entity> {
         }
 
         if (entity instanceof HasId) {
-            return loadById(((HasId)entity).getId(), fetchSet);
+            return loadById(((HasId) entity).getId(), fetchSet);
         }
         if (entity instanceof HasUuid) {
             return loadByUuid(((HasUuid) entity).getUuid(), fetchSet);

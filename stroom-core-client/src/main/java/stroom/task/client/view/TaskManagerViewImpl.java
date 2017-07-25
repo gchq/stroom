@@ -26,11 +26,7 @@ import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.task.client.presenter.TaskManagerPresenter.TaskManagerView;
 
 public class TaskManagerViewImpl extends ViewImpl implements TaskManagerView {
-    public interface Binder extends UiBinder<Widget, TaskManagerViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     FlowPanel taskList;
 
@@ -52,5 +48,8 @@ public class TaskManagerViewImpl extends ViewImpl implements TaskManagerView {
     @Override
     public void removeTask(View task) {
         taskList.remove(task.asWidget());
+    }
+
+    public interface Binder extends UiBinder<Widget, TaskManagerViewImpl> {
     }
 }

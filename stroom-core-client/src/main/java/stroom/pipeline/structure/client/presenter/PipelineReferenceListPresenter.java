@@ -60,31 +60,22 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
         implements HasDirtyHandlers {
 //    private final MySingleSelectionModel<PipelineReference> selectionModel;
 
-    private enum State {
-        INHERITED, ADDED, REMOVED
-    }
-
     private static final SafeHtml ADDED = SafeHtmlUtils.fromSafeConstant("<div style=\"font-weight:500\">");
     private static final SafeHtml REMOVED = SafeHtmlUtils
             .fromSafeConstant("<div style=\"font-weight:500;text-decoration:line-through\">");
     private static final SafeHtml INHERITED = SafeHtmlUtils.fromSafeConstant("<div style=\"color:black\">");
     private static final SafeHtml END = SafeHtmlUtils.fromSafeConstant("</div>");
-
     private final ButtonView addButton;
     private final ButtonView editButton;
     private final ButtonView removeButton;
-
+    private final Map<PipelineReference, State> referenceStateMap = new HashMap<PipelineReference, State>();
+    private final List<PipelineReference> references = new ArrayList<PipelineReference>();
+    private final Provider<NewPipelineReferencePresenter> newPipelineReferencePresenter;
     private Map<PipelineElementType, Map<String, PipelinePropertyType>> allPropertyTypes;
     private PipelineEntity pipeline;
     private PipelineModel pipelineModel;
-
     private PipelineElement currentElement;
-    private final Map<PipelineReference, State> referenceStateMap = new HashMap<PipelineReference, State>();
-    private final List<PipelineReference> references = new ArrayList<PipelineReference>();
-
-    private final Provider<NewPipelineReferencePresenter> newPipelineReferencePresenter;
     private PipelinePropertyType propertyType;
-
     @Inject
     public PipelineReferenceListPresenter(final EventBus eventBus,
                                           final Provider<NewPipelineReferencePresenter> newPipelineReferencePresenter) {
@@ -420,5 +411,9 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
     @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
+    }
+
+    private enum State {
+        INHERITED, ADDED, REMOVED
     }
 }

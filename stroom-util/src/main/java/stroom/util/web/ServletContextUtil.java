@@ -35,9 +35,9 @@ public class ServletContextUtil {
         final String fullPathUnavailableMessage = "[Full path is not available]";
         String fullPath = null;
         // Servlet context might not yet be loaded
-        if(servletContext != null) {
+        if (servletContext != null) {
             fullPath = servletContext.getRealPath(".");
-            if(fullPath != null) {
+            if (fullPath != null) {
                 final String[] parts = fullPath.split("/");
 
                 if (WEBAPP.equals(parts[parts.length - 1])) {
@@ -45,12 +45,10 @@ public class ServletContextUtil {
                 }
 
                 return parts[parts.length - 2];
-            }
-            else {
+            } else {
                 return fullPathUnavailableMessage;
             }
-        }
-        else {
+        } else {
             return fullPathUnavailableMessage;
         }
 

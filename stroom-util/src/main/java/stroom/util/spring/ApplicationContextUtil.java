@@ -24,7 +24,7 @@ import java.util.List;
 
 public class ApplicationContextUtil {
     public static final List<String> getBeanNamesWithAnnotation(final ApplicationContext applicationContext,
-            final Class<? extends Annotation> annotationType) {
+                                                                final Class<? extends Annotation> annotationType) {
         final List<String> rtnList = new ArrayList<String>();
         final String[] allBeans = applicationContext.getBeanDefinitionNames();
 

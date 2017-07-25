@@ -16,13 +16,13 @@ public class TestInternalStatisticDocRefCache {
     private static final String type1 = "myType1";
     private static final String uuid1 = UUID.randomUUID().toString();
     private static final String name1 = "myStatName";
-    private static final String docRefStr1 = String.format("docRef(%s,%s,%s)",type1, uuid1, name1);
+    private static final String docRefStr1 = String.format("docRef(%s,%s,%s)", type1, uuid1, name1);
     private static final DocRef expectedDocRef1 = new DocRef(type1, uuid1, name1);
 
     private static final String type2 = "myType2";
     private static final String uuid2 = UUID.randomUUID().toString();
     private static final String name2 = "myStatName2";
-    private static final String docRefStr2 = String.format("docRef(%s,%s,%s)",type2, uuid2, name2);
+    private static final String docRefStr2 = String.format("docRef(%s,%s,%s)", type2, uuid2, name2);
     private static final DocRef expectedDocRef2 = new DocRef(type2, uuid2, name2);
 
     @Test

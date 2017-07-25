@@ -33,17 +33,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class TickList<T extends TickBox> extends Composite implements HasSelectionHandlers<Set<T>> {
-    public interface Binder extends UiBinder<Widget, TickList<?>> {
-    }
-
+    private final Set<T> items = new HashSet<T>();
     @UiField
     FlowPanel list;
-
-    private final Set<T> items = new HashSet<T>();
     // If we are set with selected items before we have populated our list then
     // remember them and reselect them once we have filled the list.
     private Set<T> itemsToSelectOncePopulated = null;
-
     @Inject
     public TickList(final Binder binder) {
         initWidget(binder.createAndBindUi(this));
@@ -127,5 +122,8 @@ public class TickList<T extends TickBox> extends Composite implements HasSelecti
 
     public Set<T> getItems() {
         return items;
+    }
+
+    public interface Binder extends UiBinder<Widget, TickList<?>> {
     }
 }

@@ -24,17 +24,6 @@ import com.google.gwt.user.client.DOM;
 import stroom.widget.tab.client.presenter.TabData;
 
 public class LinkTabBar extends AbstractTabBar {
-    public interface Style extends CssResource {
-        String linkTabBar();
-
-        String separator();
-    }
-
-    public interface Resources extends ClientBundle {
-        @Source("LinkTabBar.css")
-        Style style();
-    }
-
     private static Resources resources;
     private final Element element;
 
@@ -66,5 +55,16 @@ public class LinkTabBar extends AbstractTabBar {
         separator.setClassName(resources.style().separator());
         separator.setInnerText("|");
         return separator;
+    }
+
+    public interface Style extends CssResource {
+        String linkTabBar();
+
+        String separator();
+    }
+
+    public interface Resources extends ClientBundle {
+        @Source("LinkTabBar.css")
+        Style style();
     }
 }

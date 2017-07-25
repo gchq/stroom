@@ -28,30 +28,16 @@ import stroom.security.client.ClientSecurityContext;
 public class PipelineSettingsPresenter
         extends EntitySettingsPresenter<PipelineSettingsPresenter.PipelineSettingsView, PipelineEntity>
         implements PipelineSettingsUiHandlers {
-    public interface PipelineSettingsView extends View, HasUiHandlers<PipelineSettingsUiHandlers> {
-        String getDescription();
-
-        void setDescription(String description);
-
-        void clearTypes();
-
-        void addType(PipelineEntity.PipelineType type);
-
-        PipelineEntity.PipelineType getType();
-
-        void setType(PipelineEntity.PipelineType type);
+    @Inject
+    public PipelineSettingsPresenter(final EventBus eventBus, final PipelineSettingsView view,
+                                     final ClientSecurityContext securityContext) {
+        super(eventBus, view, securityContext);
+        view.setUiHandlers(this);
     }
 
     @Override
     public String getType() {
         return PipelineEntity.ENTITY_TYPE;
-    }
-
-    @Inject
-    public PipelineSettingsPresenter(final EventBus eventBus, final PipelineSettingsView view,
-            final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
-        view.setUiHandlers(this);
     }
 
     @Override
@@ -85,5 +71,19 @@ public class PipelineSettingsPresenter
             pipelineEntity.setDescription(getView().getDescription().trim());
             setDirty(true);
         }
+    }
+
+    public interface PipelineSettingsView extends View, HasUiHandlers<PipelineSettingsUiHandlers> {
+        String getDescription();
+
+        void setDescription(String description);
+
+        void clearTypes();
+
+        void addType(PipelineEntity.PipelineType type);
+
+        PipelineEntity.PipelineType getType();
+
+        void setType(PipelineEntity.PipelineType type);
     }
 }

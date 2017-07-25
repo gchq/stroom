@@ -43,10 +43,9 @@ public class FilterTermsTreeBuilder {
      * {@link ExpressionItem} tree are not supported so it may throw a
      * {@link RuntimeException}.
      *
-     * @param rootItem
-     *            The {@link ExpressionItem} object that is the root of the tree
+     * @param rootItem The {@link ExpressionItem} object that is the root of the tree
      * @return A {@link FilterTermsTree} object containing a tree of
-     *         {@link PrintableNode} objects
+     * {@link PrintableNode} objects
      */
     public static FilterTermsTree convertExpresionItemsTree(final ExpressionOperator rootItem,
                                                             final Set<String> blackListedFieldNames) {

@@ -28,50 +28,17 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class MapStoreImpl implements MapStore {
-    public static class RangeStore {
-        private final Range<Long> range;
-        private final EventList eventList;
-
-        public RangeStore(final Range<Long> range, final EventList eventList) {
-            this.range = range;
-            this.eventList = eventList;
-        }
-
-        public Range<Long> getRange() {
-            return range;
-        }
-
-        public EventList getEventList() {
-            return eventList;
-        }
-
-        @Override
-        public String toString() {
-            return range.toString();
-        }
-    }
-
-    public static class RangeStoreComparator implements Comparator<RangeStore> {
-        @Override
-        public int compare(final RangeStore o1, final RangeStore o2) {
-            return o1.getRange().getFrom().compareTo(o2.getRange().getFrom());
-        }
-    }
-
     private static final String EQUALS = " = ";
     private static final String NEW_LINE = "\n";
-
     private final Map<MapStoreKey, EventList> keyMap;
     private final Map<String, RangeStore[]> rangeMap;
     private final boolean overrideExistingValues;
     private final StoredErrorReceiver storedErrorReceiver;
-
     public MapStoreImpl() {
         this(null, null, true, null);
     }
-
     public MapStoreImpl(final Map<MapStoreKey, EventList> keyMap, final Map<String, RangeStore[]> rangeMap,
-            final boolean overrideExistingValues, final StoredErrorReceiver storedErrorReceiver) {
+                        final boolean overrideExistingValues, final StoredErrorReceiver storedErrorReceiver) {
         this.keyMap = keyMap;
         this.rangeMap = rangeMap;
         this.overrideExistingValues = overrideExistingValues;
@@ -202,5 +169,35 @@ public class MapStoreImpl implements MapStore {
     @Override
     public StoredErrorReceiver getErrorReceiver() {
         return storedErrorReceiver;
+    }
+
+    public static class RangeStore {
+        private final Range<Long> range;
+        private final EventList eventList;
+
+        public RangeStore(final Range<Long> range, final EventList eventList) {
+            this.range = range;
+            this.eventList = eventList;
+        }
+
+        public Range<Long> getRange() {
+            return range;
+        }
+
+        public EventList getEventList() {
+            return eventList;
+        }
+
+        @Override
+        public String toString() {
+            return range.toString();
+        }
+    }
+
+    public static class RangeStoreComparator implements Comparator<RangeStore> {
+        @Override
+        public int compare(final RangeStore o1, final RangeStore o2) {
+            return o1.getRange().getFrom().compareTo(o2.getRange().getFrom());
+        }
     }
 }

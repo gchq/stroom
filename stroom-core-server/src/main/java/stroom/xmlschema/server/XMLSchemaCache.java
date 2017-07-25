@@ -36,71 +36,13 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 @EntityEventHandler(type = XMLSchema.ENTITY_TYPE)
 public class XMLSchemaCache implements EntityEvent.Handler {
-    public interface ClearHandler {
-        void onClear();
-    }
-
-    public static class SchemaSet {
-        private final Map<String, List<XMLSchema>> schemaNameMap;
-        private final Map<String, List<XMLSchema>> schemaNamespaceURIMap;
-        private final Map<String, List<XMLSchema>> schemaSystemIdMap;
-        private final String locations;
-
-        public SchemaSet(final Map<String, List<XMLSchema>> schemaNameMap,
-                final Map<String, List<XMLSchema>> schemaNamespaceURIMap,
-                final Map<String, List<XMLSchema>> schemaSystemIdMap, final String locations) {
-            this.schemaNameMap = schemaNameMap;
-            this.schemaNamespaceURIMap = schemaNamespaceURIMap;
-            this.schemaSystemIdMap = schemaSystemIdMap;
-            this.locations = locations;
-        }
-
-        public String getLocations() {
-            return locations;
-        }
-
-        public List<XMLSchema> getSchemaByName(final String name) {
-            return schemaNameMap.get(name);
-        }
-
-        public List<XMLSchema> getSchemaBySystemId(final String systemId) {
-            return schemaSystemIdMap.get(systemId);
-        }
-
-        public List<XMLSchema> getSchemaByNamespaceURI(final String namespaceURI) {
-            return schemaNamespaceURIMap.get(namespaceURI);
-        }
-
-        public XMLSchema getBestMatch(final String systemId, final String namespaceURI) {
-            // Try and find a matching schema by system id.
-            List<XMLSchema> matches = schemaSystemIdMap.get(systemId);
-            if (matches != null && matches.size() > 0) {
-                return matches.get(0);
-            }
-
-            // If not found try and match with namespace URI.
-            matches = schemaNamespaceURIMap.get(namespaceURI);
-            if (matches != null && matches.size() > 0) {
-                return matches.get(0);
-            }
-
-            return null;
-        }
-    }
-
     private static final Logger LOGGER = LoggerFactory.getLogger(XMLSchemaCache.class);
-
     private static final long TEN_MINUTES = 1000 * 60 * 10;
-
     private static final FindXMLSchemaCriteria ALL = new FindXMLSchemaCriteria();
-
     private final XMLSchemaService xmlSchemaService;
-
     private final List<ClearHandler> clearHandlers = new ArrayList<ClearHandler>();
-    private volatile long lastClearTime;
-
     private final Map<FindXMLSchemaCriteria, SchemaSet> schemaSets = new ConcurrentHashMap<FindXMLSchemaCriteria, SchemaSet>();
-
+    private volatile long lastClearTime;
     @Inject
     public XMLSchemaCache(final XMLSchemaService xmlSchemaService) {
         this.xmlSchemaService = xmlSchemaService;
@@ -218,5 +160,57 @@ public class XMLSchemaCache implements EntityEvent.Handler {
 
     public void addClearHandler(final ClearHandler clearHandler) {
         clearHandlers.add(clearHandler);
+    }
+
+    public interface ClearHandler {
+        void onClear();
+    }
+
+    public static class SchemaSet {
+        private final Map<String, List<XMLSchema>> schemaNameMap;
+        private final Map<String, List<XMLSchema>> schemaNamespaceURIMap;
+        private final Map<String, List<XMLSchema>> schemaSystemIdMap;
+        private final String locations;
+
+        public SchemaSet(final Map<String, List<XMLSchema>> schemaNameMap,
+                         final Map<String, List<XMLSchema>> schemaNamespaceURIMap,
+                         final Map<String, List<XMLSchema>> schemaSystemIdMap, final String locations) {
+            this.schemaNameMap = schemaNameMap;
+            this.schemaNamespaceURIMap = schemaNamespaceURIMap;
+            this.schemaSystemIdMap = schemaSystemIdMap;
+            this.locations = locations;
+        }
+
+        public String getLocations() {
+            return locations;
+        }
+
+        public List<XMLSchema> getSchemaByName(final String name) {
+            return schemaNameMap.get(name);
+        }
+
+        public List<XMLSchema> getSchemaBySystemId(final String systemId) {
+            return schemaSystemIdMap.get(systemId);
+        }
+
+        public List<XMLSchema> getSchemaByNamespaceURI(final String namespaceURI) {
+            return schemaNamespaceURIMap.get(namespaceURI);
+        }
+
+        public XMLSchema getBestMatch(final String systemId, final String namespaceURI) {
+            // Try and find a matching schema by system id.
+            List<XMLSchema> matches = schemaSystemIdMap.get(systemId);
+            if (matches != null && matches.size() > 0) {
+                return matches.get(0);
+            }
+
+            // If not found try and match with namespace URI.
+            matches = schemaNamespaceURIMap.get(namespaceURI);
+            if (matches != null && matches.size() > 0) {
+                return matches.get(0);
+            }
+
+            return null;
+        }
     }
 }

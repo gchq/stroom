@@ -78,23 +78,17 @@ public class F2XTestUtil {
      * Run a XML and XSLT transform.
      * </p>
      *
-     * @param resourceFinder
-     *            NA
-     * @param xmlValidator
-     *            NA
-     * @param parserFactory
-     *            NA
-     * @param formatLocation
-     *            NA
-     * @param xsltLocation
-     *            NA
-     * @param dataLocation
-     *            NA
+     * @param resourceFinder NA
+     * @param xmlValidator   NA
+     * @param parserFactory  NA
+     * @param formatLocation NA
+     * @param xsltLocation   NA
+     * @param dataLocation   NA
      * @return xml
      */
     public String runFullTest(final Feed feed, final TextConverterType textConverterType,
-            final String textConverterLocation, final String xsltLocation, final String dataLocation,
-            final int expectedWarnings) {
+                              final String textConverterLocation, final String xsltLocation, final String dataLocation,
+                              final int expectedWarnings) {
         // Get the input stream.
         final InputStream in = StroomProcessTestFileUtil.getInputStream(dataLocation);
 
@@ -106,23 +100,17 @@ public class F2XTestUtil {
      * Run a XML and XSLT transform.
      * </p>
      *
-     * @param resourceFinder
-     *            NA
-     * @param xmlValidator
-     *            NA
-     * @param parserFactory
-     *            NA
-     * @param formatLocation
-     *            NA
-     * @param xsltLocation
-     *            NA
-     * @param dataStream
-     *            NA
+     * @param resourceFinder NA
+     * @param xmlValidator   NA
+     * @param parserFactory  NA
+     * @param formatLocation NA
+     * @param xsltLocation   NA
+     * @param dataStream     NA
      * @return xml
      */
     public String runFullTest(final Feed feed, final TextConverterType textConverterType,
-            final String textConverterLocation, final String xsltLocation, final InputStream dataStream,
-            final int expectedWarnings) {
+                              final String textConverterLocation, final String xsltLocation, final InputStream dataStream,
+                              final int expectedWarnings) {
         // Create an output stream.
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
 
@@ -203,20 +191,15 @@ public class F2XTestUtil {
      * Run a XML transform.
      * </p>
      *
-     * @param resourceFinder
-     *            NA
-     * @param xmlValidator
-     *            NA
-     * @param parserFactory
-     *            NA
-     * @param formatLocation
-     *            NA
-     * @param dataStream
-     *            NA
+     * @param resourceFinder NA
+     * @param xmlValidator   NA
+     * @param parserFactory  NA
+     * @param formatLocation NA
+     * @param dataStream     NA
      * @return dataStream
      */
     public String runF2XTest(final TextConverterType textConverterType, final String textConverterLocation,
-            final InputStream inputStream) {
+                             final InputStream inputStream) {
         // Persist the text converter.
         TextConverter textConverter = textConverterService.create(null, "TEST_TRANSLATION");
         textConverter.setConverterType(textConverterType);

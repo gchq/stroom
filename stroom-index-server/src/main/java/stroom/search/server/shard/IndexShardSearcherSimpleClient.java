@@ -43,6 +43,10 @@ public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {
     private String searchField = null;
     private String searchValue = null;
 
+    public static void main(final String[] args) throws Exception {
+        new IndexShardSearcherSimpleClient().doMain(args);
+    }
+
     public void setSearchField(final String searchField) {
         this.searchField = searchField;
     }
@@ -55,7 +59,7 @@ public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {
     public void run() {
         // Boot up spring
         final ApplicationContext appContext = new ClassPathXmlApplicationContext(
-                new String[] { "classpath:META-INF/spring/stroomCoreServerContext.xml" });
+                new String[]{"classpath:META-INF/spring/stroomCoreServerContext.xml"});
 
         final Query query = new TermQuery(new Term(searchField, searchValue));
 
@@ -104,9 +108,5 @@ public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {
                 ex.printStackTrace();
             }
         }
-    }
-
-    public static void main(final String[] args) throws Exception {
-        new IndexShardSearcherSimpleClient().doMain(args);
     }
 }

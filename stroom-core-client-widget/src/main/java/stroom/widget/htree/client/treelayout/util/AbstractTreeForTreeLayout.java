@@ -43,10 +43,16 @@ import java.util.List;
  * (see {@link #getChildrenList(Object)} and give direct access to the parent of
  * a node (see {@link #getParent(Object)}).
  * <p>
- *
+ * <p>
  * See also {@link DefaultTreeForTreeLayout}.
  */
 abstract public class AbstractTreeForTreeLayout<TreeNode> implements TreeForTreeLayout<TreeNode> {
+    private final TreeNode root;
+
+    public AbstractTreeForTreeLayout(TreeNode root) {
+        this.root = root;
+    }
+
     /**
      * Returns the parent of a node, if it has one.
      * <p>
@@ -54,7 +60,7 @@ abstract public class AbstractTreeForTreeLayout<TreeNode> implements TreeForTree
      *
      * @param node
      * @return [nullable] the parent of the node, or null when the node is a
-     *         root.
+     * root.
      */
     abstract public TreeNode getParent(TreeNode node);
 
@@ -69,15 +75,9 @@ abstract public class AbstractTreeForTreeLayout<TreeNode> implements TreeForTree
      *
      * @param node
      * @return the children of the given node. When node is a leaf the list is
-     *         empty.
+     * empty.
      */
     abstract public List<TreeNode> getChildrenList(TreeNode node);
-
-    private final TreeNode root;
-
-    public AbstractTreeForTreeLayout(TreeNode root) {
-        this.root = root;
-    }
 
     @Override
     public TreeNode getRoot() {

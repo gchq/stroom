@@ -42,317 +42,26 @@ import java.util.Set;
  * toggled using the ENTER key as well as via mouse click.
  */
 public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState> {
-    /**
-     * The appearance used to render this Cell.
-     */
-    public interface Appearance {
-        /**
-         * Render the button and its contents.
-         *
-         * @param cell    the cell that is being rendered
-         * @param context the {@link Context} of the cell
-         * @param value   the value that generated the content
-         * @param sb      the {@link SafeHtmlBuilder} to render into
-         */
-        void render(TickBoxCell cell, Context context, TickBoxState value, SafeHtmlBuilder sb);
-
-        SafeHtml getTick();
-
-        SafeHtml getHalfTick();
-
-        SafeHtml getUntick();
-
-        SafeHtml getHTML(SafeHtml image);
-    }
-
-    public static class DefaultAppearance implements Appearance {
-        public interface Template extends SafeHtmlTemplates {
-            @Template("<div class=\"{0}\">{1}</div>")
-            SafeHtml outerDiv(String outerClass, SafeHtml icon);
-        }
-
-        @ImportedWithPrefix("stroom-tickbox")
-        public interface Style extends CssResource {
-            String DEFAULT_CSS = "TickBox.css";
-
-            String outer();
-        }
-
-        public interface Resources extends ClientBundle {
-            ImageResource tick();
-
-            ImageResource halfTick();
-
-            ImageResource untick();
-
-            @Source(Style.DEFAULT_CSS)
-            Style style();
-        }
-
-        private final Resources resources;
-        private final Template template;
-
-        private final SafeHtml imgTick;
-        private final SafeHtml imgHalfTick;
-        private final SafeHtml imgUntick;
-
-        public DefaultAppearance() {
-            resources = GWT.create(Resources.class);
-            template = GWT.create(Template.class);
-            imgTick = SafeHtmlUtils.fromTrustedString(AbstractImagePrototype.create(resources.tick()).getHTML());
-            imgHalfTick = SafeHtmlUtils
-                    .fromTrustedString(AbstractImagePrototype.create(resources.halfTick()).getHTML());
-            imgUntick = SafeHtmlUtils.fromTrustedString(AbstractImagePrototype.create(resources.untick()).getHTML());
-
-            // Make sure the CSS is injected.
-            resources.style().ensureInjected();
-        }
-
-        @Override
-        public void render(final TickBoxCell cell, final Context context, final TickBoxState value,
-                           final SafeHtmlBuilder sb) {
-            // Get the view data.
-            final Object key = context.getKey();
-            TickBoxState viewData = cell.getViewData(key);
-            if (viewData != null && viewData.equals(value)) {
-                cell.clearViewData(key);
-                viewData = null;
-            }
-
-            if (value != null) {
-                SafeHtml image = null;
-
-                switch (value) {
-                    case TICK:
-                        image = imgTick;
-                        break;
-                    case HALF_TICK:
-                        image = imgHalfTick;
-                        break;
-                    case UNTICK:
-                        image = imgUntick;
-                        break;
-                }
-
-                sb.append(template.outerDiv(resources.style().outer(), image));
-            }
-        }
-
-        @Override
-        public SafeHtml getTick() {
-            return imgTick;
-        }
-
-        @Override
-        public SafeHtml getHalfTick() {
-            return imgHalfTick;
-        }
-
-        @Override
-        public SafeHtml getUntick() {
-            return imgUntick;
-        }
-
-        @Override
-        public SafeHtml getHTML(final SafeHtml image) {
-            return template.outerDiv(resources.style().outer(), image);
-        }
-    }
-
-    public static class NoBorderAppearance implements Appearance {
-        public interface Template extends SafeHtmlTemplates {
-            @Template("<div class=\"{0}\">{1}</div>")
-            SafeHtml outerDiv(String outerClass, SafeHtml icon);
-        }
-
-        @ImportedWithPrefix("stroom-tickbox")
-        public interface Style extends CssResource {
-            String DEFAULT_CSS = "TickBoxWithMargin.css";
-
-            String outer();
-        }
-
-        public interface Resources extends ClientBundle {
-            ImageResource tickNB();
-
-            ImageResource halfTickNB();
-
-            ImageResource untickNB();
-
-            @Source(Style.DEFAULT_CSS)
-            Style style();
-        }
-
-        private final Resources resources;
-        private final Template template;
-
-        private final SafeHtml imgTick;
-        private final SafeHtml imgHalfTick;
-        private final SafeHtml imgUntick;
-
-        public NoBorderAppearance() {
-            resources = GWT.create(Resources.class);
-            template = GWT.create(Template.class);
-            imgTick = SafeHtmlUtils.fromTrustedString(AbstractImagePrototype.create(resources.tickNB()).getHTML());
-            imgHalfTick = SafeHtmlUtils
-                    .fromTrustedString(AbstractImagePrototype.create(resources.halfTickNB()).getHTML());
-            imgUntick = SafeHtmlUtils.fromTrustedString(AbstractImagePrototype.create(resources.untickNB()).getHTML());
-
-            // Make sure the CSS is injected.
-            resources.style().ensureInjected();
-        }
-
-        @Override
-        public void render(final TickBoxCell cell, final Context context, final TickBoxState value,
-                           final SafeHtmlBuilder sb) {
-            // Get the view data.
-            final Object key = context.getKey();
-            TickBoxState viewData = cell.getViewData(key);
-            if (viewData != null && viewData.equals(value)) {
-                cell.clearViewData(key);
-                viewData = null;
-            }
-
-            if (value != null) {
-                SafeHtml image = null;
-
-                switch (value) {
-                    case TICK:
-                        image = imgTick;
-                        break;
-                    case HALF_TICK:
-                        image = imgHalfTick;
-                        break;
-                    case UNTICK:
-                        image = imgUntick;
-                        break;
-                }
-
-                sb.append(template.outerDiv(resources.style().outer(), image));
-            }
-        }
-
-        @Override
-        public SafeHtml getTick() {
-            return imgTick;
-        }
-
-        @Override
-        public SafeHtml getHalfTick() {
-            return imgHalfTick;
-        }
-
-        @Override
-        public SafeHtml getUntick() {
-            return imgUntick;
-        }
-
-        @Override
-        public SafeHtml getHTML(final SafeHtml image) {
-            return template.outerDiv(resources.style().outer(), image);
-        }
-    }
-
-    public static class MarginAppearance implements Appearance {
-        public interface Template extends SafeHtmlTemplates {
-            @Template("<div class=\"{0}\">{1}</div>")
-            SafeHtml outerDiv(String outerClass, SafeHtml icon);
-        }
-
-        @ImportedWithPrefix("stroom-tickbox")
-        public interface Style extends CssResource {
-            String DEFAULT_CSS = "TickBoxWithMargin.css";
-
-            String outer();
-        }
-
-        public interface Resources extends ClientBundle {
-            ImageResource tick();
-
-            ImageResource halfTick();
-
-            ImageResource untick();
-
-            @Source(Style.DEFAULT_CSS)
-            Style style();
-        }
-
-        private final Resources resources;
-        private final Template template;
-
-        private final SafeHtml imgTick;
-        private final SafeHtml imgHalfTick;
-        private final SafeHtml imgUntick;
-
-        public MarginAppearance() {
-            resources = GWT.create(Resources.class);
-            template = GWT.create(Template.class);
-            imgTick = SafeHtmlUtils.fromTrustedString(AbstractImagePrototype.create(resources.tick()).getHTML());
-            imgHalfTick = SafeHtmlUtils
-                    .fromTrustedString(AbstractImagePrototype.create(resources.halfTick()).getHTML());
-            imgUntick = SafeHtmlUtils.fromTrustedString(AbstractImagePrototype.create(resources.untick()).getHTML());
-
-            // Make sure the CSS is injected.
-            resources.style().ensureInjected();
-        }
-
-        @Override
-        public void render(final TickBoxCell cell, final Context context, final TickBoxState value,
-                           final SafeHtmlBuilder sb) {
-            // Get the view data.
-            final Object key = context.getKey();
-            TickBoxState viewData = cell.getViewData(key);
-            if (viewData != null && viewData.equals(value)) {
-                cell.clearViewData(key);
-                viewData = null;
-            }
-
-            if (value != null) {
-                SafeHtml image = null;
-
-                switch (value) {
-                    case TICK:
-                        image = imgTick;
-                        break;
-                    case HALF_TICK:
-                        image = imgHalfTick;
-                        break;
-                    case UNTICK:
-                        image = imgUntick;
-                        break;
-                }
-
-                sb.append(template.outerDiv(resources.style().outer(), image));
-            }
-        }
-
-        @Override
-        public SafeHtml getTick() {
-            return imgTick;
-        }
-
-        @Override
-        public SafeHtml getHalfTick() {
-            return imgHalfTick;
-        }
-
-        @Override
-        public SafeHtml getUntick() {
-            return imgUntick;
-        }
-
-        @Override
-        public SafeHtml getHTML(final SafeHtml image) {
-            return template.outerDiv(resources.style().outer(), image);
-        }
-    }
-
     private static final Appearance DEFAULT_APPEARANCE = new DefaultAppearance();
-
     private final Appearance appearance;
     private final boolean dependsOnSelection;
     private final boolean handlesSelection;
     private final boolean clickable;
+
+    /**
+     * Construct a new {@link CheckboxCell} that optionally controls selection.
+     *
+     * @param dependsOnSelection true if the cell depends on the selection state
+     * @param handlesSelection   true if the cell modifies the selection state
+     */
+    private TickBoxCell(final Appearance appearance, final boolean dependsOnSelection, final boolean handlesSelection,
+                        final Set<String> consumedEvents) {
+        super(consumedEvents);
+        this.appearance = appearance;
+        this.dependsOnSelection = dependsOnSelection;
+        this.handlesSelection = handlesSelection;
+        this.clickable = consumedEvents.contains("click");
+    }
 
     public static TickBoxCell create(final boolean dependsOnSelection, final boolean handlesSelection) {
         return create(DEFAULT_APPEARANCE, dependsOnSelection, handlesSelection, true);
@@ -369,21 +78,6 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
         }
 
         return new TickBoxCell(appearance, dependsOnSelection, handlesSelection, consumedEvents);
-    }
-
-    /**
-     * Construct a new {@link CheckboxCell} that optionally controls selection.
-     *
-     * @param dependsOnSelection true if the cell depends on the selection state
-     * @param handlesSelection   true if the cell modifies the selection state
-     */
-    private TickBoxCell(final Appearance appearance, final boolean dependsOnSelection, final boolean handlesSelection,
-                        final Set<String> consumedEvents) {
-        super(consumedEvents);
-        this.appearance = appearance;
-        this.dependsOnSelection = dependsOnSelection;
-        this.handlesSelection = handlesSelection;
-        this.clickable = consumedEvents.contains("click");
     }
 
     @Override
@@ -460,5 +154,307 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
     @Override
     public void render(final Context context, final TickBoxState value, final SafeHtmlBuilder sb) {
         appearance.render(this, context, value, sb);
+    }
+
+    /**
+     * The appearance used to render this Cell.
+     */
+    public interface Appearance {
+        /**
+         * Render the button and its contents.
+         *
+         * @param cell    the cell that is being rendered
+         * @param context the {@link Context} of the cell
+         * @param value   the value that generated the content
+         * @param sb      the {@link SafeHtmlBuilder} to render into
+         */
+        void render(TickBoxCell cell, Context context, TickBoxState value, SafeHtmlBuilder sb);
+
+        SafeHtml getTick();
+
+        SafeHtml getHalfTick();
+
+        SafeHtml getUntick();
+
+        SafeHtml getHTML(SafeHtml image);
+    }
+
+    public static class DefaultAppearance implements Appearance {
+        private final Resources resources;
+        private final Template template;
+        private final SafeHtml imgTick;
+        private final SafeHtml imgHalfTick;
+        private final SafeHtml imgUntick;
+
+        public DefaultAppearance() {
+            resources = GWT.create(Resources.class);
+            template = GWT.create(Template.class);
+            imgTick = SafeHtmlUtils.fromTrustedString(AbstractImagePrototype.create(resources.tick()).getHTML());
+            imgHalfTick = SafeHtmlUtils
+                    .fromTrustedString(AbstractImagePrototype.create(resources.halfTick()).getHTML());
+            imgUntick = SafeHtmlUtils.fromTrustedString(AbstractImagePrototype.create(resources.untick()).getHTML());
+
+            // Make sure the CSS is injected.
+            resources.style().ensureInjected();
+        }
+
+        @Override
+        public void render(final TickBoxCell cell, final Context context, final TickBoxState value,
+                           final SafeHtmlBuilder sb) {
+            // Get the view data.
+            final Object key = context.getKey();
+            TickBoxState viewData = cell.getViewData(key);
+            if (viewData != null && viewData.equals(value)) {
+                cell.clearViewData(key);
+                viewData = null;
+            }
+
+            if (value != null) {
+                SafeHtml image = null;
+
+                switch (value) {
+                    case TICK:
+                        image = imgTick;
+                        break;
+                    case HALF_TICK:
+                        image = imgHalfTick;
+                        break;
+                    case UNTICK:
+                        image = imgUntick;
+                        break;
+                }
+
+                sb.append(template.outerDiv(resources.style().outer(), image));
+            }
+        }
+
+        @Override
+        public SafeHtml getTick() {
+            return imgTick;
+        }
+
+        @Override
+        public SafeHtml getHalfTick() {
+            return imgHalfTick;
+        }
+
+        @Override
+        public SafeHtml getUntick() {
+            return imgUntick;
+        }
+
+        @Override
+        public SafeHtml getHTML(final SafeHtml image) {
+            return template.outerDiv(resources.style().outer(), image);
+        }
+
+        public interface Template extends SafeHtmlTemplates {
+            @Template("<div class=\"{0}\">{1}</div>")
+            SafeHtml outerDiv(String outerClass, SafeHtml icon);
+        }
+
+        @ImportedWithPrefix("stroom-tickbox")
+        public interface Style extends CssResource {
+            String DEFAULT_CSS = "TickBox.css";
+
+            String outer();
+        }
+
+        public interface Resources extends ClientBundle {
+            ImageResource tick();
+
+            ImageResource halfTick();
+
+            ImageResource untick();
+
+            @Source(Style.DEFAULT_CSS)
+            Style style();
+        }
+    }
+
+    public static class NoBorderAppearance implements Appearance {
+        private final Resources resources;
+        private final Template template;
+        private final SafeHtml imgTick;
+        private final SafeHtml imgHalfTick;
+        private final SafeHtml imgUntick;
+
+        public NoBorderAppearance() {
+            resources = GWT.create(Resources.class);
+            template = GWT.create(Template.class);
+            imgTick = SafeHtmlUtils.fromTrustedString(AbstractImagePrototype.create(resources.tickNB()).getHTML());
+            imgHalfTick = SafeHtmlUtils
+                    .fromTrustedString(AbstractImagePrototype.create(resources.halfTickNB()).getHTML());
+            imgUntick = SafeHtmlUtils.fromTrustedString(AbstractImagePrototype.create(resources.untickNB()).getHTML());
+
+            // Make sure the CSS is injected.
+            resources.style().ensureInjected();
+        }
+
+        @Override
+        public void render(final TickBoxCell cell, final Context context, final TickBoxState value,
+                           final SafeHtmlBuilder sb) {
+            // Get the view data.
+            final Object key = context.getKey();
+            TickBoxState viewData = cell.getViewData(key);
+            if (viewData != null && viewData.equals(value)) {
+                cell.clearViewData(key);
+                viewData = null;
+            }
+
+            if (value != null) {
+                SafeHtml image = null;
+
+                switch (value) {
+                    case TICK:
+                        image = imgTick;
+                        break;
+                    case HALF_TICK:
+                        image = imgHalfTick;
+                        break;
+                    case UNTICK:
+                        image = imgUntick;
+                        break;
+                }
+
+                sb.append(template.outerDiv(resources.style().outer(), image));
+            }
+        }
+
+        @Override
+        public SafeHtml getTick() {
+            return imgTick;
+        }
+
+        @Override
+        public SafeHtml getHalfTick() {
+            return imgHalfTick;
+        }
+
+        @Override
+        public SafeHtml getUntick() {
+            return imgUntick;
+        }
+
+        @Override
+        public SafeHtml getHTML(final SafeHtml image) {
+            return template.outerDiv(resources.style().outer(), image);
+        }
+
+        public interface Template extends SafeHtmlTemplates {
+            @Template("<div class=\"{0}\">{1}</div>")
+            SafeHtml outerDiv(String outerClass, SafeHtml icon);
+        }
+
+        @ImportedWithPrefix("stroom-tickbox")
+        public interface Style extends CssResource {
+            String DEFAULT_CSS = "TickBoxWithMargin.css";
+
+            String outer();
+        }
+
+        public interface Resources extends ClientBundle {
+            ImageResource tickNB();
+
+            ImageResource halfTickNB();
+
+            ImageResource untickNB();
+
+            @Source(Style.DEFAULT_CSS)
+            Style style();
+        }
+    }
+
+    public static class MarginAppearance implements Appearance {
+        private final Resources resources;
+        private final Template template;
+        private final SafeHtml imgTick;
+        private final SafeHtml imgHalfTick;
+        private final SafeHtml imgUntick;
+
+        public MarginAppearance() {
+            resources = GWT.create(Resources.class);
+            template = GWT.create(Template.class);
+            imgTick = SafeHtmlUtils.fromTrustedString(AbstractImagePrototype.create(resources.tick()).getHTML());
+            imgHalfTick = SafeHtmlUtils
+                    .fromTrustedString(AbstractImagePrototype.create(resources.halfTick()).getHTML());
+            imgUntick = SafeHtmlUtils.fromTrustedString(AbstractImagePrototype.create(resources.untick()).getHTML());
+
+            // Make sure the CSS is injected.
+            resources.style().ensureInjected();
+        }
+
+        @Override
+        public void render(final TickBoxCell cell, final Context context, final TickBoxState value,
+                           final SafeHtmlBuilder sb) {
+            // Get the view data.
+            final Object key = context.getKey();
+            TickBoxState viewData = cell.getViewData(key);
+            if (viewData != null && viewData.equals(value)) {
+                cell.clearViewData(key);
+                viewData = null;
+            }
+
+            if (value != null) {
+                SafeHtml image = null;
+
+                switch (value) {
+                    case TICK:
+                        image = imgTick;
+                        break;
+                    case HALF_TICK:
+                        image = imgHalfTick;
+                        break;
+                    case UNTICK:
+                        image = imgUntick;
+                        break;
+                }
+
+                sb.append(template.outerDiv(resources.style().outer(), image));
+            }
+        }
+
+        @Override
+        public SafeHtml getTick() {
+            return imgTick;
+        }
+
+        @Override
+        public SafeHtml getHalfTick() {
+            return imgHalfTick;
+        }
+
+        @Override
+        public SafeHtml getUntick() {
+            return imgUntick;
+        }
+
+        @Override
+        public SafeHtml getHTML(final SafeHtml image) {
+            return template.outerDiv(resources.style().outer(), image);
+        }
+
+        public interface Template extends SafeHtmlTemplates {
+            @Template("<div class=\"{0}\">{1}</div>")
+            SafeHtml outerDiv(String outerClass, SafeHtml icon);
+        }
+
+        @ImportedWithPrefix("stroom-tickbox")
+        public interface Style extends CssResource {
+            String DEFAULT_CSS = "TickBoxWithMargin.css";
+
+            String outer();
+        }
+
+        public interface Resources extends ClientBundle {
+            ImageResource tick();
+
+            ImageResource halfTick();
+
+            ImageResource untick();
+
+            @Source(Style.DEFAULT_CSS)
+            Style style();
+        }
     }
 }

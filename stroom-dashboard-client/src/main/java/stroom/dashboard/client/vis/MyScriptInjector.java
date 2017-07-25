@@ -187,7 +187,7 @@ public class MyScriptInjector {
     return $wnd;
     }-*/;
 
-    private static native  JavaScriptObject nativeDefaultWindow()
+    private static native JavaScriptObject nativeDefaultWindow()
     /*-{
     return window;
     }-*/;

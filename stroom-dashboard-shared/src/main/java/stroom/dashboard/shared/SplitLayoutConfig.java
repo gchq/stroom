@@ -26,14 +26,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "splitLayout", propOrder = { "dimension", "children" })
+@XmlType(name = "splitLayout", propOrder = {"dimension", "children"})
 public class SplitLayoutConfig extends LayoutConfig {
     private static final long serialVersionUID = 8201392610412513780L;
     @XmlElement(name = "dimension")
     private int dimension;
     @XmlElementWrapper(name = "children")
-    @XmlElements({ @XmlElement(name = "splitLayout", type = SplitLayoutConfig.class),
-            @XmlElement(name = "tabLayout", type = TabLayoutConfig.class) })
+    @XmlElements({@XmlElement(name = "splitLayout", type = SplitLayoutConfig.class),
+            @XmlElement(name = "tabLayout", type = TabLayoutConfig.class)})
     private List<LayoutConfig> children;
 
     public SplitLayoutConfig() {

@@ -46,9 +46,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
-    private EntityServiceFindActionDataProvider<FindJobCriteria, Job> dataProvider;
-
     private final SaveQueue<Job> jobSaver;
+    private EntityServiceFindActionDataProvider<FindJobCriteria, Job> dataProvider;
 
     @Inject
     public JobListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,

@@ -32,15 +32,11 @@ public interface ClusterWorker {
      * asynchronous execution has completed another cluster call is made to pass
      * the execution result back to the source node.
      *
-     * @param task
-     *            The task to execute on the target worker node.
-     * @param sourceNode
-     *            The node that this task originated from.
-     * @param sourceTaskId
-     *            The id of the parent task that owns this worker cluster task.
-     * @param collectorId
-     *            The id of the collector to send results back to.
+     * @param task         The task to execute on the target worker node.
+     * @param sourceNode   The node that this task originated from.
+     * @param sourceTaskId The id of the parent task that owns this worker cluster task.
+     * @param collectorId  The id of the collector to send results back to.
      */
     <R extends SharedObject> void execAsync(ClusterTask<R> task, Node sourceNode, TaskId sourceTaskId,
-            CollectorId collectorId);
+                                            CollectorId collectorId);
 }

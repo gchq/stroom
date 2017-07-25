@@ -21,10 +21,6 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
 public class RequestLogoutEvent extends GwtEvent<RequestLogoutEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onLogoutRequest(RequestLogoutEvent event);
-    }
-
     private static Type<Handler> TYPE;
 
     private RequestLogoutEvent() {
@@ -50,5 +46,9 @@ public class RequestLogoutEvent extends GwtEvent<RequestLogoutEvent.Handler> {
     @Override
     protected void dispatch(final Handler handler) {
         handler.onLogoutRequest(this);
+    }
+
+    public interface Handler extends EventHandler {
+        void onLogoutRequest(RequestLogoutEvent event);
     }
 }

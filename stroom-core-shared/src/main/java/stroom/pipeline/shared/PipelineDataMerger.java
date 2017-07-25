@@ -44,15 +44,15 @@ public class PipelineDataMerger {
     private final Map<String, Map<String, List<PipelineReference>>> pipelineReferenceMap = new HashMap<>();
     private final Map<String, List<PipelineLink>> linkMap = new HashMap<>();
 
+    public PipelineDataMerger() {
+        // Default constructor necessary for GWT serialisation.
+    }
+
     public static Map<String, PipelineElementType> createElementMap() {
         final Map<String, PipelineElementType> map = new HashMap<>();
         // Ensure we always have a source element to link from.
         map.put(SOURCE, SOURCE_ELEMENT.getElementType());
         return map;
-    }
-
-    public PipelineDataMerger() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public void merge(final PipelineData... configStack) throws PipelineModelException {

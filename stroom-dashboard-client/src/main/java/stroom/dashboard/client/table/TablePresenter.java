@@ -698,6 +698,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         return null;
     }
 
+    public interface TableView extends View {
+        void setTableView(View view);
+
+        void setRefreshing(boolean refreshing);
+    }
+
     private class AddSelectionHandler implements SelectionChangeEvent.Handler {
         private final FieldAddPresenter presenter;
 
@@ -713,11 +719,5 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 fieldsManager.addField(field);
             }
         }
-    }
-
-    public interface TableView extends View {
-        void setTableView(View view);
-
-        void setRefreshing(boolean refreshing);
     }
 }

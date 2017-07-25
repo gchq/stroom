@@ -40,7 +40,7 @@ public class SqlStatisticsStore implements Store {
         }
 
         Payload payload = payloadMap.get(coprocessorKey);
-        TablePayload tablePayload = (TablePayload)payload;
+        TablePayload tablePayload = (TablePayload) payload;
         UnsafePairQueue<Key, Item> queue = tablePayload.getQueue();
 
         Map<Key, Items<Item>> childMap = new HashMap<>();

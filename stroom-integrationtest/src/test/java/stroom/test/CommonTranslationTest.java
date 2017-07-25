@@ -43,9 +43,8 @@ import java.util.Set;
 @Component
 @Profile(StroomSpringProfiles.IT)
 public class CommonTranslationTest {
-    private static final String DIR = "CommonTranslationTest/";
-
     public static final String FEED_NAME = "TEST_FEED";
+    private static final String DIR = "CommonTranslationTest/";
     public static final File VALID_RESOURCE_NAME = StroomProcessTestFileUtil
             .getTestResourcesFile(DIR + "NetworkMonitoringSample.in");
     public static final File INVALID_RESOURCE_NAME = StroomProcessTestFileUtil.getTestResourcesFile(DIR + "Invalid.in");

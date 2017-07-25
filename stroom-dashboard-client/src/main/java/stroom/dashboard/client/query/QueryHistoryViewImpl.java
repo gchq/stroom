@@ -34,6 +34,7 @@ public class QueryHistoryViewImpl extends ViewImpl implements QueryHistoryView {
     CustomCellList<QueryEntity> cellList;
     @UiField
     SimplePanel bottom;
+
     @Inject
     public QueryHistoryViewImpl(final Binder binder) {
         cellList = new CustomCellList<QueryEntity>(new QueryCell());

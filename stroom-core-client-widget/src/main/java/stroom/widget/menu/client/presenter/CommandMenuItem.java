@@ -20,8 +20,8 @@ import com.google.gwt.user.client.Command;
 
 public abstract class CommandMenuItem extends MenuItem {
     private final String shortcut;
-    private boolean enabled;
     private final Command command;
+    private boolean enabled;
 
     public CommandMenuItem(final int priority,
                            final String text, final String shortcut, final boolean enabled, final Command command) {

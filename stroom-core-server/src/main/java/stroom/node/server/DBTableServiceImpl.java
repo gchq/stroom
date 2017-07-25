@@ -47,9 +47,8 @@ import java.util.List;
 @Component("dbTableService")
 public class DBTableServiceImpl implements DBTableService, BeanFactoryAware {
     private static final Logger LOGGER = LoggerFactory.getLogger(DBTableServiceImpl.class);
-
-    private BeanFactory beanFactory;
     private final StroomDatabaseInfo stroomDatabaseInfo;
+    private BeanFactory beanFactory;
 
     @Inject
     DBTableServiceImpl(final StroomDatabaseInfo stroomDatabaseInfo) {

@@ -27,9 +27,6 @@ import com.gwtplatform.mvp.client.View;
 
 public class TextAreaPresenter extends MyPresenterWidget<TextAreaPresenter.TextAreaView>
         implements HasText, HasKeyDownHandlers {
-    public interface TextAreaView extends View, HasText, HasKeyDownHandlers {
-    }
-
     @Inject
     public TextAreaPresenter(final EventBus eventBus, final TextAreaView view) {
         super(eventBus, view);
@@ -48,5 +45,8 @@ public class TextAreaPresenter extends MyPresenterWidget<TextAreaPresenter.TextA
     @Override
     public HandlerRegistration addKeyDownHandler(final KeyDownHandler handler) {
         return getView().addKeyDownHandler(handler);
+    }
+
+    public interface TextAreaView extends View, HasText, HasKeyDownHandlers {
     }
 }

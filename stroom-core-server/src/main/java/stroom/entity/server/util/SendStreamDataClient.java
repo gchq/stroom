@@ -72,7 +72,7 @@ public final class SendStreamDataClient {
 
         // Boot up spring
         final ApplicationContext appContext = new ClassPathXmlApplicationContext(
-                new String[] { "classpath:META-INF/spring/stroomCoreServerContext.xml" });
+                new String[]{"classpath:META-INF/spring/stroomCoreServerContext.xml"});
 
         final FindStreamCriteria criteria = new FindStreamCriteria();
 

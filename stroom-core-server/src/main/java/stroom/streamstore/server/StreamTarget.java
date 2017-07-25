@@ -32,7 +32,7 @@ import java.io.OutputStream;
 public interface StreamTarget extends Closeable {
     /**
      * @return a type associated with the stream. Used to differentiate between
-     *         child streams ("ctx", "idx", etc).
+     * child streams ("ctx", "idx", etc).
      */
     StreamType getType();
 
@@ -54,8 +54,7 @@ public interface StreamTarget extends Closeable {
     /**
      * Add a child stream for this main stream.
      *
-     * @param type
-     *            name of the child.
+     * @param type name of the child.
      * @return target to write to.
      */
     StreamTarget addChildStream(StreamType type);

@@ -44,6 +44,7 @@ public class BasicQuerySettingsViewImpl extends ViewImpl implements BasicQuerySe
     TickBox autoRefresh;
     @UiField
     TextBox refreshInterval;
+
     @Inject
     public BasicQuerySettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);

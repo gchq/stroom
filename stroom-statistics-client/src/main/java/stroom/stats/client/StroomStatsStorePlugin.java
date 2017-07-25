@@ -78,7 +78,7 @@ public class StroomStatsStorePlugin extends EntityPlugin<StroomStatsStoreEntity>
     }
 
     private void doConfirmSave(final EntityEditPresenter<?, StroomStatsStoreEntity> presenter,
-            final StroomStatsStoreEntity entity, final StroomStatsStoreEntity entityFromDb) {
+                               final StroomStatsStoreEntity entity, final StroomStatsStoreEntity entityFromDb) {
         // get the persisted versions of the fields we care about
         final StatisticType prevType = entityFromDb.getStatisticType();
         final StatisticRollUpType prevRollUpType = entityFromDb.getRollUpType();
@@ -93,15 +93,15 @@ public class StroomStatsStorePlugin extends EntityPlugin<StroomStatsStoreEntity>
         // null
         if (entityFromDb != null && (
                 !prevType.equals(entity.getStatisticType()) ||
-                !prevRollUpType.equals(entity.getRollUpType()) ||
-                !prevInterval.equals(entity.getPrecision()) ||
-                !prevFieldList.equals(entity.getStatisticFields()) ||
-                !prevMaskSet.equals(entity.getCustomRollUpMasks()))) {
+                        !prevRollUpType.equals(entity.getRollUpType()) ||
+                        !prevInterval.equals(entity.getPrecision()) ||
+                        !prevFieldList.equals(entity.getStatisticFields()) ||
+                        !prevMaskSet.equals(entity.getCustomRollUpMasks()))) {
             ConfirmEvent.fireWarn(this, SafeHtmlUtils
-                    .fromTrustedString("Changes to the following attributes of a statistic data source:<br/><br/>"
-                            + "Engine Name<br/>Statistic Type<br/>Precision<br/>Rollup Type<br/>Field list<br/>Custom roll-ups<br/><br/>"
-                            + "can potentially cause corruption of the existing statistics data. Please ensure you "
-                            + "understand the full consequences of the change.<br/><br/>" + "Do you wish to continue?"),
+                            .fromTrustedString("Changes to the following attributes of a statistic data source:<br/><br/>"
+                                    + "Engine Name<br/>Statistic Type<br/>Precision<br/>Rollup Type<br/>Field list<br/>Custom roll-ups<br/><br/>"
+                                    + "can potentially cause corruption of the existing statistics data. Please ensure you "
+                                    + "understand the full consequences of the change.<br/><br/>" + "Do you wish to continue?"),
                     result -> {
                         if (result) {
                             doSave(presenter, entity);
@@ -117,7 +117,7 @@ public class StroomStatsStorePlugin extends EntityPlugin<StroomStatsStoreEntity>
     }
 
     private void doSave(final EntityEditPresenter<?, StroomStatsStoreEntity> presenter,
-            final StroomStatsStoreEntity entity) {
+                        final StroomStatsStoreEntity entity) {
         save(entity).onSuccess(presenter::read);
     }
 }

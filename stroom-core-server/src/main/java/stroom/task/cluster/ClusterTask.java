@@ -116,7 +116,7 @@ public abstract class ClusterTask<R extends SharedObject> implements Task<R>, Se
     public Monitor getMonitor() {
         if (monitor == null) {
             throw new UnsupportedOperationException(
-                        "You cannot get the monitor for a cluster task before it is executed on the worker node");
+                    "You cannot get the monitor for a cluster task before it is executed on the worker node");
         }
 
         return monitor;

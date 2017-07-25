@@ -25,7 +25,7 @@ import java.util.List;
 
 /**
  * Used to get summary data from services
- *
+ * <p>
  * Heading1 Heading2 Heading3 .... RowLabel Count1 Count2 ....
  */
 public class SummaryDataRow implements SharedObject {

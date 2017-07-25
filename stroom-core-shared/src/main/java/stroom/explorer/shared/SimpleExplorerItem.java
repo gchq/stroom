@@ -65,7 +65,7 @@ public class SimpleExplorerItem implements ExplorerData {
 
     @Override
     public NodeState getNodeState() {
-         return nodeState;
+        return nodeState;
     }
 
     @Override

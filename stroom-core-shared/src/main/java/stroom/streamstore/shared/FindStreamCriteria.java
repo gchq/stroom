@@ -46,10 +46,8 @@ import java.util.List;
 @XmlRootElement
 public class FindStreamCriteria extends BaseCriteria
         implements HasFolderIdSet, Copyable<FindStreamCriteria>, HasIsConstrained, Matcher<Stream> {
-    private static final long serialVersionUID = -4777723504698304778L;
-
     public static final String FIELD_CREATE_MS = "Create";
-
+    private static final long serialVersionUID = -4777723504698304778L;
     /**
      * Keep up to date as it's used to cache SQL queries.
      */

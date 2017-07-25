@@ -108,34 +108,34 @@ public class PersistenceConfiguration {
                                     pat = Integer.valueOf(parts[2]);
                                 }
 
-                            version = new Version(maj, min, pat);
-                            LOGGER.info("Found schema_version.version " + ver);
-                        }
-                    }
-                }
-            }
-        } catch (final Exception e) {
-            LOGGER.debug(e.getMessage());
-            // Ignore.
-        }
-
-        if (version == null) {
-            try {
-                try (final Connection connection = dataSource.getConnection()) {
-                    try (final Statement statement = connection.createStatement()) {
-                        try (final ResultSet resultSet = statement.executeQuery("SELECT VER_MAJ, VER_MIN, VER_PAT FROM STROOM_VER ORDER BY VER_MAJ DESC, VER_MIN DESC, VER_PAT DESC LIMIT 1")) {
-                            if (resultSet.next()) {
-                                version = new Version(resultSet.getInt(1), resultSet.getInt(2), resultSet.getInt(3));
-                                LOGGER.info("Found STROOM_VER.VER_MAJ/VER_MIN/VER_PAT " + version);
+                                version = new Version(maj, min, pat);
+                                LOGGER.info("Found schema_version.version " + ver);
                             }
                         }
                     }
                 }
             } catch (final Exception e) {
-                LOGGER.debug(e.getMessage(), e);
+                LOGGER.debug(e.getMessage());
                 // Ignore.
             }
-        }
+
+            if (version == null) {
+                try {
+                    try (final Connection connection = dataSource.getConnection()) {
+                        try (final Statement statement = connection.createStatement()) {
+                            try (final ResultSet resultSet = statement.executeQuery("SELECT VER_MAJ, VER_MIN, VER_PAT FROM STROOM_VER ORDER BY VER_MAJ DESC, VER_MIN DESC, VER_PAT DESC LIMIT 1")) {
+                                if (resultSet.next()) {
+                                    version = new Version(resultSet.getInt(1), resultSet.getInt(2), resultSet.getInt(3));
+                                    LOGGER.info("Found STROOM_VER.VER_MAJ/VER_MIN/VER_PAT " + version);
+                                }
+                            }
+                        }
+                    }
+                } catch (final Exception e) {
+                    LOGGER.debug(e.getMessage(), e);
+                    // Ignore.
+                }
+            }
 
             if (version == null) {
                 try {
@@ -178,22 +178,22 @@ public class PersistenceConfiguration {
             }
 
 
-        if (version == null) {
-            // If we have no version then this is a new Stroom instance so perform full FlyWay migration.
-            flyway.migrate();
-        } else if (usingFlyWay) {
-            // If we are already using FlyWay then allow FlyWay to attempt migration.
-            flyway.migrate();
-        } else if (version.getMajor() == 4 && version.getMinor() == 0 && version.getPatch() >= 60) {
-            // If Stroom is currently at v4.0.60+ then tell FlyWay to baseline at that version.
-            flyway.setBaselineVersionAsString("4.0.60");
-            flyway.baseline();
-            flyway.migrate();
-        } else {
-            final String message = "The current Stroom version cannot be upgraded to v5+. You must be on v4.0.60 or later.";
-            LOGGER.error(MarkerFactory.getMarker("FATAL"), message);
-            throw new RuntimeException(message);
-        }
+            if (version == null) {
+                // If we have no version then this is a new Stroom instance so perform full FlyWay migration.
+                flyway.migrate();
+            } else if (usingFlyWay) {
+                // If we are already using FlyWay then allow FlyWay to attempt migration.
+                flyway.migrate();
+            } else if (version.getMajor() == 4 && version.getMinor() == 0 && version.getPatch() >= 60) {
+                // If Stroom is currently at v4.0.60+ then tell FlyWay to baseline at that version.
+                flyway.setBaselineVersionAsString("4.0.60");
+                flyway.baseline();
+                flyway.migrate();
+            } else {
+                final String message = "The current Stroom version cannot be upgraded to v5+. You must be on v4.0.60 or later.";
+                LOGGER.error(MarkerFactory.getMarker("FATAL"), message);
+                throw new RuntimeException(message);
+            }
 
             return flyway;
         }

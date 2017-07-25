@@ -100,30 +100,30 @@ public class Resources {
         }
     }
 
-    public List<NamedResource> getResources(){
+    public List<NamedResource> getResources() {
         return resources;
     }
 
-    private void configureLuceneQueryResource(ApplicationContext applicationContext){
+    private void configureLuceneQueryResource(ApplicationContext applicationContext) {
         SearchResultCreatorManager searchResultCreatorManager = applicationContext.getBean(SearchResultCreatorManager.class);
         IndexService indexService = applicationContext.getBean(IndexService.class);
         stroomIndexQueryResource.setIndexService(indexService);
         stroomIndexQueryResource.setSearchResultCreatorManager(searchResultCreatorManager);
     }
 
-    private void configureSqlStatisticsQueryResource(ApplicationContext applicationContext){
+    private void configureSqlStatisticsQueryResource(ApplicationContext applicationContext) {
         StatisticsQueryService statisticsQueryService = applicationContext.getBean(StatisticsQueryService.class);
         sqlStatisticsQueryResource.setStatisticsQueryService(statisticsQueryService);
     }
 
-    private void configureAuthenticationResource(ApplicationContext applicationContext){
+    private void configureAuthenticationResource(ApplicationContext applicationContext) {
         AuthenticationService authenticationService = applicationContext.getBean(AuthenticationService.class);
         JWTService jwtService = applicationContext.getBean(JWTService.class);
         authenticationResource.setAuthenticationService(authenticationService);
         authenticationResource.setJwtService(jwtService);
     }
 
-    private void configureAuthorisationResource(ApplicationContext applicationContext){
+    private void configureAuthorisationResource(ApplicationContext applicationContext) {
         AuthorisationService authorisationService = applicationContext.getBean(AuthorisationService.class);
         authorisationResource.setAuthorisationService(authorisationService);
     }

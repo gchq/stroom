@@ -26,7 +26,7 @@ public class StoreRefFactory extends RefFactory {
     private boolean local;
 
     public StoreRefFactory(final String reference, final String section, final String refId, final int refGroup,
-            final MatchIndex matchIndex) {
+                           final MatchIndex matchIndex) {
         super(reference, section);
         this.refId = refId;
         this.refGroup = refGroup;
@@ -63,12 +63,12 @@ public class StoreRefFactory extends RefFactory {
         return matchIndex;
     }
 
-    public void setLocal(final boolean local) {
-        this.local = local;
-    }
-
     // Used for testing.
     boolean isLocal() {
         return local;
+    }
+
+    public void setLocal(final boolean local) {
+        this.local = local;
     }
 }

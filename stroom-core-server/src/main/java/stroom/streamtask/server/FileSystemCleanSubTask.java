@@ -30,8 +30,8 @@ public class FileSystemCleanSubTask extends ServerTask<VoidResult> {
     private final FileSystemCleanProgress taskProgress;
 
     public FileSystemCleanSubTask(final FileSystemCleanExecutor parentHandler, final Task<?> parentTask,
-            final FileSystemCleanProgress taskProgress, final Volume volume, final String path,
-            final String logPrefix) {
+                                  final FileSystemCleanProgress taskProgress, final Volume volume, final String path,
+                                  final String logPrefix) {
         super(parentTask);
         this.volume = volume;
         this.path = path;

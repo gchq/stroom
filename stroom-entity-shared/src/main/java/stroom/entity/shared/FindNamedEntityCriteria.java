@@ -17,10 +17,8 @@
 package stroom.entity.shared;
 
 public abstract class FindNamedEntityCriteria extends BaseCriteria {
-    private static final long serialVersionUID = -970306839701196839L;
-
     public static final String FIELD_NAME = "Name";
-
+    private static final long serialVersionUID = -970306839701196839L;
     private StringCriteria name = new StringCriteria();
 
     public FindNamedEntityCriteria() {

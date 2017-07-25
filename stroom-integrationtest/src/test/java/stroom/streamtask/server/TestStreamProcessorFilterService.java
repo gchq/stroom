@@ -115,22 +115,22 @@ public class TestStreamProcessorFilterService extends AbstractCoreIntegrationTes
         final BaseResultList<StreamProcessorFilter> filters = streamProcessorFilterService
                 .find(findStreamProcessorFilterCriteria);
         StreamProcessorFilter filter = filters.getFirst();
-        String xml = buildXML(new long[] { feed1.getId(), feed2.getId() }, null);
+        String xml = buildXML(new long[]{feed1.getId(), feed2.getId()}, null);
         Assert.assertEquals(xml, filter.getData());
 
         filter.getFindStreamCriteria().obtainFeeds().obtainInclude().remove(feed1);
         filter = streamProcessorFilterService.save(filter);
-        xml = buildXML(new long[] { feed2.getId() }, null);
+        xml = buildXML(new long[]{feed2.getId()}, null);
         Assert.assertEquals(xml, filter.getData());
 
         filter.getFindStreamCriteria().obtainFeeds().obtainExclude().add(feed1);
         filter = streamProcessorFilterService.save(filter);
-        xml = buildXML(new long[] { feed2.getId() }, new long[] { feed1.getId() });
+        xml = buildXML(new long[]{feed2.getId()}, new long[]{feed1.getId()});
         Assert.assertEquals(xml, filter.getData());
 
         filter.getFindStreamCriteria().obtainFeeds().obtainInclude().add(feed1);
         filter = streamProcessorFilterService.save(filter);
-        xml = buildXML(new long[] { feed1.getId(), feed2.getId() }, new long[] { feed1.getId() });
+        xml = buildXML(new long[]{feed1.getId(), feed2.getId()}, new long[]{feed1.getId()});
         Assert.assertEquals(xml, filter.getData());
     }
 

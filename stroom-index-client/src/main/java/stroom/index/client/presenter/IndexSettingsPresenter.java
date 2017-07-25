@@ -43,7 +43,7 @@ public class IndexSettingsPresenter extends MyPresenterWidget<IndexSettingsPrese
 
     @Inject
     public IndexSettingsPresenter(final EventBus eventBus, final IndexSettingsView view,
-            final IndexVolumeListPresenter indexVolumeListPresenter) {
+                                  final IndexVolumeListPresenter indexVolumeListPresenter) {
         super(eventBus, view);
         this.indexVolumeListPresenter = indexVolumeListPresenter;
 

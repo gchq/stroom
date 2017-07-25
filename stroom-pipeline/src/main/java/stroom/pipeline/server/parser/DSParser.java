@@ -45,10 +45,10 @@ import javax.inject.Inject;
 
 @Component
 @Scope(value = StroomScope.TASK)
-@ConfigurableElement(type = "DSParser", category = Category.PARSER, roles = { PipelineElementType.ROLE_PARSER,
+@ConfigurableElement(type = "DSParser", category = Category.PARSER, roles = {PipelineElementType.ROLE_PARSER,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
         PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
-        PipelineElementType.ROLE_HAS_CODE }, icon = ElementIcons.TEXT)
+        PipelineElementType.ROLE_HAS_CODE}, icon = ElementIcons.TEXT)
 public class DSParser extends AbstractParser implements SupportsCodeInjection {
     private final ParserFactoryPool parserFactoryPool;
     private final TextConverterService textConverterService;
@@ -56,9 +56,10 @@ public class DSParser extends AbstractParser implements SupportsCodeInjection {
     private boolean usePool = true;
     private TextConverter textConverter;
     private PoolItem<VersionedEntityDecorator<TextConverter>, StoredParserFactory> poolItem;
+
     @Inject
     public DSParser(final ErrorReceiverProxy errorReceiverProxy, final LocationFactoryProxy locationFactory,
-            final ParserFactoryPool parserFactoryPool, final TextConverterService textConverterService) {
+                    final ParserFactoryPool parserFactoryPool, final TextConverterService textConverterService) {
         super(errorReceiverProxy, locationFactory);
         this.parserFactoryPool = parserFactoryPool;
         this.textConverterService = textConverterService;

@@ -40,7 +40,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Entity
-@Table(name = "STAT_DAT_SRC", uniqueConstraints = @UniqueConstraint(columnNames = { "NAME" }) )
+@Table(name = "STAT_DAT_SRC", uniqueConstraints = @UniqueConstraint(columnNames = {"NAME"}))
 public class StatisticStoreEntity extends DocumentEntity implements StatisticStore {
     public static final String ENTITY_TYPE = "StatisticStore";
     public static final String ENTITY_TYPE_FOR_DISPLAY = "Statistic Store";
@@ -55,6 +55,16 @@ public class StatisticStoreEntity extends DocumentEntity implements StatisticSto
 
 
     public static final Map<StatisticType, List<String>> STATIC_FIELDS_MAP = new HashMap<>();
+    // Hibernate table/column names
+    public static final String TABLE_NAME = SQLNameConstants.STATISTIC + SEP + SQLNameConstants.DATA + SEP
+            + SQLNameConstants.SOURCE;
+    public static final String STATISTIC_TYPE = SQLNameConstants.STATISTIC + SEP + SQLNameConstants.TYPE;
+    public static final String PRECISION = SQLNameConstants.PRECISION;
+    public static final String ROLLUP_TYPE = SQLNameConstants.ROLLUP + SEP + SQLNameConstants.TYPE;
+    public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
+    public static final Long DEFAULT_PRECISION = EventStoreTimeIntervalEnum.HOUR.columnInterval();
+    public static final String DEFAULT_NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
+    private static final long serialVersionUID = -649286188919707915L;
 
     static {
         STATIC_FIELDS_MAP.put(StatisticType.COUNT, Arrays.asList(
@@ -73,19 +83,6 @@ public class StatisticStoreEntity extends DocumentEntity implements StatisticSto
                 FIELD_NAME_PRECISION_MS
         ));
     }
-
-
-    // Hibernate table/column names
-    public static final String TABLE_NAME = SQLNameConstants.STATISTIC + SEP + SQLNameConstants.DATA + SEP
-            + SQLNameConstants.SOURCE;
-    public static final String STATISTIC_TYPE = SQLNameConstants.STATISTIC + SEP + SQLNameConstants.TYPE;
-    public static final String PRECISION = SQLNameConstants.PRECISION;
-    public static final String ROLLUP_TYPE = SQLNameConstants.ROLLUP + SEP + SQLNameConstants.TYPE;
-    public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-    public static final Long DEFAULT_PRECISION = EventStoreTimeIntervalEnum.HOUR.columnInterval();
-    public static final String DEFAULT_NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
-
-    private static final long serialVersionUID = -649286188919707915L;
 
     private String description;
     private byte pStatisticType;

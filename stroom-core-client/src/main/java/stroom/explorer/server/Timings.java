@@ -27,23 +27,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public class Timings {
     private Map<String, AtomicLong> timings = new HashMap<>();
 
-    public class Timing {
-        private final String name;
-        private long start;
-
-        Timing(final String name) {
-            this.name = name;
-            start = System.currentTimeMillis();
-        }
-
-        public void stop() {
-            final long elapsed = System.currentTimeMillis() - start;
-            if (elapsed > 0) {
-                timings.computeIfAbsent(name, k -> new AtomicLong()).addAndGet(elapsed);
-            }
-        }
-    }
-
     public Timing start(final String name) {
         return new Timing(name);
     }
@@ -60,5 +43,22 @@ public class Timings {
         });
 
         return sb.toString();
+    }
+
+    public class Timing {
+        private final String name;
+        private long start;
+
+        Timing(final String name) {
+            this.name = name;
+            start = System.currentTimeMillis();
+        }
+
+        public void stop() {
+            final long elapsed = System.currentTimeMillis() - start;
+            if (elapsed > 0) {
+                timings.computeIfAbsent(name, k -> new AtomicLong()).addAndGet(elapsed);
+            }
+        }
     }
 }

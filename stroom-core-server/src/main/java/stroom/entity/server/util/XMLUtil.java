@@ -42,10 +42,8 @@ import java.io.StringWriter;
 import java.io.Writer;
 
 public final class XMLUtil {
-    private static final Logger LOGGER = LoggerFactory.getLogger(XMLUtil.class);
-
     public static final SAXParserFactory PARSER_FACTORY;
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(XMLUtil.class);
     private static final String XML = "xml";
     private static final String UTF_8 = "UTF-8";
     private static final String NO = "no";

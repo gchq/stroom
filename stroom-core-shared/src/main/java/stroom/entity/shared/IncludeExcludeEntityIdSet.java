@@ -25,7 +25,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "inex")
-@XmlType(name = "inex", propOrder = { "include", "exclude" })
+@XmlType(name = "inex", propOrder = {"include", "exclude"})
 public class IncludeExcludeEntityIdSet<T extends BaseEntity>
         implements Copyable<IncludeExcludeEntityIdSet<T>>, HasIsConstrained, Matcher<T>, Clearable, SharedObject {
     private static final long serialVersionUID = 7153300977968635056L;
@@ -42,13 +42,13 @@ public class IncludeExcludeEntityIdSet<T extends BaseEntity>
         this.exclude = exclude;
     }
 
-    public void setInclude(final EntityIdSet<T> include) {
-        this.include = include;
-    }
-
     @XmlElement(name = "include")
     public EntityIdSet<T> getInclude() {
         return include;
+    }
+
+    public void setInclude(final EntityIdSet<T> include) {
+        this.include = include;
     }
 
     public EntityIdSet<T> obtainInclude() {
@@ -58,13 +58,13 @@ public class IncludeExcludeEntityIdSet<T extends BaseEntity>
         return getInclude();
     }
 
-    public void setExclude(final EntityIdSet<T> exclude) {
-        this.exclude = exclude;
-    }
-
     @XmlElement(name = "exclude")
     public EntityIdSet<T> getExclude() {
         return exclude;
+    }
+
+    public void setExclude(final EntityIdSet<T> exclude) {
+        this.exclude = exclude;
     }
 
     public EntityIdSet<T> obtainExclude() {

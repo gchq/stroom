@@ -37,9 +37,8 @@ import java.util.UUID;
  */
 @Component(SessionResourceStoreImpl.BEAN_NAME)
 public class SessionResourceStoreImpl extends HttpServlet implements SessionResourceStore {
-    private static final long serialVersionUID = -4533441835216235920L;
-
     public static final String BEAN_NAME = "sessionResourceStore";
+    private static final long serialVersionUID = -4533441835216235920L;
     private static final String UUID_ARG = "UUID";
 
     private final ResourceStore resourceStore;

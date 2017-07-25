@@ -30,8 +30,21 @@ import static org.junit.Assert.assertTrue;
 public class TestInvalidXMLCharFilterReader {
     public static final char REPLACE_CHAR = 0xfffd;
 
-    private final int[] m_test_chunk_sizes = { 1, 2, 3, 5, 7, 11, 13, 16 };
+    private final int[] m_test_chunk_sizes = {1, 2, 3, 5, 7, 11, 13, 16};
     private char[] m_bmp_rep_twice, m_brokenutf16str;
+
+    private static boolean isValidXmlCP(final int ch, final InvalidXMLCharFilterReader.XMLmode mode) {
+        switch (mode) {
+            case XML_1_0:
+                return ch == 0x9 || ch == 0xa || ch == 0xd || (ch >= 0x20 && ch <= 0xd7ff) || (ch >= 0xe000 && ch <= 0xfffd)
+                        || (ch >= 0x10000 && ch <= 0x10ffff);
+            case XML_1_1:
+                return (ch >= 0x1 && ch <= 0xd7ff) || (ch >= 0xe000 && ch <= 0xfffd) || (ch >= 0x10000 && ch <= 0x10ffff);
+            default:
+                assertTrue(false);
+        }
+        return false;
+    }
 
     @Before
     public void setUp() throws Exception {
@@ -48,19 +61,6 @@ public class TestInvalidXMLCharFilterReader {
             System.arraycopy(rchars, 0, m_brokenutf16str, i, cpylen);
             i += cpylen;
         }
-    }
-
-    private static boolean isValidXmlCP(final int ch, final InvalidXMLCharFilterReader.XMLmode mode) {
-        switch (mode) {
-        case XML_1_0:
-            return ch == 0x9 || ch == 0xa || ch == 0xd || (ch >= 0x20 && ch <= 0xd7ff) || (ch >= 0xe000 && ch <= 0xfffd)
-                    || (ch >= 0x10000 && ch <= 0x10ffff);
-        case XML_1_1:
-            return (ch >= 0x1 && ch <= 0xd7ff) || (ch >= 0xe000 && ch <= 0xfffd) || (ch >= 0x10000 && ch <= 0x10ffff);
-        default:
-            assertTrue(false);
-        }
-        return false;
     }
 
     private Reader getReader(final char[] data, final InvalidXMLCharFilterReader.XMLmode mode) {

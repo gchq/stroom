@@ -26,12 +26,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "tabLayout", propOrder = { "tabs", "selected" })
+@XmlType(name = "tabLayout", propOrder = {"tabs", "selected"})
 public class TabLayoutConfig extends LayoutConfig {
     private static final long serialVersionUID = -2105048053435792675L;
 
     @XmlElementWrapper(name = "tabs")
-    @XmlElements({ @XmlElement(name = "tab", type = TabConfig.class) })
+    @XmlElements({@XmlElement(name = "tab", type = TabConfig.class)})
     private List<TabConfig> tabs;
     @XmlElement(name = "selected")
     private Integer selected;

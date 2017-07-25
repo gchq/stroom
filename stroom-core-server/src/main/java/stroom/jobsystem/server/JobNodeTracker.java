@@ -25,10 +25,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class JobNodeTracker {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeTracker.class);
-
-    private JobNode jobNode;
     private final AtomicInteger currentTaskCount = new AtomicInteger();
-
+    private JobNode jobNode;
     /**
      * Last time tasks we actually executed a task for this job.
      */

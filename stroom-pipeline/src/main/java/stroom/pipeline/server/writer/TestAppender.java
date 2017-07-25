@@ -28,8 +28,8 @@ import java.io.OutputStream;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
-@ConfigurableElement(type = "TestAppender", roles = { PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_DESTINATION }, icon = ElementIcons.STREAM)
+@ConfigurableElement(type = "TestAppender", roles = {PipelineElementType.ROLE_TARGET,
+        PipelineElementType.ROLE_DESTINATION}, icon = ElementIcons.STREAM)
 public class TestAppender extends AbstractAppender {
     private OutputStream outputStream;
 

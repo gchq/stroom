@@ -42,6 +42,11 @@ import java.util.UUID;
 @Component
 @Scope(StroomScope.PROTOTYPE)
 public class PathCreator {
+    private static final String[] NON_ENV_VARS = {"feed", "pipeline", "streamId", "searchId", "node", "year", "month",
+            "day", "hour", "minute", "second", "millis", "ms", "uuid", "fileName", "fileStem", "fileExtension",
+            StroomProperties.STROOM_TEMP};
+    private static final Set<String> NON_ENV_VARS_SET = Collections
+            .unmodifiableSet(new HashSet<>(Arrays.asList(NON_ENV_VARS)));
     @Resource
     private FeedHolder feedHolder;
     @Resource
@@ -52,40 +57,6 @@ public class PathCreator {
     private SearchIdHolder searchIdHolder;
     @Resource
     private NodeCache nodeCache;
-
-    private static final String[] NON_ENV_VARS = { "feed", "pipeline", "streamId", "searchId", "node", "year", "month",
-            "day", "hour", "minute", "second", "millis", "ms", "uuid", "fileName", "fileStem", "fileExtension",
-            StroomProperties.STROOM_TEMP };
-    private static final Set<String> NON_ENV_VARS_SET = Collections
-            .unmodifiableSet(new HashSet<>(Arrays.asList(NON_ENV_VARS)));
-
-    public String replaceAll(String path) {
-        path = replaceContextVars(path);
-        path = replaceTimeVars(path);
-        path = replaceUUIDVars(path);
-        path = replaceSystemProperties(path);
-        return path;
-    }
-
-    public String replaceContextVars(String path) {
-        if (feedHolder != null && feedHolder.getFeed() != null) {
-            path = replace(path, "feed", feedHolder.getFeed().getName());
-        }
-        if (pipelineHolder != null && pipelineHolder.getPipeline() != null) {
-            path = replace(path, "pipeline", pipelineHolder.getPipeline().getName());
-        }
-        if (streamHolder != null && streamHolder.getStream() != null) {
-            path = replace(path, "streamId", String.valueOf(streamHolder.getStream().getId()));
-        }
-        if (searchIdHolder != null && searchIdHolder.getSearchId() != null) {
-            path = replace(path, "searchId", String.valueOf(searchIdHolder.getSearchId()));
-        }
-        if (nodeCache != null) {
-            path = replace(path, "node", String.valueOf(nodeCache.getDefaultNode().getName()));
-        }
-
-        return path;
-    }
 
     public static String replaceTimeVars(String path) {
         // Replace some of the path elements with system variables.
@@ -172,5 +143,33 @@ public class PathCreator {
         }
 
         return newPath;
+    }
+
+    public String replaceAll(String path) {
+        path = replaceContextVars(path);
+        path = replaceTimeVars(path);
+        path = replaceUUIDVars(path);
+        path = replaceSystemProperties(path);
+        return path;
+    }
+
+    public String replaceContextVars(String path) {
+        if (feedHolder != null && feedHolder.getFeed() != null) {
+            path = replace(path, "feed", feedHolder.getFeed().getName());
+        }
+        if (pipelineHolder != null && pipelineHolder.getPipeline() != null) {
+            path = replace(path, "pipeline", pipelineHolder.getPipeline().getName());
+        }
+        if (streamHolder != null && streamHolder.getStream() != null) {
+            path = replace(path, "streamId", String.valueOf(streamHolder.getStream().getId()));
+        }
+        if (searchIdHolder != null && searchIdHolder.getSearchId() != null) {
+            path = replace(path, "searchId", String.valueOf(searchIdHolder.getSearchId()));
+        }
+        if (nodeCache != null) {
+            path = replace(path, "node", String.valueOf(nodeCache.getDefaultNode().getName()));
+        }
+
+        return path;
     }
 }

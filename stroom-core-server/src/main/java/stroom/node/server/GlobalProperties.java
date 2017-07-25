@@ -53,7 +53,7 @@ public class GlobalProperties {
      * it. It is recommended that most code injects GlobalProperties instead.
      *
      * @return Either the current instance of GlobalProperties or a new instance
-     *         if one has not previously been constructed.
+     * if one has not previously been constructed.
      */
     public static GlobalProperties getInstance() {
         if (instance == null) {
@@ -66,10 +66,9 @@ public class GlobalProperties {
     private void loadSpringContext() {
         try {
             final ApplicationContext propertyContext = new ClassPathXmlApplicationContext(
-                    new String[] { "classpath:META-INF/spring/stroomCoreServerPropertyContext.xml" });
+                    new String[]{"classpath:META-INF/spring/stroomCoreServerPropertyContext.xml"});
 
-            @SuppressWarnings("unchecked")
-            final List<GlobalProperty> globalPropertyList = (List<GlobalProperty>) propertyContext
+            @SuppressWarnings("unchecked") final List<GlobalProperty> globalPropertyList = (List<GlobalProperty>) propertyContext
                     .getBean("defaultPropertyList");
 
             for (final GlobalProperty globalProperty : globalPropertyList) {
@@ -92,7 +91,7 @@ public class GlobalProperties {
             final Connection connection = ConnectionUtil.getConnection();
             if (ConnectionUtil.tableExists(connection, GlobalProperty.TABLE_NAME)) {
                 final ResultSet resultSet = ConnectionUtil.executeQueryResultSet(connection, "SELECT "
-                        + SQLNameConstants.NAME + ", " + SQLNameConstants.VALUE + " FROM " + GlobalProperty.TABLE_NAME,
+                                + SQLNameConstants.NAME + ", " + SQLNameConstants.VALUE + " FROM " + GlobalProperty.TABLE_NAME,
                         null);
 
                 while (resultSet.next()) {

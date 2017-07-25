@@ -47,7 +47,7 @@ import java.util.concurrent.TimeUnit;
 
 public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDataRetentionExecutor.class);
-
+    private static final int RETENTION_PERIOD_DAYS = 1;
     @Resource
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Resource
@@ -60,8 +60,6 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
     private DataRetentionExecutor dataRetentionExecutor;
     @Resource
     private DataRetentionService dataRetentionService;
-
-    private static final int RETENTION_PERIOD_DAYS = 1;
 
     @Test
     public void testMultipleRuns() {

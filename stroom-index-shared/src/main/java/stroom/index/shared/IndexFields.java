@@ -31,20 +31,20 @@ public class IndexFields implements Serializable {
 
     private List<IndexField> indexFields;
 
-    public static IndexFields createStreamIndexFields() {
-        final List<IndexField> indexFields = new ArrayList<>();
-        // Always add standard id fields for now.
-        indexFields.add(IndexField.createIdField(IndexConstants.STREAM_ID));
-        indexFields.add(IndexField.createIdField(IndexConstants.EVENT_ID));
-        return new IndexFields(indexFields);
-    }
-
     public IndexFields() {
         this.indexFields = new ArrayList<>();
     }
 
     public IndexFields(final List<IndexField> indexFields) {
         this.indexFields = indexFields;
+    }
+
+    public static IndexFields createStreamIndexFields() {
+        final List<IndexField> indexFields = new ArrayList<>();
+        // Always add standard id fields for now.
+        indexFields.add(IndexField.createIdField(IndexConstants.STREAM_ID));
+        indexFields.add(IndexField.createIdField(IndexConstants.EVENT_ID));
+        return new IndexFields(indexFields);
     }
 
     @XmlElements({@XmlElement(name = "field", type = IndexField.class)})

@@ -47,7 +47,9 @@ import java.util.concurrent.TimeUnit;
 
 public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestSQLStatisticAggregationManager.class);
-
+    private static final long STAT_VALUE = 10L;
+    private static final String COL_NAME_VAL = "VAL";
+    private static final String COL_NAME_CNT = "CT";
     @Resource
     private CommonTestControl commonTestControl;
     @Resource
@@ -60,11 +62,6 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
     private SQLStatisticAggregationTransactionHelper sqlStatisticAggregationTransactionHelper;
     @Resource
     private StroomDatabaseInfo stroomDatabaseInfo;
-
-    private static final long STAT_VALUE = 10L;
-
-    private static final String COL_NAME_VAL = "VAL";
-    private static final String COL_NAME_CNT = "CT";
 
     @Override
     public void onBefore() {

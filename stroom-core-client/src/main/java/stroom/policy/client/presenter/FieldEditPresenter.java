@@ -32,16 +32,6 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import java.util.Set;
 
 public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.FieldEditView> {
-    public interface FieldEditView extends View {
-        DataSourceFieldType getType();
-
-        void setType(DataSourceFieldType type);
-
-        String getName();
-
-        void setName(final String name);
-    }
-
     private Set<String> otherFieldNames;
 
     @Inject
@@ -78,5 +68,15 @@ public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.Fie
 
     public void hide() {
         HidePopupEvent.fire(this, this);
+    }
+
+    public interface FieldEditView extends View {
+        DataSourceFieldType getType();
+
+        void setType(DataSourceFieldType type);
+
+        String getName();
+
+        void setName(final String name);
     }
 }

@@ -38,15 +38,22 @@ public class SQLStatKey {
     }
 
     /**
+     * We do direct SQL with keys so the MUST be cleaned
+     */
+    public static final String cleanText(final String text) {
+        return SQLStatisticsEventValidator.cleanString(text);
+    }
+
+    /**
      * SQL Stats stores the name, bit mask, tags and their values all as one big
      * string of the form
-     *
+     * <p>
      * XXXXXXXXXXaaaa¬Tag1¬Tag1Val¬Tag2¬Tag2Val
-     *
+     * <p>
      * or if there are no tags at all then
-     *
+     * <p>
      * XXXXXXXXXXaaaa
-     *
+     * <p>
      * where XXXXXXXXXX is the stat name and aaaa is the hex form of the rollup
      * bit mask
      */
@@ -84,20 +91,13 @@ public class SQLStatKey {
         }
     }
 
-    /**
-     * We do direct SQL with keys so the MUST be cleaned
-     */
-    public static final String cleanText(final String text) {
-        return SQLStatisticsEventValidator.cleanString(text);
-    }
-
     public long getMs() {
         return ms;
     }
 
     /**
      * @return The compound name consisting of the statistic name, the roll up
-     *         mask in hex form and any tag/value pairs
+     * mask in hex form and any tag/value pairs
      */
     public String getName() {
         return name;

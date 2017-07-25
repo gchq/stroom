@@ -38,7 +38,7 @@ import java.nio.file.Path;
 
 /**
  * This class should be common to all component and integration tests.
- *
+ * <p>
  * It is safer if all test classes destroy the Spring context after running
  * tests in the class to avoid knock on effects in other tests.
  */
@@ -65,6 +65,11 @@ public abstract class StroomIntegrationTest implements StroomTest {
 
     @AfterClass
     public static final void afterClass() throws IOException {
+    }
+
+    public static int getTestCount() {
+        final State state = TestState.getState();
+        return state.getClassTestCount();
     }
 
     protected void onBefore() {
@@ -97,7 +102,6 @@ public abstract class StroomIntegrationTest implements StroomTest {
 
         onBefore();
     }
-
 
     /**
      * Remove all entities from the database.
@@ -176,11 +180,6 @@ public abstract class StroomIntegrationTest implements StroomTest {
         if (force || getTestCount() > 1) {
             commonTestControl.teardown();
         }
-    }
-
-    public static int getTestCount() {
-        final State state = TestState.getState();
-        return state.getClassTestCount();
     }
 
     @Override

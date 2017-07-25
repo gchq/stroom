@@ -35,7 +35,7 @@ public class StreamAttributeCondition implements Serializable {
     }
 
     public StreamAttributeCondition(final DocRef streamAttributeKey, final Condition condition,
-            final String fieldValue) {
+                                    final String fieldValue) {
         this.streamAttributeKey = streamAttributeKey;
         this.condition = condition;
         this.fieldValue = fieldValue;

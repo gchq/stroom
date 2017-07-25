@@ -37,8 +37,7 @@ public interface CommonTestControl {
     /**
      * Return a entity count.
      *
-     * @param clazz
-     *            to count
+     * @param clazz to count
      * @return the count
      */
     int countEntity(Class<?> clazz);

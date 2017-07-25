@@ -30,7 +30,7 @@ import stroom.security.client.ClientSecurityContext;
 public class XSLTSettingsPresenter extends EntitySettingsPresenter<XSLTSettingsPresenter.XSLTSettingsView, XSLT> {
     @Inject
     public XSLTSettingsPresenter(final EventBus eventBus, final XSLTSettingsView view,
-            final ClientSecurityContext securityContext) {
+                                 final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
 
         // Add listeners for dirty events.

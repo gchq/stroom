@@ -46,11 +46,12 @@ import java.util.Set;
 
 public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     private static final String SOURCE = "Source";
+    public static final PipelineElement SOURCE_ELEMENT = new PipelineElement(SOURCE, SOURCE);
     private static final PipelineElementType SOURCE_ELEMENT_TYPE = new PipelineElementType(SOURCE, null,
             new String[]{PipelineElementType.ROLE_SOURCE, PipelineElementType.ROLE_HAS_TARGETS,
                     PipelineElementType.VISABILITY_SIMPLE},
             ElementIcons.STREAM);
-    public static final PipelineElement SOURCE_ELEMENT = new PipelineElement(SOURCE, SOURCE);
+
     static {
         SOURCE_ELEMENT.setElementType(SOURCE_ELEMENT_TYPE);
     }

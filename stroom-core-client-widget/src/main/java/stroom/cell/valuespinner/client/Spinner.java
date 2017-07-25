@@ -32,8 +32,6 @@ public class Spinner {
     private boolean increment;
     private boolean constrained = true;
     private InputElement input;
-    private boolean spinning;
-
     private final Timer timer = new Timer() {
         private int counter = 0;
         private int speed = 7;
@@ -62,9 +60,10 @@ public class Spinner {
             }
         }
     };
+    private boolean spinning;
 
     public void start(final HasSpinnerConstraints constraints, final boolean increment, final long value,
-            final InputElement input) {
+                      final InputElement input) {
         this.min = constraints.getMin();
         this.max = constraints.getMax();
         this.step = constraints.getStep();

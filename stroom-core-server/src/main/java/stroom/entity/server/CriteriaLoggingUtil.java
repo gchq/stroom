@@ -52,14 +52,14 @@ public final class CriteriaLoggingUtil {
     }
 
     public static void appendStringTerm(final List<BaseAdvancedQueryItem> items, final String name,
-            final String value) {
+                                        final String value) {
         if (name != null && value != null) {
             items.add(EventLoggingUtil.createTerm(name, TermCondition.EQUALS, value));
         }
     }
 
     public static void appendBooleanTerm(final List<BaseAdvancedQueryItem> items, final String name,
-            final Boolean value) {
+                                         final Boolean value) {
         if (name != null && value != null) {
             items.add(EventLoggingUtil.createTerm(name, TermCondition.EQUALS, value.toString()));
         }
@@ -85,7 +85,7 @@ public final class CriteriaLoggingUtil {
     }
 
     public static void appendRangeTerm(final List<BaseAdvancedQueryItem> items, final String name,
-            final Range<?> range) {
+                                       final Range<?> range) {
         if (range != null) {
             if (range.getFrom() != null) {
                 items.add(EventLoggingUtil.createTerm(name, TermCondition.GREATER_THAN_EQUAL_TO,
@@ -98,7 +98,7 @@ public final class CriteriaLoggingUtil {
     }
 
     public static void appendIncludeExcludeEntityIdSet(final List<BaseAdvancedQueryItem> items, final String name,
-            final IncludeExcludeEntityIdSet<?> includeExcludeEntityIdSet) {
+                                                       final IncludeExcludeEntityIdSet<?> includeExcludeEntityIdSet) {
         if (includeExcludeEntityIdSet != null) {
             if (includeExcludeEntityIdSet.getInclude() != null) {
                 appendEntityIdSet(items, name, includeExcludeEntityIdSet.getInclude());
@@ -115,12 +115,12 @@ public final class CriteriaLoggingUtil {
     }
 
     public static void appendEntityIdSet(final List<BaseAdvancedQueryItem> items, final String name,
-            final EntityIdSet<?> idSet) {
+                                         final EntityIdSet<?> idSet) {
         appendCriteriaSet(items, name, idSet);
     }
 
     public static void appendCriteriaSet(final List<BaseAdvancedQueryItem> items, final String name,
-            final CriteriaSet<?> set) {
+                                         final CriteriaSet<?> set) {
         if (set != null) {
             final Or or = new Or();
 

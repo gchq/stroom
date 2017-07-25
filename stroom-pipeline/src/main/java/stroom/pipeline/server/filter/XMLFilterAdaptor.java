@@ -92,11 +92,11 @@ public class XMLFilterAdaptor implements XMLFilter {
     }
 
     @Override
-    public void setElementId(final String elementId) {
+    public String getElementId() {
+        return null;
     }
 
     @Override
-    public String getElementId() {
-        return null;
+    public void setElementId(final String elementId) {
     }
 }

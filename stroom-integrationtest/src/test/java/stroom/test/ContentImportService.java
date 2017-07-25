@@ -74,13 +74,13 @@ public class ContentImportService {
         private final String name;
         private final Version version;
 
-        public static ContentPack of(final String name, final Version version) {
-            return new ContentPack(name, version);
-        }
-
         public ContentPack(final String name, final Version version) {
             this.name = name;
             this.version = version;
+        }
+
+        public static ContentPack of(final String name, final Version version) {
+            return new ContentPack(name, version);
         }
 
         public String getName() {

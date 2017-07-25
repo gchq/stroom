@@ -47,8 +47,7 @@ public class TestTranslationTask extends AbstractProcessIntegrationTest {
     /**
      * Tests Task with a valid resource and feed.
      *
-     * @throws Exception
-     *             Could be thrown.
+     * @throws Exception Could be thrown.
      */
     @Test
     public void testBothValid() throws Exception {
@@ -88,8 +87,7 @@ public class TestTranslationTask extends AbstractProcessIntegrationTest {
     /**
      * Tests Task with an invalid resource and valid feed.
      *
-     * @throws Exception
-     *             Could be thrown.
+     * @throws Exception Could be thrown.
      */
     @Test
     public void testInvalidResource() throws Exception {

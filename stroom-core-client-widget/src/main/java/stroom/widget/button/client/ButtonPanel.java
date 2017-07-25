@@ -24,15 +24,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import stroom.svg.client.SvgPreset;
 
 public class ButtonPanel extends FlowPanel {
-    public interface Style extends CssResource {
-        String layout();
-    }
-
-    public interface Resources extends ClientBundle {
-        @Source("ButtonPanel.css")
-        Style style();
-    }
-
     private static volatile Resources resources;
     private boolean vertical;
 
@@ -48,6 +39,20 @@ public class ButtonPanel extends FlowPanel {
         setStyleName(resources.style().layout());
     }
 
+    public ButtonView add(final SvgPreset preset) {
+        final SvgButton button = createButton(preset);
+        add(button);
+        return button;
+    }
+
+    private SvgButton createButton(final SvgPreset preset) {
+        final SvgButton button = SvgButton.create(preset);
+        if (vertical) {
+            button.getElement().getStyle().setDisplay(Display.BLOCK);
+        }
+        return button;
+    }
+
 //    public ImageButtonView add(final String title, final ImageResource enabledImage, final ImageResource disabledImage,
 //            final boolean enabled) {
 //        final ImageButton button = createButton(title, enabledImage, disabledImage, enabled);
@@ -55,11 +60,8 @@ public class ButtonPanel extends FlowPanel {
 //        return button;
 //    }
 
-
-    public ButtonView add(final SvgPreset preset) {
-        final SvgButton button = createButton(preset);
-        add(button);
-        return button;
+    public void setVertical(final boolean vertical) {
+        this.vertical = vertical;
     }
 
 //    private ImageButton createButton(final String title, final ImageResource enabledImage,
@@ -75,15 +77,12 @@ public class ButtonPanel extends FlowPanel {
 //        return button;
 //    }
 
-    private SvgButton createButton(final SvgPreset preset) {
-        final SvgButton button = SvgButton.create(preset);
-        if (vertical) {
-            button.getElement().getStyle().setDisplay(Display.BLOCK);
-        }
-        return button;
+    public interface Style extends CssResource {
+        String layout();
     }
 
-    public void setVertical(final boolean vertical) {
-        this.vertical = vertical;
+    public interface Resources extends ClientBundle {
+        @Source("ButtonPanel.css")
+        Style style();
     }
 }

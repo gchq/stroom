@@ -27,7 +27,7 @@ public class FetchDataWithPipelineAction extends FetchDataAction {
     }
 
     public FetchDataWithPipelineAction(final Long streamId, final Long segmentId, final DocRef pipeline,
-            final boolean showAsHtml) {
+                                       final boolean showAsHtml) {
         super(streamId, segmentId, showAsHtml);
         this.pipeline = pipeline;
     }

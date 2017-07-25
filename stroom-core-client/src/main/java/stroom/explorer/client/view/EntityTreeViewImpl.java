@@ -30,16 +30,11 @@ import stroom.widget.dropdowntree.client.view.QuickFilter;
 
 public class EntityTreeViewImpl extends ViewWithUiHandlers<EntityTreeUiHandlers>
         implements EntityTreePresenter.EntityTreeView {
-    public interface Binder extends UiBinder<Widget, EntityTreeViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     QuickFilter nameFilter;
     @UiField
     ScrollPanel scrollPanel;
-
     @Inject
     public EntityTreeViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -58,5 +53,8 @@ public class EntityTreeViewImpl extends ViewWithUiHandlers<EntityTreeUiHandlers>
     @Override
     public void setCellTree(Widget cellTree) {
         scrollPanel.setWidget(cellTree);
+    }
+
+    public interface Binder extends UiBinder<Widget, EntityTreeViewImpl> {
     }
 }

@@ -41,6 +41,10 @@ import java.util.concurrent.TimeUnit;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestFileSystemUtil extends StroomUnitTest {
+    public static final String NO_WRITE_DIR1 = "/usr/bin/username";
+    public static final String NO_WRITE_DIR2 = "/unable/to/create/this";
+    private volatile boolean allOk = true;
+
     private Volume buildTestVolume() throws IOException {
         final Volume config = new Volume();
         config.setPath(getCurrentTestDir().getCanonicalPath());
@@ -165,9 +169,6 @@ public class TestFileSystemUtil extends StroomUnitTest {
 
     }
 
-    public static final String NO_WRITE_DIR1 = "/usr/bin/username";
-    public static final String NO_WRITE_DIR2 = "/unable/to/create/this";
-
     @Test
     public void testCreateBadDirs() {
         Assert.assertFalse(FileSystemUtil.mkdirs(null, new File(NO_WRITE_DIR1)));
@@ -214,8 +215,6 @@ public class TestFileSystemUtil extends StroomUnitTest {
 
         FileSystemUtil.deleteDirectory(dir1);
     }
-
-    private volatile boolean allOk = true;
 
     private synchronized void setOk(final boolean ok) {
         if (!ok) {

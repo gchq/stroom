@@ -32,12 +32,10 @@ import java.io.OutputStream;
 import java.util.List;
 
 public class TextRecordEmitter extends XMLFilterAdaptor {
+    private final List<DestinationProvider> destinationProviders;
+    private final StringBuilder builder = new StringBuilder();
     @Resource
     private ErrorReceiverProxy errorReceiverProxy;
-
-    private final List<DestinationProvider> destinationProviders;
-
-    private final StringBuilder builder = new StringBuilder();
     private int depth;
 
     public TextRecordEmitter(final List<DestinationProvider> destinationProviders) {

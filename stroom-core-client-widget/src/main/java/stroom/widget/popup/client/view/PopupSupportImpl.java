@@ -44,7 +44,7 @@ public class PopupSupportImpl implements PopupSupport {
     private HasEnabled controls;
 
     public PopupSupportImpl(final View view, final String caption, final Boolean modal,
-            final Element... autoHidePartners) {
+                            final Element... autoHidePartners) {
         setView(view);
         setCaption(caption);
 
@@ -72,7 +72,7 @@ public class PopupSupportImpl implements PopupSupport {
 
     @Override
     public void show(final PopupType popupType, final PopupPosition popupPosition, final PopupSize popupSize,
-            final PopupUiHandlers popupUiHandlers) {
+                     final PopupUiHandlers popupUiHandlers) {
         this.popupUiHandlers = popupUiHandlers;
 
         if (popup == null) {
@@ -142,7 +142,7 @@ public class PopupSupportImpl implements PopupSupport {
      * popup are known.
      */
     private void positionPopup(final Popup popup, final PopupType popupType, final PopupPosition popupPosition,
-            int offsetWidth, int offsetHeight) {
+                               int offsetWidth, int offsetHeight) {
         int shadowWidth = 0;
         if (popupType != PopupType.POPUP) {
             shadowWidth = POPUP_SHADOW_WIDTH;
@@ -285,58 +285,58 @@ public class PopupSupportImpl implements PopupSupport {
     }
 
     private Popup createPopup(final PopupType popupType, final PopupSize popupSize,
-            final PopupUiHandlers popupUiHandlers) {
+                              final PopupUiHandlers popupUiHandlers) {
         Popup popup = null;
 
         if (popupSize != null) {
             switch (popupType) {
-            case POPUP:
-                popup = new SimplePopup(popupUiHandlers);
-                popup.setContent(view.asWidget());
-                break;
-            case DIALOG:
-                popup = new ResizableDialog(popupUiHandlers, popupSize);
-                popup.setContent(view.asWidget());
-                break;
-            case CLOSE_DIALOG:
-                popup = new ResizableDialog(popupUiHandlers, popupSize);
-                final ResizableCloseContent closeContent = new ResizableCloseContent(popupUiHandlers);
-                controls = closeContent;
-                closeContent.setContent(view.asWidget());
-                popup.setContent(closeContent);
-                break;
-            case OK_CANCEL_DIALOG:
-                popup = new ResizableDialog(popupUiHandlers, popupSize);
-                final ResizableOkCancelContent okCancelContent = new ResizableOkCancelContent(popupUiHandlers);
-                controls = okCancelContent;
-                okCancelContent.setContent(view.asWidget());
-                popup.setContent(okCancelContent);
-                break;
+                case POPUP:
+                    popup = new SimplePopup(popupUiHandlers);
+                    popup.setContent(view.asWidget());
+                    break;
+                case DIALOG:
+                    popup = new ResizableDialog(popupUiHandlers, popupSize);
+                    popup.setContent(view.asWidget());
+                    break;
+                case CLOSE_DIALOG:
+                    popup = new ResizableDialog(popupUiHandlers, popupSize);
+                    final ResizableCloseContent closeContent = new ResizableCloseContent(popupUiHandlers);
+                    controls = closeContent;
+                    closeContent.setContent(view.asWidget());
+                    popup.setContent(closeContent);
+                    break;
+                case OK_CANCEL_DIALOG:
+                    popup = new ResizableDialog(popupUiHandlers, popupSize);
+                    final ResizableOkCancelContent okCancelContent = new ResizableOkCancelContent(popupUiHandlers);
+                    controls = okCancelContent;
+                    okCancelContent.setContent(view.asWidget());
+                    popup.setContent(okCancelContent);
+                    break;
             }
         } else {
             switch (popupType) {
-            case POPUP:
-                popup = new SimplePopup(popupUiHandlers);
-                popup.setContent(view.asWidget());
-                break;
-            case DIALOG:
-                popup = new Dialog(popupUiHandlers);
-                popup.setContent(view.asWidget());
-                break;
-            case CLOSE_DIALOG:
-                popup = new Dialog(popupUiHandlers);
-                final CloseContent closeContent = new CloseContent(popupUiHandlers);
-                controls = closeContent;
-                closeContent.setContent(view.asWidget());
-                popup.setContent(closeContent);
-                break;
-            case OK_CANCEL_DIALOG:
-                popup = new Dialog(popupUiHandlers);
-                final OkCancelContent okCancelContent = new OkCancelContent(popupUiHandlers);
-                controls = okCancelContent;
-                okCancelContent.setContent(view.asWidget());
-                popup.setContent(okCancelContent);
-                break;
+                case POPUP:
+                    popup = new SimplePopup(popupUiHandlers);
+                    popup.setContent(view.asWidget());
+                    break;
+                case DIALOG:
+                    popup = new Dialog(popupUiHandlers);
+                    popup.setContent(view.asWidget());
+                    break;
+                case CLOSE_DIALOG:
+                    popup = new Dialog(popupUiHandlers);
+                    final CloseContent closeContent = new CloseContent(popupUiHandlers);
+                    controls = closeContent;
+                    closeContent.setContent(view.asWidget());
+                    popup.setContent(closeContent);
+                    break;
+                case OK_CANCEL_DIALOG:
+                    popup = new Dialog(popupUiHandlers);
+                    final OkCancelContent okCancelContent = new OkCancelContent(popupUiHandlers);
+                    controls = okCancelContent;
+                    okCancelContent.setContent(view.asWidget());
+                    popup.setContent(okCancelContent);
+                    break;
             }
         }
 

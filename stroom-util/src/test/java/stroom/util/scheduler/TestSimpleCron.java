@@ -26,6 +26,8 @@ import java.text.ParseException;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestSimpleCron {
+    private Long currentTime = null;
+
     @Test
     public void testMinRollAny1() throws ParseException {
         textNext("* * *", "2010-01-01T04:00:00.000Z", "2010-01-01T04:01:00.000Z");
@@ -161,8 +163,6 @@ public class TestSimpleCron {
         }
         return end;
     }
-
-    private Long currentTime = null;
 
     @Test
     public void testUnderLoadTypical() throws ParseException {

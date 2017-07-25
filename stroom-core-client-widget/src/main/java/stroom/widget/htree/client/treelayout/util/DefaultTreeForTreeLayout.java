@@ -52,26 +52,23 @@ import static stroom.widget.htree.client.treelayout.internal.util.Contract.check
  * {@link #addChildren(Object, Object...)}).
  */
 public class DefaultTreeForTreeLayout<TreeNode> extends AbstractTreeForTreeLayout<TreeNode> {
+    private final Map<TreeNode, List<TreeNode>> childrenMap = new HashMap<>();
+    private final Map<TreeNode, TreeNode> parents = new HashMap<>();
     private List<TreeNode> emptyList;
+    /**
+     * Creates a new instance with a given node as the root
+     *
+     * @param root the node to be used as the root.
+     */
+    public DefaultTreeForTreeLayout(final TreeNode root) {
+        super(root);
+    }
 
     private List<TreeNode> getEmptyList() {
         if (emptyList == null) {
             emptyList = new ArrayList<>();
         }
         return emptyList;
-    }
-
-    private final Map<TreeNode, List<TreeNode>> childrenMap = new HashMap<>();
-    private final Map<TreeNode, TreeNode> parents = new HashMap<>();
-
-    /**
-     * Creates a new instance with a given node as the root
-     *
-     * @param root
-     *            the node to be used as the root.
-     */
-    public DefaultTreeForTreeLayout(final TreeNode root) {
-        super(root);
     }
 
     @Override
@@ -94,10 +91,8 @@ public class DefaultTreeForTreeLayout<TreeNode> extends AbstractTreeForTreeLayou
     }
 
     /**
-     * @param parentNode
-     *            [hasNode(parentNode)]
-     * @param node
-     *            [!hasNode(node)]
+     * @param parentNode [hasNode(parentNode)]
+     * @param node       [!hasNode(node)]
      */
     public void addChild(final TreeNode parentNode, final TreeNode node) {
         checkArg(hasNode(parentNode), "parentNode is not in the tree");

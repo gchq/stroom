@@ -26,11 +26,7 @@ import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.importexport.client.presenter.ImportConfigConfirmPresenter.ImportConfigConfirmView;
 
 public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfigConfirmView {
-    public interface Binder extends UiBinder<Widget, ImportConfigConfirmViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     SimplePanel dataGridView;
 
@@ -47,5 +43,8 @@ public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfi
     @Override
     public void setDataGridView(final View view) {
         dataGridView.setWidget(view.asWidget());
+    }
+
+    public interface Binder extends UiBinder<Widget, ImportConfigConfirmViewImpl> {
     }
 }

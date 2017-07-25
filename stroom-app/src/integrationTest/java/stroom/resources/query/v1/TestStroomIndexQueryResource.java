@@ -47,57 +47,7 @@ public class TestStroomIndexQueryResource {
 
     private String jwtToken;
 
-
-    @Before
-    public void before(){
-        jwtToken = AuthorizationHelper.fetchJwtToken();
-    }
-
-    @Test
-    public void testSavedFromFile() throws IOException {
-        // Given
-        String searchRequestJson = new String(Files.readAllBytes(Paths.get("src/integrationTest/resources/searchRequest.json")));
-        ObjectMapper objectMapper = new ObjectMapper();
-        SearchRequest searchRequest = objectMapper.readValue(searchRequestJson, SearchRequest.class);
-        Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
-
-        // When
-        Response response = client
-                .target(SEARCH_TARGET)
-                .request()
-                .header("Authorization", "Bearer " + jwtToken)
-                .accept(MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON)
-                .post(Entity.json(searchRequest));
-        SearchResponse searchResponse = response.readEntity(SearchResponse.class);
-
-        // Then
-        assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
-        assertThat(searchResponse.getResults().size()).isEqualTo(5);
-
-        System.out.println(response.toString());
-    }
-
-
-    @Test
-    public void test() throws JsonProcessingException {
-        // Given
-        SearchRequest searchRequest = getSearchRequest();
-
-        // When
-        Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
-        Response response = client
-                .target(SEARCH_TARGET)
-                .request()
-                .header("Authorization", "Bearer " + jwtToken)
-                .accept(MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON)
-                .post(Entity.json(searchRequest));
-
-        // Then
-        assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
-        System.out.println(response.toString());
-    }
-
-    private static SearchRequest getSearchRequest(){
+    private static SearchRequest getSearchRequest() {
         QueryKey queryKey = new QueryKey("Some UUID");
         Query query = new Query(
                 new DocRef("docRefType", "docRefUuid", "docRefName"),
@@ -129,5 +79,53 @@ public class TestStroomIndexQueryResource {
     private static String serialiseSearchRequest(SearchRequest searchRequest) throws JsonProcessingException {
         ObjectMapper objectMapper = getMapper(true);
         return objectMapper.writeValueAsString(searchRequest);
+    }
+
+    @Before
+    public void before() {
+        jwtToken = AuthorizationHelper.fetchJwtToken();
+    }
+
+    @Test
+    public void testSavedFromFile() throws IOException {
+        // Given
+        String searchRequestJson = new String(Files.readAllBytes(Paths.get("src/integrationTest/resources/searchRequest.json")));
+        ObjectMapper objectMapper = new ObjectMapper();
+        SearchRequest searchRequest = objectMapper.readValue(searchRequestJson, SearchRequest.class);
+        Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
+
+        // When
+        Response response = client
+                .target(SEARCH_TARGET)
+                .request()
+                .header("Authorization", "Bearer " + jwtToken)
+                .accept(MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON)
+                .post(Entity.json(searchRequest));
+        SearchResponse searchResponse = response.readEntity(SearchResponse.class);
+
+        // Then
+        assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(searchResponse.getResults().size()).isEqualTo(5);
+
+        System.out.println(response.toString());
+    }
+
+    @Test
+    public void test() throws JsonProcessingException {
+        // Given
+        SearchRequest searchRequest = getSearchRequest();
+
+        // When
+        Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
+        Response response = client
+                .target(SEARCH_TARGET)
+                .request()
+                .header("Authorization", "Bearer " + jwtToken)
+                .accept(MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON)
+                .post(Entity.json(searchRequest));
+
+        // Then
+        assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        System.out.println(response.toString());
     }
 }

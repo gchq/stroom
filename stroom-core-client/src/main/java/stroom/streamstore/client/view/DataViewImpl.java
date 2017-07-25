@@ -28,11 +28,7 @@ import stroom.widget.tab.client.presenter.LayerContainer;
 import stroom.widget.tab.client.view.LinkTabBar;
 
 public class DataViewImpl extends ViewImpl implements DataView {
-    public interface Binder extends UiBinder<Widget, DataViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     LinkTabBar tabBar;
     @UiField
@@ -41,7 +37,6 @@ public class DataViewImpl extends ViewImpl implements DataView {
     Pager dataPager;
     @UiField
     LayerContainer layerContainer;
-
     @Inject
     public DataViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -81,5 +76,8 @@ public class DataViewImpl extends ViewImpl implements DataView {
     @Override
     public void setRefreshing(final boolean refreshing) {
         dataPager.setRefreshing(refreshing);
+    }
+
+    public interface Binder extends UiBinder<Widget, DataViewImpl> {
     }
 }

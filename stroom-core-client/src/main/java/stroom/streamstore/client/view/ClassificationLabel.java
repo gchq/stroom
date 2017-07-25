@@ -31,33 +31,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ClassificationLabel extends Composite {
-    private static class LabelColour {
-        private final String name;
-        private final String colour;
-
-        public LabelColour(final String name, final String colour) {
-            this.name = name;
-            this.colour = colour;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getColour() {
-            return colour;
-        }
-    }
-
     private static Binder binder = GWT.create(Binder.class);
-
-    public interface Binder extends UiBinder<Widget, ClassificationLabel> {
-    }
-
+    private final List<LabelColour> labelColours = new ArrayList<>();
     @UiField
     Label classification;
-
-    private final List<LabelColour> labelColours = new ArrayList<>();
 
     @Inject
     public ClassificationLabel(final ClientPropertyCache clientPropertyCache) {
@@ -100,5 +77,26 @@ public class ClassificationLabel extends Composite {
         }
 
         classification.getElement().getStyle().setBackgroundColor(colour);
+    }
+
+    public interface Binder extends UiBinder<Widget, ClassificationLabel> {
+    }
+
+    private static class LabelColour {
+        private final String name;
+        private final String colour;
+
+        public LabelColour(final String name, final String colour) {
+            this.name = name;
+            this.colour = colour;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getColour() {
+            return colour;
+        }
     }
 }

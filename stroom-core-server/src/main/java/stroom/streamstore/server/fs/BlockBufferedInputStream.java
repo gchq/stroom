@@ -23,7 +23,7 @@ import java.io.InputStream;
 /**
  * Class used to keep track of how many bytes we have read from a buffered
  * stream.
- *
+ * <p>
  * Also allows us to use the buffer to read another stream.
  */
 public class BlockBufferedInputStream extends BufferedInputStream {
@@ -33,18 +33,15 @@ public class BlockBufferedInputStream extends BufferedInputStream {
     private long streamPosition = 0;
 
     /**
-     * @param in
-     *            the stream we are buffering.
+     * @param in the stream we are buffering.
      */
     public BlockBufferedInputStream(final InputStream in) {
         super(in);
     }
 
     /**
-     * @param in
-     *            the stream we are buffering.
-     * @param bufSize
-     *            buffer size to use
+     * @param in      the stream we are buffering.
+     * @param bufSize buffer size to use
      */
     public BlockBufferedInputStream(final InputStream in, final int bufSize) {
         super(in, bufSize);
@@ -54,8 +51,7 @@ public class BlockBufferedInputStream extends BufferedInputStream {
      * Point at a new input stream and reset our markers. Used to avoid
      * allocating new buffers.
      *
-     * @param newIn
-     *            new stream to read
+     * @param newIn new stream to read
      */
     public void recycle(final InputStream newIn) {
         count = 0;

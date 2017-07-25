@@ -34,12 +34,12 @@ public class MetaDataStatisticTemplate implements Serializable {
     }
 
     public MetaDataStatisticTemplate(final String key, final String timeMsAttribute,
-            final List<String> tagAttributeList) {
+                                     final List<String> tagAttributeList) {
         this(key, timeMsAttribute, null, tagAttributeList);
     }
 
     public MetaDataStatisticTemplate(final String key, final String timeMsAttribute, final String incrementAttribute,
-            final List<String> tagAttributeList) {
+                                     final List<String> tagAttributeList) {
         this.key = key;
         this.timeMsAttribute = timeMsAttribute;
         this.incrementAttribute = incrementAttribute;

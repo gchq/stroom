@@ -41,27 +41,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ExpanderCell extends AbstractCell<Expander> {
-    interface Resources extends ClientBundle {
-        @Source("expander.css")
-        Style style();
-    }
-
-    interface Style extends CssResource {
-        String expanderIcon();
-
-        String active();
-    }
-
-    interface Template extends SafeHtmlTemplates {
-        @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
-        SafeHtml outerDiv(String className, SafeStyles style, SafeHtml icon);
-
-        @Template("<img class=\"{0}\" src=\"{1}\" />")
-        SafeHtml icon(String iconClass, SafeUri iconUrl);
-    }
-
     private static final Set<String> ENABLED_EVENTS = new HashSet<>(Arrays.asList("click", "keydown"));
-
     private static volatile Resources resources;
     private static volatile Template template;
 
@@ -80,7 +60,7 @@ public class ExpanderCell extends AbstractCell<Expander> {
 
     @Override
     public void onBrowserEvent(final Context context, final Element parent, final Expander value,
-            final NativeEvent event, final ValueUpdater<Expander> valueUpdater) {
+                               final NativeEvent event, final ValueUpdater<Expander> valueUpdater) {
         super.onBrowserEvent(context, parent, value, event, valueUpdater);
         if ("click".equals(event.getType())) {
             final EventTarget eventTarget = event.getEventTarget();
@@ -96,7 +76,7 @@ public class ExpanderCell extends AbstractCell<Expander> {
 
     @Override
     protected void onEnterKeyDown(final Context context, final Element parent, final Expander value,
-            final NativeEvent event, final ValueUpdater<Expander> valueUpdater) {
+                                  final NativeEvent event, final ValueUpdater<Expander> valueUpdater) {
         if (valueUpdater != null && value != null && !value.isLeaf()) {
             valueUpdater.update(value);
         }
@@ -136,5 +116,24 @@ public class ExpanderCell extends AbstractCell<Expander> {
         final AbstractImagePrototype proto = AbstractImagePrototype.create(res);
         final SafeHtml image = SafeHtmlUtils.fromTrustedString(proto.getHTML());
         return image;
+    }
+
+    interface Resources extends ClientBundle {
+        @Source("expander.css")
+        Style style();
+    }
+
+    interface Style extends CssResource {
+        String expanderIcon();
+
+        String active();
+    }
+
+    interface Template extends SafeHtmlTemplates {
+        @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
+        SafeHtml outerDiv(String className, SafeStyles style, SafeHtml icon);
+
+        @Template("<img class=\"{0}\" src=\"{1}\" />")
+        SafeHtml icon(String iconClass, SafeUri iconUrl);
     }
 }

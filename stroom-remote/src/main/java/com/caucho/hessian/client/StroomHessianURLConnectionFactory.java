@@ -25,9 +25,8 @@ import java.util.logging.Logger;
 
 public class StroomHessianURLConnectionFactory implements HessianConnectionFactory {
     private static final Logger log = Logger.getLogger(HessianURLConnectionFactory.class.getName());
-
-    private HessianProxyFactory _proxyFactory;
     private final boolean ignoreSSLHostnameVerifier;
+    private HessianProxyFactory _proxyFactory;
 
     public StroomHessianURLConnectionFactory(final boolean ignoreSSLHostnameVerifier) {
         this.ignoreSSLHostnameVerifier = ignoreSSLHostnameVerifier;

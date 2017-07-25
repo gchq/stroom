@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "PipelineReferences", propOrder = { "add", "remove" })
+@XmlType(name = "PipelineReferences", propOrder = {"add", "remove"})
 public class PipelineReferences implements SharedObject {
     private static final long serialVersionUID = 240674119913805711L;
 

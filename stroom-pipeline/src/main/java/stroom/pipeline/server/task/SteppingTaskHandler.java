@@ -333,18 +333,18 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
                         // process
                         // the next stream.
                         switch (stepType) {
-                        case FIRST:
-                            currentStreamIndex++;
-                            break;
-                        case FORWARD:
-                            currentStreamIndex++;
-                            break;
-                        case BACKWARD:
-                            currentStreamIndex--;
-                            break;
-                        case LAST:
-                            currentStreamIndex--;
-                            break;
+                            case FIRST:
+                                currentStreamIndex++;
+                                break;
+                            case FORWARD:
+                                currentStreamIndex++;
+                                break;
+                            case BACKWARD:
+                                currentStreamIndex--;
+                                break;
+                            case LAST:
+                                currentStreamIndex--;
+                                break;
                         }
 
                         final Long nextStream = getStreamId(request);
@@ -446,7 +446,7 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
     }
 
     private void processStream(final SteppingController controller, final Feed feed, final StreamType streamType,
-            final StreamSource source) {
+                               final StreamSource source) {
         // If the feed changes then destroy the last pipeline.
         if (lastFeed != null && !lastFeed.equals(feed)) {
             // destroy the last pipeline.
@@ -486,7 +486,7 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
     }
 
     private void process(final SteppingController controller, final Feed feed, final StreamType streamType,
-            final StreamSource streamSource) {
+                         final StreamSource streamSource) {
         try {
             final Stream stream = streamSource.getStream();
             final SteppingTask request = controller.getRequest();

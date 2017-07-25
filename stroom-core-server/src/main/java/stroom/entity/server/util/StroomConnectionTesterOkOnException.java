@@ -33,21 +33,21 @@ import java.sql.SQLException;
  * execute a simple SQL statement to test the connection, e.g. 'select 1'. This
  * statement is not supported by HSQLDB so also fails and invalidates the C3P0
  * connection.
- *
+ * <p>
  * To fix this issue for unit testing there are several possible solutions:
- *
+ * <p>
  * 1. Create the HSQLDB schema from our own DDL script and set
  * 'hibernate.hbm2ddl.auto' to validate.
- *
+ * <p>
  * 2. Change the connection tester 'preferredTestQuery' to be DB specific.
  * 'select 1' works OK for MySql in production but HSQLDB would need something
  * like 'SELECT 1 FROM INFORMATION_SCHEMA.SYSTEM_USERS'.
- *
+ * <p>
  * 3. Use our own connection tester in JUnit tests, i.e. this class, that just
  * defers connection testing to the JDBC connection.isValid() method.
- *
+ * <p>
  * 4. We could avoid the use of C3P0 connection pools in unit tests.
- *
+ * <p>
  * For now we will choose option 3 as it is the simplest to implement.
  */
 public class StroomConnectionTesterOkOnException implements QueryConnectionTester {

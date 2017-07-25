@@ -18,7 +18,7 @@ public enum RegisteredService {
 
     RegisteredService(final ExternalService externalService, final String subPath, final int version) {
         Preconditions.checkArgument(externalService.getType().equals(ExternalService.Type.SERVER) ||
-        externalService.getType().equals(ExternalService.Type.CLIENT_AND_SERVER),
+                        externalService.getType().equals(ExternalService.Type.CLIENT_AND_SERVER),
                 "Incorrect type for defining as a registered service");
         this.externalService = externalService;
         this.subPath = subPath;

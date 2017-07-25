@@ -40,13 +40,11 @@ import java.util.stream.Stream;
 @Component
 public class ContentPackImport {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ContentPackImport.class);
-
     static final String AUTO_IMPORT_ENABLED_PROP_KEY = "stroom.contentPackImportEnabled";
     static final Path CONTENT_PACK_IMPORT_DIR = Paths.get("contentPackImport");
     static final String FAILED_DIR = "failed";
     static final String IMPORTED_DIR = "imported";
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(ContentPackImport.class);
     private ImportExportService importExportService;
     private StroomPropertyService stroomPropertyService;
 

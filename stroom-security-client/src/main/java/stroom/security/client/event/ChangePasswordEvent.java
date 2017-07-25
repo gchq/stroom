@@ -22,15 +22,9 @@ import com.google.gwt.event.shared.HasHandlers;
 import stroom.security.shared.UserRef;
 
 public class ChangePasswordEvent extends GwtEvent<ChangePasswordEvent.ChangePasswordHandler> {
-    public interface ChangePasswordHandler extends EventHandler {
-        void onChangePassword(ChangePasswordEvent event);
-    }
-
     private static Type<ChangePasswordHandler> TYPE;
-
     private final UserRef userRef;
     private final boolean logon;
-
     private ChangePasswordEvent(final UserRef userRef, final boolean logon) {
         this.userRef = userRef;
         this.logon = logon;
@@ -63,5 +57,9 @@ public class ChangePasswordEvent extends GwtEvent<ChangePasswordEvent.ChangePass
 
     public boolean isLogonChange() {
         return logon;
+    }
+
+    public interface ChangePasswordHandler extends EventHandler {
+        void onChangePassword(ChangePasswordEvent event);
     }
 }

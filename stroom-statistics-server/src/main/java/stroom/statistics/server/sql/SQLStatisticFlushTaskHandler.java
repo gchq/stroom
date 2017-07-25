@@ -38,13 +38,11 @@ import java.util.Map.Entry;
 @TaskHandlerBean(task = SQLStatisticFlushTask.class)
 @Scope(value = StroomScope.TASK)
 public class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatisticFlushTask, VoidResult> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticFlushTaskHandler.class);
-
     /**
      * The number of records to flush to the DB in one go.
      */
     public static final int BATCH_SIZE = 5000;
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticFlushTaskHandler.class);
     private final SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService;
     private final TaskMonitor taskMonitor;
 
@@ -55,7 +53,7 @@ public class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatist
 
     @Inject
     public SQLStatisticFlushTaskHandler(final SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService,
-            final TaskMonitor taskMonitor) {
+                                        final TaskMonitor taskMonitor) {
         this.sqlStatisticValueBatchSaveService = sqlStatisticValueBatchSaveService;
         this.taskMonitor = taskMonitor;
     }

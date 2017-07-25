@@ -40,10 +40,8 @@ import java.util.List;
 @Transactional
 @Component
 public class SQLStatisticValueBatchSaveService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticValueBatchSaveService.class);
     public static final String SAVE_CALL;
-
-    private final DataSource statisticsDataSource;
+    private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticValueBatchSaveService.class);
 
     static {
         final StringBuilder sql = new StringBuilder();
@@ -60,6 +58,8 @@ public class SQLStatisticValueBatchSaveService {
         sql.append(") VALUES ( ?, ?, ?, ?) ");
         SAVE_CALL = sql.toString();
     }
+
+    private final DataSource statisticsDataSource;
 
     @Inject
     public SQLStatisticValueBatchSaveService(@Named("statisticsDataSource") final DataSource statisticsDataSource) {

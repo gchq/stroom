@@ -41,7 +41,7 @@ import stroom.widget.valuespinner.client.ValueSpinner;
 import java.util.Arrays;
 import java.util.List;
 
-public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers>implements FormatView {
+public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> implements FormatView {
     public static final List<String> STANDARD_FORMATS = Arrays
             .asList("yyyy-MM-dd'T'HH:mm:ss.SSSXX",
                     "yyyy-MM-dd'T'HH:mm:ss.SSS xx",

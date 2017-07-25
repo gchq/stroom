@@ -49,6 +49,10 @@ public abstract class AbstractBenchmark {
     @Resource
     private TaskMonitor taskMonitor;
 
+    public static int getRandomSkewed() {
+        return (int) (Math.exp(Math.random() * 10));
+    }
+
     protected boolean isTerminated() {
         return taskMonitor.isTerminated();
     }
@@ -190,10 +194,6 @@ public abstract class AbstractBenchmark {
         }
 
         return sb.toString();
-    }
-
-    public static int getRandomSkewed() {
-        return (int) (Math.exp(Math.random() * 10));
     }
 
     protected String createReferenceVerificationData(final int recordCount) {

@@ -54,7 +54,7 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
 
     private DocRefs buildFindFolderCriteria() {
         final DocRefs docRefs = new DocRefs();
-        docRefs.add(new DocRef(Folder.ENTITY_TYPE,"0", "System"));
+        docRefs.add(new DocRef(Folder.ENTITY_TYPE, "0", "System"));
         return docRefs;
     }
 

@@ -31,23 +31,14 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.widget.dropdowntree.client.presenter.DropDownPresenter;
 import stroom.widget.dropdowntree.client.presenter.DropDownUiHandlers;
 
-public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers>implements DropDownPresenter.DropDrownView {
-    public interface Binder extends UiBinder<Widget, DropDownViewImpl> {
-    }
-
-    public interface Resources extends ClientBundle {
-        ImageResource popup();
-    }
-
+public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers> implements DropDownPresenter.DropDrownView {
     private final Widget widget;
-
     @UiField
     FlowPanel container;
     @UiField
     Label label;
     @UiField
     Image button;
-
     @Inject
     public DropDownViewImpl(final Binder binder, final Resources resources) {
         widget = binder.createAndBindUi(this);
@@ -74,5 +65,12 @@ public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers>impl
                 getUiHandlers().showPopup();
             }
         }
+    }
+
+    public interface Binder extends UiBinder<Widget, DropDownViewImpl> {
+    }
+
+    public interface Resources extends ClientBundle {
+        ImageResource popup();
     }
 }

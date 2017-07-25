@@ -29,18 +29,14 @@ import javax.persistence.UniqueConstraint;
 @Table(name = "DOC_PERM", uniqueConstraints = @UniqueConstraint(columnNames = {DocumentPermission.USER_UUID,
         DocumentPermission.DOC_TYPE, DocumentPermission.DOC_UUID, DocumentPermission.PERMISSION}))
 public class DocumentPermission extends BaseEntityBig {
-    private static final long serialVersionUID = 3562407919517508053L;
-
     public static final String TABLE_NAME = SQLNameConstants.DOCUMENT + SEP + SQLNameConstants.PERMISSION;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-
     public static final String USER_UUID = User.TABLE_NAME + SEP + User.UUID;
     public static final String DOC_TYPE = SQLNameConstants.DOCUMENT + SEP + SQLNameConstants.TYPE;
     public static final String DOC_UUID = SQLNameConstants.DOCUMENT + SEP + SQLNameConstants.UUID;
     public static final String PERMISSION = SQLNameConstants.PERMISSION;
-
     public static final String ENTITY_TYPE = "DocumentPermission";
-
+    private static final long serialVersionUID = 3562407919517508053L;
     private String userUuid;
     private String docType;
     private String docUuid;

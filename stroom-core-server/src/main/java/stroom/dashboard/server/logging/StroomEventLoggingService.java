@@ -42,7 +42,9 @@ import java.util.Date;
 
 @Component
 public class StroomEventLoggingService extends DefaultEventLoggingService implements EventLoggingService {
-    /** Logger - should not be used for event logs */
+    /**
+     * Logger - should not be used for event logs
+     */
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomEventLoggingService.class);
 
     private static final String SYSTEM = "Stroom";

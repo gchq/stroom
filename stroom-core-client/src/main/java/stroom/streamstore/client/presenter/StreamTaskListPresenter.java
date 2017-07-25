@@ -217,14 +217,14 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
         dataProvider.setCriteria(criteria);
     }
 
+    public FindStreamTaskCriteria getCriteria() {
+        return dataProvider.getCriteria();
+    }
+
     private void setCriteria(final PipelineEntity pipelineEntity) {
         final FindStreamTaskCriteria criteria = initCriteria();
         criteria.obtainFindStreamCriteria().obtainPipelineIdSet().add(pipelineEntity);
         dataProvider.setCriteria(criteria);
-    }
-
-    public FindStreamTaskCriteria getCriteria() {
-        return dataProvider.getCriteria();
     }
 
     private void setNullCriteria() {

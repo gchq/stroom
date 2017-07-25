@@ -50,15 +50,13 @@ public class TestSAXEventFilter extends AbstractXMLFilter {
     private static final String END_ELEMENT = "endElement:";
     private static final String END_DOCUMENT = "endDocument:";
     private static final Pattern NEW_LINE_PATTERN = Pattern.compile(NEW_LINE);
-
-    private final CharBuffer content = new CharBuffer(500);
     final CharBuffer cb = new CharBuffer(100);
+    private final CharBuffer content = new CharBuffer(500);
     private final ByteArrayOutputStream output = new ByteArrayOutputStream();
 
     /**
-     * @param locator
-     *            an object that can return the location of any SAX document
-     *            event
+     * @param locator an object that can return the location of any SAX document
+     *                event
      * @see org.xml.sax.Locator
      */
     @Override
@@ -68,8 +66,7 @@ public class TestSAXEventFilter extends AbstractXMLFilter {
     }
 
     /**
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #endDocument
      */
     @Override
@@ -79,8 +76,7 @@ public class TestSAXEventFilter extends AbstractXMLFilter {
     }
 
     /**
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #startDocument
      */
     @Override
@@ -90,13 +86,10 @@ public class TestSAXEventFilter extends AbstractXMLFilter {
     }
 
     /**
-     * @param prefix
-     *            the Namespace prefix being declared. An empty string is used
-     *            for the default element namespace, which has no prefix.
-     * @param uri
-     *            the Namespace URI the prefix is mapped to
-     * @throws org.xml.sax.SAXException
-     *             the client may throw an exception during processing
+     * @param prefix the Namespace prefix being declared. An empty string is used
+     *               for the default element namespace, which has no prefix.
+     * @param uri    the Namespace URI the prefix is mapped to
+     * @throws org.xml.sax.SAXException the client may throw an exception during processing
      * @see #endPrefixMapping
      * @see #startElement
      */
@@ -113,11 +106,9 @@ public class TestSAXEventFilter extends AbstractXMLFilter {
     }
 
     /**
-     * @param prefix
-     *            the prefix that was being mapped. This is the empty string
-     *            when a default mapping scope ends.
-     * @throws org.xml.sax.SAXException
-     *             the client may throw an exception during processing
+     * @param prefix the prefix that was being mapped. This is the empty string
+     *               when a default mapping scope ends.
+     * @throws org.xml.sax.SAXException the client may throw an exception during processing
      * @see #startPrefixMapping
      * @see #endElement
      */
@@ -132,22 +123,17 @@ public class TestSAXEventFilter extends AbstractXMLFilter {
     }
 
     /**
-     * @param uri
-     *            the Namespace URI, or the empty string if the element has no
-     *            Namespace URI or if Namespace processing is not being
-     *            performed
-     * @param localName
-     *            the local name (without prefix), or the empty string if
-     *            Namespace processing is not being performed
-     * @param qName
-     *            the qualified name (with prefix), or the empty string if
-     *            qualified names are not available
-     * @param atts
-     *            the attributes attached to the element. If there are no
-     *            attributes, it shall be an empty Attributes object. The value
-     *            of this object after startElement returns is undefined
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param uri       the Namespace URI, or the empty string if the element has no
+     *                  Namespace URI or if Namespace processing is not being
+     *                  performed
+     * @param localName the local name (without prefix), or the empty string if
+     *                  Namespace processing is not being performed
+     * @param qName     the qualified name (with prefix), or the empty string if
+     *                  qualified names are not available
+     * @param atts      the attributes attached to the element. If there are no
+     *                  attributes, it shall be an empty Attributes object. The value
+     *                  of this object after startElement returns is undefined
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #endElement
      * @see org.xml.sax.Attributes
      * @see org.xml.sax.helpers.AttributesImpl
@@ -181,18 +167,14 @@ public class TestSAXEventFilter extends AbstractXMLFilter {
     }
 
     /**
-     * @param uri
-     *            the Namespace URI, or the empty string if the element has no
-     *            Namespace URI or if Namespace processing is not being
-     *            performed
-     * @param localName
-     *            the local name (without prefix), or the empty string if
-     *            Namespace processing is not being performed
-     * @param qName
-     *            the qualified XML name (with prefix), or the empty string if
-     *            qualified names are not available
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param uri       the Namespace URI, or the empty string if the element has no
+     *                  Namespace URI or if Namespace processing is not being
+     *                  performed
+     * @param localName the local name (without prefix), or the empty string if
+     *                  Namespace processing is not being performed
+     * @param qName     the qualified XML name (with prefix), or the empty string if
+     *                  qualified names are not available
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      */
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
@@ -209,14 +191,10 @@ public class TestSAXEventFilter extends AbstractXMLFilter {
     }
 
     /**
-     * @param ch
-     *            the characters from the XML document
-     * @param start
-     *            the start position in the array
-     * @param length
-     *            the number of characters to read from the array
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param ch     the characters from the XML document
+     * @param start  the start position in the array
+     * @param length the number of characters to read from the array
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #ignorableWhitespace
      * @see org.xml.sax.Locator
      */
@@ -228,14 +206,10 @@ public class TestSAXEventFilter extends AbstractXMLFilter {
     }
 
     /**
-     * @param ch
-     *            the characters from the XML document
-     * @param start
-     *            the start position in the array
-     * @param length
-     *            the number of characters to read from the array
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param ch     the characters from the XML document
+     * @param start  the start position in the array
+     * @param length the number of characters to read from the array
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #characters
      */
     @Override
@@ -246,14 +220,11 @@ public class TestSAXEventFilter extends AbstractXMLFilter {
     }
 
     /**
-     * @param target
-     *            the processing instruction target
-     * @param data
-     *            the processing instruction data, or null if none was supplied.
-     *            The data does not include any whitespace separating it from
-     *            the target
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param target the processing instruction target
+     * @param data   the processing instruction data, or null if none was supplied.
+     *               The data does not include any whitespace separating it from
+     *               the target
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      */
     @Override
     public void processingInstruction(final String target, final String data) throws SAXException {
@@ -266,12 +237,10 @@ public class TestSAXEventFilter extends AbstractXMLFilter {
     }
 
     /**
-     * @param name
-     *            the name of the skipped entity. If it is a parameter entity,
-     *            the name will begin with '%', and if it is the external DTD
-     *            subset, it will be the string "[dtd]"
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param name the name of the skipped entity. If it is a parameter entity,
+     *             the name will begin with '%', and if it is the external DTD
+     *             subset, it will be the string "[dtd]"
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      */
     @Override
     public void skippedEntity(final String name) throws SAXException {
@@ -324,7 +293,7 @@ public class TestSAXEventFilter extends AbstractXMLFilter {
      * string.
      *
      * @return The output that it has generated from received SAX events as a
-     *         string.
+     * string.
      */
     public String getOutput() {
         return output.toString();

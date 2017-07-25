@@ -109,6 +109,9 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     public static final String MYSQL_INDEX_STRM_FK_STRM_PROC_ID_CRT_MS_IDX = "STRM_FK_STRM_PROC_ID_CRT_MS_IDX";
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamStoreImpl.class);
     private static final Set<String> SOURCE_FETCH_SET;
+    private static final FieldMap FIELD_MAP = new FieldMap()
+            .add(FindStreamCriteria.FIELD_ID, BaseEntity.ID, "id")
+            .add(FindStreamCriteria.FIELD_CREATE_MS, Stream.CREATE_MS, "createMs");
 
     static {
         final Set<String> set = new HashSet<>();
@@ -116,10 +119,6 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         set.add(StreamType.ENTITY_TYPE);
         SOURCE_FETCH_SET = set;
     }
-
-    private static final FieldMap FIELD_MAP = new FieldMap()
-            .add(FindStreamCriteria.FIELD_ID, BaseEntity.ID, "id")
-            .add(FindStreamCriteria.FIELD_CREATE_MS, Stream.CREATE_MS, "createMs");
 
     private final StroomEntityManager entityManager;
     private final StroomDatabaseInfo stroomDatabaseInfo;

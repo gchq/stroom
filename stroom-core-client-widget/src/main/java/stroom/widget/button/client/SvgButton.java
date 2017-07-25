@@ -26,29 +26,21 @@ import com.google.gwt.user.client.ui.ButtonBase;
 import stroom.svg.client.SvgPreset;
 
 public class SvgButton extends ButtonBase implements ButtonView {
+    private final Element face;
+    private final SvgPreset preset;
     /**
      * If <code>true</code>, this widget is capturing with the mouse held down.
      */
     private boolean isCapturing;
-
     /**
      * If <code>true</code>, this widget has focus with the space bar down.
      */
     private boolean isFocusing;
-
     /**
      * Used to decide whether to allow clicks to propagate up to the superclass
      * or container elements.
      */
     private boolean allowClick;
-
-    private final Element face;
-    private final SvgPreset preset;
-
-    public static SvgButton create(final SvgPreset preset) {
-        final SvgButton button = new SvgButton(preset);
-        return button;
-    }
 
     private SvgButton(final SvgPreset preset) {
         super(Document.get().createDivElement());
@@ -70,6 +62,11 @@ public class SvgButton extends ButtonBase implements ButtonView {
 //        setHeight(preset.getHeight() + "px");
         setTitle(preset.getTitle());
         setEnabled(preset.isEnabled());
+    }
+
+    public static SvgButton create(final SvgPreset preset) {
+        final SvgButton button = new SvgButton(preset);
+        return button;
     }
 
     @Override

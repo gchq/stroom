@@ -34,17 +34,17 @@ public class FindStreamVolumeCriteria extends BaseCriteria {
     private EntityIdSet<Volume> volumeIdSet = null;
     private EntityIdSet<Stream> streamIdSet = null;
 
+    public static FindStreamVolumeCriteria create(final Stream stream) {
+        FindStreamVolumeCriteria rtn = new FindStreamVolumeCriteria();
+        rtn.obtainStreamIdSet().add(stream);
+        return rtn;
+    }
+
     public boolean isValidCriteria() {
         if (streamIdSet != null && streamIdSet.isConstrained()) {
             return true;
         }
         return streamRange != null && streamRange.isFileLocation();
-    }
-
-    public static FindStreamVolumeCriteria create(final Stream stream) {
-        FindStreamVolumeCriteria rtn = new FindStreamVolumeCriteria();
-        rtn.obtainStreamIdSet().add(stream);
-        return rtn;
     }
 
     public StreamRange getStreamRange() {

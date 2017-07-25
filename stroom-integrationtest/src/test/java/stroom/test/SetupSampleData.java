@@ -48,8 +48,7 @@ public final class SetupSampleData {
         try {
             TaskScopeContextHolder.addContext();
             try {
-                @SuppressWarnings("resource")
-                final AnnotationConfigApplicationContext appContext = new AnnotationConfigApplicationContext();
+                @SuppressWarnings("resource") final AnnotationConfigApplicationContext appContext = new AnnotationConfigApplicationContext();
                 appContext.getEnvironment().setActiveProfiles(StroomSpringProfiles.PROD,
                         SecurityConfiguration.MOCK_SECURITY);
                 appContext.register(ScopeConfiguration.class, PersistenceConfiguration.class,

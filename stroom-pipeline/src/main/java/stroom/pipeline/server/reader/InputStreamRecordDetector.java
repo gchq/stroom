@@ -35,12 +35,9 @@ public class InputStreamRecordDetector extends FilterInputStream implements Reco
     private static final Logger LOGGER = LoggerFactory.getLogger(InputStreamRecordDetector.class);
 
     private static final int MAX_COUNT = 10000;
-
-    private SteppingController controller;
-
-    private long currentStepNo;
-
     private final byte[] buffer = new byte[1024];
+    private SteppingController controller;
+    private long currentStepNo;
     private int offset;
     private int length;
     private boolean newStream = true;

@@ -26,6 +26,13 @@ import java.util.Enumeration;
 import java.util.StringTokenizer;
 
 public class MetaMapFactory {
+    public static MetaMap cloneAllowable(final MetaMap in) {
+        final MetaMap metaMap = new MetaMap();
+        metaMap.putAll(in);
+        metaMap.removeAll(StroomHeaderArguments.HEADER_CLONE_EXCLUDE_SET);
+        return metaMap;
+    }
+
     public MetaMap create() {
         MetaMap metaMap = new MetaMap();
 
@@ -66,12 +73,5 @@ public class MetaMapFactory {
                 }
             }
         }
-    }
-
-    public static MetaMap cloneAllowable(final MetaMap in) {
-        final MetaMap metaMap = new MetaMap();
-        metaMap.putAll(in);
-        metaMap.removeAll(StroomHeaderArguments.HEADER_CLONE_EXCLUDE_SET);
-        return metaMap;
     }
 }

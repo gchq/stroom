@@ -38,8 +38,8 @@ public class PipelinePlugin extends EntityPlugin<PipelineEntity> {
 
     @Inject
     public PipelinePlugin(final EventBus eventBus, final Provider<PipelinePresenter> editorProvider,
-            final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
-            final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager) {
+                          final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
+                          final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager) {
         super(eventBus, dispatcher, securityContext, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
     }

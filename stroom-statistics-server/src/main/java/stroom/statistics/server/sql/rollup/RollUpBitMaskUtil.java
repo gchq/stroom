@@ -29,9 +29,8 @@ public class RollUpBitMaskUtil {
      * list MUST be ordered by tag name as the positions of the tags in the list
      * directly relate to the bit mask positions.
      *
-     * @param tags
-     *            A list of {@link StatisticTag} objects ordered by their tag
-     *            name
+     * @param tags A list of {@link StatisticTag} objects ordered by their tag
+     *             name
      * @return A new {@link RollUpBitMask} object
      */
     public static RollUpBitMask fromSortedTagList(final List<StatisticTag> tags) {

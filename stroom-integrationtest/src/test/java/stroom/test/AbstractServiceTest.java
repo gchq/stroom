@@ -19,6 +19,6 @@ package stroom.test;
 import org.springframework.test.context.ContextConfiguration;
 import stroom.spring.PersistenceConfiguration;
 
-@ContextConfiguration(classes = { PersistenceConfiguration.class })
+@ContextConfiguration(classes = {PersistenceConfiguration.class})
 public abstract class AbstractServiceTest {
 }

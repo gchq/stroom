@@ -21,10 +21,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target(value = { ElementType.METHOD })
+@Target(value = {ElementType.METHOD})
 @Retention(value = RetentionPolicy.RUNTIME)
 public @interface ExternalFile {
     String value() default "xml";
 
-    Class<?>extensionProvider() default Class.class;
+    Class<?> extensionProvider() default Class.class;
 }

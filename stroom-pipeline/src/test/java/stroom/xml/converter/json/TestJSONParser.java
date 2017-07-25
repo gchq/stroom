@@ -145,7 +145,7 @@ public class TestJSONParser extends StroomUnitTest {
         jsonWriter.setIndentOutput(true);
         jsonWriter.setTarget(jsonAppender);
 
-        final XMLFilter[] filters = new XMLFilter[] { xmlWriter, jsonWriter };
+        final XMLFilter[] filters = new XMLFilter[]{xmlWriter, jsonWriter};
         final XMLFilterFork fork = new XMLFilterFork(filters);
 
         final XMLFilter filter = fork;
@@ -251,7 +251,7 @@ public class TestJSONParser extends StroomUnitTest {
     }
 
     public void loadXMLSchema(final String schemaGroup, final String schemaName, final String namespaceURI,
-            final String systemId, final String fileName) throws IOException {
+                              final String systemId, final String fileName) throws IOException {
         final File dir = FileSystemTestUtil.getConfigXSDDir();
 
         final File file = new File(dir, fileName);

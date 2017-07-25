@@ -31,13 +31,10 @@ import stroom.streamstore.shared.Stream;
  * </p>
  */
 public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsConstrained {
-    private static final long serialVersionUID = 5031936548305751911L;
-
     public static final int SUMMARY_POS_PIPELINE = 0;
     public static final int SUMMARY_POS_FEED = 1;
     public static final int SUMMARY_POS_PRIORITY = 2;
     public static final int SUMMARY_POS_STATUS = 3;
-
     public static final String FIELD_CREATE_TIME = "Created";
     public static final String FIELD_START_TIME = "Start Time";
     public static final String FIELD_END_TIME_DATE = "End Time";
@@ -47,7 +44,7 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
     public static final String FIELD_STATUS = "Status";
     public static final String FIELD_COUNT = "Count";
     public static final String FIELD_NODE = "Node";
-
+    private static final long serialVersionUID = 5031936548305751911L;
     /**
      * Look for stream tasks with a certain status.
      */

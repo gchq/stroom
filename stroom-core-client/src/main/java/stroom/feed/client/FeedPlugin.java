@@ -41,8 +41,8 @@ public class FeedPlugin extends EntityPlugin<Feed> {
 
     @Inject
     public FeedPlugin(final EventBus eventBus, final Provider<FeedPresenter> editorProvider,
-            final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
-            final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager) {
+                      final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
+                      final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager) {
         super(eventBus, dispatcher, securityContext, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
     }

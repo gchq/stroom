@@ -33,9 +33,9 @@ import javax.inject.Inject;
 
 @Component
 @Scope(value = StroomScope.TASK)
-@ConfigurableElement(type = "JSONParser", category = Category.PARSER, roles = { PipelineElementType.ROLE_PARSER,
+@ConfigurableElement(type = "JSONParser", category = Category.PARSER, roles = {PipelineElementType.ROLE_PARSER,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
-        PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR }, icon = ElementIcons.JSON)
+        PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR}, icon = ElementIcons.JSON)
 public class JSONParser extends AbstractParser {
     @Inject
     public JSONParser(final ErrorReceiverProxy errorReceiverProxy, final LocationFactoryProxy locationFactory) {

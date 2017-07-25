@@ -48,22 +48,18 @@ import java.util.concurrent.locks.ReentrantLock;
 @Scope(StroomScope.PROTOTYPE)
 @Component("upgradeStreamStoreProcessor")
 public class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor {
+    public static final String TASK_TABLE = "TRANSLATION_STREAM_TASK";
+    public static final String TASK_ARCHIVE_TABLE = TASK_TABLE + "_ARCHIVE";
     private static final Logger LOGGER = LoggerFactory.getLogger(UpgradeStreamStoreProcessor.class);
-
+    private static volatile String query;
+    private static volatile int args;
+    private static ReentrantLock lock = new ReentrantLock();
     @Resource
     private StreamStore streamStore;
     @Resource
     private StreamAttributeMapService streamAttributeMapService;
     @Resource
     private DataSource dataSource;
-
-    public static final String TASK_TABLE = "TRANSLATION_STREAM_TASK";
-    public static final String TASK_ARCHIVE_TABLE = TASK_TABLE + "_ARCHIVE";
-
-    private static volatile String query;
-    private static volatile int args;
-
-    private static ReentrantLock lock = new ReentrantLock();
 
     private static void buildQuery(final StringBuilder builder, final String taskTable) {
         builder.append("SELECT ");

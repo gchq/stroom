@@ -32,10 +32,9 @@ public final class SkippedEntity extends BaseEvent {
     /**
      * Stores a skippedEntity SAX event.
      *
-     * @param name
-     *            the name of the skipped entity. If it is a parameter entity,
-     *            the name will begin with '%', and if it is the external DTD
-     *            subset, it will be the string "[dtd]"
+     * @param name the name of the skipped entity. If it is a parameter entity,
+     *             the name will begin with '%', and if it is the external DTD
+     *             subset, it will be the string "[dtd]"
      */
     public SkippedEntity(final String name) {
         this.name = name;
@@ -44,10 +43,8 @@ public final class SkippedEntity extends BaseEvent {
     /**
      * Fires a stored SAX event at the supplied content handler.
      *
-     * @param handler
-     *            The content handler to fire the SAX event at.
-     * @throws SAXException
-     *             Necessary to maintain the SAX event contract.
+     * @param handler The content handler to fire the SAX event at.
+     * @throws SAXException Necessary to maintain the SAX event contract.
      * @see Event#fire(org.xml.sax.ContentHandler)
      */
     @Override

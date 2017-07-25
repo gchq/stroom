@@ -27,11 +27,11 @@ import javax.xml.bind.annotation.XmlType;
 /**
  * <p>
  * Java class for Link complex type.
- *
+ * <p>
  * <p>
  * The following schema fragment specifies the expected content contained within
  * this class.
- *
+ * <p>
  * <pre>
  * &lt;complexType name="Link">
  *   &lt;complexContent>
@@ -46,7 +46,7 @@ import javax.xml.bind.annotation.XmlType;
  * </pre>
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "Link", propOrder = { "from", "to" })
+@XmlType(name = "Link", propOrder = {"from", "to"})
 public class PipelineLink implements Comparable<PipelineLink>, SharedObject {
     private static final long serialVersionUID = 8520066243443177869L;
 

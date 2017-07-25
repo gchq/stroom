@@ -35,28 +35,14 @@ import java.io.InputStream;
  */
 public final class FileSystemStreamSource implements StreamSource {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamSource.class);
-
+    private final StreamCloser streamCloser = new StreamCloser();
     private Stream stream;
     private StreamVolume volume;
     private StreamType streamType;
     private MetaMap attributeMap;
     private InputStream inputStream;
     private File file;
-
     private FileSystemStreamSource parent;
-
-    private final StreamCloser streamCloser = new StreamCloser();
-
-    /**
-     * Creates a new file system stream source.
-     *
-     * @return A new file system stream source or null if a file cannot be
-     * created.
-     */
-    public static FileSystemStreamSource create(final Stream stream, final StreamVolume volume,
-                                                final StreamType streamType) {
-        return new FileSystemStreamSource(stream, volume, streamType);
-    }
 
     private FileSystemStreamSource(final Stream stream, final StreamVolume volume, final StreamType streamType) {
         this.stream = stream;
@@ -73,6 +59,17 @@ public final class FileSystemStreamSource implements StreamSource {
         this.streamType = streamType;
         this.file = file;
         validate();
+    }
+
+    /**
+     * Creates a new file system stream source.
+     *
+     * @return A new file system stream source or null if a file cannot be
+     * created.
+     */
+    public static FileSystemStreamSource create(final Stream stream, final StreamVolume volume,
+                                                final StreamType streamType) {
+        return new FileSystemStreamSource(stream, volume, streamType);
     }
 
     private void validate() {

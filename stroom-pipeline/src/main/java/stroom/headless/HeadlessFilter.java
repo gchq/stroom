@@ -55,13 +55,12 @@ public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
     private static final String ERROR = "Error";
     private static final String SPACE = " ";
     private static final String COLON = ":";
-
+    private final Deque<StartPrefixMapping> prefixDeque = new ArrayDeque<>();
+    private final List<StoredError> errors = new ArrayList<>();
     private MetaMap metaData;
     private boolean started;
     private int depth;
     private StartElement root;
-    private final Deque<StartPrefixMapping> prefixDeque = new ArrayDeque<>();
-    private final List<StoredError> errors = new ArrayList<>();
 
     public void beginOutput() throws SAXException {
     }
@@ -188,12 +187,9 @@ public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
     }
 
     /**
-     * @param ch
-     *            the characters from the XML document
-     * @param start
-     *            the start position in the array
-     * @param length
-     *            the number of characters to read from the array
+     * @param ch     the characters from the XML document
+     * @param start  the start position in the array
+     * @param length the number of characters to read from the array
      */
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
@@ -203,12 +199,9 @@ public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
     }
 
     /**
-     * @param ch
-     *            the characters from the XML document
-     * @param start
-     *            the start position in the array
-     * @param length
-     *            the number of characters to read from the array
+     * @param ch     the characters from the XML document
+     * @param start  the start position in the array
+     * @param length the number of characters to read from the array
      */
     @Override
     public void ignorableWhitespace(final char[] ch, final int start, final int length) throws SAXException {
@@ -257,14 +250,14 @@ public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
             for (int i = 0; i < chars.length; i++) {
                 final char c = chars[i];
                 switch (c) {
-                case '\n':
-                    sb.append(' ');
-                    break;
-                case '\r':
-                    break;
-                default:
-                    sb.append(c);
-                    break;
+                    case '\n':
+                        sb.append(' ');
+                        break;
+                    case '\r':
+                        break;
+                    default:
+                        sb.append(c);
+                        break;
                 }
             }
         }

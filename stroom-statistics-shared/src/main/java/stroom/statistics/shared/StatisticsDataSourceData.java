@@ -41,7 +41,7 @@ public class StatisticsDataSourceData implements SharedObject {
     /**
      * Should be a SortedSet but GWT doesn't support that. Contents should be
      * sorted and not contain duplicates
-     *
+     * <p>
      * XMLTransient to force JAXB to use the setter
      */
 
@@ -50,7 +50,7 @@ public class StatisticsDataSourceData implements SharedObject {
 
     /**
      * Held in a set to prevent duplicates.
-     *
+     * <p>
      * XMLTransient to force JAXB to use the setter
      */
     @XmlTransient
@@ -69,7 +69,7 @@ public class StatisticsDataSourceData implements SharedObject {
     }
 
     public StatisticsDataSourceData(final List<StatisticField> statisticFields,
-            final Set<CustomRollUpMask> customRollUpMasks) {
+                                    final Set<CustomRollUpMask> customRollUpMasks) {
         this.statisticFields = statisticFields;
         this.customRollUpMasks = customRollUpMasks;
 

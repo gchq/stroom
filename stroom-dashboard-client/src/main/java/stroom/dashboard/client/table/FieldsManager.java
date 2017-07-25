@@ -51,51 +51,15 @@ import java.util.Map;
 import java.util.Set;
 
 public class FieldsManager implements HeadingListener {
-    public interface Style extends CssResource {
-        String labels();
-
-        String label();
-
-        String row();
-
-        String fieldLabel();
-
-        String fieldText();
-
-        String sortOrder();
-
-        String buttons();
-    }
-
-    public interface Resources extends ClientBundle {
-        ImageResource expression();
-
-        ImageResource sortaz();
-
-        ImageResource sortza();
-
-        ImageResource group();
-
-        ImageResource format();
-
-        ImageResource filter();
-
-        @Source("fields.css")
-        Style style();
-    }
-
     private static Resources resources;
-
     private final TablePresenter tablePresenter;
     private final ExpressionPresenter expressionPresenter;
     private final FormatPresenter formatPresenter;
     private final FilterPresenter filterPresenter;
-    private int fieldsStartIndex;
-
     private final MenuListPresenter menuListPresenter;
+    private int fieldsStartIndex;
     private boolean busy;
     private TableComponentSettings tableSettings;
-
     public FieldsManager(final TablePresenter tablePresenter, final MenuListPresenter menuListPresenter,
                          final ExpressionPresenter expressionPresenter, final FormatPresenter formatPresenter,
                          final FilterPresenter filterPresenter) {
@@ -474,5 +438,38 @@ public class FieldsManager implements HeadingListener {
     private Item createRemoveMenu(final Field field, final Set<Item> highlights) {
         final Item item = new IconMenuItem(5, SvgPresets.REMOVE, SvgPresets.REMOVE, "Remove", null, true, () -> deleteField(field));
         return item;
+    }
+
+    public interface Style extends CssResource {
+        String labels();
+
+        String label();
+
+        String row();
+
+        String fieldLabel();
+
+        String fieldText();
+
+        String sortOrder();
+
+        String buttons();
+    }
+
+    public interface Resources extends ClientBundle {
+        ImageResource expression();
+
+        ImageResource sortaz();
+
+        ImageResource sortza();
+
+        ImageResource group();
+
+        ImageResource format();
+
+        ImageResource filter();
+
+        @Source("fields.css")
+        Style style();
     }
 }

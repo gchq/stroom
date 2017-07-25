@@ -32,7 +32,7 @@ import stroom.util.spring.StroomScope;
 @Component
 @Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(type = "SearchResultOutputFilter", category = Category.FILTER, roles = {
-        PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS }, icon = ElementIcons.SEARCH)
+        PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS}, icon = ElementIcons.SEARCH)
 public class SearchResultOutputFilter extends AbstractXMLFilter {
     private static final String RECORD = "record";
     private static final String DATA = "data";

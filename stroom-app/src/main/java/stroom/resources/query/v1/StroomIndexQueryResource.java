@@ -85,20 +85,19 @@ public class StroomIndexQueryResource implements QueryResource {
     }
 
     public HealthCheck.Result getHealth() {
-        if(searchResultCreatorManager == null || indexService == null) {
+        if (searchResultCreatorManager == null || indexService == null) {
             StringBuilder errorMessageBuilder = new StringBuilder();
             errorMessageBuilder.append("Dependency error!");
             String searchResultCreatorManagerMessage = " 'searchResultCreatorManager' has not been set!";
             String indexServiceMessage = " 'indexService' has not been set!";
-            if(searchResultCreatorManager == null){
+            if (searchResultCreatorManager == null) {
                 errorMessageBuilder.append(searchResultCreatorManagerMessage);
             }
-            if(indexService == null){
+            if (indexService == null) {
                 errorMessageBuilder.append(indexServiceMessage);
             }
             return HealthCheck.Result.unhealthy(errorMessageBuilder.toString());
-        }
-        else{
+        } else {
             return HealthCheck.Result.healthy();
         }
     }

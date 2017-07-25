@@ -29,7 +29,7 @@ public class RenameEntityEvent extends GwtEvent<RenameEntityEvent.Handler> {
     private final String entityName;
 
     private RenameEntityEvent(final PresenterWidget<?> dialog, final DocRef document,
-            final String entityName) {
+                              final String entityName) {
         this.dialog = dialog;
         this.document = document;
         this.entityName = entityName;

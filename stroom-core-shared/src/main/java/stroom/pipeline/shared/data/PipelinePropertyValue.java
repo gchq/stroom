@@ -30,11 +30,11 @@ import javax.xml.bind.annotation.XmlType;
 /**
  * <p>
  * Java class for Value complex type.
- *
+ * <p>
  * <p>
  * The following schema fragment specifies the expected content contained within
  * this class.
- *
+ * <p>
  * <pre>
  * &lt;complexType name="Value">
  *   &lt;complexContent>
@@ -51,7 +51,7 @@ import javax.xml.bind.annotation.XmlType;
  * </pre>
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "Value", propOrder = { "string", "integer", "_long", "_boolean", "entity" })
+@XmlType(name = "Value", propOrder = {"string", "integer", "_long", "_boolean", "entity"})
 public class PipelinePropertyValue implements SharedObject, Copyable<PipelinePropertyValue> {
     private static final long serialVersionUID = 1247638056133627349L;
 

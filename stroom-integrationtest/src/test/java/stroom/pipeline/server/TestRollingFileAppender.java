@@ -94,7 +94,7 @@ public class TestRollingFileAppender extends AbstractProcessIntegrationTest {
     }
 
     private PipelineEntity createPipeline(final String pipelineFile, final TextConverter textConverter,
-            final XSLT xslt) {
+                                          final XSLT xslt) {
         // Load the pipeline config.
         final String data = StroomProcessTestFileUtil.getString(pipelineFile);
         final PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineEntityService, pipelineMarshaller, data);
@@ -112,7 +112,7 @@ public class TestRollingFileAppender extends AbstractProcessIntegrationTest {
     }
 
     private TextConverter createTextConverter(final String textConverterFile, final String name,
-            final TextConverterType textConverterType) {
+                                              final TextConverterType textConverterType) {
         // Create a record for the TextConverter.
         final InputStream textConverterInputStream = StroomProcessTestFileUtil.getInputStream(textConverterFile);
         TextConverter textConverter = textConverterService.create(null, name);
@@ -134,7 +134,7 @@ public class TestRollingFileAppender extends AbstractProcessIntegrationTest {
     // TODO This method is 80% the same in a whole bunch of test classes -
     // refactor some of the repetition out.
     private void test(final PipelineEntity pipelineEntity, final String inputPath, final String inputStem,
-            final String outputReference, final String encoding, final boolean text) throws Exception {
+                      final String outputReference, final String encoding, final boolean text) throws Exception {
         String fileName = inputStem;
         if (text) {
             fileName += ".txt";

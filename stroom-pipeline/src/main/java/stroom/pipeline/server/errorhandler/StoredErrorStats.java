@@ -60,12 +60,12 @@ public class StoredErrorStats {
         return count;
     }
 
-    public void setCurrentError(final StoredError currentError) {
-        this.currentError = currentError;
-    }
-
     public StoredError getCurrentError() {
         return currentError;
+    }
+
+    public void setCurrentError(final StoredError currentError) {
+        this.currentError = currentError;
     }
 
     public long getRecordCount() {

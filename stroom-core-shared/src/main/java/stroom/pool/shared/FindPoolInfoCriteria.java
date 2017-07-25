@@ -24,13 +24,12 @@ import stroom.util.shared.CompareUtil;
 import java.util.Comparator;
 
 public class FindPoolInfoCriteria extends FindNamedEntityCriteria implements Comparator<PoolInfo> {
-    private static final long serialVersionUID = 2756271393367666136L;
-
     public static final String FIELD_LAST_ACCESS = "Last Access";
     public static final String FIELD_IN_USE = "In Use";
     public static final String FIELD_IN_POOL = "In Pool";
     public static final String FIELD_IDLE_TIME = "Idle Time (s)";
     public static final String FIELD_LIVE_TIME = "Live Time (s)";
+    private static final long serialVersionUID = 2756271393367666136L;
 
     @Override
     public int compare(final PoolInfo o1, final PoolInfo o2) {

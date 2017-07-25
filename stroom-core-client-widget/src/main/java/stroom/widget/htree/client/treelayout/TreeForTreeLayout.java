@@ -81,8 +81,7 @@ public interface TreeForTreeLayout<TreeNode> {
      * <p>
      * Time Complexity: O(1)
      *
-     * @param parentNode
-     *            [!isLeaf(parentNode)]
+     * @param parentNode [!isLeaf(parentNode)]
      * @return the children of the given parentNode, from first to last
      */
     List<TreeNode> getChildren(TreeNode parentNode);
@@ -92,8 +91,7 @@ public interface TreeForTreeLayout<TreeNode> {
      * <p>
      * Time Complexity: O(1)
      *
-     * @param parentNode
-     *            [!isLeaf(parentNode)]
+     * @param parentNode [!isLeaf(parentNode)]
      * @return the children of given parentNode, from last to first
      */
     Iterable<TreeNode> getChildrenReverse(TreeNode parentNode);
@@ -103,8 +101,7 @@ public interface TreeForTreeLayout<TreeNode> {
      * <p>
      * Time Complexity: O(1)
      *
-     * @param parentNode
-     *            [!isLeaf(parentNode)]
+     * @param parentNode [!isLeaf(parentNode)]
      * @return the first child of the parentNode
      */
     TreeNode getFirstChild(TreeNode parentNode);
@@ -112,11 +109,10 @@ public interface TreeForTreeLayout<TreeNode> {
     /**
      * Returns the last child of a parent node.
      * <p>
-     *
+     * <p>
      * Time Complexity: O(1)
      *
-     * @param parentNode
-     *            [!isLeaf(parentNode)]
+     * @param parentNode [!isLeaf(parentNode)]
      * @return the last child of the parentNode
      */
     TreeNode getLastChild(TreeNode parentNode);

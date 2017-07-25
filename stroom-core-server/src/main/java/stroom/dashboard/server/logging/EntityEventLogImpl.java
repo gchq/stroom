@@ -283,7 +283,7 @@ public class EntityEventLogImpl implements EntityEventLog {
     }
 
     private void doSearch(final BaseCriteria criteria, final Query query, final BaseResultList<?> results,
-            final Exception ex) {
+                          final Exception ex) {
         try {
             final Event event = createAction(criteria.getClass().getSimpleName(), "Finding " + getObjectType(criteria),
                     null);
@@ -318,7 +318,7 @@ public class EntityEventLogImpl implements EntityEventLog {
     }
 
     private void doSearchSummary(final BaseCriteria criteria, final Query query, final BaseResultList<?> results,
-            final Exception ex) {
+                                 final Exception ex) {
         try {
             final Event event = createAction(criteria.getClass().getSimpleName(),
                     "Finding Summary " + getObjectType(criteria), null);
@@ -375,7 +375,7 @@ public class EntityEventLogImpl implements EntityEventLog {
     }
 
     private Event createAction(final String typeId, final String description, final String entityType,
-            final String entityName) {
+                               final String entityName) {
         final String desc = description + " " + entityType + " \"" + entityName;
         return eventLoggingService.createAction(typeId, desc);
     }

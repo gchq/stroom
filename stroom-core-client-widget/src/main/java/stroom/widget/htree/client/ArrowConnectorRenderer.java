@@ -37,7 +37,7 @@ public class ArrowConnectorRenderer<T> implements ConnectorRenderer<T> {
 
     @Override
     public void render(final TreeLayout<T> treeLayout, final double x1, final double y1, final double x2,
-            final double y2, final boolean firstChild, final boolean lastChild) {
+                       final double y2, final boolean firstChild, final boolean lastChild) {
         final double midx = x1 + ((x2 - x1) / 2);
 
         // Draw arrow line.

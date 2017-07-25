@@ -20,11 +20,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RefParser {
+    public static final char REF_CHAR = '$';
+    public static final char QUOTE = '\'';
     private static final char COMPOSITE_DELIMITER = '+';
     private static final char ARRAY_START = '[';
     private static final char ARRAY_END = ']';
-    public static final char REF_CHAR = '$';
-    public static final char QUOTE = '\'';
 
     public List<RefFactory> parse(final String reference) {
         final List<RefFactory> sections = new ArrayList<RefFactory>();

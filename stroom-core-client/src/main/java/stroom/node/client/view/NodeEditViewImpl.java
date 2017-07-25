@@ -26,16 +26,11 @@ import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.node.client.presenter.NodeEditPresenter.NodeEditView;
 
 public class NodeEditViewImpl extends ViewImpl implements NodeEditView {
-    public interface Binder extends UiBinder<Widget, NodeEditViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     Label name;
     @UiField
     TextBox clusterUrl;
-
     @Inject
     public NodeEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -52,12 +47,15 @@ public class NodeEditViewImpl extends ViewImpl implements NodeEditView {
     }
 
     @Override
+    public String getClusterUrl() {
+        return clusterUrl.getText();
+    }
+
+    @Override
     public void setClusterUrl(final String clusterUrl) {
         this.clusterUrl.setText(clusterUrl);
     }
 
-    @Override
-    public String getClusterUrl() {
-        return clusterUrl.getText();
+    public interface Binder extends UiBinder<Widget, NodeEditViewImpl> {
     }
 }

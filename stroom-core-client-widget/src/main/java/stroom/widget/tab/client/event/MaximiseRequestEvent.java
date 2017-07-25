@@ -21,10 +21,6 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
 public class MaximiseRequestEvent extends GwtEvent<MaximiseRequestEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onMaximiseRequest(MaximiseRequestEvent event);
-    }
-
     private static Type<Handler> TYPE;
 
     private MaximiseRequestEvent() {
@@ -49,5 +45,9 @@ public class MaximiseRequestEvent extends GwtEvent<MaximiseRequestEvent.Handler>
     @Override
     protected void dispatch(final Handler handler) {
         handler.onMaximiseRequest(this);
+    }
+
+    public interface Handler extends EventHandler {
+        void onMaximiseRequest(MaximiseRequestEvent event);
     }
 }

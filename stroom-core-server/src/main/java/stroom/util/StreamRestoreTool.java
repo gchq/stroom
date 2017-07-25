@@ -260,7 +260,7 @@ public class StreamRestoreTool extends DatabaseTool {
             if (!inspect) {
                 for (final KeyCount keyCount : sortedList) {
                     final char response = readQuestion(keyCount.toString() + " (D)elete, (R)estore, (I)nspect, (S)kip",
-                            new char[] { 'd', 'r', 'i', 's' }, 's');
+                            new char[]{'d', 'r', 'i', 's'}, 's');
 
                     streamTypeResponse.put(keyCount.getKey().get(0), response);
 
@@ -294,7 +294,7 @@ public class StreamRestoreTool extends DatabaseTool {
                             processStreamTypeFeed(fileName, streamType, feed, 'd');
                         } else {
                             final char response = readQuestion(longLabel + " (D)elete, (R)estore, (S)kip",
-                                    new char[] { 'd', 'r', 's' }, 's');
+                                    new char[]{'d', 'r', 's'}, 's');
 
                             if (response == 'd' || response == 'r') {
                                 processStreamTypeFeed(fileName, streamType, feed, response);
@@ -410,7 +410,7 @@ public class StreamRestoreTool extends DatabaseTool {
     }
 
     public void processStreamTypeFeed(final String fileName, final String processStreamType, final String processFeedId,
-            final char action) throws IOException, SQLException {
+                                      final char action) throws IOException, SQLException {
         final LineReader lineReader = new LineReader(new FileInputStream(fileName), StreamUtil.DEFAULT_CHARSET_NAME);
 
         String line = null;

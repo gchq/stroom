@@ -17,10 +17,8 @@
 package stroom.util.shared;
 
 public class SharedString implements SharedObject, Comparable<SharedString> {
-    private static final long serialVersionUID = 2999109513859666073L;
-
     public static final SharedString EMPTY = SharedString.wrap("");
-
+    private static final long serialVersionUID = 2999109513859666073L;
     private String string;
 
     public SharedString() {

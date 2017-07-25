@@ -39,6 +39,73 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Component
 public class JobNodeTrackerCache {
+    private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeTrackerCache.class);
+    // Default refresh interval is 10 seconds.
+    private static final long DEFAULT_REFRESH_INTERVAL = 10000;
+    private final long refreshInterval = DEFAULT_REFRESH_INTERVAL;
+    private final ReentrantLock refreshLock = new ReentrantLock();
+    @Resource
+    private NodeCache nodeCache;
+    @Resource
+    private JobNodeService jobNodeService;
+    private volatile Node node;
+    private volatile Trackers trackers;
+    private volatile long lastRefreshMs;
+
+    public Trackers getTrackers() {
+        if (trackers == null) {
+            // If trackers are currently null then we will lock so that all
+            // threads requiring trackers are blocked until the first one in
+            // creates them.
+            refreshLock.lock();
+            try {
+                // If trackers have already been created by a thread that got
+                // the lock before then don't bother creating them again.
+                if (trackers == null) {
+                    // Create the initial trackers.
+                    trackers = new Trackers(trackers, jobNodeService, getNode());
+                }
+            } catch (final Throwable t) {
+                LOGGER.error(t.getMessage(), t);
+            } finally {
+                refreshLock.unlock();
+            }
+        } else {
+            // If we have trackers then let one lucky thread see if they need to
+            // be
+            // refreshed, others will get the old copy in the meantime.
+            if (refreshLock.tryLock()) {
+                try {
+                    // Check to see if trackers need to be refreshed.
+                    final long delta = System.currentTimeMillis() - lastRefreshMs;
+                    if (delta > refreshInterval) {
+                        try {
+                            // Refresh the trackers.
+                            trackers = new Trackers(trackers, jobNodeService, getNode());
+                        } catch (final Throwable t) {
+                            LOGGER.error(t.getMessage(), t);
+                        }
+
+                        lastRefreshMs = System.currentTimeMillis();
+                    }
+                } catch (final Throwable t) {
+                    LOGGER.error(t.getMessage(), t);
+                } finally {
+                    refreshLock.unlock();
+                }
+            }
+        }
+
+        return trackers;
+    }
+
+    public Node getNode() {
+        if (node == null) {
+            node = nodeCache.getDefaultNode();
+        }
+        return node;
+    }
+
     public static class Trackers {
         private final Map<JobNode, JobNodeTracker> trackersForJobNode = new HashMap<>();
         private final Map<String, JobNodeTracker> trackersForJobName = new HashMap<>();
@@ -126,76 +193,5 @@ public class JobNodeTrackerCache {
         public Scheduler getScheduler(final JobNode jobNode) {
             return schedulerMap.get(jobNode);
         }
-    }
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeTrackerCache.class);
-
-    // Default refresh interval is 10 seconds.
-    private static final long DEFAULT_REFRESH_INTERVAL = 10000;
-
-    private final long refreshInterval = DEFAULT_REFRESH_INTERVAL;
-
-    @Resource
-    private NodeCache nodeCache;
-    @Resource
-    private JobNodeService jobNodeService;
-
-    private final ReentrantLock refreshLock = new ReentrantLock();
-    private volatile Node node;
-    private volatile Trackers trackers;
-    private volatile long lastRefreshMs;
-
-    public Trackers getTrackers() {
-        if (trackers == null) {
-            // If trackers are currently null then we will lock so that all
-            // threads requiring trackers are blocked until the first one in
-            // creates them.
-            refreshLock.lock();
-            try {
-                // If trackers have already been created by a thread that got
-                // the lock before then don't bother creating them again.
-                if (trackers == null) {
-                    // Create the initial trackers.
-                    trackers = new Trackers(trackers, jobNodeService, getNode());
-                }
-            } catch (final Throwable t) {
-                LOGGER.error(t.getMessage(), t);
-            } finally {
-                refreshLock.unlock();
-            }
-        } else {
-            // If we have trackers then let one lucky thread see if they need to
-            // be
-            // refreshed, others will get the old copy in the meantime.
-            if (refreshLock.tryLock()) {
-                try {
-                    // Check to see if trackers need to be refreshed.
-                    final long delta = System.currentTimeMillis() - lastRefreshMs;
-                    if (delta > refreshInterval) {
-                        try {
-                            // Refresh the trackers.
-                            trackers = new Trackers(trackers, jobNodeService, getNode());
-                        } catch (final Throwable t) {
-                            LOGGER.error(t.getMessage(), t);
-                        }
-
-                        lastRefreshMs = System.currentTimeMillis();
-                    }
-                } catch (final Throwable t) {
-                    LOGGER.error(t.getMessage(), t);
-                } finally {
-                    refreshLock.unlock();
-                }
-            }
-        }
-
-        return trackers;
-    }
-
-    public Node getNode() {
-        if (node == null) {
-            node = nodeCache.getDefaultNode();
-        }
-        return node;
     }
 }

@@ -34,23 +34,12 @@ package stroom.widget.htree.client.treelayout;
  * <p>
  * Also see <a href="package-summary.html">this overview</a>.
  *
- * @author Udo Borkowski (ub@abego.org)
- *
  * @param <TreeNode>
+ * @author Udo Borkowski (ub@abego.org)
  */
 public interface Configuration<TreeNode> {
     // ------------------------------------------------------------------------
     // rootLocation
-
-    /**
-     * Identifies the sides of a rectangle (top, left, ...)
-     */
-    enum Location {
-        Top, Left, Bottom, Right
-    }
-
-    // ------------------------------------------------------------------------
-    // alignmentInLevel
 
     /**
      * Returns the position of the root node in the diagram.
@@ -81,13 +70,8 @@ public interface Configuration<TreeNode> {
      */
     Location getRootLocation();
 
-    /**
-     * Possible alignments of a node within a level (centered, towards or away
-     * from root)
-     */
-    enum AlignmentInLevel {
-        Center, TowardsRoot, AwayFromRoot
-    }
+    // ------------------------------------------------------------------------
+    // alignmentInLevel
 
     /**
      * Returns the alignment of "smaller" nodes within a level.
@@ -131,7 +115,7 @@ public interface Configuration<TreeNode> {
      * "doc-files/TreeGraphView-AwayFromRoot-RootLeft.png"></td>
      * </tr>
      * </table>
-     *
+     * <p>
      * <p>
      * Of cause the alignment also works when the root is at the bottom or at
      * the right side.
@@ -141,19 +125,14 @@ public interface Configuration<TreeNode> {
      */
     AlignmentInLevel getAlignmentInLevel();
 
-    // ------------------------------------------------------------------------
-    // gapBetweenLevels/Nodes
-
     /**
      * Returns the size of the gap between subsequent levels.
      * <p>
      * <img src="doc-files/gapBetweenLevels.png">
      *
-     * @param nextLevel
-     *            [nextLevel > 0]
-     *
+     * @param nextLevel [nextLevel > 0]
      * @return the size of the gap between level (nextLevel-1) and nextLevel
-     *         [result >= 0]
+     * [result >= 0]
      */
     double getGapBetweenLevels(int nextLevel);
 
@@ -172,4 +151,22 @@ public interface Configuration<TreeNode> {
      * @return the minimal size of the gap between node1 and node2 [result >= 0]
      */
     double getGapBetweenNodes(TreeNode node1, TreeNode node2);
+
+    // ------------------------------------------------------------------------
+    // gapBetweenLevels/Nodes
+
+    /**
+     * Identifies the sides of a rectangle (top, left, ...)
+     */
+    enum Location {
+        Top, Left, Bottom, Right
+    }
+
+    /**
+     * Possible alignments of a node within a level (centered, towards or away
+     * from root)
+     */
+    enum AlignmentInLevel {
+        Center, TowardsRoot, AwayFromRoot
+    }
 }

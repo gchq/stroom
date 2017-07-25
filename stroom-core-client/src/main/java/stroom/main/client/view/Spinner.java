@@ -29,14 +29,9 @@ import stroom.main.client.presenter.MainPresenter.SpinnerDisplay;
 import stroom.widget.spinner.client.SpinnerWhite;
 
 public class Spinner extends Composite implements SpinnerDisplay {
-    interface Binder extends UiBinder<Widget, Spinner> {
-    }
-
     private static Binder binder = GWT.create(Binder.class);
-
     private SpinnerWhite spinner;
     private boolean spinning;
-
     public Spinner() {
         initWidget(binder.createAndBindUi(this));
     }
@@ -69,5 +64,8 @@ public class Spinner extends Composite implements SpinnerDisplay {
     @Override
     public HandlerRegistration addDoubleClickHandler(final DoubleClickHandler handler) {
         return addDomHandler(handler, DoubleClickEvent.getType());
+    }
+
+    interface Binder extends UiBinder<Widget, Spinner> {
     }
 }

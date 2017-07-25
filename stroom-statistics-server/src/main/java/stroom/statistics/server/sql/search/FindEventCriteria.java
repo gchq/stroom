@@ -30,8 +30,16 @@ public class FindEventCriteria implements SharedObject {
     private final FilterTermsTree filterTermsTree;
     private final Set<String> rolledUpFieldNames;
 
+    private FindEventCriteria(final Period period, final String statisticName, final FilterTermsTree filterTermsTree,
+                              final Set<String> rolledUpFieldNames) {
+        this.period = period;
+        this.statisticName = statisticName;
+        this.filterTermsTree = filterTermsTree;
+        this.rolledUpFieldNames = rolledUpFieldNames;
+    }
+
     public static FindEventCriteria instance(final Period period, final String statisticName,
-            final FilterTermsTree filterTermsTree) {
+                                             final FilterTermsTree filterTermsTree) {
         return new FindEventCriteria(period, statisticName, filterTermsTree, Collections.emptySet());
     }
 
@@ -41,21 +49,13 @@ public class FindEventCriteria implements SharedObject {
     }
 
     public static FindEventCriteria instance(final Period period, final String statisticName,
-            final FilterTermsTree filterTermsTree, final Set<String> rolledUpFieldNames) {
+                                             final FilterTermsTree filterTermsTree, final Set<String> rolledUpFieldNames) {
         return new FindEventCriteria(period, statisticName, filterTermsTree, rolledUpFieldNames);
     }
 
     public static FindEventCriteria instance(final Period period, final String statisticName,
-            final Set<String> rolledUpFieldNames) {
+                                             final Set<String> rolledUpFieldNames) {
         return new FindEventCriteria(period, statisticName, FilterTermsTree.emptyTree(), rolledUpFieldNames);
-    }
-
-    private FindEventCriteria(final Period period, final String statisticName, final FilterTermsTree filterTermsTree,
-            final Set<String> rolledUpFieldNames) {
-        this.period = period;
-        this.statisticName = statisticName;
-        this.filterTermsTree = filterTermsTree;
-        this.rolledUpFieldNames = rolledUpFieldNames;
     }
 
     public Period getPeriod() {
@@ -68,7 +68,7 @@ public class FindEventCriteria implements SharedObject {
 
     /**
      * @return A list names of fields that have a roll up operation applied to
-     *         them
+     * them
      */
     public Set<String> getRolledUpFieldNames() {
         return rolledUpFieldNames;

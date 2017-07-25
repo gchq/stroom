@@ -49,7 +49,7 @@ public class SessionListServlet extends HttpServlet {
 
     /**
      * Method interceptor needs to go on public API By-pass authentication / authorisation checks.
-     *
+     * <p>
      * This servlet is NOT protected by default and should be filtered by Apache access controls, see documentation for
      * details.
      */

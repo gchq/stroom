@@ -28,14 +28,12 @@ import javax.persistence.UniqueConstraint;
  * A rack in the system. Data stored in different racks is considered resilient.
  */
 @Entity
-@Table(name = "RK", uniqueConstraints = @UniqueConstraint(columnNames = { SQLNameConstants.NAME }) )
+@Table(name = "RK", uniqueConstraints = @UniqueConstraint(columnNames = {SQLNameConstants.NAME}))
 public class Rack extends NamedEntity {
-    private static final long serialVersionUID = 3029139308332000568L;
-
     public static final String TABLE_NAME = SQLNameConstants.RACK;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-
     public static final String ENTITY_TYPE = "Rack";
+    private static final long serialVersionUID = 3029139308332000568L;
 
     public static Rack create(final String name) {
         Rack rack = new Rack();

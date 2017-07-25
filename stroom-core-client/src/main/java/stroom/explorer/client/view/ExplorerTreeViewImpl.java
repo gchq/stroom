@@ -33,11 +33,7 @@ import stroom.widget.dropdowntree.client.view.QuickFilter;
 
 public class ExplorerTreeViewImpl extends ViewWithUiHandlers<ExplorerTreeUiHandlers>
         implements ExplorerTreePresenter.ExplorerTreeView {
-    public interface Binder extends UiBinder<Widget, ExplorerTreeViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField(provided = true)
     SvgButton newItem;
     @UiField(provided = true)
@@ -48,7 +44,6 @@ public class ExplorerTreeViewImpl extends ViewWithUiHandlers<ExplorerTreeUiHandl
     SimplePanel treeContainer;
     @UiField(provided = true)
     SvgButton typeFilter;
-
     @Inject
     public ExplorerTreeViewImpl(final Binder binder) {
         newItem = SvgButton.create(SvgPresets.NEW_ITEM);
@@ -90,5 +85,8 @@ public class ExplorerTreeViewImpl extends ViewWithUiHandlers<ExplorerTreeUiHandl
     @Override
     public void setCellTree(final Widget cellTree) {
         treeContainer.setWidget(cellTree);
+    }
+
+    public interface Binder extends UiBinder<Widget, ExplorerTreeViewImpl> {
     }
 }

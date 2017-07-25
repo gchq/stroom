@@ -27,10 +27,8 @@ import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 
 public class FindIndexShardCriteria extends BaseCriteria implements EntityMatcher<IndexShard> {
-    private static final long serialVersionUID = 3552286394659242683L;
-
     public static final String FIELD_PARTITION = "Partition";
-
+    private static final long serialVersionUID = 3552286394659242683L;
     private Range<Integer> documentCountRange = new Range<Integer>();
     private EntityIdSet<Node> nodeIdSet = new EntityIdSet<Node>();
     private EntityIdSet<Volume> volumeIdSet = new EntityIdSet<Volume>();
@@ -58,12 +56,12 @@ public class FindIndexShardCriteria extends BaseCriteria implements EntityMatche
         return indexShardStatusSet;
     }
 
-    public void setDocumentCountRange(Range<Integer> documentCountRange) {
-        this.documentCountRange = documentCountRange;
-    }
-
     public Range<Integer> getDocumentCountRange() {
         return documentCountRange;
+    }
+
+    public void setDocumentCountRange(Range<Integer> documentCountRange) {
+        this.documentCountRange = documentCountRange;
     }
 
     public EntityIdSet<Index> getIndexIdSet() {

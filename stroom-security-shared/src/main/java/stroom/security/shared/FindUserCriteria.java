@@ -24,15 +24,12 @@ import stroom.entity.shared.Period;
  */
 public class FindUserCriteria extends FindDocumentEntityCriteria {
     public static final String MANAGE_USERS_PERMISSION = "Manage Users";
-
+    public static final String FIELD_STATUS = "Status";
+    public static final String FIELD_LAST_LOGIN = "Last Login";
     /**
      * Order by types.
      */
     private static final long serialVersionUID = -6584216681046824635L;
-
-    public static final String FIELD_STATUS = "Status";
-    public static final String FIELD_LAST_LOGIN = "Last Login";
-
     /**
      * Find by status
      */

@@ -21,10 +21,8 @@ import stroom.util.shared.HashCodeBuilder;
 
 public abstract class FindDocumentEntityCriteria extends FindNamedEntityCriteria
         implements HasFolderIdSet, Copyable<FindDocumentEntityCriteria> {
-    private static final long serialVersionUID = -970306839701196839L;
-
     public static final String FIELD_FOLDER = "Folder";
-
+    private static final long serialVersionUID = -970306839701196839L;
     /**
      * Sub Filter - used for restricting items to their parent folder
      */

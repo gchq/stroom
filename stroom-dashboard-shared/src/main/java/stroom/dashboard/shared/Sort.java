@@ -28,13 +28,14 @@ import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "sort", propOrder = { "order", "direction" })
+@XmlType(name = "sort", propOrder = {"order", "direction"})
 public class Sort implements Serializable {
     private static final long serialVersionUID = 4530846367973824427L;
     @XmlElement(name = "order")
     private int order = 1;
     @XmlElement(name = "direction")
     private SortDirection direction = SortDirection.ASCENDING;
+
     public Sort() {
         // Default constructor necessary for GWT serialisation.
     }

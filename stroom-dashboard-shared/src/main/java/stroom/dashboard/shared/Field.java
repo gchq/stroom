@@ -27,7 +27,7 @@ import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "field", propOrder = { "name", "expression", "sort", "filter", "format", "group", "width", "visible" })
+@XmlType(name = "field", propOrder = {"name", "expression", "sort", "filter", "format", "group", "width", "visible"})
 public class Field implements Serializable {
     private static final long serialVersionUID = 7327802315955158337L;
 

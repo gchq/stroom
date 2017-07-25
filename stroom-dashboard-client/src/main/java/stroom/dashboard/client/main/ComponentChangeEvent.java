@@ -24,6 +24,7 @@ public class ComponentChangeEvent extends GwtEvent<ComponentChangeEvent.Handler>
     private static Type<Handler> TYPE;
     private final String componentId;
     private final Component component;
+
     private ComponentChangeEvent(final String componentId, final Component component) {
         this.componentId = componentId;
         this.component = component;

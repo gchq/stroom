@@ -31,7 +31,7 @@ public class MockIndexer implements Indexer {
         this.indexShardWriterCache = new MockIndexShardWriterCache();
     }
 
-//    @Inject
+    //    @Inject
     MockIndexer(final IndexShardKeyCache indexShardKeyCache, final IndexShardWriterCache indexShardWriterCache) {
         this.indexShardKeyCache = indexShardKeyCache;
         this.indexShardWriterCache = indexShardWriterCache;

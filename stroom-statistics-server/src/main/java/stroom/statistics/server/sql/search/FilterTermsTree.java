@@ -25,13 +25,13 @@ import java.util.List;
  * equals on an object type/value pair
  */
 public class FilterTermsTree {
-    PrintableNode root;
-
     private static FilterTermsTree emptyTree;
 
     static {
         emptyTree = new FilterTermsTree(null);
     }
+
+    PrintableNode root;
 
     public FilterTermsTree() {
     }
@@ -50,6 +50,18 @@ public class FilterTermsTree {
 
     public void setRootNode(final PrintableNode rootNode) {
         this.root = rootNode;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        if (root != null) {
+            root.printNode(sb);
+        }
+        sb.append("]");
+
+        return sb.toString();
     }
 
     /**
@@ -172,17 +184,5 @@ public class FilterTermsTree {
         public FilterTermsTreeException(final String message) {
             super(message);
         }
-    }
-
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("[");
-        if (root != null) {
-            root.printNode(sb);
-        }
-        sb.append("]");
-
-        return sb.toString();
     }
 }

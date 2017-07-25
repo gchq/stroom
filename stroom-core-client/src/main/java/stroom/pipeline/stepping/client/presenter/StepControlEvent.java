@@ -23,11 +23,14 @@ import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.StepType;
 
 public class StepControlEvent extends GwtEvent<StepControlEvent.StepControlHandler> {
-    public interface StepControlHandler extends EventHandler {
-        void onSelection(StepControlEvent event);
-    }
-
     private static final Type<StepControlHandler> TYPE = new Type<StepControlHandler>();
+    private final StepType stepType;
+    private final StepLocation stepLocation;
+
+    private StepControlEvent(final StepType stepType, final StepLocation stepLocation) {
+        this.stepType = stepType;
+        this.stepLocation = stepLocation;
+    }
 
     public static <I> void fire(final HasHandlers source, final StepType stepType, final StepLocation stepLocation) {
         StepControlEvent event = new StepControlEvent(stepType, stepLocation);
@@ -41,14 +44,6 @@ public class StepControlEvent extends GwtEvent<StepControlEvent.StepControlHandl
 
     public static Type<StepControlHandler> getType() {
         return TYPE;
-    }
-
-    private final StepType stepType;
-    private final StepLocation stepLocation;
-
-    private StepControlEvent(final StepType stepType, final StepLocation stepLocation) {
-        this.stepType = stepType;
-        this.stepLocation = stepLocation;
     }
 
     @Override
@@ -67,5 +62,9 @@ public class StepControlEvent extends GwtEvent<StepControlEvent.StepControlHandl
     @Override
     protected void dispatch(final StepControlHandler handler) {
         handler.onSelection(this);
+    }
+
+    public interface StepControlHandler extends EventHandler {
+        void onSelection(StepControlEvent event);
     }
 }

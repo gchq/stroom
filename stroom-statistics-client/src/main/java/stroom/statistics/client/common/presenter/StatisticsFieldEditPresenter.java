@@ -35,14 +35,7 @@ import java.util.List;
 
 public class StatisticsFieldEditPresenter
         extends MyPresenterWidget<StatisticsFieldEditPresenter.StatisticsFieldEditView> {
-    public interface StatisticsFieldEditView extends View {
-        String getFieldName();
-
-        void setFieldName(final String fieldName);
-    }
-
     private String fieldNamePattern;
-
     private List<StatisticField> otherFields;
 
     @Inject
@@ -106,5 +99,11 @@ public class StatisticsFieldEditPresenter
 
     public void setFieldNamePattern(final String fieldNamePattern) {
         this.fieldNamePattern = fieldNamePattern;
+    }
+
+    public interface StatisticsFieldEditView extends View {
+        String getFieldName();
+
+        void setFieldName(final String fieldName);
     }
 }

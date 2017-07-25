@@ -22,7 +22,9 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 
 public class LineReader {
-    /** How big our buffers are. This should always be a multiple of 8. */
+    /**
+     * How big our buffers are. This should always be a multiple of 8.
+     */
     public static final int STREAM_BUFFER_SIZE = 1024 * 100;
 
     private final Reader reader;

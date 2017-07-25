@@ -64,7 +64,7 @@ public class RemoteServiceHandlerAdapter extends RemoteServiceServlet implements
 
     @Override
     public ModelAndView handle(final HttpServletRequest request, final HttpServletResponse response,
-            final Object handler) throws Exception {
+                               final Object handler) throws Exception {
         try {
             if (!ThreadScopeContextHolder.contextExists()) {
                 throw new IllegalStateException("ThreadScopeContext MUST EXIST");
@@ -182,7 +182,7 @@ public class RemoteServiceHandlerAdapter extends RemoteServiceServlet implements
 
         String serializationPolicyFilePath = String.format(GWT_RPC_PATH, strongName);
 
-        try(InputStream is = getClass().getResourceAsStream(serializationPolicyFilePath)){
+        try (InputStream is = getClass().getResourceAsStream(serializationPolicyFilePath)) {
             return SerializationPolicyLoader.loadFromStream(is, null);
         } catch (ParseException | IOException e) {
             throw new RuntimeException(e);

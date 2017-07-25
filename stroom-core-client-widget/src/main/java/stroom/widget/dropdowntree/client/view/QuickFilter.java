@@ -36,31 +36,11 @@ import stroom.widget.button.client.SvgButton;
 
 public class QuickFilter extends FlowPanel
         implements HasText, HasValueChangeHandlers<String> {
+    private static final Resources RESOURCES = GWT.create(Resources.class);
     private final Label label = new Label("Quick Filter", false);
     private final TextBox textBox = new TextBox();
     private final SvgButton clearButton;
-
     private EventBus eventBus;
-
-    @ImportedWithPrefix("stroom-quickfilter")
-    public interface Style extends CssResource {
-        String DEFAULT_CSS = "QuickFilter.css";
-
-        String quickFilter();
-
-        String textBox();
-
-        String label();
-
-        String clear();
-    }
-
-    public interface Resources extends ClientBundle {
-        @Source(Style.DEFAULT_CSS)
-        Style style();
-    }
-
-    private static final Resources RESOURCES = GWT.create(Resources.class);
 
     public QuickFilter() {
         RESOURCES.style().ensureInjected();
@@ -123,6 +103,18 @@ public class QuickFilter extends FlowPanel
         textBox.setText(text);
     }
 
+    @Override
+    public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<String> handler) {
+        return getEventBus().addHandler(ValueChangeEvent.getType(), handler);
+    }
+
+    private EventBus getEventBus() {
+        if (eventBus == null) {
+            eventBus = new SimpleEventBus();
+        }
+        return eventBus;
+    }
+
 //    @Override
 //    public HandlerRegistration addKeyDownHandler(final KeyDownHandler handler) {
 //        return textBox.addKeyDownHandler(handler);
@@ -139,19 +131,25 @@ public class QuickFilter extends FlowPanel
 //    }
 
     @Override
-    public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<String> handler) {
-        return getEventBus().addHandler(ValueChangeEvent.getType(), handler);
-    }
-
-    private EventBus getEventBus() {
-        if (eventBus == null) {
-            eventBus = new SimpleEventBus();
-        }
-        return eventBus;
-    }
-
-    @Override
     public void fireEvent(final GwtEvent<?> event) {
         eventBus.fireEvent(event);
+    }
+
+    @ImportedWithPrefix("stroom-quickfilter")
+    public interface Style extends CssResource {
+        String DEFAULT_CSS = "QuickFilter.css";
+
+        String quickFilter();
+
+        String textBox();
+
+        String label();
+
+        String clear();
+    }
+
+    public interface Resources extends ClientBundle {
+        @Source(Style.DEFAULT_CSS)
+        Style style();
     }
 }

@@ -24,7 +24,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "text", propOrder = { "tableId", "pipeline", "showAsHtml" })
+@XmlType(name = "text", propOrder = {"tableId", "pipeline", "showAsHtml"})
 public class TextComponentSettings extends ComponentSettings {
     private static final long serialVersionUID = -2530827581046882396L;
 

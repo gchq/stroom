@@ -24,23 +24,20 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ButtonBase;
 
 public class FabButton extends ButtonBase {
+    private final Element face;
     /**
      * If <code>true</code>, this widget is capturing with the mouse held down.
      */
     private boolean isCapturing;
-
     /**
      * If <code>true</code>, this widget has focus with the space bar down.
      */
     private boolean isFocusing;
-
     /**
      * Used to decide whether to allow clicks to propagate up to the superclass
      * or container elements.
      */
     private boolean allowClick;
-
-    private final Element face;
 
     public FabButton() {
         super(Document.get().createDivElement());

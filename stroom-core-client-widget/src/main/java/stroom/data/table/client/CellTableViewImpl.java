@@ -39,62 +39,11 @@ import stroom.widget.util.client.MySingleSelectionModel;
 import java.util.List;
 
 public class CellTableViewImpl<R> extends ViewImpl implements CellTableView<R> {
-    @ImportedWithPrefix("gwt-CellTable")
-    public interface BasicStyle extends Style {
-        String DEFAULT_CSS = "stroom/data/table/client/BasicCellTable.css";
-    }
-
-    public interface BasicResources extends Resources {
-        @Override
-        @Source(BasicStyle.DEFAULT_CSS)
-        BasicStyle cellTableStyle();
-    }
-
-    @ImportedWithPrefix("gwt-CellTable")
-    public interface DefaultStyle extends Style {
-        String DEFAULT_CSS = "stroom/data/table/client/DefaultCellTable.css";
-    }
-
-    public interface DefaultResources extends Resources {
-        @Override
-        @Source(DefaultStyle.DEFAULT_CSS)
-        DefaultStyle cellTableStyle();
-    }
-
-    @ImportedWithPrefix("gwt-CellTable")
-    public interface DisabledStyle extends Style {
-        String DEFAULT_CSS = "stroom/data/table/client/DisabledCellTable.css";
-    }
-
-    public interface DisabledResources extends Resources {
-        @Override
-        @Source(DisabledStyle.DEFAULT_CSS)
-        DisabledStyle cellTableStyle();
-    }
-
-    @ImportedWithPrefix("gwt-CellTable")
-    public interface HoverStyle extends Style {
-        String DEFAULT_CSS = "stroom/data/table/client/HoverCellTable.css";
-    }
-
-    public interface HoverResources extends Resources {
-        @Override
-        @Source(HoverStyle.DEFAULT_CSS)
-        HoverStyle cellTableStyle();
-    }
-
-    public interface MenuResources extends Resources {
-        @Override
-        @Source("MenuCellTable.css")
-        Style cellTableStyle();
-    }
-
     /**
      * The main DataGrid.
      */
     @UiField(provided = true)
     CellTable<R> cellTable;
-
     private Widget widget;
 
     public CellTableViewImpl() {
@@ -169,18 +118,23 @@ public class CellTableViewImpl<R> extends ViewImpl implements CellTableView<R> {
     }
 
     @Override
+    public void setRowCount(final int count) {
+        cellTable.setRowCount(count);
+    }
+
+    @Override
     public Range getVisibleRange() {
         return cellTable.getVisibleRange();
     }
 
     @Override
-    public boolean isRowCountExact() {
-        return cellTable.isRowCountExact();
+    public void setVisibleRange(final Range range) {
+        cellTable.setVisibleRange(range);
     }
 
     @Override
-    public void setRowCount(final int count) {
-        cellTable.setRowCount(count);
+    public boolean isRowCountExact() {
+        return cellTable.isRowCountExact();
     }
 
     @Override
@@ -191,11 +145,6 @@ public class CellTableViewImpl<R> extends ViewImpl implements CellTableView<R> {
     @Override
     public void setVisibleRange(final int start, final int length) {
         cellTable.setVisibleRange(start, length);
-    }
-
-    @Override
-    public void setVisibleRange(final Range range) {
-        cellTable.setVisibleRange(range);
     }
 
     @Override
@@ -213,6 +162,11 @@ public class CellTableViewImpl<R> extends ViewImpl implements CellTableView<R> {
     @Override
     public SelectionModel<R> getSelectionModel() {
         return (SelectionModel<R>) cellTable.getSelectionModel();
+    }
+
+    @Override
+    public void setSelectionModel(final SelectionModel<? super R> selectionModel) {
+        cellTable.setSelectionModel(selectionModel);
     }
 
     @Override
@@ -236,11 +190,6 @@ public class CellTableViewImpl<R> extends ViewImpl implements CellTableView<R> {
     }
 
     @Override
-    public void setSelectionModel(final SelectionModel<? super R> selectionModel) {
-        cellTable.setSelectionModel(selectionModel);
-    }
-
-    @Override
     public void setVisibleRangeAndClearData(final Range range, final boolean forceRangeChangeEvent) {
         cellTable.setVisibleRangeAndClearData(range, forceRangeChangeEvent);
     }
@@ -248,5 +197,55 @@ public class CellTableViewImpl<R> extends ViewImpl implements CellTableView<R> {
     @Override
     public void setSkipRowHoverCheck(final boolean skipRowHoverCheck) {
         cellTable.setSkipRowHoverCheck(skipRowHoverCheck);
+    }
+
+    @ImportedWithPrefix("gwt-CellTable")
+    public interface BasicStyle extends Style {
+        String DEFAULT_CSS = "stroom/data/table/client/BasicCellTable.css";
+    }
+
+    public interface BasicResources extends Resources {
+        @Override
+        @Source(BasicStyle.DEFAULT_CSS)
+        BasicStyle cellTableStyle();
+    }
+
+    @ImportedWithPrefix("gwt-CellTable")
+    public interface DefaultStyle extends Style {
+        String DEFAULT_CSS = "stroom/data/table/client/DefaultCellTable.css";
+    }
+
+    public interface DefaultResources extends Resources {
+        @Override
+        @Source(DefaultStyle.DEFAULT_CSS)
+        DefaultStyle cellTableStyle();
+    }
+
+    @ImportedWithPrefix("gwt-CellTable")
+    public interface DisabledStyle extends Style {
+        String DEFAULT_CSS = "stroom/data/table/client/DisabledCellTable.css";
+    }
+
+    public interface DisabledResources extends Resources {
+        @Override
+        @Source(DisabledStyle.DEFAULT_CSS)
+        DisabledStyle cellTableStyle();
+    }
+
+    @ImportedWithPrefix("gwt-CellTable")
+    public interface HoverStyle extends Style {
+        String DEFAULT_CSS = "stroom/data/table/client/HoverCellTable.css";
+    }
+
+    public interface HoverResources extends Resources {
+        @Override
+        @Source(HoverStyle.DEFAULT_CSS)
+        HoverStyle cellTableStyle();
+    }
+
+    public interface MenuResources extends Resources {
+        @Override
+        @Source("MenuCellTable.css")
+        Style cellTableStyle();
     }
 }

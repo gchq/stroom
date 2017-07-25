@@ -81,8 +81,7 @@ public class TestXMLWithErrorsInTransform extends AbstractProcessIntegrationTest
     /**
      * Tests the XMLTransformer on some sample Windows XML events.
      *
-     * @throws Exception
-     *             Could be thrown while running the test.
+     * @throws Exception Could be thrown while running the test.
      */
     @Test
     public void testXMLTransformer() throws Exception {

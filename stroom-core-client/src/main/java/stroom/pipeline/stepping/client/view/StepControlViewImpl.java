@@ -31,11 +31,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.SvgButton;
 
 public class StepControlViewImpl extends ViewWithUiHandlers<StepControlUIHandlers> implements StepControlView {
-    public interface Binder extends UiBinder<Widget, StepControlViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField(provided = true)
     SvgButton firstButton;
     @UiField(provided = true)
@@ -46,7 +42,6 @@ public class StepControlViewImpl extends ViewWithUiHandlers<StepControlUIHandler
     SvgButton lastButton;
     @UiField(provided = true)
     SvgButton refreshButton;
-
     @Inject
     public StepControlViewImpl(final Binder binder) {
 
@@ -131,5 +126,8 @@ public class StepControlViewImpl extends ViewWithUiHandlers<StepControlUIHandler
         if (getUiHandlers() != null) {
             getUiHandlers().stepRefresh();
         }
+    }
+
+    public interface Binder extends UiBinder<Widget, StepControlViewImpl> {
     }
 }

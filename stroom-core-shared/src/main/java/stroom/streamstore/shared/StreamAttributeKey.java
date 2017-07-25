@@ -35,33 +35,15 @@ import java.util.Comparator;
 @Entity
 @Table(name = "STRM_ATR_KEY")
 public class StreamAttributeKey extends AuditedEntity implements HasName, HasDisplayValue {
-    private static final long serialVersionUID = 8411148988526703262L;
-
     public static final String TABLE_NAME = SQLNameConstants.STREAM + SEP + SQLNameConstants.ATTRIBUTE + SEP
             + SQLNameConstants.KEY;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-
     public static final String ENTITY_TYPE = "StreamAttributeKey";
     public static final String NAME = SQLNameConstants.NAME;
     public static final String FIELD_TYPE = SQLNameConstants.FIELD + SQLNameConstants.TYPE_SUFFIX;
-
+    private static final long serialVersionUID = 8411148988526703262L;
     private String name;
     private byte pfieldType = StreamAttributeFieldUse.FIELD.getPrimitiveValue();
-
-    public static class NameComparator implements Comparator<StreamAttributeKey>, Serializable {
-        private static final long serialVersionUID = 8059670820914357799L;
-
-        @Override
-        public int compare(final StreamAttributeKey arg0, final StreamAttributeKey arg1) {
-            return arg0.getName().compareTo(arg1.getName());
-        }
-    }
-
-    @Transient
-    @Override
-    public String getType() {
-        return ENTITY_TYPE;
-    }
 
     public StreamAttributeKey() {
         // Default constructor necessary for GWT serialisation.
@@ -70,6 +52,12 @@ public class StreamAttributeKey extends AuditedEntity implements HasName, HasDis
     public StreamAttributeKey(final String name, final StreamAttributeFieldUse fieldType) {
         setName(name);
         setFieldType(fieldType);
+    }
+
+    @Transient
+    @Override
+    public String getType() {
+        return ENTITY_TYPE;
     }
 
     @Override
@@ -134,5 +122,14 @@ public class StreamAttributeKey extends AuditedEntity implements HasName, HasDis
     @Transient
     public String getDisplayValue() {
         return getName();
+    }
+
+    public static class NameComparator implements Comparator<StreamAttributeKey>, Serializable {
+        private static final long serialVersionUID = 8059670820914357799L;
+
+        @Override
+        public int compare(final StreamAttributeKey arg0, final StreamAttributeKey arg1) {
+            return arg0.getName().compareTo(arg1.getName());
+        }
     }
 }

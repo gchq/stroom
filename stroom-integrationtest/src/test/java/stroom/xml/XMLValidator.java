@@ -55,11 +55,9 @@ public class XMLValidator {
     /**
      * Pull back the error message regarding this XML based resource.
      *
-     * @param resourceName
-     *            to check
-     * @param useSchema
-     *            Set to true if you wish to validate against a schema. False
-     *            will just validate XML is well formed.
+     * @param resourceName to check
+     * @param useSchema    Set to true if you wish to validate against a schema. False
+     *                     will just validate XML is well formed.
      * @return message
      */
     public String getInvalidXmlResourceMessage(final String resourceName, final boolean useSchema) {

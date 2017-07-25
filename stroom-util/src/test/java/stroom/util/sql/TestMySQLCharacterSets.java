@@ -58,136 +58,6 @@ public class TestMySQLCharacterSets {
         }
     }
 
-    @Test
-    public void testRegexOnNotSign() throws SQLException {
-        Connection connection = null;
-        final String tabCharValue = "a¬b";
-        final String tabCharRegex = "a[¬]b(¬|$)";
-        final String insertBit = "INSERT INTO CHAR_SET_TEST VALUES (";
-
-        try {
-            connection = getConnection();
-
-            // prepared statement escape chars for us
-            executeSql(connection, insertBit + "?)", new String[] { tabCharValue });
-
-            final PreparedStatement preparedStatement = executeSql(connection,
-                    "SELECT * FROM CHAR_SET_TEST WHERE TXT REGEXP ?", new String[] { tabCharRegex });
-
-            final ResultSet resultSet = preparedStatement.getResultSet();
-
-            int i = 0;
-            String result = "";
-
-            while (resultSet.next()) {
-                result = resultSet.getString(1);
-                i++;
-            }
-
-            Assert.assertEquals(1, i);
-            Assert.assertEquals(tabCharValue, result);
-
-        } finally {
-            try {
-                connection.close();
-            } catch (final Exception e) {
-            }
-        }
-    }
-
-    @Test
-    public void testEscapingTab() throws SQLException {
-        Connection connection = null;
-        final String vTab = new String(new byte[] { 11 });
-        final String tabCharValue = "a" + vTab + "b" + vTab;
-        final String tabCharRegex = "a[" + vTab + "]b(" + vTab + "|$)";
-        final String insertBit = "INSERT INTO CHAR_SET_TEST VALUES (";
-
-        try {
-            connection = getConnection();
-
-            // prepared statement escape chars for us
-            executeSql(connection, insertBit + "?)", new String[] { tabCharValue });
-
-            final PreparedStatement preparedStatement = executeSql(connection,
-                    "SELECT * FROM CHAR_SET_TEST WHERE TXT REGEXP ?", new String[] { tabCharRegex });
-
-            final ResultSet resultSet = preparedStatement.getResultSet();
-
-            int i = 0;
-            String result = "";
-
-            while (resultSet.next()) {
-                result = resultSet.getString(1);
-                i++;
-            }
-
-            Assert.assertEquals(1, i);
-            Assert.assertEquals(tabCharValue, result);
-
-        } finally {
-            try {
-                connection.close();
-            } catch (final Exception e) {
-            }
-        }
-    }
-
-    @Test
-    public void testEscaping() throws SQLException {
-        Connection connection = null;
-        final String dirtyValue = "\\_\"_'";
-        final String insertBit = "INSERT INTO CHAR_SET_TEST VALUES (";
-
-        try {
-            connection = getConnection();
-
-            // prepared statement escape chars for us
-            executeSql(connection, insertBit + "?)", new String[] { dirtyValue });
-
-            // statement runs what it is given so need to escape dirty chars
-            final String safeValue = SQLSafe.escapeChars(dirtyValue);
-            executeSqlAsStatement(connection, insertBit + "'" + safeValue + "')");
-
-        } finally {
-            try {
-                connection.close();
-            } catch (final Exception e) {
-            }
-        }
-    }
-
-    @Test
-    public void testDelimiter() throws SQLException {
-        Connection connection = null;
-
-        try {
-            connection = getConnection();
-
-            executeSql(connection, "INSERT INTO CHAR_SET_TEST VALUES (?)", new String[] { "a¬b¬c¬d" });
-            executeSql(connection, "INSERT INTO CHAR_SET_TEST VALUES (?)", new String[] { "a\u00acb\u00acc\u00acd" });
-
-            dumpAllRows();
-        } finally {
-            try {
-                connection.close();
-            } catch (final Exception e) {
-            }
-        }
-
-    }
-
-    @Test
-    public void testString() {
-        final String delim = "¬";
-        final Charset charset = Charset.forName("ISO8859_1");
-        final byte[] latinBytes = delim.getBytes(charset);
-        final String latin1 = new String(latinBytes, charset);
-        final Map<String, Charset> charsets = Charset.availableCharsets();
-        System.out.println(charsets.keySet());
-        System.out.println(latin1);
-    }
-
     private static void dumpAllRows() throws SQLException {
         Connection connection = null;
 
@@ -226,7 +96,7 @@ public class TestMySQLCharacterSets {
     }
 
     private static PreparedStatement executeSql(final Connection connection, final String sql,
-            final String[] bindValues) throws SQLException {
+                                                final String[] bindValues) throws SQLException {
         final PreparedStatement preparedStatement = connection.prepareStatement(sql);
 
         int paramIndex = 1;
@@ -243,7 +113,7 @@ public class TestMySQLCharacterSets {
     }
 
     private static PreparedStatement executeSqlAsCharSet(final Connection connection, final String sql,
-            final String[] bindValues) throws SQLException {
+                                                         final String[] bindValues) throws SQLException {
         final PreparedStatement preparedStatement = connection.prepareStatement(sql);
         final Charset charset = Charset.forName("ISO8859_1");
 
@@ -278,5 +148,135 @@ public class TestMySQLCharacterSets {
         }
 
         return DriverManager.getConnection(driverUrl, driverUsername, driverPassword);
+    }
+
+    @Test
+    public void testRegexOnNotSign() throws SQLException {
+        Connection connection = null;
+        final String tabCharValue = "a¬b";
+        final String tabCharRegex = "a[¬]b(¬|$)";
+        final String insertBit = "INSERT INTO CHAR_SET_TEST VALUES (";
+
+        try {
+            connection = getConnection();
+
+            // prepared statement escape chars for us
+            executeSql(connection, insertBit + "?)", new String[]{tabCharValue});
+
+            final PreparedStatement preparedStatement = executeSql(connection,
+                    "SELECT * FROM CHAR_SET_TEST WHERE TXT REGEXP ?", new String[]{tabCharRegex});
+
+            final ResultSet resultSet = preparedStatement.getResultSet();
+
+            int i = 0;
+            String result = "";
+
+            while (resultSet.next()) {
+                result = resultSet.getString(1);
+                i++;
+            }
+
+            Assert.assertEquals(1, i);
+            Assert.assertEquals(tabCharValue, result);
+
+        } finally {
+            try {
+                connection.close();
+            } catch (final Exception e) {
+            }
+        }
+    }
+
+    @Test
+    public void testEscapingTab() throws SQLException {
+        Connection connection = null;
+        final String vTab = new String(new byte[]{11});
+        final String tabCharValue = "a" + vTab + "b" + vTab;
+        final String tabCharRegex = "a[" + vTab + "]b(" + vTab + "|$)";
+        final String insertBit = "INSERT INTO CHAR_SET_TEST VALUES (";
+
+        try {
+            connection = getConnection();
+
+            // prepared statement escape chars for us
+            executeSql(connection, insertBit + "?)", new String[]{tabCharValue});
+
+            final PreparedStatement preparedStatement = executeSql(connection,
+                    "SELECT * FROM CHAR_SET_TEST WHERE TXT REGEXP ?", new String[]{tabCharRegex});
+
+            final ResultSet resultSet = preparedStatement.getResultSet();
+
+            int i = 0;
+            String result = "";
+
+            while (resultSet.next()) {
+                result = resultSet.getString(1);
+                i++;
+            }
+
+            Assert.assertEquals(1, i);
+            Assert.assertEquals(tabCharValue, result);
+
+        } finally {
+            try {
+                connection.close();
+            } catch (final Exception e) {
+            }
+        }
+    }
+
+    @Test
+    public void testEscaping() throws SQLException {
+        Connection connection = null;
+        final String dirtyValue = "\\_\"_'";
+        final String insertBit = "INSERT INTO CHAR_SET_TEST VALUES (";
+
+        try {
+            connection = getConnection();
+
+            // prepared statement escape chars for us
+            executeSql(connection, insertBit + "?)", new String[]{dirtyValue});
+
+            // statement runs what it is given so need to escape dirty chars
+            final String safeValue = SQLSafe.escapeChars(dirtyValue);
+            executeSqlAsStatement(connection, insertBit + "'" + safeValue + "')");
+
+        } finally {
+            try {
+                connection.close();
+            } catch (final Exception e) {
+            }
+        }
+    }
+
+    @Test
+    public void testDelimiter() throws SQLException {
+        Connection connection = null;
+
+        try {
+            connection = getConnection();
+
+            executeSql(connection, "INSERT INTO CHAR_SET_TEST VALUES (?)", new String[]{"a¬b¬c¬d"});
+            executeSql(connection, "INSERT INTO CHAR_SET_TEST VALUES (?)", new String[]{"a\u00acb\u00acc\u00acd"});
+
+            dumpAllRows();
+        } finally {
+            try {
+                connection.close();
+            } catch (final Exception e) {
+            }
+        }
+
+    }
+
+    @Test
+    public void testString() {
+        final String delim = "¬";
+        final Charset charset = Charset.forName("ISO8859_1");
+        final byte[] latinBytes = delim.getBytes(charset);
+        final String latin1 = new String(latinBytes, charset);
+        final Map<String, Charset> charsets = Charset.availableCharsets();
+        System.out.println(charsets.keySet());
+        System.out.println(latin1);
     }
 }

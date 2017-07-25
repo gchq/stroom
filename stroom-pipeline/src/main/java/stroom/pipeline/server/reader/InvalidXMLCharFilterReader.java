@@ -24,24 +24,35 @@ import java.io.Reader;
  * characters with the replacement character. The purpose of this class is to
  * modify character streams (in UTF-16) such as to avoid fatal parse errors
  * arising in the XML parser.
- *
+ * <p>
  * The valid XML character ranges are taken from the XML standards documents
  * available from:
- *
+ * <p>
  * http://www.w3.org/TR/xml http://www.w3.org/TR/xml11
- *
+ * <p>
  * SH
  */
 public class InvalidXMLCharFilterReader extends TransformReader {
     private final char REPLACEMENT_CHAR = 0xfffd; // The <?> symbol.
-
-    public enum XMLmode {
-        XML_1_0, XML_1_1
-    }
+    final private XMLmode m_xmlmode;
+    private boolean m_haveReadAhead;
+    private char m_readAhead;
 
     public InvalidXMLCharFilterReader(final Reader in, final XMLmode mode) {
         super(in);
         m_xmlmode = mode;
+    }
+
+    /**
+     * Check that surrogate character pair are valid and that these represent a
+     * valid XML character code point.
+     */
+    private static boolean isValidCharSurrogatePair(final char chA, final char chB) {
+        if (!Character.isLowSurrogate(chB))
+            return false;
+        final int cp = Character.toCodePoint(chA, chB);
+        assert (cp >= 0x10000); // Consequence of implementation of toCodePoint
+        return cp < 0x10ffff;
     }
 
     /**
@@ -56,13 +67,13 @@ public class InvalidXMLCharFilterReader extends TransformReader {
         int val = in.read();
         if (val >= 0) {
             final char ch = (char) val;
-            assert(ch == val);
+            assert (ch == val);
             if (Character.isHighSurrogate(ch)) {
                 final int readAhead = in.read();
                 if (readAhead >= 0) {
                     m_haveReadAhead = true;
                     m_readAhead = (char) readAhead;
-                    assert(m_readAhead == readAhead);
+                    assert (m_readAhead == readAhead);
                     if (isValidCharSurrogatePair(ch, m_readAhead))
                         return val;
                     m_readAhead = REPLACEMENT_CHAR;
@@ -103,7 +114,7 @@ public class InvalidXMLCharFilterReader extends TransformReader {
                             if (readAhead >= 0) {
                                 m_haveReadAhead = true;
                                 m_readAhead = (char) readAhead;
-                                assert(m_readAhead == readAhead);
+                                assert (m_readAhead == readAhead);
                                 if (isValidCharSurrogatePair(cbuf[off], m_readAhead))
                                     break;
                                 else {
@@ -127,7 +138,7 @@ public class InvalidXMLCharFilterReader extends TransformReader {
                 return endOffset - originalOff;
             }
             // An error reading from underlying character stream.
-            assert(nread == -1);
+            assert (nread == -1);
         }
         return (originalOff == off) ? -1 : 1;
     }
@@ -142,30 +153,17 @@ public class InvalidXMLCharFilterReader extends TransformReader {
                 return true;
         } else
             switch (m_xmlmode) {
-            case XML_1_0:
-                return chr == 0xa || chr == 0xd || chr == 0x9;
-            case XML_1_1:
-                return chr > 0;
-            default:
-                assert(false);
+                case XML_1_0:
+                    return chr == 0xa || chr == 0xd || chr == 0x9;
+                case XML_1_1:
+                    return chr > 0;
+                default:
+                    assert (false);
             }
         return false;
     }
-
-    /**
-     * Check that surrogate character pair are valid and that these represent a
-     * valid XML character code point.
-     */
-    private static boolean isValidCharSurrogatePair(final char chA, final char chB) {
-        if (!Character.isLowSurrogate(chB))
-            return false;
-        final int cp = Character.toCodePoint(chA, chB);
-        assert(cp >= 0x10000); // Consequence of implementation of toCodePoint
-        return cp < 0x10ffff;
+    public enum XMLmode {
+        XML_1_0, XML_1_1
     }
-
-    final private XMLmode m_xmlmode;
-    private boolean m_haveReadAhead;
-    private char m_readAhead;
 
 }

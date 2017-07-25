@@ -35,11 +35,7 @@ import stroom.widget.button.client.SvgButton;
 
 public class SteppingFilterViewImpl extends ViewWithUiHandlers<SteppingFilterUiHandlers>
         implements SteppingFilterSettingsView {
-    public interface Binder extends UiBinder<Widget, SteppingFilterViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     ListBox skipToErrors;
     @UiField
@@ -52,7 +48,6 @@ public class SteppingFilterViewImpl extends ViewWithUiHandlers<SteppingFilterUiH
     SvgButton removeXPath;
     @UiField
     SimplePanel xPathList;
-
     @Inject
     public SteppingFilterViewImpl(final Binder binder) {
         addXPath = SvgButton.create(SvgPresets.ADD);
@@ -81,6 +76,16 @@ public class SteppingFilterViewImpl extends ViewWithUiHandlers<SteppingFilterUiH
     }
 
     @Override
+    public Severity getSkipToErrors() {
+        final int index = skipToErrors.getSelectedIndex();
+        if (index <= 0) {
+            return null;
+        }
+
+        return Severity.getSeverity(skipToErrors.getItemText(index));
+    }
+
+    @Override
     public void setSkipToErrors(Severity value) {
         if (value == null) {
             skipToErrors.setSelectedIndex(0);
@@ -96,13 +101,15 @@ public class SteppingFilterViewImpl extends ViewWithUiHandlers<SteppingFilterUiH
     }
 
     @Override
-    public Severity getSkipToErrors() {
-        final int index = skipToErrors.getSelectedIndex();
+    public OutputState getSkipToOutput() {
+        final int index = skipToOutput.getSelectedIndex();
         if (index <= 0) {
             return null;
         }
-
-        return Severity.getSeverity(skipToErrors.getItemText(index));
+        if (index == 1) {
+            return OutputState.NOT_EMPTY;
+        }
+        return OutputState.EMPTY;
     }
 
     @Override
@@ -114,18 +121,6 @@ public class SteppingFilterViewImpl extends ViewWithUiHandlers<SteppingFilterUiH
         } else if (OutputState.EMPTY.equals(value)) {
             skipToOutput.setSelectedIndex(2);
         }
-    }
-
-    @Override
-    public OutputState getSkipToOutput() {
-        final int index = skipToOutput.getSelectedIndex();
-        if (index <= 0) {
-            return null;
-        }
-        if (index == 1) {
-            return OutputState.NOT_EMPTY;
-        }
-        return OutputState.EMPTY;
     }
 
     @UiHandler("addXPath")
@@ -164,5 +159,8 @@ public class SteppingFilterViewImpl extends ViewWithUiHandlers<SteppingFilterUiH
         if (SteppingFilterPresenter.LIST.equals(slot)) {
             xPathList.setWidget(content);
         }
+    }
+
+    public interface Binder extends UiBinder<Widget, SteppingFilterViewImpl> {
     }
 }

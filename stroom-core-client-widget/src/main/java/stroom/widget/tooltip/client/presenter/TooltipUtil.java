@@ -32,7 +32,7 @@ public final class TooltipUtil {
     }
 
     public static void addRowData(final StringBuilder buffer, final String heading, final Object value,
-            final boolean showBlank) {
+                                  final boolean showBlank) {
         if (value != null) {
             final String s = String.valueOf(value);
             if (s.length() > 0 || showBlank) {

@@ -26,13 +26,12 @@ import java.io.InputStream;
 
 /**
  * Wrapper for a nested input stream.
- *
+ * <p>
  * You must call getNextEntry and closeEntry like the ZIP API.
  */
 public class StreamSourceInputStreamProviderImpl implements StreamSourceInputStreamProvider {
-    private Long segmentCount = null;
-
     private final StreamSource streamSource;
+    private Long segmentCount = null;
     private InputStream data;
     private InputStream boundaryIndex;
     private InputStream segmentIndex;

@@ -47,9 +47,10 @@ public class CreateEntityPresenter
     private String entityType;
     private String caption;
     private boolean allowNullFolder;
+
     @Inject
     public CreateEntityPresenter(final EventBus eventBus, final CreateEntityView view, final CreateEntityProxy proxy,
-            final EntityTreePresenter entityTreePresenter) {
+                                 final EntityTreePresenter entityTreePresenter) {
         super(eventBus, view, proxy);
         this.entityTreePresenter = entityTreePresenter;
         view.setUiHandlers(this);

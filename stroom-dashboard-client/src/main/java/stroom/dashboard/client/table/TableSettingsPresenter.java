@@ -24,7 +24,7 @@ import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 public class TableSettingsPresenter extends SettingsPresenter {
     @Inject
     public TableSettingsPresenter(final EventBus eventBus, final LinkTabsLayoutView view,
-            final BasicTableSettingsPresenter basicSettingsPresenter) {
+                                  final BasicTableSettingsPresenter basicSettingsPresenter) {
         super(eventBus, view);
         addTab("Basic", basicSettingsPresenter);
     }

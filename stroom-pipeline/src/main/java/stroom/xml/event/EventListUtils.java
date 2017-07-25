@@ -170,7 +170,7 @@ public final class EventListUtils {
      * {@link javax.xml.transform.Transformer#getOutputProperties()}
      *
      * @return a newly-constructed Properties object holding the declared
-     *         serialization properties
+     * serialization properties
      */
     private static Properties getOutputProperties() {
         final Map<Property, String> properties = new HashMap<>(10);

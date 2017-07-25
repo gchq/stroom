@@ -35,7 +35,7 @@ import java.util.zip.ZipOutputStream;
  * <p>
  * Runnable Java Program that can act as a test client to the data feed.
  * </p>
- *
+ * <p>
  * <p>
  * Duplicate class with no reuse to allow copy to be placed in documentation.
  * </p>
@@ -55,8 +55,7 @@ public final class DataFeedClient {
     }
 
     /**
-     * @param args
-     *            program args
+     * @param args program args
      */
     public static void main(final String[] args) {
         try {

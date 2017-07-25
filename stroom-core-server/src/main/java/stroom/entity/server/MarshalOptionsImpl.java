@@ -30,12 +30,12 @@ public class MarshalOptionsImpl implements MarshalOptions {
     private boolean disabled;
 
     @Override
-    public void setDisabled(final boolean disabled) {
-        this.disabled = disabled;
+    public boolean isDisabled() {
+        return disabled;
     }
 
     @Override
-    public boolean isDisabled() {
-        return disabled;
+    public void setDisabled(final boolean disabled) {
+        this.disabled = disabled;
     }
 }

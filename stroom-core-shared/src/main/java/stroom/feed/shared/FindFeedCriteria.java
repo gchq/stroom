@@ -25,11 +25,9 @@ import stroom.util.shared.HashCodeBuilder;
  * Class used to find feed definitions.
  */
 public class FindFeedCriteria extends FindDocumentEntityCriteria {
-    private static final long serialVersionUID = 1L;
-
     public static final String FIELD_TYPE = "Type";
     public static final String FIELD_CLASSIFICATION = "Classification";
-
+    private static final long serialVersionUID = 1L;
     private Boolean reference;
     private EntityIdSet<Feed> feedIdSet = new EntityIdSet<Feed>();
 

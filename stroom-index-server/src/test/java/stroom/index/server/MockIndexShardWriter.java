@@ -26,9 +26,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class MockIndexShardWriter implements IndexShardWriter {
+    private static AtomicLong idGen = new AtomicLong();
     //    private final IndexShardManager indexShardManager;
     private final List<Document> documents = new ArrayList<>();
-    private static AtomicLong idGen = new AtomicLong();
     private final long indexShardId;
 
     private final int maxDocumentCount;

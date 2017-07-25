@@ -74,8 +74,8 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
     private final FolderService folderService;
     private final GenericEntityService genericEntityService;
     private final ClassTypeMap classTypeMap = new ClassTypeMap();
-    private volatile boolean entitiesInitialised = false;
     private final SecurityContext securityContext;
+    private volatile boolean entitiesInitialised = false;
 
     @Inject
     public ImportExportSerializerImpl(final FolderService folderService,

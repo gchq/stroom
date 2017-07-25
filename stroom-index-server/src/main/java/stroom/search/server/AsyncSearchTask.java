@@ -26,7 +26,7 @@ import stroom.util.task.ServerTask;
 import java.io.Serializable;
 import java.util.Map;
 
-public class AsyncSearchTask extends ServerTask<VoidResult>implements Serializable {
+public class AsyncSearchTask extends ServerTask<VoidResult> implements Serializable {
     private static final long serialVersionUID = -1305243739417365803L;
 
     private final String searchName;

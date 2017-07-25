@@ -40,7 +40,7 @@ public class MapStoreBuilderImpl implements MapStoreBuilder {
 
     @Override
     public void setEvents(final String mapName, final String keyName, final EventList eventList,
-            final boolean overrideExistingValues) {
+                          final boolean overrideExistingValues) {
         this.overrideExistingValues = overrideExistingValues;
 
         final MapStoreKey key = new MapStoreKey(mapName, keyName);
@@ -62,7 +62,7 @@ public class MapStoreBuilderImpl implements MapStoreBuilder {
 
     @Override
     public void setEvents(final String mapName, final Range<Long> range, final EventList eventList,
-            final boolean overrideExistingValues) {
+                          final boolean overrideExistingValues) {
         this.overrideExistingValues = overrideExistingValues;
 
         if (rangeMap == null) {

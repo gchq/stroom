@@ -28,14 +28,12 @@ import java.util.function.Consumer;
 @Singleton
 public class ServiceDiscoveryManager {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryManager.class);
-
     public static final String PROP_KEY_ZOOKEEPER_QUORUM = "stroom.serviceDiscovery.zookeeperUrl";
     public static final String PROP_KEY_CURATOR_BASE_SLEEP_TIME_MS = "stroom.serviceDiscovery.curator.baseSleepTimeMs";
     public static final String PROP_KEY_CURATOR_MAX_SLEEP_TIME_MS = "stroom.serviceDiscovery.curator.maxSleepTimeMs";
     public static final String PROP_KEY_CURATOR_MAX_RETRIES = "stroom.serviceDiscovery.curator.maxRetries";
     public static final String PROP_KEY_ZOOKEEPER_BASE_PATH = "stroom.serviceDiscovery.zookeeperBasePath";
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryManager.class);
     private final StroomPropertyService stroomPropertyService;
     private final String zookeeperUrl;
 
@@ -64,7 +62,7 @@ public class ServiceDiscoveryManager {
     }
 
     public Optional<ServiceDiscovery<String>> getServiceDiscovery() {
-       return Optional.ofNullable(serviceDiscoveryRef.get());
+        return Optional.ofNullable(serviceDiscoveryRef.get());
     }
 
     public void registerStartupListener(final Consumer<ServiceDiscovery<String>> listener) {

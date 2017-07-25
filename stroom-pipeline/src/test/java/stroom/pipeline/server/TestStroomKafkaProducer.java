@@ -20,7 +20,7 @@ public class TestStroomKafkaProducer {
 
     @Test
     @Ignore("You may use this to test the local instance of Kafka.")
-    public void testManualSend(){
+    public void testManualSend() {
         // Given
         StroomKafkaProducer stroomKafkaProducer = new StroomKafkaProducer("stroom.kafka:9092");
         ProducerRecord<String, String> record = new ProducerRecord<>("statistics", "statistics", "some record data");
@@ -32,7 +32,7 @@ public class TestStroomKafkaProducer {
     }
 
     @Test
-    public void testBadlyConfigured(){
+    public void testBadlyConfigured() {
         // Given
         StroomKafkaProducer stroomKafkaProducer = new StroomKafkaProducer(null);
         ProducerRecord<String, String> record = new ProducerRecord<>("statistics", "statistics", "some record data");

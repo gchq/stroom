@@ -23,5 +23,5 @@ import stroom.streamtask.shared.StreamTask;
 
 public interface StreamProcessorTaskExecutor {
     void exec(StreamProcessor streamProcessor, StreamProcessorFilter streamProcessorFilter, StreamTask streamTask,
-            StreamSource streamSource);
+              StreamSource streamSource);
 }

@@ -27,12 +27,7 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onShow(ShowPopupEvent event);
-    }
-
     private static Type<Handler> TYPE;
-
     private final PresenterWidget<?> presenterWidget;
     private final PopupType popupType;
     private final PopupPosition popupPosition;
@@ -41,10 +36,9 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
     private final PopupUiHandlers popupUiHandlers;
     private final Boolean modal;
     private final Element[] autoHidePartners;
-
     private ShowPopupEvent(final PresenterWidget<?> presenterWidget, final PopupType popupType,
-            final PopupPosition popupPosition, final PopupSize popupSize, final String caption,
-            final PopupUiHandlers popupUiHandlers, final Boolean modal, final Element... autoHidePartners) {
+                           final PopupPosition popupPosition, final PopupSize popupSize, final String caption,
+                           final PopupUiHandlers popupUiHandlers, final Boolean modal, final Element... autoHidePartners) {
         this.presenterWidget = presenterWidget;
         this.popupType = popupType;
         this.popupPosition = popupPosition;
@@ -60,7 +54,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
      * handler.
      */
     public static void fire(final HasHandlers handlers, final PresenterWidget<?> presenterWidget,
-            final PopupType popupType, final String caption, final Element... autoHidePartner) {
+                            final PopupType popupType, final String caption, final Element... autoHidePartner) {
         fire(handlers, presenterWidget, popupType, null, null, caption, null, null, autoHidePartner);
     }
 
@@ -68,8 +62,8 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
      * Show a popup center of the screen and sized by the popup size.
      */
     public static void fire(final HasHandlers handlers, final PresenterWidget<?> presenterWidget,
-            final PopupType popupType, final PopupSize popupSize, final String caption,
-            final PopupUiHandlers popupUiHandlers, final Element... autoHidePartner) {
+                            final PopupType popupType, final PopupSize popupSize, final String caption,
+                            final PopupUiHandlers popupUiHandlers, final Element... autoHidePartner) {
         fire(handlers, presenterWidget, popupType, null, popupSize, caption, popupUiHandlers, null, autoHidePartner);
     }
 
@@ -78,8 +72,8 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
      * modality.
      */
     public static void fire(final HasHandlers handlers, final PresenterWidget<?> presenterWidget,
-            final PopupType popupType, final String caption, final PopupUiHandlers popupUiHandlers, final Boolean modal,
-            final Element... autoHidePartner) {
+                            final PopupType popupType, final String caption, final PopupUiHandlers popupUiHandlers, final Boolean modal,
+                            final Element... autoHidePartner) {
         fire(handlers, presenterWidget, popupType, null, null, caption, popupUiHandlers, modal, autoHidePartner);
     }
 
@@ -87,8 +81,8 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
      * Show a popup center of the screen and sized to it's content.
      */
     public static void fire(final HasHandlers handlers, final PresenterWidget<?> presenterWidget,
-            final PopupType popupType, final String caption, final PopupUiHandlers popupUiHandlers,
-            final Element... autoHidePartner) {
+                            final PopupType popupType, final String caption, final PopupUiHandlers popupUiHandlers,
+                            final Element... autoHidePartner) {
         fire(handlers, presenterWidget, popupType, null, null, caption, popupUiHandlers, null, autoHidePartner);
     }
 
@@ -96,8 +90,8 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
      * Show a popup in the specified position and sized to it's content.
      */
     public static void fire(final HasHandlers handlers, final PresenterWidget<?> presenterWidget,
-            final PopupType popupType, final PopupPosition popupPosition, final PopupUiHandlers popupUiHandlers,
-            final Element... autoHidePartner) {
+                            final PopupType popupType, final PopupPosition popupPosition, final PopupUiHandlers popupUiHandlers,
+                            final Element... autoHidePartner) {
         fire(handlers, presenterWidget, popupType, popupPosition, null, null, popupUiHandlers, null, autoHidePartner);
     }
 
@@ -105,9 +99,9 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
      * Show a popup in the specified position and the specified size.
      */
     public static void fire(final HasHandlers handlers, final PresenterWidget<?> presenterWidget,
-            final PopupType popupType, final PopupPosition popupPosition, final PopupSize popupSize,
-            final String caption, final PopupUiHandlers popupUiHandlers, final Boolean modal,
-            final Element... autoHidePartners) {
+                            final PopupType popupType, final PopupPosition popupPosition, final PopupSize popupSize,
+                            final String caption, final PopupUiHandlers popupUiHandlers, final Boolean modal,
+                            final Element... autoHidePartners) {
         handlers.fireEvent(new ShowPopupEvent(presenterWidget, popupType, popupPosition, popupSize, caption,
                 popupUiHandlers, modal, autoHidePartners));
     }
@@ -159,5 +153,9 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
 
     public Element[] getAutoHidePartners() {
         return autoHidePartners;
+    }
+
+    public interface Handler extends EventHandler {
+        void onShow(ShowPopupEvent event);
     }
 }

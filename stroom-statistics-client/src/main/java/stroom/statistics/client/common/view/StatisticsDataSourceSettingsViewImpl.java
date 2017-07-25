@@ -33,23 +33,15 @@ import stroom.widget.tickbox.client.view.TickBox;
 
 public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<StatisticsDataSourceSettingsUiHandlers>
         implements StatisticsDataSourceSettingsView {
-    public interface Binder extends UiBinder<Widget, StatisticsDataSourceSettingsViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     TextArea description;
-
     @UiField(provided = true)
     ItemListBox<StatisticType> statisticType;
-
     @UiField(provided = true)
     ItemListBox<EventStoreTimeIntervalEnum> precision;
-
     @UiField(provided = true)
     ItemListBox<StatisticRollUpType> rollUpType;
-
     @UiField(provided = true)
     TickBox enabled;
 
@@ -132,7 +124,6 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
         this.statisticType.setSelectedItem(statisticType);
     }
 
-
     @Override
     public EventStoreTimeIntervalEnum getPrecision() {
         return precision.getSelectedItem();
@@ -151,5 +142,8 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
     @Override
     public void setRollUpType(final StatisticRollUpType statisticRollUpType) {
         rollUpType.setSelectedItem(statisticRollUpType);
+    }
+
+    public interface Binder extends UiBinder<Widget, StatisticsDataSourceSettingsViewImpl> {
     }
 }

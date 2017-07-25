@@ -29,22 +29,6 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.TaskId;
 
 public class TaskPresenter extends MyPresenterWidget<TaskPresenter.TaskView> {
-    public interface TaskView extends View, HasUiHandlers<TaskUiHandlers> {
-        void setTaskName(String taskName);
-
-        HasText getTaskAge();
-
-        HasText getTaskStatus();
-
-        void setId(TaskId id);
-
-        void setTerminateVisible(boolean visible);
-    }
-
-    public interface Resources extends ClientBundle {
-        ImageResource terminate();
-    }
-
     @Inject
     public TaskPresenter(final EventBus eventBus, final TaskView view) {
         super(eventBus, view);
@@ -63,5 +47,21 @@ public class TaskPresenter extends MyPresenterWidget<TaskPresenter.TaskView> {
 
     public void setUiHandlers(final TaskUiHandlers uiHandlers) {
         getView().setUiHandlers(uiHandlers);
+    }
+
+    public interface TaskView extends View, HasUiHandlers<TaskUiHandlers> {
+        void setTaskName(String taskName);
+
+        HasText getTaskAge();
+
+        HasText getTaskStatus();
+
+        void setId(TaskId id);
+
+        void setTerminateVisible(boolean visible);
+    }
+
+    public interface Resources extends ClientBundle {
+        ImageResource terminate();
     }
 }

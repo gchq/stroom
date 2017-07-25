@@ -24,7 +24,7 @@ import stroom.dashboard.client.main.ComponentRegistry;
 public class QueryPlugin {
     @Inject
     public QueryPlugin(final EventBus eventBus, final ComponentRegistry componentRegistry,
-            final Provider<QueryPresenter> provider) {
+                       final Provider<QueryPresenter> provider) {
         componentRegistry.register(QueryPresenter.TYPE, provider);
     }
 }

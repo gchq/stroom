@@ -29,6 +29,7 @@ public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEv
     private final Long childStreamId;
     private final StreamType childStreamType;
     private final SharedDocRef pipelineRef;
+
     private BeginPipelineSteppingEvent(final Long streamId, final Long eventId, final Long childStreamId,
                                        final StreamType childStreamType, final SharedDocRef pipelineRef) {
         this.streamId = streamId;

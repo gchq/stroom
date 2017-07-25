@@ -24,7 +24,7 @@ import org.springframework.context.annotation.FilterType;
 
 /**
  * Defines the component scanning required for the server module.
- *
+ * <p>
  * Defined separately from the main configuration so it can be easily
  * overridden.
  */
@@ -70,7 +70,7 @@ import org.springframework.context.annotation.FilterType;
 }, excludeFilters = {
         // Exclude other configurations that might be found accidentally during
         // a component scan as configurations should be specified explicitly.
-        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class), })
+        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
 public class ServerComponentScanConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerComponentScanConfiguration.class);
 

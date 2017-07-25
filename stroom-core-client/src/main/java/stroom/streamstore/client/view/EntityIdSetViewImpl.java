@@ -30,19 +30,14 @@ import stroom.streamstore.client.presenter.EntityIdSetUiHandlers;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.SvgButton;
 
-public class EntityIdSetViewImpl extends ViewWithUiHandlers<EntityIdSetUiHandlers>implements EntityIdSetView {
-    public interface Binder extends UiBinder<Widget, EntityIdSetViewImpl> {
-    }
-
+public class EntityIdSetViewImpl extends ViewWithUiHandlers<EntityIdSetUiHandlers> implements EntityIdSetView {
     private final Widget widget;
-
     @UiField(provided = true)
     SvgButton add;
     @UiField(provided = true)
     SvgButton remove;
     @UiField
     ScrollPanel list;
-
     @Inject
     public EntityIdSetViewImpl(final Binder binder) {
         add = SvgButton.create(SvgPresets.ADD);
@@ -82,5 +77,8 @@ public class EntityIdSetViewImpl extends ViewWithUiHandlers<EntityIdSetUiHandler
         if (getUiHandlers() != null) {
             getUiHandlers().onRemove();
         }
+    }
+
+    public interface Binder extends UiBinder<Widget, EntityIdSetViewImpl> {
     }
 }

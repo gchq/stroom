@@ -22,16 +22,13 @@ import stroom.util.shared.SharedObject;
  * API to table status
  */
 public class DBTableStatus implements SharedObject {
-    private static final long serialVersionUID = -5061144975403180924L;
-
     public static final String FIELD_DATABASE = "Database";
     public static final String FIELD_TABLE = "Table";
     public static final String FIELD_ROW_COUNT = "Count";
     public static final String FIELD_DATA_SIZE = "Data Size";
     public static final String FIELD_INDEX_SIZE = "Index Size";
-
     public static final String MANAGE_DB_PERMISSION = "Manage DB";
-
+    private static final long serialVersionUID = -5061144975403180924L;
     private String db;
     private String table;
     private Long count;

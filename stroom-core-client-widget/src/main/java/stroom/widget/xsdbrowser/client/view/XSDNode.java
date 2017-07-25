@@ -30,50 +30,6 @@ import java.util.Map;
 
 public class XSDNode implements Comparable<XSDNode> {
     private static final String XSD_NS = "http://www.w3.org/2001/XMLSchema";
-
-    public enum XSDType {
-        SCHEMA("schema"), ATTRIBUTE("attribute"), COMPLEX_TYPE("complexType"), SIMPLE_TYPE("simpleType"), ELEMENT(
-                "element"), ELEMENT_REF("ref"), GROUP("group"), SEQUENCE("sequence"), CHOICE("choice"), ALL("all"), ANY(
-                        "any"), ANNOTATION("annotation"), DOCUMENTATION("documentation"), RESTRICTION(
-                                "restriction"), PATTERN("pattern"), ENUMERATION("enumeration"), COMPLEX_CONTENT(
-                                        "complexContent"), EXTENSION("extension");
-
-        private final String string;
-
-        XSDType(final String string) {
-            this.string = string;
-        }
-
-        @Override
-        public String toString() {
-            return string;
-        }
-
-        public boolean isStructural() {
-            return this == XSDType.SEQUENCE || this == XSDType.CHOICE || this == XSDType.ALL;
-        }
-
-        public boolean isStructuralOrElement() {
-            return isStructural() || this == XSDType.ELEMENT;
-        }
-    }
-
-    public enum XSDAttribute {
-        MIN_OCCURS("minOccurs"), MAX_OCCURS("maxOccurs"), TYPE("type"), REF("ref"), NAME("name"), TARGET_NAMESPACE(
-                "targetNamespace"), VALUE("value"), BASE("base");
-
-        private String string;
-
-        XSDAttribute(final String string) {
-            this.string = string;
-        }
-
-        @Override
-        public String toString() {
-            return string;
-        }
-    }
-
     private static Map<String, XSDType> xsdElementMap = new HashMap<>();
     private static Map<String, XSDAttribute> xsdAttributeMap = new HashMap<>();
 
@@ -91,14 +47,13 @@ public class XSDNode implements Comparable<XSDNode> {
     private final String name;
     private final XSDType type;
     private final String valueType;
-    private XSDNode parent;
     private final String ref;
     private final String base;
     private final String occurance;
+    private XSDNode parent;
     private String documentation;
     private boolean firstChild;
     private boolean lastChild;
-
     public XSDNode(final XSDModel model, final Node node) {
         this.model = model;
         this.node = node;
@@ -131,6 +86,15 @@ public class XSDNode implements Comparable<XSDNode> {
         }
     }
 
+    private static XSDType getType(final Node node) {
+        if (node.getNamespaceURI() == null || !node.getNamespaceURI().equalsIgnoreCase(XSD_NS)) {
+            return null;
+        }
+
+        final String localName = XMLUtil.removePrefix(node.getNodeName());
+        return xsdElementMap.get(localName);
+    }
+
     public Node getNode() {
         return node;
     }
@@ -141,15 +105,6 @@ public class XSDNode implements Comparable<XSDNode> {
 
     public XSDType getType() {
         return type;
-    }
-
-    private static XSDType getType(final Node node) {
-        if (node.getNamespaceURI() == null || !node.getNamespaceURI().equalsIgnoreCase(XSD_NS)) {
-            return null;
-        }
-
-        final String localName = XMLUtil.removePrefix(node.getNodeName());
-        return xsdElementMap.get(localName);
     }
 
     public String getValueType() {
@@ -197,7 +152,7 @@ public class XSDNode implements Comparable<XSDNode> {
     }
 
     private void addNodes(final XSDTypeFilter filter, final Node node, final List<XSDNode> nodeList,
-            final boolean resolveGroups) {
+                          final boolean resolveGroups) {
         if (node.hasChildNodes()) {
             final NodeList childNodes = node.getChildNodes();
             final int childNodeCount = childNodes.getLength();
@@ -376,5 +331,48 @@ public class XSDNode implements Comparable<XSDNode> {
         final CompareBuilder builder = new CompareBuilder();
         builder.append(o1Name, o2Name);
         return builder.toComparison();
+    }
+
+    public enum XSDType {
+        SCHEMA("schema"), ATTRIBUTE("attribute"), COMPLEX_TYPE("complexType"), SIMPLE_TYPE("simpleType"), ELEMENT(
+                "element"), ELEMENT_REF("ref"), GROUP("group"), SEQUENCE("sequence"), CHOICE("choice"), ALL("all"), ANY(
+                "any"), ANNOTATION("annotation"), DOCUMENTATION("documentation"), RESTRICTION(
+                "restriction"), PATTERN("pattern"), ENUMERATION("enumeration"), COMPLEX_CONTENT(
+                "complexContent"), EXTENSION("extension");
+
+        private final String string;
+
+        XSDType(final String string) {
+            this.string = string;
+        }
+
+        @Override
+        public String toString() {
+            return string;
+        }
+
+        public boolean isStructural() {
+            return this == XSDType.SEQUENCE || this == XSDType.CHOICE || this == XSDType.ALL;
+        }
+
+        public boolean isStructuralOrElement() {
+            return isStructural() || this == XSDType.ELEMENT;
+        }
+    }
+
+    public enum XSDAttribute {
+        MIN_OCCURS("minOccurs"), MAX_OCCURS("maxOccurs"), TYPE("type"), REF("ref"), NAME("name"), TARGET_NAMESPACE(
+                "targetNamespace"), VALUE("value"), BASE("base");
+
+        private String string;
+
+        XSDAttribute(final String string) {
+            this.string = string;
+        }
+
+        @Override
+        public String toString() {
+            return string;
+        }
     }
 }

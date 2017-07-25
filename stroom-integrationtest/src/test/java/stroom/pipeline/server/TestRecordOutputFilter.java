@@ -98,7 +98,7 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
     }
 
     private PipelineEntity createPipeline(final String pipelineFile, final TextConverter textConverter,
-            final XSLT xslt) {
+                                          final XSLT xslt) {
         // Load the pipeline config.
         final String data = StroomProcessTestFileUtil.getString(pipelineFile);
         final PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineEntityService, pipelineMarshaller, data);
@@ -116,7 +116,7 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
     }
 
     private TextConverter createTextConverter(final String textConverterFile, final String name,
-            final TextConverterType textConverterType) {
+                                              final TextConverterType textConverterType) {
         // Create a record for the TextConverter.
         final InputStream textConverterInputStream = StroomProcessTestFileUtil.getInputStream(textConverterFile);
         TextConverter textConverter = textConverterService.create(null, name);
@@ -136,7 +136,7 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
     }
 
     private void test(final PipelineEntity pipelineEntity, final String dir, final String inputStem,
-            final String outputXMLStem, final String outputSAXStem, final String encoding) throws Exception {
+                      final String outputXMLStem, final String outputSAXStem, final String encoding) throws Exception {
         final File tempDir = getCurrentTestDir();
 
         final File outputFile = new File(tempDir, "TestRecordOutputFilter.xml");
@@ -205,7 +205,7 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
     }
 
     private <T extends XMLFilter> void insertFilter(final Pipeline pipeline, final Class<T> parentFilterType,
-            final XMLFilter filterToAdd) {
+                                                    final XMLFilter filterToAdd) {
         final List<T> parentFilters = pipeline.findFilters(parentFilterType);
         final AbstractXMLFilter parentFilter = (AbstractXMLFilter) parentFilters.get(0);
         final XMLFilter existingChild = parentFilter.getFilter();

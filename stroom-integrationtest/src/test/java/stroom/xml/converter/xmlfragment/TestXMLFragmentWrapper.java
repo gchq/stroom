@@ -35,8 +35,7 @@ public class TestXMLFragmentWrapper extends AbstractProcessIntegrationTest {
     /**
      * Tests a basic XML fragment.
      *
-     * @throws Exception
-     *             Might be thrown while performing the test.
+     * @throws Exception Might be thrown while performing the test.
      */
     @Test
     public void testBasicFragment() throws Exception {

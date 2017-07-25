@@ -39,11 +39,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class StroomProperties {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StroomProperties.class);
-
     public static final String STROOM_TEMP = "stroom.temp";
-
     public static final String USER_CONF_DIR = ".stroom";
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomProperties.class);
     private static final String USER_CONF_PATH = USER_CONF_DIR + "/stroom.conf";
     private static final String STROOM_TMP_ENV = "STROOM_TMP";
     private static final String JAVA_IO_TMPDIR = "java.io.tmpdir";

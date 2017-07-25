@@ -30,45 +30,32 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 import java.util.List;
 
 public class Editor extends Composite implements HasValueChangeHandlers<String> {
+    private final AceEditor editor;
     private String text = "";
     private boolean textDirty;
-
     private int firstLineNumber = 1;
     private boolean firstLineNumberDirty;
-
     private List<Annotation> annotations;
     private boolean annotationsDirty;
-
     private List<Marker> markers;
     private boolean markersDirty;
-
     private boolean readOnly;
     private boolean readOnlyDirty;
-
     private AceEditorMode mode = AceEditorMode.XML;
     private boolean modeDirty = true;
-
     private AceEditorTheme theme = AceEditorTheme.CHROME;
     private boolean themeDirty = true;
-
     private boolean showGutter = true;
     private boolean showGutterDirty;
-
     private int gotoLine;
     private boolean gotoLineDirty;
-
     private Rect scrollMargin;
     private boolean scrollMarginDirty;
-
     private boolean useWrapMode;
     private boolean useWrapModeDirty;
-
     private boolean addChangeHandler;
     private boolean addedChangeHandler;
-
     private boolean started;
-
-    private final AceEditor editor;
 
     public Editor() {
         editor = new AceEditor();

@@ -22,16 +22,10 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
 public class ShowNewMenuEvent extends GwtEvent<ShowNewMenuEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onShow(ShowNewMenuEvent event);
-    }
-
     private static Type<Handler> TYPE;
-
     private final Element element;
     private final int x;
     private final int y;
-
     private ShowNewMenuEvent(final Element element, final int x, final int y) {
         this.element = element;
         this.x = x;
@@ -69,5 +63,9 @@ public class ShowNewMenuEvent extends GwtEvent<ShowNewMenuEvent.Handler> {
 
     public int getY() {
         return y;
+    }
+
+    public interface Handler extends EventHandler {
+        void onShow(ShowNewMenuEvent event);
     }
 }

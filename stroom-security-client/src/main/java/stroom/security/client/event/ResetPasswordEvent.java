@@ -23,12 +23,7 @@ import stroom.security.client.event.ResetPasswordEvent.ResetPasswordHandler;
 import stroom.security.shared.UserRef;
 
 public class ResetPasswordEvent extends GwtEvent<ResetPasswordHandler> {
-    public interface ResetPasswordHandler extends EventHandler {
-        void onResetPassword(ResetPasswordEvent event);
-    }
-
     private static Type<ResetPasswordHandler> TYPE;
-
     private final UserRef userRef;
 
     private ResetPasswordEvent(final UserRef userRef) {
@@ -58,5 +53,9 @@ public class ResetPasswordEvent extends GwtEvent<ResetPasswordHandler> {
 
     public UserRef getUserRef() {
         return userRef;
+    }
+
+    public interface ResetPasswordHandler extends EventHandler {
+        void onResetPassword(ResetPasswordEvent event);
     }
 }

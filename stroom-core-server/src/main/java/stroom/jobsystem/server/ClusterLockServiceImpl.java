@@ -40,7 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class ClusterLockServiceImpl implements ClusterLockService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockServiceImpl.class);
-
+    private final ConcurrentHashMap<String, ClusterLockKey> lockMap = new ConcurrentHashMap<>();
     @Resource
     private StroomEntityManager entityManager;
     @Resource
@@ -51,8 +51,6 @@ public class ClusterLockServiceImpl implements ClusterLockService {
     private TaskManager taskManager;
     @Resource
     private NodeCache nodeCache;
-
-    private final ConcurrentHashMap<String, ClusterLockKey> lockMap = new ConcurrentHashMap<>();
 
     @Override
     @Transactional(propagation = Propagation.MANDATORY)

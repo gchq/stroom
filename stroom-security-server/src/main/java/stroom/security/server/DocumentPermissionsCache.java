@@ -36,15 +36,14 @@ import java.util.concurrent.TimeUnit;
 @EntityEventHandler(action = EntityAction.CLEAR_CACHE)
 public class DocumentPermissionsCache extends AbstractCacheBean<DocRef, DocumentPermissions> implements EntityEvent.Handler {
     private static final int MAX_CACHE_ENTRIES = 1000000;
-
-    private final DocumentPermissionService documentPermissionService;
-    private final Provider<EntityEventBus> eventBusProvider;
-
     private static final CacheConfiguration CACHE_CONFIGURATION = new CacheConfiguration("Document Permissions Cache", MAX_CACHE_ENTRIES);
 
     static {
         CACHE_CONFIGURATION.setMemoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.LFU.toString());
     }
+
+    private final DocumentPermissionService documentPermissionService;
+    private final Provider<EntityEventBus> eventBusProvider;
 
     @Inject
     public DocumentPermissionsCache(final CacheManager cacheManager,

@@ -28,13 +28,8 @@ import stroom.svg.client.SvgPresets;
 public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> {
     public static final String JOB_LIST = "JOB_LIST";
     public static final String JOB_NODE_LIST = "JOB_NODE_LIST";
-
-    public interface JobView extends View {
-    }
-
     private final JobListPresenter jobListPresenter;
     private final JobNodeListPresenter jobNodeListPresenter;
-
     @Inject
     public JobPresenter(final EventBus eventBus, final JobView view, final JobListPresenter jobListPresenter,
                         final JobNodeListPresenter jobNodeListPresenter, final ClientDispatchAsync dispatcher) {
@@ -64,5 +59,8 @@ public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> {
     @Override
     public String getLabel() {
         return "Jobs";
+    }
+
+    public interface JobView extends View {
     }
 }

@@ -137,13 +137,13 @@ public abstract class BaseEntity extends Entity implements HasType, HasId, Share
         return stub;
     }
 
+    public void setStub(final boolean stub) {
+        this.stub = stub;
+    }
+
     public void setStub(final long stubId) {
         setId(stubId);
         setStub(true);
-    }
-
-    public void setStub(final boolean stub) {
-        this.stub = stub;
     }
 
     /**
@@ -212,8 +212,7 @@ public abstract class BaseEntity extends Entity implements HasType, HasId, Share
      * Compares one base entity with another using the id of each entity. When
      * used with sorted collections entities will be ordered by ascending id.
      *
-     * @param o
-     *            The base entity to compare this one with.
+     * @param o The base entity to compare this one with.
      * @return An integer that is a result of this id - the comparing object id.
      */
     @Override

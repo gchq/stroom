@@ -34,9 +34,10 @@ public class ExtractionTask extends ServerTask<VoidResult> {
     private final FieldIndexMap fieldIndexes;
     private final ResultReceiver resultReceiver;
     private final ErrorReceiver errorReceiver;
+
     public ExtractionTask(final ClusterSearchTask clusterSearchTask, final long streamId, final long[] eventIds,
-            final DocRef pipelineRef, final FieldIndexMap fieldIndexes, final ResultReceiver resultReceiver,
-            final ErrorReceiver errorReceiver) {
+                          final DocRef pipelineRef, final FieldIndexMap fieldIndexes, final ResultReceiver resultReceiver,
+                          final ErrorReceiver errorReceiver) {
         super(clusterSearchTask);
         this.clusterSearchTask = clusterSearchTask;
         this.streamId = streamId;

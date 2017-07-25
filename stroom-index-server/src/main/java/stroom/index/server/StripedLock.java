@@ -24,16 +24,15 @@ import java.util.concurrent.locks.ReentrantLock;
  * lock.
  */
 public class StripedLock {
-    private static final int DOUG_LEA_BLACK_MAGIC_OPERAND_1 = 20;
-    private static final int DOUG_LEA_BLACK_MAGIC_OPERAND_2 = 12;
-    private static final int DOUG_LEA_BLACK_MAGIC_OPERAND_3 = 7;
-    private static final int DOUG_LEA_BLACK_MAGIC_OPERAND_4 = 4;
-
     /**
      * We use a number here based on our typical concurrency profile. So 10
      * indexing threads and 2048 locks seems OK.
      */
     public static final int DEFAULT_NUMBER_OF_MUTEXES = 2048;
+    private static final int DOUG_LEA_BLACK_MAGIC_OPERAND_1 = 20;
+    private static final int DOUG_LEA_BLACK_MAGIC_OPERAND_2 = 12;
+    private static final int DOUG_LEA_BLACK_MAGIC_OPERAND_3 = 7;
+    private static final int DOUG_LEA_BLACK_MAGIC_OPERAND_4 = 4;
     private Lock[] mutexes = null;
 
     public StripedLock() {

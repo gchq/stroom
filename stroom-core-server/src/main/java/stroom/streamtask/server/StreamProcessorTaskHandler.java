@@ -46,11 +46,11 @@ import java.util.Set;
 @TaskHandlerBean(task = StreamProcessorTask.class)
 @Scope(value = StroomScope.TASK)
 public class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask, VoidResult> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamProcessorTaskHandler.class);
+    private static final Set<String> FETCH_SET = new HashSet<>(
+            Arrays.asList(StreamProcessor.ENTITY_TYPE, StreamProcessorFilter.ENTITY_TYPE, PipelineEntity.ENTITY_TYPE));
     @Resource
     private StroomBeanStore beanStore;
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(StreamProcessorTaskHandler.class);
-
     @Resource(name = "cachedStreamProcessorService")
     private StreamProcessorService streamProcessorService;
     @Resource(name = "cachedStreamProcessorFilterService")
@@ -63,9 +63,6 @@ public class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProces
     private NodeCache nodeCache;
     @Resource
     private TaskMonitor taskMonitor;
-
-    private static final Set<String> FETCH_SET = new HashSet<>(
-            Arrays.asList(StreamProcessor.ENTITY_TYPE, StreamProcessorFilter.ENTITY_TYPE, PipelineEntity.ENTITY_TYPE));
 
     @Override
     public VoidResult exec(final StreamProcessorTask task) {
@@ -139,7 +136,7 @@ public class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProces
                             complete = true;
                         }
                     } catch (final Exception ex) {
-                        LOGGER.error("Task failed {} {}", new Object[] {destStreamProcessor, stream}, ex);
+                        LOGGER.error("Task failed {} {}", new Object[]{destStreamProcessor, stream}, ex);
                     }
                 }
             }

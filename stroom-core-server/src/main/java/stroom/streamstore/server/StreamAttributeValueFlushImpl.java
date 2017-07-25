@@ -45,8 +45,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Component
 public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush {
+    public static final String LOCK_NAME = "StreamAttributeDelete";
+    public static final int MONTH_OLD_MS = 1000 * 60 * 60 * 24 * 30;
+    public static final int BATCH_SIZE = 1000;
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeValueFlushImpl.class);
-
+    final Queue<AsyncFlush> queue = new ConcurrentLinkedQueue<>();
     @Resource
     private StreamAttributeKeyService streamAttributeKeyService;
     @Resource
@@ -58,34 +61,6 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
     @Resource
     private ClusterLockService clusterLockService;
 
-    public static final String LOCK_NAME = "StreamAttributeDelete";
-
-    public static class AsyncFlush {
-        private final Stream stream;
-        private final boolean append;
-        private final MetaMap metaMap;
-
-        public AsyncFlush(final Stream stream, final boolean append, final MetaMap metaMap) {
-            this.stream = stream;
-            this.append = append;
-            this.metaMap = metaMap;
-        }
-
-        public Stream getStream() {
-            return stream;
-        }
-
-        public boolean isAppend() {
-            return append;
-        }
-
-        public MetaMap getMetaMap() {
-            return metaMap;
-        }
-    }
-
-    final Queue<AsyncFlush> queue = new ConcurrentLinkedQueue<>();
-
     @Override
     public void persitAttributes(final Stream stream, final boolean append, final MetaMap metaMap) {
         queue.add(new AsyncFlush(stream, append, metaMap));
@@ -96,9 +71,6 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
         flush();
 
     }
-
-    public static final int MONTH_OLD_MS = 1000 * 60 * 60 * 24 * 30;
-    public static final int BATCH_SIZE = 1000;
 
     /**
      * @return The oldest stream attribute that we should keep
@@ -220,12 +192,36 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
 
                 if (logExecutionTime.getDuration() > 1000) {
                     LOGGER.warn("flush() - Saved {} updates, skipped {}, queue size is {}, completed in {}",
-                            new Object[] {batchUpdate.size(), skipCount, queue.size(), logExecutionTime});
+                            new Object[]{batchUpdate.size(), skipCount, queue.size(), logExecutionTime});
                 } else {
                     LOGGER.debug("flush() - Saved {} updates, skipped {}, queue size is {}, completed in {}",
-                            new Object[] {batchUpdate.size(), skipCount, queue.size(), logExecutionTime});
+                            new Object[]{batchUpdate.size(), skipCount, queue.size(), logExecutionTime});
                 }
             }
+        }
+    }
+
+    public static class AsyncFlush {
+        private final Stream stream;
+        private final boolean append;
+        private final MetaMap metaMap;
+
+        public AsyncFlush(final Stream stream, final boolean append, final MetaMap metaMap) {
+            this.stream = stream;
+            this.append = append;
+            this.metaMap = metaMap;
+        }
+
+        public Stream getStream() {
+            return stream;
+        }
+
+        public boolean isAppend() {
+            return append;
+        }
+
+        public MetaMap getMetaMap() {
+            return metaMap;
         }
     }
 }

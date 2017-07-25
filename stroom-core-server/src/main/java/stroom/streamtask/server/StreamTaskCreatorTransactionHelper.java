@@ -59,42 +59,22 @@ import java.util.Map.Entry;
 @Component
 @Transactional(propagation = Propagation.REQUIRES_NEW)
 public class StreamTaskCreatorTransactionHelper {
-    public static class CreatedTasks {
-        private final List<StreamTask> availableTaskList;
-        private final int availableTasksCreated;
-        private final int totalTasksCreated;
-        private final long eventCount;
-
-        public CreatedTasks(final List<StreamTask> availableTaskList, final int availableTasksCreated,
-                            final int totalTasksCreated, final long eventCount) {
-            this.availableTaskList = availableTaskList;
-            this.availableTasksCreated = availableTasksCreated;
-            this.totalTasksCreated = totalTasksCreated;
-            this.eventCount = eventCount;
-        }
-
-        public List<StreamTask> getAvailableTaskList() {
-            return availableTaskList;
-        }
-
-        public int getAvailableTasksCreated() {
-            return availableTasksCreated;
-        }
-
-        public int getTotalTasksCreated() {
-            return totalTasksCreated;
-        }
-
-        public long getEventCount() {
-            return eventCount;
-        }
-    }
-
+    public static final int RECENT_STREAM_ID_LIMIT = 10000;
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamTaskCreatorTransactionHelper.class);
 
     private static final String LOCK_NAME = "StreamTaskCreator";
-    public static final int RECENT_STREAM_ID_LIMIT = 10000;
+    private static final SqlBuilder MAX_STREAM_ID_SQL;
 
+    static {
+        final SqlBuilder sql = new SqlBuilder();
+        sql.append("SELECT MAX(");
+        sql.append(Stream.ID);
+        sql.append(") FROM ");
+        sql.append(Stream.TABLE_NAME);
+        MAX_STREAM_ID_SQL = sql;
+    }
+
+    private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
     @Resource
     private NodeCache nodeCache;
     @Resource
@@ -109,8 +89,6 @@ public class StreamTaskCreatorTransactionHelper {
     private StroomDatabaseInfo stroomDatabaseInfo;
     @Resource
     private StreamProcessorFilterService streamProcessorFilterService;
-
-    private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
 
     /**
      * Anything that we owned release
@@ -426,18 +404,38 @@ public class StreamTaskCreatorTransactionHelper {
         return recentStreamInfo;
     }
 
-    private static final SqlBuilder MAX_STREAM_ID_SQL;
-
-    static {
-        final SqlBuilder sql = new SqlBuilder();
-        sql.append("SELECT MAX(");
-        sql.append(Stream.ID);
-        sql.append(") FROM ");
-        sql.append(Stream.TABLE_NAME);
-        MAX_STREAM_ID_SQL = sql;
-    }
-
     private long getMaxStreamId() {
         return stroomEntityManager.executeNativeQueryLongResult(MAX_STREAM_ID_SQL);
+    }
+
+    public static class CreatedTasks {
+        private final List<StreamTask> availableTaskList;
+        private final int availableTasksCreated;
+        private final int totalTasksCreated;
+        private final long eventCount;
+
+        public CreatedTasks(final List<StreamTask> availableTaskList, final int availableTasksCreated,
+                            final int totalTasksCreated, final long eventCount) {
+            this.availableTaskList = availableTaskList;
+            this.availableTasksCreated = availableTasksCreated;
+            this.totalTasksCreated = totalTasksCreated;
+            this.eventCount = eventCount;
+        }
+
+        public List<StreamTask> getAvailableTaskList() {
+            return availableTaskList;
+        }
+
+        public int getAvailableTasksCreated() {
+            return availableTasksCreated;
+        }
+
+        public int getTotalTasksCreated() {
+            return totalTasksCreated;
+        }
+
+        public long getEventCount() {
+            return eventCount;
+        }
     }
 }

@@ -23,10 +23,9 @@ import stroom.util.shared.ThreadPool;
 import stroom.util.shared.VoidResult;
 import stroom.util.task.ServerTask;
 
-public class StreamProcessorTask extends ServerTask<VoidResult>implements DistributedTask<VoidResult> {
-    private static final long serialVersionUID = 5719364078026952526L;
-
+public class StreamProcessorTask extends ServerTask<VoidResult> implements DistributedTask<VoidResult> {
     public static final String JOB_NAME = "Stream Processor";
+    private static final long serialVersionUID = 5719364078026952526L;
     private static final ThreadPool THREAD_POOL = new SimpleThreadPool("Stream Processor#", 1);
 
     private StreamTask streamTask;

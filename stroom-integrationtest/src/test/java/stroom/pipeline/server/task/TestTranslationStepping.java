@@ -61,8 +61,8 @@ public class TestTranslationStepping extends AbstractCoreIntegrationTest {
     }
 
     private void test(final String converterDefinitionLocation, final String xsltLocation, final String inputDir,
-            final String extension, final TextConverterType textConverterType, final String outputName)
-                    throws Exception {
+                      final String extension, final TextConverterType textConverterType, final String outputName)
+            throws Exception {
         // FIXME : Fix this.
     }
 }

@@ -23,7 +23,7 @@ public class Servlets {
 
     final ServletHolder upgradeDispatcherServletHolder;
 
-    public Servlets(MutableServletContextHandler servletContextHandler){
+    public Servlets(MutableServletContextHandler servletContextHandler) {
         upgradeDispatcherServletHolder = Servlets.newUpgradeDispatcherServlet();
 
         addServlet(servletContextHandler, upgradeDispatcherServletHolder, 3, "*.rpc", new String[]{
@@ -48,9 +48,9 @@ public class Servlets {
             ServletHolder servletHolder,
             int loadOnStartup,
             String servletMapping,
-            String[] furtherServletMappings){
+            String[] furtherServletMappings) {
         servletContextHandler.addServlet(servletHolder, servletMapping);
-        if(furtherServletMappings != null && furtherServletMappings.length > 0){
+        if (furtherServletMappings != null && furtherServletMappings.length > 0) {
             servletHolder.getRegistration().addMapping(furtherServletMappings);
         }
         servletHolder.getRegistration().setLoadOnStartup(loadOnStartup);

@@ -327,10 +327,10 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
 
             internalStatisticsFacadeFactory.create()
                     .putEvent(event, throwable ->
-                        outputError(
-                                new RuntimeException("Error recording internal statistic with key " +
-                                        INTERNAL_STAT_KEY_PIPELINE_STREAM_PROCESSOR, throwable),
-                                Severity.WARNING));
+                            outputError(
+                                    new RuntimeException("Error recording internal statistic with key " +
+                                            INTERNAL_STAT_KEY_PIPELINE_STREAM_PROCESSOR, throwable),
+                                    Severity.WARNING));
 
         } catch (final Exception ex) {
             LOGGER.error("recordStats", ex);
@@ -512,6 +512,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     private void outputError(final Exception ex) {
         outputError(ex, Severity.FATAL_ERROR);
     }
+
     /**
      * Used to handle any errors that may occur during translation.
      */

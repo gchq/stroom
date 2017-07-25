@@ -22,13 +22,8 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.View;
 
 public class MaximiseEvent extends GwtEvent<MaximiseEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onMaximise(MaximiseEvent event);
-    }
-
     private static Type<Handler> TYPE;
     private final View view;
-
     private MaximiseEvent(final View view) {
         this.view = view;
     }
@@ -56,5 +51,9 @@ public class MaximiseEvent extends GwtEvent<MaximiseEvent.Handler> {
 
     public View getView() {
         return view;
+    }
+
+    public interface Handler extends EventHandler {
+        void onMaximise(MaximiseEvent event);
     }
 }

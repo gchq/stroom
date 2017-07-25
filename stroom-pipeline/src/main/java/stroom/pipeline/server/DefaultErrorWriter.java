@@ -72,14 +72,14 @@ public class DefaultErrorWriter implements ErrorWriter {
             for (int i = 0; i < chars.length; i++) {
                 final char c = chars[i];
                 switch (c) {
-                case '\n':
-                    sb.append(' ');
-                    break;
-                case '\r':
-                    break;
-                default:
-                    sb.append(c);
-                    break;
+                    case '\n':
+                        sb.append(' ');
+                        break;
+                    case '\r':
+                        break;
+                    default:
+                        sb.append(c);
+                        break;
                 }
             }
 

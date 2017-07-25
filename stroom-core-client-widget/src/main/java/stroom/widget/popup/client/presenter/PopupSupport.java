@@ -20,7 +20,7 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 public interface PopupSupport {
     void show(final PopupType popupType, final PopupPosition popupPosition, final PopupSize popupSize,
-            final PopupUiHandlers hidePopupUiHandlers);
+              final PopupUiHandlers hidePopupUiHandlers);
 
     void hide();
 

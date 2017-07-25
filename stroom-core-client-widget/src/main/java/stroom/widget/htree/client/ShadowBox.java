@@ -24,48 +24,12 @@ import stroom.widget.htree.client.treelayout.Bounds;
 
 public class ShadowBox {
     private static final double DEFAULT_RADIUS = 5;
-
+    private final RoundedRectangle roundedRectangle = new RoundedRectangle();
     private double radius = DEFAULT_RADIUS;
-
-    public static class Colors {
-        private static final String DEFAULT_BORDER_COLOR = "#c5cde2";
-        private static final String DEFAULT_BACKGROUND_TOP_COLOR = "#f5f9fd";
-        private static final String DEFAULT_BACKGROUND_BOTTOM_COLOR = "#e1ebf8";
-        private static final String DEFAULT_SHADOW_COLOR = "#888888";
-
-        private final String borderColor;
-        private final String backgroundTopColor;
-        private final String backgroundBottomColor;
-        private final String shadowColor;
-
-        public static Colors createDefault() {
-            return new Colors(DEFAULT_BORDER_COLOR, DEFAULT_BACKGROUND_TOP_COLOR, DEFAULT_BACKGROUND_BOTTOM_COLOR,
-                    DEFAULT_SHADOW_COLOR);
-        }
-
-        public static Colors createDefaultSelection() {
-            return new Colors("black", "#bbdefb", "#bbdefb", DEFAULT_SHADOW_COLOR);
-        }
-
-        public static Colors createDefaultMouseOver() {
-            return new Colors(DEFAULT_BORDER_COLOR, "#f7fbff", "#f7fbff", DEFAULT_SHADOW_COLOR);
-        }
-
-        public Colors(final String borderColor, final String backgroundTopColor, final String backgroundBottomColor,
-                final String shadowColor) {
-            this.borderColor = borderColor;
-            this.backgroundTopColor = backgroundTopColor;
-            this.backgroundBottomColor = backgroundBottomColor;
-            this.shadowColor = shadowColor;
-        }
-    }
-
     private double shadowOffset = 1;
 
-    private final RoundedRectangle roundedRectangle = new RoundedRectangle();
-
     public void draw(final Context2d shadowContext, final Context2d backgroundContext, final Bounds bounds,
-            final Colors colors) {
+                     final Colors colors) {
         final Bounds shadowBounds = getShadowBounds(bounds);
         clear(shadowContext, shadowBounds);
         clear(backgroundContext, shadowBounds);
@@ -112,5 +76,38 @@ public class ShadowBox {
 
     private void clear(final Context2d ctx, final Bounds bounds) {
         ctx.clearRect(bounds.getX() - 2, bounds.getY() - 2, bounds.getWidth() + 4, bounds.getHeight() + 4);
+    }
+
+    public static class Colors {
+        private static final String DEFAULT_BORDER_COLOR = "#c5cde2";
+        private static final String DEFAULT_BACKGROUND_TOP_COLOR = "#f5f9fd";
+        private static final String DEFAULT_BACKGROUND_BOTTOM_COLOR = "#e1ebf8";
+        private static final String DEFAULT_SHADOW_COLOR = "#888888";
+
+        private final String borderColor;
+        private final String backgroundTopColor;
+        private final String backgroundBottomColor;
+        private final String shadowColor;
+
+        public Colors(final String borderColor, final String backgroundTopColor, final String backgroundBottomColor,
+                      final String shadowColor) {
+            this.borderColor = borderColor;
+            this.backgroundTopColor = backgroundTopColor;
+            this.backgroundBottomColor = backgroundBottomColor;
+            this.shadowColor = shadowColor;
+        }
+
+        public static Colors createDefault() {
+            return new Colors(DEFAULT_BORDER_COLOR, DEFAULT_BACKGROUND_TOP_COLOR, DEFAULT_BACKGROUND_BOTTOM_COLOR,
+                    DEFAULT_SHADOW_COLOR);
+        }
+
+        public static Colors createDefaultSelection() {
+            return new Colors("black", "#bbdefb", "#bbdefb", DEFAULT_SHADOW_COLOR);
+        }
+
+        public static Colors createDefaultMouseOver() {
+            return new Colors(DEFAULT_BORDER_COLOR, "#f7fbff", "#f7fbff", DEFAULT_SHADOW_COLOR);
+        }
     }
 }

@@ -53,11 +53,8 @@ public class User extends NamedEntity implements HasUuid {
 //            + SQLNameConstants.MS_SUFFIX;
     public static final String GROUP = SQLNameConstants.GROUP;
     public static final String ENTITY_TYPE = "User";
-
-    private static final long serialVersionUID = -2415531358356094596L;
-
     public static final String UUID = SQLNameConstants.UUID;
-
+    private static final long serialVersionUID = -2415531358356094596L;
     private String uuid;
 
     private String passwordHash;

@@ -157,7 +157,7 @@ public abstract class AbstractBatchDeleteExecutor {
     protected abstract SqlBuilder getTempIdSelectSql(final long age, final int batchSize);
 
     protected final void deleteWithJoin(final String fromTable, final String fromColumn, final String type,
-            final long total) {
+                                        final long total) {
         info("Deleting {} (total={})", type, total);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         final long count = batchIdTransactionHelper.deleteWithJoin(fromTable, fromColumn, tempIdTable, Stream.ID);

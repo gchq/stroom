@@ -33,7 +33,7 @@ import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "TXT_CONV", uniqueConstraints = @UniqueConstraint(columnNames = { "FK_FOLDER_ID", "NAME" }) )
+@Table(name = "TXT_CONV", uniqueConstraints = @UniqueConstraint(columnNames = {"FK_FOLDER_ID", "NAME"}))
 public class TextConverter extends DocumentEntity implements Copyable<TextConverter>, HasData {
     public static final String TABLE_NAME = SQLNameConstants.TEXT + SEP + SQLNameConstants.CONVERTER;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;

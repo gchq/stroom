@@ -26,18 +26,18 @@ import java.io.InputStream;
 
 /**
  * Wrapper for a nested input stream.
- *
+ * <p>
  * You must call getNextEntry and closeEntry like the ZIP API.
  */
 public class RANestedInputStream extends NestedInputStream {
+    protected final InputStream data;
+    protected final InputStream index;
+    private final StreamCloser streamCloser;
     private long currentEntry = -1;
     private boolean currentEntryClosed = true;
     private boolean closed = false;
     private Long segmentCount = null;
     private RASegmentInputStream segmentInputStream;
-    protected final InputStream data;
-    protected final InputStream index;
-    private final StreamCloser streamCloser;
 
     public RANestedInputStream(InputStream data, InputStream index) {
         this.data = data;

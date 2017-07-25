@@ -24,23 +24,17 @@ import stroom.xml.converter.ds3.ref.VarMap;
 import java.util.Set;
 
 public class GroupFactory extends StoreFactory {
-    public enum MatchOrder {
-        SEQUENCE, ANY
-    }
-
-    private String value;
-    private RefResolver refValue;
-
     private final boolean reverse;
     private final boolean ignoreErrors;
     private final MatchOrder matchOrder;
-
+    private String value;
+    private RefResolver refValue;
     public GroupFactory(final NodeFactory parent, final String id) {
         this(parent, id, null, false, MatchOrder.SEQUENCE, false);
     }
 
     public GroupFactory(final NodeFactory parent, final String id, final String value, final boolean reverse,
-            final MatchOrder matchOrder, final boolean ignoreErrors) {
+                        final MatchOrder matchOrder, final boolean ignoreErrors) {
         super(parent, id);
         this.value = value;
         this.reverse = reverse;
@@ -97,5 +91,9 @@ public class GroupFactory extends StoreFactory {
 
     public boolean isIgnoreErrors() {
         return ignoreErrors;
+    }
+
+    public enum MatchOrder {
+        SEQUENCE, ANY
     }
 }

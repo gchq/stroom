@@ -116,11 +116,11 @@ public class RollingDestinations {
     /**
      * Try and lock this destination so that the current thread has exclusive access. Once locked we will attempt to
      * roll this destination if it needs rolling.
-     *
+     * <p>
      * If it is rolled then this method will return null as this destination can no longer be used, if the destination
      * does not need rolling yet then it will be returned for use.
      *
-     * @param key The key that this destination is associated with.
+     * @param key         The key that this destination is associated with.
      * @param destination The destination to lock and attempt to roll.
      * @return The destination if it didn't need rolling and can be used, null otherwise. The returned destination is locked for exclusive use by the current thread.
      * @throws IOException Could be thrown while attempting to flush or close the destination on roll.

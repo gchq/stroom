@@ -20,5 +20,5 @@ import stroom.widget.htree.client.treelayout.TreeLayout;
 
 public interface ConnectorRenderer<T> {
     void render(TreeLayout<T> treeLayout, double x1, double y1, double x2, double y2, boolean firstChild,
-            boolean lastChild);
+                boolean lastChild);
 }

@@ -30,22 +30,6 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 public class AboutPresenter extends MyPresenter<AboutPresenter.AboutView, AboutPresenter.AboutProxy> {
-    @ProxyCodeSplit
-    public interface AboutProxy extends Proxy<AboutPresenter> {
-    }
-
-    public interface AboutView extends View {
-        void setHTML(String html);
-
-        HasText getBuildVersion();
-
-        HasText getBuildDate();
-
-        HasText getUpDate();
-
-        HasText getNodeName();
-    }
-
     @Inject
     public AboutPresenter(final EventBus eventBus, final AboutView view, final AboutProxy proxy,
                           final ClientPropertyCache clientPropertyCache) {
@@ -64,5 +48,21 @@ public class AboutPresenter extends MyPresenter<AboutPresenter.AboutView, AboutP
     @Override
     protected void revealInParent() {
         ShowPopupEvent.fire(this, this, PopupType.CLOSE_DIALOG, "About");
+    }
+
+    @ProxyCodeSplit
+    public interface AboutProxy extends Proxy<AboutPresenter> {
+    }
+
+    public interface AboutView extends View {
+        void setHTML(String html);
+
+        HasText getBuildVersion();
+
+        HasText getBuildDate();
+
+        HasText getUpDate();
+
+        HasText getNodeName();
     }
 }

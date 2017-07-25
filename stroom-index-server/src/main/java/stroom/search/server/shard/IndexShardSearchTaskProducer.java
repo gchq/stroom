@@ -44,9 +44,9 @@ public class IndexShardSearchTaskProducer extends AbstractTaskProducer {
     private final AtomicInteger tasksCompleted = new AtomicInteger();
 
     public IndexShardSearchTaskProducer(final ClusterSearchTask clusterSearchTask,
-            final TransferList<String[]> storedData, final IndexShardSearcherCache indexShardSearcherCache,
-            final List<Long> shards, final IndexShardQueryFactory queryFactory, final String[] fieldNames,
-            final ErrorReceiver errorReceiver, final AtomicLong hitCount, final int maxThreadsPerTask) {
+                                        final TransferList<String[]> storedData, final IndexShardSearcherCache indexShardSearcherCache,
+                                        final List<Long> shards, final IndexShardQueryFactory queryFactory, final String[] fieldNames,
+                                        final ErrorReceiver errorReceiver, final AtomicLong hitCount, final int maxThreadsPerTask) {
         super(maxThreadsPerTask);
         this.clusterSearchTask = clusterSearchTask;
         this.indexShardSearcherCache = indexShardSearcherCache;

@@ -20,19 +20,15 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class FormatEvent extends GwtEvent<FormatEvent.FormatHandler> {
-    public interface FormatHandler extends EventHandler {
-        void onFormat(FormatEvent event);
-    }
-
     public static final GwtEvent.Type<FormatHandler> TYPE = new GwtEvent.Type<>();
+
+    protected FormatEvent() {
+    }
 
     public static <I> void fire(final HasFormatHandlers source) {
         if (TYPE != null) {
             source.fireEvent(new FormatEvent());
         }
-    }
-
-    protected FormatEvent() {
     }
 
     @Override
@@ -43,5 +39,9 @@ public class FormatEvent extends GwtEvent<FormatEvent.FormatHandler> {
     @Override
     protected void dispatch(FormatHandler handler) {
         handler.onFormat(this);
+    }
+
+    public interface FormatHandler extends EventHandler {
+        void onFormat(FormatEvent event);
     }
 }

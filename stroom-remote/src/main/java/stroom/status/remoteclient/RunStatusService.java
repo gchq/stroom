@@ -31,7 +31,7 @@ public class RunStatusService {
     public static void main(String[] args) {
         try {
             ApplicationContext appContext = new ClassPathXmlApplicationContext(
-                    new String[] { "classpath:META-INF/spring/stroomRemoteClientContext.xml" });
+                    new String[]{"classpath:META-INF/spring/stroomRemoteClientContext.xml"});
 
             RemoteStatusService statusService = appContext.getBean(RemoteStatusService.class);
 

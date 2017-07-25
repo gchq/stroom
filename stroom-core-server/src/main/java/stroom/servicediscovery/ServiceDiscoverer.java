@@ -14,6 +14,7 @@ public interface ServiceDiscoverer {
      * provider chosen will depend on the strategy defined in {@link ExternalService}. The instance will not be marked
      * as disabled and will also not be deemed to be 'down' by Curator
      * (see {@link org.apache.curator.x.discovery.details.DownInstanceManager)}
+     *
      * @param externalService The definition of the service to get an instance of
      * @return A {@link ServiceInstance} object representing one of the instances of the external service.  You MUST not
      * hold onto this object, use it to call the service then throw it away.

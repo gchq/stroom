@@ -33,7 +33,7 @@ public class TextConverterSettingsPresenter
         extends EntitySettingsPresenter<TextConverterSettingsPresenter.TextConverterSettingsView, TextConverter> {
     @Inject
     public TextConverterSettingsPresenter(final EventBus eventBus, final TextConverterSettingsView view,
-            final ClientSecurityContext securityContext) {
+                                          final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
 
         view.getConverterType().addItem(TextConverterType.NONE);

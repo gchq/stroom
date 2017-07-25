@@ -56,15 +56,11 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
     private final ButtonView newButton;
     private final ButtonView removeButton;
     private final ButtonView autoGenerateButton;
-
+    private final List<Column<MaskHolder, ?>> columns = new ArrayList<Column<MaskHolder, ?>>();
+    private final ClientDispatchAsync dispatcher;
     private MaskHolder selectedElement;
-
     private StatisticStoreEntity statisticsDataSource;
     private MaskHolderList maskList = new MaskHolderList();
-
-    private final List<Column<MaskHolder, ?>> columns = new ArrayList<Column<MaskHolder, ?>>();
-
-    private final ClientDispatchAsync dispatcher;
 
     @SuppressWarnings("unchecked")
     @Inject

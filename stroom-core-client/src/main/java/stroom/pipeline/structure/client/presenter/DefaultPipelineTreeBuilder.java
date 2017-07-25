@@ -41,7 +41,7 @@ public class DefaultPipelineTreeBuilder implements PipelineTreeBuilder {
     }
 
     private void addChildren(final DefaultTreeForTreeLayout<PipelineElement> tree, final PipelineElement parent,
-            final Map<PipelineElement, List<PipelineElement>> childMap) {
+                             final Map<PipelineElement, List<PipelineElement>> childMap) {
         final List<PipelineElement> children = childMap.get(parent);
         if (children != null) {
             for (final PipelineElement child : children) {

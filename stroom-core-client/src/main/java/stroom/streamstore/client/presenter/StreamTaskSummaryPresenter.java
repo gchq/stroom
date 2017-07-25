@@ -99,11 +99,11 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
 
         getView().addResizableColumn(
                 new OrderByColumn<SummaryDataRow, String>(new TextCell(), FindStreamTaskCriteria.FIELD_PRIORITY, false) {
-            @Override
-            public String getValue(final SummaryDataRow row) {
-                return row.getLabel().get(FindStreamTaskCriteria.SUMMARY_POS_PRIORITY);
-            }
-        }, "Priority", 100);
+                    @Override
+                    public String getValue(final SummaryDataRow row) {
+                        return row.getLabel().get(FindStreamTaskCriteria.SUMMARY_POS_PRIORITY);
+                    }
+                }, "Priority", 100);
 
         getView().addResizableColumn(
                 new OrderByColumn<SummaryDataRow, String>(new TextCell(), FindStreamTaskCriteria.FIELD_STATUS, false) {

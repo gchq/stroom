@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Set;
 
 @Entity
-@Table(name = "STROOM_STATS_STORE", uniqueConstraints = @UniqueConstraint(columnNames = { "NAME" }) )
+@Table(name = "STROOM_STATS_STORE", uniqueConstraints = @UniqueConstraint(columnNames = {"NAME"}))
 public class StroomStatsStoreEntity extends DocumentEntity {
     public static final String ENTITY_TYPE = "StroomStatsStore";
     public static final String ENTITY_TYPE_FOR_DISPLAY = "Stroom-Stats Store";
@@ -126,17 +126,17 @@ public class StroomStatsStoreEntity extends DocumentEntity {
     }
 
     @Transient
+    public void setPrecision(final EventStoreTimeIntervalEnum interval) {
+        this.precision = interval.toString();
+    }
+
+    @Transient
     public EventStoreTimeIntervalEnum getPrecisionAsInterval() {
         return EventStoreTimeIntervalEnum.valueOf(precision);
     }
 
     public void setPrecision(final String precision) {
         this.precision = precision;
-    }
-
-    @Transient
-    public void setPrecision(final EventStoreTimeIntervalEnum interval) {
-        this.precision = interval.toString();
     }
 
     @Column(name = SQLNameConstants.ENABLED, nullable = false)

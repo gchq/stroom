@@ -36,11 +36,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.SvgButton;
 
 public class Pager extends AbstractPager {
-    public interface Binder extends UiBinder<Widget, Pager> {
-    }
-
     private static Binder binder;
-
     @UiField(provided = true)
     SvgButton first;
     @UiField(provided = true)
@@ -65,7 +61,6 @@ public class Pager extends AbstractPager {
     Label lblToSeparator;
     @UiField
     Label lblOfSeparator;
-
     private boolean editing;
 
     public Pager() {
@@ -211,6 +206,11 @@ public class Pager extends AbstractPager {
     }
 
     @Override
+    public void setPage(final int index) {
+        super.setPage(index);
+    }
+
+    @Override
     public int getPageCount() {
         return super.getPageCount();
     }
@@ -258,11 +258,6 @@ public class Pager extends AbstractPager {
     @Override
     public void previousPage() {
         super.previousPage();
-    }
-
-    @Override
-    public void setPage(final int index) {
-        super.setPage(index);
     }
 
     @Override
@@ -339,5 +334,8 @@ public class Pager extends AbstractPager {
         } else {
             refresh.getElement().removeClassName("fa-spin");
         }
+    }
+
+    public interface Binder extends UiBinder<Widget, Pager> {
     }
 }

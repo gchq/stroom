@@ -205,6 +205,18 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
         return new QueryQueryAppender(entityManager);
     }
 
+    @Override
+    public String getNamePattern() {
+        // Unnamed queries are valid.
+        return null;
+    }
+
+    @Override
+    protected FieldMap createFieldMap() {
+        return super.createFieldMap()
+                .add(FindQueryCriteria.FIELD_TIME, QueryEntity.CREATE_TIME, "createTime");
+    }
+
     private static class QueryQueryAppender extends QueryAppender<QueryEntity, FindQueryCriteria> {
         public QueryQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
@@ -221,17 +233,5 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
             sql.appendValueQuery(alias + ".dashboardId", criteria.getDashboardId());
             sql.appendValueQuery(alias + ".queryId", criteria.getQueryId());
         }
-    }
-
-    @Override
-    public String getNamePattern() {
-        // Unnamed queries are valid.
-        return null;
-    }
-
-    @Override
-    protected FieldMap createFieldMap() {
-        return super.createFieldMap()
-                .add(FindQueryCriteria.FIELD_TIME, QueryEntity.CREATE_TIME, "createTime");
     }
 }

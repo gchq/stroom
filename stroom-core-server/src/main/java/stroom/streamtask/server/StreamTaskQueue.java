@@ -41,11 +41,11 @@ public class StreamTaskQueue {
         return this.filling.compareAndSet(expect, update);
     }
 
-    public void setFilling(final boolean update) {
-        this.filling.set(update);
-    }
-
     public boolean isFilling() {
         return filling.get();
+    }
+
+    public void setFilling(final boolean update) {
+        this.filling.set(update);
     }
 }

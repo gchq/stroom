@@ -32,59 +32,7 @@ import stroom.svg.client.SvgIcon;
 import stroom.widget.tab.client.presenter.ImageIcon;
 
 public class CurveTab extends AbstractTab {
-    public interface Style extends CssResource {
-        String curveTab();
-
-        String hover();
-
-        String selected();
-
-        String background();
-
-        String leftBackground();
-
-        String midBackground();
-
-        String rightBackground();
-
-        String icon();
-
-        String face();
-
-        String text();
-
-        String close();
-
-        String closeActive();
-    }
-
-    public interface Resources extends ClientBundle {
-        @Source("content.png")
-        @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
-        ImageResource content();
-
-        @Source("left.png")
-        ImageResource left();
-
-        @Source("middle.png")
-        @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
-        ImageResource middle();
-
-        @Source("right.png")
-        ImageResource right();
-
-        @Source("close.png")
-        ImageResource close();
-
-        @Source("closeActive.png")
-        ImageResource closeActive();
-
-        @Source("CurveTab.css")
-        Style style();
-    }
-
     private static Resources resources;
-
     private final Element element;
     private final Element background;
     private final Element leftBackground;
@@ -94,7 +42,6 @@ public class CurveTab extends AbstractTab {
     private final Element label;
     private final Element close;
     private final boolean allowClose;
-
     public CurveTab(final Icon icon, final String text, final boolean allowClose) {
         this.allowClose = allowClose;
 
@@ -211,13 +158,13 @@ public class CurveTab extends AbstractTab {
         }
     }
 
+    public String getText() {
+        return label.getInnerText();
+    }
+
     @Override
     public void setText(final String text) {
         label.setInnerText(text);
-    }
-
-    public String getText() {
-        return label.getInnerText();
     }
 
     @Override
@@ -232,5 +179,56 @@ public class CurveTab extends AbstractTab {
     @Override
     protected Element getCloseElement() {
         return close;
+    }
+
+    public interface Style extends CssResource {
+        String curveTab();
+
+        String hover();
+
+        String selected();
+
+        String background();
+
+        String leftBackground();
+
+        String midBackground();
+
+        String rightBackground();
+
+        String icon();
+
+        String face();
+
+        String text();
+
+        String close();
+
+        String closeActive();
+    }
+
+    public interface Resources extends ClientBundle {
+        @Source("content.png")
+        @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
+        ImageResource content();
+
+        @Source("left.png")
+        ImageResource left();
+
+        @Source("middle.png")
+        @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
+        ImageResource middle();
+
+        @Source("right.png")
+        ImageResource right();
+
+        @Source("close.png")
+        ImageResource close();
+
+        @Source("closeActive.png")
+        ImageResource closeActive();
+
+        @Source("CurveTab.css")
+        Style style();
     }
 }

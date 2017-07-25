@@ -25,17 +25,18 @@ import com.google.gwt.core.client.JavaScriptObject;
 
 
 /**
- * A completion proposed by an {@link AceCompletionProvider}. 
- * 
+ * A completion proposed by an {@link AceCompletionProvider}.
+ * <p>
  * <strong>Warning</strong>: this is an experimental feature of AceGWT.
  * It is possible that the API will change in an incompatible way
  * in future releases.
  */
 public abstract class AceCompletion {
-	
-	/**
-	 * A completion maps to a generated JavaScript object in a variety of formats depending on the concrete implementation
-	 * @return A non-null JavaScript object.
-	 */
-	abstract JavaScriptObject toJsObject();
+
+    /**
+     * A completion maps to a generated JavaScript object in a variety of formats depending on the concrete implementation
+     *
+     * @return A non-null JavaScript object.
+     */
+    abstract JavaScriptObject toJsObject();
 }

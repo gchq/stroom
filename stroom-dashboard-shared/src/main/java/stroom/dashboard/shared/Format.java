@@ -36,8 +36,8 @@ public class Format implements Serializable {
     public static List<Type> TYPES = Arrays.asList(Type.GENERAL, Type.NUMBER, Type.DATE_TIME, Type.TEXT);
     @XmlElement(name = "type")
     private Type type;
-    @XmlElements({ @XmlElement(name = "numberFormatSettings", type = NumberFormatSettings.class),
-            @XmlElement(name = "dateTimeFormatSettings", type = DateTimeFormatSettings.class) })
+    @XmlElements({@XmlElement(name = "numberFormatSettings", type = NumberFormatSettings.class),
+            @XmlElement(name = "dateTimeFormatSettings", type = DateTimeFormatSettings.class)})
     private FormatSettings settings;
     @XmlElement(name = "wrap")
     private Boolean wrap;

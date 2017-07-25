@@ -36,11 +36,12 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.List;
 
-public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatView>implements FormatUihandlers {
+public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatView> implements FormatUihandlers {
     private final TimeZones timeZones;
     private Type type;
     private TablePresenter tablePresenter;
     private Field field;
+
     @Inject
     public FormatPresenter(final EventBus eventBus, final FormatView view, final TimeZones timeZones) {
         super(eventBus, view);

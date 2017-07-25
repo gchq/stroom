@@ -38,10 +38,6 @@ public enum ByteSizeUnit {
     TERABYTE(1000 * 1000 * 1000 * 1000, "TB", "Terabytes"),
     PETABYTE(1000 * 1000 * 1000 * 1000 * 1000, "PB", "Petabytes");
 
-    private final int bytes;
-    private final String shortName;
-    private final String longName;
-
     private static final Map<CaseInsensitiveString, ByteSizeUnit> shortNameToEnumMap = new HashMap<>();
     private static final Map<Integer, ByteSizeUnit> intToEnumMap = new HashMap<>();
 
@@ -52,10 +48,39 @@ public enum ByteSizeUnit {
         }
     }
 
+    private final int bytes;
+    private final String shortName;
+    private final String longName;
+
     private ByteSizeUnit(final int bytes, final String shortName, final String longName) {
         this.bytes = bytes;
         this.shortName = shortName;
         this.longName = longName;
+    }
+
+    public static ByteSizeUnit fromShortName(String shortName) {
+        ByteSizeUnit val = shortNameToEnumMap.get(CaseInsensitiveString.fromString(shortName));
+        if (val == null) {
+            String allShortNames = Arrays.stream(ByteSizeUnit.values())
+                    .map(byteSizeUnit -> {
+                        return byteSizeUnit.shortName;
+                    })
+                    .collect(Collectors.joining(", "));
+            throw new IllegalArgumentException(String.format("ShortName [%s] is not valid. Should be one of [%s] (case insensitive).", shortName, allShortNames));
+        }
+        return val;
+    }
+
+    public static ByteSizeUnit fromBytes(final int bytes) {
+        ByteSizeUnit val = intToEnumMap.get(bytes);
+        if (val == null) {
+            throw new IllegalArgumentException(String.format("The byte value %s is not a valid value for conversion into a ByteSizeUnit unit", bytes));
+        }
+        return val;
+    }
+
+    public static ByteSizeUnit fromBytes(final long bytes) {
+        return fromBytes((int) bytes);
     }
 
     /**
@@ -114,31 +139,6 @@ public enum ByteSizeUnit {
         return longName;
     }
 
-    public static ByteSizeUnit fromShortName(String shortName) {
-        ByteSizeUnit val = shortNameToEnumMap.get(CaseInsensitiveString.fromString(shortName));
-        if (val == null) {
-            String allShortNames = Arrays.stream(ByteSizeUnit.values())
-                    .map(byteSizeUnit -> {
-                        return byteSizeUnit.shortName;
-                    })
-                    .collect(Collectors.joining(", "));
-            throw new IllegalArgumentException(String.format("ShortName [%s] is not valid. Should be one of [%s] (case insensitive).", shortName, allShortNames));
-        }
-        return val;
-    }
-
-    public static ByteSizeUnit fromBytes(final int bytes){
-        ByteSizeUnit val = intToEnumMap.get(bytes);
-        if (val == null) {
-            throw new IllegalArgumentException(String.format("The byte value %s is not a valid value for conversion into a ByteSizeUnit unit", bytes));
-        }
-        return val;
-    }
-
-    public static ByteSizeUnit fromBytes(final long bytes){
-        return fromBytes((int) bytes);
-    }
-
     /**
      * Converts a value from one byte size unit into another, e.g. MiB into KiB
      */
@@ -153,7 +153,7 @@ public enum ByteSizeUnit {
             this.value = value.toLowerCase();
         }
 
-        public static CaseInsensitiveString fromString(String value){
+        public static CaseInsensitiveString fromString(String value) {
             return new CaseInsensitiveString(value);
         }
 

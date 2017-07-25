@@ -31,11 +31,7 @@ import stroom.node.client.presenter.ManageGlobalPropertyEditPresenter.GlobalProp
 import stroom.widget.tickbox.client.view.TickBox;
 
 public final class GlobalPropertyEditViewImpl extends ViewImpl implements GlobalPropertyEditView {
-    public interface Binder extends UiBinder<Widget, GlobalPropertyEditViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     Grid grid;
     @UiField
@@ -54,7 +50,6 @@ public final class GlobalPropertyEditViewImpl extends ViewImpl implements Global
     TickBox requireRestart;
     @UiField
     TickBox requireUiRestart;
-
     private boolean password;
 
     @Inject
@@ -128,5 +123,8 @@ public final class GlobalPropertyEditViewImpl extends ViewImpl implements Global
     public void setEditable(final boolean edit) {
         value.setReadOnly(!edit);
         valuePassword.setReadOnly(!edit);
+    }
+
+    public interface Binder extends UiBinder<Widget, GlobalPropertyEditViewImpl> {
     }
 }

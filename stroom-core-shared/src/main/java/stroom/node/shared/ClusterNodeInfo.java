@@ -38,7 +38,7 @@ public class ClusterNodeInfo implements SharedObject {
     }
 
     public ClusterNodeInfo(final String discoverTime, final String buildDate, final String buildVersion,
-            final String upDate, final String nodeName, final String clusterURL) {
+                           final String upDate, final String nodeName, final String clusterURL) {
         this.discoverTime = discoverTime;
         this.buildDate = buildDate;
         this.buildVersion = buildVersion;

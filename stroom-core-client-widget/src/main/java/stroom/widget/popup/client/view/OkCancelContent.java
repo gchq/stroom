@@ -29,19 +29,13 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 public class OkCancelContent extends Composite implements HasEnabled {
     private static Binder binder = GWT.create(Binder.class);
-
-    public interface Binder extends UiBinder<Widget, OkCancelContent> {
-    }
-
     private final PopupUiHandlers popupUiHandlers;
-
     @UiField
     Button ok;
     @UiField
     Button cancel;
     @UiField
     SimplePanel content;
-
     public OkCancelContent(final PopupUiHandlers popupUiHandlers) {
         initWidget(binder.createAndBindUi(this));
         this.popupUiHandlers = popupUiHandlers;
@@ -67,5 +61,8 @@ public class OkCancelContent extends Composite implements HasEnabled {
     public void setEnabled(final boolean enabled) {
         ok.setEnabled(enabled);
         cancel.setEnabled(enabled);
+    }
+
+    public interface Binder extends UiBinder<Widget, OkCancelContent> {
     }
 }

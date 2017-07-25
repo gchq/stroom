@@ -70,27 +70,23 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     private final SimplePanel emptyTableWidget = new SimplePanel();
     private final SimplePanel loadingTableWidget = new SimplePanel();
     private final List<ColSettings> colSettings = new ArrayList<>();
-
-    private MultiSelectionModel<R> selectionModel;
     private final DoubleSelectTest doubleClickTest = new DoubleSelectTest();
     private final boolean allowMultiSelect;
-    // Required for multiple selection using shift and control key modifiers.
-    private R multiSelectStart;
-
     /**
      * The main DataGrid.
      */
     @UiField(provided = true)
     DataGrid<R> dataGrid;
-
     /**
      * The pager used to change the range of data.
      */
     @UiField
     Pager pager;
-
     @UiField
     ButtonPanel buttonPanel;
+    private MultiSelectionModel<R> selectionModel;
+    // Required for multiple selection using shift and control key modifiers.
+    private R multiSelectStart;
     private Widget widget;
     private HeadingListener headingListener;
     private HandlerRegistration handlerRegistration;
@@ -601,6 +597,48 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
         return dataGrid.getRowElement(row);
     }
 
+    protected void doSelect(final R selection, final SelectionType selectionType) {
+        if (selection == null) {
+            multiSelectStart = null;
+            selectionModel.clear();
+        } else if (selectionType.isAllowMultiSelect() && selectionType.isShiftPressed() && multiSelectStart != null) {
+            // If control isn't pressed as well as shift then we are selecting a new range so clear.
+            if (!selectionType.isControlPressed()) {
+                selectionModel.clear();
+            }
+
+            List<R> rows = dataGrid.getVisibleItems();
+            final int index1 = rows.indexOf(multiSelectStart);
+            final int index2 = rows.indexOf(selection);
+            if (index1 != -1 && index2 != -1) {
+                final int start = Math.min(index1, index2);
+                final int end = Math.max(index1, index2);
+                for (int i = start; i <= end; i++) {
+                    selectionModel.setSelected(rows.get(i), true);
+                }
+            } else if (selectionType.isControlPressed()) {
+                multiSelectStart = selection;
+                selectionModel.setSelected(selection, !selectionModel.isSelected(selection));
+            } else {
+                multiSelectStart = selection;
+                selectionModel.setSelected(selection);
+            }
+        } else if (selectionType.isAllowMultiSelect() && selectionType.isControlPressed()) {
+            multiSelectStart = selection;
+            selectionModel.setSelected(selection, !selectionModel.isSelected(selection));
+        } else {
+            multiSelectStart = selection;
+            selectionModel.setSelected(selection);
+        }
+
+        MultiSelectEvent.fire(dataGrid, selectionType);
+    }
+
+    @Override
+    public MultiSelectionModel<R> getSelectionModel() {
+        return selectionModel;
+    }
+
     public interface Binder extends UiBinder<Widget, DataGridViewImpl<?>> {
     }
 
@@ -748,47 +786,5 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
                 }
             }
         }
-    }
-
-    protected void doSelect(final R selection, final SelectionType selectionType) {
-        if (selection == null) {
-            multiSelectStart = null;
-            selectionModel.clear();
-        } else if (selectionType.isAllowMultiSelect() && selectionType.isShiftPressed() && multiSelectStart != null) {
-            // If control isn't pressed as well as shift then we are selecting a new range so clear.
-            if (!selectionType.isControlPressed()) {
-                selectionModel.clear();
-            }
-
-            List<R> rows = dataGrid.getVisibleItems();
-            final int index1 = rows.indexOf(multiSelectStart);
-            final int index2 = rows.indexOf(selection);
-            if (index1 != -1 && index2 != -1) {
-                final int start = Math.min(index1, index2);
-                final int end = Math.max(index1, index2);
-                for (int i = start; i <= end; i++) {
-                    selectionModel.setSelected(rows.get(i), true);
-                }
-            } else if (selectionType.isControlPressed()) {
-                multiSelectStart = selection;
-                selectionModel.setSelected(selection, !selectionModel.isSelected(selection));
-            } else {
-                multiSelectStart = selection;
-                selectionModel.setSelected(selection);
-            }
-        } else if (selectionType.isAllowMultiSelect() && selectionType.isControlPressed()) {
-            multiSelectStart = selection;
-            selectionModel.setSelected(selection, !selectionModel.isSelected(selection));
-        } else {
-            multiSelectStart = selection;
-            selectionModel.setSelected(selection);
-        }
-
-        MultiSelectEvent.fire(dataGrid, selectionType);
-    }
-
-    @Override
-    public MultiSelectionModel<R> getSelectionModel() {
-        return selectionModel;
     }
 }

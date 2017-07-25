@@ -27,9 +27,7 @@ import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.about.client.presenter.AboutPresenter;
 
 public class AboutViewImpl extends ViewImpl implements AboutPresenter.AboutView {
-    public interface Binder extends UiBinder<Widget, AboutViewImpl> {
-    }
-
+    private final Widget widget;
     @UiField
     SimplePanel html;
     @UiField
@@ -40,8 +38,6 @@ public class AboutViewImpl extends ViewImpl implements AboutPresenter.AboutView 
     Label upDate;
     @UiField
     Label nodeName;
-
-    private final Widget widget;
 
     @Inject
     public AboutViewImpl(final Binder binder) {
@@ -76,5 +72,8 @@ public class AboutViewImpl extends ViewImpl implements AboutPresenter.AboutView 
     @Override
     public HasText getNodeName() {
         return nodeName;
+    }
+
+    public interface Binder extends UiBinder<Widget, AboutViewImpl> {
     }
 }

@@ -31,18 +31,14 @@ import javax.persistence.Transient;
  */
 @Entity(name = "STRM_VOL")
 public class StreamVolume extends BaseEntityBig {
-    private static final long serialVersionUID = 6729492408680929025L;
-
     public static final String TABLE_NAME = SQLNameConstants.STREAM + SEP + SQLNameConstants.VOLUME;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-
     public static final String ENTITY_TYPE = "StreamVolume";
-
-    private Volume volume;
-    private Stream stream;
-
     public static final String LAST_ACCESS_MS = SQLNameConstants.LAST + SEP + SQLNameConstants.ACCESS
             + SQLNameConstants.MS_SUFFIX;
+    private static final long serialVersionUID = 6729492408680929025L;
+    private Volume volume;
+    private Stream stream;
 
     public StreamVolume() {
         // Default constructor necessary for GWT serialisation.

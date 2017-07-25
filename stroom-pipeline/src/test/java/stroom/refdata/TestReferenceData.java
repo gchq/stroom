@@ -85,8 +85,8 @@ public class TestReferenceData extends StroomUnitTest {
 
             // Add multiple reference data items to prove that looping over maps
             // works.
-            addData(referenceData, pipeline1, new String[] { "SID_TO_PF_1", "SID_TO_PF_2" });
-            addData(referenceData, pipeline2, new String[] { "SID_TO_PF_3", "SID_TO_PF_4" });
+            addData(referenceData, pipeline1, new String[]{"SID_TO_PF_1", "SID_TO_PF_2"});
+            addData(referenceData, pipeline2, new String[]{"SID_TO_PF_3", "SID_TO_PF_4"});
             checkData(referenceData, pipelineReferences, "SID_TO_PF_1");
             checkData(referenceData, pipelineReferences, "SID_TO_PF_2");
             checkData(referenceData, pipelineReferences, "SID_TO_PF_3");
@@ -120,7 +120,7 @@ public class TestReferenceData extends StroomUnitTest {
     }
 
     private void checkData(final ReferenceData data, final List<PipelineReference> pipelineReferences,
-            final String mapName) {
+                           final String mapName) {
         final ErrorReceiver errorReceiver = new FatalErrorReceiver();
 
         Assert.assertEquals("B1111", getStringFromEvents(data.getValue(pipelineReferences, errorReceiver,

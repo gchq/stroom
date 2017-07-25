@@ -32,11 +32,11 @@ import javax.xml.bind.annotation.XmlType;
 /**
  * <p>
  * Java class for PipelineReference complex type.
- *
+ * <p>
  * <p>
  * The following schema fragment specifies the expected content contained within
  * this class.
- *
+ * <p>
  * <pre>
  * &lt;complexType name="PipelineReference">
  *   &lt;complexContent>
@@ -54,7 +54,7 @@ import javax.xml.bind.annotation.XmlType;
  * </pre>
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "PipelineReference", propOrder = { "element", "name", "pipeline", "feed", "streamType" })
+@XmlType(name = "PipelineReference", propOrder = {"element", "name", "pipeline", "feed", "streamType"})
 public class PipelineReference implements Comparable<PipelineReference>, SharedObject, Copyable<PipelineReference> {
     private static final long serialVersionUID = -8037614920682819123L;
     @XmlElement(name = "element", required = true)

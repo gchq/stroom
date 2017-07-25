@@ -40,7 +40,8 @@ public class IconMenuItem extends CommandMenuItem {
 //            this.disabledImage = null;
 //        }
     }
-//
+
+    //
 //    public IconMenuItem(final int priority, final String enabledImageUrl, final String disabledImageUrl,
 //                        final String text, final String shortcut, final boolean enabled, final Command command) {
 //        super(priority, text, shortcut, enabled, command);

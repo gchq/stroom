@@ -28,7 +28,7 @@ public interface StroomHeaderArguments {
     String COMPRESSION_GZIP = "GZIP";
     String COMPRESSION_NONE = "NONE";
 
-   Set<String> VALID_COMPRESSION_SET = Collections
+    Set<String> VALID_COMPRESSION_SET = Collections
             .unmodifiableSet(new HashSet<>(Arrays.asList(COMPRESSION_GZIP, COMPRESSION_ZIP, COMPRESSION_NONE)));
 
     String CONTENT_LENGTH = "content-length";

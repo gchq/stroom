@@ -40,7 +40,7 @@ public class PipelineDataValidator {
     }
 
     public void validate(final SourcePipeline source, final PipelineData pipelineData,
-            final Map<String, PipelineElementType> elementMap) {
+                         final Map<String, PipelineElementType> elementMap) {
         final ElementRegistry registry = pipelineElementRegistryFactory.get();
 
         // Validate elements.
@@ -61,7 +61,7 @@ public class PipelineDataValidator {
     }
 
     private void validateElementList(final ElementRegistry registry, final SourcePipeline source,
-            final List<PipelineElement> elementsList, final Map<String, PipelineElementType> elementMap) {
+                                     final List<PipelineElement> elementsList, final Map<String, PipelineElementType> elementMap) {
         for (final PipelineElement element : elementsList) {
             if (element.getId() == null) {
                 throw new PipelineFactoryException("No id has been declared for element: " + element.getType());
@@ -87,7 +87,7 @@ public class PipelineDataValidator {
     }
 
     private void validatePropertiesList(final ElementRegistry registry, final SourcePipeline source,
-            final List<PipelineProperty> propertiesList, final Map<String, PipelineElementType> elementMap) {
+                                        final List<PipelineProperty> propertiesList, final Map<String, PipelineElementType> elementMap) {
         for (final PipelineProperty property : propertiesList) {
             if (property.getElement() == null) {
                 throw new PipelineFactoryException(
@@ -115,7 +115,7 @@ public class PipelineDataValidator {
     }
 
     private void validatePipelineReferencesList(final ElementRegistry registry, final SourcePipeline source,
-            final List<PipelineReference> pipelineReferencesList, final Map<String, PipelineElementType> elementMap) {
+                                                final List<PipelineReference> pipelineReferencesList, final Map<String, PipelineElementType> elementMap) {
         for (final PipelineReference pipelineReference : pipelineReferencesList) {
             if (pipelineReference.getElement() == null) {
                 throw new PipelineFactoryException(
@@ -145,7 +145,7 @@ public class PipelineDataValidator {
     }
 
     private void validateLinksList(final SourcePipeline source, final List<PipelineLink> linksList,
-            final Map<String, PipelineElementType> elementMap) {
+                                   final Map<String, PipelineElementType> elementMap) {
         for (final PipelineLink link : linksList) {
             if (!elementMap.containsKey(link.getFrom())) {
                 throw new PipelineFactoryException("Attempt to link from \"" + link.getFrom() + "\" to \""

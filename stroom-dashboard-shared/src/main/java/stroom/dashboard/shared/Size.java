@@ -26,12 +26,12 @@ import javax.xml.bind.annotation.XmlType;
 import java.util.Arrays;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "size", propOrder = { "width", "height" })
+@XmlType(name = "size", propOrder = {"width", "height"})
 public class Size implements SharedObject {
     private static final long serialVersionUID = 8201392610412513780L;
 
     @XmlTransient
-    private int[] size = new int[] { 200, 200 };
+    private int[] size = new int[]{200, 200};
 
     public Size() {
         // Default constructor necessary for GWT serialisation.

@@ -23,34 +23,28 @@ import java.util.List;
 
 public interface Statistics {
     /**
-     * @param statisticEvent
-     *            add event to the store
-     * @param statisticsDataSource
-     *            The data source to store the stat against
+     * @param statisticEvent       add event to the store
+     * @param statisticsDataSource The data source to store the stat against
      * @return
      */
     void putEvent(StatisticEvent statisticEvent, StatisticStore statisticsDataSource);
 
     /**
-     * @param statisticEvents
-     *            add serveral event to the store. All events must be for the
-     *            passes data source
-     * @param statisticsDataSource
-     *            The data source to store the stat against
+     * @param statisticEvents      add serveral event to the store. All events must be for the
+     *                             passes data source
+     * @param statisticsDataSource The data source to store the stat against
      * @return
      */
     void putEvents(List<StatisticEvent> statisticEvents, StatisticStore statisticsDataSource);
 
     /**
-     * @param statisticEvent
-     *            add event to the store
+     * @param statisticEvent add event to the store
      */
     void putEvent(StatisticEvent statisticEvent);
 
     /**
-     * @param statisticEvents
-     *            add several events to the store. All events must be for the
-     *            same statistic name and engine
+     * @param statisticEvents add several events to the store. All events must be for the
+     *                        same statistic name and engine
      */
     void putEvents(List<StatisticEvent> statisticEvents);
 
@@ -58,8 +52,7 @@ public interface Statistics {
      * For a given statistic tag name, it returns all known values existing in
      * the statistic store
      *
-     * @param tagName
-     *            The statistic tag name to search for
+     * @param tagName The statistic tag name to search for
      * @return A list of values associated with the given statistic tag name
      */
     List<String> getValuesByTag(String tagName);
@@ -68,11 +61,9 @@ public interface Statistics {
      * For a given statistic tag name and part of a value, it returns all known
      * values existing in the statistic store that match
      *
-     * @param tagName
-     *            The statistic tag name to search for
-     * @param partialValue
-     *            A contiguous part of a statistic tag value which should be
-     *            contained in any matches
+     * @param tagName      The statistic tag name to search for
+     * @param partialValue A contiguous part of a statistic tag value which should be
+     *                     contained in any matches
      * @return Those statistic tag values that match both criteria
      */
     List<String> getValuesByTagAndPartialValue(String tagName, String partialValue);

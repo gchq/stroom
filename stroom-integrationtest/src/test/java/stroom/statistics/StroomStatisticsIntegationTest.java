@@ -22,9 +22,9 @@ import stroom.test.StroomIntegrationTest;
 import stroom.util.test.StroomSpringJUnit4ClassRunner;
 
 @RunWith(StroomSpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = { "classpath:META-INF/spring/stroomCoreServerContext.xml",
+@ContextConfiguration(locations = {"classpath:META-INF/spring/stroomCoreServerContext.xml",
         "classpath:META-INF/spring/stroomProcessContext.xml", "classpath:META-INF/spring/stroomStatisticsContext.xml",
-        "classpath:META-INF/spring/stroomStatisticsTestContext.xml" })
+        "classpath:META-INF/spring/stroomStatisticsTestContext.xml"})
 public abstract class StroomStatisticsIntegationTest extends StroomIntegrationTest {
     // @Resource
     // protected CommonTestControl commonTestControl;

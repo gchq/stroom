@@ -30,7 +30,7 @@ public @interface ConfigurableElement {
 
     Category category() default Category.INTERNAL;
 
-    String[]roles();
+    String[] roles();
 
     String icon();
 }

@@ -45,10 +45,8 @@ public class StroomBeanStore implements InitializingBean, BeanFactoryAware, Appl
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomBeanStore.class);
 
     private static final String STROOM_CLASSES = "stroom.";
-
-    private boolean initialised = false;
     private final Map<Class<?>, List<StroomBeanMethod>> stroomBeanMethodMap = new HashMap<>();
-
+    private boolean initialised = false;
     private ApplicationContext applicationContext;
     private BeanFactory beanFactory;
 

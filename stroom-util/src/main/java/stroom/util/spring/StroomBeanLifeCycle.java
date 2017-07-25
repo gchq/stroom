@@ -41,7 +41,7 @@ public class StroomBeanLifeCycle {
 
     /**
      * @return things that need running at start up of null if they have all
-     *         started
+     * started
      */
     public StroomBeanMethodExecutable getStartExecutable() {
         init();
@@ -66,7 +66,7 @@ public class StroomBeanLifeCycle {
 
     /**
      * @return things that need running at start up of null if they have all
-     *         started
+     * started
      */
     public StroomBeanMethodExecutable getStopExecutable() {
         init();

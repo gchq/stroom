@@ -64,7 +64,6 @@ public class StructureValidationUtil {
         }
 
 
-
         return !childType.hasRole(PipelineElementType.ROLE_DESTINATION);
     }
 }

@@ -27,8 +27,8 @@ import org.springframework.context.annotation.FilterType;
  * a component scan as configurations should be specified explicitly.
  */
 @Configuration
-@ComponentScan(basePackages = { "stroom.logging" }, excludeFilters = {
-        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class), })
+@ComponentScan(basePackages = {"stroom.logging"}, excludeFilters = {
+        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
 public class EventLoggingConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(EventLoggingConfiguration.class);
 

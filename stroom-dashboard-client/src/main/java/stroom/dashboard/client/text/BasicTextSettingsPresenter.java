@@ -38,7 +38,7 @@ public class BasicTextSettingsPresenter
 
     @Inject
     public BasicTextSettingsPresenter(final EventBus eventBus, final BasicTextSettingsView view,
-            final EntityDropDownPresenter pipelinePresenter) {
+                                      final EntityDropDownPresenter pipelinePresenter) {
         super(eventBus, view);
         this.pipelinePresenter = pipelinePresenter;
 

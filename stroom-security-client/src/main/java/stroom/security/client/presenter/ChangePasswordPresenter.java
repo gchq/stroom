@@ -40,31 +40,8 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 public class ChangePasswordPresenter
         extends MyPresenter<ChangePasswordPresenter.ChangePasswordView, ChangePasswordPresenter.ChangePasswordProxy>
         implements ChangePasswordHandler, PopupUiHandlers {
-    public interface ChangePasswordView extends View, HasUiHandlers<PopupUiHandlers> {
-        String getUserName();
-
-        void setUserName(String userName);
-
-        String getOldPassword();
-
-        void setOldPassword(String oldPassword);
-
-        String getNewPassword();
-
-        void setNewPassword(String newPassword);
-
-        String getConfirmPassword();
-
-        void setConfirmPassword(String confirmPassword);
-    }
-
-    @ProxyCodeSplit
-    public interface ChangePasswordProxy extends Proxy<ChangePasswordPresenter> {
-    }
-
     private final CurrentUser currentUser;
     private final ClientDispatchAsync dispatcher;
-
     private UserRef userRef;
     private boolean loginOnChange;
 
@@ -137,5 +114,27 @@ public class ChangePasswordPresenter
                 });
             }
         }
+    }
+
+    public interface ChangePasswordView extends View, HasUiHandlers<PopupUiHandlers> {
+        String getUserName();
+
+        void setUserName(String userName);
+
+        String getOldPassword();
+
+        void setOldPassword(String oldPassword);
+
+        String getNewPassword();
+
+        void setNewPassword(String newPassword);
+
+        String getConfirmPassword();
+
+        void setConfirmPassword(String confirmPassword);
+    }
+
+    @ProxyCodeSplit
+    public interface ChangePasswordProxy extends Proxy<ChangePasswordPresenter> {
     }
 }

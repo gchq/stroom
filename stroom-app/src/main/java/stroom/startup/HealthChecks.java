@@ -28,9 +28,8 @@ import stroom.servicediscovery.ServiceDiscoveryRegistrar;
 import java.util.function.Consumer;
 
 public class HealthChecks {
-    private static final Logger LOGGER = LoggerFactory.getLogger(HealthChecks.class);
-
     public static final String HEALTH_CHECK_SUFFIX = "HealthCheck";
+    private static final Logger LOGGER = LoggerFactory.getLogger(HealthChecks.class);
 
     private HealthChecks() {
     }

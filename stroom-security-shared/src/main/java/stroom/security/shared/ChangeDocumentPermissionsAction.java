@@ -23,26 +23,9 @@ import stroom.util.shared.VoidResult;
 
 public class ChangeDocumentPermissionsAction extends Action<VoidResult> {
     private static final long serialVersionUID = -6740095230475597845L;
-
-    public enum Cascade implements HasDisplayValue {
-        NO("No"), CHANGES_ONLY("Changes only"), ALL("All");
-
-        private final String displayValue;
-
-        Cascade(final String displayValue) {
-            this.displayValue = displayValue;
-        }
-
-        @Override
-        public String getDisplayValue() {
-            return displayValue;
-        }
-    }
-
     private DocRef docRef;
     private ChangeSet<UserPermission> changeSet;
     private Cascade cascade;
-
     public ChangeDocumentPermissionsAction() {
         // Default constructor necessary for GWT serialisation.
     }
@@ -72,6 +55,21 @@ public class ChangeDocumentPermissionsAction extends Action<VoidResult> {
     @Override
     public String getTaskName() {
         return "Change Document Permissions";
+    }
+
+    public enum Cascade implements HasDisplayValue {
+        NO("No"), CHANGES_ONLY("Changes only"), ALL("All");
+
+        private final String displayValue;
+
+        Cascade(final String displayValue) {
+            this.displayValue = displayValue;
+        }
+
+        @Override
+        public String getDisplayValue() {
+            return displayValue;
+        }
     }
 
 }

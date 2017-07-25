@@ -32,15 +32,15 @@ import java.util.Arrays;
 import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "table", propOrder = { "queryId", "fields", "extractValues", "extractionPipeline", "maxResults",
-        "showDetail" })
+@XmlType(name = "table", propOrder = {"queryId", "fields", "extractValues", "extractionPipeline", "maxResults",
+        "showDetail"})
 public class TableComponentSettings extends ComponentSettings {
-    public static final int[] DEFAULT_MAX_RESULTS = { 1000000 };
+    public static final int[] DEFAULT_MAX_RESULTS = {1000000};
     private static final long serialVersionUID = -2530827581046882396L;
     @XmlElement(name = "queryId")
     private String queryId;
     @XmlElementWrapper(name = "fields")
-    @XmlElements({ @XmlElement(name = "field", type = Field.class) })
+    @XmlElements({@XmlElement(name = "field", type = Field.class)})
     private List<Field> fields;
     @XmlElement(name = "extractValues")
     private Boolean extractValues;

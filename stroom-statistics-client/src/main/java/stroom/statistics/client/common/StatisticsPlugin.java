@@ -93,9 +93,9 @@ public class StatisticsPlugin extends EntityPlugin<StatisticStoreEntity> {
         // null
         if (entityFromDb != null && (
                 !prevType.equals(entity.getStatisticType())
-                || !prevRollUpType.equals(entity.getRollUpType()) || !prevInterval.equals(entity.getPrecision())
-                || !prevFieldList.equals(entity.getStatisticFields())
-                || !prevMaskSet.equals(entity.getCustomRollUpMasks()))) {
+                        || !prevRollUpType.equals(entity.getRollUpType()) || !prevInterval.equals(entity.getPrecision())
+                        || !prevFieldList.equals(entity.getStatisticFields())
+                        || !prevMaskSet.equals(entity.getCustomRollUpMasks()))) {
             ConfirmEvent.fireWarn(this, SafeHtmlUtils
                             .fromTrustedString("Changes to the following attributes of a statistic data source:<br/><br/>"
                                     + "Engine Name<br/>Statistic Type<br/>Precision<br/>Rollup Type<br/>Field list<br/>Custom roll-ups<br/><br/>"

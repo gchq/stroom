@@ -26,6 +26,7 @@ public class VisFunction {
     private Set<StatusHandler> statusHandlers;
     private LoadStatus status = LoadStatus.NOT_LOADED;
     private String statusMessage;
+
     public VisFunction(final int id) {
         this.id = id;
     }

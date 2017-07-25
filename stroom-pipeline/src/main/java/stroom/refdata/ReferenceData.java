@@ -67,16 +67,13 @@ public class ReferenceData {
      * Given a date and a map name get some reference data value.
      * </p>
      *
-     * @param time
-     *            The event time (or the time the reference data is valid for)
-     * @param mapName
-     *            The map name
-     * @param key
-     *            The key of the reference data
+     * @param time    The event time (or the time the reference data is valid for)
+     * @param mapName The map name
+     * @param key     The key of the reference data
      * @return the value of ref data
      */
     public EventList getValue(final List<PipelineReference> pipelineReferences, final ErrorReceiver errorReceiver,
-            final long time, final String mapName, final String key) {
+                              final long time, final String mapName, final String key) {
         // Do we have a nested token?
         final int splitPos = mapName.indexOf(NEST_SEPERATOR);
         if (splitPos != -1) {
@@ -98,7 +95,7 @@ public class ReferenceData {
     }
 
     private EventList doGetValue(final List<PipelineReference> pipelineReferences, final ErrorReceiver errorReceiver,
-            final long time, final String mapName, final String keyName) {
+                                 final long time, final String mapName, final String keyName) {
         for (final PipelineReference pipelineReference : pipelineReferences) {
             EventList eventList = null;
 
@@ -124,7 +121,7 @@ public class ReferenceData {
      * stream context and is therefore not effective time sensitive.
      */
     private EventList getNestedStreamEventList(final PipelineReference pipelineReference,
-            final ErrorReceiver errorReceiver, final String mapName, final String keyName) {
+                                               final ErrorReceiver errorReceiver, final String mapName, final String keyName) {
         EventList events = null;
 
         try {
@@ -190,7 +187,7 @@ public class ReferenceData {
      * to effective time.
      */
     private EventList getExternalEventList(final PipelineReference pipelineReference, final ErrorReceiver errorReceiver,
-            final long time, final String mapName, final String keyName) {
+                                           final long time, final String mapName, final String keyName) {
         // First round down the time to the nearest 10 days approx (actually
         // more like 11.5, one billion milliseconds).
         final long baseTime = effectiveStreamCache.getBaseTime(time);

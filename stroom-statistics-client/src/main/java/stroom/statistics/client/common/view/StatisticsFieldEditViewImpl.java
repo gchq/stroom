@@ -25,11 +25,7 @@ import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.statistics.client.common.presenter.StatisticsFieldEditPresenter.StatisticsFieldEditView;
 
 public class StatisticsFieldEditViewImpl extends ViewImpl implements StatisticsFieldEditView {
-    public interface Binder extends UiBinder<Widget, StatisticsFieldEditViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     TextBox name;
 
@@ -51,5 +47,8 @@ public class StatisticsFieldEditViewImpl extends ViewImpl implements StatisticsF
     @Override
     public void setFieldName(final String fieldName) {
         name.setText(fieldName);
+    }
+
+    public interface Binder extends UiBinder<Widget, StatisticsFieldEditViewImpl> {
     }
 }

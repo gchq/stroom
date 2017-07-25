@@ -40,38 +40,13 @@ import stroom.util.shared.HasBooleanValue;
 
 public class TickBox extends Composite
         implements HasValue<TickBoxState>, HasValueChangeHandlers<TickBoxState>, HasBooleanValue {
-    public interface Binder extends UiBinder<Widget, TickBox> {
-    }
-
-    public interface Style extends CssResource {
-        String outer();
-
-        String tickBox();
-
-        String text();
-    }
-
-    public interface Resources extends ClientBundle {
-        ImageResource tick();
-
-        ImageResource halfTick();
-
-        ImageResource untick();
-
-        @Source("tickbox.css")
-        Style style();
-    }
-
     private static volatile Binder binder;
     private static volatile Resources resources;
-
     @UiField
     FlowPanel layout;
     @UiField
     Image image;
-
     Label lblText;
-
     private TickBoxState state = TickBoxState.TICK;
     private boolean enabled = true;
 
@@ -82,7 +57,6 @@ public class TickBox extends Composite
     public TickBox(final String text) {
         this(TickBoxState.UNTICK, text);
     }
-
     public TickBox(final TickBoxState state, final String text) {
         if (binder == null) {
             synchronized (TickBox.class) {
@@ -153,15 +127,15 @@ public class TickBox extends Composite
             this.state = value;
 
             switch (state) {
-            case TICK:
-                image.setResource(resources.tick());
-                break;
-            case HALF_TICK:
-                image.setResource(resources.halfTick());
-                break;
-            case UNTICK:
-                image.setResource(resources.untick());
-                break;
+                case TICK:
+                    image.setResource(resources.tick());
+                    break;
+                case HALF_TICK:
+                    image.setResource(resources.halfTick());
+                    break;
+                case UNTICK:
+                    image.setResource(resources.untick());
+                    break;
             }
 
             if (fireEvents) {
@@ -184,6 +158,14 @@ public class TickBox extends Composite
         }
     }
 
+    public String getText() {
+        if (lblText == null) {
+            return null;
+        }
+
+        return lblText.getText();
+    }
+
     public void setText(final String text) {
         if (text != null) {
             if (lblText == null) {
@@ -196,19 +178,33 @@ public class TickBox extends Composite
         }
     }
 
-    public String getText() {
-        if (lblText == null) {
-            return null;
-        }
-
-        return lblText.getText();
-    }
-
     public boolean isEnabled() {
         return enabled;
     }
 
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public interface Binder extends UiBinder<Widget, TickBox> {
+    }
+
+    public interface Style extends CssResource {
+        String outer();
+
+        String tickBox();
+
+        String text();
+    }
+
+    public interface Resources extends ClientBundle {
+        ImageResource tick();
+
+        ImageResource halfTick();
+
+        ImageResource untick();
+
+        @Source("tickbox.css")
+        Style style();
     }
 }

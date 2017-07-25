@@ -122,19 +122,19 @@ public class ExcelTarget implements SearchResultWriter.Target {
                 }
 
                 switch (type) {
-                case TEXT:
-                    cell.setCellValue(getText(value));
-                    cell.setCellType(Cell.CELL_TYPE_STRING);
-                    break;
-                case NUMBER:
-                    number(wb, cell, value, settings);
-                    break;
-                case DATE_TIME:
-                    dateTime(wb, cell, value, settings);
-                    break;
-                default:
-                    general(wb, cell, value);
-                    break;
+                    case TEXT:
+                        cell.setCellValue(getText(value));
+                        cell.setCellType(Cell.CELL_TYPE_STRING);
+                        break;
+                    case NUMBER:
+                        number(wb, cell, value, settings);
+                        break;
+                    case DATE_TIME:
+                        dateTime(wb, cell, value, settings);
+                        break;
+                    default:
+                        general(wb, cell, value);
+                        break;
                 }
             }
         }

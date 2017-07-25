@@ -22,6 +22,11 @@ import java.util.List;
 
 public class GetStatusResponse implements Serializable {
     private static final long serialVersionUID = 8200506344347303608L;
+    public List<StatusEntry> statusEntryList = new ArrayList<StatusEntry>();
+
+    public List<StatusEntry> getStatusEntryList() {
+        return statusEntryList;
+    }
 
     public enum Status {
         Error, Warn, Info
@@ -55,11 +60,5 @@ public class GetStatusResponse implements Serializable {
         public String toString() {
             return status + ", " + area + ", " + message;
         }
-    }
-
-    public List<StatusEntry> statusEntryList = new ArrayList<StatusEntry>();
-
-    public List<StatusEntry> getStatusEntryList() {
-        return statusEntryList;
     }
 }

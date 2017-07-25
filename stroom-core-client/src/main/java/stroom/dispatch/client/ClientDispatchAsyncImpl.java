@@ -123,7 +123,7 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
                 }
 
 
-                            handleFailure(throwable);
+                handleFailure(throwable);
 
             }
 

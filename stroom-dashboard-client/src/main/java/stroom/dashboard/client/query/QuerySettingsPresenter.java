@@ -24,7 +24,7 @@ import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 public class QuerySettingsPresenter extends SettingsPresenter {
     @Inject
     public QuerySettingsPresenter(final EventBus eventBus, final LinkTabsLayoutView view,
-            final BasicQuerySettingsPresenter basicSettingsPresenter) {
+                                  final BasicQuerySettingsPresenter basicSettingsPresenter) {
         super(eventBus, view);
         addTab("Basic", basicSettingsPresenter);
     }

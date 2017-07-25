@@ -48,7 +48,7 @@ public class TestRollUpBitMask extends StroomUnitTest {
     @Test
     public void testToBytesAndBack() {
         final RollUpBitMask rowKeyBitMap = RollUpBitMask
-                .fromMask(new short[] { 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 });
+                .fromMask(new short[]{0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
 
         final byte[] bytes = rowKeyBitMap.asBytes();
 
@@ -66,7 +66,7 @@ public class TestRollUpBitMask extends StroomUnitTest {
         final RollUpBitMask rowKeyBitMap1 = RollUpBitMask.fromTagPositions(Arrays.asList(1, 4, 14));
 
         final RollUpBitMask rowKeyBitMap2 = RollUpBitMask
-                .fromMask(new short[] { 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 });
+                .fromMask(new short[]{0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1});
 
         Assert.assertEquals(rowKeyBitMap1, rowKeyBitMap2);
     }
@@ -83,7 +83,7 @@ public class TestRollUpBitMask extends StroomUnitTest {
     @Test
     public void testToString() {
         final RollUpBitMask rowKeyBitMap = RollUpBitMask
-                .fromMask(new short[] { 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 });
+                .fromMask(new short[]{0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1});
 
         Assert.assertEquals("100000000010010", rowKeyBitMap.toString());
     }
@@ -96,13 +96,13 @@ public class TestRollUpBitMask extends StroomUnitTest {
     @Test(expected = RuntimeException.class)
     public void testFromMaskInvalidMask() {
         // one value too many
-        RollUpBitMask.fromMask(new short[] { 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 });
+        RollUpBitMask.fromMask(new short[]{0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0});
     }
 
     @Test(expected = RuntimeException.class)
     public void fromMaskInvalidMaskValue() {
         // one value too many
-        RollUpBitMask.fromMask(new short[] { 9, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 });
+        RollUpBitMask.fromMask(new short[]{9, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1});
     }
 
     @Test
@@ -146,7 +146,7 @@ public class TestRollUpBitMask extends StroomUnitTest {
         final Set<List<Integer>> perms = RollUpBitMask.getRollUpPermutationsAsPositions(0);
 
         Assert.assertEquals(1, perms.size());
-        Assert.assertTrue(perms.contains(Collections.<Integer> emptyList()));
+        Assert.assertTrue(perms.contains(Collections.<Integer>emptyList()));
 
     }
 
@@ -155,7 +155,7 @@ public class TestRollUpBitMask extends StroomUnitTest {
         final Set<List<Integer>> perms = RollUpBitMask.getRollUpPermutationsAsPositions(1);
 
         Assert.assertEquals(2, perms.size());
-        Assert.assertTrue(perms.contains(Collections.<Integer> emptyList()));
+        Assert.assertTrue(perms.contains(Collections.<Integer>emptyList()));
         Assert.assertTrue(perms.contains(Arrays.asList(0)));
 
     }
@@ -166,7 +166,7 @@ public class TestRollUpBitMask extends StroomUnitTest {
 
         Assert.assertEquals(4, perms.size());
 
-        Assert.assertTrue(perms.contains(Collections.<Integer> emptyList()));
+        Assert.assertTrue(perms.contains(Collections.<Integer>emptyList()));
         Assert.assertTrue(perms.contains(Arrays.asList(1)));
         Assert.assertTrue(perms.contains(Arrays.asList(0)));
         Assert.assertTrue(perms.contains(Arrays.asList(0, 1)));

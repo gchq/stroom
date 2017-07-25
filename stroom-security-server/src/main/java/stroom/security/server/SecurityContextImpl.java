@@ -53,7 +53,10 @@ import java.util.Set;
 @Scope(value = StroomScope.PROTOTYPE, proxyMode = ScopedProxyMode.INTERFACES)
 class SecurityContextImpl implements SecurityContext {
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityContextImpl.class);
-
+    private static final String INTERNAL = "INTERNAL";
+    private static final String SYSTEM = "system";
+    private static final String USER = "user";
+    private static final UserRef INTERNAL_PROCESSING_USER = new UserRef(User.ENTITY_TYPE, "0", INTERNAL, false, true);
     private final DocumentPermissionsCache documentPermissionsCache;
     private final UserGroupsCache userGroupsCache;
     private final UserAppPermissionsCache userAppPermissionsCache;
@@ -61,11 +64,6 @@ class SecurityContextImpl implements SecurityContext {
     private final DocumentPermissionService documentPermissionService;
     private final GenericEntityService genericEntityService;
     private final JWTService jwtService;
-
-    private static final String INTERNAL = "INTERNAL";
-    private static final String SYSTEM = "system";
-    private static final String USER = "user";
-    private static final UserRef INTERNAL_PROCESSING_USER = new UserRef(User.ENTITY_TYPE, "0", INTERNAL, false, true);
 
     @Inject
     SecurityContextImpl(

@@ -27,57 +27,6 @@ import java.util.List;
  * structure.
  */
 public class XMLStyler {
-    /**
-     * Individual styles for each XML fragment type.
-     */
-    public enum Style {
-        SYNTAX("s"), PI("pi"), DOCTYPE("d"), ELEMENT_NAME("e"), ATTRIBUTE_NAME("an"), ATTRIBUTE_VALUE("av"), CONTENT(
-                "c"), COMMENT("z"), HIGHLIGHT("hl");
-
-        private final String start;
-        private final String end;
-
-        Style(final String style) {
-            this.start = "<" + style + ">";
-            this.end = "</" + style + ">";
-        }
-
-        public String getStart() {
-            return start;
-        }
-
-        public String getEnd() {
-            return end;
-        }
-
-        @Override
-        public String toString() {
-            return start;
-        }
-    }
-
-    /**
-     * The different fragment types of an XML instance.
-     */
-    private enum ElementType {
-        DOCTYPE(Style.DOCTYPE), START(Style.ELEMENT_NAME), END(Style.ELEMENT_NAME), EMPTY(Style.ELEMENT_NAME), PI(
-                Style.PI), COMMENT(Style.COMMENT), CONTENT(Style.CONTENT);
-
-        private final Style style;
-
-        ElementType(final Style style) {
-            this.style = style;
-        }
-
-        public Style getStyle() {
-            return style;
-        }
-    }
-
-    private enum CommentState {
-        START, CONTENT, END
-    }
-
     private static final String DOCTYPE_START = "<!DOCTYPE";
     private static final String EMPTY_ELEMENT_END = "/>";
     private static final String END_ELEMENT_START = "</";
@@ -87,12 +36,9 @@ public class XMLStyler {
     private static final String GT = "&gt;";
     private static final String LT = "&lt;";
     private static final String AMP = "&amp;";
-
     private boolean inHighlight;
     private boolean changedHighlight;
-
     private int depth;
-
     private ElementType elementType;
     private ElementType nextElementType;
     private ElementType lastElementType;
@@ -102,12 +48,10 @@ public class XMLStyler {
     private boolean inAttValue;
     private boolean lastCharWasSpace;
     private CommentState commentState;
-
     private char c;
     private char[] arr;
     private int pos;
     private int elementStartPos;
-
     private boolean inEntity;
     private StringBuilder output;
 
@@ -136,16 +80,13 @@ public class XMLStyler {
      * parameters supplied. The resulting string is HTML containing multiple
      * &lt;span&gt; elements to style the various XML fragments.
      *
-     * @param input
-     *            The input XML to style and format.
-     * @param applyStyle
-     *            True if this method should add styles to the resultant HTML.
-     * @param format
-     *            True if this method should format the XML.
+     * @param input      The input XML to style and format.
+     * @param applyStyle True if this method should add styles to the resultant HTML.
+     * @param format     True if this method should format the XML.
      * @return An HTML string of the formatted and styled XML.
      */
     public String processXML(final String input, final boolean applyStyle, final boolean format, final int startLineNo,
-            final List<Highlight> highlights) {
+                             final List<Highlight> highlights) {
         List<Highlight> remainingHighlights = null;
         if (highlights != null) {
             remainingHighlights = new ArrayList<>(highlights);
@@ -167,73 +108,73 @@ public class XMLStyler {
             colNo++;
 
             switch (c) {
-            case '\n':
-                lineNo++;
-                colNo = 0;
+                case '\n':
+                    lineNo++;
+                    colNo = 0;
 
-                // Make sure the element type is content if we aren't in an
-                // element.
-                if (!inElement) {
-                    elementType = ElementType.CONTENT;
-                }
-                break;
-            case '<':
-                if (!inAttValue) {
+                    // Make sure the element type is content if we aren't in an
+                    // element.
                     if (!inElement) {
-                        // We are entering an element so reset some variables.
-                        changedElement = true;
-                        inElement = true;
-                        inAttValue = false;
-                        doneElementStyle = false;
-                        lastCharWasSpace = false;
-
-                        // Get the element type we are entering.
-                        elementType = getElementType(pos);
-                        elementStartPos = pos;
-                        if (elementType == ElementType.COMMENT) {
-                            commentState = CommentState.START;
-                        }
-                    } else if (elementType == ElementType.DOCTYPE) {
-                        inEntity = true;
+                        elementType = ElementType.CONTENT;
                     }
-                }
-                break;
-            case '>':
-                if (!inAttValue) {
-                    if (inEntity) {
-                        inEntity = false;
-                    } else if (inElement) {
-                        // If we are in a comment make sure this is the proper
-                        // end to a comment.
-                        if (elementType == ElementType.COMMENT) {
-                            if (back(2) == '-' && back(1) == '-') {
+                    break;
+                case '<':
+                    if (!inAttValue) {
+                        if (!inElement) {
+                            // We are entering an element so reset some variables.
+                            changedElement = true;
+                            inElement = true;
+                            inAttValue = false;
+                            doneElementStyle = false;
+                            lastCharWasSpace = false;
+
+                            // Get the element type we are entering.
+                            elementType = getElementType(pos);
+                            elementStartPos = pos;
+                            if (elementType == ElementType.COMMENT) {
+                                commentState = CommentState.START;
+                            }
+                        } else if (elementType == ElementType.DOCTYPE) {
+                            inEntity = true;
+                        }
+                    }
+                    break;
+                case '>':
+                    if (!inAttValue) {
+                        if (inEntity) {
+                            inEntity = false;
+                        } else if (inElement) {
+                            // If we are in a comment make sure this is the proper
+                            // end to a comment.
+                            if (elementType == ElementType.COMMENT) {
+                                if (back(2) == '-' && back(1) == '-') {
+                                    inElement = false;
+                                }
+                            } else {
                                 inElement = false;
                             }
-                        } else {
-                            inElement = false;
                         }
                     }
-                }
-                break;
-            default:
-                // Make sure the element type is content if we aren't in an
-                // element.
-                if (!inElement) {
-                    elementType = ElementType.CONTENT;
-                }
-
-                // Do some processing to figure out what the state should be if
-                // we are in a comment.
-                if (elementType == ElementType.COMMENT) {
-                    if (commentState == CommentState.START && pos > elementStartPos + 3) {
-                        commentState = CommentState.CONTENT;
+                    break;
+                default:
+                    // Make sure the element type is content if we aren't in an
+                    // element.
+                    if (!inElement) {
+                        elementType = ElementType.CONTENT;
                     }
-                    if (commentState == CommentState.CONTENT && c == '-' && forward(1) == '-' && forward(2) == '>') {
-                        commentState = CommentState.END;
-                    }
-                }
 
-                break;
+                    // Do some processing to figure out what the state should be if
+                    // we are in a comment.
+                    if (elementType == ElementType.COMMENT) {
+                        if (commentState == CommentState.START && pos > elementStartPos + 3) {
+                            commentState = CommentState.CONTENT;
+                        }
+                        if (commentState == CommentState.CONTENT && c == '-' && forward(1) == '-' && forward(2) == '>') {
+                            commentState = CommentState.END;
+                        }
+                    }
+
+                    break;
             }
 
             // See if we want to toggle highlighting.
@@ -472,11 +413,10 @@ public class XMLStyler {
      * Returns the char that is the specified number of chars before the current
      * array position ignoring whitespace chars.
      *
-     * @param len
-     *            The number of characters before the current array position.
+     * @param len The number of characters before the current array position.
      * @return The char at the specified location or '~' if the array bounds are
-     *         exceeded as we know that '~' isn't a character this is tested
-     *         for.
+     * exceeded as we know that '~' isn't a character this is tested
+     * for.
      */
     private char back(final int len) {
         int index = pos - len;
@@ -497,11 +437,10 @@ public class XMLStyler {
      * Returns the char that is the specified number of chars after the current
      * array position ignoring whitespace chars.
      *
-     * @param len
-     *            The number of characters after the current array position.
+     * @param len The number of characters after the current array position.
      * @return The char at the specified location or '~' if the array bounds are
-     *         exceeded as we know that '~' isn't a character this is tested
-     *         for.
+     * exceeded as we know that '~' isn't a character this is tested
+     * for.
      */
     private char forward(final int len) {
         int index = pos + len;
@@ -522,13 +461,11 @@ public class XMLStyler {
      * Outputs style span elements based on the current element type and whether
      * we are currently in a highlighted section or not.
      *
-     * @param applyStyle
-     *            Determines if element styles are to be output. This does not
-     *            affect the output of highlight styles as they are applied to
-     *            styled and non styled text.
-     * @param output
-     *            The output <code>StringBuilder</code> to append the style span
-     *            elements to.
+     * @param applyStyle Determines if element styles are to be output. This does not
+     *                   affect the output of highlight styles as they are applied to
+     *                   styled and non styled text.
+     * @param output     The output <code>StringBuilder</code> to append the style span
+     *                   elements to.
      */
     private void outputStyle(final boolean applyStyle, final StringBuilder output) {
         // Output the start style element if the style has changed.
@@ -593,9 +530,8 @@ public class XMLStyler {
      * Outputs the appropriate highlight start or end element depending on
      * whether we are switching to or from the highlight state.
      *
-     * @param output
-     *            The output <code>StringBuilder</code> to append the highlight
-     *            element to.
+     * @param output The output <code>StringBuilder</code> to append the highlight
+     *               element to.
      */
     private void outputHighlight(final StringBuilder output) {
         if (changedHighlight) {
@@ -614,10 +550,8 @@ public class XMLStyler {
      * Gets the style type that is appropriate for the current char in the
      * current element type.
      *
-     * @param c
-     *            The current char.
-     * @param elementType
-     *            The current element type.
+     * @param c           The current char.
+     * @param elementType The current element type.
      * @return The appropriate style.
      */
     private Style getStyle(final char c, final ElementType elementType) {
@@ -669,10 +603,9 @@ public class XMLStyler {
     /**
      * Tests if a character is a whitespace character.
      *
-     * @param c
-     *            The character to test.
+     * @param c The character to test.
      * @return True if the character is a space, tab, new line or carriage
-     *         return.
+     * return.
      */
     private boolean isWhitespace(final char c) {
         return c == ' ' || c == '\t' || c == '\n' || c == '\r';
@@ -682,8 +615,7 @@ public class XMLStyler {
      * Reduces the current length of a <code>StringBuilder</code> to trim any
      * whitespace off the end of the buffer.
      *
-     * @param sb
-     *            The <code>StringBuilder</code> to trim.
+     * @param sb The <code>StringBuilder</code> to trim.
      */
     private void trimEndWhitespace(final StringBuilder sb) {
         int index = sb.length() - 1;
@@ -699,22 +631,73 @@ public class XMLStyler {
 
     private void escape(final char c) {
         switch (c) {
-        case '\r':
-            // Ignore carriage returns.
-            break;
-        case '<':
-            output.append(LT);
-            break;
-        case '>':
-            // Convert < to &gt;.
-            output.append(GT);
-            break;
-        case '&':
-            // Convert & to &amp;.
-            output.append(AMP);
-            break;
-        default:
-            output.append(c);
+            case '\r':
+                // Ignore carriage returns.
+                break;
+            case '<':
+                output.append(LT);
+                break;
+            case '>':
+                // Convert < to &gt;.
+                output.append(GT);
+                break;
+            case '&':
+                // Convert & to &amp;.
+                output.append(AMP);
+                break;
+            default:
+                output.append(c);
         }
+    }
+
+    /**
+     * Individual styles for each XML fragment type.
+     */
+    public enum Style {
+        SYNTAX("s"), PI("pi"), DOCTYPE("d"), ELEMENT_NAME("e"), ATTRIBUTE_NAME("an"), ATTRIBUTE_VALUE("av"), CONTENT(
+                "c"), COMMENT("z"), HIGHLIGHT("hl");
+
+        private final String start;
+        private final String end;
+
+        Style(final String style) {
+            this.start = "<" + style + ">";
+            this.end = "</" + style + ">";
+        }
+
+        public String getStart() {
+            return start;
+        }
+
+        public String getEnd() {
+            return end;
+        }
+
+        @Override
+        public String toString() {
+            return start;
+        }
+    }
+
+    /**
+     * The different fragment types of an XML instance.
+     */
+    private enum ElementType {
+        DOCTYPE(Style.DOCTYPE), START(Style.ELEMENT_NAME), END(Style.ELEMENT_NAME), EMPTY(Style.ELEMENT_NAME), PI(
+                Style.PI), COMMENT(Style.COMMENT), CONTENT(Style.CONTENT);
+
+        private final Style style;
+
+        ElementType(final Style style) {
+            this.style = style;
+        }
+
+        public Style getStyle() {
+            return style;
+        }
+    }
+
+    private enum CommentState {
+        START, CONTENT, END
     }
 }

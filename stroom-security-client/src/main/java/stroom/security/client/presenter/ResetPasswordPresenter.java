@@ -39,26 +39,7 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 public class ResetPasswordPresenter
         extends MyPresenter<ResetPasswordPresenter.ResetPasswordView, ResetPasswordPresenter.ResetPasswordProxy>
         implements ResetPasswordHandler, PopupUiHandlers {
-    public interface ResetPasswordView extends View, HasUiHandlers<PopupUiHandlers> {
-        String getUserName();
-
-        void setUserName(String userName);
-
-        String getPassword();
-
-        void setPassword(String password);
-
-        String getConfirmPassword();
-
-        void setConfirmPassword(String confirmPassword);
-    }
-
-    @ProxyCodeSplit
-    public interface ResetPasswordProxy extends Proxy<ResetPasswordPresenter> {
-    }
-
     private final ClientDispatchAsync dispatcher;
-
     private UserRef userRef;
 
     @Inject
@@ -122,5 +103,23 @@ public class ResetPasswordPresenter
                 });
             }
         }
+    }
+
+    public interface ResetPasswordView extends View, HasUiHandlers<PopupUiHandlers> {
+        String getUserName();
+
+        void setUserName(String userName);
+
+        String getPassword();
+
+        void setPassword(String password);
+
+        String getConfirmPassword();
+
+        void setConfirmPassword(String confirmPassword);
+    }
+
+    @ProxyCodeSplit
+    public interface ResetPasswordProxy extends Proxy<ResetPasswordPresenter> {
     }
 }

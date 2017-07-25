@@ -25,17 +25,11 @@ import java.util.List;
 
 public class StringCriteria implements Serializable, HasIsConstrained, Clearable, Copyable<StringCriteria> {
     private static final long serialVersionUID = 4737939969786534908L;
-
-    public enum MatchStyle {
-        WildEnd, WildStandAndEnd
-    }
-
     private String string;
     private String stringUpper;
     private MatchStyle matchStyle = null;
     private boolean caseInsensitive;
     private Boolean matchNull = null;
-
     public StringCriteria() {
         // Default constructor necessary for GWT serialisation.
     }
@@ -47,6 +41,17 @@ public class StringCriteria implements Serializable, HasIsConstrained, Clearable
     public StringCriteria(final String string, final MatchStyle matchStyle) {
         this.string = string;
         this.matchStyle = matchStyle;
+    }
+
+    public static List<StringCriteria> convertStringList(List<String> strings) {
+        List<StringCriteria> criteriaList = new ArrayList<>();
+
+        if (strings != null) {
+            for (String string : strings) {
+                criteriaList.add(new StringCriteria(string));
+            }
+        }
+        return criteriaList;
     }
 
     @Override
@@ -182,14 +187,7 @@ public class StringCriteria implements Serializable, HasIsConstrained, Clearable
         return builder.isEquals();
     }
 
-    public static List<StringCriteria> convertStringList(List<String> strings) {
-        List<StringCriteria> criteriaList = new ArrayList<>();
-
-        if (strings != null) {
-            for (String string : strings) {
-                criteriaList.add(new StringCriteria(string));
-            }
-        }
-        return criteriaList;
+    public enum MatchStyle {
+        WildEnd, WildStandAndEnd
     }
 }

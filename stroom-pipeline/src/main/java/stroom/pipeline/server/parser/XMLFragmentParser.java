@@ -49,10 +49,10 @@ import java.io.IOException;
 
 @Component
 @Scope(value = StroomScope.TASK)
-@ConfigurableElement(type = "XMLFragmentParser", category = Category.PARSER, roles = { PipelineElementType.ROLE_PARSER,
+@ConfigurableElement(type = "XMLFragmentParser", category = Category.PARSER, roles = {PipelineElementType.ROLE_PARSER,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
         PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
-        PipelineElementType.ROLE_HAS_CODE }, icon = ElementIcons.XML)
+        PipelineElementType.ROLE_HAS_CODE}, icon = ElementIcons.XML)
 public class XMLFragmentParser extends AbstractParser implements SupportsCodeInjection {
     private static final SAXParserFactory PARSER_FACTORY;
 
@@ -67,9 +67,10 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
     private boolean usePool = true;
     private TextConverter textConverter;
     private PoolItem<VersionedEntityDecorator<TextConverter>, StoredParserFactory> poolItem;
+
     @Inject
     public XMLFragmentParser(final ErrorReceiverProxy errorReceiverProxy, final LocationFactoryProxy locationFactory,
-            final ParserFactoryPool parserFactoryPool, final TextConverterService textConverterService) {
+                             final ParserFactoryPool parserFactoryPool, final TextConverterService textConverterService) {
         super(errorReceiverProxy, locationFactory);
         this.parserFactoryPool = parserFactoryPool;
         this.textConverterService = textConverterService;

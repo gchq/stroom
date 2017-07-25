@@ -32,9 +32,8 @@ public final class EndPrefixMapping extends BaseEvent {
     /**
      * Stores an endPrefixMapping SAX event.
      *
-     * @param prefix
-     *            the prefix that was being mapped. This is the empty string
-     *            when a default mapping scope ends.
+     * @param prefix the prefix that was being mapped. This is the empty string
+     *               when a default mapping scope ends.
      */
     public EndPrefixMapping(final String prefix) {
         this.prefix = prefix;
@@ -43,10 +42,8 @@ public final class EndPrefixMapping extends BaseEvent {
     /**
      * Fires a stored SAX event at the supplied content handler.
      *
-     * @param handler
-     *            The content handler to fire the SAX event at.
-     * @throws SAXException
-     *             Necessary to maintain the SAX event contract.
+     * @param handler The content handler to fire the SAX event at.
+     * @throws SAXException Necessary to maintain the SAX event contract.
      * @see Event#fire(org.xml.sax.ContentHandler)
      */
     @Override

@@ -27,12 +27,6 @@ import stroom.util.shared.Highlight;
 import java.util.List;
 
 public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
-    public interface TextView extends View, HasUiHandlers<TextUiHandlers> {
-        void setTextView(View view);
-
-        void setPlayVisible(boolean visible);
-    }
-
     private final EditorPresenter textPresenter;
 
     @Inject
@@ -73,5 +67,11 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
     public void setControlsVisible(final boolean controlsVisible) {
         getView().setPlayVisible(controlsVisible);
         textPresenter.setControlsVisible(controlsVisible);
+    }
+
+    public interface TextView extends View, HasUiHandlers<TextUiHandlers> {
+        void setTextView(View view);
+
+        void setPlayVisible(boolean visible);
     }
 }

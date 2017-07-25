@@ -28,9 +28,10 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
-public class FilterPresenter extends MyPresenterWidget<FilterPresenter.FilterView>implements PopupUiHandlers {
+public class FilterPresenter extends MyPresenterWidget<FilterPresenter.FilterView> implements PopupUiHandlers {
     private TablePresenter tablePresenter;
     private Field field;
+
     @Inject
     public FilterPresenter(final EventBus eventBus, final FilterView view) {
         super(eventBus, view);

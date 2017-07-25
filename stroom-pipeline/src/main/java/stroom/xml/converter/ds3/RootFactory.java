@@ -60,12 +60,12 @@ public class RootFactory extends NodeFactory {
         return NodeType.ROOT;
     }
 
-    public void setIgnoreErrors(final boolean ignoreErrors) {
-        this.ignoreErrors = ignoreErrors;
-    }
-
     public boolean isIgnoreErrors() {
         return ignoreErrors;
+    }
+
+    public void setIgnoreErrors(final boolean ignoreErrors) {
+        this.ignoreErrors = ignoreErrors;
     }
 
     public int getBufferSize() {

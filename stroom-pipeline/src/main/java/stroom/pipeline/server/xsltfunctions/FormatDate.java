@@ -56,7 +56,7 @@ public class FormatDate extends StroomExtensionFunctionCall {
     }
 
     private Sequence convertMilliseconds(final String functionName, final XPathContext context,
-            final Sequence[] arguments) throws XPathException {
+                                         final Sequence[] arguments) throws XPathException {
         Sequence result = StringValue.EMPTY_STRING;
         final String milliseconds = getSafeString(functionName, context, arguments, 0);
 
@@ -77,7 +77,7 @@ public class FormatDate extends StroomExtensionFunctionCall {
     }
 
     private Sequence convertToStandardDateFormat(final String functionName, final XPathContext context,
-            final Sequence[] arguments) throws XPathException {
+                                                 final Sequence[] arguments) throws XPathException {
         Sequence result = StringValue.EMPTY_STRING;
         final String date = getSafeString(functionName, context, arguments, 0);
         final String pattern = getSafeString(functionName, context, arguments, 1);
@@ -111,7 +111,7 @@ public class FormatDate extends StroomExtensionFunctionCall {
     }
 
     private Sequence convertToSpecifiedDateFormat(final String functionName, final XPathContext context,
-            final Sequence[] arguments) throws XPathException {
+                                                  final Sequence[] arguments) throws XPathException {
         Sequence result = StringValue.EMPTY_STRING;
         final String date = getSafeString(functionName, context, arguments, 0);
         final String patternIn = getSafeString(functionName, context, arguments, 1);

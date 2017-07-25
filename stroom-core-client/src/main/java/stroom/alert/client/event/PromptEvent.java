@@ -22,16 +22,10 @@ import com.google.gwt.event.shared.HasHandlers;
 import stroom.alert.client.presenter.PromptCallback;
 
 public class PromptEvent extends GwtEvent<PromptEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onPrompt(PromptEvent event);
-    }
-
     public static GwtEvent.Type<Handler> TYPE;
-
     private final String message;
     private final String initialValue;
     private final PromptCallback callback;
-
     private PromptEvent(final String message, final String initialValue, final PromptCallback callback) {
         this.message = message;
         this.initialValue = initialValue;
@@ -39,7 +33,7 @@ public class PromptEvent extends GwtEvent<PromptEvent.Handler> {
     }
 
     public static void fire(final HasHandlers handlers, final String message, final String initialValue,
-            final PromptCallback callback) {
+                            final PromptCallback callback) {
         handlers.fireEvent(new PromptEvent(message, initialValue, callback));
     }
 
@@ -70,5 +64,9 @@ public class PromptEvent extends GwtEvent<PromptEvent.Handler> {
 
     public PromptCallback getCallback() {
         return callback;
+    }
+
+    public interface Handler extends EventHandler {
+        void onPrompt(PromptEvent event);
     }
 }

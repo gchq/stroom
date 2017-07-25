@@ -40,10 +40,6 @@ public class TestRASegmentStreams extends StroomUnitTest {
     private static final String B = "B";
     private static final String C = "C";
     private static final String D = "D";
-
-    private File dir;
-    private RASegmentInputStream is;
-
     private static final int N1 = 1;
     private static final int N2 = 2;
     private static final int N3 = 3;
@@ -51,12 +47,14 @@ public class TestRASegmentStreams extends StroomUnitTest {
     private static final int N5 = 5;
     private static final int N10 = 10;
     private static final int N1024 = 3;
+    private File dir;
+    private RASegmentInputStream is;
 
     @Before
     public void setup() throws IOException {
         dir = getCurrentTestDir();
         try (OutputStream datStream = new BlockGZIPOutputFile(new File(dir, "test.dat"));
-                final OutputStream idxStream = new FileOutputStream(new File(dir, "test.idx"))) {
+             final OutputStream idxStream = new FileOutputStream(new File(dir, "test.idx"))) {
             try (SegmentOutputStream os = new RASegmentOutputStream(datStream, idxStream)) {
                 os.write(A.getBytes(StreamUtil.DEFAULT_CHARSET));
                 os.addSegment();
@@ -310,17 +308,17 @@ public class TestRASegmentStreams extends StroomUnitTest {
     private void testInclude(final int bufferLength) throws IOException {
         test(null, null, A + B + C + D, bufferLength);
 
-        test(new long[] { 0 }, null, A, bufferLength);
-        test(new long[] { N1 }, null, B, bufferLength);
-        test(new long[] { N2 }, null, C, bufferLength);
-        test(new long[] { N3 }, null, D, bufferLength);
-        test(new long[] { 0, N1 }, null, A + B, bufferLength);
-        test(new long[] { N2, N3 }, null, C + D, bufferLength);
-        test(new long[] { 0, N3 }, null, A + D, bufferLength);
-        test(new long[] { N1, N2 }, null, B + C, bufferLength);
-        test(new long[] { 0, N2 }, null, A + C, bufferLength);
-        test(new long[] { 1, N3 }, null, B + D, bufferLength);
-        test(new long[] { 0, N1, N2, N3 }, null, A + B + C + D, bufferLength);
+        test(new long[]{0}, null, A, bufferLength);
+        test(new long[]{N1}, null, B, bufferLength);
+        test(new long[]{N2}, null, C, bufferLength);
+        test(new long[]{N3}, null, D, bufferLength);
+        test(new long[]{0, N1}, null, A + B, bufferLength);
+        test(new long[]{N2, N3}, null, C + D, bufferLength);
+        test(new long[]{0, N3}, null, A + D, bufferLength);
+        test(new long[]{N1, N2}, null, B + C, bufferLength);
+        test(new long[]{0, N2}, null, A + C, bufferLength);
+        test(new long[]{1, N3}, null, B + D, bufferLength);
+        test(new long[]{0, N1, N2, N3}, null, A + B + C + D, bufferLength);
     }
 
     @Test
@@ -332,17 +330,17 @@ public class TestRASegmentStreams extends StroomUnitTest {
     }
 
     private void testExclude(final int bufferLength) throws IOException {
-        test(null, new long[] { 0 }, B + C + D, bufferLength);
-        test(null, new long[] { 1 }, A + C + D, bufferLength);
-        test(null, new long[] { 2 }, A + B + D, bufferLength);
-        test(null, new long[] { 3 }, A + B + C, bufferLength);
-        test(null, new long[] { 0, 1 }, C + D, bufferLength);
-        test(null, new long[] { 2, 3 }, A + B, bufferLength);
-        test(null, new long[] { 0, 3 }, B + C, bufferLength);
-        test(null, new long[] { 1, 2 }, A + D, bufferLength);
-        test(null, new long[] { 0, 2 }, B + D, bufferLength);
-        test(null, new long[] { 1, 3 }, A + C, bufferLength);
-        test(null, new long[] { 0, 1, 2, 3 }, "", bufferLength);
+        test(null, new long[]{0}, B + C + D, bufferLength);
+        test(null, new long[]{1}, A + C + D, bufferLength);
+        test(null, new long[]{2}, A + B + D, bufferLength);
+        test(null, new long[]{3}, A + B + C, bufferLength);
+        test(null, new long[]{0, 1}, C + D, bufferLength);
+        test(null, new long[]{2, 3}, A + B, bufferLength);
+        test(null, new long[]{0, 3}, B + C, bufferLength);
+        test(null, new long[]{1, 2}, A + D, bufferLength);
+        test(null, new long[]{0, 2}, B + D, bufferLength);
+        test(null, new long[]{1, 3}, A + C, bufferLength);
+        test(null, new long[]{0, 1, 2, 3}, "", bufferLength);
     }
 
     @Test

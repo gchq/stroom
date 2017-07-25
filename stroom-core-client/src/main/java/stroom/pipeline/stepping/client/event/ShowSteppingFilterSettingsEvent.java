@@ -24,17 +24,11 @@ import stroom.pipeline.shared.SteppingFilterSettings;
 
 public class ShowSteppingFilterSettingsEvent
         extends GwtEvent<ShowSteppingFilterSettingsEvent.ShowSteppingFilterSettingsHandler> {
-    public interface ShowSteppingFilterSettingsHandler extends EventHandler {
-        void onShow(ShowSteppingFilterSettingsEvent event);
-    }
-
     private static Type<ShowSteppingFilterSettingsHandler> TYPE;
-
     private final EditorPresenter editor;
     private final boolean input;
     private final String elementId;
     private final SteppingFilterSettings settings;
-
     private ShowSteppingFilterSettingsEvent(final EditorPresenter editor, final boolean input,
                                             final String elementId, final SteppingFilterSettings settings) {
         this.editor = editor;
@@ -79,5 +73,9 @@ public class ShowSteppingFilterSettingsEvent
 
     public SteppingFilterSettings getSettings() {
         return settings;
+    }
+
+    public interface ShowSteppingFilterSettingsHandler extends EventHandler {
+        void onShow(ShowSteppingFilterSettingsEvent event);
     }
 }

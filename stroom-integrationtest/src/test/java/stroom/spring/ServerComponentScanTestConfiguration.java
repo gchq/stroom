@@ -27,12 +27,13 @@ import stroom.streamtask.server.StreamProcessorTaskFactory;
 
 /**
  * Configures the context for core integration tests.
- *
+ * <p>
  * Reuses production configurations but defines its own component scan.
- *
+ * <p>
  * This configuration relies on @ActiveProfile(StroomSpringProfiles.PROD) being
  * applied to the tests.
  */
+
 /**
  * Exclude other configurations that might be found accidentally during a
  * component scan as configurations should be specified explicitly.
@@ -82,7 +83,7 @@ import stroom.streamtask.server.StreamProcessorTaskFactory;
         // Exclude these so we get the mocks instead.
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = NodeConfigImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ClusterNodeManagerImpl.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = StreamProcessorTaskFactory.class) })
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = StreamProcessorTaskFactory.class)})
 public class ServerComponentScanTestConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerComponentScanTestConfiguration.class);
 

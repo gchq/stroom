@@ -48,8 +48,8 @@ import javax.annotation.Resource;
 import java.util.Arrays;
 
 public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
+    private static final String QUERY_COMPONENT = "Test Component";
     private static Logger LOGGER = LoggerFactory.getLogger(TestQueryServiceImpl.class);
-
     @Resource
     private DashboardService dashboardService;
     @Resource
@@ -62,9 +62,6 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
     private FolderService folderService;
     @Resource
     private QueryHistoryCleanExecutor queryHistoryCleanExecutor;
-
-    private static final String QUERY_COMPONENT = "Test Component";
-
     private Dashboard dashboard;
     private UserRef userRef;
     private QueryEntity testQuery;

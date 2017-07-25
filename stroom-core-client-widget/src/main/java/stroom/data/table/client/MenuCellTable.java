@@ -38,56 +38,6 @@ import stroom.widget.util.client.MySingleSelectionModel;
 import java.util.List;
 
 public class MenuCellTable<R> extends Composite {
-    @ImportedWithPrefix("gwt-CellTable")
-    public interface BasicStyle extends Style {
-        String DEFAULT_CSS = "stroom/data/table/client/BasicCellTable.css";
-    }
-
-    public interface BasicResources extends Resources {
-        @Override
-        @Source(BasicStyle.DEFAULT_CSS)
-        BasicStyle cellTableStyle();
-    }
-
-    @ImportedWithPrefix("gwt-CellTable")
-    public interface DefaultStyle extends Style {
-        String DEFAULT_CSS = "stroom/data/table/client/DefaultCellTable.css";
-    }
-
-    public interface DefaultResources extends Resources {
-        @Override
-        @Source(DefaultStyle.DEFAULT_CSS)
-        DefaultStyle cellTableStyle();
-    }
-
-    @ImportedWithPrefix("gwt-CellTable")
-    public interface DisabledStyle extends Style {
-        String DEFAULT_CSS = "stroom/data/table/client/DisabledCellTable.css";
-    }
-
-    public interface DisabledResources extends Resources {
-        @Override
-        @Source(DisabledStyle.DEFAULT_CSS)
-        DisabledStyle cellTableStyle();
-    }
-
-    @ImportedWithPrefix("gwt-CellTable")
-    public interface HoverStyle extends Style {
-        String DEFAULT_CSS = "stroom/data/table/client/HoverCellTable.css";
-    }
-
-    public interface HoverResources extends Resources {
-        @Override
-        @Source(HoverStyle.DEFAULT_CSS)
-        HoverStyle cellTableStyle();
-    }
-
-    public interface MenuResources extends Resources {
-        @Override
-        @Source("MenuCellTable.css")
-        Style cellTableStyle();
-    }
-
     /**
      * The main DataGrid.
      */
@@ -147,16 +97,20 @@ public class MenuCellTable<R> extends Composite {
         return cellTable.getRowCount();
     }
 
+    public void setRowCount(final int count) {
+        cellTable.setRowCount(count);
+    }
+
     public Range getVisibleRange() {
         return cellTable.getVisibleRange();
     }
 
-    public boolean isRowCountExact() {
-        return cellTable.isRowCountExact();
+    public void setVisibleRange(final Range range) {
+        cellTable.setVisibleRange(range);
     }
 
-    public void setRowCount(final int count) {
-        cellTable.setRowCount(count);
+    public boolean isRowCountExact() {
+        return cellTable.isRowCountExact();
     }
 
     public void setRowCount(final int count, final boolean isExact) {
@@ -165,10 +119,6 @@ public class MenuCellTable<R> extends Composite {
 
     public void setVisibleRange(final int start, final int length) {
         cellTable.setVisibleRange(start, length);
-    }
-
-    public void setVisibleRange(final Range range) {
-        cellTable.setVisibleRange(range);
     }
 
     @Override
@@ -184,6 +134,10 @@ public class MenuCellTable<R> extends Composite {
     @SuppressWarnings("unchecked")
     public SelectionModel<R> getSelectionModel() {
         return (SelectionModel<R>) cellTable.getSelectionModel();
+    }
+
+    public void setSelectionModel(final SelectionModel<? super R> selectionModel) {
+        cellTable.setSelectionModel(selectionModel);
     }
 
     public R getVisibleItem(final int indexOnPage) {
@@ -202,15 +156,61 @@ public class MenuCellTable<R> extends Composite {
         cellTable.setRowData(start, values);
     }
 
-    public void setSelectionModel(final SelectionModel<? super R> selectionModel) {
-        cellTable.setSelectionModel(selectionModel);
-    }
-
     public void setVisibleRangeAndClearData(final Range range, final boolean forceRangeChangeEvent) {
         cellTable.setVisibleRangeAndClearData(range, forceRangeChangeEvent);
     }
 
     public void setSkipRowHoverCheck(final boolean skipRowHoverCheck) {
         cellTable.setSkipRowHoverCheck(skipRowHoverCheck);
+    }
+
+    @ImportedWithPrefix("gwt-CellTable")
+    public interface BasicStyle extends Style {
+        String DEFAULT_CSS = "stroom/data/table/client/BasicCellTable.css";
+    }
+
+    public interface BasicResources extends Resources {
+        @Override
+        @Source(BasicStyle.DEFAULT_CSS)
+        BasicStyle cellTableStyle();
+    }
+
+    @ImportedWithPrefix("gwt-CellTable")
+    public interface DefaultStyle extends Style {
+        String DEFAULT_CSS = "stroom/data/table/client/DefaultCellTable.css";
+    }
+
+    public interface DefaultResources extends Resources {
+        @Override
+        @Source(DefaultStyle.DEFAULT_CSS)
+        DefaultStyle cellTableStyle();
+    }
+
+    @ImportedWithPrefix("gwt-CellTable")
+    public interface DisabledStyle extends Style {
+        String DEFAULT_CSS = "stroom/data/table/client/DisabledCellTable.css";
+    }
+
+    public interface DisabledResources extends Resources {
+        @Override
+        @Source(DisabledStyle.DEFAULT_CSS)
+        DisabledStyle cellTableStyle();
+    }
+
+    @ImportedWithPrefix("gwt-CellTable")
+    public interface HoverStyle extends Style {
+        String DEFAULT_CSS = "stroom/data/table/client/HoverCellTable.css";
+    }
+
+    public interface HoverResources extends Resources {
+        @Override
+        @Source(HoverStyle.DEFAULT_CSS)
+        HoverStyle cellTableStyle();
+    }
+
+    public interface MenuResources extends Resources {
+        @Override
+        @Source("MenuCellTable.css")
+        Style cellTableStyle();
     }
 }

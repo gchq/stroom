@@ -32,7 +32,7 @@ import javax.persistence.UniqueConstraint;
  * cluster.
  */
 @Entity
-@Table(name = "GLOB_PROP", uniqueConstraints = @UniqueConstraint(columnNames = { SQLNameConstants.NAME }) )
+@Table(name = "GLOB_PROP", uniqueConstraints = @UniqueConstraint(columnNames = {SQLNameConstants.NAME}))
 public class GlobalProperty extends NamedEntity implements HasPassword {
     public static final String TABLE_NAME = SQLNameConstants.GLOBAL + SEP + SQLNameConstants.PROPERTY;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;

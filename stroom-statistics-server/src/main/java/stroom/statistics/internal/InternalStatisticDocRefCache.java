@@ -20,9 +20,8 @@ import java.util.stream.Collectors;
 @Component
 public class InternalStatisticDocRefCache {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(InternalStatisticDocRefCache.class);
-
     static final String PROP_KEY_FORMAT = "stroom.internalstatistics.%s.docRefs";
+    private static final Logger LOGGER = LoggerFactory.getLogger(InternalStatisticDocRefCache.class);
     private static final Pattern DOC_REF_PART_PATTERN = Pattern.compile("(docRef\\([^,]+,[0-9a-f\\-]+,[^,]+\\))");
     private static final Pattern DOC_REF_WHOLE_PATTERN = Pattern.compile("(" + DOC_REF_PART_PATTERN.pattern() + ",?)+");
 
@@ -52,7 +51,7 @@ public class InternalStatisticDocRefCache {
         if (docRefsStr == null || docRefsStr.isEmpty()) {
             LOGGER.trace("Returning empty list");
             return Collections.emptyList();
-        } else  {
+        } else {
             Matcher matcher = DOC_REF_WHOLE_PATTERN.matcher(docRefsStr);
             if (!matcher.matches()) {
                 throw new RuntimeException(String.format("Property value for key %s does not contain valid docRefs [%s]", internalStatisticKey, docRefsStr));

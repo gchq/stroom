@@ -28,7 +28,7 @@ import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 public class StreamListPresenter extends AbstractStreamListPresenter {
     @Inject
     public StreamListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
-            final TooltipPresenter tooltipPresenter, final ClientSecurityContext securityContext) {
+                               final TooltipPresenter tooltipPresenter, final ClientSecurityContext securityContext) {
         super(eventBus, dispatcher, tooltipPresenter, securityContext, true);
     }
 

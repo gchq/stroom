@@ -88,7 +88,7 @@ public abstract class AbstractCertificateRequiredCache {
         checkForRegEx();
     }
 
-    @Cacheable(cacheName = "serviceCache", keyGenerator = @KeyGenerator(name = "ListCacheKeyGenerator") )
+    @Cacheable(cacheName = "serviceCache", keyGenerator = @KeyGenerator(name = "ListCacheKeyGenerator"))
     public String checkCertificate(final boolean isDn, final String originalCert) {
         checkForRegEx();
 

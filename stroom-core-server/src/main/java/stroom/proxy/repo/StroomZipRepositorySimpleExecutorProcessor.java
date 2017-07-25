@@ -23,9 +23,8 @@ import stroom.util.shared.Monitor;
 import stroom.util.thread.ThreadScopeRunnable;
 
 public abstract class StroomZipRepositorySimpleExecutorProcessor extends StroomZipRepositoryProcessor {
-    private SimpleExecutor simpleExecutor;
-
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomZipRepositorySimpleExecutorProcessor.class);
+    private SimpleExecutor simpleExecutor;
     private int threadCount = 1;
 
     public StroomZipRepositorySimpleExecutorProcessor(final Monitor monitor) {

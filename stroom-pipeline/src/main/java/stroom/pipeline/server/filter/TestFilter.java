@@ -36,9 +36,9 @@ import javax.inject.Inject;
 @Component
 @Scope(StroomScope.TASK)
 @Profile(StroomSpringProfiles.TEST)
-@ConfigurableElement(type = "TestFilter", roles = { PipelineElementType.ROLE_TARGET,
+@ConfigurableElement(type = "TestFilter", roles = {PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
-        PipelineElementType.VISABILITY_STEPPING }, icon = ElementIcons.STREAM)
+        PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
 public class TestFilter extends AbstractSamplingFilter {
     @Inject
     public TestFilter(final ErrorReceiverProxy errorReceiverProxy, final LocationFactoryProxy locationFactory) {

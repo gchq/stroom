@@ -27,6 +27,20 @@ import java.util.List;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestExecutionProfilerTopN extends StroomUnitTest {
+    @Test
+    public void test() {
+        final List<ExecutionProfiler> list = new ArrayList<ExecutionProfiler>();
+        list.add(new SimpleExecutionProfiler(10));
+        list.add(new SimpleExecutionProfiler(1));
+        list.add(new SimpleExecutionProfiler(5));
+
+        final ExecutionProfilerTopN topN = new ExecutionProfilerTopN(list, 2);
+
+        Assert.assertEquals(10, topN.getTopN().get(0).getTotalExecutionCount());
+        Assert.assertEquals(5, topN.getTopN().get(1).getTotalExecutionCount());
+        Assert.assertEquals(2, topN.getTopN().size());
+    }
+
     public class SimpleExecutionProfiler implements ExecutionProfiler {
         int id;
 
@@ -49,19 +63,5 @@ public class TestExecutionProfilerTopN extends StroomUnitTest {
             return id;
         }
 
-    }
-
-    @Test
-    public void test() {
-        final List<ExecutionProfiler> list = new ArrayList<ExecutionProfiler>();
-        list.add(new SimpleExecutionProfiler(10));
-        list.add(new SimpleExecutionProfiler(1));
-        list.add(new SimpleExecutionProfiler(5));
-
-        final ExecutionProfilerTopN topN = new ExecutionProfilerTopN(list, 2);
-
-        Assert.assertEquals(10, topN.getTopN().get(0).getTotalExecutionCount());
-        Assert.assertEquals(5, topN.getTopN().get(1).getTotalExecutionCount());
-        Assert.assertEquals(2, topN.getTopN().size());
     }
 }

@@ -18,51 +18,6 @@ import stroom.explorer.shared.ExplorerData;
 import stroom.util.client.ImageUtil;
 
 public class ExplorerCell extends AbstractCell<ExplorerData> {
-    public interface Style extends CssResource {
-        /**
-         * The path to the default CSS styles used by this resource.
-         */
-        String DEFAULT_CSS = "stroom/explorer/client/view/ExplorerCell.css";
-
-        String outer();
-
-        String expander();
-
-        String expanderIcon();
-
-        String icon();
-
-        String text();
-    }
-
-    interface Resources extends ClientBundle {
-        @Source(Style.DEFAULT_CSS)
-        Style style();
-    }
-
-    interface Template extends SafeHtmlTemplates {
-//        @Template("<div class=\"{0}\" style=\"width:{1}px\"></div>")
-//        SafeHtml indent(String indentClass, int indent);
-
-        @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
-        SafeHtml expander(String iconClass, SafeStyles styles, SafeHtml icon);
-
-        @Template("<img class=\"{0}\" src=\"{1}\" />")
-        SafeHtml icon(String iconClass, SafeUri iconUrl);
-
-        @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml text(String textClass, SafeHtml text);
-
-        @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml outer(String outerClass, SafeHtml content);
-
-        /**
-         * The wrapper around the image vertically aligned to the middle.
-         */
-        @Template("")
-        SafeHtml imageWrapperMiddle(SafeStyles styles, SafeHtml image);
-    }
-
     private static Template template;
     private static Resources resources;
 
@@ -144,5 +99,50 @@ public class ExplorerCell extends AbstractCell<ExplorerData> {
         final AbstractImagePrototype proto = AbstractImagePrototype.create(res);
         final SafeHtml image = SafeHtmlUtils.fromTrustedString(proto.getHTML());
         return image;
+    }
+
+    public interface Style extends CssResource {
+        /**
+         * The path to the default CSS styles used by this resource.
+         */
+        String DEFAULT_CSS = "stroom/explorer/client/view/ExplorerCell.css";
+
+        String outer();
+
+        String expander();
+
+        String expanderIcon();
+
+        String icon();
+
+        String text();
+    }
+
+    interface Resources extends ClientBundle {
+        @Source(Style.DEFAULT_CSS)
+        Style style();
+    }
+
+    interface Template extends SafeHtmlTemplates {
+//        @Template("<div class=\"{0}\" style=\"width:{1}px\"></div>")
+//        SafeHtml indent(String indentClass, int indent);
+
+        @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
+        SafeHtml expander(String iconClass, SafeStyles styles, SafeHtml icon);
+
+        @Template("<img class=\"{0}\" src=\"{1}\" />")
+        SafeHtml icon(String iconClass, SafeUri iconUrl);
+
+        @Template("<div class=\"{0}\">{1}</div>")
+        SafeHtml text(String textClass, SafeHtml text);
+
+        @Template("<div class=\"{0}\">{1}</div>")
+        SafeHtml outer(String outerClass, SafeHtml content);
+
+        /**
+         * The wrapper around the image vertically aligned to the middle.
+         */
+        @Template("")
+        SafeHtml imageWrapperMiddle(SafeStyles styles, SafeHtml image);
     }
 }

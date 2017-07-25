@@ -19,7 +19,7 @@ package stroom.jobsystem.server;
 /**
  * tryLock and release lock utilises the cluster but the master node must be up
  * to work
- *
+ * <p>
  * lock uses the database
  */
 public interface ClusterLockService {

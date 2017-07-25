@@ -35,8 +35,7 @@ public class ViewData<E> {
     /**
      * Construct a ViewData instance containing a given value.
      *
-     * @param value
-     *            a String value
+     * @param value a String value
      */
     public ViewData(E value) {
         this.lastValue = value;
@@ -67,6 +66,16 @@ public class ViewData<E> {
     }
 
     /**
+     * Set the current value.
+     *
+     * @param curValue the current value
+     * @see #getCurrentValue()
+     */
+    protected void setCurrentValue(E curValue) {
+        this.curValue = curValue;
+    }
+
+    /**
      * Return the last value sent to the {@link ValueUpdater}.
      *
      * @return the last value String
@@ -76,33 +85,21 @@ public class ViewData<E> {
     }
 
     /**
+     * Set the last value.
+     *
+     * @param lastValue the last value
+     * @see #getLastValue()
+     */
+    protected void setLastValue(E lastValue) {
+        this.lastValue = lastValue;
+    }
+
+    /**
      * Return a hash code based on the last and current values.
      */
     @Override
     public int hashCode() {
         return (lastValue + "_*!@HASH_SEPARATOR@!*_" + curValue).hashCode();
-    }
-
-    /**
-     * Set the current value.
-     *
-     * @param curValue
-     *            the current value
-     * @see #getCurrentValue()
-     */
-    protected void setCurrentValue(E curValue) {
-        this.curValue = curValue;
-    }
-
-    /**
-     * Set the last value.
-     *
-     * @param lastValue
-     *            the last value
-     * @see #getLastValue()
-     */
-    protected void setLastValue(E lastValue) {
-        this.lastValue = lastValue;
     }
 
     private boolean equalsOrNull(Object a, Object b) {

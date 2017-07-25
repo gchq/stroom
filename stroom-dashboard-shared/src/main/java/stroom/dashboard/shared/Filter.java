@@ -27,7 +27,7 @@ import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "filter", propOrder = { "includes", "excludes" })
+@XmlType(name = "filter", propOrder = {"includes", "excludes"})
 public class Filter implements Serializable {
     private static final long serialVersionUID = 7327802315955158337L;
 

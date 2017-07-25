@@ -29,13 +29,13 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 
 public final class DateUtil {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DateUtil.class);
     public static final int DATE_LENGTH = "2000-01-01T00:00:00.000Z".length();
     public static final java.time.format.DateTimeFormatter NORMAL_STROOM_TIME_FORMATTER = java.time.format.DateTimeFormatter
             .ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXX");
     public static final long MIN_MS = 1000 * 60;
     public static final long HOUR_MS = MIN_MS * 60;
     public static final long DAY_MS = HOUR_MS * 24;
+    private static final Logger LOGGER = LoggerFactory.getLogger(DateUtil.class);
     private static final String NULL = "NULL";
     private static final java.time.format.DateTimeFormatter FILE_TIME_STROOM_TIME_FORMATTER = java.time.format.DateTimeFormatter
             .ofPattern("yyyy-MM-dd'T'HH'#'mm'#'ss,SSSXX");

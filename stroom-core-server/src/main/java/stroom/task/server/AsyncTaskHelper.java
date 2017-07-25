@@ -26,36 +26,23 @@ import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class AsyncTaskHelper<R> {
-    private static class Entry<R> {
-        Task<R> task;
-        TaskCallback<R> callback;
-
-        public Entry(final Task<R> task, final TaskCallback<R> callback) {
-            this.task = task;
-            this.callback = callback;
-        }
-    }
-
     private static final Logger LOGGER = LoggerFactory.getLogger(AsyncTaskHelper.class);
     private static final String STATUS = "Executing task {}\n{}";
     private static final String FINISHED = "Finished task {}\n{}";
-
     private final TaskMonitor taskMonitor;
     private final TaskManager taskManager;
     private final int concurrent;
-
     private final String taskInfo;
+    private final ReentrantLock lock = new ReentrantLock();
+    private final List<Entry<R>> taskList = new ArrayList<>();
+    private final List<Entry<R>> executingTasks = new ArrayList<>();
     private volatile long running;
     private volatile long remaining;
     private volatile long completed;
     private volatile long total;
     private volatile boolean busy;
-    private final ReentrantLock lock = new ReentrantLock();
-    private final List<Entry<R>> taskList = new ArrayList<>();
-    private final List<Entry<R>> executingTasks = new ArrayList<>();
-
     public AsyncTaskHelper(final String taskInfo, final TaskMonitor taskMonitor, final TaskManager taskManager,
-            final int concurrent) {
+                           final int concurrent) {
         this.taskInfo = taskInfo;
         this.taskMonitor = taskMonitor;
         this.taskManager = taskManager;
@@ -227,5 +214,15 @@ public class AsyncTaskHelper<R> {
         final StringBuilder sb = new StringBuilder();
         appendStatus(sb);
         return sb.toString();
+    }
+
+    private static class Entry<R> {
+        Task<R> task;
+        TaskCallback<R> callback;
+
+        public Entry(final Task<R> task, final TaskCallback<R> callback) {
+            this.task = task;
+            this.callback = callback;
+        }
     }
 }

@@ -49,8 +49,7 @@ public interface StreamMaintenanceService extends FindService<StreamVolume, Find
     /**
      * Used in tests. Find all files related to this stream.
      *
-     * @param stream
-     *            to search for
+     * @param stream to search for
      * @return is of real IO files.
      */
     FileArrayList findAllStreamFile(Stream stream);

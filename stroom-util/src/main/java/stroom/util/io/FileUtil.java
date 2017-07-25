@@ -29,19 +29,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public final class FileUtil {
-    private static final Logger LOGGER = LoggerFactory.getLogger(FileUtil.class);
-
     public static final int MKDIR_RETRY_COUNT = 2;
     public static final int MKDIR_RETRY_SLEEP_MS = 100;
-
-    private FileUtil() {
-        // Utility.
-    }
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileUtil.class);
     /**
      * JVM wide temp dir
      */
     private volatile static File tempDir = null;
+
+    private FileUtil() {
+        // Utility.
+    }
 
     public static File getInitialTempDir() {
         final String pathString = StroomProperties.getProperty(StroomProperties.STROOM_TEMP);

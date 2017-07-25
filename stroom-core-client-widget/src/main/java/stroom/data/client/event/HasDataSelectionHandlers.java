@@ -25,8 +25,7 @@ public interface HasDataSelectionHandlers<I> extends HasHandlers {
     /**
      * Adds a {@link SelectionEvent} handler.
      *
-     * @param handler
-     *            the handler
+     * @param handler the handler
      * @return the registration for the event
      */
     HandlerRegistration addDataSelectionHandler(DataSelectionHandler<I> handler);

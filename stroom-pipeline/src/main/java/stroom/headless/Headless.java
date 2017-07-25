@@ -81,6 +81,10 @@ public class Headless extends AbstractCommandLineTool {
     private File configFile;
     private File tmpDir;
 
+    public static void main(final String[] args) throws Exception {
+        new Headless().doMain(args);
+    }
+
     public void setInput(final String input) {
         this.input = input;
     }
@@ -296,9 +300,5 @@ public class Headless extends AbstractCommandLineTool {
                 ScopeConfiguration.class, PersistenceConfiguration.class,
                 ServerConfiguration.class, PipelineConfiguration.class, HeadlessConfiguration.class);
         return context;
-    }
-
-    public static void main(final String[] args) throws Exception {
-        new Headless().doMain(args);
     }
 }

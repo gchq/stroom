@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-public enum LogLevelInspector implements HasHealthCheck{
+public enum LogLevelInspector implements HasHealthCheck {
 
     INSTANCE;
 

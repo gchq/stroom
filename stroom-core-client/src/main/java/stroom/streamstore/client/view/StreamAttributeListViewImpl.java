@@ -32,18 +32,13 @@ import stroom.widget.button.client.SvgButton;
 
 public class StreamAttributeListViewImpl extends ViewWithUiHandlers<StreamAttributeListUiHandlers>
         implements StreamAttributeListView {
-    public interface Binder extends UiBinder<Widget, StreamAttributeListViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField(provided = true)
     SvgButton add;
     @UiField(provided = true)
     SvgButton remove;
     @UiField
     ScrollPanel list;
-
     @Inject
     public StreamAttributeListViewImpl(final Binder binder) {
         add = SvgButton.create(SvgPresets.ADD);
@@ -83,5 +78,8 @@ public class StreamAttributeListViewImpl extends ViewWithUiHandlers<StreamAttrib
         if (getUiHandlers() != null) {
             getUiHandlers().onRemove();
         }
+    }
+
+    public interface Binder extends UiBinder<Widget, StreamAttributeListViewImpl> {
     }
 }

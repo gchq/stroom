@@ -53,30 +53,6 @@ public class IndexShardWriterImpl implements IndexShardWriter {
 
     private static final int DEFAULT_RAM_BUFFER_MB_SIZE = 1024;
     private static final StripedLock SHARD_OPEN_CLOSE_LOCK = new StripedLock();
-
-    /**
-     * Used to manage the way fields are analysed.
-     */
-    private final Map<String, Analyzer> fieldAnalyzers = new ConcurrentHashMap<>();
-    private final Lock shardLock;
-    private final IndexShardManager indexShardManager;
-    private final long indexShardId;
-    private final Path dir;
-
-    /**
-     * Lucene stuff
-     */
-    private final Directory directory;
-    private final IndexWriter indexWriter;
-
-    /**
-     * A count of documents added to the index used to control the maximum number of documents that are added.
-     * Note that due to the multi-threaded nature of document addition and how this count is used to control
-     * addition this will not always be accurate.
-     */
-    private final AtomicInteger documentCount;
-    private volatile int maxDocumentCount;
-
     /**
      * When we are in debug mode we track some important info from the LUCENE
      * log so that we can report some debug info
@@ -89,8 +65,28 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         LOG_WATCH_TERMS.put("Commit Count", "startCommit()");
     }
 
+    /**
+     * Used to manage the way fields are analysed.
+     */
+    private final Map<String, Analyzer> fieldAnalyzers = new ConcurrentHashMap<>();
+    private final Lock shardLock;
+    private final IndexShardManager indexShardManager;
+    private final long indexShardId;
+    private final Path dir;
+    /**
+     * Lucene stuff
+     */
+    private final Directory directory;
+    private final IndexWriter indexWriter;
+    /**
+     * A count of documents added to the index used to control the maximum number of documents that are added.
+     * Note that due to the multi-threaded nature of document addition and how this count is used to control
+     * addition this will not always be accurate.
+     */
+    private final AtomicInteger documentCount;
     private final AtomicBoolean open = new AtomicBoolean();
     private final AtomicInteger adding = new AtomicInteger();
+    private volatile int maxDocumentCount;
 
     /**
      * Convenience constructor used in tests.

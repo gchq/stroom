@@ -785,7 +785,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                 // queue.
                 createdTasks.getAvailableTaskList().forEach(queue::add);
                 LOGGER.debug("createTasks() - Created {} tasks (tasksToCreate={}) for filter {}",
-                        new Object[] {createdTasks.getTotalTasksCreated(), requiredTasks, filter.toString()});
+                        new Object[]{createdTasks.getTotalTasksCreated(), requiredTasks, filter.toString()});
 
                 exhaustedFilterMap.put(filter.getId(), resultSize == 0 || reachedLimit);
 

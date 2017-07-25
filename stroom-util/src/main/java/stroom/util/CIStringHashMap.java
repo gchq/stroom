@@ -14,76 +14,6 @@ import java.util.function.Function;
  */
 public class CIStringHashMap implements Serializable, Map<String, String> {
     private static final long serialVersionUID = 4877407570072403322L;
-
-    protected static class CIString implements Comparable<CIString>, Serializable {
-        private static final long serialVersionUID = 550532045010691235L;
-
-        private String key;
-        private String lowerKey;
-
-        CIString(final String key) {
-            this.key = key.trim();
-            this.lowerKey = this.key.toLowerCase(Locale.ENGLISH);
-        }
-
-        public String getKey() {
-            return key;
-        }
-
-        public String getLowerKey() {
-            return lowerKey;
-        }
-
-        @Override
-        public int hashCode() {
-            return lowerKey.hashCode();
-        }
-
-        @Override
-        public boolean equals(final Object obj) {
-            if (obj == null) {
-                return false;
-            }
-            if (!(obj instanceof CIString)) {
-                return false;
-            }
-            return key.equalsIgnoreCase(((CIString) obj).key);
-        }
-
-        @Override
-        public int compareTo(final CIString o) {
-            return lowerKey.compareTo(o.lowerKey);
-        }
-
-        @Override
-        public String toString() {
-            return key;
-        }
-    }
-
-    private static class CIEntryAdaptor implements Entry<String, String> {
-        private Entry<CIString, String> realEntry;
-
-        private CIEntryAdaptor(final Entry<CIString, String> realEntry) {
-            this.realEntry = realEntry;
-        }
-
-        @Override
-        public String getKey() {
-            return realEntry.getKey().key;
-        }
-
-        @Override
-        public String getValue() {
-            return realEntry.getValue();
-        }
-
-        @Override
-        public String setValue(final String value) {
-            return realEntry.setValue(value);
-        }
-    }
-
     protected HashMap<CIString, String> realMap = new HashMap<>();
 
     @Override
@@ -179,5 +109,74 @@ public class CIStringHashMap implements Serializable, Map<String, String> {
     @Override
     public String toString() {
         return realMap.toString();
+    }
+
+    protected static class CIString implements Comparable<CIString>, Serializable {
+        private static final long serialVersionUID = 550532045010691235L;
+
+        private String key;
+        private String lowerKey;
+
+        CIString(final String key) {
+            this.key = key.trim();
+            this.lowerKey = this.key.toLowerCase(Locale.ENGLISH);
+        }
+
+        public String getKey() {
+            return key;
+        }
+
+        public String getLowerKey() {
+            return lowerKey;
+        }
+
+        @Override
+        public int hashCode() {
+            return lowerKey.hashCode();
+        }
+
+        @Override
+        public boolean equals(final Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (!(obj instanceof CIString)) {
+                return false;
+            }
+            return key.equalsIgnoreCase(((CIString) obj).key);
+        }
+
+        @Override
+        public int compareTo(final CIString o) {
+            return lowerKey.compareTo(o.lowerKey);
+        }
+
+        @Override
+        public String toString() {
+            return key;
+        }
+    }
+
+    private static class CIEntryAdaptor implements Entry<String, String> {
+        private Entry<CIString, String> realEntry;
+
+        private CIEntryAdaptor(final Entry<CIString, String> realEntry) {
+            this.realEntry = realEntry;
+        }
+
+        @Override
+        public String getKey() {
+            return realEntry.getKey().key;
+        }
+
+        @Override
+        public String getValue() {
+            return realEntry.getValue();
+        }
+
+        @Override
+        public String setValue(final String value) {
+            return realEntry.setValue(value);
+        }
     }
 }

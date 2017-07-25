@@ -26,7 +26,7 @@ public class AllFactory extends ExpressionFactory {
     }
 
     public AllFactory(final NodeFactory parent, final String id, final int minMatch, final int maxMatch,
-            final Set<Integer> onlyMatch) {
+                      final Set<Integer> onlyMatch) {
         super(parent, id, minMatch, maxMatch, onlyMatch, -1);
 
         final StringBuilder sb = new StringBuilder();

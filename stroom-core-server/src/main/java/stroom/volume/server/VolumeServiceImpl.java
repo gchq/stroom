@@ -86,6 +86,13 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
      */
     public static final String PROP_RESILIENT_REPLICATION_COUNT = "stroom.streamstore.resilientReplicationCount";
     /**
+     * Whether a default volume should be created on application start, but only if other volumes don't already exist
+     */
+    static final String PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP = "stroom.volumes.createDefaultOnStart";
+    static final Path DEFAULT_VOLUMES_SUBDIR = Paths.get("volumes");
+    static final Path DEFAULT_INDEX_VOLUME_SUBDIR = Paths.get("defaultIndexVolume");
+    static final Path DEFAULT_STREAM_VOLUME_SUBDIR = Paths.get("defaultStreamVolume");
+    /**
      * Should we try to write to local volumes if possible?
      */
     private static final String PROP_PREFER_LOCAL_VOLUMES = "stroom.streamstore.preferLocalVolumes";
@@ -93,18 +100,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
      * How should we select volumes to use?
      */
     private static final String PROP_VOLUME_SELECTOR = "stroom.streamstore.volumeSelector";
-
     private static final String INTERNAL_STAT_KEY_VOLUMES = "volumes";
-
-    /**
-     * Whether a default volume should be created on application start, but only if other volumes don't already exist
-     */
-    static final String PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP = "stroom.volumes.createDefaultOnStart";
-
-    static final Path DEFAULT_VOLUMES_SUBDIR = Paths.get("volumes");
-    static final Path DEFAULT_INDEX_VOLUME_SUBDIR = Paths.get("defaultIndexVolume");
-    static final Path DEFAULT_STREAM_VOLUME_SUBDIR = Paths.get("defaultStreamVolume");
-
     private static final Logger LOGGER = LoggerFactory.getLogger(VolumeServiceImpl.class);
 
     private static final Map<String, VolumeSelector> volumeSelectorMap;
@@ -496,25 +492,6 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         return new VolumeQueryAppender(entityManager);
     }
 
-    private enum LocalVolumeUse {
-        REQUIRED, PREFERRED
-    }
-
-    private static class VolumeQueryAppender extends QueryAppender<Volume, FindVolumeCriteria> {
-        VolumeQueryAppender(final StroomEntityManager entityManager) {
-            super(entityManager);
-        }
-
-        @Override
-        public void appendBasicCriteria(HqlBuilder sql, String alias, FindVolumeCriteria criteria) {
-            super.appendBasicCriteria(sql, alias, criteria);
-            sql.appendEntityIdSetQuery(alias + ".node", criteria.getNodeIdSet());
-            sql.appendPrimitiveValueSetQuery(alias + ".pindexStatus", criteria.getIndexStatusSet());
-            sql.appendPrimitiveValueSetQuery(alias + ".pstreamStatus", criteria.getStreamStatusSet());
-            sql.appendPrimitiveValueSetQuery(alias + ".pvolumeType", criteria.getVolumeTypeSet());
-        }
-    }
-
     @StroomStartup(priority = -1100)
     public void startup() {
 
@@ -610,7 +587,6 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
                 .flatMap(userHome -> Optional.of(Paths.get(userHome, StroomProperties.USER_CONF_DIR)));
     }
 
-
     private Optional<Path> getApplicationJarDir() {
         try {
             String codeSourceLocation = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
@@ -622,6 +598,25 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         } catch (Exception e) {
             LOGGER.warn("Unable to determine application jar directory due to: {}", e.getMessage());
             return Optional.empty();
+        }
+    }
+
+    private enum LocalVolumeUse {
+        REQUIRED, PREFERRED
+    }
+
+    private static class VolumeQueryAppender extends QueryAppender<Volume, FindVolumeCriteria> {
+        VolumeQueryAppender(final StroomEntityManager entityManager) {
+            super(entityManager);
+        }
+
+        @Override
+        public void appendBasicCriteria(HqlBuilder sql, String alias, FindVolumeCriteria criteria) {
+            super.appendBasicCriteria(sql, alias, criteria);
+            sql.appendEntityIdSetQuery(alias + ".node", criteria.getNodeIdSet());
+            sql.appendPrimitiveValueSetQuery(alias + ".pindexStatus", criteria.getIndexStatusSet());
+            sql.appendPrimitiveValueSetQuery(alias + ".pstreamStatus", criteria.getStreamStatusSet());
+            sql.appendPrimitiveValueSetQuery(alias + ".pvolumeType", criteria.getVolumeTypeSet());
         }
     }
 

@@ -28,11 +28,7 @@ import stroom.pipeline.structure.client.presenter.NewPropertyPresenter.NewProper
 import stroom.pipeline.structure.client.presenter.PropertyListPresenter.Source;
 
 public class NewPropertyViewImpl extends ViewImpl implements NewPropertyView {
-    public interface Binder extends UiBinder<Widget, NewPropertyViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     Label element;
     @UiField
@@ -41,7 +37,6 @@ public class NewPropertyViewImpl extends ViewImpl implements NewPropertyView {
     ItemListBox<Source> source;
     @UiField
     SimplePanel value;
-
     @Inject
     public NewPropertyViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -71,5 +66,8 @@ public class NewPropertyViewImpl extends ViewImpl implements NewPropertyView {
     @Override
     public void setValueWidget(final Widget widget) {
         value.setWidget(widget);
+    }
+
+    public interface Binder extends UiBinder<Widget, NewPropertyViewImpl> {
     }
 }

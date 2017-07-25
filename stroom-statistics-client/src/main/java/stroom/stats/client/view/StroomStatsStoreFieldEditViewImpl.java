@@ -26,11 +26,7 @@ import stroom.stats.client.presenter.StroomStatsStoreFieldEditPresenter;
 
 public class StroomStatsStoreFieldEditViewImpl extends ViewImpl implements StroomStatsStoreFieldEditPresenter.StroomStatsStoreFieldEditView {
 
-    public interface Binder extends UiBinder<Widget, StroomStatsStoreFieldEditViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     TextBox name;
 
@@ -52,5 +48,8 @@ public class StroomStatsStoreFieldEditViewImpl extends ViewImpl implements Stroo
     @Override
     public void setFieldName(final String fieldName) {
         name.setText(fieldName);
+    }
+
+    public interface Binder extends UiBinder<Widget, StroomStatsStoreFieldEditViewImpl> {
     }
 }

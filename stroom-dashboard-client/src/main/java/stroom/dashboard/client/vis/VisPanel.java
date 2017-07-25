@@ -39,6 +39,7 @@ public class VisPanel extends SimplePanel implements VisPane {
     private final Set<Long> loadedScripts;
     private JavaScriptObject vis;
     private boolean autoResize = true;
+
     public VisPanel(final Set<Long> loadedScripts) {
         this.loadedScripts = loadedScripts;
     }
@@ -321,7 +322,7 @@ public class VisPanel extends SimplePanel implements VisPane {
     }-*/;
 
     private final native void setData(final JavaScriptObject vis, final JavaScriptObject context,
-            final JavaScriptObject settings, final JavaScriptObject data)
+                                      final JavaScriptObject settings, final JavaScriptObject data)
             /*-{
             vis.setData(context, settings, data);
             }-*/;

@@ -31,7 +31,7 @@ public class LSResourceResolverImpl implements LSResourceResolver {
 
     @Override
     public LSInput resolveResource(final String type, final String namespaceURI, final String publicId,
-            final String systemId, final String baseURI) {
+                                   final String systemId, final String baseURI) {
         final SchemaSet allSchemas = xmlSchemaCache.getAllSchemas();
         final XMLSchema xmlSchema = allSchemas.getBestMatch(systemId, namespaceURI);
 

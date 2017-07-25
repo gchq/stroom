@@ -51,13 +51,13 @@ import java.util.Set;
 /**
  * Type of {@link StroomStreamHandler} that store the entries in the stream store.
  * There are some special rules about how this works.
- *
+ * <p>
  * This is fine if all the meta data indicates they belong to the same feed
  * 001.meta, 002.meta, 001.dat, 002.dat
- *
+ * <p>
  * This is also fine if 001.meta indicates 001 belongs to feed X and 002.meta
  * indicates 001 belongs to feed Y 001.meta, 002.meta, 001.dat, 002.dat
- *
+ * <p>
  * However if the global header map indicates feed Z and the files are send in
  * the following order 001.dat, 002.dat, 001.meta, 002.meta this is invalid ....
  * I.E. as soon as we add non header stream for a feed if the header turns out
@@ -71,24 +71,19 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     private final MetaDataStatistic metaDataStatistics;
     private final HashSet<Stream> streamSet;
     private final StroomZipNameSet stroomZipNameSet;
+    private final Map<String, Feed> feedMap = new HashMap<>();
+    private final Map<Feed, NestedStreamTarget> feedNestedStreamTarget = new HashMap<>();
+    private final Map<Feed, StreamTarget> feedStreamTarget = new HashMap<>();
+    private final ByteArrayOutputStream currentHeaderByteArrayOutputStream = new ByteArrayOutputStream();
     private boolean oneByOne;
-
     private StroomZipFileType currentFileType = null;
     private StroomZipEntry currentStroomZipEntry = null;
     private StroomZipEntry lastDatStroomZipEntry = null;
     private StroomZipEntry lastCtxStroomZipEntry = null;
-
-    private final Map<String, Feed> feedMap = new HashMap<>();
-
-    private final Map<Feed, NestedStreamTarget> feedNestedStreamTarget = new HashMap<>();
-    private final Map<Feed, StreamTarget> feedStreamTarget = new HashMap<>();
     private Feed currentFeed;
     private StreamType currentStreamType;
-
     private MetaMap globalMetaMap;
     private MetaMap currentMetaMap;
-
-    private final ByteArrayOutputStream currentHeaderByteArrayOutputStream = new ByteArrayOutputStream();
 
     public StreamTargetStroomStreamHandler(final StreamStore streamStore, final FeedService feedService,
                                            final MetaDataStatistic metaDataStatistics, final Feed feed, final StreamType streamType) {

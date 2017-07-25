@@ -23,13 +23,11 @@ import java.util.Map;
  * key.
  */
 public class ResourceKey implements SharedObject {
-    private static final long serialVersionUID = 8764851638854986846L;
-
-    private String name;
-    private String key;
-
     public static final String NAME = "name";
     public static final String KEY = "key";
+    private static final long serialVersionUID = 8764851638854986846L;
+    private String name;
+    private String key;
 
     public ResourceKey(final String name, final String key) {
         this.name = name;

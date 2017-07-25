@@ -30,16 +30,12 @@ import javax.persistence.UniqueConstraint;
 @Entity
 @Table(name = "POLICY", uniqueConstraints = @UniqueConstraint(columnNames = {SQLNameConstants.NAME}))
 public class Policy extends NamedEntity {
-    private static final long serialVersionUID = 4519634323788508083L;
-
     public static final String TABLE_NAME = SQLNameConstants.POLICY;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
     public static final String DATA = SQLNameConstants.DATA;
-
     public static final String ENTITY_TYPE = "Policy";
-
     public static final String MANAGE_POLICIES_PERMISSION = "Manage Policies";
-
+    private static final long serialVersionUID = 4519634323788508083L;
     private String data;
 
     public Policy() {
