@@ -125,8 +125,8 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         addFileSizeColumn();
         addBytesPDColumn();
         addCommitColumn();
-        addCommitDurationColumn();
-        addCommitCountColumn();
+//        addCommitDurationColumn();
+//        addCommitCountColumn();
         addVersionColumn();
         getView().addEndColumn(new EndColumn<>());
     }
@@ -300,26 +300,26 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
             public String getValue(final IndexShard indexShard) {
                 return ClientDateUtil.toISOString(indexShard.getCommitMs());
             }
-        }, "Commit", 150);
+        }, "Last Commit", 170);
     }
 
-    private void addCommitDurationColumn() {
-        getView().addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
-            @Override
-            public String getValue(final IndexShard indexShard) {
-                return ModelStringUtil.formatDurationString(indexShard.getCommitDurationMs());
-            }
-        }, "Commit Duration", 100);
-    }
-
-    private void addCommitCountColumn() {
-        getView().addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
-            @Override
-            public String getValue(final IndexShard indexShard) {
-                return intToString(indexShard.getCommitDocumentCount());
-            }
-        }, "Commit Doc Count", 120);
-    }
+//    private void addCommitDurationColumn() {
+//        getView().addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
+//            @Override
+//            public String getValue(final IndexShard indexShard) {
+//                return ModelStringUtil.formatDurationString(indexShard.getCommitDurationMs());
+//            }
+//        }, "Commit In", 100);
+//    }
+//
+//    private void addCommitCountColumn() {
+//        getView().addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
+//            @Override
+//            public String getValue(final IndexShard indexShard) {
+//                return intToString(indexShard.getCommitDocumentCount());
+//            }
+//        }, "Commit Count", 100);
+//    }
 
     private void addVersionColumn() {
         getView().addResizableColumn(new Column<IndexShard, String>(new TextCell()) {

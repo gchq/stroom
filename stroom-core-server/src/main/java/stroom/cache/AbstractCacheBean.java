@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.shared.CacheInfo;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -85,10 +86,6 @@ public abstract class AbstractCacheBean<K, V> implements CacheBean<K, V> {
         }
         return keys;
     }
-
-//    protected V get(final K key) {
-//        return getValue(ehcache.get(new Mapping<K, V>(key, null)));
-//    }
 
     @SuppressWarnings("unchecked")
     private V getValue(final Element element) {
@@ -173,7 +170,7 @@ public abstract class AbstractCacheBean<K, V> implements CacheBean<K, V> {
         void destroy();
     }
 
-    private static class Mapping<K, V> {
+    private static class Mapping<K, V> implements Serializable {
         private final K key;
         private final Function<? super K, ? extends V> mappingFunction;
 
