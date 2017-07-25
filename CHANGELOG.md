@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.43] - 2017-07-25
+
+* Issue **#351** : Fixed ehcache item eviction issue caused by ehcache internally using a deprecated API.
+
 ## [v5.0-beta.42] - 2017-07-24
 
 * Issue **#347** : Added a 'Source' node to pipelines to establish a proper root for a pipeline rather than an assumed one based on elements with no parent.
@@ -515,7 +519,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.42...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.43...HEAD
+[v5.0-beta.43]: https://github.com/gchq/stroom/compare/v5.0-beta.42...v5.0-beta.43
 [v5.0-beta.42]: https://github.com/gchq/stroom/compare/v5.0-beta.41...v5.0-beta.42
 [v5.0-beta.41]: https://github.com/gchq/stroom/compare/v5.0-beta.40...v5.0-beta.41
 [v5.0-beta.40]: https://github.com/gchq/stroom/compare/v5.0-beta.39...v5.0-beta.40
