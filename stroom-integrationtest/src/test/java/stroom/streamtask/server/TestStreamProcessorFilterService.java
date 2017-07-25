@@ -18,8 +18,6 @@ package stroom.streamtask.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.CommonTestScenarioCreator;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
@@ -33,6 +31,8 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterService;
 import stroom.streamtask.shared.StreamProcessorService;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestScenarioCreator;
 
 import javax.annotation.Resource;
 import java.util.List;

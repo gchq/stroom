@@ -27,12 +27,12 @@ import stroom.dashboard.shared.TabConfig;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
+import stroom.svg.client.Icon;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.svg.client.Icon;
 
 public abstract class AbstractComponentPresenter<V extends View> extends MyPresenterWidget<V>
         implements Component, HasDirtyHandlers {

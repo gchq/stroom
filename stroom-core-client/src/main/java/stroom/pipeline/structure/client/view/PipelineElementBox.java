@@ -25,7 +25,6 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.svg.client.SvgIcon;
-import stroom.svg.client.SvgImage;
 
 public class PipelineElementBox extends Box<PipelineElement> {
     public interface Style extends CssResource {

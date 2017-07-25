@@ -27,8 +27,8 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.explorer.client.presenter.ExplorerTreePresenter;
 import stroom.explorer.client.presenter.ExplorerTreeUiHandlers;
-import stroom.widget.button.client.SvgButton;
 import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.SvgButton;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 
 public class ExplorerTreeViewImpl extends ViewWithUiHandlers<ExplorerTreeUiHandlers>

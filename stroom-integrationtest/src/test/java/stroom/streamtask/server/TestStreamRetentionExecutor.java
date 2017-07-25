@@ -20,8 +20,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.CommonTestScenarioCreator;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
@@ -32,6 +30,8 @@ import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestScenarioCreator;
 import stroom.util.date.DateUtil;
 
 import javax.annotation.Resource;

@@ -26,9 +26,9 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.pipeline.stepping.client.presenter.StepControlPresenter.StepControlView;
 import stroom.pipeline.stepping.client.presenter.StepControlUIHandlers;
-import stroom.widget.button.client.SvgButton;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.SvgButton;
 
 public class StepControlViewImpl extends ViewWithUiHandlers<StepControlUIHandlers> implements StepControlView {
     public interface Binder extends UiBinder<Widget, StepControlViewImpl> {

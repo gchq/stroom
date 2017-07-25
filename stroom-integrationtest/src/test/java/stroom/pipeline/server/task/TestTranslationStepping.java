@@ -18,11 +18,11 @@ package stroom.pipeline.server.task;
 
 import org.junit.Ignore;
 import org.junit.Test;
-import stroom.test.AbstractCoreIntegrationTest;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.tools.StoreCreationTool;
 import stroom.task.server.TaskManager;
+import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.annotation.Resource;
 

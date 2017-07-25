@@ -18,12 +18,12 @@ package stroom.pipeline.server.task;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.test.AbstractProcessIntegrationTest;
-import stroom.test.CommonTranslationTest;
 import stroom.streamstore.server.MockStreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.server.StreamProcessorTaskExecutor;
+import stroom.test.AbstractProcessIntegrationTest;
+import stroom.test.CommonTranslationTest;
 import stroom.test.ComparisonHelper;
 import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.shared.Severity;

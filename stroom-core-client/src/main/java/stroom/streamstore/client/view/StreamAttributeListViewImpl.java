@@ -27,8 +27,8 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.streamstore.client.presenter.StreamAttributeListPresenter.StreamAttributeListView;
 import stroom.streamstore.client.presenter.StreamAttributeListUiHandlers;
-import stroom.widget.button.client.SvgButton;
 import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.SvgButton;
 
 public class StreamAttributeListViewImpl extends ViewWithUiHandlers<StreamAttributeListUiHandlers>
         implements StreamAttributeListView {

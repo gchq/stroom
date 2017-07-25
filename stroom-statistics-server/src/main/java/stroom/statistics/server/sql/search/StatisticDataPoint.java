@@ -16,9 +16,9 @@
 
 package stroom.statistics.server.sql.search;
 
+import stroom.statistics.server.sql.StatisticEvent;
 import stroom.statistics.server.sql.StatisticTag;
 import stroom.statistics.shared.StatisticType;
-import stroom.statistics.server.sql.StatisticEvent;
 
 import java.util.Collections;
 import java.util.HashMap;

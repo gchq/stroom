@@ -17,11 +17,11 @@
 package stroom.entity.server;
 
 import org.springframework.context.annotation.Scope;
+import stroom.dashboard.server.logging.EntityEventLog;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.EntityService;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.EntityServiceSaveAction;
-import stroom.dashboard.server.logging.EntityEventLog;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;

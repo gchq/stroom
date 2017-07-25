@@ -16,12 +16,12 @@
 
 package stroom.entity.shared;
 
+import stroom.util.shared.EqualsBuilder;
+import stroom.util.shared.HashCodeBuilder;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
 
 public class StringCriteria implements Serializable, HasIsConstrained, Clearable, Copyable<StringCriteria> {
     private static final long serialVersionUID = 4737939969786534908L;

@@ -17,8 +17,8 @@
 package stroom.task.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.entity.shared.Sort.Direction;
 import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.Sort.Direction;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.shared.FindTaskProgressCriteria;

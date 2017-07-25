@@ -18,9 +18,9 @@ package stroom.statistic.server;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import stroom.feed.MetaMap;
 import stroom.internalstatistics.MetaDataStatistic;
 import stroom.util.spring.StroomSpringProfiles;
-import stroom.feed.MetaMap;
 
 @Profile(StroomSpringProfiles.TEST)
 @Component

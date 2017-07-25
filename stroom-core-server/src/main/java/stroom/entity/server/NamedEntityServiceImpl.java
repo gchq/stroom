@@ -17,8 +17,8 @@
 package stroom.entity.server;
 
 import event.logging.BaseAdvancedQueryItem;
-import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.FieldMap;
+import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.FindNamedEntityCriteria;

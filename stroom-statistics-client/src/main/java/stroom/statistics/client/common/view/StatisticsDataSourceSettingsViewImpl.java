@@ -16,24 +16,19 @@
 
 package stroom.statistics.client.common.view;
 
-import java.util.List;
-
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.item.client.ItemListBox;
-import stroom.item.client.StringListBox;
 import stroom.statistics.client.common.presenter.StatisticsDataSourceSettingsPresenter.StatisticsDataSourceSettingsView;
 import stroom.statistics.client.common.presenter.StatisticsDataSourceSettingsUiHandlers;
+import stroom.statistics.shared.StatisticType;
 import stroom.statistics.shared.common.EventStoreTimeIntervalEnum;
 import stroom.statistics.shared.common.StatisticRollUpType;
-import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.statistics.shared.StatisticType;
 import stroom.widget.tickbox.client.view.TickBox;
 
 public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<StatisticsDataSourceSettingsUiHandlers>

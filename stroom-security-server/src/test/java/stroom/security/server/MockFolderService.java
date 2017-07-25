@@ -16,17 +16,15 @@
 
 package stroom.security.server;
 
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.server.MockDocumentEntityService;
-import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.FindFolderCriteria;
 import stroom.entity.shared.Folder;
-import stroom.entity.shared.FolderIdSet;
 import stroom.entity.shared.FolderService;
 import stroom.importexport.server.EntityPathResolver;
 import stroom.util.spring.StroomSpringProfiles;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 

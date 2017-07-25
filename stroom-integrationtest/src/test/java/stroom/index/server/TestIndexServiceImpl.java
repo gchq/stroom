@@ -18,7 +18,6 @@ package stroom.index.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.test.AbstractCoreIntegrationTest;
 import stroom.entity.server.util.BaseEntityDeProxyProcessor;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
@@ -29,6 +28,7 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexService;
 import stroom.query.api.v1.DocRef;
+import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.annotation.Resource;
 

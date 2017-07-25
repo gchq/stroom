@@ -16,9 +16,9 @@
 
 package stroom.task.shared;
 
+import stroom.entity.shared.FindNamedEntityCriteria;
 import stroom.entity.shared.Sort;
 import stroom.entity.shared.Sort.Direction;
-import stroom.entity.shared.FindNamedEntityCriteria;
 import stroom.util.shared.CompareUtil;
 
 import java.util.Comparator;

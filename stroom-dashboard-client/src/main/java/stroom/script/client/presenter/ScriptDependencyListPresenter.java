@@ -27,15 +27,15 @@ import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
-import stroom.query.api.v1.DocRef;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.explorer.shared.EntityData;
 import stroom.node.client.view.WrapperView;
+import stroom.query.api.v1.DocRef;
 import stroom.script.shared.Script;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.widget.button.client.ButtonView;
 import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.ButtonView;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -18,7 +18,6 @@ package stroom.pipeline.server.task;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.test.AbstractProcessIntegrationTest;
 import stroom.node.server.NodeCache;
 import stroom.streamstore.server.MockStreamStore;
 import stroom.streamstore.server.tools.StoreCreationTool;
@@ -29,6 +28,7 @@ import stroom.streamtask.server.StreamProcessorTaskExecutor;
 import stroom.streamtask.server.StreamTaskCreator;
 import stroom.streamtask.shared.StreamTask;
 import stroom.task.server.TaskManager;
+import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.ComparisonHelper;
 import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.shared.Severity;

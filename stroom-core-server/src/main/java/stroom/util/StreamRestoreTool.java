@@ -19,6 +19,7 @@ package stroom.util;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.mutable.MutableInt;
 import stroom.entity.shared.SQLNameConstants;
+import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
 import stroom.node.shared.Volume;
 import stroom.streamstore.shared.Stream;
@@ -31,9 +32,6 @@ import stroom.util.io.LineReader;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.thread.ThreadScopeRunnable;
-import stroom.feed.MetaMap;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.mutable.MutableInt;
 
 import java.io.BufferedReader;
 import java.io.File;

@@ -36,9 +36,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.annotation.Resource;
-import java.io.IOException;
-
 @Component
 @Scope(value = StroomScope.TASK)
 public class MetaDataHolder extends AbstractHolder<MetaDataHolder> implements Holder {

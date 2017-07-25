@@ -16,6 +16,8 @@
 
 package stroom.index.shared;
 
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import stroom.entity.shared.AuditedEntity;
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
@@ -24,8 +26,6 @@ import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.util.shared.HasDisplayValue;
 import stroom.util.shared.ModelStringUtil;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

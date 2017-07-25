@@ -29,8 +29,8 @@ import stroom.entity.shared.EntityServiceDeleteAction;
 import stroom.entity.shared.FindNamedEntityCriteria;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.StringCriteria.MatchStyle;
-import stroom.widget.button.client.ButtonView;
 import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 

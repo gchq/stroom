@@ -16,7 +16,6 @@
 
 package stroom.entity.server;
 
-import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;

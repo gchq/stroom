@@ -18,12 +18,11 @@ package stroom.index.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.test.AbstractCoreIntegrationTest;
-import stroom.entity.shared.Sort.Direction;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.FolderService;
 import stroom.entity.shared.Range;
+import stroom.entity.shared.Sort.Direction;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.Index.PartitionBy;
@@ -37,6 +36,7 @@ import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeService;
 import stroom.query.api.v1.DocRef;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
 
 import javax.annotation.Resource;

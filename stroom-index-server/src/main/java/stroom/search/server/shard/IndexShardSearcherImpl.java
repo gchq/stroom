@@ -24,15 +24,14 @@ import org.apache.lucene.store.NIOFSDirectory;
 import org.apache.lucene.store.NoLockFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.index.server.AbstractIndexShard;
 import stroom.index.server.IndexShardUtil;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.search.server.SearchException;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 

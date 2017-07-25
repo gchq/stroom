@@ -18,7 +18,6 @@ package stroom.statistics.common;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.test.AbstractCoreIntegrationTest;
 import stroom.datasource.api.v1.DataSource;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
@@ -31,12 +30,13 @@ import stroom.query.api.v1.DocRef;
 import stroom.statistics.server.sql.datasource.FindStatisticsEntityCriteria;
 import stroom.statistics.server.sql.datasource.StatisticStoreEntityService;
 import stroom.statistics.server.sql.datasource.StatisticsDataSourceProvider;
-import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.shared.StatisticsDataSourceData;
+import stroom.statistics.shared.common.StatisticField;
 import stroom.streamstore.server.fs.FileSystemUtil;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.test.FileSystemTestUtil;
 
 import javax.annotation.Resource;

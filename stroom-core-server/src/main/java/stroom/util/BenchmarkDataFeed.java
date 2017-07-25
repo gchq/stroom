@@ -16,6 +16,13 @@
 
 package stroom.util;
 
+import stroom.task.server.StroomThreadGroup;
+import stroom.util.date.DateUtil;
+import stroom.util.io.StreamUtil;
+import stroom.util.shared.ModelStringUtil;
+import stroom.util.thread.CustomThreadFactory;
+
+import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -33,15 +40,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPOutputStream;
-
-import javax.net.ssl.HttpsURLConnection;
-
-import stroom.task.server.StroomThreadGroup;
-import stroom.util.date.DateUtil;
-import stroom.util.io.StreamUtil;
-import stroom.util.shared.ModelStringUtil;
-import stroom.util.thread.CustomThreadFactory;
-import stroom.feed.MetaMap;
 
 public class BenchmarkDataFeed {
     private static class DataFeedResult {

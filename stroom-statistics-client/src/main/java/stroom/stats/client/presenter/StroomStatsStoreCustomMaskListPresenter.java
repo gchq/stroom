@@ -44,7 +44,6 @@ import stroom.stats.shared.StroomStatsStoreEntityData;
 import stroom.stats.shared.StroomStatsStoreFieldChangeAction;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.ImageButtonView;
 
 import java.util.ArrayList;
 import java.util.Collection;

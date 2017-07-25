@@ -17,7 +17,6 @@
 package stroom.index.server;
 
 import stroom.cache.CacheBean;
-import stroom.index.server.IndexShardWriter;
 
 /**
  * API into our index shard writer cache.

@@ -18,8 +18,6 @@ package stroom.streamstore.server.upload;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.CommonTestScenarioCreator;
 import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
 import stroom.proxy.repo.StroomZipFile;
@@ -37,6 +35,8 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.task.server.TaskManager;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.StreamUtil;
 import stroom.util.task.ServerTask;
 

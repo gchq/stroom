@@ -32,8 +32,8 @@ import stroom.streamstore.shared.StreamVolume;
 import stroom.streamtask.server.AbstractBatchDeleteExecutor;
 import stroom.streamtask.server.BatchIdTransactionHelper;
 import stroom.streamtask.shared.StreamTask;
-import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.spring.StroomScope;
+import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;

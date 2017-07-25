@@ -18,10 +18,10 @@ package stroom.datasource;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import stroom.servicediscovery.ExternalService;
-import stroom.servicediscovery.ServiceDiscoverer;
 import stroom.query.api.v1.DocRef;
 import stroom.security.SecurityContext;
+import stroom.servicediscovery.ExternalService;
+import stroom.servicediscovery.ServiceDiscoverer;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;

@@ -16,8 +16,6 @@
 
 package stroom.search.server.shard;
 
-import java.util.List;
-
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexableField;
@@ -38,6 +36,8 @@ import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.fs.serializable.RASegmentInputStream;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.io.StreamUtil;
+
+import java.util.List;
 
 public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {
     private String searchField = null;

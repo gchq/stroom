@@ -17,6 +17,8 @@
 package stroom.entity.server.util;
 
 
+import stroom.util.ArgsUtil;
+
 import javax.net.ssl.HttpsURLConnection;
 import java.io.File;
 import java.io.FileInputStream;
@@ -27,12 +29,6 @@ import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-
-import javax.net.ssl.HttpsURLConnection;
-
-import stroom.feed.MetaMap;
-import stroom.util.ArgsUtil;
-import stroom.util.CIStringHashMap;
 
 /**
  * <p>

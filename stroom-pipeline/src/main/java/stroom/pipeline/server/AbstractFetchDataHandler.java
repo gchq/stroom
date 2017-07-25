@@ -18,11 +18,11 @@ package stroom.pipeline.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.dashboard.server.logging.StreamEventLog;
 import stroom.entity.shared.EntityServiceException;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.io.StreamCloser;
-import stroom.dashboard.server.logging.StreamEventLog;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.server.errorhandler.ProcessException;

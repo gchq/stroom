@@ -18,8 +18,8 @@ package stroom.statistics.server.sql;
 
 import org.apache.commons.lang.mutable.MutableLong;
 import stroom.statistics.server.sql.exception.StatisticsEventValidationException;
-import stroom.statistics.shared.StatisticType;
 import stroom.statistics.server.sql.rollup.RolledUpStatisticEvent;
+import stroom.statistics.shared.StatisticType;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -17,9 +17,9 @@
 package stroom.dashboard.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.entity.shared.DataSourceFields;
 import stroom.dashboard.shared.FetchDataSourceFieldsAction;
 import stroom.datasource.DataSourceProviderRegistry;
+import stroom.entity.shared.DataSourceFields;
 import stroom.security.SecurityContext;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;

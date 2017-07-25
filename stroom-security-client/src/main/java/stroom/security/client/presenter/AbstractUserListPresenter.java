@@ -17,7 +17,6 @@
 package stroom.security.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -26,10 +25,9 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.security.shared.UserRef;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.ImageButtonView;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 
 public abstract class AbstractUserListPresenter extends MyPresenterWidget<UserListView> implements UserListUiHandlers {

@@ -27,8 +27,8 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.streamstore.client.presenter.EntityIdSetPresenter.EntityIdSetView;
 import stroom.streamstore.client.presenter.EntityIdSetUiHandlers;
-import stroom.widget.button.client.SvgButton;
 import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.SvgButton;
 
 public class EntityIdSetViewImpl extends ViewWithUiHandlers<EntityIdSetUiHandlers>implements EntityIdSetView {
     public interface Binder extends UiBinder<Widget, EntityIdSetViewImpl> {

@@ -20,11 +20,11 @@ import org.apache.commons.lang.mutable.MutableLong;
 import org.junit.Test;
 import stroom.statistics.server.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.server.sql.rollup.RollUpBitMask;
-import stroom.statistics.shared.common.StatisticField;
-import stroom.statistics.shared.common.StatisticRollUpType;
+import stroom.statistics.server.sql.rollup.RolledUpStatisticEvent;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticsDataSourceData;
-import stroom.statistics.server.sql.rollup.RolledUpStatisticEvent;
+import stroom.statistics.shared.common.StatisticField;
+import stroom.statistics.shared.common.StatisticRollUpType;
 import stroom.util.test.StroomUnitTest;
 
 import java.util.ArrayList;

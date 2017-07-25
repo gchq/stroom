@@ -28,8 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.AbstractCacheBean;
 
-import java.util.function.Function;
-
 public abstract class AbstractPoolCacheBean<K, V> extends AbstractCacheBean<K, ObjectPool<PoolItem<K, V>>>
         implements PoolBean<K, V> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractPoolCacheBean.class);

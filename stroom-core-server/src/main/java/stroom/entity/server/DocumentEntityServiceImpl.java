@@ -18,8 +18,8 @@ package stroom.entity.server;
 
 import event.logging.BaseAdvancedQueryItem;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.FieldMap;
+import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;

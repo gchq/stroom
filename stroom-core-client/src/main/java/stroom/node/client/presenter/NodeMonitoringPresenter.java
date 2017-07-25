@@ -42,15 +42,15 @@ import stroom.node.shared.FetchNodeInfoAction;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeInfoResult;
 import stroom.streamstore.client.presenter.ActionDataProvider;
-import stroom.widget.button.client.ButtonView;
+import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.svg.client.Icon;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
 public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<NodeInfoResult>> implements Refreshable {

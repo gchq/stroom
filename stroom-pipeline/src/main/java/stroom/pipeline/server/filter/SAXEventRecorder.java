@@ -17,7 +17,6 @@
 package stroom.pipeline.server.filter;
 
 import net.sf.saxon.Configuration;
-import net.sf.saxon.om.DocumentInfo;
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.xpath.XPathEvaluator;
 import org.springframework.context.annotation.Scope;

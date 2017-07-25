@@ -20,14 +20,13 @@ import stroom.query.api.v1.ExpressionItem;
 import stroom.query.api.v1.ExpressionOperator;
 import stroom.query.api.v1.ExpressionTerm;
 import stroom.query.api.v1.ExpressionTerm.Condition;
+import stroom.statistics.server.sql.search.FilterTermsTree.OperatorNode;
+import stroom.statistics.server.sql.search.FilterTermsTree.TermNode;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-
-import stroom.statistics.server.sql.search.FilterTermsTree.OperatorNode;
-import stroom.statistics.server.sql.search.FilterTermsTree.TermNode;
 
 public class FilterTermsTreeBuilder {
     private FilterTermsTreeBuilder() {

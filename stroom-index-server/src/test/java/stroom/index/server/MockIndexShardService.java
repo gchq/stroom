@@ -16,23 +16,21 @@
 
 package stroom.index.server;
 
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
 import stroom.entity.server.MockEntityService;
 import stroom.entity.shared.BaseResultList;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexShardService;
-import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.spring.StroomSpringProfiles;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
 import java.nio.file.Files;
 import java.nio.file.Path;
 

@@ -19,7 +19,6 @@ package stroom.search;
 import org.junit.Assert;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-
 import stroom.index.server.IndexShardManager;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.pipeline.server.task.PipelineStreamProcessor;

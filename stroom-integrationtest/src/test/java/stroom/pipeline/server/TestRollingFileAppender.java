@@ -18,7 +18,6 @@ package stroom.pipeline.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.test.AbstractProcessIntegrationTest;
 import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
@@ -36,6 +35,7 @@ import stroom.pipeline.shared.XSLTService;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.RecordCount;
+import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.ComparisonHelper;
 import stroom.test.PipelineTestUtil;
 import stroom.test.StroomProcessTestFileUtil;

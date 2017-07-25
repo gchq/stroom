@@ -16,6 +16,11 @@
 
 package stroom.index.server;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
@@ -26,14 +31,9 @@ import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.concurrent.SimpleExecutor;
-import stroom.util.test.StroomUnitTest;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.CheckedLimit;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicInteger;

@@ -32,7 +32,6 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.safehtml.shared.SafeUri;
-import com.google.gwt.safehtml.shared.SafeUriHostedModeUtils;
 import com.google.gwt.safehtml.shared.UriUtils;
 import com.google.gwt.user.client.ui.Image;
 import stroom.data.table.client.CellTableViewImpl.MenuResources;

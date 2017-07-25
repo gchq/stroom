@@ -19,8 +19,6 @@ package stroom.statistics.client.common.presenter;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.entity.client.event.DirtyEvent;
-import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.EntityEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;

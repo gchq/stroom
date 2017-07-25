@@ -23,7 +23,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.entity.client.EntityItemListBox;
-import stroom.entity.shared.SharedDocRef;
 import stroom.item.client.ItemListBox;
 import stroom.query.api.v1.DocRef;
 import stroom.query.api.v1.ExpressionTerm.Condition;

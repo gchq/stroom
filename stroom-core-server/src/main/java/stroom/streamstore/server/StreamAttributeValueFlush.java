@@ -17,8 +17,8 @@
 package stroom.streamstore.server;
 
 import stroom.entity.shared.Flushable;
-import stroom.streamstore.shared.Stream;
 import stroom.feed.MetaMap;
+import stroom.streamstore.shared.Stream;
 
 public interface StreamAttributeValueFlush extends Flushable {
     void persitAttributes(final Stream stream, final boolean append, final MetaMap metaMap);

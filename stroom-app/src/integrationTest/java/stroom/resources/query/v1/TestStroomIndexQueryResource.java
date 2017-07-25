@@ -18,9 +18,9 @@ import stroom.query.api.v1.QueryKey;
 import stroom.query.api.v1.ResultRequest;
 import stroom.query.api.v1.SearchRequest;
 import stroom.query.api.v1.SearchResponse;
-import stroom.resources.authorisation.v1.AuthorizationHelper;
 import stroom.resources.RegisteredService;
 import stroom.resources.ResourcePaths;
+import stroom.resources.authorisation.v1.AuthorizationHelper;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;

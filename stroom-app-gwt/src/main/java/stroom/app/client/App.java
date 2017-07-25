@@ -18,7 +18,6 @@ package stroom.app.client;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.Window;
 import com.gwtplatform.mvp.client.DelayedBindRegistry;
 import stroom.app.client.gin.AppGinjector;
 

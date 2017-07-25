@@ -18,10 +18,10 @@ package stroom.streamtask.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.internalstatistics.MetaDataStatistic;
-import stroom.feed.MetaMap;
 import stroom.proxy.repo.MetaMapFactory;
 import stroom.proxy.repo.StroomHeaderStreamHandler;
 import stroom.proxy.repo.StroomStreamHandler;

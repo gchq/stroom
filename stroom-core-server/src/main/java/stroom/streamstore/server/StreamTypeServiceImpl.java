@@ -21,7 +21,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.NamedEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
-import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;

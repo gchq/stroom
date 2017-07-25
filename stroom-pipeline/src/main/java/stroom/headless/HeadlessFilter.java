@@ -21,13 +21,13 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
+import stroom.feed.MetaMap;
 import stroom.pipeline.server.ErrorWriter;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.filter.AbstractXMLFilter;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
-import stroom.feed.MetaMap;
 import stroom.xml.event.simple.StartElement;
 import stroom.xml.event.simple.StartPrefixMapping;
 

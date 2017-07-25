@@ -20,10 +20,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.util.XMLMarshallerUtil;
+import stroom.policy.shared.DataRetentionPolicy;
 import stroom.policy.shared.FindPolicyCriteria;
 import stroom.policy.shared.Policy;
 import stroom.policy.shared.PolicyService;
-import stroom.policy.shared.DataRetentionPolicy;
 
 import javax.inject.Inject;
 import javax.xml.bind.JAXBContext;

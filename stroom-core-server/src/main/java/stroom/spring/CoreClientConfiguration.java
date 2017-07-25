@@ -29,7 +29,9 @@ import stroom.datafeed.server.DataFeedServiceImpl;
 import stroom.dispatch.server.DispatchServiceImpl;
 import stroom.dispatch.shared.DispatchService;
 import stroom.entity.server.SpringRequestFactoryServlet;
+import stroom.feed.MetaMap;
 import stroom.feed.server.RemoteFeedServiceRPC;
+import stroom.proxy.repo.MetaMapFactory;
 import stroom.servlet.DebugServlet;
 import stroom.servlet.DynamicCSSServlet;
 import stroom.servlet.EchoServlet;
@@ -40,8 +42,6 @@ import stroom.servlet.SessionResourceStoreImpl;
 import stroom.servlet.StatusServlet;
 import stroom.util.config.StroomProperties;
 import stroom.util.thread.ThreadLocalBuffer;
-import stroom.feed.MetaMap;
-import stroom.proxy.repo.MetaMapFactory;
 
 import java.util.Properties;
 

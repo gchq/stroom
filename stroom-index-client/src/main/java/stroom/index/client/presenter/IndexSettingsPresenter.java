@@ -25,15 +25,14 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
-import stroom.index.shared.Index;
-import stroom.index.shared.Index.PartitionBy;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
+import stroom.index.shared.Index;
+import stroom.index.shared.Index.PartitionBy;
 import stroom.item.client.ItemListBox;
 import stroom.pipeline.shared.SupportedRetentionAge;
 

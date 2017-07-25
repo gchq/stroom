@@ -21,7 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 import stroom.feed.MetaMap;
-import stroom.feed.MetaMap;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsFacadeFactory;
 import stroom.util.date.DateUtil;

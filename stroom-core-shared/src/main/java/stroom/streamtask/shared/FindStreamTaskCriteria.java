@@ -20,7 +20,6 @@ import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.HasIsConstrained;
-import stroom.entity.shared.SQLNameConstants;
 import stroom.node.shared.Node;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.streamstore.shared.FindStreamCriteria;

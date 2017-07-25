@@ -18,10 +18,10 @@ package stroom.statistics.server.sql.rollup;
 
 import org.springframework.context.annotation.Scope;
 import stroom.security.Insecure;
-import stroom.statistics.shared.common.CustomRollUpMask;
-import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.statistics.shared.StatisticsDataSourceFieldChangeAction;
+import stroom.statistics.shared.common.CustomRollUpMask;
+import stroom.statistics.shared.common.StatisticField;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;

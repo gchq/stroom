@@ -24,8 +24,8 @@ import stroom.core.client.MenuKeys;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.monitoring.client.presenter.TaskProgressMonitoringPresenter;
 import stroom.security.client.ClientSecurityContext;
-import stroom.task.shared.FindTaskProgressAction;
 import stroom.svg.client.SvgPresets;
+import stroom.task.shared.FindTaskProgressAction;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 public class TaskProgressMonitoringPlugin extends MonitoringPlugin<TaskProgressMonitoringPresenter> {

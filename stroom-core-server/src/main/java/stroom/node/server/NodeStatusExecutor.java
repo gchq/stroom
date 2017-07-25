@@ -20,8 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import stroom.statistics.internal.InternalStatisticsFacadeFactory;
 import stroom.jobsystem.server.JobTrackedSchedule;
+import stroom.statistics.internal.InternalStatisticsFacadeFactory;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 

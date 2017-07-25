@@ -20,8 +20,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
-import stroom.widget.button.client.SvgButton;
 import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.SvgButton;
 
 public class SmallSpinner extends Composite {
     public interface Style extends CssResource {

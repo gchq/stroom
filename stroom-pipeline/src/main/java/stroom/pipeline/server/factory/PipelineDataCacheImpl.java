@@ -17,13 +17,6 @@
 package stroom.pipeline.server.factory;
 
 import net.sf.ehcache.CacheManager;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.TimeUnit;
-
-import javax.inject.Inject;
-
 import org.springframework.stereotype.Component;
 import stroom.cache.AbstractCacheBean;
 import stroom.entity.shared.VersionedEntityDecorator;
@@ -37,8 +30,6 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import net.sf.ehcache.CacheManager;
-import stroom.util.shared.Task;
 
 @Insecure
 @Component

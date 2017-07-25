@@ -18,11 +18,11 @@ package stroom.pipeline.server.task;
 
 import org.junit.Ignore;
 import org.junit.Test;
-import stroom.test.AbstractProcessIntegrationTest;
 import stroom.node.server.NodeCache;
 import stroom.streamstore.server.MockStreamStore;
 import stroom.streamstore.server.tools.StoreCreationTool;
 import stroom.task.server.TaskManager;
+import stroom.test.AbstractProcessIntegrationTest;
 
 import javax.annotation.Resource;
 

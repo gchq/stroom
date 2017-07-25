@@ -35,12 +35,12 @@ import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.statistics.client.common.presenter.StatisticsCustomMaskListPresenter.MaskHolder;
-import stroom.statistics.shared.common.CustomRollUpMask;
-import stroom.statistics.shared.common.RollUpBitMaskPermGenerationAction;
-import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.statistics.shared.StatisticsDataSourceFieldChangeAction;
+import stroom.statistics.shared.common.CustomRollUpMask;
+import stroom.statistics.shared.common.RollUpBitMaskPermGenerationAction;
+import stroom.statistics.shared.common.StatisticField;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 

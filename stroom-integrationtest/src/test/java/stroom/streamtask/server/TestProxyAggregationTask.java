@@ -18,8 +18,6 @@ package stroom.streamtask.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.CommonTestScenarioCreator;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.shared.Feed;
 import stroom.io.SeekableInputStream;
@@ -31,6 +29,8 @@ import stroom.streamstore.server.fs.serializable.RANestedInputStream;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.spring.DummyTask;

@@ -23,26 +23,22 @@ import stroom.query.api.v1.ExpressionOperator.Op;
 import stroom.query.api.v1.ExpressionTerm.Condition;
 import stroom.query.api.v1.Query;
 import stroom.query.api.v1.SearchRequest;
-import stroom.statistics.server.sql.search.FilterTermsTree;
-import stroom.statistics.server.sql.search.FindEventCriteria;
 import stroom.statistics.server.sql.datasource.StatisticStoreEntityService;
 import stroom.statistics.server.sql.rollup.RollUpBitMask;
+import stroom.statistics.server.sql.rollup.RolledUpStatisticEvent;
+import stroom.statistics.server.sql.search.FilterTermsTree;
+import stroom.statistics.server.sql.search.FindEventCriteria;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.statistics.shared.common.CustomRollUpMask;
 import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.common.StatisticRollUpType;
-import stroom.statistics.server.sql.rollup.RolledUpStatisticEvent;
 import stroom.util.date.DateUtil;
 import stroom.util.test.StroomUnitTest;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 public class TestSQLStatisticEventStore2 extends StroomUnitTest {
     private static final long EVENT_TIME = 1234L;
@@ -66,9 +62,9 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
         final RolledUpStatisticEvent rolledUpStatisticEvent = SQLStatisticEventStore.generateTagRollUps(event,
                 statisticsDataSource);
 
-        assertEquals(4, rolledUpStatisticEvent.getPermutationCount());
+        Assert.assertEquals(4, rolledUpStatisticEvent.getPermutationCount());
 
-        final List<TimeAgnosticStatisticEvent> timeAgnosticStatisticEvents = new ArrayList<TimeAgnosticStatisticEvent>();
+        final List<TimeAgnosticStatisticEvent> timeAgnosticStatisticEvents = new ArrayList<>();
 
         // define all the tag/value perms we expect to get back
         final List<List<StatisticTag>> expectedTagPerms = new ArrayList<List<StatisticTag>>();
@@ -89,19 +85,19 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
         for (final TimeAgnosticStatisticEvent eventPerm : rolledUpStatisticEvent) {
             // make sure we don't already have one like this.
-            assertFalse(timeAgnosticStatisticEvents.contains(eventPerm));
+            Assert.assertFalse(timeAgnosticStatisticEvents.contains(eventPerm));
 
-            assertEquals(event.getName(), eventPerm.getName());
-            assertEquals(event.getType(), eventPerm.getType());
-            assertEquals(event.getCount(), eventPerm.getCount());
-            assertEquals(event.getTagList().size(), eventPerm.getTagList().size());
+            Assert.assertEquals(event.getName(), eventPerm.getName());
+            Assert.assertEquals(event.getType(), eventPerm.getType());
+            Assert.assertEquals(event.getCount(), eventPerm.getCount());
+            Assert.assertEquals(event.getTagList().size(), eventPerm.getTagList().size());
 
             System.out.println(eventPerm.getTagList());
 
-            assertTrue(expectedTagPerms.contains(eventPerm.getTagList()));
+            Assert.assertTrue(expectedTagPerms.contains(eventPerm.getTagList()));
 
             for (int i = 0; i < event.getTagList().size(); i++) {
-                assertEquals(event.getTagList().get(i).getTag(), eventPerm.getTagList().get(i).getTag());
+                Assert.assertEquals(event.getTagList().get(i).getTag(), eventPerm.getTagList().get(i).getTag());
                 Assert.assertTrue(event.getTagList().get(i).getValue().equals(eventPerm.getTagList().get(i).getValue())
                         || RollUpBitMask.ROLL_UP_TAG_VALUE.equals(eventPerm.getTagList().get(i).getValue()));
             }
@@ -117,7 +113,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
         final RolledUpStatisticEvent rolledUpStatisticEvent = SQLStatisticEventStore.generateTagRollUps(event,
                 statisticsDataSource);
 
-        assertEquals(3, rolledUpStatisticEvent.getPermutationCount());
+        Assert.assertEquals(3, rolledUpStatisticEvent.getPermutationCount());
 
         final List<TimeAgnosticStatisticEvent> timeAgnosticStatisticEvents = new ArrayList<TimeAgnosticStatisticEvent>();
 
@@ -144,19 +140,19 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
         for (final TimeAgnosticStatisticEvent eventPerm : rolledUpStatisticEvent) {
             // make sure we don't already have one like this.
-            assertFalse(timeAgnosticStatisticEvents.contains(eventPerm));
+            Assert.assertFalse(timeAgnosticStatisticEvents.contains(eventPerm));
 
-            assertEquals(event.getName(), eventPerm.getName());
-            assertEquals(event.getType(), eventPerm.getType());
-            assertEquals(event.getCount(), eventPerm.getCount());
-            assertEquals(event.getTagList().size(), eventPerm.getTagList().size());
+            Assert.assertEquals(event.getName(), eventPerm.getName());
+            Assert.assertEquals(event.getType(), eventPerm.getType());
+            Assert.assertEquals(event.getCount(), eventPerm.getCount());
+            Assert.assertEquals(event.getTagList().size(), eventPerm.getTagList().size());
 
             System.out.println(eventPerm.getTagList());
 
-            assertTrue(expectedTagPerms.contains(eventPerm.getTagList()));
+            Assert.assertTrue(expectedTagPerms.contains(eventPerm.getTagList()));
 
             for (int i = 0; i < event.getTagList().size(); i++) {
-                assertEquals(event.getTagList().get(i).getTag(), eventPerm.getTagList().get(i).getTag());
+                Assert.assertEquals(event.getTagList().get(i).getTag(), eventPerm.getTagList().get(i).getTag());
                 Assert.assertTrue(event.getTagList().get(i).getValue().equals(eventPerm.getTagList().get(i).getValue())
                         || RollUpBitMask.ROLL_UP_TAG_VALUE.equals(eventPerm.getTagList().get(i).getValue()));
             }
@@ -172,16 +168,16 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
         final RolledUpStatisticEvent rolledUpStatisticEvent = SQLStatisticEventStore.generateTagRollUps(event,
                 statisticsDataSource);
 
-        assertEquals(1, rolledUpStatisticEvent.getPermutationCount());
+        Assert.assertEquals(1, rolledUpStatisticEvent.getPermutationCount());
 
         for (final TimeAgnosticStatisticEvent eventPerm : rolledUpStatisticEvent) {
-            assertEquals(event.getName(), eventPerm.getName());
-            assertEquals(event.getType(), eventPerm.getType());
-            assertEquals(event.getCount(), eventPerm.getCount());
-            assertEquals(event.getTagList().size(), eventPerm.getTagList().size());
+            Assert.assertEquals(event.getName(), eventPerm.getName());
+            Assert.assertEquals(event.getType(), eventPerm.getType());
+            Assert.assertEquals(event.getCount(), eventPerm.getCount());
+            Assert.assertEquals(event.getTagList().size(), eventPerm.getTagList().size());
 
             for (int i = 0; i < event.getTagList().size(); i++) {
-                assertEquals(event.getTagList().get(i).getTag(), eventPerm.getTagList().get(i).getTag());
+                Assert.assertEquals(event.getTagList().get(i).getTag(), eventPerm.getTagList().get(i).getTag());
                 Assert.assertTrue(event.getTagList().get(i).getValue().equals(eventPerm.getTagList().get(i).getValue())
                         || RollUpBitMask.ROLL_UP_TAG_VALUE.equals(eventPerm.getTagList().get(i).getValue()));
             }
@@ -198,16 +194,16 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
         final RolledUpStatisticEvent rolledUpStatisticEvent = SQLStatisticEventStore.generateTagRollUps(event,
                 statisticsDataSource);
 
-        assertEquals(1, rolledUpStatisticEvent.getPermutationCount());
+        Assert.assertEquals(1, rolledUpStatisticEvent.getPermutationCount());
 
         for (final TimeAgnosticStatisticEvent eventPerm : rolledUpStatisticEvent) {
-            assertEquals(event.getName(), eventPerm.getName());
-            assertEquals(event.getType(), eventPerm.getType());
-            assertEquals(event.getCount(), eventPerm.getCount());
-            assertEquals(event.getTagList().size(), eventPerm.getTagList().size());
+            Assert.assertEquals(event.getName(), eventPerm.getName());
+            Assert.assertEquals(event.getType(), eventPerm.getType());
+            Assert.assertEquals(event.getCount(), eventPerm.getCount());
+            Assert.assertEquals(event.getTagList().size(), eventPerm.getTagList().size());
 
             for (int i = 0; i < event.getTagList().size(); i++) {
-                assertEquals(event.getTagList().get(i).getTag(), eventPerm.getTagList().get(i).getTag());
+                Assert.assertEquals(event.getTagList().get(i).getTag(), eventPerm.getTagList().get(i).getTag());
                 Assert.assertTrue(event.getTagList().get(i).getValue().equals(eventPerm.getTagList().get(i).getValue())
                         || RollUpBitMask.ROLL_UP_TAG_VALUE.equals(eventPerm.getTagList().get(i).getValue()));
             }

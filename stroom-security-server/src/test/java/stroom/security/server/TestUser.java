@@ -19,7 +19,6 @@ package stroom.security.server;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.security.server.User;
 import stroom.security.shared.UserStatus;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;

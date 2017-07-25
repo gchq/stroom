@@ -20,7 +20,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.test.AbstractCoreIntegrationTest;
 import stroom.dashboard.server.QueryHistoryCleanExecutor;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardService;
@@ -42,6 +41,7 @@ import stroom.query.api.v1.ExpressionTerm.Condition;
 import stroom.query.api.v1.Query;
 import stroom.security.server.UserService;
 import stroom.security.shared.UserRef;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.thread.ThreadUtil;
 
 import javax.annotation.Resource;

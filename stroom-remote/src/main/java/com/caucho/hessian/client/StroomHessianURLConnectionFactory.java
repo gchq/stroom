@@ -16,13 +16,12 @@
 
 package com.caucho.hessian.client;
 
+import javax.net.ssl.HttpsURLConnection;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import javax.net.ssl.HttpsURLConnection;
 
 public class StroomHessianURLConnectionFactory implements HessianConnectionFactory {
     private static final Logger log = Logger.getLogger(HessianURLConnectionFactory.class.getName());

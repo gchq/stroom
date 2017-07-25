@@ -32,11 +32,11 @@ import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
-import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticsDataSourceData;
-import stroom.widget.button.client.ButtonView;
+import stroom.statistics.shared.common.StatisticField;
 import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 import java.util.ArrayList;

@@ -21,15 +21,15 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.CommonTestControl;
-import stroom.test.CommonTestScenarioCreator;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexShardService;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestControl;
+import stroom.test.CommonTestScenarioCreator;
 
 import javax.annotation.Resource;
 import java.io.IOException;

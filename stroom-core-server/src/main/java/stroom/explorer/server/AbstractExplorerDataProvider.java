@@ -27,7 +27,6 @@ import stroom.entity.shared.FindNamedEntityCriteria;
 import stroom.entity.shared.FindService;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
-import stroom.entity.shared.Sort.Direction;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;

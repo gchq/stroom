@@ -17,11 +17,11 @@
 package stroom.streamtask.server;
 
 import org.junit.Test;
-import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.CommonTestScenarioCreator;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.node.server.NodeCache;
 import stroom.streamtask.shared.StreamTaskService;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestScenarioCreator;
 
 import javax.annotation.Resource;
 

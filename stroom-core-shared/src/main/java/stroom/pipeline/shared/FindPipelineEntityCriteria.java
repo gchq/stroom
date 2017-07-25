@@ -22,9 +22,6 @@ import stroom.entity.shared.FindDocumentEntityCriteria;
 import java.util.HashSet;
 import java.util.Set;
 
-import java.util.HashSet;
-import java.util.Set;
-
 public class FindPipelineEntityCriteria extends FindDocumentEntityCriteria implements EntityMatcher<PipelineEntity> {
     private static final long serialVersionUID = 1L;
 

@@ -18,13 +18,13 @@ package stroom.streamstore.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.CommonTestScenarioCreator;
 import stroom.feed.shared.Feed;
 import stroom.jobsystem.server.MockTask;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.server.FileSystemCleanExecutor;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.FileUtil;
 
 import javax.annotation.Resource;

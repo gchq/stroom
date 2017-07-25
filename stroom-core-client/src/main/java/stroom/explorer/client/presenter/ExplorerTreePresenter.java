@@ -38,11 +38,11 @@ import stroom.explorer.shared.ExplorerData;
 import stroom.security.client.event.CurrentUserChangedEvent;
 import stroom.security.client.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.svg.client.Icon;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.SelectionType;
 

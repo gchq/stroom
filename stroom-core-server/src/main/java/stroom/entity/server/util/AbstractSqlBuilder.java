@@ -22,14 +22,12 @@ import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.IncludeExcludeEntityIdSet;
 import stroom.entity.shared.PageRequest;
-import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
 import stroom.entity.shared.Sort;
 import stroom.entity.shared.Sort.Direction;
 import stroom.entity.shared.StringCriteria;
 
 import javax.persistence.Query;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;

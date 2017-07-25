@@ -18,8 +18,6 @@ package stroom.importexport.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.CommonTestControl;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardConfig;
@@ -52,6 +50,8 @@ import stroom.query.api.v1.ExpressionTerm.Condition;
 import stroom.resource.server.ResourceStore;
 import stroom.script.shared.Script;
 import stroom.script.shared.ScriptService;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestControl;
 import stroom.util.shared.ResourceKey;
 import stroom.visualisation.shared.FindVisualisationCriteria;
 import stroom.visualisation.shared.Visualisation;

@@ -16,19 +16,15 @@
 
 package stroom.index.server;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import stroom.test.AbstractProcessIntegrationTest;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexService;
-import stroom.index.shared.IndexShard;
 import stroom.pipeline.server.PipelineMarshaller;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
@@ -43,6 +39,7 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.StreamHolder;
 import stroom.streamstore.shared.Stream;
+import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.PipelineTestUtil;
 import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.io.StreamUtil;

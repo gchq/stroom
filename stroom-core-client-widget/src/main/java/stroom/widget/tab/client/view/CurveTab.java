@@ -27,10 +27,9 @@ import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Image;
-import stroom.svg.client.SvgImage;
 import stroom.svg.client.Icon;
-import stroom.widget.tab.client.presenter.ImageIcon;
 import stroom.svg.client.SvgIcon;
+import stroom.widget.tab.client.presenter.ImageIcon;
 
 public class CurveTab extends AbstractTab {
     public interface Style extends CssResource {

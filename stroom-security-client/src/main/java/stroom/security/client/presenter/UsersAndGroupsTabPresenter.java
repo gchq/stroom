@@ -29,8 +29,8 @@ import stroom.security.shared.CreateUserAction;
 import stroom.security.shared.DeleteUserAction;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserRef;
-import stroom.widget.button.client.ButtonView;
 import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 

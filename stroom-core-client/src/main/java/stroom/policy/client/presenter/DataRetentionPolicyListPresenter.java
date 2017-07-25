@@ -26,9 +26,9 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.policy.shared.DataRetentionRule;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
+import stroom.svg.client.SvgPreset;
 import stroom.util.client.BorderUtil;
 import stroom.widget.button.client.ButtonView;
-import stroom.svg.client.SvgPreset;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.List;

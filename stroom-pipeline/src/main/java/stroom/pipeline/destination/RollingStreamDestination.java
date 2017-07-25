@@ -18,11 +18,11 @@ package stroom.pipeline.destination;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.feed.MetaMap;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.shared.StreamAttributeConstants;
-import stroom.feed.MetaMap;
 
 import java.io.IOException;
 import java.io.OutputStream;

@@ -19,11 +19,11 @@ package stroom.streamtask.server;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import stroom.feed.MetaMap;
 import stroom.streamstore.server.StreamFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
-import stroom.feed.MetaMap;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestStreamFactory extends StroomUnitTest {

@@ -27,9 +27,9 @@ import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.cell.list.client.CustomCellList;
 import stroom.dashboard.client.query.QueryFavouritesPresenter.QueryFavouritesView;
 import stroom.dashboard.shared.QueryEntity;
+import stroom.svg.client.SvgPreset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
-import stroom.svg.client.SvgPreset;
 
 public class QueryFavouritesViewImpl extends ViewImpl implements QueryFavouritesView {
     private final Widget widget;

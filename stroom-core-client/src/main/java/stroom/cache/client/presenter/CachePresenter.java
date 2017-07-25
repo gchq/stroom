@@ -22,8 +22,8 @@ import com.gwtplatform.mvp.client.View;
 import stroom.cache.shared.CacheRow;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.client.Icon;
+import stroom.svg.client.SvgPresets;
 
 public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView> {
     public static final String LIST = "LIST";

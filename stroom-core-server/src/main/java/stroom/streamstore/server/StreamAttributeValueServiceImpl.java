@@ -22,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.SystemEntityServiceImpl;
-import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;

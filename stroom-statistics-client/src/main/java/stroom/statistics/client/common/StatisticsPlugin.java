@@ -31,11 +31,11 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.node.client.ClientPropertyCache;
 import stroom.security.client.ClientSecurityContext;
 import stroom.statistics.client.common.presenter.StatisticsDataSourcePresenter;
+import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.StatisticType;
 import stroom.statistics.shared.common.CustomRollUpMask;
 import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.common.StatisticRollUpType;
-import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.statistics.shared.StatisticType;
 
 import java.util.List;
 import java.util.Set;

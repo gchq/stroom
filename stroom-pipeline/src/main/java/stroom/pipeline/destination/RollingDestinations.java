@@ -27,13 +27,11 @@ import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomShutdown;
 import stroom.util.task.TaskMonitor;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
-
-import javax.inject.Inject;
 
 @Component
 public class RollingDestinations {

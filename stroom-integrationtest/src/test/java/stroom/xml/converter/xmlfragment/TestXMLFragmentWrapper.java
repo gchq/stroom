@@ -18,8 +18,8 @@ package stroom.xml.converter.xmlfragment;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.test.AbstractProcessIntegrationTest;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
+import stroom.test.AbstractProcessIntegrationTest;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.task.TaskScopeContextHolder;
 import stroom.xml.F2XTestUtil;

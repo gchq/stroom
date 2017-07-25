@@ -16,6 +16,7 @@
 
 package stroom.index.server;
 
+import org.springframework.context.annotation.Scope;
 import stroom.entity.cluster.FindFlushServiceClusterTask;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.FlushIndexShardAction;
@@ -25,7 +26,6 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
 
 import javax.inject.Inject;
 

@@ -17,7 +17,6 @@
 package stroom.dashboard.client.query;
 
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -29,11 +28,10 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.dashboard.client.main.SearchModel.Mode;
 import stroom.dashboard.client.query.QueryPresenter.QueryView;
+import stroom.svg.client.SvgPreset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.FabButton;
-import stroom.widget.button.client.ImageButtonView;
-import stroom.svg.client.SvgPreset;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 public class QueryViewImpl extends ViewWithUiHandlers<QueryUiHandlers>

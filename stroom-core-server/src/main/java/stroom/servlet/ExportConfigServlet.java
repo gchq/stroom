@@ -17,11 +17,11 @@
 package stroom.servlet;
 
 import org.springframework.stereotype.Component;
-import stroom.query.api.v1.DocRef;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.Folder;
 import stroom.importexport.server.ImportExportService;
 import stroom.node.server.StroomPropertyService;
+import stroom.query.api.v1.DocRef;
 import stroom.resource.server.ResourceStore;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ResourceKey;

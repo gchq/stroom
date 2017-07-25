@@ -17,9 +17,9 @@
 package stroom.pipeline.server;
 
 import org.springframework.context.annotation.Scope;
+import stroom.dashboard.server.logging.StreamEventLog;
 import stroom.entity.shared.EntityServiceException;
 import stroom.feed.shared.FeedService;
-import stroom.dashboard.server.logging.StreamEventLog;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.factory.PipelineDataCache;
 import stroom.pipeline.server.factory.PipelineFactory;

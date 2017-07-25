@@ -18,7 +18,6 @@ package stroom.statistics.shared.common;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.statistics.shared.common.EventStoreTimeIntervalEnum;
 
 public class TestEventStoreTimeIntervalEnum {
     @Test

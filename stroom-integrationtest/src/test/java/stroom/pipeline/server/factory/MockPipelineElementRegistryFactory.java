@@ -16,11 +16,6 @@
 
 package stroom.pipeline.server.factory;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import stroom.pipeline.server.source.SourceElement;
-import stroom.util.spring.StroomSpringProfiles;
 import org.springframework.context.annotation.Profile;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.filter.RecordCountFilter;
@@ -34,6 +29,7 @@ import stroom.pipeline.server.parser.DSParser;
 import stroom.pipeline.server.parser.JSONParser;
 import stroom.pipeline.server.parser.XMLFragmentParser;
 import stroom.pipeline.server.parser.XMLParser;
+import stroom.pipeline.server.source.SourceElement;
 import stroom.pipeline.server.writer.FileAppender;
 import stroom.pipeline.server.writer.JSONWriter;
 import stroom.pipeline.server.writer.StreamAppender;

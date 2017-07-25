@@ -16,20 +16,13 @@
 
 package stroom.jobsystem.server;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import javax.annotation.Resource;
-
-import stroom.entity.server.util.HqlBuilder;
-import stroom.entity.server.util.StroomEntityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
+import stroom.entity.server.util.HqlBuilder;
+import stroom.entity.server.util.StroomEntityManager;
 import stroom.jobsystem.shared.ClusterLock;
 
 import javax.annotation.Resource;

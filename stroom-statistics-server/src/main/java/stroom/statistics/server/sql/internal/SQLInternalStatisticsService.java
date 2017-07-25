@@ -5,13 +5,13 @@ import io.vavr.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.statistics.internal.InternalStatisticEvent;
-import stroom.statistics.internal.InternalStatisticsService;
 import stroom.node.server.StroomPropertyService;
 import stroom.query.api.v1.DocRef;
+import stroom.statistics.internal.InternalStatisticEvent;
+import stroom.statistics.internal.InternalStatisticsService;
+import stroom.statistics.server.sql.StatisticEvent;
 import stroom.statistics.server.sql.StatisticTag;
 import stroom.statistics.server.sql.Statistics;
-import stroom.statistics.server.sql.StatisticEvent;
 
 import javax.inject.Inject;
 import java.util.List;

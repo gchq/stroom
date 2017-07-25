@@ -24,7 +24,6 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ButtonBase;
 import stroom.svg.client.SvgPreset;
-import stroom.widget.util.client.ResourceCache;
 
 public class SvgButton extends ButtonBase implements ButtonView {
     /**

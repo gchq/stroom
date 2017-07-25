@@ -32,10 +32,9 @@ import stroom.explorer.shared.ExplorerData;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.shared.Stream;
 import stroom.streamtask.shared.StreamProcessor;
+import stroom.svg.client.Icon;
 import stroom.svg.client.SvgIcon;
 import stroom.util.client.ImageUtil;
-import stroom.svg.client.Icon;
-import stroom.widget.tab.client.presenter.ImageIcon;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.SelectionType;
 

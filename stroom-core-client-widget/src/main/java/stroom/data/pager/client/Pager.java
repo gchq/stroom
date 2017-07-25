@@ -32,8 +32,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.HasRows;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.RangeChangeEvent;
-import stroom.widget.button.client.SvgButton;
 import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.SvgButton;
 
 public class Pager extends AbstractPager {
     public interface Binder extends UiBinder<Widget, Pager> {

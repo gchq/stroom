@@ -28,10 +28,10 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.SteppingFilterSettingsView;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterUiHandlers;
+import stroom.svg.client.SvgPresets;
 import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
 import stroom.widget.button.client.SvgButton;
-import stroom.svg.client.SvgPresets;
 
 public class SteppingFilterViewImpl extends ViewWithUiHandlers<SteppingFilterUiHandlers>
         implements SteppingFilterSettingsView {

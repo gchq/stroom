@@ -18,7 +18,6 @@ package stroom.search;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.test.AbstractCoreIntegrationTest;
 import stroom.dashboard.shared.DataSourceFieldsMap;
 import stroom.datasource.api.v1.DataSourceField;
 import stroom.datasource.api.v1.DataSourceField.DataSourceFieldType;
@@ -34,6 +33,7 @@ import stroom.query.api.v1.ExpressionOperator;
 import stroom.query.api.v1.ExpressionOperator.Op;
 import stroom.query.api.v1.ExpressionTerm.Condition;
 import stroom.search.server.IndexDataSourceFieldUtil;
+import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.annotation.Resource;
 import java.util.List;

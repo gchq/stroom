@@ -18,8 +18,6 @@ package stroom.streamstore.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.CommonTestScenarioCreator;
 import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
 import stroom.query.api.v1.ExpressionTerm.Condition;
@@ -32,6 +30,8 @@ import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeKeyService;
 import stroom.streamstore.shared.StreamAttributeMapService;
 import stroom.streamstore.shared.StreamType;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestScenarioCreator;
 import stroom.util.date.DateUtil;
 
 import javax.annotation.Resource;

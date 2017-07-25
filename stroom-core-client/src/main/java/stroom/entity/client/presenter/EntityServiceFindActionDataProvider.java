@@ -22,9 +22,9 @@ import stroom.data.grid.client.OrderByColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.Sort.Direction;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.ResultList;
+import stroom.entity.shared.Sort.Direction;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.util.shared.SharedObject;
 

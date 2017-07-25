@@ -22,7 +22,6 @@ import org.springframework.test.context.ContextConfiguration;
 import stroom.dashboard.server.logging.spring.EventLoggingConfiguration;
 import stroom.dashboard.spring.DashboardConfiguration;
 import stroom.index.spring.IndexConfiguration;
-import stroom.pipeline.spring.PipelineConfiguration;
 import stroom.script.spring.ScriptConfiguration;
 import stroom.search.spring.SearchConfiguration;
 import stroom.security.spring.SecurityConfiguration;

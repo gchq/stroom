@@ -27,14 +27,13 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.Sort.Direction;
-import stroom.entity.shared.Sort.Direction;
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.FindDBTableCriteria;
 import stroom.node.shared.FindSystemTableStatusAction;
 import stroom.streamstore.client.presenter.ActionDataProvider;
-import stroom.util.shared.ModelStringUtil;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.client.Icon;
+import stroom.svg.client.SvgPresets;
+import stroom.util.shared.ModelStringUtil;
 
 public class DatabaseTablesMonitoringPresenter extends ContentTabPresenter<DataGridView<DBTableStatus>> implements ColumnSortEvent.Handler {
     private final FindDBTableCriteria criteria;

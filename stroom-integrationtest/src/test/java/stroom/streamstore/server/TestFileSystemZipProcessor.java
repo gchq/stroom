@@ -18,8 +18,6 @@ package stroom.streamstore.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.CommonTestScenarioCreator;
 import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
@@ -27,6 +25,8 @@ import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.streamstore.server.fs.serializable.RANestedInputStream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.server.StreamTargetStroomStreamHandler;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.util.zip.StroomHeaderArguments;

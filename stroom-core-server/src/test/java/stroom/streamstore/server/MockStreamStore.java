@@ -22,16 +22,13 @@ import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Period;
+import stroom.feed.MetaMap;
 import stroom.io.SeekableInputStream;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.collections.TypedMap;
 import stroom.util.spring.StroomSpringProfiles;
-import stroom.feed.MetaMap;
-import event.logging.BaseAdvancedQueryItem;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

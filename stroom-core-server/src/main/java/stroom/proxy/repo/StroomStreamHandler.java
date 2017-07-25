@@ -16,8 +16,6 @@
 
 package stroom.proxy.repo;
 
-import stroom.proxy.repo.StroomZipEntry;
-
 import java.io.IOException;
 
 public interface StroomStreamHandler {

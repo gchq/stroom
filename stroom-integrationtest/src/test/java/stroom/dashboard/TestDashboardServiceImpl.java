@@ -17,7 +17,6 @@
 package stroom.dashboard;
 
 import org.junit.Test;
-import stroom.test.AbstractCoreIntegrationTest;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardConfig;
@@ -33,6 +32,7 @@ import stroom.entity.shared.Res;
 import stroom.query.api.v1.DocRef;
 import stroom.script.shared.Script;
 import stroom.script.shared.ScriptService;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.visualisation.shared.Visualisation;
 import stroom.visualisation.shared.VisualisationService;
 

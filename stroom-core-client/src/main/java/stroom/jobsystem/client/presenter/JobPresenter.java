@@ -22,8 +22,8 @@ import com.gwtplatform.mvp.client.View;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.jobsystem.shared.Job;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.client.Icon;
+import stroom.svg.client.SvgPresets;
 
 public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> {
     public static final String JOB_LIST = "JOB_LIST";

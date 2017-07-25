@@ -32,9 +32,9 @@ import stroom.streamstore.client.presenter.ClassificationWrappedStreamPresenter;
 import stroom.streamstore.client.presenter.StreamTaskPresenter;
 import stroom.streamstore.shared.Stream;
 import stroom.streamtask.shared.StreamProcessor;
-import stroom.util.client.ImageUtil;
-import stroom.svg.client.SvgPreset;
 import stroom.svg.client.Icon;
+import stroom.svg.client.SvgPreset;
+import stroom.util.client.ImageUtil;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 

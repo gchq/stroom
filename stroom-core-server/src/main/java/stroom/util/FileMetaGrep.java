@@ -25,9 +25,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
-import java.io.File;
-import java.io.IOException;
-
 public class FileMetaGrep extends AbstractCommandLineTool {
     private String[] repoPathParts = null;
     Map<String, String> matchMap;

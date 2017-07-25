@@ -16,6 +16,15 @@
 
 package stroom.statistics.shared;
 
+import stroom.statistics.shared.common.CustomRollUpMask;
+import stroom.statistics.shared.common.StatisticField;
+import stroom.util.shared.SharedObject;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,16 +32,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
-
-import stroom.statistics.shared.common.CustomRollUpMask;
-import stroom.statistics.shared.common.StatisticField;
-import stroom.util.shared.SharedObject;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "data")

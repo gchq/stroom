@@ -29,7 +29,6 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
-import stroom.cell.info.client.SvgCell;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.event.DataSelectionEvent;
@@ -40,7 +39,6 @@ import stroom.data.table.client.CellTableViewImpl;
 import stroom.data.table.client.CellTableViewImpl.BasicResources;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
-import stroom.svg.client.SvgPreset;
 import stroom.util.client.ImageUtil;
 
 import java.util.HashSet;

@@ -17,13 +17,13 @@
 package stroom.jobsystem.server;
 
 import org.junit.Test;
-import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.CommonTestControl;
 import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobNode;
 import stroom.jobsystem.shared.JobNodeService;
 import stroom.jobsystem.shared.JobService;
 import stroom.node.server.NodeCache;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestControl;
 
 import javax.annotation.Resource;
 

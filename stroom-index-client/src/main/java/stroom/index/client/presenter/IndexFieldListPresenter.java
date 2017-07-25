@@ -36,8 +36,8 @@ import stroom.entity.client.presenter.HasWrite;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
-import stroom.widget.button.client.ButtonView;
 import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 import java.util.ArrayList;
