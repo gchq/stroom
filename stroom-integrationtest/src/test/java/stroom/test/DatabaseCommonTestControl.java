@@ -16,11 +16,11 @@
 
 package stroom.test;
 
-import net.sf.ehcache.CacheManager;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
+import stroom.cache.StroomCacheManager;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.QueryEntity;
 import stroom.dictionary.shared.Dictionary;
@@ -101,7 +101,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
     @Resource
     private LifecycleServiceImpl lifecycleServiceImpl;
     @Resource
-    private CacheManager cacheManager;
+    private StroomCacheManager cacheManager;
 
     private ApplicationContext applicationContext;
 
@@ -194,7 +194,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
         deleteEntity(Rack.class);
 
         databaseCommonTestControlTransactionHelper.clearContext();
-        cacheManager.clearAll();
+        cacheManager.clear();
 
         final Map<String, Clearable> clearableBeanMap = applicationContext.getBeansOfType(Clearable.class, false,
                 false);
