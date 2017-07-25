@@ -26,9 +26,7 @@ dependencies {
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
-    compile libs.commons_lang
     compile libs.ehcache_core
-    compile libs.hibernate_jpa_api
     compile libs.javax_inject
     compile libs.lucene_analyzers_common
     compile libs.lucene_core
