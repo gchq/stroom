@@ -122,7 +122,7 @@ public class TestPipelineModel extends StroomUnitTest {
         pipelineData.addElement(ELEM_TYPE, "test");
         pipelineData.addLink("unknown", "test");
 
-        test(null, pipelineData, 1, 0, 0, 0, 0, 0, 0, 0);
+        test(null, pipelineData, 0, 0, 0, 0, 0, 0, 0, 0);
     }
 
     @Test
@@ -157,7 +157,7 @@ public class TestPipelineModel extends StroomUnitTest {
         override.removeElement(ELEM_TYPE, "test2");
         override.addLink("test2", "test3");
 
-        test(baseStack, override, 1, 1, 0, 0, 0, 0, 0, 1);
+        test(baseStack, override, 0, 1, 0, 0, 0, 0, 0, 1);
     }
 
     @Test

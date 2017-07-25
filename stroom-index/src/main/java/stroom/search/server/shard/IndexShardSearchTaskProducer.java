@@ -90,7 +90,7 @@ public class IndexShardSearchTaskProducer extends AbstractTaskProducer {
         if (!clusterSearchTask.isTerminated()) {
             // First try and get a task that will make use of an open shard.
             for (final IndexShardSearchTask t : taskQueue) {
-                if (indexShardSearcherCache.get(t.getIndexShardId()) != null) {
+                if (indexShardSearcherCache.isCached(t.getIndexShardId())) {
                     if (taskQueue.remove(t)) {
                         task = t;
                         break;

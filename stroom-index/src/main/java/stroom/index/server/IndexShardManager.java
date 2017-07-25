@@ -34,7 +34,7 @@ public interface IndexShardManager extends FindDeleteService<FindIndexShardCrite
 
     void update(long indexShardId, Integer documentCount, Long commitDurationMs, Long commitMs, Long fileSize);
 
-    IndexShard load(IndexShard indexShard);
+    IndexShard load(long indexShardId);
 
     void shutdown();
 

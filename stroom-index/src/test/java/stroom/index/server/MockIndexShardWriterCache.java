@@ -19,7 +19,6 @@ package stroom.index.server;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import stroom.cache.AbstractCacheBean.Destroyable;
-import stroom.index.shared.IndexShard;
 import stroom.util.spring.StroomSpringProfiles;
 
 import java.util.Map;
@@ -29,7 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component("indexShardWriterCache")
 public class MockIndexShardWriterCache implements IndexShardWriterCache {
     private final int maxDocumentCount;
-    private final Map<IndexShard, IndexShardWriter> writers = new ConcurrentHashMap<>();
+    private final Map<Long, IndexShardWriter> writers = new ConcurrentHashMap<>();
 
     MockIndexShardWriterCache() {
         this(Integer.MAX_VALUE);
@@ -40,17 +39,17 @@ public class MockIndexShardWriterCache implements IndexShardWriterCache {
     }
 
     @Override
-    public IndexShardWriter getOrCreate(final IndexShard key) {
+    public IndexShardWriter getOrCreate(final Long key) {
         return writers.computeIfAbsent(key, k -> new MockIndexShardWriter(maxDocumentCount));
     }
 
     @Override
-    public IndexShardWriter getQuiet(final IndexShard key) {
+    public IndexShardWriter getQuiet(final Long key) {
         return writers.get(key);
     }
 
     @Override
-    public void remove(final IndexShard key) {
+    public void remove(final Long key) {
         writers.remove(key);
     }
 
@@ -65,7 +64,7 @@ public class MockIndexShardWriterCache implements IndexShardWriterCache {
         writers.values().forEach(IndexShardWriter::flush);
     }
 
-    public Map<IndexShard, IndexShardWriter> getWriters() {
+    Map<Long, IndexShardWriter> getWriters() {
         return writers;
     }
 }

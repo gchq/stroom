@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 @Profile(StroomSpringProfiles.PROD)
-public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShard, IndexShardWriter> implements IndexShardWriterCache {
+public class IndexShardWriterCacheImpl extends AbstractCacheBean<Long, IndexShardWriter> implements IndexShardWriterCache {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardWriterCacheImpl.class);
     private static final int MAX_CACHE_ENTRIES = 1000000;
 
@@ -61,18 +61,18 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShard, Ind
     }
 
     @Override
-    public IndexShardWriter getOrCreate(final IndexShard key) {
-        return computeIfAbsent(key, this::create);
+    public IndexShardWriter getOrCreate(final Long indexShardId) {
+        return computeIfAbsent(indexShardId, this::create);
     }
 
     @Override
-    public IndexShardWriter getQuiet(final IndexShard key) {
-        return super.getQuiet(key);
+    public IndexShardWriter getQuiet(final Long indexShardId) {
+        return super.getQuiet(indexShardId);
     }
 
-    private IndexShardWriter create(final IndexShard indexShard) {
+    private IndexShardWriter create(final Long indexShardId) {
         // Load the current index shard.
-        final IndexShard loaded = indexShardManager.load(indexShard);
+        final IndexShard loaded = indexShardManager.load(indexShardId);
 
         if (loaded == null) {
             throw new IndexException("Index shard is no longer in the database");
@@ -138,7 +138,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShard, Ind
     public void flushAll() {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-        final List<IndexShard> keys = getKeys();
+        final List<Long> keys = getKeys();
         keys.forEach(key -> {
             final IndexShardWriter indexShardWriter = getQuiet(key);
             if (indexShardWriter != null) {

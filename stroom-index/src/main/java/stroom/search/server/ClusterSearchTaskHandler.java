@@ -312,9 +312,9 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
 
                             // Make sure the query was created successfully.
                             if (query.getQuery() == null) {
-                                throw new SearchException("Failed to build LUCENE query given expression");
+                                throw new SearchException("Failed to build Lucene query given expression");
                             } else if (LOGGER.isDebugEnabled()) {
-                                LOGGER.debug("Lucence Query is " + query.toString());
+                                LOGGER.debug("Lucene Query is " + query.toString());
                             }
                         } catch (final Exception e) {
                             error(e.getMessage(), e);

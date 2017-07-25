@@ -59,8 +59,6 @@ public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStruct
     @UiField
     ResizeSimplePanel pipelineReferences;
     @UiField
-    TickBox advancedMode;
-    @UiField
     Hyperlink viewSource;
 
     @Inject
@@ -133,13 +131,6 @@ public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStruct
     void onRestoreClick(final ClickEvent event) {
         if (getUiHandlers() != null) {
             getUiHandlers().onRestore(event);
-        }
-    }
-
-    @UiHandler("advancedMode")
-    void onAdvancedMode(final ValueChangeEvent<TickBoxState> event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().setAdvancedMode(event.getValue().toBoolean());
         }
     }
 

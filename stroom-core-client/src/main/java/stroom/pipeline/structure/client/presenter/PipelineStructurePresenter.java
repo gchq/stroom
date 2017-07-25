@@ -153,7 +153,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
             }
         });
 
-        setAdvancedMode(false);
+        setAdvancedMode(true);
         enableButtons();
     }
 

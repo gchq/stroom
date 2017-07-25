@@ -30,7 +30,6 @@ import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestScenarioCreator;
 import stroom.index.server.FieldFactory;
 import stroom.index.server.IndexShardKeyUtil;
-import stroom.index.server.IndexShardManager;
 import stroom.index.server.IndexShardWriterCache;
 import stroom.index.server.Indexer;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -41,8 +40,8 @@ import stroom.index.shared.IndexShardService;
 import stroom.query.shared.IndexField;
 import stroom.query.shared.IndexField.AnalyzerType;
 import stroom.query.shared.IndexFields;
-import stroom.search.server.IndexShardSearcher;
-import stroom.search.server.IndexShardSearcherImpl;
+import stroom.search.server.shard.IndexShardSearcher;
+import stroom.search.server.shard.IndexShardSearcherImpl;
 import stroom.search.server.MaxHitCollector;
 
 import javax.annotation.Resource;
@@ -107,7 +106,6 @@ public class TestBasicSearch extends AbstractCoreIntegrationTest {
 
         final IndexReader[] searchables = new IndexReader[readers.length];
         for (i = 0; i < readers.length; i++) {
-            readers[i].open();
             searchables[i] = readers[i].getReader();
         }
         final MultiReader multiReader = new MultiReader(searchables);
@@ -141,7 +139,7 @@ public class TestBasicSearch extends AbstractCoreIntegrationTest {
 
         // Close readers.
         for (final IndexShardSearcher reader : readers) {
-            reader.close();
+            reader.destroy();
         }
     }
 }

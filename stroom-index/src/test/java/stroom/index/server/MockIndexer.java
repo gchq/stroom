@@ -49,7 +49,7 @@ public class MockIndexer implements Indexer {
     public void addDocument(final IndexShardKey key, final Document document) {
         try {
             final IndexShard indexShard = indexShardKeyCache.getOrCreate(key);
-            final IndexShardWriter indexShardWriter = indexShardWriterCache.getOrCreate(indexShard);
+            final IndexShardWriter indexShardWriter = indexShardWriterCache.getOrCreate(indexShard.getId());
             indexShardWriter.addDocument(document);
         } catch (final Exception e) {
             throw new RuntimeException(e.getMessage(), e);

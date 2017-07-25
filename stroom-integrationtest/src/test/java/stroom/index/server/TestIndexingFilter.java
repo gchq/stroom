@@ -64,8 +64,6 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
     @Resource
     private FeedHolder feedHolder;
     @Resource
-    private MockIndexShardManager indexShardManager;
-    @Resource
     private MockIndexShardWriterCache indexShardWriterCache;
     @Resource
     private MockIndexShardKeyCache indexShardKeyCache;
@@ -219,7 +217,7 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
         if (indexShardWriterCache.getWriters().size() > 0) {
             Assert.assertEquals(1, indexShardWriterCache.getWriters().size());
             final IndexShard indexShard = indexShardKeyCache.getOrCreate(indexShardKey);
-            Assert.assertTrue(indexShardWriterCache.getWriters().containsKey(indexShard));
+            Assert.assertTrue(indexShardWriterCache.getWriters().containsKey(indexShard.getId()));
 
             // Get a writer from the pool.
             for (final IndexShardWriter writer : indexShardWriterCache.getWriters().values()) {

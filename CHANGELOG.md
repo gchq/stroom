@@ -19,6 +19,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 
 
+## [v5.0-beta.42] - 2017-07-24
+
+* Issue **#347** : Added a 'Source' node to pipelines to establish a proper root for a pipeline rather than an assumed one based on elements with no parent.
+
+* Issue **#350** : Removed 'Advanced Mode' from pipeline structure editor as it is no longer very useful.
+
+* Issue **#349** : Improved index searcher cache to ensure searchers are not affected by writers closing.
+
 ## [v5.0-beta.41] - 2017-07-20
 
 * Issue **#342** : Changed the way indexing is performed to ensure index readers reference open writers correctly.
@@ -521,6 +529,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
 [v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
 
+[v5.0-beta.42]: https://github.com/gchq/stroom/compare/v5.0-beta.41...v5.0-beta.42
 [v5.0-beta.41]: https://github.com/gchq/stroom/compare/v5.0-beta.40...v5.0-beta.41
 [v5.0-beta.40]: https://github.com/gchq/stroom/compare/v5.0-beta.39...v5.0-beta.40
 [v5.0-beta.39]: https://github.com/gchq/stroom/compare/v5.0-beta.38...v5.0-beta.39

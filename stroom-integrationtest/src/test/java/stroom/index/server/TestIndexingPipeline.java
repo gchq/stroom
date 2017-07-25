@@ -128,7 +128,7 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
         Assert.assertEquals(1, indexShardWriterCache.getWriters().size());
 
         // Get the writer from the pool.
-        final Map<IndexShard, IndexShardWriter> writers = indexShardWriterCache.getWriters();
+        final Map<Long, IndexShardWriter> writers = indexShardWriterCache.getWriters();
         final MockIndexShardWriter writer = (MockIndexShardWriter) writers.values().iterator().next();
 
         // Check that we indexed 4 documents.
