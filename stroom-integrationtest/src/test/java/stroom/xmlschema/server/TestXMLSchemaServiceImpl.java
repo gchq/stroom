@@ -49,7 +49,7 @@ public class TestXMLSchemaServiceImpl extends AbstractCoreIntegrationTest {
         criteria.setNamespaceURI("event-logging:3");
         list = xmlSchemaService.find(criteria);
         Assert.assertNotNull(list);
-        Assert.assertEquals(1, list.size());
+        Assert.assertEquals(2, list.size());
 
         criteria = new FindXMLSchemaCriteria();
         criteria.setSystemId("file://event-logging-v3.0.0.xsd");
@@ -61,6 +61,6 @@ public class TestXMLSchemaServiceImpl extends AbstractCoreIntegrationTest {
         criteria.setSchemaGroup("EVENTS");
         list = xmlSchemaService.find(criteria);
         Assert.assertNotNull(list);
-        Assert.assertEquals(1, list.size());
+        Assert.assertEquals(2, list.size());
     }
 }
