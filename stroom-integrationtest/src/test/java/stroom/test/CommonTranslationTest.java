@@ -30,7 +30,6 @@ import stroom.streamtask.server.StreamTaskCreator;
 import stroom.streamtask.shared.StreamTask;
 import stroom.task.server.TaskManager;
 import stroom.task.server.TaskMonitorImpl;
-import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.spring.StroomSpringProfiles;
 
 import javax.annotation.Resource;

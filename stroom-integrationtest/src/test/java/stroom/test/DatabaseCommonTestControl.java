@@ -30,8 +30,6 @@ import stroom.entity.shared.Folder;
 import stroom.entity.shared.Res;
 import stroom.feed.shared.Feed;
 import stroom.index.server.IndexShardManager;
-import stroom.index.server.IndexShardWriterImpl;
-import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardService;
@@ -148,13 +146,8 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
 
         // Make sure we don't delete database entries without clearing the pool.
         indexShardManager.shutdown();
+        indexShardManager.deleteFromDisk();
 
-        for (final IndexShard indexShard : indexShardService.find(new FindIndexShardCriteria())) {
-            final IndexShardWriterImpl writer = new IndexShardWriterImpl(indexShardService, null, indexShard.getIndex(),
-                    indexShard);
-            writer.delete();
-            writer.deleteFromDisk();
-        }
         deleteEntity(IndexShard.class);
         deleteEntity(Index.class);
 

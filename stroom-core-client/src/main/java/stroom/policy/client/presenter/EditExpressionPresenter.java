@@ -22,15 +22,15 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import stroom.datasource.api.v1.DataSourceField;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
-import stroom.entity.shared.DocRef;
+import stroom.query.api.v1.DocRef;
+import stroom.query.api.v1.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.IndexField;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
@@ -118,8 +118,8 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         }));
     }
 
-    public void init(final ClientDispatchAsync dispatcher, final DocRef dataSource, final List<IndexField> indexFields) {
-        expressionPresenter.init(dispatcher, dataSource, indexFields);
+    public void init(final ClientDispatchAsync dispatcher, final DocRef dataSource, final List<DataSourceField> fields) {
+        expressionPresenter.init(dispatcher, dataSource, fields);
     }
 
     private void setButtonsEnabled() {

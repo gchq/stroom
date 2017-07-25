@@ -19,11 +19,11 @@ package stroom.index.server;
 import net.sf.ehcache.CacheManager;
 import org.springframework.stereotype.Component;
 import stroom.cache.AbstractCacheBean;
-import stroom.entity.shared.DocRef;
 import stroom.index.shared.Index;
+import stroom.index.shared.IndexFields;
+import stroom.index.shared.IndexFieldsMap;
 import stroom.index.shared.IndexService;
-import stroom.query.shared.IndexFields;
-import stroom.query.shared.IndexFieldsMap;
+import stroom.query.api.v1.DocRef;
 
 import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;

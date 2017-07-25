@@ -22,14 +22,14 @@ import org.springframework.stereotype.Component;
 import stroom.datasource.api.v1.DataSourceField;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.feed.MetaMap;
+import stroom.policy.server.DataReceiptService;
+import stroom.policy.shared.DataReceiptAction;
+import stroom.policy.shared.DataReceiptPolicy;
+import stroom.policy.shared.DataReceiptRule;
 import stroom.query.api.v1.ExpressionItem;
 import stroom.query.api.v1.ExpressionOperator;
 import stroom.query.api.v1.ExpressionTerm;
-import stroom.streamstore.server.DataReceiptService;
 import stroom.streamstore.server.ExpressionMatcher;
-import stroom.streamstore.shared.DataReceiptAction;
-import stroom.streamstore.shared.DataReceiptPolicy;
-import stroom.streamstore.shared.DataReceiptRule;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

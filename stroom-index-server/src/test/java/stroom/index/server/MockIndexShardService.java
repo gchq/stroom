@@ -33,7 +33,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @Profile(StroomSpringProfiles.TEST)
 @Component("indexShardService")
@@ -49,9 +50,9 @@ public class MockIndexShardService extends MockEntityService<IndexShard, FindInd
         indexShard.setPartitionFromTime(indexShardKey.getPartitionFromTime());
         indexShard.setPartitionToTime(indexShardKey.getPartitionToTime());
         final IndexShard il = save(indexShard);
-        final File indexDir = IndexShardUtil.getIndexDir(indexShard);
-        if (indexDir.isDirectory()) {
-            FileSystemUtil.deleteContents(indexDir);
+        final Path indexPath = IndexShardUtil.getIndexPath(indexShard);
+        if (Files.isDirectory(indexPath)) {
+            FileSystemUtil.deleteContents(indexPath);
         }
         return il;
     }

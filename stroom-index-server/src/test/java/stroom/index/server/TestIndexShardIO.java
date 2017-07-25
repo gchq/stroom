@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.index.shared.Index;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexFields;
+import stroom.index.shared.IndexFieldsMap;
 import stroom.index.shared.IndexShard;
 import stroom.node.shared.Volume;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexFields;
-import stroom.query.shared.IndexFieldsMap;
 import stroom.search.server.shard.IndexShardSearcher;
 import stroom.search.server.shard.IndexShardSearcherImpl;
 import stroom.streamstore.server.fs.FileSystemUtil;
@@ -34,6 +34,7 @@ import stroom.util.test.StroomUnitTest;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashSet;
 
 @RunWith(StroomJUnit4ClassRunner.class)
@@ -79,7 +80,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
         // Clean up from previous tests.
-        final File dir = IndexShardUtil.getIndexDir(idx1);
+        final Path dir = IndexShardUtil.getIndexPath(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
         for (int i = 1; i <= 10; i++) {
@@ -107,7 +108,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
         // Clean up from previous tests.
-        final File dir = IndexShardUtil.getIndexDir(idx1);
+        final Path dir = IndexShardUtil.getIndexPath(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
         for (int i = 1; i <= 10; i++) {
@@ -137,7 +138,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
         // Clean up from previous tests.
-        final File dir = IndexShardUtil.getIndexDir(idx1);
+        final Path dir = IndexShardUtil.getIndexPath(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
         final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, idx1);
@@ -166,7 +167,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
         // Clean up from previous tests.
-        final File dir = IndexShardUtil.getIndexDir(idx1);
+        final Path dir = IndexShardUtil.getIndexPath(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
         final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, idx1);
@@ -197,7 +198,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
         // Clean up from previous tests.
-        final File dir = IndexShardUtil.getIndexDir(idx1);
+        final Path dir = IndexShardUtil.getIndexPath(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
         final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, idx1);

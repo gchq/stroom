@@ -19,20 +19,29 @@ package stroom.headless;
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.test.ContentImportService.ContentPack;
+import stroom.test.ContentPackDownloader;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.test.ComparisonHelper;
 import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
+import stroom.util.shared.Version;
 import stroom.util.zip.ZipUtil;
 
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class TestHeadless {
+    private static final Version CORE_XML_SCHEMAS_VERSION = Version.of(1, 0);
+    private static final Version EVENT_LOGGING_XML_SCHEMA_VERSION = Version.of(1, 0);
+
     @Test
     public void test() throws Exception {
         try {
@@ -53,7 +62,6 @@ public class TestHeadless {
             final Path inputDirPath = tmpPath.resolve("input");
             final Path outputDirPath = tmpPath.resolve("output");
 
-            FileSystemUtil.deleteDirectory(inputDirPath);
             Files.createDirectories(inputDirPath);
             Files.createDirectories(outputDirPath);
 
@@ -69,10 +77,31 @@ public class TestHeadless {
             ZipUtil.zip(inputFilePath.toFile(), rawInputPath.toFile());
 
             // Create config zip file
+            final Path contentPacks = tmpPath.resolve("contentPacks");
+            Files.createDirectories(contentPacks);
+            importXmlSchemas(contentPacks);
+
+            // Copy required config into the temp dir.
+            final Path rawConfigPath = tmpPath.resolve("config");
+            Files.createDirectories(rawConfigPath);
             final Path configUnzippedDirPath = samplesPath.resolve("config");
+            FileUtils.copyDirectory(configUnzippedDirPath.toFile(), rawConfigPath.toFile());
+
+            // Unzip the downloaded content packs into the temp dir.
+            try (final Stream<Path> files = Files.list(contentPacks)) {
+                files.forEach(f -> {
+                    try {
+                        ZipUtil.unzip(f, rawConfigPath);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+            }
+
+            // Build the config zip file.
             final Path configFilePath = tmpPath.resolve("config.zip");
             Files.deleteIfExists(configFilePath);
-            ZipUtil.zip(configFilePath.toFile(), configUnzippedDirPath.toFile());
+            ZipUtil.zip(configFilePath.toFile(), rawConfigPath.toFile());
 
             final Headless headless = new Headless();
 
@@ -97,5 +126,16 @@ public class TestHeadless {
         } finally {
             StroomProperties.removeOverrides();
         }
+    }
+
+    private void importXmlSchemas(final Path path) {
+        importContentPacks(Arrays.asList(
+                ContentPack.of("core-xml-schemas", CORE_XML_SCHEMAS_VERSION),
+                ContentPack.of("event-logging-xml-schema", EVENT_LOGGING_XML_SCHEMA_VERSION)
+        ), path);
+    }
+
+    private void importContentPacks(final List<ContentPack> packs, final Path path) {
+        packs.forEach(pack -> ContentPackDownloader.downloadContentPack(pack.getName(), pack.getVersion(), path));
     }
 }

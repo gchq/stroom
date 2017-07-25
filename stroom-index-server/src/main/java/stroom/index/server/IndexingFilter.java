@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-import stroom.index.server.CachedIndexService.CachedIndex;
+import stroom.entity.shared.DocRefUtil;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldType;
@@ -68,7 +68,7 @@ class IndexingFilter extends AbstractXMLFilter {
     private final LocationFactoryProxy locationFactory;
     private final Indexer indexer;
     private final ErrorReceiverProxy errorReceiverProxy;
-    private final CachedIndexService cachedIndexService;
+    private final IndexConfigCache indexConfigCache;
 
     private IndexFieldsMap indexFieldsMap;
 
@@ -88,12 +88,12 @@ class IndexingFilter extends AbstractXMLFilter {
                    final LocationFactoryProxy locationFactory,
                    final Indexer indexer,
                    final ErrorReceiverProxy errorReceiverProxy,
-                   final CachedIndexService cachedIndexService) {
+                   final IndexConfigCache indexConfigCache) {
         this.streamHolder = streamHolder;
         this.locationFactory = locationFactory;
         this.indexer = indexer;
         this.errorReceiverProxy = errorReceiverProxy;
-        this.cachedIndexService = cachedIndexService;
+        this.indexConfigCache = indexConfigCache;
     }
 
     /**
@@ -108,14 +108,14 @@ class IndexingFilter extends AbstractXMLFilter {
             }
 
             // Get the index and index fields from the cache.
-            final CachedIndex cachedIndex = cachedIndexService.get(index);
-            if (cachedIndex == null) {
+            final IndexConfig indexConfig = indexConfigCache.getOrCreate(DocRefUtil.create(index));
+            if (indexConfig == null) {
                 log(Severity.FATAL_ERROR, "Unable to load index", null);
                 throw new LoggedException("Unable to load index");
             }
 
-            index = cachedIndex.getIndex();
-            indexFieldsMap = cachedIndex.getIndexFieldsMap();
+            index = indexConfig.getIndex();
+            indexFieldsMap = indexConfig.getIndexFieldsMap();
 
             // Create a key to create shards with.
             if (streamHolder == null || streamHolder.getStream() == null) {

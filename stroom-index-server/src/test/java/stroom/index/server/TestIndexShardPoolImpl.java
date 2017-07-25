@@ -25,19 +25,19 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
-import stroom.cache.CacheManagerAutoCloseable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.index.shared.Index;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexFields;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.concurrent.SimpleExecutor;
-import stroom.util.logging.StroomLogger;
 import stroom.util.test.StroomUnitTest;
 
 import java.io.File;
@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TestIndexShardPoolImpl extends StroomUnitTest {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestIndexShardPoolImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestIndexShardPoolImpl.class);
 
     @Mock
     private NodeCache nodeCache;
@@ -123,7 +123,7 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
                 indexShard.setVolume(
                         Volume.create(defaultNode, getCurrentTestDir().getAbsolutePath(), VolumeType.PUBLIC));
                 indexShard.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
-                FileSystemUtil.deleteContents(IndexShardUtil.getIndexDir(indexShard));
+                FileSystemUtil.deleteContents(IndexShardUtil.getIndexPath(indexShard));
                 return indexShard;
             }
         };
@@ -138,28 +138,7 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
         // }
         // });
 
-        try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
-//            final IndexShardManagerImpl indexShardManager = new IndexShardManagerImpl(mockIndexShardService, cacheManager, null, null,
-//                    mockIndexShardService, nodeCache, null) {
-//                @Override
-//                protected void destroy(final IndexShardKey key, final IndexShardWriter writer) {
-//                    // // checkedLimit.decrement();
-//                    // synchronized (closedSet) {
-//                    // if (writer != null) {
-//                    // if (closedSet.contains(writer.getIndexShard())) {
-//                    // throw new RuntimeException("Closed already called on this
-//                    // item?");
-//                    // }
-//                    // closedSet.add(writer.getIndexShard());
-//                    // }
-//                    // }
-//                    super.destroy(key, writer);
-//                    if (writer != null && IndexShardStatus.OPEN.equals(writer.getStatus())) {
-//                        throw new RuntimeException("Writer should have been closed on destroy!");
-//                    }
-//                }
-//            };
-
+        try {
             final IndexShardKeyCache indexShardKeyCache = new MockIndexShardKeyCache(mockIndexShardService);
             final IndexShardWriterCache indexShardWriterCache = new MockIndexShardWriterCache(maxDocumentsPerIndexShard);
             final Indexer indexer = new IndexerImpl(indexShardKeyCache, indexShardWriterCache, null);
@@ -185,7 +164,6 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
 
             simpleExecutor.waitForComplete();
             simpleExecutor.stop(false);
-//            indexShardManager.shutdown();
 
             Assert.assertEquals("Not expecting any errored threads", 0, failedThreads.get());
         } catch (final Exception e) {
@@ -216,12 +194,6 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
                 document.add(field);
 
                 indexer.addDocument(indexShardKey, document);
-
-//                // Delay returning the writer to the pool.
-//                ThreadUtil.sleep(1);
-
-                // // Return the writer to the pool.
-                // indexShardManager.returnObject(poolItem, true);
 
             } catch (final Throwable th) {
                 LOGGER.error("TEST ERROR " + testNumber, th);

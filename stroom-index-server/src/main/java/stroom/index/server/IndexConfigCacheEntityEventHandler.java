@@ -19,13 +19,13 @@ package stroom.index.server;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventHandler;
-import stroom.entity.shared.DocRef;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardService;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
+import stroom.query.api.v1.DocRef;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -33,8 +33,6 @@ import java.util.List;
 @Component
 @EntityEventHandler(type = Index.ENTITY_TYPE)
 public class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
-    private static final int MAX_CACHE_ENTRIES = 10;
-
     private final NodeCache nodeCache;
     private final IndexConfigCacheImpl indexConfigCache;
     private final IndexShardService indexShardService;

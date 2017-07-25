@@ -38,8 +38,11 @@ public class SearchResultCreatorManager extends AbstractCacheBean<SearchResultCr
         this.luceneSearchStoreFactory = luceneSearchStoreFactory;
     }
 
-    @Override
-    protected SearchResponseCreator create(final SearchResultCreatorManager.Key key) {
+    public SearchResponseCreator getOrCreate(final SearchResultCreatorManager.Key key) {
+        return computeIfAbsent(key, this::create);
+    }
+
+    private SearchResponseCreator create(final SearchResultCreatorManager.Key key) {
         return new SearchResponseCreator(luceneSearchStoreFactory.create(key.searchRequest));
     }
 

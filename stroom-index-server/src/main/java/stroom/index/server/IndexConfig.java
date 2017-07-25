@@ -17,8 +17,8 @@
 package stroom.index.server;
 
 import stroom.index.shared.Index;
-import stroom.query.shared.IndexFields;
-import stroom.query.shared.IndexFieldsMap;
+import stroom.index.shared.IndexFields;
+import stroom.index.shared.IndexFieldsMap;
 
 public class IndexConfig {
     private final Index index;

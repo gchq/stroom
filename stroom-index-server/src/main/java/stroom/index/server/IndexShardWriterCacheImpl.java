@@ -20,7 +20,7 @@ import net.sf.ehcache.CacheManager;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import stroom.cache.AbstractCacheBean;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
 import stroom.jobsystem.server.JobTrackedSchedule;
@@ -82,7 +82,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<Long, IndexShar
         final Index index = loaded.getIndex();
 
         // Get the index fields.
-        final IndexConfig indexConfig = indexConfigCache.getOrCreate(DocRef.create(index));
+        final IndexConfig indexConfig = indexConfigCache.getOrCreate(DocRefUtil.create(index));
 
         // Create the writer.
         final int ramBufferSizeMB = getRamBufferSize();

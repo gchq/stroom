@@ -21,10 +21,10 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.DocRef;
-import stroom.query.shared.ExpressionBuilder;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionOperator.Op;
+import stroom.query.api.v1.DocRef;
+import stroom.query.api.v1.ExpressionBuilder;
+import stroom.query.api.v1.ExpressionOperator;
+import stroom.query.api.v1.ExpressionOperator.Op;
 import stroom.policy.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
 import stroom.policy.shared.DataRetentionRule;
 import stroom.streamstore.shared.FetchFieldsAction;
@@ -43,7 +43,7 @@ public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionR
         this.editExpressionPresenter = editExpressionPresenter;
         view.setExpressionView(editExpressionPresenter.getView());
 
-        dispatcher.exec(new FetchFieldsAction()).onSuccess(result -> editExpressionPresenter.init(dispatcher, new DocRef("STREAM_STORE", "STREAM_STORE"), result.getIndexFields()));
+        dispatcher.exec(new FetchFieldsAction()).onSuccess(result -> editExpressionPresenter.init(dispatcher, new DocRef("STREAM_STORE", "STREAM_STORE"), result.getFields()));
     }
 
     void read(final DataRetentionRule rule) {

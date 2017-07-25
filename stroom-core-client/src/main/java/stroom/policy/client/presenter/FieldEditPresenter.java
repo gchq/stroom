@@ -21,8 +21,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexFieldType;
+import stroom.datasource.api.v1.DataSourceField;
+import stroom.datasource.api.v1.DataSourceField.DataSourceFieldType;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -33,13 +33,13 @@ import java.util.Set;
 
 public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.FieldEditView> {
     public interface FieldEditView extends View {
-        IndexFieldType getFieldUse();
+        DataSourceFieldType getType();
 
-        void setFieldUse(IndexFieldType fieldUse);
+        void setType(DataSourceFieldType type);
 
-        String getFieldName();
+        String getName();
 
-        void setFieldName(final String fieldName);
+        void setName(final String name);
     }
 
     private Set<String> otherFieldNames;
@@ -49,29 +49,26 @@ public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.Fie
         super(eventBus, view);
     }
 
-    public void read(final IndexField indexField, final Set<String> otherFieldNames) {
+    public void read(final DataSourceField field, final Set<String> otherFieldNames) {
         this.otherFieldNames = otherFieldNames;
-        getView().setFieldUse(indexField.getFieldType());
-        getView().setFieldName(indexField.getFieldName());
+        getView().setType(field.getType());
+        getView().setName(field.getName());
     }
 
-    public boolean write(final IndexField indexField) {
-        String name = getView().getFieldName();
+    public DataSourceField write() {
+        String name = getView().getName();
         name = name.trim();
-
-        indexField.setFieldType(getView().getFieldUse());
-        indexField.setFieldName(name);
 
         if (name.length() == 0) {
             AlertEvent.fireWarn(this, "A field must have a name", null);
-            return false;
+            return null;
         }
-        if (otherFieldNames.contains(indexField.getFieldName())) {
+        if (otherFieldNames.contains(name)) {
             AlertEvent.fireWarn(this, "A field with this name already exists", null);
-            return false;
+            return null;
         }
 
-        return true;
+        return new DataSourceField(getView().getType(), name, null, null);
     }
 
     public void show(final String caption, final PopupUiHandlers uiHandlers) {

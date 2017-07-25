@@ -36,8 +36,11 @@ public class ActiveQueriesManager extends AbstractCacheBean<String, ActiveQuerie
         this.dataSourceProviderRegistry = dataSourceProviderRegistry;
     }
 
-    @Override
-    protected ActiveQueries create(final String key) {
+    public ActiveQueries getOrCreate(final String key) {
+        return computeIfAbsent(key, this::create);
+    }
+
+    private ActiveQueries create(final String key) {
         return new ActiveQueries(dataSourceProviderRegistry);
     }
 

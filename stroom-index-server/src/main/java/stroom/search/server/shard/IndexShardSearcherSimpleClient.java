@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,13 +27,12 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-
 import stroom.index.server.IndexShardUtil;
 import stroom.index.shared.FindIndexShardCriteria;
+import stroom.index.shared.IndexConstants;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardService;
-import stroom.query.shared.IndexConstants;
-import stroom.search.server.SimpleCollector;
+import stroom.search.server.MaxHitCollector;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.fs.serializable.RASegmentInputStream;
@@ -71,12 +70,12 @@ public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {
             try {
                 final IndexShardSearcher indexShardSearcher = new IndexShardSearcherImpl(indexShard);
                 System.out.println("");
-                System.out.println("Searching Index " + IndexShardUtil.getIndexDir(indexShard));
-                final SimpleCollector simpleCollector = new SimpleCollector();
+                System.out.println("Searching Index " + IndexShardUtil.getIndexPath(indexShard));
+                final MaxHitCollector docIdListCollector = new MaxHitCollector(Integer.MAX_VALUE);
                 final IndexReader reader = indexShardSearcher.getReader();
                 final IndexSearcher searcher = new IndexSearcher(reader);
-                searcher.search(query, simpleCollector);
-                for (final Integer doc : simpleCollector.getDocIdList()) {
+                searcher.search(query, docIdListCollector);
+                for (final Integer doc : docIdListCollector.getDocIdList()) {
                     System.out.println("\tFound match " + doc);
                     final Document document = reader.document(doc);
                     for (final IndexableField fieldable : document.getFields()) {
@@ -96,7 +95,7 @@ public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {
                     }
                 }
 
-                if (simpleCollector.getDocIdList().size() == 0) {
+                if (docIdListCollector.getDocIdList().size() == 0) {
                     System.out.println("\tNo Matches");
                 }
                 System.out.println("");

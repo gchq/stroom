@@ -30,13 +30,14 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.search.server.SearchException;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class IndexShardSearcherImpl implements IndexShardSearcher {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractIndexShard.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardSearcherImpl.class);
 
     private final IndexShard indexShard;
 
@@ -76,13 +77,13 @@ public class IndexShardSearcherImpl implements IndexShardSearcher {
             // If we failed to open a reader with an existing writer then just try
             // and use the index shard directory.
             if (indexReader == null) {
-                final File dir = IndexShardUtil.getIndexDir(indexShard);
+                final Path dir = IndexShardUtil.getIndexPath(indexShard);
 
-                if (!dir.isDirectory()) {
-                    throw new SearchException("Index directory not found for searching: " + dir.getAbsolutePath());
+                if (!Files.isDirectory(dir)) {
+                    throw new SearchException("Index directory not found for searching: " + dir.toAbsolutePath().toString());
                 }
 
-                directory = new NIOFSDirectory(dir, NoLockFactory.getNoLockFactory());
+                directory = new NIOFSDirectory(dir, NoLockFactory.INSTANCE);
                 indexReader = DirectoryReader.open(directory);
 
                 // Check the document count in the index matches the DB.

@@ -47,8 +47,8 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.Set;
 
+@Component
 @Profile(StroomSpringProfiles.PROD)
-@Component("indexShardService")
 @Insecure
 @Transactional
 public class IndexShardServiceImpl
@@ -118,6 +118,7 @@ public class IndexShardServiceImpl
         CriteriaLoggingUtil.appendEntityIdSet(items, "volumeIdSet", criteria.getVolumeIdSet());
         CriteriaLoggingUtil.appendEntityIdSet(items, "indexIdSet", criteria.getIndexShardSet());
         CriteriaLoggingUtil.appendCriteriaSet(items, "indexShardStatusSet", criteria.getIndexShardStatusSet());
+        CriteriaLoggingUtil.appendStringTerm(items, "partition", criteria.getPartition().getString());
 
         super.appendCriteria(items, criteria);
     }
@@ -172,6 +173,7 @@ public class IndexShardServiceImpl
             sql.appendEntityIdSetQuery(alias + ".volume", criteria.getVolumeIdSet());
             sql.appendPrimitiveValueSetQuery(alias + ".pstatus", criteria.getIndexShardStatusSet());
             sql.appendRangeQuery(alias + ".documentCount", criteria.getDocumentCountRange());
+            sql.appendValueQuery(alias + ".partition", criteria.getPartition());
         }
     }
 }

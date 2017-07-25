@@ -24,15 +24,15 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.datasource.api.v1.DataSourceField;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
+import stroom.query.api.v1.ExpressionBuilder;
+import stroom.query.api.v1.ExpressionOperator.Op;
 import stroom.query.client.ExpressionTreePresenter;
-import stroom.query.shared.ExpressionBuilder;
-import stroom.query.shared.ExpressionOperator.Op;
-import stroom.query.shared.IndexField;
 import stroom.policy.client.presenter.DataReceiptPolicySettingsPresenter.DataReceiptPolicySettingsView;
 import stroom.policy.shared.DataReceiptAction;
 import stroom.policy.shared.DataReceiptPolicy;
@@ -52,7 +52,7 @@ public class DataReceiptPolicySettingsPresenter extends MyPresenterWidget<DataRe
     private final ExpressionTreePresenter expressionPresenter;
     private final Provider<DataReceiptRulePresenter> editRulePresenterProvider;
 
-    private List<IndexField> indexFields;
+    private List<DataSourceField> fields;
     private List<DataReceiptRule> rules;
 
     private ButtonView addButton;
@@ -203,7 +203,7 @@ public class DataReceiptPolicySettingsPresenter extends MyPresenterWidget<DataRe
     private void add() {
         final DataReceiptRule newRule = new DataReceiptRule(0, System.currentTimeMillis(), "", true, new ExpressionBuilder(Op.AND).build(), DataReceiptAction.RECEIVE);
         final DataReceiptRulePresenter editRulePresenter = editRulePresenterProvider.get();
-        editRulePresenter.read(newRule, indexFields);
+        editRulePresenter.read(newRule, fields);
 
         final PopupSize popupSize = new PopupSize(800, 400, 300, 300, 2000, 2000, true);
         ShowPopupEvent.fire(DataReceiptPolicySettingsPresenter.this, editRulePresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Add New Rule", new PopupUiHandlers() {
@@ -229,7 +229,7 @@ public class DataReceiptPolicySettingsPresenter extends MyPresenterWidget<DataRe
 
     private void edit(final DataReceiptRule existingRule) {
         final DataReceiptRulePresenter editRulePresenter = editRulePresenterProvider.get();
-        editRulePresenter.read(existingRule, indexFields);
+        editRulePresenter.read(existingRule, fields);
 
         final PopupSize popupSize = new PopupSize(800, 400, 300, 300, 2000, 2000, true);
         ShowPopupEvent.fire(DataReceiptPolicySettingsPresenter.this, editRulePresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Rule", new PopupUiHandlers() {
@@ -263,10 +263,7 @@ public class DataReceiptPolicySettingsPresenter extends MyPresenterWidget<DataRe
     @Override
     public void read(final DataReceiptPolicy policy) {
         if (policy != null) {
-            if (policy.getFields() != null) {
-                this.indexFields = policy.getFields().getIndexFields();
-            }
-
+            this.fields = policy.getFields();
             this.rules = policy.getRules();
             listPresenter.getSelectionModel().clear();
             setDirty(false);

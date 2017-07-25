@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,19 @@
 
 package stroom.search.server.extraction;
 
+import java.io.InputStream;
+import java.util.List;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+
+import stroom.util.shared.UserTokenUtil;
+import stroom.util.spring.StroomScope;
 import net.sf.ehcache.CacheException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
+
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
@@ -49,15 +58,8 @@ import stroom.task.server.TaskHandlerBean;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
-import stroom.util.shared.UserTokenUtil;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.io.InputStream;
-import java.util.List;
 
 @TaskHandlerBean(task = ExtractionTask.class)
 @Scope(value = StroomScope.TASK)
@@ -136,7 +138,7 @@ public class ExtractionTaskHandler extends AbstractTaskHandler<ExtractionTask, V
             }
 
             // Create the parser.
-            final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+            final PipelineData pipelineData = pipelineDataCache.getOrCreate(pipelineEntity);
             final Pipeline pipeline = pipelineFactory.create(pipelineData);
             if (pipeline == null) {
                 throw new SearchException("Unable to create parser for pipeline: " + pipelineRef);

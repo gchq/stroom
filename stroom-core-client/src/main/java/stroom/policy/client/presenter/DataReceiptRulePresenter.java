@@ -20,10 +20,10 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.query.shared.ExpressionBuilder;
-import stroom.query.shared.ExpressionOperator;
-import stroom.query.shared.ExpressionOperator.Op;
-import stroom.query.shared.IndexField;
+import stroom.datasource.api.v1.DataSourceField;
+import stroom.query.api.v1.ExpressionBuilder;
+import stroom.query.api.v1.ExpressionOperator;
+import stroom.query.api.v1.ExpressionOperator.Op;
 import stroom.policy.client.presenter.DataReceiptRulePresenter.DataReceiptRuleView;
 import stroom.policy.shared.DataReceiptAction;
 import stroom.policy.shared.DataReceiptRule;
@@ -43,8 +43,8 @@ public class DataReceiptRulePresenter extends MyPresenterWidget<DataReceiptRuleV
         view.setExpressionView(editExpressionPresenter.getView());
     }
 
-    void read(final DataReceiptRule rule, final List<IndexField> indexFields) {
-        editExpressionPresenter.init(null, null, indexFields);
+    void read(final DataReceiptRule rule, final List<DataSourceField> fields) {
+        editExpressionPresenter.init(null, null, fields);
         this.originalRule = rule;
         getView().setName(rule.getName());
         if (rule.getExpression() == null) {

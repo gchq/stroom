@@ -16,16 +16,14 @@
 
 package stroom.index.server;
 
-import stroom.cache.CacheManagerAutoCloseable;
 import stroom.index.shared.Index;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
-import stroom.query.shared.IndexField;
-import stroom.query.shared.IndexFields;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.concurrent.SimpleExecutor;
 import stroom.util.test.StroomUnitTest;
@@ -77,21 +75,12 @@ public class TestIndexShardPoolImpl2 extends StroomUnitTest {
                 indexShard.setVolume(
                         Volume.create(defaultNode, getCurrentTestDir().getAbsolutePath(), VolumeType.PUBLIC));
                 indexShard.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
-                FileSystemUtil.deleteContents(IndexShardUtil.getIndexDir(indexShard));
+                FileSystemUtil.deleteContents(IndexShardUtil.getIndexPath(indexShard));
                 return indexShard;
             }
         };
 
-        try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
-//            final IndexShardManagerImpl indexShardManager = new IndexShardManagerImpl(cacheManager, null, null,
-//                    mockIndexShardService, new NodeCache(defaultNode), null) {
-//                @Override
-//                protected void destroy(final IndexShardKey key, final IndexShardWriter value) {
-//                    checkedLimit.decrement();
-//                    super.destroy(key, value);
-//                }
-//            };
-
+        try {
             final Indexer indexer = new MockIndexer();
 
             final Index index = new Index();

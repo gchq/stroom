@@ -21,7 +21,6 @@ import net.sf.ehcache.CacheException;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
-import net.sf.ehcache.Statistics;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.constructs.blocking.SelfPopulatingCache;
 import net.sf.ehcache.event.CacheEventListenerAdapter;
@@ -31,39 +30,12 @@ import stroom.cache.shared.CacheInfo;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public abstract class AbstractCacheBean<K, V> implements CacheBean<K, V> {
     private final Ehcache ehcache;
     private final Ehcache selfPopulatingCache;
-
-    private static class Mapping<K, V> {
-        private final K key;
-        private final Function<? super K, ? extends V> mappingFunction;
-
-        Mapping(final K key, final Function<? super K, ? extends V> mappingFunction) {
-            this.key = key;
-            this.mappingFunction = mappingFunction;
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            final Mapping innerKey = (Mapping) o;
-
-            return key.equals(innerKey.key);
-        }
-
-        @Override
-        public int hashCode() {
-            return key.hashCode();
-        }
-    }
 
     public AbstractCacheBean(final CacheManager cacheManager, final String name, final int maxCacheEntries) {
         this(cacheManager, new CacheConfiguration(name, maxCacheEntries));
@@ -104,10 +76,6 @@ public abstract class AbstractCacheBean<K, V> implements CacheBean<K, V> {
         return getValue(ehcache.getQuiet(new Mapping<K, V>(key, null)));
     }
 
-//    protected V get(final K key) {
-//        return getValue(ehcache.get(new Mapping<K, V>(key, null)));
-//    }
-
     @SuppressWarnings("unchecked")
     protected List<K> getKeys() {
         final List list = selfPopulatingCache.getKeys();
@@ -117,6 +85,10 @@ public abstract class AbstractCacheBean<K, V> implements CacheBean<K, V> {
         }
         return keys;
     }
+
+//    protected V get(final K key) {
+//        return getValue(ehcache.get(new Mapping<K, V>(key, null)));
+//    }
 
     @SuppressWarnings("unchecked")
     private V getValue(final Element element) {
@@ -199,6 +171,31 @@ public abstract class AbstractCacheBean<K, V> implements CacheBean<K, V> {
 
     public interface Destroyable {
         void destroy();
+    }
+
+    private static class Mapping<K, V> {
+        private final K key;
+        private final Function<? super K, ? extends V> mappingFunction;
+
+        Mapping(final K key, final Function<? super K, ? extends V> mappingFunction) {
+            this.key = key;
+            this.mappingFunction = mappingFunction;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            final Mapping innerKey = (Mapping) o;
+
+            return key.equals(innerKey.key);
+        }
+
+        @Override
+        public int hashCode() {
+            return key.hashCode();
+        }
     }
 
     private static class CacheListener extends CacheEventListenerAdapter {
