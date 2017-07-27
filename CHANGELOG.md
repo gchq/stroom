@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#353** : Reduced expected error logging to debug.
+
 ## [v5.0-beta.43] - 2017-07-25
 
 * Issue **#351** : Fixed ehcache item eviction issue caused by ehcache internally using a deprecated API.
