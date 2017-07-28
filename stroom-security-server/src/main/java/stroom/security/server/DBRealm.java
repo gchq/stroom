@@ -153,7 +153,7 @@ public class DBRealm extends AuthenticatingRealm {
         } catch (final AuthenticationException e) {
             throw e;
         } catch (final Exception e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.debug(e.getMessage(), e);
             throw new BadCredentialsException(e.getMessage());
         }
 
@@ -183,7 +183,7 @@ public class DBRealm extends AuthenticatingRealm {
         } catch (final AuthenticationException e) {
             throw e;
         } catch (final Exception e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.debug(e.getMessage(), e);
             throw new BadCredentialsException(e.getMessage());
         }
 
