@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 
 
+## [v5.0-beta.44] - 2017-07-28
+
+* Issue **#353** : Reduced expected error logging to debug.
+
+* Issue **#354** : Changed the way search index shard readers get references to open writers so that any attempt to get an open writer will not cause, or have to wait for, a writer to close.
+
 ## [v5.0-beta.43] - 2017-07-25
 
 * Issue **#351** : Fixed ehcache item eviction issue caused by ehcache internally using a deprecated API.
@@ -533,6 +539,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
 [v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
 
+[v5.0-beta.44]: https://github.com/gchq/stroom/compare/v5.0-beta.43...v5.0-beta.44
 [v5.0-beta.43]: https://github.com/gchq/stroom/compare/v5.0-beta.42...v5.0-beta.43
 [v5.0-beta.42]: https://github.com/gchq/stroom/compare/v5.0-beta.41...v5.0-beta.42
 [v5.0-beta.41]: https://github.com/gchq/stroom/compare/v5.0-beta.40...v5.0-beta.41

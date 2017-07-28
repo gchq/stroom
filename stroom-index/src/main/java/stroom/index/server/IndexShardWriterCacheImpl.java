@@ -25,14 +25,19 @@ import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.StroomPropertyService;
+import stroom.task.server.GenericServerTask;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomSpringProfiles;
+import stroom.util.task.TaskScopeRunnable;
+import stroom.util.thread.ThreadScopeRunnable;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -46,6 +51,12 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<Long, IndexShar
     private final IndexConfigCache indexConfigCache;
     private final IndexShardManager indexShardManager;
     private final StroomPropertyService stroomPropertyService;
+
+    // We have to keep a separate map of writers so that readers can get them without touching Ehcache.
+    // Touching Ehcache causes expired elements to be evicted which causes them to be destroyed. Destruction happens in
+    // the same thread and can take a while to commit and close index writers. This can seriously impact searching if
+    // search has to wait for writers to be destroyed.
+    private final Map<Long, IndexShardWriter> activeWriters = new ConcurrentHashMap<>();
 
     @Inject
     IndexShardWriterCacheImpl(final CacheManager cacheManager,
@@ -67,7 +78,7 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<Long, IndexShar
 
     @Override
     public IndexShardWriter getQuiet(final Long indexShardId) {
-        return super.getQuiet(indexShardId);
+        return activeWriters.get(indexShardId);
     }
 
     private IndexShardWriter create(final Long indexShardId) {
@@ -86,7 +97,9 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<Long, IndexShar
 
         // Create the writer.
         final int ramBufferSizeMB = getRamBufferSize();
-        return new IndexShardWriterImpl(indexShardManager, indexConfig, loaded, ramBufferSizeMB);
+        final IndexShardWriter indexShardWriter = new IndexShardWriterImpl(indexShardManager, indexConfig, loaded, ramBufferSizeMB);
+        activeWriters.put(indexShardId, indexShardWriter);
+        return indexShardWriter;
     }
 
     private int getRamBufferSize() {
@@ -139,13 +152,36 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<Long, IndexShar
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
         final List<Long> keys = getKeys();
-        keys.forEach(key -> {
-            final IndexShardWriter indexShardWriter = getQuiet(key);
-            if (indexShardWriter != null) {
-                indexShardWriter.flush();
+        keys.parallelStream().forEach(key -> {
+            try {
+                new TaskScopeRunnable(GenericServerTask.create("Flush all", null)) {
+                    @Override
+                    protected void exec() {
+                        new ThreadScopeRunnable() {
+                            @Override
+                            protected void exec() {
+                                final IndexShardWriter indexShardWriter = IndexShardWriterCacheImpl.super.getQuiet(key);
+                                if (indexShardWriter != null) {
+                                    indexShardWriter.flush();
+                                }
+                            }
+                        }.run();
+                    }
+                }.run();
+            } catch (final Throwable t) {
+                LOGGER.error(t::getMessage, t);
             }
         });
 
         LOGGER.debug(() -> "flushAll() - Completed in " + logExecutionTime);
+    }
+
+    @Override
+    protected void destroy(final Long indexShardId, final IndexShardWriter indexShardWriter) {
+        try {
+            super.destroy(indexShardId, indexShardWriter);
+        } finally {
+            activeWriters.remove(indexShardId);
+        }
     }
 }

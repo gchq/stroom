@@ -21,6 +21,9 @@ import net.sf.ehcache.Statistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.shared.CacheInfo;
+import stroom.task.server.GenericServerTask;
+import stroom.util.task.TaskScopeRunnable;
+import stroom.util.thread.ThreadScopeRunnable;
 
 import java.util.List;
 
@@ -46,19 +49,26 @@ public final class CacheUtil {
     static void clear(final Ehcache ehcache) {
         // If we do not remove each key individually then the cache items will not be destroyed properly.
         try {
-            final List keys = ehcache.getKeys();
-            for (final Object key : keys) {
-                try {
-                    // Try and get the element quietly as we don't want this call to extend the life of sessions that should be dying.
-                    ehcache.remove(key);
-                } catch (final Throwable t) {
-                    LOGGER.error(t.getMessage(), t);
-                }
-            }
+            final List<?> keys = ehcache.getKeys();
+            keys.parallelStream().forEach(key -> {
+                new TaskScopeRunnable(GenericServerTask.create("Clear cache", null)) {
+                    @Override
+                    protected void exec() {
+                        new ThreadScopeRunnable() {
+                            @Override
+                            protected void exec() {
+                                try {
+                                    ehcache.remove(key);
+                                } catch (final Throwable t) {
+                                    LOGGER.error(t.getMessage(), t);
+                                }
+                            }
+                        }.run();
+                    }
+                }.run();
+            });
         } catch (final Throwable t) {
             LOGGER.error(t.getMessage(), t);
         }
-
-//        selfPopulatingCache.removeAll();
     }
 }
