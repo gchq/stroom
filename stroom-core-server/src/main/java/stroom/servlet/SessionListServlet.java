@@ -38,7 +38,7 @@ import java.util.Collections;
 import java.util.List;
 
 @Component(SessionListServlet.BEAN_NAME)
-@Scope(StroomScope.THREAD)
+@Scope(StroomScope.PROTOTYPE)
 public class SessionListServlet extends HttpServlet {
     public static final String BEAN_NAME = "sessionListServlet";
 
