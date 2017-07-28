@@ -26,12 +26,13 @@ import org.springframework.stereotype.Component;
 import stroom.dashboard.server.logging.AuthenticationEventLog;
 import stroom.security.shared.UserRef;
 import stroom.servlet.HttpServletRequestHolder;
+import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+@Scope(StroomScope.PROTOTYPE)
 public class AuthenticationServiceMailSender {
     private final MailSender mailSender;
     private final String userDomain;

@@ -25,6 +25,7 @@ import org.springframework.context.annotation.Scope;
 import stroom.feed.MetaMap;
 import stroom.proxy.repo.MetaMapFactory;
 import stroom.streamstore.server.MockStreamStore;
+import stroom.util.spring.StroomScope;
 import stroom.util.thread.ThreadLocalBuffer;
 
 /**
@@ -48,13 +49,13 @@ public class TestDataFeedServiceImplConfiguration {
     }
 
     @Bean
-    @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+    @Scope(StroomScope.PROTOTYPE)
     public MockMetaMapFactory metaMapFactory() {
         return new MockMetaMapFactory();
     }
 
     @Bean
-    @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+    @Scope(StroomScope.PROTOTYPE)
     public MetaMap metaMap(MetaMapFactory metaMapFactory) {
         return metaMapFactory.create();
     }
