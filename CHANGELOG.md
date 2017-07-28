@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#348** : Fixed new menu icons.
+
 ## [v5.1-alpha.2] - 2017-06-22
 
 * Issue **#203** : Initial release of the new data receipt policy functionality.
