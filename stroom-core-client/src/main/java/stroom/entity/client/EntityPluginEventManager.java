@@ -57,6 +57,7 @@ import stroom.query.api.v1.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.client.SvgIcon;
 import stroom.util.client.ImageUtil;
 import stroom.util.shared.HasDisplayValue;
 import stroom.util.shared.SharedMap;
@@ -390,7 +391,7 @@ public class EntityPluginEventManager extends Plugin {
 
         for (final DocumentType documentType : documentTypes.getAllTypes()) {
             if (documentPermissions.hasCreatePermission(documentType)) {
-                final Item item = new IconMenuItem(documentType.getPriority(), ImageIcon.create(ImageUtil.getImageURL() + documentType.getIconUrl()), null,
+                final Item item = new IconMenuItem(documentType.getPriority(), new SvgIcon(ImageUtil.getImageURL() + documentType.getIconUrl(), 18, 18), null,
                         documentType.getDisplayType(), null, true, () -> ShowCreateEntityDialogEvent.fire(EntityPluginEventManager.this,
                         explorerData, documentType.getType(), documentType.getDisplayType(), true));
                 children.add(item);
