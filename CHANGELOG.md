@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#353** : Reduced expected error logging to debug.
 
+* Issue **#354** : Changed the way search index shard readers get references to open writers so that any attempt to get an open writer will not cause, or have to wait for, a writer to close.
+
 ## [v5.0-beta.43] - 2017-07-25
 
 * Issue **#351** : Fixed ehcache item eviction issue caused by ehcache internally using a deprecated API.
