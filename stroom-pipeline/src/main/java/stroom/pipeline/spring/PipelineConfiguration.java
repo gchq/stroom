@@ -16,8 +16,6 @@
 
 package stroom.pipeline.spring;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
@@ -36,9 +34,4 @@ import org.springframework.context.annotation.FilterType;
         // explicitly.
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
 public class PipelineConfiguration {
-    private static final Logger LOGGER = LoggerFactory.getLogger(PipelineConfiguration.class);
-
-    public PipelineConfiguration() {
-        LOGGER.info("PipelineConfiguration loading...");
-    }
 }

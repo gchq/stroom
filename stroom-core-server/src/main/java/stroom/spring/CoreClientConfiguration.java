@@ -54,12 +54,6 @@ import java.util.Properties;
 //@ComponentScan(basePackages = {"stroom"}, excludeFilters = {
 //        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
 public class CoreClientConfiguration {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CoreClientConfiguration.class);
-
-    public CoreClientConfiguration() {
-        LOGGER.info("CoreClientConfiguration loading...");
-    }
-
     @Bean
     @Scope("request")
     public MetaMap metaMap() {

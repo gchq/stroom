@@ -16,8 +16,6 @@
 
 package stroom.spring;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.CustomScopeConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,12 +26,6 @@ import java.util.Map;
 
 @Configuration
 public class ScopeConfiguration {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ScopeConfiguration.class);
-
-    public ScopeConfiguration() {
-        LOGGER.info("ScopeConfiguration loading...");
-    }
-
     // CustomScopeConfigurers are BeanFactoryPostProcessors. They need to be
     // instantiated early in the container lifecycle.
     // Making them static help avoid certain problems related to this.

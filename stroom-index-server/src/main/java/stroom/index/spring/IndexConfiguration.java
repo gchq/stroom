@@ -16,8 +16,6 @@
 
 package stroom.index.spring;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
@@ -28,9 +26,4 @@ import org.springframework.context.annotation.FilterType;
         // a component scan as configurations should be specified explicitly.
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
 public class IndexConfiguration {
-    private static final Logger LOGGER = LoggerFactory.getLogger(IndexConfiguration.class);
-
-    public IndexConfiguration() {
-        LOGGER.info("IndexConfiguration loading...");
-    }
 }

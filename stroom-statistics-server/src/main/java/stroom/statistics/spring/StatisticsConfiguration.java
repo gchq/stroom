@@ -45,10 +45,6 @@ import java.sql.Statement;
 public class StatisticsConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsConfiguration.class);
 
-    public StatisticsConfiguration() {
-        LOGGER.info("StatisticsConfiguration loading...");
-    }
-
     @Bean
     public ComboPooledDataSource statisticsDataSource(final GlobalProperties globalProperties) throws PropertyVetoException {
         final ComboPooledDataSource dataSource = new ComboPooledDataSource();

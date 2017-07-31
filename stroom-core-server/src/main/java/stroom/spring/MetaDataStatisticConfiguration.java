@@ -11,13 +11,6 @@ import java.util.Arrays;
 
 @Configuration
 public class MetaDataStatisticConfiguration {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(MetaDataStatisticConfiguration.class);
-
-    public MetaDataStatisticConfiguration() {
-        LOGGER.info("MetaDataStatisticConfiguration loading...");
-    }
-
     /**
      * This bean must be returned as a class and not an interface otherwise annotation scanning will not work.
      */

@@ -60,8 +60,6 @@ public class StroomIndexQueryResource implements QueryResource {
     @Path(QueryResource.SEARCH_ENDPOINT)
     @Timed
     public SearchResponse search(final SearchRequest request) {
-//        final SearchResponseCreator searchResponseCreator = searchResultCreatorCache.computeIfAbsent(request.getValues(), k -> new SearchResponseCreator(luceneSearchStoreFactory.create(request)));
-
         final SearchResponseCreator searchResponseCreator = searchResultCreatorManager.getOrCreate(new Key(request));
         return searchResponseCreator.create(request);
     }

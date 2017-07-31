@@ -48,10 +48,6 @@ import java.util.Properties;
 public class PersistenceConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(PersistenceConfiguration.class);
 
-    public PersistenceConfiguration() {
-        LOGGER.info("PersistenceConfiguration loading...");
-    }
-
     @Bean
     public ComboPooledDataSource dataSource(final GlobalProperties globalProperties) throws PropertyVetoException {
         final ComboPooledDataSource dataSource = new ComboPooledDataSource();
