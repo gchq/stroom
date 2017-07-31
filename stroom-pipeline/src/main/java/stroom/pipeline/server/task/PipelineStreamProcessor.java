@@ -325,12 +325,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                             "Pipeline", pipelineEntity.getName(),
                             "Node", nodeCache.getDefaultNode().getName()));
 
-            internalStatisticsFacadeFactory.create()
-                    .putEvent(event, throwable ->
-                            outputError(
-                                    new RuntimeException("Error recording internal statistic with key " +
-                                            INTERNAL_STAT_KEY_PIPELINE_STREAM_PROCESSOR, throwable),
-                                    Severity.WARNING));
+            internalStatisticsFacadeFactory.create().putEvent(event);
 
         } catch (final Exception ex) {
             LOGGER.error("recordStats", ex);

@@ -36,9 +36,9 @@ public class HeadlessInternalStatisticsFacadeFactory implements InternalStatisti
         public void putEvent(final InternalStatisticEvent internalStatisticEvent) {
         }
 
-        @Override
-        public void putEvent(final InternalStatisticEvent internalStatisticEvent, final Consumer<Throwable> exceptionHandler) {
-        }
+//        @Override
+//        public void putEvent(final InternalStatisticEvent internalStatisticEvent, final Consumer<Throwable> exceptionHandler) {
+//        }
 
         @Override
         public void putEvents(final List<InternalStatisticEvent> statisticEvents) {

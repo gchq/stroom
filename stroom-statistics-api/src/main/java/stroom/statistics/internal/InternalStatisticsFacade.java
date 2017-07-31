@@ -14,7 +14,7 @@ public interface InternalStatisticsFacade {
     Logger LOGGER = LoggerFactory.getLogger(InternalStatisticsFacade.class);
 
     Consumer<Throwable> LOG_ONLY_EXCEPTION_HANDLER = throwable ->
-            LOGGER.error("Swallowing exception from putting internal statistic events", throwable);
+            LOGGER.debug("Swallowing exception from putting internal statistic events", throwable);
 
     /**
      * @param internalStatisticEvent A statistic event to record.
@@ -25,10 +25,10 @@ public interface InternalStatisticsFacade {
         putEvents(Collections.singletonList(internalStatisticEvent), LOG_ONLY_EXCEPTION_HANDLER);
     }
 
-    default void putEvent(final InternalStatisticEvent internalStatisticEvent,
-                          final Consumer<Throwable> exceptionHandler) {
-        putEvents(Collections.singletonList(internalStatisticEvent), exceptionHandler);
-    }
+//    default void putEvent(final InternalStatisticEvent internalStatisticEvent,
+//                          final Consumer<Throwable> exceptionHandler) {
+//        putEvents(Collections.singletonList(internalStatisticEvent), exceptionHandler);
+//    }
 
     default void putEvents(List<InternalStatisticEvent> statisticEvents) {
         putEvents(statisticEvents, LOG_ONLY_EXCEPTION_HANDLER);
@@ -56,10 +56,10 @@ public interface InternalStatisticsFacade {
             return this;
         }
 
-        public BatchBuilder addExceptionHandler(Consumer<Throwable> handler) {
-            exceptionHandler = Preconditions.checkNotNull(handler);
-            return this;
-        }
+//        public BatchBuilder addExceptionHandler(Consumer<Throwable> handler) {
+//            exceptionHandler = Preconditions.checkNotNull(handler);
+//            return this;
+//        }
 
         public void putBatch() {
             internalStatisticsFacade.putEvents(

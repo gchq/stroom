@@ -45,12 +45,12 @@ class MultiServiceInternalStatisticsFacade implements InternalStatisticsFacade {
 
             serviceToEventsMapMap.entrySet().forEach(entry -> {
                 //TODO as it stands if we get a failure to send with one service, we won't send to any other services
-                //it may be better to record the exception without letting it propogate and then throw an exception at
+                //it may be better to record the exception without letting it propagate and then throw an exception at
                 //the end if any failed
                 putEvents(entry.getKey(), entry.getValue());
             });
         } catch (Exception e) {
-            LOGGER.error("Error sending internal stats to all services", e);
+            LOGGER.warn("Error sending internal stats to all services");
             exceptionHandler.accept(e);
         }
     }

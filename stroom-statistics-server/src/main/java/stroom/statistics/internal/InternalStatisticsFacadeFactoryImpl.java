@@ -17,21 +17,17 @@ import java.util.function.Consumer;
 @SuppressWarnings("unused")
 @Component
 public class InternalStatisticsFacadeFactoryImpl implements InternalStatisticsFacadeFactory {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(InternalStatisticsFacadeFactoryImpl.class);
-
-    private static final DoNothingInternalStatisticsFacade DO_NOTHING_FACADE = new DoNothingInternalStatisticsFacade();
 
     private final StroomBeanStore stroomBeanStore;
     private final InternalStatisticDocRefCache internalStatisticDocRefCache;
     private final Map<String, InternalStatisticsService> docRefTypeToServiceMap = new HashMap<>();
 
-    private InternalStatisticsFacade internalStatisticsFacade;
+    private volatile InternalStatisticsFacade internalStatisticsFacade = new DoNothingInternalStatisticsFacade();
 
     @Inject
     public InternalStatisticsFacadeFactoryImpl(final StroomBeanStore stroomBeanStore,
                                                final InternalStatisticDocRefCache internalStatisticDocRefCache) {
-
         this.stroomBeanStore = stroomBeanStore;
         this.internalStatisticDocRefCache = internalStatisticDocRefCache;
     }
@@ -64,9 +60,6 @@ public class InternalStatisticsFacadeFactoryImpl implements InternalStatisticsFa
      */
     @Override
     public InternalStatisticsFacade create() {
-        if (internalStatisticsFacade == null) {
-            return DO_NOTHING_FACADE;
-        }
         return internalStatisticsFacade;
     }
 
@@ -75,7 +68,6 @@ public class InternalStatisticsFacadeFactoryImpl implements InternalStatisticsFa
      * the system to function albeit with the loss of the stats.
      */
     private static class DoNothingInternalStatisticsFacade implements InternalStatisticsFacade {
-
         @Override
         public void putEvents(List<InternalStatisticEvent> statisticEvents, Consumer<Throwable> exceptionHandler) {
             InternalStatisticsFacade.LOGGER.warn(
@@ -83,5 +75,4 @@ public class InternalStatisticsFacadeFactoryImpl implements InternalStatisticsFa
 
         }
     }
-
 }

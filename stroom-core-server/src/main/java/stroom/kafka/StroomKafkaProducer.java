@@ -65,7 +65,7 @@ public class StroomKafkaProducer {
                     }
 
                 } catch (Exception e) {
-                    LOGGER.error("Error initialising kafka producer to " + bootstrapServers, e);
+                    LOGGER.error("Error initialising kafka producer to " + bootstrapServers);
                     exceptionHandler.accept(e);
                 }
             } else {
@@ -73,7 +73,7 @@ public class StroomKafkaProducer {
                         "kafka may be down or the connection details incorrect"));
             }
         } catch (Exception e) {
-            LOGGER.error("Error initialising kafka producer to " + bootstrapServers, e);
+            LOGGER.error("Error initialising kafka producer to " + bootstrapServers);
             exceptionHandler.accept(e);
         }
     }
