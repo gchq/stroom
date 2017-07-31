@@ -23,7 +23,7 @@ public class DownloadSearchResultsAction extends Action<ResourceGeneration> {
     private static final long serialVersionUID = -6668626615097471925L;
 
     private DashboardQueryKey queryKey;
-    private Search search;
+    private SearchRequest searchRequest;
     private String componentId;
     private DownloadSearchResultFileType fileType;
     private boolean sample;
@@ -34,11 +34,11 @@ public class DownloadSearchResultsAction extends Action<ResourceGeneration> {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public DownloadSearchResultsAction(final DashboardQueryKey queryKey, final Search search, final String componentId,
+    public DownloadSearchResultsAction(final DashboardQueryKey queryKey, final SearchRequest searchRequest, final String componentId,
                                        final DownloadSearchResultFileType fileType, final boolean sample, final int percent,
                                        final String dateTimeLocale) {
         this.queryKey = queryKey;
-        this.search = search;
+        this.searchRequest = searchRequest;
         this.componentId = componentId;
         this.fileType = fileType;
         this.sample = sample;
@@ -50,8 +50,8 @@ public class DownloadSearchResultsAction extends Action<ResourceGeneration> {
         return queryKey;
     }
 
-    public Search getSearch() {
-        return search;
+    public SearchRequest getSearchRequest() {
+        return searchRequest;
     }
 
     public String getComponentId() {

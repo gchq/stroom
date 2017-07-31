@@ -121,7 +121,7 @@ public class SearchRequestMapper {
 
                 final TableSettings tableSettings = mapTableSettings(tableResultRequest.getTableSettings());
 
-                final stroom.query.api.v1.ResultRequest copy = new stroom.query.api.v1.ResultRequest(componentId, Collections.singletonList(tableSettings), mapOffsetRange(tableResultRequest.getRequestedRange()), mapCollection(String.class, tableResultRequest.getOpenGroups()), ResultStyle.TABLE, tableResultRequest.wantsData());
+                final stroom.query.api.v1.ResultRequest copy = new stroom.query.api.v1.ResultRequest(componentId, Collections.singletonList(tableSettings), mapOffsetRange(tableResultRequest.getRequestedRange()), mapCollection(String.class, tableResultRequest.getOpenGroups()), ResultStyle.TABLE, tableResultRequest.getFetch());
                 resultRequests.add(copy);
 
             } else if (componentResultRequest instanceof VisResultRequest) {
@@ -130,7 +130,7 @@ public class SearchRequestMapper {
                 final TableSettings parentTableSettings = mapTableSettings(visResultRequest.getVisDashboardSettings().getTableSettings());
                 final TableSettings childTableSettings = mapVisSettingsToTableSettings(visResultRequest.getVisDashboardSettings(), parentTableSettings);
 
-                final stroom.query.api.v1.ResultRequest copy = new stroom.query.api.v1.ResultRequest(componentId, Arrays.asList(parentTableSettings, childTableSettings), null, null, ResultStyle.FLAT, visResultRequest.wantsData());
+                final stroom.query.api.v1.ResultRequest copy = new stroom.query.api.v1.ResultRequest(componentId, Arrays.asList(parentTableSettings, childTableSettings), null, null, ResultStyle.FLAT, visResultRequest.getFetch());
                 resultRequests.add(copy);
 
 //

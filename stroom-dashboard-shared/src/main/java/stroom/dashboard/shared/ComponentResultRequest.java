@@ -16,20 +16,21 @@
 
 package stroom.dashboard.shared;
 
+import stroom.query.api.v1.ResultRequest.Fetch;
 import stroom.util.shared.SharedObject;
 
 public abstract class ComponentResultRequest implements SharedObject {
     private static final long serialVersionUID = -7455554742243923562L;
-    private boolean wantsData;
+    private Fetch fetch;
 
     public abstract ComponentType getComponentType();
 
-    public boolean wantsData() {
-        return wantsData;
+    public Fetch getFetch() {
+        return fetch;
     }
 
-    public void setWantsData(final boolean wantsData) {
-        this.wantsData = wantsData;
+    public void setFetch(final Fetch fetch) {
+        this.fetch = fetch;
     }
 
     public enum ComponentType {

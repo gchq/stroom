@@ -34,6 +34,7 @@ import stroom.query.api.v1.Query;
 import stroom.query.api.v1.QueryKey;
 import stroom.query.api.v1.Result;
 import stroom.query.api.v1.ResultRequest;
+import stroom.query.api.v1.ResultRequest.Fetch;
 import stroom.query.api.v1.Row;
 import stroom.query.api.v1.SearchRequest;
 import stroom.query.api.v1.SearchResponse;
@@ -97,7 +98,7 @@ public class TestEventSearch extends AbstractSearchTest {
         for (final String componentId : componentIds) {
             final TableSettings tableSettings = createTableSettings(index, extractValues);
 
-            final ResultRequest tableResultRequest = new ResultRequest(componentId, Collections.singletonList(tableSettings), null, null, ResultRequest.ResultStyle.TABLE, true);
+            final ResultRequest tableResultRequest = new ResultRequest(componentId, Collections.singletonList(tableSettings), null, null, ResultRequest.ResultStyle.TABLE, Fetch.CHANGES);
             resultRequests.add(tableResultRequest);
         }
 

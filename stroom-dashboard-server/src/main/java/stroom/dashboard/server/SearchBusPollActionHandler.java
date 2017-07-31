@@ -53,7 +53,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
     private final QueryService queryService;
     private final SearchEventLog searchEventLog;
     private final DataSourceProviderRegistry searchDataSourceProviderRegistry;
-    private final ActiveQueriesManager searchSessionManager;
+    private final ActiveQueriesManager activeQueriesManager;
     private final SearchRequestMapper searchRequestMapper;
     private final SecurityContext securityContext;
 
@@ -61,13 +61,13 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
     SearchBusPollActionHandler(final QueryService queryService,
                                final SearchEventLog searchEventLog,
                                final DataSourceProviderRegistry searchDataSourceProviderRegistry,
-                               final ActiveQueriesManager searchSessionManager,
+                               final ActiveQueriesManager activeQueriesManager,
                                final SearchRequestMapper searchRequestMapper,
                                final SecurityContext securityContext) {
         this.queryService = queryService;
         this.searchEventLog = searchEventLog;
         this.searchDataSourceProviderRegistry = searchDataSourceProviderRegistry;
-        this.searchSessionManager = searchSessionManager;
+        this.activeQueriesManager = activeQueriesManager;
         this.searchRequestMapper = searchRequestMapper;
         this.securityContext = securityContext;
     }
@@ -91,7 +91,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
             }
 
             final String searchSessionId = action.getUserToken() + "_" + action.getApplicationInstanceId();
-            final ActiveQueries searchSession = searchSessionManager.getOrCreate(searchSessionId);
+            final ActiveQueries activeQueries = activeQueriesManager.getOrCreate(searchSessionId);
             final Map<DashboardQueryKey, SearchResponse> searchResultMap = new HashMap<>();
 
 //            // Fix query keys so they have session and user info.
@@ -102,7 +102,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
 //            }
 
             // Kill off any queries that are no longer required by the UI.
-            searchSession.destroyUnusedQueries(action.getSearchActionMap().keySet());
+            activeQueries.destroyUnusedQueries(action.getSearchActionMap().keySet());
 
             // Get query results for every active query.
             for (final Entry<DashboardQueryKey, SearchRequest> entry : action.getSearchActionMap().entrySet()) {
@@ -111,7 +111,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
                 final SearchRequest searchRequest = entry.getValue();
 
                 if (searchRequest != null && searchRequest.getSearch() != null) {
-                    final SearchResponse searchResponse = processRequest(searchSession, queryKey, searchRequest);
+                    final SearchResponse searchResponse = processRequest(activeQueries, queryKey, searchRequest);
                     if (searchResponse != null) {
                         searchResultMap.put(queryKey, searchResponse);
                     }

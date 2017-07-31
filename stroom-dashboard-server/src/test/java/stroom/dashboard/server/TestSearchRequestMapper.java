@@ -57,7 +57,7 @@ public class TestSearchRequestMapper {
 
         assertThat(componentResultRequestMap.size(), equalTo(resultRequests.size()));
         assertThat("componentSettingsMapKey", equalTo(resultRequests.get(0).getComponentId()));
-        assertThat(componentResultRequestMap.get("componentSettingsMapKey").wantsData(), equalTo(resultRequests.get(0).getFetchData()));
+        assertThat(componentResultRequestMap.get("componentSettingsMapKey").getFetch(), equalTo(resultRequests.get(0).getFetch()));
 
         TableResultRequest tableResultRequest = ((TableResultRequest) componentResultRequestMap.get("componentSettingsMapKey"));
         ResultRequest resultRequest = resultRequests.get(0);

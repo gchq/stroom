@@ -47,6 +47,7 @@ import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dashboard.shared.VisResultRequest;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.query.api.v1.DocRef;
+import stroom.query.api.v1.ResultRequest.Fetch;
 import stroom.script.client.ScriptCache;
 import stroom.script.shared.FetchScriptAction;
 import stroom.script.shared.Script;
@@ -243,7 +244,11 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     @Override
     public void setWantsData(final boolean wantsData) {
         getView().setRefreshing(wantsData);
-        visResultRequest.setWantsData(wantsData);
+        if (wantsData) {
+            visResultRequest.setFetch(Fetch.CHANGES);
+        } else {
+            visResultRequest.setFetch(Fetch.NONE);
+        }
     }
 
     private void cleanupSearchModelAssociation() {

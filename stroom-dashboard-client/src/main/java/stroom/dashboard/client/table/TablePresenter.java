@@ -55,6 +55,7 @@ import stroom.dashboard.shared.Format;
 import stroom.dashboard.shared.Format.Type;
 import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.Search;
+import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.data.grid.client.DataGridView;
@@ -67,6 +68,7 @@ import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
+import stroom.query.api.v1.ResultRequest.Fetch;
 import stroom.security.client.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
@@ -82,7 +84,9 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class TablePresenter extends AbstractComponentPresenter<TableView>
@@ -282,15 +286,25 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private void download() {
         if (currentSearchModel != null) {
-            final Search search = currentSearchModel.getActiveSearch();
+            final Search activeSearch = currentSearchModel.getActiveSearch();
             final DashboardQueryKey queryKey = currentSearchModel.getCurrentQueryKey();
-            if (search != null && queryKey != null) {
+            if (activeSearch != null && queryKey != null) {
                 final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
                     @Override
                     public void onHideRequest(final boolean autoClose, final boolean ok) {
                         if (ok) {
+                            final TableResultRequest tableResultRequest = new TableResultRequest(0, Integer.MAX_VALUE);
+                            tableResultRequest.setTableSettings(TablePresenter.this.tableSettings);
+                            tableResultRequest.setFetch(Fetch.ALL);
+
+                            final Map<String, ComponentResultRequest> requestMap = new HashMap<>();
+                            requestMap.put(getComponentData().getId(), tableResultRequest);
+
+                            final Search search = new Search(activeSearch.getDataSourceRef(), activeSearch.getExpression(), activeSearch.getComponentSettingsMap(), activeSearch.getParamMap(), true, false);
+                            final SearchRequest searchRequest = new SearchRequest(search, requestMap, timeZones.getTimeZone());
+
                             dispatcher.exec(
-                                    new DownloadSearchResultsAction(queryKey, search, getComponentData().getId(),
+                                    new DownloadSearchResultsAction(queryKey, searchRequest, getComponentData().getId(),
                                             downloadPresenter.getFileType(), downloadPresenter.isSample(),
                                             downloadPresenter.getPercent(), timeZones.getTimeZone()))
                                     .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result));
@@ -322,7 +336,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     @Override
     public void setWantsData(final boolean wantsData) {
         getView().setRefreshing(wantsData);
-        tableResultRequest.setWantsData(wantsData);
+        if (wantsData) {
+            tableResultRequest.setFetch(Fetch.CHANGES);
+        } else {
+            tableResultRequest.setFetch(Fetch.NONE);
+        }
     }
 
     @Override

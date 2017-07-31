@@ -34,6 +34,7 @@ import stroom.query.api.v1.DocRef;
 import stroom.query.api.v1.ExpressionBuilder;
 import stroom.query.api.v1.ExpressionOperator;
 import stroom.query.api.v1.ExpressionTerm;
+import stroom.query.api.v1.ResultRequest.Fetch;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -84,7 +85,7 @@ public class SearchRequestTestData {
         for (final Map.Entry<String, ComponentSettings> entry : componentSettingsMap.entrySet()) {
             TableResultRequest tableResultRequest = new TableResultRequest();
             tableResultRequest.setTableSettings((TableComponentSettings) entry.getValue());
-            tableResultRequest.setWantsData(true);
+            tableResultRequest.setFetch(Fetch.CHANGES);
             componentResultRequestMap.put(entry.getKey(), tableResultRequest);
         }
 
