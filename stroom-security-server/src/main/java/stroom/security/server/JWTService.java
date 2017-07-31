@@ -26,7 +26,8 @@ import static org.jose4j.jws.AlgorithmIdentifiers.HMAC_SHA256;
 
 @Component
 public class JWTService {
-    protected static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String BEARER = "Bearer ";
+    private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final Logger LOGGER = LoggerFactory.getLogger(JWTService.class);
     private final String jwtSecret;
     private final String jwtIssuer;
@@ -36,6 +37,13 @@ public class JWTService {
             @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.issuer')}") final String jwtIssuer) {
         this.jwtSecret = jwtSecret;
         this.jwtIssuer = jwtIssuer;
+
+        if (jwtSecret == null) {
+            throw new SecurityException("No JWT secret defined");
+        }
+        if (jwtIssuer == null) {
+            throw new SecurityException("No JWT issuer defined");
+        }
     }
 
     public static Optional<String> getAuthHeader(ServletRequest request) {
@@ -68,10 +76,10 @@ public class JWTService {
 
             final String jwtToken;
 
-            if (bearerString.contains("Bearer")) {
+            if (bearerString.startsWith(BEARER)) {
                 // TODO This chops out 'Bearer'. We're dealing with unpredictable client data so we need a
                 // way to do this that more robustly handles an error in the string.
-                jwtToken = bearerString.substring(7);
+                jwtToken = bearerString.substring(BEARER.length());
             } else {
                 jwtToken = bearerString;
             }
