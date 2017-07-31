@@ -16,8 +16,6 @@
 
 package stroom.spring;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;
 import stroom.util.spring.PropertyProvider;
@@ -32,8 +30,6 @@ import javax.inject.Inject;
  */
 @Component("propertyConfigurer")
 public class PropertyConfigurer implements PropertyProvider {
-    private static final Logger LOGGER = LoggerFactory.getLogger(PropertyConfigurer.class);
-
     private final StroomPropertyService stroomPropertyService;
 
     @Inject
