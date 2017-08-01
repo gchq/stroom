@@ -78,10 +78,9 @@ public class TestMultiServiceInternalStatisticsFacade {
                 DOC_REF_TYPE_1, internalStatisticsService1, //i.e. docRefA1 and B1
                 DOC_REF_TYPE_2, internalStatisticsService2); //i.e. docRefA2
 
-        MultiServiceInternalStatisticsFacade facade = new MultiServiceInternalStatisticsFacade(
+        InternalStatisticsImpl.MultiServiceInternalStatistics facade = new InternalStatisticsImpl.MultiServiceInternalStatistics(
                 internalStatisticDocRefCache,
                 docRefTypeToServiceMap);
-
 
         //fire 6 events at the facade, 3 for each key
         facade.putEvents(Arrays.asList(

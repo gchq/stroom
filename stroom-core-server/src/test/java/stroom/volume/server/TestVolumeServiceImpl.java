@@ -33,7 +33,7 @@ import stroom.node.shared.Rack;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.VolumeState;
-import stroom.statistics.internal.InternalStatisticsFacadeFactory;
+import stroom.statistics.internal.InternalStatistics;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 import stroom.util.spring.StroomBeanStore;
@@ -207,8 +207,8 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
 
         public MockVolumeService(final StroomEntityManager stroomEntityManager, final NodeCache nodeCache,
                                  final StroomPropertyService stroomPropertyService, final StroomBeanStore stroomBeanStore,
-                                 final InternalStatisticsFacadeFactory internalStatisticsFacadeFactory) {
-            super(stroomEntityManager, nodeCache, stroomPropertyService, stroomBeanStore, internalStatisticsFacadeFactory);
+                                 final InternalStatistics internalStatistics) {
+            super(stroomEntityManager, nodeCache, stroomPropertyService, stroomBeanStore, internalStatistics);
         }
 
         @Override

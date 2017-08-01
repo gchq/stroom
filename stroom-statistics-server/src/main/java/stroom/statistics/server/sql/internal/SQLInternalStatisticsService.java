@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
-public class SQLInternalStatisticsService implements InternalStatisticsService {
+class SQLInternalStatisticsService implements InternalStatisticsService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLInternalStatisticsService.class);
 
@@ -30,8 +30,8 @@ public class SQLInternalStatisticsService implements InternalStatisticsService {
     private final String docRefType;
 
     @Inject
-    public SQLInternalStatisticsService(final StroomPropertyService stroomPropertyService,
-                                        final Statistics statisticsService) {
+    SQLInternalStatisticsService(final StroomPropertyService stroomPropertyService,
+                                 final Statistics statisticsService) {
         this.stroomPropertyService = stroomPropertyService;
         this.statisticsService = statisticsService;
         this.docRefType = stroomPropertyService.getProperty(PROP_KEY_DOC_REF_TYPE);

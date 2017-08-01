@@ -31,7 +31,7 @@ import java.util.TimeZone;
 
 @SuppressWarnings("unused") //handled by stroom.statistics.internal.InternalStatisticsFacadeFactory
 @Component
-public class StroomStatsInternalStatisticsService implements InternalStatisticsService {
+class StroomStatsInternalStatisticsService implements InternalStatisticsService {
 
     static final String PROP_KEY_DOC_REF_TYPE = "stroom.services.stroomStats.docRefType";
     static final String PROP_KEY_PREFIX_KAFKA_TOPICS = "stroom.services.stroomStats.kafkaTopics.";
@@ -46,8 +46,8 @@ public class StroomStatsInternalStatisticsService implements InternalStatisticsS
     private final DatatypeFactory datatypeFactory;
 
     @Inject
-    public StroomStatsInternalStatisticsService(final StroomKafkaProducer stroomKafkaProducer,
-                                                final StroomPropertyService stroomPropertyService) {
+    StroomStatsInternalStatisticsService(final StroomKafkaProducer stroomKafkaProducer,
+                                         final StroomPropertyService stroomPropertyService) {
 
         this.stroomKafkaProducer = stroomKafkaProducer;
         this.stroomPropertyService = stroomPropertyService;

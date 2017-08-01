@@ -37,9 +37,9 @@ public class StroomKafkaProducer {
     //instance of a kafka producer that will be shared by all threads
     private volatile Producer<String, String> producer = null;
     private volatile Instant timeOfLastFailedInitAttempt = Instant.EPOCH;
+
     public StroomKafkaProducer(
             @Value("#{propertyConfigurer.getProperty('stroom.kafka.bootstrap.servers')}") final String bootstrapServers) {
-
         this.bootstrapServers = bootstrapServers;
     }
 
