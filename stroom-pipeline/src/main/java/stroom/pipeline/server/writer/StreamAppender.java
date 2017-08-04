@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.pipeline.server.writer;
@@ -19,8 +20,8 @@ package stroom.pipeline.server.writer;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.feed.MetaMap;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.io.StreamCloser;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ProcessException;
@@ -34,10 +35,10 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
+import stroom.streamstore.server.StreamTypeService;
 import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.streamstore.shared.StreamTypeService;
 import stroom.util.io.WrappedOutputStream;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.pipeline.server.task;
@@ -23,14 +24,14 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.ImportState.ImportMode;
 import stroom.feed.MetaMap;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.importexport.server.ImportExportSerializer;
 import stroom.node.server.NodeCache;
+import stroom.pipeline.server.PipelineEntityService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.SharedStepData;
 import stroom.pipeline.shared.StepType;
@@ -39,18 +40,18 @@ import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
+import stroom.streamstore.server.StreamTypeService;
 import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.server.fs.serializable.RawInputSegmentWriter;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.streamstore.shared.StreamTypeService;
+import stroom.streamtask.server.StreamProcessorFilterService;
+import stroom.streamtask.server.StreamProcessorService;
 import stroom.streamtask.server.StreamProcessorTask;
 import stroom.streamtask.server.StreamTargetStroomStreamHandler;
 import stroom.streamtask.server.StreamTaskCreator;
 import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamProcessorFilterService;
-import stroom.streamtask.shared.StreamProcessorService;
 import stroom.streamtask.shared.StreamTask;
 import stroom.task.server.TaskManager;
 import stroom.task.server.TaskMonitorImpl;

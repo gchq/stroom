@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.test;
@@ -51,8 +52,8 @@ import stroom.node.server.MockNodeService;
 import stroom.node.server.MockRecordCountService;
 import stroom.node.server.NodeConfigForTesting;
 import stroom.node.server.NodeConfigImpl;
-import stroom.node.shared.NodeService;
-import stroom.node.shared.VolumeService;
+import stroom.node.server.NodeService;
+import stroom.node.server.VolumeService;
 import stroom.pipeline.server.MockPipelineEntityService;
 import stroom.pipeline.server.MockTextConverterService;
 import stroom.pipeline.server.MockXSLTService;

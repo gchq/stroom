@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,17 +12,17 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.feed.server;
 
 import org.springframework.stereotype.Component;
-import stroom.entity.shared.FolderService;
+import stroom.entity.server.FolderService;
 import stroom.explorer.server.AbstractExplorerDataProvider;
 import stroom.explorer.server.ProvidesExplorerData;
 import stroom.explorer.server.TreeModel;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
 
 import javax.inject.Inject;

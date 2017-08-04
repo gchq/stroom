@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.benchmark.server;
@@ -23,36 +24,36 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.entity.cluster.ClearServiceClusterTask;
 import stroom.entity.shared.Period;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.jobsystem.shared.JobManager;
+import stroom.node.server.NodeService;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
-import stroom.node.shared.NodeService;
+import stroom.pipeline.server.PipelineEntityService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.statistics.server.sql.StatisticEvent;
 import stroom.statistics.server.sql.StatisticTag;
 import stroom.statistics.server.sql.Statistics;
+import stroom.streamstore.server.StreamAttributeMapService;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeMap;
-import stroom.streamstore.shared.StreamAttributeMapService;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
+import stroom.streamtask.server.StreamProcessorFilterService;
+import stroom.streamtask.server.StreamProcessorService;
 import stroom.streamtask.server.StreamProcessorTask;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
-import stroom.streamtask.shared.StreamProcessorFilterService;
-import stroom.streamtask.shared.StreamProcessorService;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.server.AsyncTaskHelper;

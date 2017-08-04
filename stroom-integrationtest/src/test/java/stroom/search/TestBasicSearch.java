@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.search;
@@ -28,6 +29,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.index.server.FieldFactory;
 import stroom.index.server.IndexShardKeyUtil;
+import stroom.index.server.IndexShardService;
 import stroom.index.server.IndexShardWriterCache;
 import stroom.index.server.Indexer;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -37,7 +39,6 @@ import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.index.shared.IndexShardService;
 import stroom.search.server.MaxHitCollector;
 import stroom.search.server.shard.IndexShardSearcher;
 import stroom.search.server.shard.IndexShardSearcherImpl;

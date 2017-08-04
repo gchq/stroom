@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,13 +12,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.streamstore.server;
 
-import stroom.entity.shared.BaseEntityService;
-import stroom.entity.shared.FindDeleteService;
-import stroom.entity.shared.FindService;
+import stroom.entity.server.BaseEntityService;
+import stroom.entity.server.FindDeleteService;
+import stroom.entity.server.FindService;
 import stroom.streamstore.shared.StreamAttributeValue;
 
 public interface StreamAttributeValueService

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.pipeline.server.task;
@@ -19,11 +20,12 @@ package stroom.pipeline.server.task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.io.StreamCloser;
 import stroom.pipeline.server.EncodingSelection;
 import stroom.pipeline.server.LocationFactoryProxy;
+import stroom.pipeline.server.PipelineEntityService;
 import stroom.pipeline.server.StreamLocationFactory;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggedException;
@@ -33,7 +35,6 @@ import stroom.pipeline.server.factory.Pipeline;
 import stroom.pipeline.server.factory.PipelineDataCache;
 import stroom.pipeline.server.factory.PipelineFactory;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.StepType;
 import stroom.pipeline.shared.SteppingResult;
@@ -47,6 +48,7 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.security.Secured;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
+import stroom.streamstore.server.StreamTypeService;
 import stroom.streamstore.server.fs.serializable.NestedInputStream;
 import stroom.streamstore.server.fs.serializable.RANestedInputStream;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStream;
@@ -54,7 +56,6 @@ import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.streamstore.shared.StreamTypeService;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.date.DateUtil;

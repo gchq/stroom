@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.visualisation.server;
@@ -29,7 +30,6 @@ import stroom.security.SecurityContext;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.visualisation.shared.FindVisualisationCriteria;
 import stroom.visualisation.shared.Visualisation;
-import stroom.visualisation.shared.VisualisationService;
 
 import javax.inject.Inject;
 

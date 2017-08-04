@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.entity.server;
@@ -20,7 +21,7 @@ import event.logging.BaseAdvancedQueryOperator.And;
 import event.logging.Query;
 import event.logging.Query.Advanced;
 import org.springframework.context.annotation.Scope;
-import stroom.dashboard.server.logging.EntityEventLog;
+import stroom.dashboard.server.logging.DocumentEventLog;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
@@ -41,10 +42,10 @@ import java.util.List;
 class EntityReferenceFindHandler
         extends AbstractTaskHandler<EntityReferenceFindAction<BaseCriteria>, ResultList<SharedDocRef>> {
     private final EntityServiceBeanRegistry beanRegistry;
-    private final EntityEventLog entityEventLog;
+    private final DocumentEventLog entityEventLog;
 
     @Inject
-    EntityReferenceFindHandler(final EntityServiceBeanRegistry beanRegistry, final EntityEventLog entityEventLog) {
+    EntityReferenceFindHandler(final EntityServiceBeanRegistry beanRegistry, final DocumentEventLog entityEventLog) {
         this.beanRegistry = beanRegistry;
         this.entityEventLog = entityEventLog;
     }

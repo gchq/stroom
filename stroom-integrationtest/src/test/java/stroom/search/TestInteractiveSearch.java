@@ -12,18 +12,19 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.search;
 
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.dictionary.server.DictionaryService;
 import stroom.dictionary.shared.Dictionary;
-import stroom.dictionary.shared.DictionaryService;
 import stroom.entity.shared.DocRefUtil;
+import stroom.index.server.IndexService;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
-import stroom.index.shared.IndexService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v1.DocRef;
 import stroom.query.api.v1.ExpressionBuilder;
@@ -299,7 +300,7 @@ public class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     public void dictionaryTest1() {
-        Dictionary dic = dictionaryService.create(null, "users");
+        Dictionary dic = dictionaryService.create("users");
         dic.setData("user1\nuser2\nuser5");
         dic = dictionaryService.save(dic);
 
@@ -316,11 +317,11 @@ public class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     public void dictionaryTest2() {
-        Dictionary dic1 = dictionaryService.create(null, "users");
+        Dictionary dic1 = dictionaryService.create("users");
         dic1.setData("user1\nuser2\nuser5");
         dic1 = dictionaryService.save(dic1);
 
-        Dictionary dic2 = dictionaryService.create(null, "command");
+        Dictionary dic2 = dictionaryService.create("command");
         dic2.setData("msg");
         dic2 = dictionaryService.save(dic2);
 
@@ -339,11 +340,11 @@ public class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     public void dictionaryTest3() {
-        Dictionary dic1 = dictionaryService.create(null, "users");
+        Dictionary dic1 = dictionaryService.create("users");
         dic1.setData("user1\nuser2\nuser5");
         dic1 = dictionaryService.save(dic1);
 
-        Dictionary dic2 = dictionaryService.create(null, "command");
+        Dictionary dic2 = dictionaryService.create("command");
         dic2.setData("msg foo bar");
         dic2 = dictionaryService.save(dic2);
 

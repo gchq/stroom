@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.startup;
@@ -20,7 +21,7 @@ import com.google.common.base.Preconditions;
 import io.dropwizard.jersey.setup.JerseyEnvironment;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.context.ApplicationContext;
-import stroom.index.shared.IndexService;
+import stroom.index.server.IndexService;
 import stroom.resources.NamedResource;
 import stroom.resources.authentication.v1.AuthenticationResource;
 import stroom.resources.authorisation.v1.AuthorisationResource;

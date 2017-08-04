@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.explorer.client.presenter;
@@ -25,8 +26,8 @@ import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerDataAction;
 import stroom.explorer.shared.FetchExplorerDataResult;
 import stroom.explorer.shared.FindExplorerDataCriteria;
-import stroom.explorer.shared.SimpleExplorerItem;
 import stroom.explorer.shared.TreeStructure;
+import stroom.query.api.v1.DocRef;
 import stroom.util.shared.HasNodeState.NodeState;
 
 import java.util.ArrayList;
@@ -34,7 +35,7 @@ import java.util.List;
 import java.util.Set;
 
 public class ExplorerTreeModel {
-    public static final ExplorerData NULL_SELECTION = new SimpleExplorerItem(null, null, "None", null);
+    public static final ExplorerData NULL_SELECTION = ExplorerData.create(new DocRef("", "", "None"));
 
     private final OpenItems<ExplorerData> openItems = new OpenItems<>();
     private final NameFilterTimer timer = new NameFilterTimer();

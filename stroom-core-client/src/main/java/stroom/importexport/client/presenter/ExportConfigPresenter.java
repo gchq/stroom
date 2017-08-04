@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.importexport.client.presenter;
@@ -28,10 +29,7 @@ import stroom.core.client.LocationManager;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.entity.shared.DocRefs;
-import stroom.entity.shared.Folder;
-import stroom.entity.shared.SharedDocRef;
 import stroom.explorer.client.presenter.EntityCheckTreePresenter;
-import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;
 import stroom.importexport.client.event.ExportConfigEvent;
 import stroom.importexport.shared.ExportConfigAction;
@@ -103,14 +101,8 @@ public class ExportConfigPresenter
 
         } else {
             final DocRefs docRefs = new DocRefs();
-            for (final ExplorerData dataItem : dataItems) {
-                if (dataItem instanceof EntityData) {
-                    final EntityData entityData = (EntityData) dataItem;
-                    docRefs.add(entityData.getDocRef());
-                } else {
-                    // It must be the root folder that is selected
-                    docRefs.add(new SharedDocRef(Folder.ENTITY_TYPE, "0", "System"));
-                }
+            for (final ExplorerData explorerData : dataItems) {
+                docRefs.add(explorerData.getDocRef());
             }
 
             clientDispatchAsync.exec(new ExportConfigAction(docRefs))

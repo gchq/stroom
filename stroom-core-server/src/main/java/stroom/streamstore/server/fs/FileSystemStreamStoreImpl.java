@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.streamstore.server.fs;
@@ -43,14 +44,14 @@ import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Sort.Direction;
 import stroom.feed.MetaMap;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.node.server.NodeCache;
+import stroom.node.server.VolumeService;
 import stroom.node.shared.Volume;
-import stroom.node.shared.VolumeService;
+import stroom.pipeline.server.PipelineEntityService;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.query.api.v1.DocRef;
 import stroom.query.api.v1.ExpressionTerm;
 import stroom.security.Secured;
@@ -61,6 +62,7 @@ import stroom.streamstore.server.StreamAttributeValueFlush;
 import stroom.streamstore.server.StreamException;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamTarget;
+import stroom.streamstore.server.StreamTypeService;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeCondition;
@@ -70,10 +72,9 @@ import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.streamstore.shared.StreamPermissionException;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
-import stroom.streamstore.shared.StreamTypeService;
 import stroom.streamstore.shared.StreamVolume;
+import stroom.streamtask.server.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamProcessorService;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.node.client.presenter;
@@ -22,7 +23,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.ManageEntityEditPresenter;
-import stroom.entity.shared.EntityServiceSaveAction;
+import stroom.entity.shared.DocumentServiceWriteAction;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.GlobalProperty;
 import stroom.security.client.ClientSecurityContext;
@@ -72,7 +73,7 @@ public final class ManageGlobalPropertyEditPresenter
         getEntity().setValue(getView().getValue().getText());
 
         // Save the device.
-        dispatcher.exec(new EntityServiceSaveAction<>(getEntity())).onSuccess(result -> {
+        dispatcher.exec(new DocumentServiceWriteAction<GlobalProperty>(getEntity())).onSuccess(result -> {
             setEntity(result);
             if (hideOnSave) {
                 hide();

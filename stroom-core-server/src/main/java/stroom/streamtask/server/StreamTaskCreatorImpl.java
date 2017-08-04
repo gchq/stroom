@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.streamtask.server;
@@ -42,10 +43,8 @@ import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
-import stroom.streamtask.shared.StreamProcessorFilterService;
 import stroom.streamtask.shared.StreamProcessorFilterTracker;
 import stroom.streamtask.shared.StreamTask;
-import stroom.streamtask.shared.StreamTaskService;
 import stroom.streamtask.shared.TaskStatus;
 import stroom.task.server.TaskCallbackAdaptor;
 import stroom.task.server.TaskManager;

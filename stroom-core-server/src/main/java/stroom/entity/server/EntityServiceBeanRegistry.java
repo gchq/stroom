@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.entity.server;
@@ -22,12 +23,11 @@ import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.stereotype.Component;
+import stroom.document.server.DocumentStore;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.Entity;
-import stroom.entity.shared.EntityService;
 import stroom.entity.shared.EntityServiceException;
-import stroom.entity.shared.FindService;
 import stroom.util.spring.StroomBeanStore;
 
 import javax.annotation.Resource;
@@ -264,6 +264,12 @@ public class EntityServiceBeanRegistry implements BeanPostProcessor {
                     if (existing != null) {
                         LOGGER.error("Existing bean found for entity find type class '" + existing + "'");
                     }
+                }
+            } else if (bean instanceof DocumentStore) {
+                final DocumentStore documentStore = (DocumentStore) bean;
+                final String existing = entityServiceTypeMap.put(documentStore.getDocType(), beanName);
+                if (existing != null) {
+                    LOGGER.error("Existing bean found for entity find type class '" + existing + "'");
                 }
             }
         }

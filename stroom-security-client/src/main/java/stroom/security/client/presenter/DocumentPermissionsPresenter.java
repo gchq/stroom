@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.security.client.presenter;
@@ -21,7 +22,6 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.Folder;
-import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;
 import stroom.item.client.ItemListBox;
 import stroom.security.shared.ChangeDocumentPermissionsAction;
@@ -60,19 +60,16 @@ public class DocumentPermissionsPresenter
     }
 
     public void show(final ExplorerData explorerData) {
-        if (explorerData instanceof EntityData) {
-            final EntityData entityData = (EntityData) explorerData;
-
-            getView().setCascasdeVisible(Folder.ENTITY_TYPE.equals(entityData.getType()));
-            final DocumentPermissionsTabPresenter usersPresenter = getTabPresenter(entityData);
-            final DocumentPermissionsTabPresenter groupsPresenter = getTabPresenter(entityData);
+        getView().setCascasdeVisible(Folder.ENTITY_TYPE.equals(explorerData.getType()));
+        final DocumentPermissionsTabPresenter usersPresenter = getTabPresenter(explorerData);
+        final DocumentPermissionsTabPresenter groupsPresenter = getTabPresenter(explorerData);
 
             final TabData groups = tabPresenter.addTab("Groups", groupsPresenter);
             final TabData users = tabPresenter.addTab("Users", usersPresenter);
 
             tabPresenter.changeSelectedTab(groups);
 
-            final FetchAllDocumentPermissionsAction fetchAllDocumentPermissionsAction = new FetchAllDocumentPermissionsAction(entityData.getDocRef());
+        final FetchAllDocumentPermissionsAction fetchAllDocumentPermissionsAction = new FetchAllDocumentPermissionsAction(explorerData.getDocRef());
             dispatcher.exec(fetchAllDocumentPermissionsAction).onSuccess(documentPermissions -> {
                 usersPresenter.setDocumentPermissions(documentPermissions, false, changeSet);
                 groupsPresenter.setDocumentPermissions(documentPermissions, true, changeSet);
@@ -94,18 +91,17 @@ public class DocumentPermissionsPresenter
                 };
 
                 PopupSize popupSize;
-                if (Folder.ENTITY_TYPE.equals(entityData.getType())) {
+                if (Folder.ENTITY_TYPE.equals(explorerData.getType())) {
                     popupSize = new PopupSize(384, 664, 384, 664, true);
                 } else {
                     popupSize = new PopupSize(384, 500, 384, 500, true);
                 }
 
-                ShowPopupEvent.fire(DocumentPermissionsPresenter.this, DocumentPermissionsPresenter.this, PopupView.PopupType.OK_CANCEL_DIALOG, popupSize, "Set " + entityData.getType() + " Permissions", popupUiHandlers);
+                ShowPopupEvent.fire(DocumentPermissionsPresenter.this, DocumentPermissionsPresenter.this, PopupView.PopupType.OK_CANCEL_DIALOG, popupSize, "Set " + explorerData.getType() + " Permissions", popupUiHandlers);
             });
-        }
     }
 
-    private DocumentPermissionsTabPresenter getTabPresenter(final EntityData entity) {
+    private DocumentPermissionsTabPresenter getTabPresenter(final ExplorerData entity) {
         if (Folder.ENTITY_TYPE.equals(entity.getType())) {
             return folderPermissionsListPresenterProvider.get();
         }

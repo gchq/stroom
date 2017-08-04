@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.dashboard.client.main;
@@ -32,7 +33,8 @@ import com.gwtplatform.mvp.client.proxy.RevealRootContentEvent;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.EntityServiceLoadAction;
+import stroom.entity.shared.DocRefUtil;
+import stroom.entity.shared.DocumentServiceReadAction;
 import stroom.query.api.v1.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.client.event.CurrentUserChangedEvent;
@@ -74,7 +76,7 @@ public class DashboardAppPresenter
 
             } else {
                 final DocRef docRef = new DocRef(type, uuid);
-                dispatcher.exec(new EntityServiceLoadAction<Dashboard>(docRef, null))
+                dispatcher.exec(new DocumentServiceReadAction<Dashboard>(docRef))
                         .onSuccess(this::onLoadSuccess)
                         .onFailure(this::onLoadFailure);
             }
@@ -114,7 +116,7 @@ public class DashboardAppPresenter
             RootPanel.get("logo").setVisible(false);
 
             dashboardPresenter.setParams(params);
-            dashboardPresenter.read(dashboard);
+            dashboardPresenter.read(DocRefUtil.create(dashboard), dashboard);
             Window.setTitle(dashboard.getName());
         }
     }

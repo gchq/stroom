@@ -5,13 +5,14 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.test;
@@ -30,23 +31,23 @@ import stroom.entity.shared.Folder;
 import stroom.entity.shared.Res;
 import stroom.feed.shared.Feed;
 import stroom.index.server.IndexShardManager;
+import stroom.index.server.IndexShardService;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShardService;
 import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobNode;
 import stroom.lifecycle.LifecycleServiceImpl;
 import stroom.node.server.NodeConfig;
+import stroom.node.server.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
 import stroom.node.shared.Volume;
-import stroom.node.shared.VolumeService;
 import stroom.node.shared.VolumeState;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.XSLT;
-import stroom.policy.shared.Policy;
+import stroom.ruleset.shared.Policy;
 import stroom.script.shared.Script;
 import stroom.security.server.DocumentPermission;
 import stroom.security.server.Permission;
@@ -54,12 +55,12 @@ import stroom.security.server.User;
 import stroom.security.server.UserGroupUser;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.stats.shared.StroomStatsStoreEntity;
+import stroom.streamstore.server.StreamAttributeKeyService;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeKey;
-import stroom.streamstore.shared.StreamAttributeKeyService;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.streamstore.shared.StreamVolume;
 import stroom.streamtask.server.StreamTaskCreator;

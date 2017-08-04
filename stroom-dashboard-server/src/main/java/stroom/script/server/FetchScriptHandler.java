@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.script.server;
@@ -20,7 +21,6 @@ import org.springframework.context.annotation.Scope;
 import stroom.query.api.v1.DocRef;
 import stroom.script.shared.FetchScriptAction;
 import stroom.script.shared.Script;
-import stroom.script.shared.ScriptService;
 import stroom.security.SecurityContext;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;

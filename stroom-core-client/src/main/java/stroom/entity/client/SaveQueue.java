@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,13 +12,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.entity.client;
 
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.EntityServiceSaveAction;
+import stroom.entity.shared.DocumentServiceWriteAction;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,7 +53,7 @@ public class SaveQueue<E extends BaseEntity> {
             task.setValue(entity);
         }
 
-        dispatcher.exec(new EntityServiceSaveAction<>(entity))
+        dispatcher.exec(new DocumentServiceWriteAction<E>(entity))
                 .onSuccess(result -> {
                     if (result != null) {
                         // Get all of the tasks that are queued for this

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.xml;
@@ -21,6 +22,8 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.server.PipelineMarshaller;
+import stroom.pipeline.server.TextConverterService;
+import stroom.pipeline.server.XSLTService;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.server.factory.Pipeline;
@@ -30,9 +33,7 @@ import stroom.pipeline.server.writer.TestAppender;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
-import stroom.pipeline.shared.TextConverterService;
 import stroom.pipeline.shared.XSLT;
-import stroom.pipeline.shared.XSLTService;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
@@ -201,7 +202,7 @@ public class F2XTestUtil {
     public String runF2XTest(final TextConverterType textConverterType, final String textConverterLocation,
                              final InputStream inputStream) {
         // Persist the text converter.
-        TextConverter textConverter = textConverterService.create(null, "TEST_TRANSLATION");
+        TextConverter textConverter = textConverterService.create("TEST_TRANSLATION");
         textConverter.setConverterType(textConverterType);
         textConverter.setData(StroomProcessTestFileUtil.getString(textConverterLocation));
         textConverter = textConverterService.save(textConverter);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,15 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.security.server;
 
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.entity.server.FolderService;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Folder;
-import stroom.entity.shared.FolderService;
 import stroom.importexport.server.EntityPathResolver;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.test.FileSystemTestUtil;
@@ -39,7 +40,7 @@ public class TestFolderEntityManager extends AbstractCoreIntegrationTest {
         final String l2Name = "L2_" + FileSystemTestUtil.getUniqueTestString();
         final String l3Name = "L3_" + FileSystemTestUtil.getUniqueTestString();
 
-        final Folder l1Node = folderService.create(null, l1Name);
+        final Folder l1Node = folderService.create(l1Name);
         final Folder l2Node = folderService.create(DocRefUtil.create(l1Node), l2Name);
         final Folder l3Node = folderService.create(DocRefUtil.create(l2Node), l3Name);
 

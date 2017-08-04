@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.refdata;
@@ -22,14 +23,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 import stroom.cache.CacheManagerAutoCloseable;
+import stroom.entity.server.FolderService;
 import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.FolderService;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
+import stroom.pipeline.server.PipelineEntityService;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.query.api.v1.DocRef;
 import stroom.streamstore.shared.StreamType;
@@ -60,7 +61,7 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
 
     @Override
     protected void onBefore() {
-        folder = DocRefUtil.create(folderService.create(null, "TEST_FOLDER"));
+        folder = DocRefUtil.create(folderService.create("TEST_FOLDER"));
     }
 
     /**
@@ -76,8 +77,8 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
         feed2.setReference(true);
         feed2 = feedService.save(feed2);
 
-        final PipelineEntity pipeline1 = pipelineEntityService.create(null, "TEST_PIPELINE_1");
-        final PipelineEntity pipeline2 = pipelineEntityService.create(null, "TEST_PIPELINE_2");
+        final PipelineEntity pipeline1 = pipelineEntityService.create("TEST_PIPELINE_1");
+        final PipelineEntity pipeline2 = pipelineEntityService.create("TEST_PIPELINE_2");
 
         final PipelineReference pipelineReference1 = new PipelineReference(DocRefUtil.create(pipeline1),
                 DocRefUtil.create(feed1), StreamType.REFERENCE.getName());

@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.explorer.client.presenter;
@@ -25,7 +26,6 @@ import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.Folder;
-import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;
 import stroom.query.api.v1.DocRef;
 import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter;
@@ -78,11 +78,7 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
             return true;
         }
 
-        if (selected instanceof EntityData) {
-            return !Folder.ENTITY_TYPE.equals(selected.getType());
-        }
-
-        return false;
+        return !Folder.ENTITY_TYPE.equals(selected.getType());
     }
 
     @Override
@@ -116,7 +112,7 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
     }
 
     public DocRef getSelectedEntityReference() {
-        final EntityData entityData = getSelectedEntityData();
+        final ExplorerData entityData = getSelectedEntityData();
         if (entityData == null) {
             return null;
         }
@@ -124,18 +120,14 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
     }
 
     public void setSelectedEntityReference(final DocRef docRef) {
-        setSelectedEntityData(EntityData.create(docRef));
+        setSelectedEntityData(ExplorerData.create(docRef));
     }
 
-    private EntityData getSelectedEntityData() {
-        final ExplorerData selected = explorerTree.getSelectionModel().getSelected();
-        if (selected != null && selected instanceof EntityData) {
-            return (EntityData) selected;
-        }
-        return null;
+    private ExplorerData getSelectedEntityData() {
+        return explorerTree.getSelectionModel().getSelected();
     }
 
-    private void setSelectedEntityData(final EntityData entityData) {
+    private void setSelectedEntityData(final ExplorerData entityData) {
         this.selectedEntityData = entityData;
         refresh();
     }
@@ -152,7 +144,7 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
     @Override
     public void onHideRequest(final boolean autoClose, final boolean ok) {
         if (ok) {
-            final EntityData selected = getSelectedEntityData();
+            final ExplorerData selected = getSelectedEntityData();
             if (isSelectionAllowed(selected)) {
                 DataSelectionEvent.fire(this, selected, false);
                 this.selectedEntityData = selected;

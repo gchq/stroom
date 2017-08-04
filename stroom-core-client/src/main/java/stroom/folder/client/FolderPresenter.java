@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.folder.client;
@@ -20,7 +21,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.entity.client.presenter.ContentCallback;
-import stroom.entity.client.presenter.EntityEditTabPresenter;
+import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
 import stroom.entity.shared.Folder;
@@ -34,7 +35,7 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
-public class FolderPresenter extends EntityEditTabPresenter<LinkTabPanelView, Folder> {
+public class FolderPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Folder> {
     private static final TabData DATA = new TabDataImpl("Data");
     private static final TabData TASKS = new TabDataImpl("Active Tasks");
     private static final TabData PROCESSORS = new TabDataImpl("Processors");

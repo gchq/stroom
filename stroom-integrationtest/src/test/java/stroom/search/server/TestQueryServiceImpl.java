@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.search.server;
@@ -20,19 +21,19 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.dashboard.server.DashboardService;
 import stroom.dashboard.server.QueryHistoryCleanExecutor;
+import stroom.dashboard.server.QueryService;
 import stroom.dashboard.shared.Dashboard;
-import stroom.dashboard.shared.DashboardService;
 import stroom.dashboard.shared.FindQueryCriteria;
 import stroom.dashboard.shared.QueryEntity;
-import stroom.dashboard.shared.QueryService;
+import stroom.entity.server.FolderService;
 import stroom.entity.server.util.BaseEntityDeProxyProcessor;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.FolderService;
 import stroom.entity.shared.Sort.Direction;
+import stroom.index.server.IndexService;
 import stroom.index.shared.Index;
-import stroom.index.shared.IndexService;
 import stroom.query.api.v1.DocRef;
 import stroom.query.api.v1.ExpressionBuilder;
 import stroom.query.api.v1.ExpressionOperator;
@@ -74,14 +75,14 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
 
         userRef = userService.createUser("testuser");
 
-        final DocRef testFolder = DocRefUtil.create(folderService.create(null, "Test Folder"));
+        final DocRef testFolder = DocRefUtil.create(folderService.create("Test Folder"));
 
         dashboard = dashboardService.create(testFolder, "Test");
 
         final Index index = indexService.create(testFolder, "Test index");
         final DocRef dataSourceRef = DocRefUtil.create(index);
 
-        refQuery = queryService.create(null, "Ref query");
+        refQuery = queryService.create("Ref query");
         refQuery.setDashboardId(dashboard.getId());
         refQuery.setQueryId(QUERY_COMPONENT);
         refQuery.setQuery(new Query(dataSourceRef, new ExpressionOperator(null, Op.AND, Arrays.asList())));
@@ -96,7 +97,7 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
 
         LOGGER.info(root.toString());
 
-        testQuery = queryService.create(null, "Test query");
+        testQuery = queryService.create("Test query");
         testQuery.setDashboardId(dashboard.getId());
         testQuery.setQueryId(QUERY_COMPONENT);
         testQuery.setQuery(new Query(dataSourceRef, root.build()));
@@ -159,7 +160,7 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
 
         // Now insert the same query over 100 times.
         for (int i = 0; i < 120; i++) {
-            final QueryEntity newQuery = queryService.create(null, "History");
+            final QueryEntity newQuery = queryService.create("History");
             newQuery.setDashboardId(query.getDashboardId());
             newQuery.setQueryId(query.getQueryId());
             newQuery.setFavourite(false);

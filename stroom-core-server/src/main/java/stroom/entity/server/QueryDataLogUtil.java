@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.entity.server;
@@ -20,8 +21,8 @@ import event.logging.BaseAdvancedQueryItem;
 import event.logging.BaseAdvancedQueryOperator;
 import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
+import stroom.dictionary.server.DictionaryService;
 import stroom.dictionary.shared.Dictionary;
-import stroom.dictionary.shared.DictionaryService;
 import stroom.dictionary.shared.FindDictionaryCriteria;
 import stroom.query.api.v1.ExpressionItem;
 import stroom.query.api.v1.ExpressionOperator;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,19 +12,20 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.app.client.gin;
 
 import stroom.about.client.AboutPlugin;
 import stroom.core.client.gin.PluginModule;
-import stroom.entity.client.EntityPluginEventManager;
+import stroom.document.client.DocumentPluginEventManager;
 import stroom.help.client.HelpPlugin;
 
 public class PluginsModule extends PluginModule {
     @Override
     protected void configure() {
-        bindPlugin(EntityPluginEventManager.class);
+        bindPlugin(DocumentPluginEventManager.class);
 
         bindPlugin(HelpPlugin.class);
         bindPlugin(AboutPlugin.class);

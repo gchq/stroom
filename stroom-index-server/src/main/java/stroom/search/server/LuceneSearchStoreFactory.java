@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.search.server;
@@ -20,11 +21,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import stroom.dictionary.shared.DictionaryService;
+import stroom.dictionary.server.DictionaryService;
+import stroom.index.server.IndexService;
 import stroom.index.server.LuceneVersionUtil;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexFieldsMap;
-import stroom.index.shared.IndexService;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.ClientProperties;
 import stroom.node.shared.Node;

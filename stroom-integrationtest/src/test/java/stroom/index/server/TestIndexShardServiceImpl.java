@@ -12,29 +12,28 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.index.server;
 
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.entity.server.FolderService;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.FolderService;
 import stroom.entity.shared.Range;
 import stroom.entity.shared.Sort.Direction;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.Index.PartitionBy;
-import stroom.index.shared.IndexService;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.index.shared.IndexShardService;
 import stroom.node.server.NodeCache;
+import stroom.node.server.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
-import stroom.node.shared.VolumeService;
 import stroom.query.api.v1.DocRef;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
@@ -65,7 +64,7 @@ public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
     public void test() {
         final Volume volume = volumeService.find(new FindVolumeCriteria()).getFirst();
 
-        final DocRef testFolder = DocRefUtil.create(folderService.create(null, "Test Group"));
+        final DocRef testFolder = DocRefUtil.create(folderService.create("Test Group"));
 
         Index index1 = indexService.create(testFolder, "Test Index 1");
         index1.getVolumes().add(volume);
@@ -112,7 +111,7 @@ public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
     public void testOrderBy() {
         final Volume volume = volumeService.find(new FindVolumeCriteria()).getFirst();
 
-        final DocRef testFolder = DocRefUtil.create(folderService.create(null, "Test Group"));
+        final DocRef testFolder = DocRefUtil.create(folderService.create("Test Group"));
 
         Index index = indexService.create(testFolder, "Test Index 1");
         index.getVolumes().add(volume);

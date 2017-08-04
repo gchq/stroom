@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.entity.server;
@@ -26,13 +27,10 @@ import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
-import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.FindDocumentEntityCriteria;
 import stroom.entity.shared.FindNamedEntityCriteria;
-import stroom.entity.shared.FindService;
 import stroom.entity.shared.Folder;
-import stroom.entity.shared.FolderService;
 import stroom.entity.shared.ImportState;
 import stroom.entity.shared.ImportState.ImportMode;
 import stroom.entity.shared.ImportState.State;
@@ -85,7 +83,9 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     private String entityType;
     private FieldMap sqlFieldMap;
 
-    protected DocumentEntityServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext) {
+    protected DocumentEntityServiceImpl(final StroomEntityManager entityManager,
+                                        final ImportExportHelper importExportHelper,
+                                        final SecurityContext securityContext) {
         this.entityManager = entityManager;
         this.importExportHelper = importExportHelper;
         this.securityContext = securityContext;
@@ -103,12 +103,16 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     }
 
     @Override
-    public E create(final DocRef folder, final String name) throws RuntimeException {
-        return create(folder, name, PermissionInheritance.NONE);
+    public E create(final String name) throws RuntimeException {
+        return create(null, name, PermissionInheritance.NONE);
     }
 
     @Override
-    public E create(final DocRef folder, final String name, final PermissionInheritance permissionInheritance) throws RuntimeException {
+    public final E create(final DocRef folder, final String name) throws RuntimeException {
+        return create(folder, name, PermissionInheritance.NONE);
+    }
+
+    protected E create(final DocRef folder, final String name, final PermissionInheritance permissionInheritance) throws RuntimeException {
         // Create a new entity instance.
         E entity;
         try {
@@ -119,7 +123,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
         entity.setName(name);
         setFolder(entity, folder);
-        final E result = entityServiceHelper.create(entity);
+        final E result = create(entity);
         final DocRef dest = DocRefUtil.create(result);
 
         // Create the initial user permissions for this new document.
@@ -141,6 +145,39 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     // TODO : Temporary for query service.
     protected E create(final E entity) {
         return entityServiceHelper.create(entity);
+    }
+
+    @Override
+    public E saveAs(final E entity, final DocRef folder, final String name, final PermissionInheritance permissionInheritance) throws RuntimeException {
+        entity.clearPersistence();
+        entity.setName(name);
+        setFolder(entity, folder);
+        final E result = create(entity);
+        final DocRef dest = DocRefUtil.create(result);
+
+        // Create the initial user permissions for this new document.
+        switch (permissionInheritance) {
+            case NONE:
+                addDocumentPermissions(null, dest, true);
+                break;
+            case COMBINED:
+                addDocumentPermissions(folder, dest, true);
+                break;
+            case INHERIT:
+                addDocumentPermissions(folder, dest, true);
+                break;
+        }
+
+        return result;
+    }
+
+    protected void setFolder(final E entity, final String folderUUID) throws RuntimeException {
+        DocRef folderRef = null;
+        if (folderUUID != null) {
+            folderRef = new DocRef(Folder.ENTITY_TYPE, folderUUID);
+        }
+
+        setFolder(entity, folderRef);
     }
 
     private void setFolder(final E entity, final DocRef folderRef) throws RuntimeException {
@@ -210,6 +247,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     }
 
     // TODO : Remove this method when the explorer service is broken out as a separate micro service.
+    @SuppressWarnings("unchecked")
     @Transactional(readOnly = true)
     @Override
     public E loadByIdInsecure(final long id, final Set<String> fetchSet) throws RuntimeException {
@@ -357,68 +395,6 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
             entity.setUuid(UUID.randomUUID().toString());
         }
         return entityServiceHelper.save(entity);
-    }
-
-    @Override
-    public E copy(final E entity, final DocRef folder, final String name, final PermissionInheritance permissionInheritance) {
-        final DocRef source = DocRefUtil.create(entity);
-
-        // Check that we can read the entity that we are going to copy.
-        checkReadPermission(entity);
-
-        // This is going to be a copy so clear the persistence so save will create a new DB entry.
-        entity.clearPersistence();
-
-        entity.setName(name);
-
-        setFolder(entity, folder);
-
-        final E result = entityServiceHelper.create(entity);
-        final DocRef dest = DocRefUtil.create(result);
-
-        if (permissionInheritance != null) {
-            switch (permissionInheritance) {
-                case NONE:
-                    addDocumentPermissions(source, dest, true);
-                    break;
-                case COMBINED:
-                    addDocumentPermissions(source, dest, true);
-                    addDocumentPermissions(folder, dest, true);
-                    break;
-                case INHERIT:
-                    addDocumentPermissions(folder, dest, true);
-                    break;
-            }
-        }
-
-        return result;
-    }
-
-    @Override
-    public E move(final E entity, final DocRef folder, final PermissionInheritance permissionInheritance) {
-        // Check that we can read the entity that we are going to move.
-        checkReadPermission(entity);
-
-        setFolder(entity, folder);
-
-        final E result = save(entity);
-        final DocRef dest = DocRefUtil.create(result);
-
-        if (permissionInheritance != null) {
-            switch (permissionInheritance) {
-                case NONE:
-                    break;
-                case COMBINED:
-                    addDocumentPermissions(folder, dest, false);
-                    break;
-                case INHERIT:
-                    clearDocumentPermissions(dest);
-                    addDocumentPermissions(folder, dest, false);
-                    break;
-            }
-        }
-
-        return result;
     }
 
     @Override
@@ -615,6 +591,198 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return STANDARD_PERMISSIONS;
     }
 
+
+    ////////////////////////////////////////////////////////////////////////
+    // START OF ExplorerActionHandler
+    ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public final DocRef create(final String parentFolderUUID, final String name) {
+        // Create a new entity instance.
+        E entity;
+        try {
+            entity = getEntityClass().newInstance();
+        } catch (final IllegalAccessException | InstantiationException e) {
+            throw new EntityServiceException(e.getMessage());
+        }
+
+        entity.setName(name);
+        setFolder(entity, parentFolderUUID);
+        final E result = create(entity);
+        return DocRefUtil.create(result);
+    }
+
+    @Override
+    public DocRef copy(final String uuid, final String parentFolderUUID) {
+        final E entity = loadByUuid(uuid);
+
+        // This is going to be a copy so clear the persistence so save will create a new DB entry.
+        entity.clearPersistence();
+
+        entity.setName("Copy of " + entity.getName());
+
+        setFolder(entity, parentFolderUUID);
+
+        final E result = create(entity);
+        return DocRefUtil.create(result);
+    }
+
+//    @Override
+//    public DocRef copy(final DocRef document, final DocRef folder, final String name, final PermissionInheritance permissionInheritance) {
+//        try {
+//            final E entity = loadByUuid(document.getUuid());
+//            // This is going to be a copy so clear the persistence so save will create a new DB entry.
+//            entity.clearPersistence();
+//
+//            entity.setName(name);
+//
+//            setFolder(entity, folder);
+//
+//            final E result = entityServiceHelper.create(entity);
+//            final DocRef dest = DocRefUtil.create(result);
+//
+//            if (permissionInheritance != null) {
+//                switch (permissionInheritance) {
+//                    case NONE:
+//                        addDocumentPermissions(document, dest, true);
+//                        break;
+//                    case COMBINED:
+//                        addDocumentPermissions(document, dest, true);
+//                        addDocumentPermissions(folder, dest, true);
+//                        break;
+//                    case INHERIT:
+//                        addDocumentPermissions(folder, dest, true);
+//                        break;
+//                }
+//            }
+//
+//            documentEventLog.copy(document, folder, name);
+//            return dest;
+//        } catch (final RuntimeException e) {
+//            documentEventLog.copy(document, folder, name, e);
+//            throw e;
+//        }
+//    }
+
+    @Override
+    public DocRef move(final String uuid, final String parentFolderUUID) {
+        final E entity = loadByUuid(uuid);
+
+        setFolder(entity, parentFolderUUID);
+
+        final E result = save(entity);
+        return DocRefUtil.create(result);
+    }
+
+//    @Override
+//    public DocRef move(final DocRef document, final DocRef folder, final String name, final PermissionInheritance permissionInheritance) {
+//        try {
+//            final E entity = loadByUuid(document.getUuid());
+//
+//            entity.setName(name);
+//
+//            setFolder(entity, folder);
+//
+//            final E result = entityServiceHelper.save(entity);
+//            final DocRef dest = DocRefUtil.create(result);
+//
+//            if (permissionInheritance != null) {
+//                switch (permissionInheritance) {
+//                    case NONE:
+//                        addDocumentPermissions(document, dest, true);
+//                        break;
+//                    case COMBINED:
+//                        addDocumentPermissions(document, dest, true);
+//                        addDocumentPermissions(folder, dest, true);
+//                        break;
+//                    case INHERIT:
+//                        addDocumentPermissions(folder, dest, true);
+//                        break;
+//                }
+//            }
+//
+//            documentEventLog.move(document, folder, name);
+//            return dest;
+//        } catch (final RuntimeException e) {
+//            documentEventLog.move(document, folder, name, e);
+//            throw e;
+//        }
+//    }
+
+
+    @Override
+    public DocRef rename(final String uuid, final String name) {
+        final E entity = loadByUuid(uuid);
+
+        entity.setName(name);
+
+        final E result = save(entity);
+        return DocRefUtil.create(result);
+    }
+
+    @Override
+    public void delete(final String uuid) {
+        final E entity = loadByUuid(uuid);
+        delete(entity);
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    // END OF ExplorerActionHandler
+    ////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////
+    // START OF DocumentActionHandler
+    ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public Object read(final DocRef docRef) {
+        return loadByUuid(docRef.getUuid());
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Object write(final Object document) {
+        if (!getEntityClass().isAssignableFrom(document.getClass())) {
+            throw new EntityServiceException("Unexpected document type");
+        }
+
+        final E entity = (E) document;
+
+        return save(entity);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Object fork(final Object document, final String docName, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+        if (!getEntityClass().isAssignableFrom(document.getClass())) {
+            throw new EntityServiceException("Unexpected document type");
+        }
+
+        final E entity = (E) document;
+
+        // This is going to be a copy so clear the persistence so save will create a new DB entry.
+        entity.clearPersistence();
+
+        entity.setName(docName);
+
+        setFolder(entity, destinationFolderRef.getUuid());
+
+        final E result = create(entity);
+        return DocRefUtil.create(result);
+
+        // TODO : Call the explorer service to notify it that a new item has been created.
+    }
+
+    @Override
+    public void delete(final DocRef docRef) {
+        delete(docRef.getUuid());
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    // END OF DocumentActionHandler
+    ////////////////////////////////////////////////////////////////////////
+
+    @SuppressWarnings("unchecked")
     protected QueryAppender<E, C> createQueryAppender(final StroomEntityManager entityManager) {
         return new QueryAppender(entityManager);
     }
@@ -629,6 +797,10 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     }
 
     private void checkCreatePermission(final E entity, final DocRef folder) {
+        checkCreatePermission(DocRefUtil.create(entity), folder);
+    }
+
+    private void checkCreatePermission(final DocRef docRef, final DocRef folder) {
         // Only allow administrators to create documents with no folder.
         if (folder == null) {
             if (!securityContext.isAdmin()) {
@@ -636,7 +808,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
             }
         } else {
             if (!securityContext.hasDocumentPermission(Folder.ENTITY_TYPE, folder.getUuid(), DocumentPermissionNames.getDocumentCreatePermission(getEntityType()))) {
-                throw new PermissionException("You do not have permission to create " + getDocReference(entity) + " in folder " + folder);
+                throw new PermissionException("You do not have permission to create (" + docRef + ") in folder " + folder);
             }
         }
     }
@@ -645,21 +817,32 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         if (!entity.isPersistent()) {
             throw new EntityServiceException("You cannot update an entity that has not been created");
         }
+        checkUpdatePermission(DocRefUtil.create(entity));
+    }
 
-        if (!securityContext.hasDocumentPermission(entity.getType(), entity.getUuid(), DocumentPermissionNames.UPDATE)) {
-            throw new PermissionException("You do not have permission to update " + getDocReference(entity));
+    protected void checkUpdatePermission(final DocRef docRef) {
+        if (!securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.UPDATE)) {
+            throw new PermissionException("You do not have permission to update (" + docRef + ")");
         }
     }
 
     protected final void checkReadPermission(final E entity) {
-        if (!securityContext.hasDocumentPermission(entity.getType(), entity.getUuid(), DocumentPermissionNames.READ)) {
-            throw new PermissionException("You do not have permission to read " + getDocReference(entity));
+        checkReadPermission(DocRefUtil.create(entity));
+    }
+
+    protected final void checkReadPermission(final DocRef docRef) {
+        if (!securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ)) {
+            throw new PermissionException("You do not have permission to read (" + docRef + ")");
         }
     }
 
     protected final void checkDeletePermission(final E entity) {
-        if (!securityContext.hasDocumentPermission(entity.getType(), entity.getUuid(), DocumentPermissionNames.DELETE)) {
-            throw new PermissionException("You do not have permission to delete " + getDocReference(entity));
+        checkDeletePermission(DocRefUtil.create(entity));
+    }
+
+    protected final void checkDeletePermission(final DocRef docRef) {
+        if (!securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.DELETE)) {
+            throw new PermissionException("You do not have permission to delete (" + docRef + ")");
         }
     }
 

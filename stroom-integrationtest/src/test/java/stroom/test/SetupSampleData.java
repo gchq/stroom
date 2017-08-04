@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.test;
@@ -21,6 +22,7 @@ import stroom.dashboard.server.logging.spring.EventLoggingConfiguration;
 import stroom.dashboard.spring.DashboardConfiguration;
 import stroom.index.spring.IndexConfiguration;
 import stroom.pipeline.spring.PipelineConfiguration;
+import stroom.ruleset.spring.RuleSetConfiguration;
 import stroom.script.spring.ScriptConfiguration;
 import stroom.search.spring.SearchConfiguration;
 import stroom.security.spring.SecurityConfiguration;
@@ -51,12 +53,23 @@ public final class SetupSampleData {
                 @SuppressWarnings("resource") final AnnotationConfigApplicationContext appContext = new AnnotationConfigApplicationContext();
                 appContext.getEnvironment().setActiveProfiles(StroomSpringProfiles.PROD,
                         SecurityConfiguration.MOCK_SECURITY);
-                appContext.register(ScopeConfiguration.class, PersistenceConfiguration.class,
-                        SetupSampleDataComponentScanConfiguration.class, ServerConfiguration.class,
-                        SecurityConfiguration.class, ScopeTestConfiguration.class,
-                        PipelineConfiguration.class, EventLoggingConfiguration.class, IndexConfiguration.class,
-                        SearchConfiguration.class, ScriptConfiguration.class, VisualisationConfiguration.class,
-                        DashboardConfiguration.class, StatisticsConfiguration.class);
+                appContext.register(
+                        ScopeConfiguration.class,
+                        PersistenceConfiguration.class,
+                        SetupSampleDataComponentScanConfiguration.class,
+                        ServerConfiguration.class,
+                        RuleSetConfiguration.class,
+                        SecurityConfiguration.class,
+                        ScopeTestConfiguration.class,
+                        PipelineConfiguration.class,
+                        EventLoggingConfiguration.class,
+                        IndexConfiguration.class,
+                        SearchConfiguration.class,
+                        ScriptConfiguration.class,
+                        VisualisationConfiguration.class,
+                        DashboardConfiguration.class,
+                        StatisticsConfiguration.class
+                );
                 appContext.refresh();
                 final CommonTestControl commonTestControl = appContext.getBean(CommonTestControl.class);
 

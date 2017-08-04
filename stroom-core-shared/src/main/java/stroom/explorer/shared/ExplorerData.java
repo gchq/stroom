@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,10 +12,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.explorer.shared;
 
+import stroom.entity.shared.DocRefUtil;
+import stroom.entity.shared.NamedEntity;
+import stroom.query.api.v1.DocRef;
 import stroom.util.shared.HasDisplayValue;
 import stroom.util.shared.HasNodeState;
 import stroom.util.shared.HasType;
@@ -23,14 +27,117 @@ import stroom.util.shared.SharedObject;
 
 import java.util.Set;
 
-public interface ExplorerData extends HasType, HasNodeState, HasDisplayValue, SharedObject {
-    int getDepth();
+/**
+ * This is a light-weight class used to represent an entity object and provide
+ * some additional properties for constructing a tree.
+ */
+public class ExplorerData implements HasType, HasNodeState, HasDisplayValue, SharedObject {
+    private static final long serialVersionUID = -5216736591679930246L;
 
-    void setDepth(int depth);
+    private int depth;
+    private String iconUrl;
+    private DocRef docRef;
+    private NodeState nodeState;
+    private Set<String> tags;
 
-    String getIconUrl();
+    public ExplorerData() {
+        // Default constructor necessary for GWT serialisation.
+    }
 
-    void setNodeState(HasNodeState.NodeState nodeState);
+    private ExplorerData(final String iconUrl, final DocRef docRef, final NodeState nodeState) {
+        this.iconUrl = iconUrl;
+        this.docRef = docRef;
+        this.nodeState = nodeState;
+    }
 
-    Set<String> getTags();
+    public static ExplorerData create(final String iconUrl, final NamedEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+        return create(iconUrl, entity, NodeState.LEAF);
+    }
+
+    public static ExplorerData create(final String iconUrl, final NamedEntity entity, final NodeState nodeState) {
+        if (entity == null) {
+            return null;
+        }
+        return new ExplorerData(iconUrl, DocRefUtil.create(entity), nodeState);
+    }
+
+    public static ExplorerData create(final String iconUrl, final DocRef docRef, final NodeState nodeState) {
+        if (docRef == null) {
+            return null;
+        }
+        return new ExplorerData(iconUrl, docRef, nodeState);
+    }
+
+    public static ExplorerData create(final DocRef docRef) {
+        if (docRef == null) {
+            return null;
+        }
+        return create(null, docRef, NodeState.LEAF);
+    }
+
+    public int getDepth() {
+        return depth;
+    }
+
+    public void setDepth(int depth) {
+        this.depth = depth;
+    }
+
+    public String getIconUrl() {
+        return iconUrl;
+    }
+
+    public DocRef getDocRef() {
+        return docRef;
+    }
+
+    @Override
+    public String getType() {
+        return docRef.getType();
+    }
+
+    @Override
+    public NodeState getNodeState() {
+        return nodeState;
+    }
+
+    public void setNodeState(final NodeState nodeState) {
+        this.nodeState = nodeState;
+    }
+
+    @Override
+    public String getDisplayValue() {
+        return docRef.getDisplayValue();
+    }
+
+    public Set<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(final Set<String> tags) {
+        this.tags = tags;
+    }
+
+    @Override
+    public int hashCode() {
+        return docRef.hashCode();
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (obj == null || !(obj instanceof ExplorerData)) {
+            return false;
+        }
+
+        final ExplorerData item = (ExplorerData) obj;
+        return docRef.equals(item.docRef);
+    }
+
+    @Override
+    public String toString() {
+        return docRef.getDisplayValue();
+    }
 }

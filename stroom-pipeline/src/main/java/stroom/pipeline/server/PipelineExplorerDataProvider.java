@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,19 +12,19 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.pipeline.server;
 
 import org.springframework.stereotype.Component;
-import stroom.entity.shared.FolderService;
+import stroom.entity.server.FolderService;
 import stroom.explorer.server.AbstractExplorerDataProvider;
 import stroom.explorer.server.ProvidesExplorerData;
 import stroom.explorer.server.TreeModel;
-import stroom.explorer.shared.EntityData;
+import stroom.explorer.shared.ExplorerData;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -49,8 +49,8 @@ public class PipelineExplorerDataProvider
     }
 
     @Override
-    protected EntityData createEntityData(final PipelineEntity entity) {
-        final EntityData entityData = super.createEntityData(entity);
+    protected ExplorerData createEntityData(final PipelineEntity entity) {
+        final ExplorerData entityData = super.createEntityData(entity);
 
         if (entity.getPipelineType() != null) {
             final Set<String> tags = new HashSet<>();

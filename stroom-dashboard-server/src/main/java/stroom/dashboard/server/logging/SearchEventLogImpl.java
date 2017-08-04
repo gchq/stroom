@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.dashboard.server.logging;
@@ -29,7 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.datasource.DataSourceProviderRegistry;
-import stroom.dictionary.shared.DictionaryService;
+import stroom.dictionary.server.DictionaryService;
 import stroom.entity.server.QueryDataLogUtil;
 import stroom.query.api.v1.DocRef;
 import stroom.query.api.v1.ExpressionOperator;

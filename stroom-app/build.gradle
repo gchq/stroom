@@ -60,8 +60,9 @@ dependencies {
     compile project(':stroom-util')
     compile project(':stroom-security-api')
 
-    runtime project(':stroom-dashboard-server')
-    runtime project(':stroom-statistics-server')
+    compile project(':stroom-dashboard-server')
+    compile project(':stroom-statistics-server')
+    compile project(':stroom-ruleset-server')
 
     compile urlDependencies.get(versions.stroomQueryApi)
     compile urlDependencies.get(versions.stroomQueryCommon)

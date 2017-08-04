@@ -12,27 +12,28 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.test;
 
 import org.junit.Assert;
 import org.springframework.stereotype.Component;
+import stroom.entity.server.FolderService;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Folder;
-import stroom.entity.shared.FolderService;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
-import stroom.feed.shared.FeedService;
+import stroom.index.server.IndexService;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
-import stroom.index.shared.IndexService;
 import stroom.node.server.NodeCache;
+import stroom.node.server.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeUseStatus;
-import stroom.node.shared.VolumeService;
 import stroom.query.api.v1.DocRef;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
@@ -41,9 +42,9 @@ import stroom.streamstore.server.fs.serializable.RawInputSegmentWriter;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
+import stroom.streamtask.server.StreamProcessorFilterService;
+import stroom.streamtask.server.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamProcessorFilterService;
-import stroom.streamtask.shared.StreamProcessorService;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.util.zip.StroomHeaderArguments;
@@ -84,7 +85,7 @@ public class CommonTestScenarioCreator {
         Folder globalGroup = null;
         globalGroup = folderService.loadByName(null, "GlobalGroup");
         if (globalGroup == null) {
-            globalGroup = folderService.create(null, "GlobalGroup");
+            globalGroup = folderService.create("GlobalGroup");
         }
         return DocRefUtil.create(globalGroup);
     }

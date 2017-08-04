@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.search;
@@ -21,13 +22,13 @@ import org.junit.Test;
 import stroom.dashboard.shared.DataSourceFieldsMap;
 import stroom.datasource.api.v1.DataSourceField;
 import stroom.datasource.api.v1.DataSourceField.DataSourceFieldType;
+import stroom.index.server.IndexService;
+import stroom.index.server.IndexShardService;
 import stroom.index.server.IndexShardUtil;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
-import stroom.index.shared.IndexService;
 import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShardService;
 import stroom.query.api.v1.ExpressionBuilder;
 import stroom.query.api.v1.ExpressionOperator;
 import stroom.query.api.v1.ExpressionOperator.Op;

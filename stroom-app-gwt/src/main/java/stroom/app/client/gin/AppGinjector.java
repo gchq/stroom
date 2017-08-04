@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.app.client.gin;
@@ -55,8 +56,8 @@ import stroom.monitoring.client.gin.MonitoringGinjector;
 import stroom.monitoring.client.gin.MonitoringModule;
 import stroom.pipeline.client.gin.PipelineGinjector;
 import stroom.pipeline.client.gin.PipelineModule;
-import stroom.policy.client.gin.PolicyModule;
 import stroom.query.client.QueryModule;
+import stroom.ruleset.client.gin.PolicyModule;
 import stroom.script.client.gin.ScriptGinjector;
 import stroom.script.client.gin.ScriptModule;
 import stroom.security.client.gin.SecurityGinjector;

@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.node.client.presenter;
@@ -25,8 +26,8 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.EntityServiceDeleteAction;
-import stroom.entity.shared.EntityServiceLoadAction;
+import stroom.entity.shared.DocumentServiceDeleteAction;
+import stroom.entity.shared.DocumentServiceReadAction;
 import stroom.node.client.view.WrapperView;
 import stroom.node.shared.FlushVolumeStatusAction;
 import stroom.node.shared.Volume;
@@ -96,7 +97,7 @@ public class ManageVolumesPresenter extends MyPresenter<WrapperView, ManageVolum
     private void open(final PopupUiHandlers popupUiHandlers) {
         final Volume volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
-            dispatcher.exec(new EntityServiceLoadAction<Volume>(DocRefUtil.create(volume), null))
+            dispatcher.exec(new DocumentServiceReadAction<Volume>(DocRefUtil.create(volume)))
                     .onSuccess(result -> {
                         final VolumeEditPresenter editor = editProvider.get();
                         editor.editVolume(result, popupUiHandlers);
@@ -116,7 +117,7 @@ public class ManageVolumesPresenter extends MyPresenter<WrapperView, ManageVolum
                         if (result) {
                             volumeStatusListPresenter.getSelectionModel().clear();
                             for (final Volume volume : list) {
-                                dispatcher.exec(new EntityServiceDeleteAction<>(volume)).onSuccess(r -> refresh());
+                                dispatcher.exec(new DocumentServiceDeleteAction(volume)).onSuccess(r -> refresh());
                             }
                         }
                     });

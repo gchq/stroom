@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.search;
@@ -19,9 +20,9 @@ package stroom.search;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.DocRefUtil;
+import stroom.index.server.IndexService;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
-import stroom.index.shared.IndexService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v1.DocRef;
 import stroom.query.api.v1.ExpressionBuilder;

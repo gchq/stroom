@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,17 +12,18 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.security.server;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import stroom.entity.server.FolderService;
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.server.MockDocumentEntityService;
 import stroom.entity.shared.FindFolderCriteria;
 import stroom.entity.shared.Folder;
-import stroom.entity.shared.FolderService;
 import stroom.importexport.server.EntityPathResolver;
 import stroom.util.spring.StroomSpringProfiles;
 
@@ -46,7 +47,7 @@ public class MockFolderService extends MockDocumentEntityService<Folder, FindFol
      * Used to reset the user.
      */
     public void setupTestUser() {
-        create(null, "Junit Group");
+        create("Junit Group");
     }
 
     @Override

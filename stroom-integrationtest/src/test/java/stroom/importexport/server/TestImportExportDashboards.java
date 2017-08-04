@@ -12,50 +12,51 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.importexport.server;
 
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.dashboard.server.DashboardService;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardConfig;
-import stroom.dashboard.shared.DashboardService;
 import stroom.dashboard.shared.FindDashboardCriteria;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
+import stroom.dictionary.server.DictionaryService;
 import stroom.dictionary.shared.Dictionary;
-import stroom.dictionary.shared.DictionaryService;
 import stroom.dictionary.shared.FindDictionaryCriteria;
+import stroom.entity.server.FolderService;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.FindFolderCriteria;
 import stroom.entity.shared.Folder;
-import stroom.entity.shared.FolderService;
 import stroom.entity.shared.ImportState;
 import stroom.entity.shared.Res;
-import stroom.feed.shared.FeedService;
+import stroom.feed.server.FeedService;
+import stroom.index.server.IndexService;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
-import stroom.index.shared.IndexService;
+import stroom.pipeline.server.PipelineEntityService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.query.api.v1.ExpressionBuilder;
 import stroom.query.api.v1.ExpressionOperator.Op;
 import stroom.query.api.v1.ExpressionTerm;
 import stroom.query.api.v1.ExpressionTerm.Condition;
 import stroom.resource.server.ResourceStore;
+import stroom.script.server.ScriptService;
 import stroom.script.shared.Script;
-import stroom.script.shared.ScriptService;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.util.shared.ResourceKey;
+import stroom.visualisation.server.VisualisationService;
 import stroom.visualisation.shared.FindVisualisationCriteria;
 import stroom.visualisation.shared.Visualisation;
-import stroom.visualisation.shared.VisualisationService;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -113,8 +114,8 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     private void test(final boolean skipVisCreation, final boolean skipVisExport, final boolean update) {
         deleteAllAndCheck();
 
-        final Folder folder1 = folderService.create(null, "Group1");
-        final Folder folder2 = folderService.create(null, "Group2");
+        final Folder folder1 = folderService.create("Group1");
+        final Folder folder2 = folderService.create("Group2");
 
         Assert.assertEquals(2, commonTestControl.countEntity(Folder.class));
 

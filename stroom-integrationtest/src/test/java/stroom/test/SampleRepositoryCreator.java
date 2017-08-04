@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.test;
@@ -19,7 +20,7 @@ package stroom.test;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import stroom.entity.shared.ImportState.ImportMode;
-import stroom.feed.shared.FeedService;
+import stroom.feed.server.FeedService;
 import stroom.importexport.server.ImportExportSerializer;
 import stroom.node.server.NodeCache;
 import stroom.proxy.repo.ProxyRepositoryCreator;

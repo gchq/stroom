@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.datafeed.server;
@@ -22,10 +23,9 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import stroom.feed.MetaMap;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.internalstatistics.MetaDataStatistic;
-import stroom.policy.shared.DataReceiptAction;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
@@ -62,7 +62,7 @@ public class DefaultDataFeedRequest implements DataFeedRequest {
     private final ThreadLocalBuffer requestThreadLocalBuffer;
     private final MetaDataStatistic metaDataStatistics;
     private final MetaMap metaMap;
-    private final DataReceiptPolicyChecker dataReceiptPolicyChecker;
+    private final MetaMapFilter metaMapFilter;
 
     @Inject
     DefaultDataFeedRequest(final SecurityContext securityContext,
@@ -72,7 +72,7 @@ public class DefaultDataFeedRequest implements DataFeedRequest {
                            @Named("requestThreadLocalBuffer") final ThreadLocalBuffer requestThreadLocalBuffer,
                            final MetaDataStatistic metaDataStatistics,
                            final MetaMap metaMap,
-                           final DataReceiptPolicyChecker dataReceiptPolicyChecker) {
+                           final MetaMapFilterFactory metaMapFilterFactory) {
         this.securityContext = securityContext;
         this.request = request;
         this.streamStore = streamStore;
@@ -80,7 +80,7 @@ public class DefaultDataFeedRequest implements DataFeedRequest {
         this.requestThreadLocalBuffer = requestThreadLocalBuffer;
         this.metaDataStatistics = metaDataStatistics;
         this.metaMap = metaMap;
-        this.dataReceiptPolicyChecker = dataReceiptPolicyChecker;
+        this.metaMapFilter = metaMapFilterFactory.create("dataFeed");
     }
 
     @Override
@@ -88,14 +88,7 @@ public class DefaultDataFeedRequest implements DataFeedRequest {
     public void processRequest() {
         securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
         try {
-            // We need to examine the meta map and ensure we aren't dropping or rejecting this data.
-            final DataReceiptAction dataReceiptAction = dataReceiptPolicyChecker.check(metaMap);
-
-            if (DataReceiptAction.REJECT.equals(dataReceiptAction)) {
-                debug("Rejecting data", metaMap);
-                throw new StroomStreamException(StroomStatusCode.RECEIPT_POLICY_SET_TO_REJECT_DATA);
-
-            } else if (DataReceiptAction.RECEIVE.equals(dataReceiptAction)) {
+            if (metaMapFilter.filter(metaMap)) {
                 debug("Receiving data", metaMap);
                 final String feedName = metaMap.get(StroomHeaderArguments.FEED);
 

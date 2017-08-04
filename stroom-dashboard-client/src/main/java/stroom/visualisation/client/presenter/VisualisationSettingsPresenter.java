@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.visualisation.client.presenter;
@@ -26,16 +27,17 @@ import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.entity.client.presenter.EntitySettingsPresenter;
+import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.script.shared.Script;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.EqualsUtil;
+import stroom.visualisation.client.presenter.VisualisationSettingsPresenter.VisualisationSettingsView;
 import stroom.visualisation.shared.Visualisation;
 
 public class VisualisationSettingsPresenter
-        extends EntitySettingsPresenter<VisualisationSettingsPresenter.VisualisationSettingsView, Visualisation> {
+        extends DocumentSettingsPresenter<VisualisationSettingsView, Visualisation> {
     private final EntityDropDownPresenter scriptPresenter;
     private final EditorPresenter editorPresenter;
 

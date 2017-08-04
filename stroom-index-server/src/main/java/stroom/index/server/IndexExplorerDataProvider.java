@@ -12,19 +12,19 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.index.server;
 
 import org.springframework.stereotype.Component;
-import stroom.entity.shared.FolderService;
+import stroom.entity.server.FolderService;
 import stroom.explorer.server.AbstractExplorerDataProvider;
 import stroom.explorer.server.ProvidesExplorerData;
 import stroom.explorer.server.TreeModel;
-import stroom.explorer.shared.EntityData;
+import stroom.explorer.shared.ExplorerData;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
-import stroom.index.shared.IndexService;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -54,8 +54,8 @@ public class IndexExplorerDataProvider extends AbstractExplorerDataProvider<Inde
     }
 
     @Override
-    protected EntityData createEntityData(final Index entity) {
-        final EntityData entityData = super.createEntityData(entity);
+    protected ExplorerData createEntityData(final Index entity) {
+        final ExplorerData entityData = super.createEntityData(entity);
         entityData.setTags(tags);
         return entityData;
     }

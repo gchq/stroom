@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.pipeline.server.task;
@@ -21,10 +22,10 @@ import org.junit.Ignore;
 import org.junit.Test;
 import stroom.feed.shared.Feed;
 import stroom.node.server.NodeCache;
+import stroom.pipeline.server.XSLTService;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.pipeline.shared.XSLT;
-import stroom.pipeline.shared.XSLTService;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.tools.StoreCreationTool;
 import stroom.streamstore.shared.FindStreamCriteria;

@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.process.client.presenter;
@@ -26,11 +27,11 @@ import stroom.entity.client.presenter.HasRead;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
+import stroom.entity.shared.DocumentServiceDeleteAction;
+import stroom.entity.shared.DocumentServiceReadAction;
+import stroom.entity.shared.DocumentServiceWriteAction;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityReferenceComparator;
-import stroom.entity.shared.EntityServiceDeleteAction;
-import stroom.entity.shared.EntityServiceLoadAction;
-import stroom.entity.shared.EntityServiceSaveAction;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.Period;
@@ -212,7 +213,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                 final DocRef dataSourceRef = queryData.getDataSource();
 
                 if (expression != null && dataSourceRef != null) {
-                    dispatcher.exec(new EntityServiceLoadAction<NamedEntity>(dataSourceRef, null)).onSuccess(result -> {
+                    dispatcher.exec(new DocumentServiceReadAction<NamedEntity>(dataSourceRef)).onSuccess(result -> {
                         final ExpressionBuilder builder = new ExpressionBuilder(Op.AND);
                         builder.addTerm("Data Source", Condition.EQUALS, result.getName());
 
@@ -449,7 +450,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         if (filter != null) {
             // Now update the processor filter using the find stream criteria.
             filter.setFindStreamCriteria(findStreamCriteria);
-            dispatcher.exec(new EntityServiceSaveAction<>(filter)).onSuccess(result -> {
+            dispatcher.exec(new DocumentServiceWriteAction<StreamProcessorFilter>(filter)).onSuccess(result -> {
                 refresh(result);
                 HidePopupEvent.fire(ProcessorPresenter.this, streamFilterPresenter);
             });
@@ -469,14 +470,14 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                 final StreamProcessorRow streamProcessorRow = (StreamProcessorRow) selectedProcessor;
                 ConfirmEvent.fire(this, "Are you sure you want to delete this processor?", result -> {
                     if (result) {
-                        dispatcher.exec(new EntityServiceDeleteAction<>(streamProcessorRow.getEntity())).onSuccess(res -> processorListPresenter.refresh());
+                        dispatcher.exec(new DocumentServiceDeleteAction(streamProcessorRow.getEntity())).onSuccess(res -> processorListPresenter.refresh());
                     }
                 });
             } else if (selectedProcessor instanceof StreamProcessorFilterRow) {
                 final StreamProcessorFilterRow streamProcessorFilterRow = (StreamProcessorFilterRow) selectedProcessor;
                 ConfirmEvent.fire(this, "Are you sure you want to delete this filter?", result -> {
                     if (result) {
-                        dispatcher.exec(new EntityServiceDeleteAction<>(streamProcessorFilterRow.getEntity())).onSuccess(res -> processorListPresenter.refresh());
+                        dispatcher.exec(new DocumentServiceDeleteAction(streamProcessorFilterRow.getEntity())).onSuccess(res -> processorListPresenter.refresh());
                     }
                 });
             }

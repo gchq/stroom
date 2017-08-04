@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.pipeline.structure.client.presenter;
@@ -28,16 +29,16 @@ import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.document.client.event.DirtyEvent;
+import stroom.document.client.event.DirtyEvent.DirtyHandler;
+import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.entity.client.event.DirtyEvent;
-import stroom.entity.client.event.DirtyEvent.DirtyHandler;
-import stroom.entity.client.event.HasDirtyHandlers;
-import stroom.entity.client.event.ReloadEntityEvent;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.entity.shared.DocRefUtil;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.explorer.shared.EntityData;
+import stroom.explorer.shared.ExplorerData;
 import stroom.pipeline.shared.FetchPipelineDataAction;
 import stroom.pipeline.shared.FetchPipelineXMLAction;
 import stroom.pipeline.shared.FetchPropertyTypesAction;
@@ -164,7 +165,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
         registerHandler(pipelineReferenceListPresenter.addDirtyHandler(dirtyHandler));
         registerHandler(pipelinePresenter.addDataSelectionHandler(event -> {
             if (event.getSelectedItem() != null) {
-                final EntityData entityData = (EntityData) event.getSelectedItem();
+                final ExplorerData entityData = (ExplorerData) event.getSelectedItem();
                 if (EqualsUtil.isEquals(entityData.getDocRef().getUuid(), pipelineEntity.getUuid())) {
                     AlertEvent.fireWarn(PipelineStructurePresenter.this, "A pipeline cannot inherit from itself",
                             () -> {
@@ -501,7 +502,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
             // Hide the popup.
             HidePopupEvent.fire(PipelineStructurePresenter.this, xmlEditor, false, true);
             // Reload the entity.
-            ReloadEntityEvent.fire(PipelineStructurePresenter.this, pipelineEntity);
+            RefreshDocumentEvent.fire(PipelineStructurePresenter.this, DocRefUtil.create(pipelineEntity));
         });
     }
 

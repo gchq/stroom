@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,21 +12,28 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.explorer.server;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import stroom.entity.shared.FolderService;
+import stroom.entity.server.EntityServiceBeanRegistry;
+import stroom.entity.server.FolderService;
+import stroom.entity.server.NameValidationUtil;
+import stroom.entity.shared.EntityServiceException;
+import stroom.entity.shared.PermissionInheritance;
+import stroom.entity.shared.ProvidesNamePattern;
+import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
-import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerDataResult;
 import stroom.explorer.shared.FindExplorerDataCriteria;
 import stroom.folder.server.FolderRootExplorerDataProvider;
+import stroom.query.api.v1.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.HasNodeState;
@@ -43,13 +50,20 @@ import java.util.Set;
 @Component
 @Scope(StroomScope.PROTOTYPE)
 class ExplorerServiceImpl implements ExplorerService {
-    private final SecurityContext securityContext;
     private final ExplorerTreeModel explorerTreeModel;
+    private final EntityServiceBeanRegistry beanRegistry;
+    private final SecurityContext securityContext;
+    private final ExplorerEventLog explorerEventLog;
 
     @Inject
-    ExplorerServiceImpl(SecurityContext securityContext, ExplorerTreeModel explorerTreeModel) {
-        this.securityContext = securityContext;
+    ExplorerServiceImpl(final ExplorerTreeModel explorerTreeModel,
+                        final EntityServiceBeanRegistry beanRegistry,
+                        final SecurityContext securityContext,
+                        final ExplorerEventLog explorerEventLog) {
         this.explorerTreeModel = explorerTreeModel;
+        this.beanRegistry = beanRegistry;
+        this.securityContext = securityContext;
+        this.explorerEventLog = explorerEventLog;
     }
 
     @Override
@@ -153,16 +167,12 @@ class ExplorerServiceImpl implements ExplorerService {
     }
 
     private boolean checkSecurity(final ExplorerData explorerData, final Set<String> requiredPermissions) {
-        if (!(explorerData instanceof EntityData)) {
-            return true;
-        }
-
         if (requiredPermissions == null || requiredPermissions.size() == 0) {
             return false;
         }
 
         final String type = explorerData.getType();
-        final String uuid = ((EntityData) explorerData).getDocRef().getUuid();
+        final String uuid = explorerData.getDocRef().getUuid();
         for (final String permission : requiredPermissions) {
             if (!securityContext.hasDocumentPermission(type, uuid, permission)) {
                 return false;
@@ -173,7 +183,7 @@ class ExplorerServiceImpl implements ExplorerService {
     }
 
     private boolean checkType(final ExplorerData explorerData, final Set<String> types) {
-        return types == null || types.contains(explorerData.getType()) || FolderService.ROOT.equals(explorerData.getType());
+        return types == null || types.contains(explorerData.getType()) || FolderService.SYSTEM.equals(explorerData.getType());
     }
 
     private boolean checkTags(final ExplorerData explorerData, final Set<String> tags) {
@@ -292,5 +302,204 @@ class ExplorerServiceImpl implements ExplorerService {
         });
 
         return documentTypes;
+    }
+
+    @Override
+    public DocRef create(final String type, final String name, final DocRef folder, final PermissionInheritance permissionInheritance) {
+        final ExplorerActionHandler documentStore = getDocumentStore(type);
+
+        DocRef result;
+
+        try {
+            // Validate the entity name.
+            validateName(documentStore, name);
+
+            result = documentStore.create(folder.getUuid(), name);
+
+            // Create the initial user permissions for this new document.
+            switch (permissionInheritance) {
+                case NONE:
+                    addDocumentPermissions(null, result, true);
+                    break;
+                case COMBINED:
+                    addDocumentPermissions(folder, result, true);
+                    break;
+                case INHERIT:
+                    addDocumentPermissions(folder, result, true);
+                    break;
+            }
+
+            explorerTreeModel.setRebuildRequired(true);
+
+            explorerEventLog.create(type, name, folder, permissionInheritance, null);
+        } catch (final RuntimeException e) {
+            explorerEventLog.create(type, name, folder, permissionInheritance, e);
+            throw e;
+        }
+
+        return result;
+    }
+
+    @Override
+    public BulkActionResult copy(final List<DocRef> docRefs, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+        final List<DocRef> resultDocRefs = new ArrayList<>();
+        final StringBuilder resultMessage = new StringBuilder();
+
+        for (final DocRef docRef : docRefs) {
+            final ExplorerActionHandler documentStore = getDocumentStore(docRef.getType());
+
+            DocRef result;
+
+            try {
+                result = documentStore.copy(docRef.getUuid(), destinationFolderRef.getUuid());
+
+                if (permissionInheritance != null) {
+                    switch (permissionInheritance) {
+                        case NONE:
+                            addDocumentPermissions(docRef, result, true);
+                            break;
+                        case COMBINED:
+                            addDocumentPermissions(docRef, result, true);
+                            addDocumentPermissions(destinationFolderRef, result, true);
+                            break;
+                        case INHERIT:
+                            addDocumentPermissions(destinationFolderRef, result, true);
+                            break;
+                    }
+                }
+
+                explorerEventLog.copy(docRef, destinationFolderRef, permissionInheritance, null);
+                resultDocRefs.add(result);
+
+            } catch (final Exception e) {
+                explorerEventLog.copy(docRef, destinationFolderRef, permissionInheritance, e);
+                resultMessage.append("Unable to copy '" + docRef.getName() + "' " + e.getMessage() + "\n");
+            }
+        }
+
+        explorerTreeModel.setRebuildRequired(true);
+        return new BulkActionResult(resultDocRefs, resultMessage.toString());
+    }
+
+    @Override
+    public BulkActionResult move(final List<DocRef> docRefs, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+        final List<DocRef> resultDocRefs = new ArrayList<>();
+        final StringBuilder resultMessage = new StringBuilder();
+
+        for (final DocRef docRef : docRefs) {
+            final ExplorerActionHandler documentStore = getDocumentStore(docRef.getType());
+
+            DocRef result;
+
+            try {
+                result = documentStore.move(docRef.getUuid(), destinationFolderRef.getUuid());
+
+                if (permissionInheritance != null) {
+                    switch (permissionInheritance) {
+                        case NONE:
+                            addDocumentPermissions(docRef, result, true);
+                            break;
+                        case COMBINED:
+                            addDocumentPermissions(docRef, result, true);
+                            addDocumentPermissions(destinationFolderRef, result, true);
+                            break;
+                        case INHERIT:
+                            addDocumentPermissions(destinationFolderRef, result, true);
+                            break;
+                    }
+                }
+
+                explorerEventLog.move(docRef, destinationFolderRef, permissionInheritance, null);
+                resultDocRefs.add(result);
+
+            } catch (final Exception e) {
+                explorerEventLog.move(docRef, destinationFolderRef, permissionInheritance, e);
+                resultMessage.append("Unable to move '" + docRef.getName() + "' " + e.getMessage() + "\n");
+            }
+        }
+
+        explorerTreeModel.setRebuildRequired(true);
+        return new BulkActionResult(resultDocRefs, resultMessage.toString());
+    }
+
+    @Override
+    public DocRef rename(final DocRef docRef, final String docName) {
+        final ExplorerActionHandler documentStore = getDocumentStore(docRef.getType());
+
+        DocRef result;
+
+        try {
+            // Validate the entity name.
+            validateName(documentStore, docName);
+            result = documentStore.rename(docRef.getUuid(), docName);
+
+            explorerTreeModel.setRebuildRequired(true);
+
+            explorerEventLog.rename(docRef, docName, null);
+        } catch (final RuntimeException e) {
+            explorerEventLog.rename(docRef, docName, e);
+            throw e;
+        }
+
+        return result;
+    }
+
+    @Override
+    public BulkActionResult delete(final List<DocRef> docRefs) {
+        final List<DocRef> resultDocRefs = new ArrayList<>();
+        final StringBuilder resultMessage = new StringBuilder();
+
+        for (final DocRef docRef : docRefs) {
+            final ExplorerActionHandler documentStore = getDocumentStore(docRef.getType());
+            try {
+                documentStore.delete(docRef.getUuid());
+                explorerEventLog.delete(docRef, null);
+                resultDocRefs.add(docRef);
+
+            } catch (final Exception e) {
+                explorerEventLog.delete(docRef, e);
+                resultMessage.append("Unable to delete '" + docRef.getName() + "' " + e.getMessage() + "\n");
+            }
+        }
+
+        explorerTreeModel.setRebuildRequired(true);
+        return new BulkActionResult(resultDocRefs, resultMessage.toString());
+    }
+
+    private void validateName(final ExplorerActionHandler documentStore, final String name) {
+        if (documentStore instanceof ProvidesNamePattern) {
+            final ProvidesNamePattern providesNamePattern = (ProvidesNamePattern) documentStore;
+            NameValidationUtil.validate(providesNamePattern, name);
+        }
+    }
+
+    private ExplorerActionHandler getDocumentStore(final String type) {
+        final Object bean = beanRegistry.getEntityService(type);
+        if (bean == null) {
+            throw new EntityServiceException("No document store can be found for type '" + type + "'");
+        }
+        if (!(bean instanceof ExplorerActionHandler)) {
+            throw new EntityServiceException("Bean is not a document store");
+        }
+        return (ExplorerActionHandler) bean;
+    }
+
+    private void addDocumentPermissions(final DocRef source, final DocRef dest, final boolean owner) {
+        String sourceType = null;
+        String sourceUuid = null;
+        String destType = null;
+        String destUuid = null;
+
+        if (source != null) {
+            sourceType = source.getType();
+            sourceUuid = source.getUuid();
+        }
+
+        if (dest != null) {
+            destType = dest.getType();
+            destUuid = dest.getUuid();
+        }
+
+        securityContext.addDocumentPermissions(sourceType, sourceUuid, destType, destUuid, owner);
     }
 }

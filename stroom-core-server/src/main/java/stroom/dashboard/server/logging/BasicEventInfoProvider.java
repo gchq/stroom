@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.dashboard.server.logging;
@@ -24,18 +25,18 @@ import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import stroom.entity.server.FolderService;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.Document;
 import stroom.entity.shared.Folder;
-import stroom.entity.shared.FolderService;
 import stroom.entity.shared.HasFolder;
 import stroom.entity.shared.NamedEntity;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.streamstore.server.StreamTypeService;
 import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamTypeService;
 
 import javax.inject.Inject;
 import javax.inject.Named;

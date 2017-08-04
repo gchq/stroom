@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.pipeline.server.stepping;
@@ -20,11 +21,11 @@ import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.SharedDocRef;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
+import stroom.pipeline.server.PipelineEntityService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
 import stroom.query.api.v1.DocRef;
 import stroom.streamstore.server.StreamStore;

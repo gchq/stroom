@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.jobsystem.server;
@@ -28,7 +29,6 @@ import stroom.entity.shared.Sort;
 import stroom.entity.shared.Sort.Direction;
 import stroom.jobsystem.shared.FindJobCriteria;
 import stroom.jobsystem.shared.Job;
-import stroom.jobsystem.shared.JobService;
 import stroom.security.Secured;
 import stroom.util.shared.CompareUtil;
 import stroom.util.spring.StroomBeanMethod;

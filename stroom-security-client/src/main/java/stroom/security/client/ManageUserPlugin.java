@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.security.client;
@@ -21,7 +22,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.MenuKeys;
-import stroom.entity.client.event.ShowPermissionsEntityDialogEvent;
+import stroom.document.client.event.ShowPermissionsDialogEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.NodeToolsPlugin;
 import stroom.security.client.presenter.DocumentPermissionsPresenter;
@@ -41,7 +42,7 @@ public class ManageUserPlugin extends NodeToolsPlugin {
         super(eventBus, securityContext);
         this.usersAndGroupsPresenterProvider = usersAndGroupsPresenterProvider;
 
-        eventBus.addHandler(ShowPermissionsEntityDialogEvent.getType(), event -> documentPermissionsPresenterProvider.get(new AsyncCallback<DocumentPermissionsPresenter>() {
+        eventBus.addHandler(ShowPermissionsDialogEvent.getType(), event -> documentPermissionsPresenterProvider.get(new AsyncCallback<DocumentPermissionsPresenter>() {
             @Override
             public void onSuccess(final DocumentPermissionsPresenter presenter) {
                 presenter.show(event.getExplorerData());

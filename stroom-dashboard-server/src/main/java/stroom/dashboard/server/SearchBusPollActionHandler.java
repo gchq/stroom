@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.dashboard.server;
@@ -22,7 +23,6 @@ import org.springframework.context.annotation.Scope;
 import stroom.dashboard.server.logging.SearchEventLog;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.QueryEntity;
-import stroom.dashboard.shared.QueryService;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchBusPollAction;
 import stroom.dashboard.shared.SearchBusPollResult;
@@ -209,7 +209,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
 
                 final Query query = new Query(search.getDataSourceRef(), search.getExpression(), params);
 
-                final QueryEntity queryEntity = queryService.create(null, "History");
+                final QueryEntity queryEntity = queryService.create("History");
 
                 queryEntity.setDashboardId(queryKey.getDashboardId());
                 queryEntity.setQueryId(queryKey.getQueryId());

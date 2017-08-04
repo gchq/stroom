@@ -12,25 +12,26 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.importexport.server;
 
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.entity.server.FolderService;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.Folder;
-import stroom.entity.shared.FolderService;
 import stroom.entity.shared.ImportState;
 import stroom.entity.shared.ImportState.ImportMode;
 import stroom.entity.shared.ImportState.State;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
+import stroom.pipeline.server.PipelineEntityService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.query.api.v1.DocRef;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -39,9 +40,9 @@ import stroom.test.CommonTestScenarioCreator;
 import stroom.test.ComparisonHelper;
 import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.test.FileSystemTestUtil;
+import stroom.xmlschema.server.XMLSchemaService;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XMLSchema;
-import stroom.xmlschema.shared.XMLSchemaService;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -148,7 +149,7 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
     @Test
     public void testPipeline() throws IOException {
-        final DocRef folder = DocRefUtil.create(folderService.create(null, FileSystemTestUtil.getUniqueTestString()));
+        final DocRef folder = DocRefUtil.create(folderService.create(FileSystemTestUtil.getUniqueTestString()));
         final PipelineEntity parentPipeline = pipelineEntityService.create(folder, "Parent");
 
         final PipelineEntity childPipeline = pipelineEntityService.create(folder, "Child");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,26 +12,27 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.entity.client.gin;
 
 import com.google.gwt.inject.client.AsyncProvider;
 import com.google.gwt.inject.client.Ginjector;
-import stroom.entity.client.presenter.CopyEntityPresenter;
-import stroom.entity.client.presenter.CreateEntityPresenter;
-import stroom.entity.client.presenter.MoveEntityPresenter;
-import stroom.entity.client.presenter.NameEntityPresenter;
-import stroom.entity.client.presenter.SaveAsEntityPresenter;
+import stroom.entity.client.presenter.CopyDocumentPresenter;
+import stroom.entity.client.presenter.CreateDocumentPresenter;
+import stroom.entity.client.presenter.ForkDocumentPresenter;
+import stroom.entity.client.presenter.MoveDocumentPresenter;
+import stroom.entity.client.presenter.NameDocumentPresenter;
 
 public interface EntityGinjector extends Ginjector {
-    AsyncProvider<CreateEntityPresenter> getCreateEntityPresenter();
+    AsyncProvider<CreateDocumentPresenter> getCreateEntityPresenter();
 
-    AsyncProvider<CopyEntityPresenter> getCopyEntityPresenter();
+    AsyncProvider<CopyDocumentPresenter> getCopyEntityPresenter();
 
-    AsyncProvider<MoveEntityPresenter> getMoveEntityPresenter();
+    AsyncProvider<MoveDocumentPresenter> getMoveEntityPresenter();
 
-    AsyncProvider<NameEntityPresenter> getRenameEntityPresenter();
+    AsyncProvider<NameDocumentPresenter> getRenameEntityPresenter();
 
-    AsyncProvider<SaveAsEntityPresenter> getSaveAsEntityPresenter();
+    AsyncProvider<ForkDocumentPresenter> getSaveAsEntityPresenter();
 }

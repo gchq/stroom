@@ -12,12 +12,29 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.startup;
 
 import io.dropwizard.jetty.MutableServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import stroom.dashboard.server.logging.spring.EventLoggingConfiguration;
+import stroom.dashboard.spring.DashboardConfiguration;
+import stroom.index.spring.IndexConfiguration;
+import stroom.pipeline.spring.PipelineConfiguration;
+import stroom.ruleset.spring.RuleSetConfiguration;
+import stroom.script.spring.ScriptConfiguration;
+import stroom.search.spring.SearchConfiguration;
+import stroom.security.spring.SecurityConfiguration;
+import stroom.spring.CoreClientConfiguration;
+import stroom.spring.MetaDataStatisticConfiguration;
+import stroom.spring.PersistenceConfiguration;
+import stroom.spring.ScopeConfiguration;
+import stroom.spring.ServerComponentScanConfiguration;
+import stroom.spring.ServerConfiguration;
+import stroom.statistics.spring.StatisticsConfiguration;
+import stroom.visualisation.spring.VisualisationConfiguration;
 
 public class Servlets {
 
@@ -57,27 +74,42 @@ public class Servlets {
     }
 
     private static ServletHolder newUpgradeDispatcherServlet() {
+        final String configLocation = createConfigLocationString(
+                ScopeConfiguration.class,
+                PersistenceConfiguration.class,
+                ServerComponentScanConfiguration.class,
+                ServerConfiguration.class,
+                RuleSetConfiguration.class,
+                EventLoggingConfiguration.class,
+                PipelineConfiguration.class,
+                IndexConfiguration.class,
+                SearchConfiguration.class,
+                ScriptConfiguration.class,
+                VisualisationConfiguration.class,
+                DashboardConfiguration.class,
+                CoreClientConfiguration.class,
+                MetaDataStatisticConfiguration.class,
+                StatisticsConfiguration.class,
+                SecurityConfiguration.class
+        );
+
         ServletHolder servlet = new ServletHolder(stroom.util.upgrade.UpgradeDispatcherServlet.class);
         servlet.setName("spring");
         servlet.setInitParameter("spring.profiles.active", "production,PROD_SECURITY");
         servlet.setInitParameter("upgrade-class", "stroom.upgrade.StroomUpgradeHandler");
         servlet.setInitParameter("contextClass", "org.springframework.web.context.support.AnnotationConfigWebApplicationContext");
-        servlet.setInitParameter("contextConfigLocation", "stroom.spring.ScopeConfiguration,\n" +
-                "                stroom.spring.PersistenceConfiguration,\n" +
-                "                stroom.spring.ServerComponentScanConfiguration,\n" +
-                "                stroom.spring.ServerConfiguration,\n" +
-                "                stroom.spring.CachedServiceConfiguration,\n" +
-                "                stroom.logging.spring.EventLoggingConfiguration,\n" +
-                "                stroom.pipeline.spring.PipelineConfiguration,\n" +
-                "                stroom.index.spring.IndexConfiguration,\n" +
-                "                stroom.search.spring.SearchConfiguration,\n" +
-                "                stroom.script.spring.ScriptConfiguration,\n" +
-                "                stroom.visualisation.spring.VisualisationConfiguration,\n" +
-                "                stroom.dashboard.spring.DashboardConfiguration,\n" +
-                "                stroom.spring.CoreClientConfiguration,\n" +
-                "                stroom.spring.MetaDataStatisticConfiguration,\n" +
-                "                stroom.statistics.spring.StatisticsConfiguration,\n" +
-                "                stroom.security.spring.SecurityConfiguration");
+        servlet.setInitParameter("contextConfigLocation", configLocation);
         return servlet;
+    }
+
+    private static String createConfigLocationString(final Class<?>... classes) {
+        final StringBuilder sb = new StringBuilder();
+        for (final Class<?> clazz : classes) {
+            if (sb.length() > 0) {
+                sb.append("\n,");
+            }
+            sb.append(clazz.getCanonicalName());
+        }
+        return sb.toString();
     }
 }

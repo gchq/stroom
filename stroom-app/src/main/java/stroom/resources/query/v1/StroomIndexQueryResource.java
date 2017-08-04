@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.resources.query.v1;
@@ -19,8 +20,8 @@ package stroom.resources.query.v1;
 import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.health.HealthCheck;
 import stroom.datasource.api.v1.DataSource;
+import stroom.index.server.IndexService;
 import stroom.index.shared.Index;
-import stroom.index.shared.IndexService;
 import stroom.query.SearchResponseCreator;
 import stroom.query.api.v1.DocRef;
 import stroom.query.api.v1.QueryKey;

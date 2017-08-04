@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.refdata;
@@ -19,11 +20,12 @@ package stroom.refdata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.io.StreamCloser;
 import stroom.pipeline.server.EncodingSelection;
 import stroom.pipeline.server.LocationFactoryProxy;
+import stroom.pipeline.server.PipelineEntityService;
 import stroom.pipeline.server.StreamLocationFactory;
 import stroom.pipeline.server.errorhandler.ErrorReceiverIdDecorator;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
@@ -32,7 +34,6 @@ import stroom.pipeline.server.factory.Pipeline;
 import stroom.pipeline.server.factory.PipelineDataCache;
 import stroom.pipeline.server.factory.PipelineFactory;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;

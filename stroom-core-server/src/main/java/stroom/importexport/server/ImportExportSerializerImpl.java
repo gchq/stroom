@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.importexport.server;
@@ -19,17 +20,17 @@ package stroom.importexport.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import stroom.entity.server.DocumentEntityService;
+import stroom.entity.server.EntityService;
+import stroom.entity.server.FindService;
+import stroom.entity.server.FolderService;
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.DocumentEntity;
-import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.Entity;
-import stroom.entity.shared.EntityService;
 import stroom.entity.shared.EntityServiceException;
-import stroom.entity.shared.FindService;
 import stroom.entity.shared.Folder;
-import stroom.entity.shared.FolderService;
 import stroom.entity.shared.HasFolder;
 import stroom.entity.shared.ImportState;
 import stroom.entity.shared.ImportState.ImportMode;

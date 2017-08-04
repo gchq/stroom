@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.streamstore.server.udload;
@@ -22,18 +23,18 @@ import org.springframework.context.annotation.Scope;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
 import stroom.feed.MetaMap;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.internalstatistics.MetaDataStatistic;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
+import stroom.streamstore.server.StreamTypeService;
 import stroom.streamstore.server.fs.serializable.NestedStreamTarget;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.streamstore.shared.StreamTypeService;
 import stroom.streamtask.server.StreamTargetStroomStreamHandler;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;

@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.streamstore.server;
@@ -20,7 +21,7 @@ import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.dictionary.shared.DictionaryService;
+import stroom.dictionary.server.DictionaryService;
 import stroom.entity.server.SupportsCriteriaLogging;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
@@ -28,29 +29,26 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.PermissionException;
 import stroom.entity.shared.Sort.Direction;
 import stroom.feed.MetaMap;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.node.shared.Volume;
+import stroom.pipeline.server.PipelineEntityService;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.policy.server.DataRetentionService;
-import stroom.policy.shared.DataRetentionPolicy;
-import stroom.policy.shared.DataRetentionRule;
+import stroom.ruleset.shared.DataRetentionPolicy;
+import stroom.ruleset.shared.DataRetentionRule;
 import stroom.security.SecurityContext;
 import stroom.streamstore.server.fs.FileSystemStreamTypeUtil;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeKey;
-import stroom.streamstore.shared.StreamAttributeKeyService;
 import stroom.streamstore.shared.StreamAttributeMap;
-import stroom.streamstore.shared.StreamAttributeMapService;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.streamstore.shared.StreamType;
-import stroom.streamstore.shared.StreamTypeService;
 import stroom.streamstore.shared.StreamVolume;
+import stroom.streamtask.server.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamProcessorService;
 
 import javax.inject.Inject;
 import javax.inject.Named;

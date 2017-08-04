@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.streamstore.server.tools;
@@ -20,28 +21,28 @@ import org.junit.Assert;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseResultList;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
-import stroom.feed.shared.FeedService;
+import stroom.index.server.IndexService;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
-import stroom.index.shared.IndexService;
+import stroom.pipeline.server.PipelineEntityService;
 import stroom.pipeline.server.PipelineMarshaller;
+import stroom.pipeline.server.TextConverterService;
+import stroom.pipeline.server.XSLTService;
 import stroom.pipeline.server.parser.CombinedParser;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.FindTextConverterCriteria;
 import stroom.pipeline.shared.FindXSLTCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntity.PipelineType;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
-import stroom.pipeline.shared.TextConverterService;
 import stroom.pipeline.shared.XSLT;
-import stroom.pipeline.shared.XSLTService;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineReference;
@@ -53,10 +54,10 @@ import stroom.streamstore.server.fs.serializable.RawInputSegmentWriter;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
+import stroom.streamtask.server.StreamProcessorFilterService;
+import stroom.streamtask.server.StreamProcessorService;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamProcessorFilterService;
-import stroom.streamtask.shared.StreamProcessorService;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.PipelineTestUtil;

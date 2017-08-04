@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.pipeline.client.presenter;
@@ -23,11 +24,12 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 import stroom.core.client.event.DirtyKeyDownHander;
-import stroom.entity.client.presenter.EntitySettingsPresenter;
+import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.pipeline.client.presenter.XSLTSettingsPresenter.XSLTSettingsView;
 import stroom.pipeline.shared.XSLT;
 import stroom.security.client.ClientSecurityContext;
 
-public class XSLTSettingsPresenter extends EntitySettingsPresenter<XSLTSettingsPresenter.XSLTSettingsView, XSLT> {
+public class XSLTSettingsPresenter extends DocumentSettingsPresenter<XSLTSettingsView, XSLT> {
     @Inject
     public XSLTSettingsPresenter(final EventBus eventBus, final XSLTSettingsView view,
                                  final ClientSecurityContext securityContext) {

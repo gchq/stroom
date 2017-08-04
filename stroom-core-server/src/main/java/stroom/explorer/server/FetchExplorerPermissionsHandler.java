@@ -12,17 +12,17 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.explorer.server;
 
 import org.springframework.context.annotation.Scope;
+import stroom.entity.server.FolderService;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Folder;
-import stroom.entity.shared.FolderService;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
-import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;
 import stroom.explorer.shared.ExplorerPermissions;
 import stroom.explorer.shared.FetchExplorerPermissionsAction;
@@ -50,8 +50,8 @@ class FetchExplorerPermissionsHandler
     static {
         final Folder folder = new Folder();
         folder.setId(-1);
-        folder.setUuid(FolderService.ROOT);
-        folder.setName(FolderService.ROOT);
+        folder.setUuid(FolderService.SYSTEM);
+        folder.setName(FolderService.SYSTEM);
         ROOT = DocRefUtil.create(folder);
     }
 
@@ -72,12 +72,7 @@ class FetchExplorerPermissionsHandler
         for (final ExplorerData explorerData : explorerDataList) {
             final Set<DocumentType> createPermissions = new HashSet<>();
             final Set<String> documentPermissions = new HashSet<>();
-            DocRef docRef = null;
-
-            if (explorerData instanceof EntityData) {
-                final EntityData entityData = (EntityData) explorerData;
-                docRef = entityData.getDocRef();
-            }
+            DocRef docRef = explorerData.getDocRef();
 
             if (docRef != null) {
                 for (final String permissionName : DocumentPermissionNames.DOCUMENT_PERMISSIONS) {

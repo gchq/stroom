@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.refdata;
@@ -54,10 +55,10 @@ public class TestReferenceData extends StroomUnitTest {
 
     @Test
     public void testSimple() {
-        final Feed feed1 = feedService.create(null, "TEST_FEED_1");
-        final Feed feed2 = feedService.create(null, "TEST_FEED_2");
-        final PipelineEntity pipeline1 = pipelineEntityService.create(null, "TEST_PIPELINE_1");
-        final PipelineEntity pipeline2 = pipelineEntityService.create(null, "TEST_PIPELINE_2");
+        final Feed feed1 = feedService.create("TEST_FEED_1");
+        final Feed feed2 = feedService.create("TEST_FEED_2");
+        final PipelineEntity pipeline1 = pipelineEntityService.create("TEST_PIPELINE_1");
+        final PipelineEntity pipeline2 = pipelineEntityService.create("TEST_PIPELINE_2");
 
         final List<PipelineReference> pipelineReferences = new ArrayList<>();
         pipelineReferences.add(new PipelineReference(DocRefUtil.create(pipeline1), DocRefUtil.create(feed1),
@@ -144,7 +145,7 @@ public class TestReferenceData extends StroomUnitTest {
 
     @Test
     public void testNestedMaps() {
-        Feed feed1 = feedService.create(null, "TEST_FEED_V1");
+        Feed feed1 = feedService.create("TEST_FEED_V1");
         feed1.setReference(true);
         feed1 = feedService.save(feed1);
 
@@ -189,7 +190,7 @@ public class TestReferenceData extends StroomUnitTest {
 
     @Test
     public void testRange() {
-        Feed feed1 = feedService.create(null, "TEST_FEED_V1");
+        Feed feed1 = feedService.create("TEST_FEED_V1");
         feed1.setReference(true);
         feed1 = feedService.save(feed1);
 

@@ -14,6 +14,8 @@ dependencies {
     permitUnusedDeclared project(':stroom-security-server')
     compile project(':stroom-statistics-server')
     permitUnusedDeclared project(':stroom-statistics-server')
+    compile project(':stroom-ruleset-server')
+    permitUnusedDeclared project(':stroom-ruleset-server')
 
     testCompile urlDependencies.get(urlLibs.stroomQueryApi)
     testCompile urlDependencies.get(urlLibs.stroomQueryCommon)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,24 +12,26 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.folder.server;
 
 import org.springframework.stereotype.Component;
-import stroom.entity.shared.FolderService;
+import stroom.entity.server.FolderService;
+import stroom.entity.shared.Folder;
 import stroom.explorer.server.ExplorerDataProvider;
 import stroom.explorer.server.ProvidesExplorerData;
 import stroom.explorer.server.TreeModel;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerData;
-import stroom.explorer.shared.SimpleExplorerItem;
+import stroom.query.api.v1.DocRef;
 
 @ProvidesExplorerData
 @Component
 public class FolderRootExplorerDataProvider implements ExplorerDataProvider {
-    private static final String ICON_URL = DocumentType.DOC_IMAGE_URL + FolderService.ROOT + ".svg";
-    public static final ExplorerData ROOT = new SimpleExplorerItem(ICON_URL, FolderService.ROOT, "System", null);
+    private static final String ICON_URL = DocumentType.DOC_IMAGE_URL + FolderService.SYSTEM + ".svg";
+    public static final ExplorerData ROOT = ExplorerData.create(ICON_URL, new DocRef(Folder.ENTITY_TYPE, "0", "System"), null);
 
     @Override
     public void addItems(final TreeModel treeModel) {
@@ -38,12 +40,12 @@ public class FolderRootExplorerDataProvider implements ExplorerDataProvider {
 
     @Override
     public String getType() {
-        return FolderService.ROOT;
+        return FolderService.SYSTEM;
     }
 
     @Override
     public String getDisplayType() {
-        return FolderService.ROOT;
+        return FolderService.SYSTEM;
     }
 
     @Override

@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.policy.server;
@@ -23,9 +24,8 @@ import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
-import stroom.policy.shared.FindPolicyCriteria;
-import stroom.policy.shared.Policy;
-import stroom.policy.shared.PolicyService;
+import stroom.ruleset.shared.FindPolicyCriteria;
+import stroom.ruleset.shared.Policy;
 import stroom.security.Secured;
 
 import javax.inject.Inject;

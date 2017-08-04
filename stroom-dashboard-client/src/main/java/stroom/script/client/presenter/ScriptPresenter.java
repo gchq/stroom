@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.script.client.presenter;
@@ -24,10 +25,9 @@ import stroom.dashboard.client.vis.ClearScriptCacheEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
-import stroom.entity.client.presenter.EntityEditTabPresenter;
+import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.entity.shared.Res;
 import stroom.script.shared.Script;
 import stroom.security.client.ClientSecurityContext;
@@ -35,10 +35,8 @@ import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import javax.inject.Provider;
-import java.util.HashSet;
-import java.util.Set;
 
-public class ScriptPresenter extends EntityEditTabPresenter<LinkTabPanelView, Script> {
+public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Script> {
     private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
     private static final TabData SCRIPT_TAB = new TabDataImpl("Script");
 
@@ -104,7 +102,7 @@ public class ScriptPresenter extends EntityEditTabPresenter<LinkTabPanelView, Sc
     @Override
     public void onRead(final Script script) {
         loadCount++;
-        settingsPresenter.read(script);
+        settingsPresenter.read(getDocRef(), script);
 
         // Reload the resource if we have loaded it before.
         if (codePresenter != null) {
@@ -143,12 +141,9 @@ public class ScriptPresenter extends EntityEditTabPresenter<LinkTabPanelView, Sc
 
     private void loadResource(final EditorPresenter codePresenter, final ContentCallback callback) {
         if (!loadedResource) {
-            final Set<String> fetchSet = new HashSet<>();
-            fetchSet.add(Script.FETCH_RESOURCE);
-            final EntityServiceLoadAction<Script> action = new EntityServiceLoadAction<>(DocRefUtil.create(getEntity()),
-                    fetchSet);
-            dispatcher.exec(action).onSuccess(script -> {
-                resource = script.getResource();
+//            final DocumentServiceReadAction<Script> action = new DocumentServiceReadAction<>(DocRefUtil.create(getEntity()));
+//            dispatcher.exec(action).onSuccess(script -> {
+            resource = getEntity().getResource();
                 if (resource != null) {
                     codePresenter.setText(resource.getData());
                 }
@@ -158,7 +153,7 @@ public class ScriptPresenter extends EntityEditTabPresenter<LinkTabPanelView, Sc
                 }
 
                 loadedResource = true;
-            });
+//            });
         }
     }
 

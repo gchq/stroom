@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.dashboard.server;
@@ -20,7 +21,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import stroom.dashboard.shared.FindQueryCriteria;
 import stroom.dashboard.shared.QueryEntity;
-import stroom.dashboard.shared.QueryService;
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.server.MockDocumentEntityService;
 import stroom.importexport.server.EntityPathResolver;

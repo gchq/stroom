@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.dashboard.server;
@@ -56,8 +57,8 @@ import stroom.query.api.v1.TableSettings;
 import stroom.query.api.v1.TableSettingsBuilder;
 import stroom.query.api.v1.TimeZone.Use;
 import stroom.util.shared.OffsetRange;
+import stroom.visualisation.server.VisualisationService;
 import stroom.visualisation.shared.Visualisation;
-import stroom.visualisation.shared.VisualisationService;
 
 import javax.inject.Inject;
 import java.io.IOException;

@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.dashboard.server;
@@ -22,16 +23,13 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.dashboard.shared.Dashboard;
-import stroom.dashboard.shared.DashboardService;
 import stroom.dashboard.shared.FindDashboardCriteria;
 import stroom.dashboard.shared.QueryEntity;
 import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.shared.PermissionInheritance;
 import stroom.importexport.server.ImportExportHelper;
-import stroom.query.api.v1.DocRef;
 import stroom.security.SecurityContext;
 import stroom.util.io.StreamUtil;
 
@@ -71,8 +69,8 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
     }
 
     @Override
-    public Dashboard create(final DocRef folder, final String name, final PermissionInheritance permissionInheritance) throws RuntimeException {
-        final Dashboard dashboard = super.create(folder, name, permissionInheritance);
+    protected Dashboard create(final Dashboard entity) {
+        final Dashboard dashboard = super.create(entity);
         // Add the template.
         if (dashboard.getData() == null) {
             dashboard.setData(getTemplate());

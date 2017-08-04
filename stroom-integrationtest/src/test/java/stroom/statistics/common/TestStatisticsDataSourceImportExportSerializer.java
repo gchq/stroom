@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.statistics.common;
@@ -19,11 +20,11 @@ package stroom.statistics.common;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.datasource.api.v1.DataSource;
+import stroom.entity.server.FolderService;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.Folder;
-import stroom.entity.shared.FolderService;
 import stroom.entity.shared.ImportState.ImportMode;
 import stroom.importexport.server.ImportExportSerializer;
 import stroom.query.api.v1.DocRef;
@@ -65,7 +66,7 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
      */
     @Test
     public void testStatisticsDataSource() {
-        final DocRef folder = DocRefUtil.create(folderService.create(null, FileSystemTestUtil.getUniqueTestString()));
+        final DocRef folder = DocRefUtil.create(folderService.create(FileSystemTestUtil.getUniqueTestString()));
 
         final StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(folder, "StatName1");
         statisticsDataSource.setDescription("My Description");
@@ -110,7 +111,7 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
 
     @Test
     public void testDeSerialiseOnLoad() {
-        final DocRef folder = DocRefUtil.create(folderService.create(null, FileSystemTestUtil.getUniqueTestString()));
+        final DocRef folder = DocRefUtil.create(folderService.create(FileSystemTestUtil.getUniqueTestString()));
 
         final StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(folder, "StatName1");
         statisticsDataSource.setDescription("My Description");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.script.server;
@@ -21,7 +22,6 @@ import org.springframework.stereotype.Component;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.shared.Res;
 import stroom.script.shared.Script;
-import stroom.script.shared.ScriptService;
 import stroom.security.SecurityContext;
 import stroom.util.task.TaskScopeContextHolder;
 

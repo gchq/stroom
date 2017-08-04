@@ -12,21 +12,22 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.importexport.server;
 
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.entity.server.FolderService;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.Folder;
-import stroom.entity.shared.FolderService;
 import stroom.entity.shared.ImportState;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
+import stroom.pipeline.server.PipelineEntityService;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.query.api.v1.DocRef;
 import stroom.resource.server.ResourceStore;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -57,11 +58,11 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
 
         Assert.assertEquals(0, commonTestControl.countEntity(Folder.class));
 
-        Folder folder1 = folderService.create(null, "Root1_" + FileSystemTestUtil.getUniqueTestString());
+        Folder folder1 = folderService.create("Root1_" + FileSystemTestUtil.getUniqueTestString());
         folder1 = folderService.save(folder1);
         final DocRef folder1Ref = DocRefUtil.create(folder1);
 
-        Folder folder2 = folderService.create(null, "Root2_" + FileSystemTestUtil.getUniqueTestString());
+        Folder folder2 = folderService.create("Root2_" + FileSystemTestUtil.getUniqueTestString());
         folder2 = folderService.save(folder2);
         final DocRef folder2Ref = DocRefUtil.create(folder2);
 

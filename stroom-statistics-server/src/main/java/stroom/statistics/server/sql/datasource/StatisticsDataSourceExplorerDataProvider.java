@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.statistics.server.sql.datasource;
@@ -19,11 +20,11 @@ package stroom.statistics.server.sql.datasource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.entity.shared.FolderService;
+import stroom.entity.server.FolderService;
 import stroom.explorer.server.AbstractExplorerDataProvider;
 import stroom.explorer.server.ProvidesExplorerData;
 import stroom.explorer.server.TreeModel;
-import stroom.explorer.shared.EntityData;
+import stroom.explorer.shared.ExplorerData;
 import stroom.node.server.StroomPropertyService;
 import stroom.statistics.shared.StatisticStoreEntity;
 
@@ -65,8 +66,8 @@ public class StatisticsDataSourceExplorerDataProvider
     }
 
     @Override
-    protected EntityData createEntityData(final StatisticStoreEntity entity) {
-        final EntityData entityData = super.createEntityData(entity);
+    protected ExplorerData createEntityData(final StatisticStoreEntity entity) {
+        final ExplorerData entityData = super.createEntityData(entity);
         entityData.setTags(tags);
         return entityData;
     }

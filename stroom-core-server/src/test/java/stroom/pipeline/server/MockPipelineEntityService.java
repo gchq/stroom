@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.pipeline.server;
@@ -23,7 +24,6 @@ import stroom.entity.server.MockDocumentEntityService;
 import stroom.importexport.server.EntityPathResolver;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.query.api.v1.DocRef;
 import stroom.util.spring.StroomSpringProfiles;
 

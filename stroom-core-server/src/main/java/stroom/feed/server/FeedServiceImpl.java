@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.feed.server;
@@ -24,15 +25,16 @@ import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.importexport.server.ImportExportHelper;
+import stroom.query.api.v1.DocRef;
 import stroom.security.SecurityContext;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.config.StroomProperties;
 
 import javax.inject.Inject;
 import javax.persistence.Transient;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -41,6 +43,7 @@ import java.util.Set;
 public class FeedServiceImpl extends DocumentEntityServiceImpl<Feed, FindFeedCriteria> implements FeedService {
     public static final String FEED_NAME_PATTERN_PROPERTY = "stroom.feedNamePattern";
     public static final String FEED_NAME_PATTERN_VALUE = "^[A-Z0-9_\\-]{3,}$";
+    public static final Set<String> FETCH_SET = Collections.singleton(StreamType.ENTITY_TYPE);
 
     @Inject
     FeedServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext) {
@@ -71,6 +74,11 @@ public class FeedServiceImpl extends DocumentEntityServiceImpl<Feed, FindFeedCri
         }
 
         return feed;
+    }
+
+    @Override
+    public Object read(final DocRef docRef) {
+        return loadByUuid(docRef.getUuid(), FETCH_SET);
     }
 
     @Override

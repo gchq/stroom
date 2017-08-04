@@ -5,13 +5,14 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.pipeline.stepping.client.presenter;
@@ -25,14 +26,14 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.document.client.event.DirtyEvent;
+import stroom.document.client.event.DirtyEvent.DirtyHandler;
+import stroom.document.client.event.HasDirtyHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.entity.client.event.DirtyEvent;
-import stroom.entity.client.event.DirtyEvent.DirtyHandler;
-import stroom.entity.client.event.HasDirtyHandlers;
+import stroom.entity.shared.DocumentServiceReadAction;
+import stroom.entity.shared.DocumentServiceWriteAction;
 import stroom.entity.shared.Entity;
 import stroom.entity.shared.EntityServiceFindAction;
-import stroom.entity.shared.EntityServiceLoadAction;
-import stroom.entity.shared.EntityServiceSaveAction;
 import stroom.entity.shared.HasData;
 import stroom.entity.shared.StringCriteria;
 import stroom.pipeline.shared.FindTextConverterCriteria;
@@ -121,7 +122,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
                         }
                     } else {
                         async = true;
-                        dispatcher.exec(new EntityServiceLoadAction<>(entityRef, null))
+                        dispatcher.exec(new DocumentServiceReadAction<Entity>(entityRef))
                                 .onSuccess(result -> {
                                     entity = result;
                                     dirtyCode = false;
@@ -158,7 +159,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
     public void save() {
         if (loaded && entity != null && dirtyCode) {
             write();
-            dispatcher.exec(new EntityServiceSaveAction<>(entity)).onSuccess(result -> {
+            dispatcher.exec(new DocumentServiceWriteAction<Entity>(entity)).onSuccess(result -> {
                 entity = result;
                 dirtyCode = false;
             });

@@ -12,16 +12,17 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.streamstore.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dictionary.shared.DictionaryService;
+import stroom.dictionary.server.DictionaryService;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.policy.shared.DataRetentionRule;
+import stroom.ruleset.shared.DataRetentionRule;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeMap;

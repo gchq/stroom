@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.security.server;
@@ -19,11 +20,11 @@ package stroom.security.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
+import stroom.entity.server.DocumentEntityService;
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
-import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.Folder;
 import stroom.query.api.v1.DocRef;

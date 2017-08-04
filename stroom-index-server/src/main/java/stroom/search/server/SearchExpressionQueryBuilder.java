@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.search.server;
@@ -29,8 +30,8 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.util.Version;
+import stroom.dictionary.server.DictionaryService;
 import stroom.dictionary.shared.Dictionary;
-import stroom.dictionary.shared.DictionaryService;
 import stroom.index.server.analyzer.AnalyzerFactory;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;

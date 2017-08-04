@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.streamstore.server.fs;
@@ -19,19 +20,20 @@ package stroom.streamstore.server.fs;
 import org.hibernate.LazyInitializationException;
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.entity.server.FolderService;
 import stroom.entity.server.util.PeriodUtil;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Folder;
-import stroom.entity.shared.FolderService;
 import stroom.entity.shared.IdRange;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.Period;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.streamstore.server.EffectiveMetaDataCriteria;
 import stroom.streamstore.server.FindStreamAttributeValueCriteria;
 import stroom.streamstore.server.FindStreamVolumeCriteria;
+import stroom.streamstore.server.StreamAttributeMapService;
 import stroom.streamstore.server.StreamAttributeValueFlush;
 import stroom.streamstore.server.StreamAttributeValueService;
 import stroom.streamstore.server.StreamException;
@@ -44,7 +46,6 @@ import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeMap;
-import stroom.streamstore.shared.StreamAttributeMapService;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
@@ -113,7 +114,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     private Feed setupFeed(final String feedName) {
         Feed sample = feedService.loadByName(feedName);
         if (sample == null) {
-            Folder folder = folderService.create(null, FileSystemTestUtil.getUniqueTestString());
+            Folder folder = folderService.create(FileSystemTestUtil.getUniqueTestString());
             folder = folderService.save(folder);
 
             sample = feedService.create(DocRefUtil.create(folder), feedName);

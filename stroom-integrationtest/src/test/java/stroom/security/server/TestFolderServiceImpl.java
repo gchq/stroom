@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,18 +12,19 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.security.server;
 
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.entity.server.FolderService;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.FindFolderCriteria;
 import stroom.entity.shared.Folder;
-import stroom.entity.shared.FolderService;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.test.FileSystemTestUtil;
@@ -38,8 +39,8 @@ public class TestFolderServiceImpl extends AbstractCoreIntegrationTest {
 
     @Test
     public void testSimple() {
-        final Folder root1 = folderService.create(null, FileSystemTestUtil.getUniqueTestString());
-        final Folder root2 = folderService.create(null, FileSystemTestUtil.getUniqueTestString());
+        final Folder root1 = folderService.create(FileSystemTestUtil.getUniqueTestString());
+        final Folder root2 = folderService.create(FileSystemTestUtil.getUniqueTestString());
 
         final Folder root1child1 = folderService.create(DocRefUtil.create(root1), FileSystemTestUtil.getUniqueTestString());
         final Folder root1child1child1 = folderService.create(DocRefUtil.create(root1child1), FileSystemTestUtil.getUniqueTestString());
@@ -76,7 +77,7 @@ public class TestFolderServiceImpl extends AbstractCoreIntegrationTest {
         if (stroomDatabaseInfo.isMysql()) {
             // commonTestControl.deleteAll();
 
-            Folder group = folderService.create(null, "Testing");
+            Folder group = folderService.create("Testing");
 
             for (int i = 0; i < 130; i++) {
                 group.setName("Testing" + group.getVersion());
@@ -90,9 +91,9 @@ public class TestFolderServiceImpl extends AbstractCoreIntegrationTest {
     @Test
     public void testVersionCheck() {
         // commonTestControl.deleteAll();
-        Folder dbGroupV1 = folderService.create(null, "Testing");
-        Folder dbGroupV2 = folderService.copy(dbGroupV1, null, "TestingV2", PermissionInheritance.INHERIT);
-        Folder dbGroupV3 = folderService.copy(dbGroupV2, null, "TestingV3", PermissionInheritance.INHERIT);
+        Folder dbGroupV1 = folderService.create("Testing");
+        Folder dbGroupV2 = folderService.saveAs(dbGroupV1, null, "TestingV2", PermissionInheritance.INHERIT);
+        Folder dbGroupV3 = folderService.saveAs(dbGroupV2, null, "TestingV3", PermissionInheritance.INHERIT);
 
         // Make sure we can't save a stale object.
         try {

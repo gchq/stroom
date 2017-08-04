@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.statistics.server.sql.pipeline.filter;
@@ -88,7 +89,7 @@ public class TestStatisticsFilter implements Statistics {
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
         final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
-        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
+        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(STAT_NAME);
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(
                 Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
@@ -163,7 +164,7 @@ public class TestStatisticsFilter implements Statistics {
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
         final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
-        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
+        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(STAT_NAME);
         statisticsDataSource.setStatisticType(StatisticType.VALUE);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(
                 Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
@@ -214,7 +215,7 @@ public class TestStatisticsFilter implements Statistics {
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
         final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
-        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
+        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(STAT_NAME);
         // xml has a value element so set this to count
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(
@@ -241,7 +242,7 @@ public class TestStatisticsFilter implements Statistics {
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
         final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
-        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
+        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(STAT_NAME);
         // xml has a value element so set this to count
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(
@@ -272,7 +273,7 @@ public class TestStatisticsFilter implements Statistics {
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
         final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
-        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
+        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(STAT_NAME);
         // xml has a value element so set this to count
         statisticsDataSource.setStatisticType(StatisticType.VALUE);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(
@@ -300,7 +301,7 @@ public class TestStatisticsFilter implements Statistics {
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
         final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
-        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
+        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(STAT_NAME);
         // xml has a value element so set this to count
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(
@@ -327,7 +328,7 @@ public class TestStatisticsFilter implements Statistics {
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
         final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
-        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
+        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(STAT_NAME);
         // xml has a value element so set this to count
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(
@@ -354,7 +355,7 @@ public class TestStatisticsFilter implements Statistics {
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
         final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
-        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
+        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(STAT_NAME);
         // xml has a value element so set this to count
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(
@@ -385,7 +386,7 @@ public class TestStatisticsFilter implements Statistics {
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
         final MockStatisticsDataSourceService statisticsDataSourceService = new MockStatisticsDataSourceService();
-        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(null, STAT_NAME);
+        StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(STAT_NAME);
         // xml has a value element so set this to count
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData(

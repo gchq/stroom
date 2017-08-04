@@ -12,19 +12,20 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.search.server;
 
 import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.Sort.Direction;
+import stroom.index.server.IndexService;
+import stroom.index.server.IndexShardService;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexService;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
-import stroom.index.shared.IndexShardService;
 import stroom.node.shared.Node;
 import stroom.query.ResultHandler;
 import stroom.query.api.v1.Query;

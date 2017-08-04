@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.streamstore.server.fs;
@@ -22,16 +23,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.datasource.api.v1.DataSourceField;
-import stroom.dictionary.shared.DictionaryService;
+import stroom.dictionary.server.DictionaryService;
 import stroom.entity.server.util.PreparedStatementUtil;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.policy.shared.DataRetentionRule;
 import stroom.query.api.v1.ExpressionItem;
 import stroom.query.api.v1.ExpressionOperator;
 import stroom.query.api.v1.ExpressionTerm;
+import stroom.ruleset.shared.DataRetentionRule;
 import stroom.streamstore.server.ExpressionMatcher;
 import stroom.streamstore.server.StreamFields;
 import stroom.streamstore.shared.Stream;

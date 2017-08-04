@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.streamtask.server;
@@ -19,7 +20,6 @@ package stroom.streamtask.server;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CachingEntityManager;
-import stroom.streamtask.shared.StreamProcessorService;
 
 import javax.inject.Inject;
 

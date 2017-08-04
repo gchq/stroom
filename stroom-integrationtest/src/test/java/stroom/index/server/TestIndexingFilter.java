@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.index.server;
@@ -30,9 +31,9 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFieldType;
 import stroom.index.shared.IndexFields;
-import stroom.index.shared.IndexService;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
+import stroom.pipeline.server.PipelineEntityService;
 import stroom.pipeline.server.PipelineMarshaller;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
@@ -40,7 +41,6 @@ import stroom.pipeline.server.factory.Pipeline;
 import stroom.pipeline.server.factory.PipelineDataCache;
 import stroom.pipeline.server.factory.PipelineFactory;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
@@ -180,7 +180,7 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
     public List<Document> doTest(final String resourceName, final IndexFields indexFields)
             throws SAXException, ParserConfigurationException, IOException {
         // Setup the index.
-        Index index = indexService.create(null, "Test index");
+        Index index = indexService.create("Test index");
         index.setIndexFieldsObject(indexFields);
         index = new IndexMarshaller().marshal(index);
         index = indexService.save(index);

@@ -12,29 +12,30 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.dashboard;
 
 import org.junit.Test;
+import stroom.dashboard.server.DashboardService;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardConfig;
-import stroom.dashboard.shared.DashboardService;
 import stroom.dashboard.shared.SplitLayoutConfig;
 import stroom.dashboard.shared.SplitLayoutConfig.Direction;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.dashboard.shared.VisComponentSettings;
+import stroom.entity.server.FolderService;
 import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.FolderService;
 import stroom.entity.shared.Res;
 import stroom.query.api.v1.DocRef;
+import stroom.script.server.ScriptService;
 import stroom.script.shared.Script;
-import stroom.script.shared.ScriptService;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.visualisation.server.VisualisationService;
 import stroom.visualisation.shared.Visualisation;
-import stroom.visualisation.shared.VisualisationService;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -52,7 +53,7 @@ public class TestDashboardServiceImpl extends AbstractCoreIntegrationTest {
 
     @Test
     public void test() {
-        final DocRef testGroup = DocRefUtil.create(folderService.create(null, "Test Group"));
+        final DocRef testGroup = DocRefUtil.create(folderService.create("Test Group"));
 
         final VisComponentSettings visSettings = getVisSettings(testGroup);
 

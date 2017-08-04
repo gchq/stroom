@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.index.server;
@@ -24,17 +25,16 @@ import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
-import stroom.index.shared.IndexService;
+import stroom.pipeline.server.PipelineEntityService;
 import stroom.pipeline.server.PipelineMarshaller;
+import stroom.pipeline.server.XSLTService;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.server.factory.Pipeline;
 import stroom.pipeline.server.factory.PipelineDataCache;
 import stroom.pipeline.server.factory.PipelineFactory;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.XSLT;
-import stroom.pipeline.shared.XSLTService;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.StreamHolder;
@@ -82,7 +82,7 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
     @Test
     public void testSimple() {
         // Setup the XSLT.
-        XSLT xslt = xsltService.create(null, "Indexing XSLT");
+        XSLT xslt = xsltService.create("Indexing XSLT");
         xslt.setData(StreamUtil.streamToString(StroomProcessTestFileUtil.getInputStream(SAMPLE_INDEX_XSLT)));
         xslt = xsltService.save(xslt);
 
@@ -98,7 +98,7 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
         indexFields.add(IndexField.createField("ProcessCommand"));
 
         // Setup the target index
-        Index index = indexService.create(null, "Test index");
+        Index index = indexService.create("Test index");
         index.setIndexFieldsObject(indexFields);
         index = indexService.save(index);
 

@@ -12,18 +12,19 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.streamstore.server;
 
 import org.junit.Test;
 import stroom.entity.server.util.XMLMarshallerUtil;
-import stroom.policy.shared.DataRetentionPolicy;
-import stroom.policy.shared.DataRetentionRule;
 import stroom.query.api.v1.ExpressionBuilder;
 import stroom.query.api.v1.ExpressionOperator;
 import stroom.query.api.v1.ExpressionOperator.Op;
 import stroom.query.api.v1.ExpressionTerm.Condition;
+import stroom.ruleset.shared.DataRetentionPolicy;
+import stroom.ruleset.shared.DataRetentionRule;
 import stroom.streamstore.shared.TimeUnit;
 
 import javax.xml.bind.JAXBContext;

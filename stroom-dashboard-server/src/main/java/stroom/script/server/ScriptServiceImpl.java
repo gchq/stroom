@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.script.server;
@@ -23,22 +24,24 @@ import stroom.entity.server.ObjectMarshaller;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
-import stroom.entity.shared.PermissionInheritance;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.query.api.v1.DocRef;
 import stroom.script.shared.FindScriptCriteria;
 import stroom.script.shared.Script;
-import stroom.script.shared.ScriptService;
 import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 @Component("scriptService")
 @Transactional
 public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScriptCriteria> implements ScriptService {
+    public static final Set<String> FETCH_SET = Collections.singleton(Script.FETCH_RESOURCE);
+
     @Inject
     ScriptServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext) {
         super(entityManager, importExportHelper, securityContext);
@@ -55,25 +58,24 @@ public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScr
     }
 
     @Override
-    public Script copy(final Script entity, final DocRef folder, final String name, final PermissionInheritance permissionInheritance) {
-        // Load resources or dependencies if we don't have them. This can happen
-        // as they are loaded lazily by the UI and so won't always be available
-        // on the entity being saved.
-        if (entity.isPersistent() && (entity.getResource() == null || entity.getResource().getData() == null
-                || entity.getDependencies() == null)) {
-            final Set<String> fetchSet = new HashSet<>();
-            fetchSet.add(Script.FETCH_RESOURCE);
-            final Script loaded = load(entity, fetchSet);
+    public DocRef copy(final String uuid, final String parentFolderUUID) {
+        final Set<String> fetchSet = new HashSet<>();
+        fetchSet.add(Script.FETCH_RESOURCE);
 
-            if (entity.getResource() == null || entity.getResource().getData() == null) {
-                entity.setResource(loaded.getResource());
-            }
-            if (entity.getDependencies() == null) {
-                entity.setDependencies(loaded.getDependencies());
-            }
-        }
+        final Script entity = loadByUuid(uuid, fetchSet);
 
-        return super.copy(entity, folder, name, permissionInheritance);
+        // This is going to be a copy so clear the persistence so save will create a new DB entry.
+        entity.clearPersistence();
+
+        setFolder(entity, parentFolderUUID);
+
+        final Script result = create(entity);
+        return DocRefUtil.create(result);
+    }
+
+    @Override
+    public Object read(final DocRef docRef) {
+        return loadByUuid(docRef.getUuid(), FETCH_SET);
     }
 
     @Override

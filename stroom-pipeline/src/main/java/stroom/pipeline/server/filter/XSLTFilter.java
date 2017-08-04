@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.pipeline.server.filter;
@@ -34,6 +35,7 @@ import stroom.entity.shared.VersionedEntityDecorator;
 import stroom.node.server.StroomPropertyService;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.SupportsCodeInjection;
+import stroom.pipeline.server.XSLTService;
 import stroom.pipeline.server.errorhandler.ErrorListenerAdaptor;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.ErrorReceiverIdDecorator;
@@ -47,7 +49,6 @@ import stroom.pipeline.server.writer.PathCreator;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.FindXSLTCriteria;
 import stroom.pipeline.shared.XSLT;
-import stroom.pipeline.shared.XSLTService;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.shared.data.PipelineReference;

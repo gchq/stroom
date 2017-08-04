@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.dashboard.server;
@@ -24,7 +25,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.dashboard.shared.FindQueryCriteria;
 import stroom.dashboard.shared.QueryEntity;
-import stroom.dashboard.shared.QueryService;
 import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.DocumentEntityServiceImpl;
@@ -34,6 +34,7 @@ import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.EntityServiceException;
+import stroom.entity.shared.PermissionInheritance;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.query.api.v1.DocRef;
 import stroom.security.SecurityContext;
@@ -74,7 +75,7 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
     // TODO : Remove this when document entities no longer reference a folder.
     // Don't do any create permission checking as a query doesn't live in a folder and all users are allowed to create queries.
     @Override
-    public QueryEntity create(final DocRef folder, final String name) throws RuntimeException {
+    public QueryEntity create(final DocRef folder, final String name, final PermissionInheritance permissionInheritance) throws RuntimeException {
         // Create a new entity instance.
         QueryEntity entity;
         try {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,42 +12,43 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.entity.client.gin;
 
 import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
-import stroom.entity.client.presenter.CopyEntityPresenter;
-import stroom.entity.client.presenter.CopyEntityPresenter.CopyEntityProxy;
-import stroom.entity.client.presenter.CopyEntityPresenter.CopyEntityView;
-import stroom.entity.client.presenter.CreateEntityPresenter;
-import stroom.entity.client.presenter.CreateEntityPresenter.CreateEntityProxy;
-import stroom.entity.client.presenter.CreateEntityPresenter.CreateEntityView;
-import stroom.entity.client.presenter.MoveEntityPresenter;
-import stroom.entity.client.presenter.MoveEntityPresenter.MoveEntityProxy;
-import stroom.entity.client.presenter.MoveEntityPresenter.MoveEntityView;
-import stroom.entity.client.presenter.NameEntityPresenter;
-import stroom.entity.client.presenter.NameEntityPresenter.RenameEntityProxy;
-import stroom.entity.client.presenter.NameEntityView;
-import stroom.entity.client.presenter.SaveAsEntityPresenter;
-import stroom.entity.client.presenter.SaveAsEntityPresenter.SaveAsEntityProxy;
-import stroom.entity.client.presenter.SaveAsEntityPresenter.SaveAsEntityView;
-import stroom.entity.client.view.CopyEntityViewImpl;
-import stroom.entity.client.view.CreateEntityViewImpl;
-import stroom.entity.client.view.MoveEntityViewImpl;
-import stroom.entity.client.view.NameEntityViewImpl;
-import stroom.entity.client.view.SaveAsEntityViewImpl;
+import stroom.entity.client.presenter.CopyDocumentPresenter;
+import stroom.entity.client.presenter.CopyDocumentPresenter.CopyDocumentProxy;
+import stroom.entity.client.presenter.CopyDocumentPresenter.CopyDocumentView;
+import stroom.entity.client.presenter.CreateDocumentPresenter;
+import stroom.entity.client.presenter.CreateDocumentPresenter.CreateDocumentProxy;
+import stroom.entity.client.presenter.CreateDocumentPresenter.CreateDocumentView;
+import stroom.entity.client.presenter.ForkDocumentPresenter;
+import stroom.entity.client.presenter.ForkDocumentPresenter.ForkDocumentProxy;
+import stroom.entity.client.presenter.ForkDocumentPresenter.ForkDocumentView;
+import stroom.entity.client.presenter.MoveDocumentPresenter;
+import stroom.entity.client.presenter.MoveDocumentPresenter.MoveDocumentProxy;
+import stroom.entity.client.presenter.MoveDocumentPresenter.MoveDocumentView;
+import stroom.entity.client.presenter.NameDocumentPresenter;
+import stroom.entity.client.presenter.NameDocumentPresenter.NameDocumentProxy;
+import stroom.entity.client.presenter.NameDocumentView;
+import stroom.entity.client.view.CopyDocumentViewImpl;
+import stroom.entity.client.view.CreateDocumentViewImpl;
+import stroom.entity.client.view.ForkDocumentViewImpl;
+import stroom.entity.client.view.MoveDocumentViewImpl;
+import stroom.entity.client.view.NameDocumentViewImpl;
 
 public class EntityModule extends AbstractPresenterModule {
     @Override
     protected void configure() {
-        bindPresenter(CreateEntityPresenter.class, CreateEntityView.class, CreateEntityViewImpl.class,
-                CreateEntityProxy.class);
-        bindPresenter(CopyEntityPresenter.class, CopyEntityView.class, CopyEntityViewImpl.class, CopyEntityProxy.class);
-        bindPresenter(MoveEntityPresenter.class, MoveEntityView.class, MoveEntityViewImpl.class, MoveEntityProxy.class);
-        bindSharedView(NameEntityView.class, NameEntityViewImpl.class);
-        bindPresenter(NameEntityPresenter.class, RenameEntityProxy.class);
-        bindPresenter(SaveAsEntityPresenter.class, SaveAsEntityView.class, SaveAsEntityViewImpl.class,
-                SaveAsEntityProxy.class);
+        bindPresenter(CreateDocumentPresenter.class, CreateDocumentView.class, CreateDocumentViewImpl.class,
+                CreateDocumentProxy.class);
+        bindPresenter(CopyDocumentPresenter.class, CopyDocumentView.class, CopyDocumentViewImpl.class, CopyDocumentProxy.class);
+        bindPresenter(MoveDocumentPresenter.class, MoveDocumentView.class, MoveDocumentViewImpl.class, MoveDocumentProxy.class);
+        bindSharedView(NameDocumentView.class, NameDocumentViewImpl.class);
+        bindPresenter(NameDocumentPresenter.class, NameDocumentProxy.class);
+        bindPresenter(ForkDocumentPresenter.class, ForkDocumentView.class, ForkDocumentViewImpl.class,
+                ForkDocumentProxy.class);
     }
 }

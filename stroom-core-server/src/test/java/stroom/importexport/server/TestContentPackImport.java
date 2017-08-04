@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.importexport.server;
@@ -29,9 +30,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import stroom.node.server.GlobalPropertyService;
 import stroom.node.server.MockStroomPropertyService;
 import stroom.node.shared.GlobalProperty;
-import stroom.node.shared.GlobalPropertyService;
 import stroom.util.config.StroomProperties;
 import stroom.util.test.StroomExpectedException;
 import stroom.util.test.StroomJUnit4ClassRunner;

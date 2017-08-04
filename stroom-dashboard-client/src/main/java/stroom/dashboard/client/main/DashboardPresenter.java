@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.dashboard.client.main;
@@ -32,6 +33,7 @@ import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.dashboard.client.flexlayout.FlexLayoutChangeHandler;
 import stroom.dashboard.client.flexlayout.PositionAndSize;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
+import stroom.dashboard.client.main.DashboardPresenter.DashboardView;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardConfig;
@@ -42,11 +44,11 @@ import stroom.dashboard.shared.SplitLayoutConfig;
 import stroom.dashboard.shared.SplitLayoutConfig.Direction;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
-import stroom.entity.client.EntityTabData;
-import stroom.entity.client.event.HasDirtyHandlers;
-import stroom.entity.client.event.SaveEntityEvent;
-import stroom.entity.client.event.ShowSaveAsEntityDialogEvent;
-import stroom.entity.client.presenter.EntityEditPresenter;
+import stroom.document.client.DocumentTabData;
+import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.ShowForkDocumentDialogEvent;
+import stroom.document.client.event.WriteDocumentEvent;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.shared.DocumentType;
 import stroom.security.client.ClientSecurityContext;
 import stroom.svg.client.Icon;
@@ -66,8 +68,8 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.DashboardView, Dashboard>
-        implements FlexLayoutChangeHandler, EntityTabData, DashboardUiHandlers {
+public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Dashboard>
+        implements FlexLayoutChangeHandler, DocumentTabData, DashboardUiHandlers {
     private final ButtonView saveButton;
     private final ButtonView saveAsButton;
     private final DashboardLayoutPresenter layoutPresenter;
@@ -98,12 +100,12 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
 
         registerHandler(saveButton.addClickHandler(event -> {
             if (saveButton.isEnabled()) {
-                SaveEntityEvent.fire(DashboardPresenter.this, DashboardPresenter.this);
+                WriteDocumentEvent.fire(DashboardPresenter.this, DashboardPresenter.this);
             }
         }));
         registerHandler(saveAsButton.addClickHandler(event -> {
             if (saveAsButton.isEnabled()) {
-                ShowSaveAsEntityDialogEvent.fire(DashboardPresenter.this, DashboardPresenter.this);
+                ShowForkDocumentDialogEvent.fire(DashboardPresenter.this, DashboardPresenter.this);
             }
         }));
 

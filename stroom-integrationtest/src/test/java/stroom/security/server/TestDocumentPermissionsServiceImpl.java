@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.security.server;
@@ -23,8 +24,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.transaction.TransactionException;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefUtil;
+import stroom.index.server.IndexService;
 import stroom.index.shared.Index;
-import stroom.index.shared.IndexService;
 import stroom.query.api.v1.DocRef;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.UserRef;

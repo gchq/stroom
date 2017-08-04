@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.search.server.shard;
@@ -25,11 +26,11 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+import stroom.index.server.IndexShardService;
 import stroom.index.server.IndexShardUtil;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexConstants;
 import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShardService;
 import stroom.search.server.MaxHitCollector;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;

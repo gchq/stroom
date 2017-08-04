@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.pipeline.server.parser;
@@ -25,6 +26,7 @@ import stroom.cache.server.StoredParserFactory;
 import stroom.entity.shared.VersionedEntityDecorator;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.SupportsCodeInjection;
+import stroom.pipeline.server.TextConverterService;
 import stroom.pipeline.server.errorhandler.ErrorReceiverIdDecorator;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggedException;
@@ -34,7 +36,6 @@ import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.TextConverter;
-import stroom.pipeline.shared.TextConverterService;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pool.PoolItem;

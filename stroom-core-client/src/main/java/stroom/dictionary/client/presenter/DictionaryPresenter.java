@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.dictionary.client.presenter;
@@ -22,13 +23,13 @@ import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.dictionary.shared.Dictionary;
 import stroom.entity.client.presenter.ContentCallback;
-import stroom.entity.client.presenter.EntityEditTabPresenter;
+import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
-public class DictionaryPresenter extends EntityEditTabPresenter<LinkTabPanelView, Dictionary> {
+public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Dictionary> {
     private static final TabData WORDS = new TabDataImpl("Words");
 
     private final TextAreaPresenter textAreaPresenter;

@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.dashboard.client.query;
@@ -41,9 +42,9 @@ import stroom.dashboard.shared.DataSourceFieldsMap;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.datasource.api.v1.DataSourceField;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.event.DirtyEvent;
-import stroom.entity.client.event.DirtyEvent.DirtyHandler;
-import stroom.entity.client.event.HasDirtyHandlers;
+import stroom.document.client.event.DirtyEvent;
+import stroom.document.client.event.DirtyEvent.DirtyHandler;
+import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;

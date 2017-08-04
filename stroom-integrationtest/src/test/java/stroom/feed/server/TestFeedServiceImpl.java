@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,23 +12,23 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.feed.server;
 
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.entity.server.FolderService;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Folder;
-import stroom.entity.shared.FolderService;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
+import stroom.pipeline.server.PipelineEntityService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
@@ -90,7 +90,7 @@ public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
         Feed fd = feedService.create(commonTestScenarioCreator.getTestFolder(), feedName);
 
-        fd = feedService.copy(fd, DocRefUtil.create(fd.getFolder()), fd.getName() + "COPY", PermissionInheritance.INHERIT);
+        fd = feedService.saveAs(fd, DocRefUtil.create(fd.getFolder()), fd.getName() + "COPY", PermissionInheritance.INHERIT);
 
         feedService.save(fd);
     }
@@ -212,7 +212,7 @@ public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
      */
     @Test
     public void testParentJPAStuff() {
-        Folder folder = folderService.create(null, "JUNIT");
+        Folder folder = folderService.create("JUNIT");
         folder = folderService.save(folder);
 
         PipelineEntity translation1 = pipelineEntityService.create(DocRefUtil.create(folder), "JUNIT");

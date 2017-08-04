@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.entity.server;
@@ -20,11 +21,8 @@ import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocumentEntity;
-import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.Entity;
-import stroom.entity.shared.EntityService;
 import stroom.entity.shared.EntityServiceException;
-import stroom.entity.shared.FindService;
 import stroom.entity.shared.HasLoadById;
 import stroom.entity.shared.HasLoadByName;
 import stroom.entity.shared.HasLoadByUuid;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.entity.client.presenter;
@@ -25,7 +26,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.EntityServiceDeleteAction;
+import stroom.entity.shared.DocumentServiceDeleteAction;
 import stroom.entity.shared.FindNamedEntityCriteria;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.StringCriteria.MatchStyle;
@@ -143,7 +144,7 @@ public abstract class ManageEntityPresenter<C extends FindNamedEntityCriteria, E
             ConfirmEvent.fire(this, "Are you sure you want to delete the selected " + getEntityDisplayType() + "?",
                     result -> {
                         if (result) {
-                            dispatcher.exec(new EntityServiceDeleteAction<>(entity)).onSuccess(res -> {
+                            dispatcher.exec(new DocumentServiceDeleteAction(entity)).onSuccess(res -> {
                                 listPresenter.refresh();
                                 listPresenter.getView().getSelectionModel().clear();
                             });

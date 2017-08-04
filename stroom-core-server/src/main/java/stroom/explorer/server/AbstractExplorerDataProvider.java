@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.explorer.server;
@@ -20,15 +21,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.framework.Advised;
 import stroom.entity.server.DocumentEntityServiceImpl;
+import stroom.entity.server.FindService;
+import stroom.entity.server.FolderService;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.FindDocumentEntityCriteria;
 import stroom.entity.shared.FindNamedEntityCriteria;
-import stroom.entity.shared.FindService;
 import stroom.entity.shared.Folder;
-import stroom.entity.shared.FolderService;
 import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;
 import stroom.folder.server.FolderExplorerDataProvider;
 import stroom.folder.server.FolderRootExplorerDataProvider;
@@ -77,18 +77,18 @@ public abstract class AbstractExplorerDataProvider<E extends DocumentEntity, C e
                 final DocumentEntityServiceImpl documentEntityService = getDocumentEntityService(folderService);
                 if (documentEntityService != null) {
                     folder = (Folder) documentEntityService.loadByIdInsecure(folder.getId(), null);
-                    parent = EntityData.create(FolderExplorerDataProvider.ICON_URL, folder);
+                    parent = ExplorerData.create(FolderExplorerDataProvider.ICON_URL, folder);
                 }
             }
 
             // Get entity explorer data.
-            final EntityData entityData = createEntityData(entity);
+            final ExplorerData entityData = createEntityData(entity);
             treeModel.add(parent, entityData);
         }
     }
 
-    protected EntityData createEntityData(E entity) {
-        return EntityData.create(getIconUrl(), entity);
+    protected ExplorerData createEntityData(E entity) {
+        return ExplorerData.create(getIconUrl(), entity);
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.streamtask.server;
@@ -19,8 +20,8 @@ package stroom.streamtask.server;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.feed.MetaMap;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.streamstore.server.MockStreamStore;
@@ -48,7 +49,7 @@ public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrat
     public void testReferenceNonAggregation() throws IOException {
         ((MockStreamStore) streamStore).clear();
 
-        Feed feed = feedService.create(null, "TEST_FEED");
+        Feed feed = feedService.create("TEST_FEED");
         feed.setReference(true);
         feed = feedService.save(feed);
 
@@ -85,8 +86,8 @@ public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrat
     public void testFeedChange() throws IOException {
         ((MockStreamStore) streamStore).clear();
 
-        final Feed feed1 = feedService.create(null, "TEST_FEED1");
-        final Feed feed2 = feedService.create(null, "TEST_FEED2");
+        final Feed feed1 = feedService.create("TEST_FEED1");
+        final Feed feed2 = feedService.create("TEST_FEED2");
 
         final MetaMap metaMap1 = new MetaMap();
         metaMap1.put(StroomHeaderArguments.FEED, "TEST_FEED1");
@@ -125,7 +126,7 @@ public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrat
     public void testFeedAggregation() throws IOException {
         ((MockStreamStore) streamStore).clear();
 
-        final Feed feed = feedService.create(null, "TEST_FEED");
+        final Feed feed = feedService.create("TEST_FEED");
 
         final MetaMap metaMap = new MetaMap();
         metaMap.put(StroomHeaderArguments.FEED, "TEST_FEED");
