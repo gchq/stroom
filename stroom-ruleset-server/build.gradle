@@ -1,19 +1,19 @@
 dependencies {
     compile urlDependencies.get(urlLibs.stroomExpression)
 
+    compile project(':stroom-core-shared')
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-util')
+
+    compile project(':stroom-security-api')
+
     compile project(':stroom-core-server')
     compile project(':stroom-ruleset-shared')
 
+    compile libs.slf4j_api
+    compile libs.spring_context
     compile libs.jackson_annotations
-    compile libs.jackson_core
     compile libs.jackson_databind
-    compile libs.javax_annotation_api
     compile libs.javax_inject
-    compile libs.javax_servlet_api
-    compile libs.ws_rs_api
-    compile libs.dropwizard_metrics_annotation
-
-    testCompile libs.hamcrest_core
-    testCompile libs.junit
-    testCompile libs.mockito_core
 }

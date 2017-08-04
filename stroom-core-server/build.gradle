@@ -28,9 +28,6 @@ dependencies {
     compile libs.curator_x_discovery
     compile libs.kafka_clients
     compile libs.aspectjweaver
-    compile libs.jackson_annotations
-    compile libs.jackson_core
-    compile libs.jackson_databind
     compile libs.jersey_client
     compile libs.jersey_common
     compile libs.hibernate_jpa_api

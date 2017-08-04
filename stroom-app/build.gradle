@@ -51,6 +51,7 @@ configurations {
 dependencies {
 
     compile project(':stroom-core-server')
+    compile project(':stroom-pipeline')
     compile project(':stroom-security-server')
     compile project(':stroom-index-server')
     compile project(':stroom-statistics-api')
