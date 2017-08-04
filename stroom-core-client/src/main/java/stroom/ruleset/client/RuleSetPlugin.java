@@ -26,18 +26,18 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.query.api.v1.DocRef;
-import stroom.ruleset.client.presenter.DataReceiptPolicyPresenter;
+import stroom.ruleset.client.presenter.RuleSetPresenter;
 import stroom.ruleset.shared.RuleSet;
 
-public class DataReceiptPolicyPlugin extends DocumentPlugin<RuleSet> {
-    private final Provider<DataReceiptPolicyPresenter> editorProvider;
+public class RuleSetPlugin extends DocumentPlugin<RuleSet> {
+    private final Provider<RuleSetPresenter> editorProvider;
 
     @Inject
-    public DataReceiptPolicyPlugin(final EventBus eventBus,
-                                   final Provider<DataReceiptPolicyPresenter> editorProvider,
-                                   final ClientDispatchAsync dispatcher,
-                                   final ContentManager contentManager,
-                                   final DocumentPluginEventManager entityPluginEventManager) {
+    public RuleSetPlugin(final EventBus eventBus,
+                         final Provider<RuleSetPresenter> editorProvider,
+                         final ClientDispatchAsync dispatcher,
+                         final ContentManager contentManager,
+                         final DocumentPluginEventManager entityPluginEventManager) {
         super(eventBus, dispatcher, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
     }

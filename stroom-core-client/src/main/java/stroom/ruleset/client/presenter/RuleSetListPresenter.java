@@ -34,9 +34,9 @@ import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.List;
 
-public class DataReceiptPolicyListPresenter extends MyPresenterWidget<DataGridView<Rule>> {
+public class RuleSetListPresenter extends MyPresenterWidget<DataGridView<Rule>> {
     @Inject
-    public DataReceiptPolicyListPresenter(final EventBus eventBus) {
+    public RuleSetListPresenter(final EventBus eventBus) {
         super(eventBus, new DataGridViewImpl<>(true, false));
 
         // Add a border to the list.

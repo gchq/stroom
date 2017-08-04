@@ -26,10 +26,10 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.item.client.ItemListBox;
-import stroom.ruleset.client.presenter.DataReceiptRulePresenter.DataReceiptRuleView;
+import stroom.ruleset.client.presenter.RulePresenter.RuleView;
 import stroom.ruleset.shared.DataReceiptAction;
 
-public class DataReceiptRuleViewImpl extends ViewImpl implements DataReceiptRuleView {
+public class RuleViewImpl extends ViewImpl implements RuleView {
     private final Widget widget;
 
     @UiField
@@ -40,7 +40,7 @@ public class DataReceiptRuleViewImpl extends ViewImpl implements DataReceiptRule
     ItemListBox<DataReceiptAction> action;
 
     @Inject
-    public DataReceiptRuleViewImpl(final DataReceiptRuleViewImpl.Binder binder) {
+    public RuleViewImpl(final RuleViewImpl.Binder binder) {
         widget = binder.createAndBindUi(this);
 
         action.addItem(DataReceiptAction.RECEIVE);
@@ -78,6 +78,6 @@ public class DataReceiptRuleViewImpl extends ViewImpl implements DataReceiptRule
         this.action.setSelectedItem(action);
     }
 
-    public interface Binder extends UiBinder<Widget, DataReceiptRuleViewImpl> {
+    public interface Binder extends UiBinder<Widget, RuleViewImpl> {
     }
 }

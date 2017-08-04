@@ -25,20 +25,20 @@ import stroom.datasource.api.v1.DataSourceField;
 import stroom.query.api.v1.ExpressionBuilder;
 import stroom.query.api.v1.ExpressionOperator;
 import stroom.query.api.v1.ExpressionOperator.Op;
-import stroom.ruleset.client.presenter.DataReceiptRulePresenter.DataReceiptRuleView;
+import stroom.ruleset.client.presenter.RulePresenter.RuleView;
 import stroom.ruleset.shared.DataReceiptAction;
 import stroom.ruleset.shared.Rule;
 
 import java.util.List;
 
-public class DataReceiptRulePresenter extends MyPresenterWidget<DataReceiptRuleView> {
+public class RulePresenter extends MyPresenterWidget<RuleView> {
     private final EditExpressionPresenter editExpressionPresenter;
     private Rule originalRule;
 
     @Inject
-    public DataReceiptRulePresenter(final EventBus eventBus,
-                                    final DataReceiptRuleView view,
-                                    final EditExpressionPresenter editExpressionPresenter) {
+    public RulePresenter(final EventBus eventBus,
+                         final RuleView view,
+                         final EditExpressionPresenter editExpressionPresenter) {
         super(eventBus, view);
         this.editExpressionPresenter = editExpressionPresenter;
         view.setExpressionView(editExpressionPresenter.getView());
@@ -61,7 +61,7 @@ public class DataReceiptRulePresenter extends MyPresenterWidget<DataReceiptRuleV
         return new Rule(originalRule.getRuleNumber(), originalRule.getCreationTime(), getView().getName(), originalRule.isEnabled(), expression, getView().getAction());
     }
 
-    public interface DataReceiptRuleView extends View {
+    public interface RuleView extends View {
         void setExpressionView(View view);
 
         String getName();

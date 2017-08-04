@@ -24,9 +24,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.ruleset.client.presenter.DataReceiptPolicySettingsPresenter.DataReceiptPolicySettingsView;
+import stroom.ruleset.client.presenter.RuleSetSettingsPresenter.RuleSetSettingsView;
 
-public class DataReceiptPolicySettingsViewImpl extends ViewImpl implements DataReceiptPolicySettingsView {
+public class RuleSetSettingsViewImpl extends ViewImpl implements RuleSetSettingsView {
     private final Widget widget;
 
     @UiField
@@ -35,7 +35,7 @@ public class DataReceiptPolicySettingsViewImpl extends ViewImpl implements DataR
     SimplePanel expression;
 
     @Inject
-    public DataReceiptPolicySettingsViewImpl(final Binder binder) {
+    public RuleSetSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -54,6 +54,6 @@ public class DataReceiptPolicySettingsViewImpl extends ViewImpl implements DataR
         this.expression.setWidget(view.asWidget());
     }
 
-    public interface Binder extends UiBinder<Widget, DataReceiptPolicySettingsViewImpl> {
+    public interface Binder extends UiBinder<Widget, RuleSetSettingsViewImpl> {
     }
 }

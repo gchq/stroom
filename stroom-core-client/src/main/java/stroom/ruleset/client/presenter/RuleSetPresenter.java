@@ -38,7 +38,7 @@ import stroom.widget.tab.client.presenter.TabDataImpl;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DataReceiptPolicyPresenter extends DocumentEditTabPresenter<LinkTabPanelView, RuleSet> implements HasDirtyHandlers {
+public class RuleSetPresenter extends DocumentEditTabPresenter<LinkTabPanelView, RuleSet> implements HasDirtyHandlers {
     private static final TabData RULES = new TabDataImpl("Rules");
     private static final TabData FIELDS = new TabDataImpl("Fields");
 
@@ -54,11 +54,11 @@ public class DataReceiptPolicyPresenter extends DocumentEditTabPresenter<LinkTab
     private boolean dirty;
 
     @Inject
-    public DataReceiptPolicyPresenter(final EventBus eventBus,
-                                      final LinkTabPanelView view,
-                                      final ClientSecurityContext securityContext,
-                                      final Provider<DataReceiptPolicySettingsPresenter> settingsPresenterProvider,
-                                      final Provider<FieldListPresenter> fieldListPresenterProvider, final ClientDispatchAsync dispatcher) {
+    public RuleSetPresenter(final EventBus eventBus,
+                            final LinkTabPanelView view,
+                            final ClientSecurityContext securityContext,
+                            final Provider<RuleSetSettingsPresenter> settingsPresenterProvider,
+                            final Provider<FieldListPresenter> fieldListPresenterProvider, final ClientDispatchAsync dispatcher) {
         super(eventBus, view, securityContext);
         this.dispatcher = dispatcher;
 

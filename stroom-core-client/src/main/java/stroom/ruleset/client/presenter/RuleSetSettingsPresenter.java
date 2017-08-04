@@ -34,7 +34,7 @@ import stroom.entity.client.presenter.HasWrite;
 import stroom.query.api.v1.ExpressionBuilder;
 import stroom.query.api.v1.ExpressionOperator.Op;
 import stroom.query.client.ExpressionTreePresenter;
-import stroom.ruleset.client.presenter.DataReceiptPolicySettingsPresenter.DataReceiptPolicySettingsView;
+import stroom.ruleset.client.presenter.RuleSetSettingsPresenter.RuleSetSettingsView;
 import stroom.ruleset.shared.DataReceiptAction;
 import stroom.ruleset.shared.Rule;
 import stroom.ruleset.shared.RuleSet;
@@ -48,10 +48,10 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.List;
 
-public class DataReceiptPolicySettingsPresenter extends MyPresenterWidget<DataReceiptPolicySettingsView> implements HasRead<RuleSet>, HasWrite<RuleSet>, HasDirtyHandlers {
-    private final DataReceiptPolicyListPresenter listPresenter;
+public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsView> implements HasRead<RuleSet>, HasWrite<RuleSet>, HasDirtyHandlers {
+    private final RuleSetListPresenter listPresenter;
     private final ExpressionTreePresenter expressionPresenter;
-    private final Provider<DataReceiptRulePresenter> editRulePresenterProvider;
+    private final Provider<RulePresenter> editRulePresenterProvider;
 
     private List<DataSourceField> fields;
     private List<Rule> rules;
@@ -67,11 +67,11 @@ public class DataReceiptPolicySettingsPresenter extends MyPresenterWidget<DataRe
     private boolean dirty;
 
     @Inject
-    public DataReceiptPolicySettingsPresenter(final EventBus eventBus,
-                                              final DataReceiptPolicySettingsView view,
-                                              final DataReceiptPolicyListPresenter listPresenter,
-                                              final ExpressionTreePresenter expressionPresenter,
-                                              final Provider<DataReceiptRulePresenter> editRulePresenterProvider) {
+    public RuleSetSettingsPresenter(final EventBus eventBus,
+                                    final RuleSetSettingsView view,
+                                    final RuleSetListPresenter listPresenter,
+                                    final ExpressionTreePresenter expressionPresenter,
+                                    final Provider<RulePresenter> editRulePresenterProvider) {
         super(eventBus, view);
         this.listPresenter = listPresenter;
         this.expressionPresenter = expressionPresenter;
@@ -203,11 +203,11 @@ public class DataReceiptPolicySettingsPresenter extends MyPresenterWidget<DataRe
 
     private void add() {
         final Rule newRule = new Rule(0, System.currentTimeMillis(), "", true, new ExpressionBuilder(Op.AND).build(), DataReceiptAction.RECEIVE);
-        final DataReceiptRulePresenter editRulePresenter = editRulePresenterProvider.get();
+        final RulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(newRule, fields);
 
         final PopupSize popupSize = new PopupSize(800, 400, 300, 300, 2000, 2000, true);
-        ShowPopupEvent.fire(DataReceiptPolicySettingsPresenter.this, editRulePresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Add New Rule", new PopupUiHandlers() {
+        ShowPopupEvent.fire(RuleSetSettingsPresenter.this, editRulePresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Add New Rule", new PopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
@@ -218,7 +218,7 @@ public class DataReceiptPolicySettingsPresenter extends MyPresenterWidget<DataRe
                     setDirty(true);
                 }
 
-                HidePopupEvent.fire(DataReceiptPolicySettingsPresenter.this, editRulePresenter);
+                HidePopupEvent.fire(RuleSetSettingsPresenter.this, editRulePresenter);
             }
 
             @Override
@@ -229,11 +229,11 @@ public class DataReceiptPolicySettingsPresenter extends MyPresenterWidget<DataRe
     }
 
     private void edit(final Rule existingRule) {
-        final DataReceiptRulePresenter editRulePresenter = editRulePresenterProvider.get();
+        final RulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(existingRule, fields);
 
         final PopupSize popupSize = new PopupSize(800, 400, 300, 300, 2000, 2000, true);
-        ShowPopupEvent.fire(DataReceiptPolicySettingsPresenter.this, editRulePresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Rule", new PopupUiHandlers() {
+        ShowPopupEvent.fire(RuleSetSettingsPresenter.this, editRulePresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Rule", new PopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
@@ -251,7 +251,7 @@ public class DataReceiptPolicySettingsPresenter extends MyPresenterWidget<DataRe
                     }
                 }
 
-                HidePopupEvent.fire(DataReceiptPolicySettingsPresenter.this, editRulePresenter);
+                HidePopupEvent.fire(RuleSetSettingsPresenter.this, editRulePresenter);
             }
 
             @Override
@@ -325,7 +325,7 @@ public class DataReceiptPolicySettingsPresenter extends MyPresenterWidget<DataRe
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
 
-    public interface DataReceiptPolicySettingsView extends View {
+    public interface RuleSetSettingsView extends View {
         void setTableView(View view);
 
         void setExpressionView(View view);
