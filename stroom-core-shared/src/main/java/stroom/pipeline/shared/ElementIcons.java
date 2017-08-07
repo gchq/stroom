@@ -17,23 +17,22 @@
 package stroom.pipeline.shared;
 
 public final class ElementIcons {
-    public static final String ANALYTIC_OUTPUT = "analyticOutput.png";
-    public static final String ID = "id.png";
-    public static final String INDEX = "index.png";
-    public static final String JSON = "json.png";
-    public static final String KAFKA = "kafka.png";
-    public static final String RECORD_COUNT = "recordCount.png";
-    public static final String RECORD_OUTPUT = "recordOutput.png";
-    public static final String REFERENCE_DATA = "referenceData.png";
-    public static final String SEARCH = "search.png";
-    public static final String SPLIT = "split.png";
-    public static final String STATISTICS = "statistics.png";
-    public static final String STREAM = "stream.png";
-    public static final String STROOM_STATS = "stroomStats.png";
-    public static final String TEXT = "text.png";
-    public static final String XML = "xml.png";
-    public static final String XSD = "xsd.png";
-    public static final String XSLT = "xslt.png";
+    public static final String ID = "id.svg";
+    public static final String INDEX = "index.svg";
+    public static final String JSON = "json.svg";
+    public static final String KAFKA = "kafka.svg";
+    public static final String RECORD_COUNT = "recordCount.svg";
+    public static final String RECORD_OUTPUT = "recordOutput.svg";
+    public static final String REFERENCE_DATA = "referenceData.svg";
+    public static final String SEARCH = "search.svg";
+    public static final String SPLIT = "split.svg";
+    public static final String STATISTICS = "statistics.svg";
+    public static final String STREAM = "stream.svg";
+    public static final String STROOM_STATS = "stroomStats.svg";
+    public static final String TEXT = "text.svg";
+    public static final String XML = "xml.svg";
+    public static final String XSD = "xsd.svg";
+    public static final String XSLT = "xslt.svg";
 
     private ElementIcons() {
         // Constants only.
