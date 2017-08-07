@@ -25,6 +25,7 @@ import stroom.core.client.ContentManager.CloseHandler;
 import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.document.client.DocumentPluginEventManager;
+import stroom.entity.shared.Folder;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.presenter.ExplorerTreePresenter;
 import stroom.explorer.shared.DocumentType;
@@ -67,7 +68,7 @@ public class FolderRootPlugin extends Plugin implements TabData {
                     final SelectionType selectionType = event.getSelectionType();
                     if (!selectionType.isRightClick() && !selectionType.isMultiSelect()) {
                         final ExplorerData selected = event.getSelectionModel().getSelected();
-                        if (selected != null && SYSTEM.equals(selected.getType())) {
+                        if (selected != null && Folder.ENTITY_TYPE.equals(selected.getType()) && selected.getDocRef().getUuid().equals("0")) {
                             if (presenter == null && selectionType.isDoubleSelect()) {
                                 // If the presenter is null then we haven't got
                                 // this tab open.

@@ -17,6 +17,8 @@
 
 package stroom.explorer.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.MarshalOptions;
@@ -39,6 +41,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Component
 public class ExplorerTreeModel implements InitializingBean {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerTreeModel.class);
+
     private static final long TEN_MINUTES = 1000 * 60 * 10;
     private final Map<String, ExplorerDataProvider> providerTypeMap = new HashMap<>();
     private final List<ExplorerDataProvider> providers = new ArrayList<>();
@@ -99,8 +103,12 @@ public class ExplorerTreeModel implements InitializingBean {
 
                 // Add explorer items from all providers to the new map.
                 for (final ExplorerDataProvider provider : providers) {
-                    final ExplorerDataProvider dataProvider = stroomBeanStore.getBean(provider.getClass());
-                    dataProvider.addItems(treeModel);
+                    try {
+                        final ExplorerDataProvider dataProvider = stroomBeanStore.getBean(provider.getClass());
+                        dataProvider.addItems(treeModel);
+                    } catch (final Exception e) {
+                        LOGGER.error(e.getMessage(), e);
+                    }
                 }
             }
         };

@@ -41,6 +41,7 @@ import stroom.util.shared.EqualsUtil;
 import stroom.widget.customdatebox.client.MyDateBox;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class TermEditor extends Composite {
@@ -239,15 +240,53 @@ public class TermEditor extends Composite {
     }
 
     private List<Condition> getConditions(final DataSourceField field) {
-        final List<Condition> conditions = new ArrayList<>();
+        List<Condition> conditions;
 
         if (field == null) {
-            conditions.add(Condition.CONTAINS);
-            conditions.add(Condition.IN);
-            conditions.add(Condition.IN_DICTIONARY);
+            conditions = Arrays.asList(
+                    Condition.CONTAINS,
+                    Condition.IN,
+                    Condition.IN_DICTIONARY
+            );
+
+        } else if (field.getConditions() != null && field.getConditions().size() > 0) {
+            conditions = field.getConditions();
 
         } else {
-            conditions.addAll(field.getConditions());
+            if (field.getType().isNumeric()) {
+                conditions = Arrays.asList(
+                        Condition.EQUALS,
+                        Condition.CONTAINS,
+                        Condition.GREATER_THAN,
+                        Condition.GREATER_THAN_OR_EQUAL_TO,
+                        Condition.LESS_THAN,
+                        Condition.LESS_THAN_OR_EQUAL_TO,
+                        Condition.BETWEEN,
+                        Condition.IN,
+                        Condition.IN_DICTIONARY
+                );
+
+            } else if (DataSourceFieldType.DATE_FIELD.equals(field.getType())) {
+                conditions = Arrays.asList(
+                        Condition.EQUALS,
+                        Condition.CONTAINS,
+                        Condition.GREATER_THAN,
+                        Condition.GREATER_THAN_OR_EQUAL_TO,
+                        Condition.LESS_THAN,
+                        Condition.LESS_THAN_OR_EQUAL_TO,
+                        Condition.BETWEEN,
+                        Condition.IN,
+                        Condition.IN_DICTIONARY
+                );
+
+            } else {
+                conditions = Arrays.asList(
+                        Condition.EQUALS,
+                        Condition.CONTAINS,
+                        Condition.IN,
+                        Condition.IN_DICTIONARY
+                );
+            }
         }
 
         return conditions;

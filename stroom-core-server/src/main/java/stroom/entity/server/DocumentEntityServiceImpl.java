@@ -787,10 +787,6 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return new QueryAppender(entityManager);
     }
 
-    protected final QueryAppender<E, C> getQueryAppender() {
-        return queryAppender;
-    }
-
     @Override
     public void appendCriteria(final List<BaseAdvancedQueryItem> items, final C criteria) {
         CriteriaLoggingUtil.appendPageRequest(items, criteria.getPageRequest());

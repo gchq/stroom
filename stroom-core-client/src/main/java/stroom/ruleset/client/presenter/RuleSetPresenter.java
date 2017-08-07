@@ -102,6 +102,13 @@ public class RuleSetPresenter extends DocumentEditTabPresenter<LinkTabPanelView,
 
     @Override
     public void onRead(final RuleSet dataReceiptPolicy) {
+        if (dataReceiptPolicy.getFields() == null) {
+            dataReceiptPolicy.setFields(new ArrayList<>());
+        }
+        if (dataReceiptPolicy.getRules() == null) {
+            dataReceiptPolicy.setRules(new ArrayList<>());
+        }
+
         tabContentProvider.read(dataReceiptPolicy);
     }
 

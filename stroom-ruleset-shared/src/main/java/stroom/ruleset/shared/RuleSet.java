@@ -27,6 +27,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
+import java.util.ArrayList;
 import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -47,11 +48,6 @@ public class RuleSet extends Document implements SharedObject {
         // Default constructor for GWT serialisation.
     }
 
-    public RuleSet(final List<DataSourceField> fields, final List<Rule> rules) {
-        this.fields = fields;
-        this.rules = rules;
-    }
-
     public List<DataSourceField> getFields() {
         return fields;
     }
@@ -62,6 +58,10 @@ public class RuleSet extends Document implements SharedObject {
 
     public List<Rule> getRules() {
         return rules;
+    }
+
+    public void setRules(final List<Rule> rules) {
+        this.rules = rules;
     }
 
     @Override
