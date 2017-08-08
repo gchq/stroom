@@ -54,7 +54,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Component
 @Profile(StroomSpringProfiles.PROD)
-class IndexShardWriterCacheImpl implements IndexShardWriterCache {
+public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardWriterCacheImpl.class);
 
     private final NodeCache nodeCache;
@@ -75,11 +75,11 @@ class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private volatile Settings settings;
 
     @Inject
-    IndexShardWriterCacheImpl(final NodeCache nodeCache,
-                              final IndexShardService indexShardService,
-                              final StroomPropertyService stroomPropertyService,
-                              final IndexConfigCache indexConfigCache,
-                              final IndexShardManager indexShardManager) {
+    public IndexShardWriterCacheImpl(final NodeCache nodeCache,
+                                     final IndexShardService indexShardService,
+                                     final StroomPropertyService stroomPropertyService,
+                                     final IndexConfigCache indexConfigCache,
+                                     final IndexShardManager indexShardManager) {
         this.nodeCache = nodeCache;
         this.indexShardService = indexShardService;
         this.stroomPropertyService = stroomPropertyService;
@@ -269,7 +269,7 @@ class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     }
 
     private void tryCloseAsync(final IndexShardWriter indexShardWriter, final AtomicLong maxRemovals) {
-        if (maxRemovals.decrementAndGet() > 0) {
+        if (maxRemovals.decrementAndGet() >= 0) {
             closeAsync(indexShardWriter);
         }
     }
@@ -331,6 +331,9 @@ class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     @StroomStartup
     public synchronized void startup() {
+        LOGGER.info(() -> "Index shard writer cache startup");
+        final LogExecutionTime logExecutionTime = new LogExecutionTime();
+
         // Make sure all open shards are marked as closed.
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
         criteria.getNodeIdSet().add(nodeCache.getDefaultNode());
@@ -343,11 +346,15 @@ class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             indexShard.setStatus(IndexShardStatus.CLOSED);
             indexShardService.save(indexShard);
         }
+
+        LOGGER.info(() -> "Index shard writer cache startup completed in " + logExecutionTime);
     }
 
     @StroomShutdown
     public synchronized void shutdown() {
-        LOGGER.info(() -> "Clearing index shard writer cache");
+        LOGGER.info(() -> "Index shard writer cache shutdown");
+        final LogExecutionTime logExecutionTime = new LogExecutionTime();
+
         ScheduledExecutorService executor = null;
 
         try {
@@ -371,7 +378,7 @@ class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             }
         }
 
-        LOGGER.info(() -> "Finished clearing index shard writer cache");
+        LOGGER.info(() -> "Index shard writer cache shutdown completed in " + logExecutionTime);
     }
 
 //    @Override

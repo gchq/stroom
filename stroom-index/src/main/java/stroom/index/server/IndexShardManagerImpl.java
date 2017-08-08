@@ -26,6 +26,7 @@ import stroom.index.shared.IndexShardService;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
+import stroom.security.Insecure;
 import stroom.security.Secured;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.task.server.GenericServerTask;
@@ -302,6 +303,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
         return null;
     }
 
+    @Insecure
     @Override
     public void setStatus(final long indexShardId, final IndexShardStatus status) {
         // Allow the thing to run without a service (e.g. benchmark mode)
@@ -325,6 +327,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
         }
     }
 
+    @Insecure
     @Override
     public void update(final long indexShardId, final Integer documentCount, final Long commitDurationMs, final Long commitMs, final Long fileSize) {
         // Allow the thing to run without a service (e.g. benchmark mode)
