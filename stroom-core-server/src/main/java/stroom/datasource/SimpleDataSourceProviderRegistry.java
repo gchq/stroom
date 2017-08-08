@@ -42,7 +42,7 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
 
         urlMap.put("Index", basePath + "/api/stroom-index/v1");
         urlMap.put("StatisticStore", basePath + "/api/sqlstatistics/v1");
-        urlMap.put("StroomStatsStore", basePath + "/api/statistics/v1");
+        urlMap.put("StroomStatsStore", basePath + "/api/stroom-stats/v1");
         urlMap.put("authentication", basePath + "/api/authentication/v1");
         urlMap.put("authorisation", basePath + "/api/authorisation/v1");
     }
