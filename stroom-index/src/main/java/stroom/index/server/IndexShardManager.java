@@ -19,12 +19,8 @@ package stroom.index.server;
 import stroom.entity.shared.FindDeleteService;
 import stroom.entity.shared.FindFlushService;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * API into our index shard manager.
@@ -35,8 +31,6 @@ public interface IndexShardManager extends FindDeleteService<FindIndexShardCrite
     void update(long indexShardId, Integer documentCount, Long commitDurationMs, Long commitMs, Long fileSize);
 
     IndexShard load(long indexShardId);
-
-    void shutdown();
 
     void deleteFromDisk();
 

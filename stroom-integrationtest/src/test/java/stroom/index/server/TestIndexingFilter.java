@@ -26,7 +26,6 @@ import stroom.AbstractProcessIntegrationTest;
 import stroom.feed.shared.Feed;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
-import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.pipeline.server.PipelineMarshaller;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
@@ -66,8 +65,6 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
     @Resource
     private MockIndexShardWriterCache indexShardWriterCache;
     @Resource
-    private MockIndexShardKeyCache indexShardKeyCache;
-    @Resource
     private IndexService indexService;
     @Resource
     private PipelineEntityService pipelineEntityService;
@@ -79,7 +76,7 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
     @Before
     @After
     public void clear() {
-        indexShardWriterCache.clear();
+        indexShardWriterCache.shutdown();
     }
 
     @Test
@@ -216,8 +213,7 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
         final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
         if (indexShardWriterCache.getWriters().size() > 0) {
             Assert.assertEquals(1, indexShardWriterCache.getWriters().size());
-            final IndexShard indexShard = indexShardKeyCache.getOrCreate(indexShardKey);
-            Assert.assertTrue(indexShardWriterCache.getWriters().containsKey(indexShard.getId()));
+            Assert.assertTrue(indexShardWriterCache.getWriters().containsKey(indexShardKey));
 
             // Get a writer from the pool.
             for (final IndexShardWriter writer : indexShardWriterCache.getWriters().values()) {

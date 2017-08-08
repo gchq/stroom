@@ -76,9 +76,13 @@ public abstract class AbstractCacheBean<K, V> implements CacheBean<K, V> {
         return getValue(ehcache.getQuiet(new Mapping<K, V>(key, null)));
     }
 
+//    protected V get(final K key) {
+//        return getValue(ehcache.get(new Mapping<K, V>(key, null)));
+//    }
+
     @SuppressWarnings("unchecked")
     protected List<K> getKeys() {
-        final List list = selfPopulatingCache.getKeys();
+        final List list = ehcache.getKeys();
         final List<K> keys = new ArrayList<>(list.size());
         for (final Object item : list) {
             keys.add((K) ((Mapping) item).key);
@@ -86,9 +90,15 @@ public abstract class AbstractCacheBean<K, V> implements CacheBean<K, V> {
         return keys;
     }
 
-//    protected V get(final K key) {
-//        return getValue(ehcache.get(new Mapping<K, V>(key, null)));
-//    }
+    @SuppressWarnings("unchecked")
+    protected List<K> getKeysWithExpiryCheck() {
+        final List list = ehcache.getKeysWithExpiryCheck();
+        final List<K> keys = new ArrayList<>(list.size());
+        for (final Object item : list) {
+            keys.add((K) ((Mapping) item).key);
+        }
+        return keys;
+    }
 
     @SuppressWarnings("unchecked")
     private V getValue(final Element element) {

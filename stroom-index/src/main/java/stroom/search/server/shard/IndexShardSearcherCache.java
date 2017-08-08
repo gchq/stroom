@@ -22,7 +22,6 @@ import org.springframework.stereotype.Component;
 import stroom.cache.AbstractCacheBean;
 import stroom.index.server.IndexShardWriter;
 import stroom.index.server.IndexShardWriterCache;
-import stroom.index.server.StripedLock;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardService;
 import stroom.search.server.SearchException;
@@ -33,14 +32,11 @@ import javax.inject.Inject;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
 
 @Component
 public class IndexShardSearcherCache extends AbstractCacheBean<IndexShardSearcherCache.Key, IndexShardSearcherImpl> {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearcherCache.class);
     private static final int MAX_CACHE_ENTRIES = 2;
-
-    private final StripedLock stripedLock = new StripedLock();
 
     private final IndexShardService indexShardService;
     private final IndexShardWriterCache indexShardWriterCache;
@@ -86,26 +82,20 @@ public class IndexShardSearcherCache extends AbstractCacheBean<IndexShardSearche
     }
 
     IndexShardSearcher borrowSearcher(final Long indexShardId) {
-        final Lock lock = stripedLock.getLockForKey(indexShardId);
-        lock.lock();
-        try {
-            IndexShardSearcherImpl result = null;
+        IndexShardSearcherImpl result = null;
 
-            while (result == null) {
-                final IndexWriter indexWriter = getWriter(indexShardId);
-                final Key key = new Key(indexShardId, indexWriter);
-                result = computeIfAbsent(key, this::create);
+        while (result == null) {
+            final IndexWriter indexWriter = getWriter(indexShardId);
+            final Key key = new Key(indexShardId, indexWriter);
+            result = computeIfAbsent(key, this::create);
 
-                if (!result.incrementInUse()) {
-                    remove(key);
-                    result = null;
-                }
+            if (!result.incrementInUse()) {
+                remove(key);
+                result = null;
             }
-
-            return result;
-        } finally {
-            lock.unlock();
         }
+
+        return result;
     }
 
     void returnSearcher(final IndexShardSearcher indexShardSearcher) {
@@ -133,7 +123,7 @@ public class IndexShardSearcherCache extends AbstractCacheBean<IndexShardSearche
         IndexWriter indexWriter = null;
 
         // Load the current index shard.
-        final IndexShardWriter indexShardWriter = indexShardWriterCache.getQuiet(indexShardId);
+        final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardId(indexShardId);
         if (indexShardWriter != null) {
             indexWriter = indexShardWriter.getWriter();
         }

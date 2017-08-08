@@ -33,8 +33,6 @@ import java.util.List;
 @Component
 @EntityEventHandler(type = Index.ENTITY_TYPE)
 public class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
-    private static final int MAX_CACHE_ENTRIES = 10;
-
     private final NodeCache nodeCache;
     private final IndexConfigCacheImpl indexConfigCache;
     private final IndexShardService indexShardService;
@@ -68,7 +66,7 @@ public class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
 
         final List<IndexShard> shards = indexShardService.find(criteria);
         shards.forEach(shard -> {
-            final IndexShardWriter indexShardWriter = indexShardWriterCache.getQuiet(shard.getId());
+            final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardId(shard.getId());
             if (indexShardWriter != null) {
                 final IndexConfig indexConfig = indexConfigCache.getOrCreate(indexRef);
                 indexShardWriter.updateIndexConfig(indexConfig);

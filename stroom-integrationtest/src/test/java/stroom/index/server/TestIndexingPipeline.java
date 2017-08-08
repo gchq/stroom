@@ -23,7 +23,7 @@ import org.junit.Test;
 import stroom.AbstractProcessIntegrationTest;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
-import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShardKey;
 import stroom.pipeline.server.PipelineMarshaller;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
@@ -77,7 +77,7 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
     @Before
     @After
     public void clear() {
-        indexShardWriterCache.clear();
+        indexShardWriterCache.shutdown();
     }
 
     @Test
@@ -128,7 +128,7 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
         Assert.assertEquals(1, indexShardWriterCache.getWriters().size());
 
         // Get the writer from the pool.
-        final Map<Long, IndexShardWriter> writers = indexShardWriterCache.getWriters();
+        final Map<IndexShardKey, IndexShardWriter> writers = indexShardWriterCache.getWriters();
         final MockIndexShardWriter writer = (MockIndexShardWriter) writers.values().iterator().next();
 
         // Check that we indexed 4 documents.
