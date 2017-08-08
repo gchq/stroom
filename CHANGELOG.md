@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#356** : Changed the way index shard writers are cached to improve indexing performance and reduce blocking.
+
 ## [v5.0-beta.44] - 2017-07-28
 
 * Issue **#353** : Reduced expected error logging to debug.
