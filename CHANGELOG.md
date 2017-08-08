@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.45] - 2017-08-08
+
 * Issue **#356** : Changed the way index shard writers are cached to improve indexing performance and reduce blocking.
 
 ## [v5.0-beta.44] - 2017-07-28
@@ -527,7 +529,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.44...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.45...HEAD
+[v5.0-beta.45]: https://github.com/gchq/stroom/compare/v5.0-beta.44...v5.0-beta.45
 [v5.0-beta.44]: https://github.com/gchq/stroom/compare/v5.0-beta.43...v5.0-beta.44
 [v5.0-beta.43]: https://github.com/gchq/stroom/compare/v5.0-beta.42...v5.0-beta.43
 [v5.0-beta.42]: https://github.com/gchq/stroom/compare/v5.0-beta.41...v5.0-beta.42
