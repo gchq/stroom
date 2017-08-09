@@ -55,6 +55,9 @@ class MultiServiceInternalStatisticsReceiver implements InternalStatisticsReceiv
                                                     Tuple3::_3, //event
                                                     Collectors.toList()))));
 
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("Putting {} events to {} services", statisticEvents.size(), serviceToEventsMapMap.size());
+            }
             serviceToEventsMapMap.entrySet().forEach(entry -> {
                 //TODO as it stands if we get a failure to send with one service, we won't send to any other services
                 //it may be better to record the exception without letting it propagate and then throw an exception at
@@ -68,6 +71,14 @@ class MultiServiceInternalStatisticsReceiver implements InternalStatisticsReceiv
 
     private void putEvents(final InternalStatisticsService service, Map<DocRef, List<InternalStatisticEvent>> eventsMap) {
         try {
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("Putting events for docRef(s) [{}] to {}",
+                        eventsMap.keySet().stream()
+                                .map(DocRef::getName)
+                                .collect(Collectors.joining(",")),
+                        service.getClass().getName());
+            }
+
             service.putEvents(eventsMap);
         } catch (Exception e) {
             throw new RuntimeException("Error sending internal statistics to service of type " + service.getDocRefType(), e);
