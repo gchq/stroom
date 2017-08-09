@@ -50,7 +50,7 @@ class MultiServiceInternalStatisticsFacade implements InternalStatisticsFacade {
                 putEvents(entry.getKey(), entry.getValue());
             });
         } catch (Exception e) {
-            LOGGER.warn("Error sending internal stats to all services");
+            LOGGER.warn("Error sending internal stats to all services due to ({})", e.getMessage());
             exceptionHandler.accept(e);
         }
     }
@@ -59,7 +59,8 @@ class MultiServiceInternalStatisticsFacade implements InternalStatisticsFacade {
         try {
             service.putEvents(eventsMap);
         } catch (Exception e) {
-            throw new RuntimeException("Error sending internal statistics to service of type " + service.getDocRefType(), e);
+            throw new RuntimeException(String.format("Error sending internal statistics to service of type %s due to (%s)",
+                    service.getDocRefType(), e.getMessage(), e));
         }
     }
 }

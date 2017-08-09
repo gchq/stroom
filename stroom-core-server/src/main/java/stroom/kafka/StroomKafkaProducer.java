@@ -32,49 +32,56 @@ import java.util.function.Consumer;
 public class StroomKafkaProducer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomKafkaProducer.class);
+
     private static final int TIME_BETWEEN_INIT_ATTEMPS_MS = 30_000;
     private final String bootstrapServers;
     //instance of a kafka producer that will be shared by all threads
     private volatile Producer<String, String> producer = null;
     private volatile Instant timeOfLastFailedInitAttempt = Instant.EPOCH;
+
     public StroomKafkaProducer(
             @Value("#{propertyConfigurer.getProperty('stroom.kafka.bootstrap.servers')}") final String bootstrapServers) {
 
         this.bootstrapServers = bootstrapServers;
+        if (Strings.isNullOrEmpty(bootstrapServers)) {
+            LOGGER.error("Stroom is not properly configured to connect to Kafka: 'stroom.kafka.bootstrap.servers' is required.");
+        }
     }
 
     public void send(final ProducerRecord<String, String> record,
                      final FlushMode flushMode,
                      final Consumer<Exception> exceptionHandler) {
+
         //kafka may not have been up on startup so ensure we have a producer instance now
         try {
             intiProducer();
-
-            if (producer != null) {
-                try {
-                    Future<RecordMetadata> future = producer.send(record, (recordMetadata, exception) -> {
-
-                        if (exception != null) {
-                            exceptionHandler.accept(exception);
-                        }
-                        LOGGER.trace("Record sent to Kafka");
-                    });
-
-                    if (flushMode.equals(FlushMode.FLUSH_ON_SEND)) {
-                        future.get();
-                    }
-
-                } catch (Exception e) {
-                    LOGGER.error("Error initialising kafka producer to " + bootstrapServers);
-                    exceptionHandler.accept(e);
-                }
-            } else {
-                exceptionHandler.accept(new IOException("The kafka producer is currently not initialised, " +
-                        "kafka may be down or the connection details incorrect"));
-            }
         } catch (Exception e) {
-            LOGGER.error("Error initialising kafka producer to " + bootstrapServers);
+            LOGGER.error("Error initialising kafka producer to " + bootstrapServers + ", (" + e.getMessage() + ")");
             exceptionHandler.accept(e);
+            return;
+        }
+
+        if (producer != null) {
+            try {
+                Future<RecordMetadata> future = producer.send(record, (recordMetadata, exception) -> {
+
+                    if (exception != null) {
+                        exceptionHandler.accept(exception);
+                    }
+                    LOGGER.trace("Record sent to Kafka");
+                });
+
+                if (flushMode.equals(FlushMode.FLUSH_ON_SEND)) {
+                    future.get();
+                }
+
+            } catch (Exception e) {
+                LOGGER.error("Error initialising kafka producer to " + bootstrapServers + ", (" + e.getMessage() + ")");
+                exceptionHandler.accept(e);
+            }
+        } else {
+            exceptionHandler.accept(new IOException(String.format("Kafka producer is currently not initialised, " +
+                    "it may be down or the connection details incorrect, bootstrapServers: [%s]", bootstrapServers)));
         }
     }
 
@@ -88,32 +95,28 @@ public class StroomKafkaProducer {
      * Lazy initialisation of the kafka producer
      */
     private void intiProducer() {
-        if (producer == null) {
+        if (producer == null && isOkToInitNow(bootstrapServers)) {
             synchronized (this) {
-                if (producer == null && isOkToInitNow()) {
-                    if (Strings.isNullOrEmpty(bootstrapServers)) {
-                        LOGGER.error("Kafka is not properly configured: 'stroom.kafka.bootstrap.servers' is required.");
-                    } else {
-                        LOGGER.info("Initialising kafka producer for {}", bootstrapServers);
-                        Properties props = new Properties();
-                        props.put("bootstrap.servers", bootstrapServers);
-                        props.put("acks", "all");
-                        props.put("retries", 0);
-                        props.put("batch.size", 16384);
-                        props.put("linger.ms", 1);
-                        props.put("buffer.memory", 33554432);
-                        props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-                        // TODO We will probably want to send Avro'd bytes (or something similar) at some point, so the serializer will need to change.
-                        props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+                if (producer == null && isOkToInitNow(bootstrapServers)) {
+                    LOGGER.info("Initialising kafka producer for {}", bootstrapServers);
+                    Properties props = new Properties();
+                    props.put("bootstrap.servers", bootstrapServers);
+                    props.put("acks", "all");
+                    props.put("retries", 0);
+                    props.put("batch.size", 16384);
+                    props.put("linger.ms", 1);
+                    props.put("buffer.memory", 33554432);
+                    props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+                    // TODO We will probably want to send Avro'd bytes (or something similar) at some point, so the serializer will need to change.
+                    props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 
-                        try {
-                            producer = new KafkaProducer<>(props);
-                            LOGGER.info("Ready to send records to Kafka.");
-                        } catch (Exception e) {
-                            LOGGER.error("Error initialising kafka producer for {}", bootstrapServers, e);
-                            throw e;
-                        }
+                    try {
+                        producer = new KafkaProducer<>(props);
+                    } catch (Exception e) {
+                        LOGGER.error("Error initialising kafka producer for {}", bootstrapServers, e);
+                        throw e;
                     }
+                    LOGGER.info("Kafka Producer successfully created");
                 }
             }
         }
@@ -121,10 +124,12 @@ public class StroomKafkaProducer {
 
     /**
      * A check to prevent many process trying to repeatedly init a producer. This means init will only be attempted
-     * every 30s to prevent the logs being filled up if kafka is down
+     * every 30s to prevent the logs being filled up if kafka is down. It will never try to init if there is no
+     * bootstrapServers value
      */
-    private boolean isOkToInitNow() {
-        return Instant.now().isAfter(timeOfLastFailedInitAttempt.plusMillis(TIME_BETWEEN_INIT_ATTEMPS_MS));
+    private boolean isOkToInitNow(final String bootstrapServers) {
+        return !Strings.isNullOrEmpty(bootstrapServers) &&
+                Instant.now().isAfter(timeOfLastFailedInitAttempt.plusMillis(TIME_BETWEEN_INIT_ATTEMPS_MS));
     }
 
     @StroomShutdown

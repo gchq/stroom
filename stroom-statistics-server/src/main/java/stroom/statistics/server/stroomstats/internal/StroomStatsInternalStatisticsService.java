@@ -88,8 +88,8 @@ public class StroomStatsInternalStatisticsService implements InternalStatisticsS
                         ProducerRecord<String, String> producerRecord = new ProducerRecord<>(topic, statName, message);
                         stroomKafkaProducer.send(producerRecord, StroomKafkaProducer.FlushMode.NO_FLUSH, exception -> {
                             throw new RuntimeException(String.format(
-                                    "Error sending %s internal statistics with name %s to kafka on topic %s",
-                                    events.size(), statName, topic), exception);
+                                    "Error sending %s internal stats with name %s to kafka on topic %s, due to (%s)",
+                                    events.size(), statName, topic, exception.getMessage()), exception);
                         });
                     });
         } finally {

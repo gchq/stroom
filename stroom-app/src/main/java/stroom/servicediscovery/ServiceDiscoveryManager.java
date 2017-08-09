@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -28,12 +27,16 @@ import java.util.function.Consumer;
 @Singleton
 public class ServiceDiscoveryManager {
 
-    public static final String PROP_KEY_ZOOKEEPER_QUORUM = "stroom.serviceDiscovery.zookeeperUrl";
-    public static final String PROP_KEY_CURATOR_BASE_SLEEP_TIME_MS = "stroom.serviceDiscovery.curator.baseSleepTimeMs";
-    public static final String PROP_KEY_CURATOR_MAX_SLEEP_TIME_MS = "stroom.serviceDiscovery.curator.maxSleepTimeMs";
-    public static final String PROP_KEY_CURATOR_MAX_RETRIES = "stroom.serviceDiscovery.curator.maxRetries";
-    public static final String PROP_KEY_ZOOKEEPER_BASE_PATH = "stroom.serviceDiscovery.zookeeperBasePath";
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryManager.class);
+
+    public static final String PROP_KEY_PREFIX = "stroom.serviceDiscovery.";
+    public static final String PROP_KEY_ZOOKEEPER_QUORUM = PROP_KEY_PREFIX + "zookeeperUrl";
+    public static final String PROP_KEY_CURATOR_BASE_SLEEP_TIME_MS = PROP_KEY_PREFIX + "curator.baseSleepTimeMs";
+    public static final String PROP_KEY_CURATOR_MAX_SLEEP_TIME_MS = PROP_KEY_PREFIX + "curator.maxSleepTimeMs";
+    public static final String PROP_KEY_CURATOR_MAX_RETRIES = PROP_KEY_PREFIX + "curator.maxRetries";
+    public static final String PROP_KEY_ZOOKEEPER_BASE_PATH = PROP_KEY_PREFIX + "zookeeperBasePath";
+    public static final String PROP_KEY_SERVICE_DISCOVERY_ENABLED = PROP_KEY_PREFIX + "enabled";
+
     private final StroomPropertyService stroomPropertyService;
     private final String zookeeperUrl;
 
@@ -50,19 +53,23 @@ public class ServiceDiscoveryManager {
         this.zookeeperUrl = stroomPropertyService.getProperty(PROP_KEY_ZOOKEEPER_QUORUM);
 
 
-        //try and start the connection with ZK in another thread to prevent connection problems from stopping the bean
-        //creation and application startup, then start ServiceDiscovery and notify any listeners
-        CompletableFuture.runAsync(this::startCurator)
-                .thenRun(this::startServiceDiscovery)
-                .thenRun(this::notifyListeners)
-                .exceptionally(throwable -> {
-                    LOGGER.error("Error initialising service discovery", throwable);
-                    return null;
-                });
-    }
+        boolean isServiceDiscoveryEnabled = stroomPropertyService.getBooleanProperty(
+                PROP_KEY_SERVICE_DISCOVERY_ENABLED,
+                false);
 
-    public Optional<ServiceDiscovery<String>> getServiceDiscovery() {
-        return Optional.ofNullable(serviceDiscoveryRef.get());
+        if (isServiceDiscoveryEnabled) {
+            //try and start the connection with ZK in another thread to prevent connection problems from stopping the bean
+            //creation and application startup, then start ServiceDiscovery and notify any listeners
+            CompletableFuture.runAsync(this::startCurator)
+                    .thenRun(this::startServiceDiscovery)
+                    .thenRun(this::notifyListeners)
+                    .exceptionally(throwable -> {
+                        LOGGER.error("Error initialising service discovery", throwable);
+                        return null;
+                    });
+        } else {
+            LOGGER.info("Service discovery is disabled, won't attempt to connect to Zookeeper");
+        }
     }
 
     public void registerStartupListener(final Consumer<ServiceDiscovery<String>> listener) {
@@ -73,7 +80,6 @@ public class ServiceDiscoveryManager {
             curatorStartupListeners.add(Preconditions.checkNotNull(listener));
         }
     }
-
 
     private void startCurator() {
         int baseSleepTimeMs = stroomPropertyService.getIntProperty(PROP_KEY_CURATOR_BASE_SLEEP_TIME_MS, 5_000);
