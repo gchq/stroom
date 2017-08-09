@@ -268,6 +268,15 @@ subprojects {
 
         maven { url "http://repo.maven.apache.org/maven2" }
     }
+
+    test {
+        //Use full logging for test exceptions so we can see where the failure occurred 
+        testLogging {
+            events "failed"
+            exceptionFormat = 'full'
+            showStackTraces = true
+        }
+    }
 }
 
 
