@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
-@SuppressWarnings("unused") //handled by stroom.statistics.internal.InternalStatisticsFacadeFactory
+@SuppressWarnings("unused")
 @Component
 class StroomStatsInternalStatisticsService implements InternalStatisticsService {
 
