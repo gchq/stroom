@@ -992,7 +992,7 @@
 
 
 
-        <!-- Service discovery properties -->
+        <!-- Kafka properties -->
         <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~START~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.kafka.bootstrap.servers"/>
@@ -1003,10 +1003,30 @@
             <property name="requireUiRestart" value="true"/>
         </bean>
 
+
         <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
         <!-- Service discovery properties -->
         <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~START~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.serviceDiscovery.enabled"/>
+            <property name="value" value="true"/>
+            <property name="description"
+                      value="Set this to true to use Zookeeper for service discovery. Set this to false to use resolve all services locally, i.e. 127.0.0.1"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
+        </bean>
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.serviceDiscovery.simpleLookup.basePath"/>
+            <property name="value" value="http://127.0.0.1:8080"/>
+            <property name="description"
+                      value="The base path to connect to local services on, when not using service discovery"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
+        </bean>
+
+
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.serviceDiscovery.zookeeperUrl"/>
             <property name="value"

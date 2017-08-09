@@ -39,7 +39,7 @@ dependencies {
 // Integration tests are quite slow so output progress for each test to keep travis alive
 test {
     afterTest { desc, result -> 
-        println "Executing test ${desc.name} [${desc.className}] with result: ${result.resultType}"
+        println "Executed test ${desc.name} [${desc.className}] with result: ${result.resultType}"
     }
 
     //Use full logging for test exceptions so we can see where the failure occurred 
