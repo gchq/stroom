@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.entity.server;
@@ -90,16 +89,20 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         this.importExportHelper = importExportHelper;
         this.securityContext = securityContext;
         this.queryAppender = createQueryAppender(entityManager);
-        this.entityServiceHelper = new EntityServiceHelper<>(entityManager, getEntityClass(), queryAppender);
+        this.entityServiceHelper = new EntityServiceHelper<>(entityManager, getEntityClass());
         this.findServiceHelper = new FindServiceHelper<>(entityManager, getEntityClass(), queryAppender);
     }
 
-    public StroomEntityManager getEntityManager() {
+    protected StroomEntityManager getEntityManager() {
         return entityManager;
     }
 
-    public EntityServiceHelper<E> getEntityServiceHelper() {
+    protected EntityServiceHelper<E> getEntityServiceHelper() {
         return entityServiceHelper;
+    }
+
+    protected QueryAppender<E, C> getQueryAppender() {
+        return queryAppender;
     }
 
     @Override
@@ -144,7 +147,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
     // TODO : Temporary for query service.
     protected E create(final E entity) {
-        return entityServiceHelper.create(entity);
+        return entityServiceHelper.create(entity, queryAppender);
     }
 
     @Override
@@ -207,19 +210,23 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         if (entity == null) {
             return null;
         }
-        return loadById(entity.getId(), fetchSet);
+        return loadById(entity.getId(), fetchSet, queryAppender);
     }
 
     @Transactional(readOnly = true)
     @Override
     public E loadById(final long id) throws RuntimeException {
-        return loadById(id, Collections.emptySet());
+        return loadById(id, Collections.emptySet(), queryAppender);
     }
 
-    @SuppressWarnings("unchecked")
     @Transactional(readOnly = true)
     @Override
     public E loadById(final long id, final Set<String> fetchSet) throws RuntimeException {
+        return loadById(id, fetchSet, queryAppender);
+    }
+
+    @SuppressWarnings("unchecked")
+    protected E loadById(final long id, final Set<String> fetchSet, final QueryAppender<E, C> queryAppender) throws RuntimeException {
         E entity = null;
 
         final HqlBuilder sql = new HqlBuilder();
@@ -228,7 +235,9 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         sql.append(getEntityClass().getName());
         sql.append(" AS e");
 
-        queryAppender.appendBasicJoin(sql, "e", fetchSet);
+        if (queryAppender != null) {
+            queryAppender.appendBasicJoin(sql, "e", fetchSet);
+        }
 
         sql.append(" WHERE e.id = ");
         sql.arg(id);
@@ -239,7 +248,9 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         }
 
         if (entity != null) {
-            queryAppender.postLoad(entity);
+            if (queryAppender != null) {
+                queryAppender.postLoad(entity);
+            }
             checkReadPermission(entity);
         }
 
@@ -389,12 +400,16 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
     @Override
     public E save(final E entity) throws RuntimeException {
+        return save(entity, queryAppender);
+    }
+
+    protected E save(final E entity, final QueryAppender<E, C> queryAppender) throws RuntimeException {
         checkUpdatePermission(entity);
 
         if (entity.getUuid() == null) {
             entity.setUuid(UUID.randomUUID().toString());
         }
-        return entityServiceHelper.save(entity);
+        return entityServiceHelper.save(entity, queryAppender);
     }
 
     @Override
@@ -554,7 +569,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     @Override
     public Map<String, String> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
         if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.EXPORT)) {
-            final E entity = entityServiceHelper.loadByUuid(docRef.getUuid());
+            final E entity = entityServiceHelper.loadByUuid(docRef.getUuid(), Collections.emptySet(), queryAppender);
             if (entity != null) {
                 return importExportHelper.performExport(entity, omitAuditFields, messageList);
             }

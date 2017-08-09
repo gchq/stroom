@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.springframework.web.HttpRequestHandler;
 import org.springframework.web.context.ServletContextAware;
 import org.springframework.web.servlet.HandlerAdapter;
 import org.springframework.web.servlet.ModelAndView;
-import stroom.util.thread.ThreadScopeContextHolder;
 
 import javax.annotation.Resource;
 import javax.servlet.Servlet;
@@ -66,11 +65,6 @@ public class RemoteServiceHandlerAdapter extends RemoteServiceServlet implements
     public ModelAndView handle(final HttpServletRequest request, final HttpServletResponse response,
                                final Object handler) throws Exception {
         try {
-            if (!ThreadScopeContextHolder.contextExists()) {
-                throw new IllegalStateException("ThreadScopeContext MUST EXIST");
-            }
-
-
             httpServletRequestHolder.set(request);
             SessionListListener.setLastRequest(request);
 

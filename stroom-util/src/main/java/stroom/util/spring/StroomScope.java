@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package stroom.util.spring;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 
 public interface StroomScope {
-    String THREAD = "thread";
     String TASK = "task";
     String SESSION = "session";
     String SINGLETON = ConfigurableBeanFactory.SCOPE_SINGLETON;

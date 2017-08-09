@@ -16,13 +16,14 @@
 
 package stroom.dashboard.server;
 
-import org.springframework.stereotype.Component;
 import stroom.dashboard.shared.QueryEntity;
 import stroom.entity.server.EntityMarshaller;
 import stroom.query.api.v1.Query;
 
-@Component
-public class QueryEntityMarshaller extends EntityMarshaller<QueryEntity, Query> {
+class QueryEntityMarshaller extends EntityMarshaller<QueryEntity, Query> {
+    QueryEntityMarshaller() {
+    }
+
     @Override
     public Query getObject(final QueryEntity entity) {
         return entity.getQuery();

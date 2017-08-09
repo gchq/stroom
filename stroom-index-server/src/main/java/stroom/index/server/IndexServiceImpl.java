@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.index.server;
@@ -22,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.DocumentEntityServiceImpl;
+import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.index.shared.FindIndexCriteria;
@@ -49,5 +49,31 @@ public class IndexServiceImpl extends DocumentEntityServiceImpl<Index, FindIndex
     @Override
     public FindIndexCriteria createCriteria() {
         return new FindIndexCriteria();
+    }
+
+    @Override
+    protected QueryAppender<Index, FindIndexCriteria> createQueryAppender(final StroomEntityManager entityManager) {
+        return new IndexQueryAppender(entityManager);
+    }
+
+    private static class IndexQueryAppender extends QueryAppender<Index, FindIndexCriteria> {
+        private final IndexMarshaller marshaller;
+
+        IndexQueryAppender(final StroomEntityManager entityManager) {
+            super(entityManager);
+            marshaller = new IndexMarshaller();
+        }
+
+        @Override
+        protected void preSave(final Index entity) {
+            super.preSave(entity);
+            marshaller.marshal(entity);
+        }
+
+        @Override
+        protected void postLoad(final Index entity) {
+            marshaller.unmarshal(entity);
+            super.postLoad(entity);
+        }
     }
 }

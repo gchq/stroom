@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,14 @@
 
 package stroom.pipeline.server;
 
-import org.springframework.stereotype.Component;
 import stroom.entity.server.EntityMarshaller;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineData;
 
-@Component
-public class PipelineMarshaller extends EntityMarshaller<PipelineEntity, PipelineData> {
+class PipelineMarshaller extends EntityMarshaller<PipelineEntity, PipelineData> {
+    PipelineMarshaller() {
+    }
+
     @Override
     public PipelineData getObject(final PipelineEntity entity) {
         return entity.getPipelineData();

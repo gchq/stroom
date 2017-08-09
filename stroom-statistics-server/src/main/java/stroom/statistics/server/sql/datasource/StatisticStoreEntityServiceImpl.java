@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,8 +61,11 @@ public class StatisticStoreEntityServiceImpl
     }
 
     private static class StatisticStoreEntityQueryAppender extends QueryAppender<StatisticStoreEntity, FindStatisticsEntityCriteria> {
-        public StatisticStoreEntityQueryAppender(final StroomEntityManager entityManager) {
+        private final StatisticsDataSourceMarshaller marshaller;
+
+        StatisticStoreEntityQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
+            marshaller = new StatisticsDataSourceMarshaller();
         }
 
         @Override
@@ -72,6 +75,18 @@ public class StatisticStoreEntityServiceImpl
             if (criteria.getStatisticType() != null) {
                 sql.appendValueQuery(alias + ".pStatisticType", criteria.getStatisticType().getPrimitiveValue());
             }
+        }
+
+        @Override
+        protected void preSave(final StatisticStoreEntity entity) {
+            super.preSave(entity);
+            marshaller.marshal(entity);
+        }
+
+        @Override
+        protected void postLoad(final StatisticStoreEntity entity) {
+            marshaller.unmarshal(entity);
+            super.postLoad(entity);
         }
     }
 }

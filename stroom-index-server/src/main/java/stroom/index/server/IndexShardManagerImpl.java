@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.index.server;
@@ -36,7 +35,6 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomShutdown;
 import stroom.util.spring.StroomSimpleCronSchedule;
-import stroom.util.thread.ThreadScopeRunnable;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -224,34 +222,31 @@ public class IndexShardManagerImpl implements IndexShardManager {
             executor.scheduleAtFixedRate(() -> LOGGER.info(() -> "Waiting for " + remaining.get() + " index shards to " + action.getName()), 10, 10, TimeUnit.SECONDS);
 
             // Perform action on all of the index shard writers in parallel.
-            shards.parallelStream().forEach(shard -> new ThreadScopeRunnable() {
-                @Override
-                protected void exec() {
-                    try {
-                        switch (action) {
-                            case FLUSH:
-                                final IndexShardWriter indexShardWriter = indexShardWriterCache.getQuiet(shard.getId());
-                                if (indexShardWriter != null) {
-                                    LOGGER.debug(() -> action.getActivity() + " index shard " + shard.getId());
-                                    shardCount.incrementAndGet();
-                                    indexShardWriter.flush();
-                                }
-                                break;
+            shards.parallelStream().forEach(shard -> {
+                try {
+                    switch (action) {
+                        case FLUSH:
+                            final IndexShardWriter indexShardWriter = indexShardWriterCache.getQuiet(shard.getId());
+                            if (indexShardWriter != null) {
+                                LOGGER.debug(() -> action.getActivity() + " index shard " + shard.getId());
+                                shardCount.incrementAndGet();
+                                indexShardWriter.flush();
+                            }
+                            break;
 //                                case CLOSE:
 //                                    indexShardWriter.close();
 //                                    break;
-                            case DELETE:
-                                shardCount.incrementAndGet();
-                                setStatus(shard.getId(), IndexShardStatus.DELETED);
-                                break;
-                        }
-                    } catch (final Exception e) {
-                        LOGGER.error(e::getMessage, e);
+                        case DELETE:
+                            shardCount.incrementAndGet();
+                            setStatus(shard.getId(), IndexShardStatus.DELETED);
+                            break;
                     }
-
-                    remaining.getAndDecrement();
+                } catch (final Exception e) {
+                    LOGGER.error(e::getMessage, e);
                 }
-            }.run());
+
+                remaining.getAndDecrement();
+            });
 
             // Shut down the progress logging executor.
             executor.shutdown();

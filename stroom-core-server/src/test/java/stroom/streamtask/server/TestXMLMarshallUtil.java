@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.entity.server.util;
+package stroom.streamtask.server;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.entity.shared.Period;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamtask.server.StreamProcessorFilterMarshaller;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;

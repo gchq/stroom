@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.dashboard.server;
@@ -27,6 +26,7 @@ import stroom.dashboard.shared.FindDashboardCriteria;
 import stroom.dashboard.shared.QueryEntity;
 import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.DocumentEntityServiceImpl;
+import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.importexport.server.ImportExportHelper;
@@ -68,23 +68,23 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
         return new FindDashboardCriteria();
     }
 
-    @Override
-    protected Dashboard create(final Dashboard entity) {
-        final Dashboard dashboard = super.create(entity);
-        // Add the template.
-        if (dashboard.getData() == null) {
-            dashboard.setData(getTemplate());
-        }
-        return super.save(dashboard);
-    }
-
-    @Override
-    public Dashboard save(Dashboard entity) throws RuntimeException {
-        if (entity.getData() == null) {
-            entity.setData(getTemplate());
-        }
-        return super.save(entity);
-    }
+//    @Override
+//    protected Dashboard create(final Dashboard entity) {
+//        final Dashboard dashboard = super.create(entity);
+//        // Add the template.
+//        if (dashboard.getData() == null) {
+//            dashboard.setData(getTemplate());
+//        }
+//        return super.save(dashboard);
+//    }
+//
+//    @Override
+//    public Dashboard save(Dashboard entity) throws RuntimeException {
+//        if (entity.getData() == null) {
+//            entity.setData(getTemplate());
+//        }
+//        return super.save(entity);
+//    }
 
     @Override
     public Boolean delete(final Dashboard entity) throws RuntimeException {
@@ -125,5 +125,38 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
     @Override
     public String[] getPermissions() {
         return PERMISSIONS;
+    }
+
+    @Override
+    protected QueryAppender<Dashboard, FindDashboardCriteria> createQueryAppender(final StroomEntityManager entityManager) {
+        return new DashboardQueryAppender(entityManager, this);
+    }
+
+    private static class DashboardQueryAppender extends QueryAppender<Dashboard, FindDashboardCriteria> {
+        private final DashboardServiceImpl dashboardService;
+        private final DashboardMarshaller marshaller;
+
+        DashboardQueryAppender(final StroomEntityManager entityManager, final DashboardServiceImpl dashboardService) {
+            super(entityManager);
+            this.dashboardService = dashboardService;
+            this.marshaller = new DashboardMarshaller();
+        }
+
+        @Override
+        protected void postLoad(final Dashboard entity) {
+            super.postLoad(entity);
+            marshaller.unmarshal(entity);
+        }
+
+        @Override
+        protected void preSave(final Dashboard entity) {
+            super.preSave(entity);
+
+            if (entity.getData() == null && entity.getDashboardData() == null) {
+                entity.setData(dashboardService.getTemplate());
+            } else {
+                marshaller.marshal(entity);
+            }
+        }
     }
 }

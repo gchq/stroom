@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.streamstore.server.tools;
@@ -31,7 +30,7 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
 import stroom.pipeline.server.PipelineEntityService;
-import stroom.pipeline.server.PipelineMarshaller;
+import stroom.pipeline.server.PipelineTestUtil;
 import stroom.pipeline.server.TextConverterService;
 import stroom.pipeline.server.XSLTService;
 import stroom.pipeline.server.parser.CombinedParser;
@@ -60,7 +59,6 @@ import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
-import stroom.test.PipelineTestUtil;
 import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.spring.StroomSpringProfiles;
@@ -106,8 +104,6 @@ public final class StoreCreationTool {
     private XSLTService xsltService;
     @Resource
     private PipelineEntityService pipelineEntityService;
-    @Resource
-    private PipelineMarshaller pipelineMarshaller;
     @Resource
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Resource
@@ -545,7 +541,7 @@ public final class StoreCreationTool {
             return list.getFirst();
         }
 
-        return PipelineTestUtil.createTestPipeline(pipelineEntityService, pipelineMarshaller, commonTestScenarioCreator.getTestFolder(), name, "Description " + name,
+        return PipelineTestUtil.createTestPipeline(pipelineEntityService, commonTestScenarioCreator.getTestFolder(), name, "Description " + name,
                 data);
     }
 

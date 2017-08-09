@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.index.server;
@@ -34,7 +33,7 @@ import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.pipeline.server.PipelineEntityService;
-import stroom.pipeline.server.PipelineMarshaller;
+import stroom.pipeline.server.PipelineTestUtil;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.server.factory.Pipeline;
@@ -45,7 +44,6 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
 import stroom.test.AbstractProcessIntegrationTest;
-import stroom.test.PipelineTestUtil;
 import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.date.DateUtil;
 
@@ -73,8 +71,6 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
     private IndexService indexService;
     @Resource
     private PipelineEntityService pipelineEntityService;
-    @Resource
-    private PipelineMarshaller pipelineMarshaller;
     @Resource
     private PipelineDataCache pipelineDataCache;
 
@@ -196,7 +192,7 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
         // Create the pipeline.
         final String data = StroomProcessTestFileUtil.getString(PIPELINE);
-        PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineEntityService, pipelineMarshaller, data);
+        PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineEntityService, data);
         pipelineEntity.getPipelineData().addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", index));
         pipelineEntity = pipelineEntityService.save(pipelineEntity);
 

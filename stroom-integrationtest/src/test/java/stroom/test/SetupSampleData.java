@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.test;
@@ -34,7 +33,6 @@ import stroom.statistics.spring.StatisticsConfiguration;
 import stroom.util.io.FileUtil;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.task.TaskScopeContextHolder;
-import stroom.util.thread.ThreadScopeContextHolder;
 import stroom.visualisation.spring.VisualisationConfiguration;
 
 /**
@@ -46,43 +44,38 @@ public final class SetupSampleData {
         System.setProperty("stroom.connectionTesterClassName",
                 "stroom.entity.server.util.StroomConnectionTesterOkOnException");
 
-        ThreadScopeContextHolder.createContext();
+        TaskScopeContextHolder.addContext();
         try {
-            TaskScopeContextHolder.addContext();
-            try {
-                @SuppressWarnings("resource") final AnnotationConfigApplicationContext appContext = new AnnotationConfigApplicationContext();
-                appContext.getEnvironment().setActiveProfiles(StroomSpringProfiles.PROD,
-                        SecurityConfiguration.MOCK_SECURITY);
-                appContext.register(
-                        ScopeConfiguration.class,
-                        PersistenceConfiguration.class,
-                        SetupSampleDataComponentScanConfiguration.class,
-                        ServerConfiguration.class,
-                        RuleSetConfiguration.class,
-                        SecurityConfiguration.class,
-                        ScopeTestConfiguration.class,
-                        PipelineConfiguration.class,
-                        EventLoggingConfiguration.class,
-                        IndexConfiguration.class,
-                        SearchConfiguration.class,
-                        ScriptConfiguration.class,
-                        VisualisationConfiguration.class,
-                        DashboardConfiguration.class,
-                        StatisticsConfiguration.class
-                );
-                appContext.refresh();
-                final CommonTestControl commonTestControl = appContext.getBean(CommonTestControl.class);
+            @SuppressWarnings("resource") final AnnotationConfigApplicationContext appContext = new AnnotationConfigApplicationContext();
+            appContext.getEnvironment().setActiveProfiles(StroomSpringProfiles.PROD,
+                    SecurityConfiguration.MOCK_SECURITY);
+            appContext.register(
+                    ScopeConfiguration.class,
+                    PersistenceConfiguration.class,
+                    SetupSampleDataComponentScanConfiguration.class,
+                    ServerConfiguration.class,
+                    RuleSetConfiguration.class,
+                    SecurityConfiguration.class,
+                    ScopeTestConfiguration.class,
+                    PipelineConfiguration.class,
+                    EventLoggingConfiguration.class,
+                    IndexConfiguration.class,
+                    SearchConfiguration.class,
+                    ScriptConfiguration.class,
+                    VisualisationConfiguration.class,
+                    DashboardConfiguration.class,
+                    StatisticsConfiguration.class
+            );
+            appContext.refresh();
+            final CommonTestControl commonTestControl = appContext.getBean(CommonTestControl.class);
 
-                commonTestControl.setup();
+            commonTestControl.setup();
 
-                final SetupSampleDataBean setupSampleDataBean = appContext.getBean(SetupSampleDataBean.class);
-                setupSampleDataBean.run(true);
+            final SetupSampleDataBean setupSampleDataBean = appContext.getBean(SetupSampleDataBean.class);
+            setupSampleDataBean.run(true);
 
-            } finally {
-                TaskScopeContextHolder.removeContext();
-            }
         } finally {
-            ThreadScopeContextHolder.destroyContext();
+            TaskScopeContextHolder.removeContext();
         }
     }
 }

@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.xml;
@@ -21,7 +20,7 @@ import org.junit.Assert;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.server.PipelineMarshaller;
+import stroom.pipeline.server.PipelineTestUtil;
 import stroom.pipeline.server.TextConverterService;
 import stroom.pipeline.server.XSLTService;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
@@ -39,7 +38,6 @@ import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.RecordCount;
 import stroom.streamstore.server.StreamStore;
-import stroom.test.PipelineTestUtil;
 import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
@@ -65,8 +63,6 @@ public class F2XTestUtil {
     private TextConverterService textConverterService;
     @Resource
     private XSLTService xsltService;
-    @Resource
-    private PipelineMarshaller pipelineMarshaller;
     @Resource
     private ErrorReceiverProxy errorReceiverProxy;
     @Resource
@@ -136,7 +132,7 @@ public class F2XTestUtil {
         errorReceiverProxy.setErrorReceiver(loggingErrorReceiver);
 
         // Create the pipeline.
-        final PipelineEntity pipelineEntity = PipelineTestUtil.createBasicPipeline(pipelineMarshaller,
+        final PipelineEntity pipelineEntity = PipelineTestUtil.createBasicPipeline(
                 StroomProcessTestFileUtil.getString("F2XTestUtil/f2xtest.Pipeline.data.xml"));
         final PipelineData pipelineData = pipelineEntity.getPipelineData();
 
@@ -212,7 +208,7 @@ public class F2XTestUtil {
         errorReceiverProxy.setErrorReceiver(loggingErrorReceiver);
 
         // Create the pipeline.
-        final PipelineEntity pipelineEntity = PipelineTestUtil.createBasicPipeline(pipelineMarshaller,
+        final PipelineEntity pipelineEntity = PipelineTestUtil.createBasicPipeline(
                 StroomProcessTestFileUtil.getString("F2XTestUtil/f2xtest.Pipeline.data.xml"));
         final PipelineData pipelineData = pipelineEntity.getPipelineData();
 

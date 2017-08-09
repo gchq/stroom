@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.task.TaskScopeRunnable;
-import stroom.util.thread.ThreadScopeRunnable;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -157,15 +156,10 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<Long, IndexShar
                 new TaskScopeRunnable(GenericServerTask.create("Flush all", null)) {
                     @Override
                     protected void exec() {
-                        new ThreadScopeRunnable() {
-                            @Override
-                            protected void exec() {
-                                final IndexShardWriter indexShardWriter = IndexShardWriterCacheImpl.super.getQuiet(key);
-                                if (indexShardWriter != null) {
-                                    indexShardWriter.flush();
-                                }
-                            }
-                        }.run();
+                        final IndexShardWriter indexShardWriter = IndexShardWriterCacheImpl.super.getQuiet(key);
+                        if (indexShardWriter != null) {
+                            indexShardWriter.flush();
+                        }
                     }
                 }.run();
             } catch (final Throwable t) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,14 @@
 
 package stroom.streamtask.server;
 
-import org.springframework.stereotype.Component;
 import stroom.entity.server.EntityMarshaller;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamtask.shared.StreamProcessorFilter;
 
-@Component
-public class StreamProcessorFilterMarshaller extends EntityMarshaller<StreamProcessorFilter, FindStreamCriteria> {
+class StreamProcessorFilterMarshaller extends EntityMarshaller<StreamProcessorFilter, FindStreamCriteria> {
+    StreamProcessorFilterMarshaller() {
+    }
+
     @Override
     public FindStreamCriteria getObject(final StreamProcessorFilter entity) {
         return entity.getFindStreamCriteria();

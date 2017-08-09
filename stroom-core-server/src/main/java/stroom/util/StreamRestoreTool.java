@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import stroom.util.date.DateUtil;
 import stroom.util.io.LineReader;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.thread.ThreadScopeRunnable;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -200,16 +199,6 @@ public class StreamRestoreTool extends DatabaseTool {
 
     @Override
     public void run() {
-        new ThreadScopeRunnable() {
-            @Override
-            protected void exec() {
-                doThreadRun();
-
-            }
-        }.run();
-    }
-
-    public void doThreadRun() {
         String fileName = null;
 
         if (deleteFile != null) {

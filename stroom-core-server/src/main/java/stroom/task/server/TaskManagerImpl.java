@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,6 @@ import stroom.util.task.MonitorInfoUtil;
 import stroom.util.task.TaskScopeContextHolder;
 import stroom.util.task.TaskScopeRunnable;
 import stroom.util.thread.CustomThreadFactory;
-import stroom.util.thread.ThreadScopeRunnable;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
@@ -345,12 +344,7 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
                 try {
                     // We might run out of threads and get a can't fork
                     // exception from the thread pool.
-                    executor.execute(new ThreadScopeRunnable() {
-                        @Override
-                        protected void exec() {
-                            taskScopeRunnable.run();
-                        }
-                    });
+                    executor.execute(taskScopeRunnable);
 
                 } catch (final Throwable t) {
                     try {

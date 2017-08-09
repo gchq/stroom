@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import stroom.cache.shared.CacheInfo;
 import stroom.task.server.GenericServerTask;
 import stroom.util.task.TaskScopeRunnable;
-import stroom.util.thread.ThreadScopeRunnable;
 
 import java.util.List;
 
@@ -54,16 +53,11 @@ public final class CacheUtil {
                 new TaskScopeRunnable(GenericServerTask.create("Clear cache", null)) {
                     @Override
                     protected void exec() {
-                        new ThreadScopeRunnable() {
-                            @Override
-                            protected void exec() {
-                                try {
-                                    ehcache.remove(key);
-                                } catch (final Throwable t) {
-                                    LOGGER.error(t.getMessage(), t);
-                                }
-                            }
-                        }.run();
+                        try {
+                            ehcache.remove(key);
+                        } catch (final Throwable t) {
+                            LOGGER.error(t.getMessage(), t);
+                        }
                     }
                 }.run();
             });

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Required;
 import org.springframework.context.SmartLifecycle;
 import stroom.util.concurrent.AtomicSequence;
-import stroom.util.thread.ThreadScopeContextHolder;
 
 import javax.annotation.Resource;
 import java.util.ArrayDeque;
@@ -55,35 +54,22 @@ public class StroomBeanLifeCycleReloadableContextBeanProcessor implements SmartL
     private synchronized void doStop() {
         doLog("STOPPING");
 
-        boolean createdContext = false;
+        if (!started) {
+            LOGGER.error("Stopped Called When Not Started");
+            return;
+        }
+        if (stopped) {
+            LOGGER.error("Stopped Called Twice");
+            return;
+        }
+        stopped = true;
 
-        try {
-            if (!ThreadScopeContextHolder.contextExists()) {
-                ThreadScopeContextHolder.createContext();
-                createdContext = true;
-            }
+        StroomBeanMethodExecutable work;
+        while ((work = stroomBeanLifeCycle.getStopExecutable()) != null) {
+            doLog("STOPPING ->", work.toString());
+            work.exec(new DummyTask());
+            doLog("STOPPED  ->", work.toString());
 
-            if (!started) {
-                LOGGER.error("Stopped Called When Not Started");
-                return;
-            }
-            if (stopped) {
-                LOGGER.error("Stopped Called Twice");
-                return;
-            }
-            stopped = true;
-
-            StroomBeanMethodExecutable work;
-            while ((work = stroomBeanLifeCycle.getStopExecutable()) != null) {
-                doLog("STOPPING ->", work.toString());
-                work.exec(new DummyTask());
-                doLog("STOPPED  ->", work.toString());
-
-            }
-        } finally {
-            if (createdContext) {
-                ThreadScopeContextHolder.destroyContext();
-            }
         }
 
         doLog("STOP COMPLETE");
@@ -92,29 +78,16 @@ public class StroomBeanLifeCycleReloadableContextBeanProcessor implements SmartL
     private synchronized void doStart() {
         doLog("STARTING");
 
-        boolean createdContext = false;
+        if (started) {
+            throw new IllegalStateException("Start Called Twice");
+        }
+        started = true;
 
-        try {
-            if (!ThreadScopeContextHolder.contextExists()) {
-                ThreadScopeContextHolder.createContext();
-                createdContext = true;
-            }
-
-            if (started) {
-                throw new IllegalStateException("Start Called Twice");
-            }
-            started = true;
-
-            StroomBeanMethodExecutable work;
-            while ((work = stroomBeanLifeCycle.getStartExecutable()) != null) {
-                doLog("STARTING ->", work.toString());
-                work.exec(new DummyTask());
-                doLog("STARTED  ->", work.toString());
-            }
-        } finally {
-            if (createdContext) {
-                ThreadScopeContextHolder.destroyContext();
-            }
+        StroomBeanMethodExecutable work;
+        while ((work = stroomBeanLifeCycle.getStartExecutable()) != null) {
+            doLog("STARTING ->", work.toString());
+            work.exec(new DummyTask());
+            doLog("STARTED  ->", work.toString());
         }
 
         doLog("START COMPLETE");

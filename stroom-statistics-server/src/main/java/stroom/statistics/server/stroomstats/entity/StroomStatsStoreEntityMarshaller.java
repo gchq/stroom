@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,12 @@
 
 package stroom.statistics.server.stroomstats.entity;
 
-import org.springframework.stereotype.Component;
 import stroom.entity.server.EntityMarshaller;
 import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.stats.shared.StroomStatsStoreEntityData;
 
-@Component
-public class StroomStatsStoreEntityMarshaller extends EntityMarshaller<StroomStatsStoreEntity, StroomStatsStoreEntityData> {
-
-    public StroomStatsStoreEntityMarshaller() {
+class StroomStatsStoreEntityMarshaller extends EntityMarshaller<StroomStatsStoreEntity, StroomStatsStoreEntityData> {
+    StroomStatsStoreEntityMarshaller() {
     }
 
     @Override
@@ -35,7 +32,6 @@ public class StroomStatsStoreEntityMarshaller extends EntityMarshaller<StroomSta
     @Override
     public void setObject(final StroomStatsStoreEntity entity, final StroomStatsStoreEntityData object) {
         entity.setDataObject(object);
-
     }
 
     @Override

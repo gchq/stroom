@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.context.WebApplicationContext;
 import stroom.util.spring.ContextAwareService;
-import stroom.util.thread.ThreadScopeContextHolder;
 import stroom.util.thread.ThreadUtil;
 
 import javax.servlet.ServletConfig;
@@ -118,12 +117,7 @@ public class UpgradeDispatcherSingleton {
                         return;
                     }
                     LOGGER.info("init() - Starting spring context");
-                    try {
-                        ThreadScopeContextHolder.createContext();
-                        getServlet().doInit(getServletConfig());
-                    } finally {
-                        ThreadScopeContextHolder.destroyContext();
-                    }
+                    getServlet().doInit(getServletConfig());
                     LOGGER.info("init() - Spring context started");
                     contextStarted.set(true);
 

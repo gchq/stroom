@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.entity.server;
@@ -28,6 +27,7 @@ import stroom.entity.shared.Entity;
 import stroom.security.Secured;
 import stroom.security.shared.PermissionNames;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -47,7 +47,7 @@ public abstract class SystemEntityServiceImpl<E extends Entity, C extends BaseCr
     protected SystemEntityServiceImpl(final StroomEntityManager entityManager) {
         this.entityManager = entityManager;
         this.queryAppender = createQueryAppender(entityManager);
-        this.entityServiceHelper = new EntityServiceHelper<>(entityManager, getEntityClass(), queryAppender);
+        this.entityServiceHelper = new EntityServiceHelper<>(entityManager, getEntityClass());
         this.findServiceHelper = new FindServiceHelper<>(entityManager, getEntityClass(), queryAppender);
     }
 
@@ -61,40 +61,40 @@ public abstract class SystemEntityServiceImpl<E extends Entity, C extends BaseCr
     @Transactional(readOnly = true)
     @Override
     public E load(final E entity) throws RuntimeException {
-        return entityServiceHelper.load(entity);
+        return entityServiceHelper.load(entity, Collections.emptySet(), queryAppender);
     }
 
     //    @Secured(permission = DocumentPermissionNames.READ)
     @Transactional(readOnly = true)
     @Override
     public E load(final E entity, final Set<String> fetchSet) throws RuntimeException {
-        return entityServiceHelper.load(entity, fetchSet);
+        return entityServiceHelper.load(entity, fetchSet, queryAppender);
     }
 
     //    @Secured(permission = DocumentPermissionNames.READ)
     @Transactional(readOnly = true)
     @Override
     public E loadById(final long id) throws RuntimeException {
-        return entityServiceHelper.loadById(id);
+        return entityServiceHelper.loadById(id, Collections.emptySet(), queryAppender);
     }
 
     //    @Secured(permission = DocumentPermissionNames.READ)
     @Transactional(readOnly = true)
     @Override
     public E loadById(final long id, final Set<String> fetchSet) throws RuntimeException {
-        return entityServiceHelper.loadById(id, fetchSet);
+        return entityServiceHelper.loadById(id, fetchSet, queryAppender);
     }
 
     @Transactional(readOnly = true)
     @Override
     public E loadByIdInsecure(final long id, final Set<String> fetchSet) throws RuntimeException {
-        return entityServiceHelper.loadById(id, fetchSet);
+        return entityServiceHelper.loadById(id, Collections.emptySet(), queryAppender);
     }
 
     //    @Secured(permission = DocumentPermissionNames.UPDATE)
     @Override
     public E save(final E entity) throws RuntimeException {
-        return entityServiceHelper.save(entity);
+        return entityServiceHelper.save(entity, queryAppender);
     }
 
 //    @Secured(permission = DocumentPermissionNames.USE)
@@ -135,7 +135,7 @@ public abstract class SystemEntityServiceImpl<E extends Entity, C extends BaseCr
     }
 
     protected QueryAppender<E, C> createQueryAppender(StroomEntityManager entityManager) {
-        return new QueryAppender(entityManager);
+        return new QueryAppender<>(entityManager);
     }
 
     protected final QueryAppender<E, C> getQueryAppender() {

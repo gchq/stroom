@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.server;
@@ -72,6 +71,16 @@ public class MockPipelineEntityService extends MockDocumentEntityService<Pipelin
             pipelineList.add(0, parent);
         }
         return pipelineList;
+    }
+
+    @Override
+    public PipelineEntity loadByIdWithoutUnmarshal(final long id) {
+        return loadById(id);
+    }
+
+    @Override
+    public PipelineEntity saveWithoutMarshal(final PipelineEntity pipelineEntity) {
+        return save(pipelineEntity);
     }
 
     @Override

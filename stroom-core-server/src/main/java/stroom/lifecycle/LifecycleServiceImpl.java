@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import stroom.util.spring.StroomBeanLifeCycle;
 import stroom.util.spring.StroomBeanMethodExecutable;
 import stroom.util.task.ServerTask;
 import stroom.util.thread.CustomThreadFactory;
-import stroom.util.thread.ThreadScopeRunnable;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
@@ -137,26 +136,22 @@ public class LifecycleServiceImpl implements ContextAwareService {
 
         // Create the runnable object that will perform execution on all
         // scheduled services.
-        final Runnable runnable = new ThreadScopeRunnable() {
-            private final ReentrantLock lock = new ReentrantLock();
+        final ReentrantLock lock = new ReentrantLock();
+        final Runnable runnable = () -> {
+            if (lock.tryLock()) {
 
-            @Override
-            protected void exec() {
-                if (lock.tryLock()) {
-
-                    securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
-                    try {
-                        Thread.currentThread().setName("Stroom Lifecycle - ScheduledExecutor");
-                        scheduledTaskExecutor.execute();
-                    } catch (final Throwable t) {
-                        LOGGER.error(t.getMessage(), t);
-                    } finally {
-                        securityContext.popUser();
-                        lock.unlock();
-                    }
-                } else {
-                    LOGGER.warn("Still trying to execute tasks");
+                securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
+                try {
+                    Thread.currentThread().setName("Stroom Lifecycle - ScheduledExecutor");
+                    scheduledTaskExecutor.execute();
+                } catch (final Throwable t) {
+                    LOGGER.error(t.getMessage(), t);
+                } finally {
+                    securityContext.popUser();
+                    lock.unlock();
                 }
+            } else {
+                LOGGER.warn("Still trying to execute tasks");
             }
         };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import stroom.task.shared.TerminateTaskProgressAction;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.task.ServerTask;
 import stroom.util.task.TaskIdFactory;
-import stroom.util.thread.ThreadScopeRunnable;
 import stroom.util.zip.StroomHeaderArguments;
 
 import javax.servlet.http.HttpServletRequest;
@@ -97,30 +96,24 @@ public class SessionListListener implements HttpSessionListener, SessionListServ
             lastRequestUserAgent.remove(httpSession.getId());
         }
 
-        new ThreadScopeRunnable() {
-            @Override
-            protected void exec() {
-                try {
-                    // Manually set the id as we are invoking a UI Action Task
-                    // directly
-                    final String sessionId = event.getSession().getId();
-                    final FindTaskCriteria criteria = new FindTaskCriteria();
-                    criteria.setSessionId(sessionId);
-                    final TerminateTaskProgressAction action = new TerminateTaskProgressAction(
-                            "Terminate session: " + sessionId, criteria, false);
-                    action.setUserToken(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
-                    action.setId(TaskIdFactory.create());
+        try {
+            // Manually set the id as we are invoking a UI Action Task
+            // directly
+            final String sessionId = event.getSession().getId();
+            final FindTaskCriteria criteria = new FindTaskCriteria();
+            criteria.setSessionId(sessionId);
+            final TerminateTaskProgressAction action = new TerminateTaskProgressAction(
+                    "Terminate session: " + sessionId, criteria, false);
+            action.setUserToken(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
+            action.setId(TaskIdFactory.create());
 
-                    final TaskManager taskManager = getTaskManager();
-                    if (taskManager != null) {
-                        taskManager.exec(action);
-                    }
-                } catch (final Exception ex) {
-                    getLogger().error("sessionDestroyed()", ex);
-                }
+            final TaskManager taskManager = getTaskManager();
+            if (taskManager != null) {
+                taskManager.exec(action);
             }
-        }.run();
-
+        } catch (final Exception ex) {
+            getLogger().error("sessionDestroyed()", ex);
+        }
     }
 
     @Override

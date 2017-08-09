@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.explorer.server;
@@ -21,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
-import stroom.entity.server.MarshalOptions;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventBus;
 import stroom.security.Insecure;
@@ -97,10 +95,6 @@ public class ExplorerTreeModel implements InitializingBean {
         final TaskScopeRunnable runnable = new TaskScopeRunnable(GenericServerTask.create("Create Explorer Model", null)) {
             @Override
             protected void exec() {
-                // We don't need to do marshaling.
-                final MarshalOptions marshalOptions = stroomBeanStore.getBean(MarshalOptions.class);
-                marshalOptions.setDisabled(true);
-
                 // Add explorer items from all providers to the new map.
                 for (final ExplorerDataProvider provider : providers) {
                     try {

@@ -12,13 +12,11 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.entity.server.MarshalOptions;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.SavePipelineXMLAction;
 import stroom.task.server.AbstractTaskHandler;
@@ -26,25 +24,25 @@ import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 @TaskHandlerBean(task = SavePipelineXMLAction.class)
 @Scope(value = StroomScope.TASK)
-public class SavePipelineXMLHandler extends AbstractTaskHandler<SavePipelineXMLAction, VoidResult> {
-    @Resource
-    private PipelineEntityService pipelineEntityService;
-    @Resource
-    private MarshalOptions marshalOptions;
+class SavePipelineXMLHandler extends AbstractTaskHandler<SavePipelineXMLAction, VoidResult> {
+    private final PipelineEntityService pipelineEntityService;
+
+    @Inject
+    SavePipelineXMLHandler(final PipelineEntityService pipelineEntityService) {
+        this.pipelineEntityService = pipelineEntityService;
+    }
 
     @Override
     public VoidResult exec(final SavePipelineXMLAction action) {
-        marshalOptions.setDisabled(true);
-
         final PipelineEntity pipelineEntity = pipelineEntityService.loadById(action.getPipelineId());
 
         if (pipelineEntity != null) {
             pipelineEntity.setData(action.getXml());
-            pipelineEntityService.save(pipelineEntity);
+            pipelineEntityService.saveWithoutMarshal(pipelineEntity);
         }
 
         return VoidResult.INSTANCE;

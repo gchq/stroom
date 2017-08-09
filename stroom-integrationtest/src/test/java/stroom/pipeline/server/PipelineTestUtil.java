@@ -12,21 +12,20 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package stroom.test;
+package stroom.pipeline.server;
 
-import stroom.pipeline.server.PipelineEntityService;
-import stroom.pipeline.server.PipelineMarshaller;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v1.DocRef;
 
 public final class PipelineTestUtil {
+    private static final PipelineMarshaller pipelineMarshaller = new PipelineMarshaller();
+
     private PipelineTestUtil() {
     }
 
-    public static PipelineEntity createBasicPipeline(final PipelineMarshaller pipelineMarshaller, final String data) {
+    public static PipelineEntity createBasicPipeline(final String data) {
         PipelineEntity pipelineEntity = new PipelineEntity();
         pipelineEntity.setName("test");
         pipelineEntity.setDescription("test");
@@ -38,11 +37,11 @@ public final class PipelineTestUtil {
     }
 
 
-    public static PipelineEntity createTestPipeline(final PipelineEntityService pipelineEntityService, final PipelineMarshaller pipelineMarshaller, final String data) {
-        return createTestPipeline(pipelineEntityService, pipelineMarshaller, null, "test", "test", data);
+    public static PipelineEntity createTestPipeline(final PipelineEntityService pipelineEntityService, final String data) {
+        return createTestPipeline(pipelineEntityService, null, "test", "test", data);
     }
 
-    public static PipelineEntity createTestPipeline(final PipelineEntityService pipelineEntityService, final PipelineMarshaller pipelineMarshaller, final DocRef folder, final String name,
+    public static PipelineEntity createTestPipeline(final PipelineEntityService pipelineEntityService, final DocRef folder, final String name,
                                                     final String description, final String data) {
         PipelineEntity pipelineEntity = pipelineEntityService.create(folder, name);
         pipelineEntity.setName(name);
@@ -52,5 +51,13 @@ public final class PipelineTestUtil {
             pipelineEntity = pipelineMarshaller.unmarshal(pipelineEntity, true, false);
         }
         return pipelineEntityService.save(pipelineEntity);
+    }
+
+    public static PipelineEntity loadPipeline(final PipelineEntity pipeline, final boolean external) {
+        return pipelineMarshaller.unmarshal(pipeline, external, false);
+    }
+
+    public static PipelineEntity savePipeline(final PipelineEntity pipeline, final boolean external) {
+        return pipelineMarshaller.marshal(pipeline, external, false);
     }
 }

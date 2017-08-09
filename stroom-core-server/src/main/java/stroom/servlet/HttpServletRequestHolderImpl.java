@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,12 @@
 
 package stroom.servlet;
 
-import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Scope;
-import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Component;
-import stroom.util.spring.StroomScope;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 @Component
-@Lazy
-@Scope(value = StroomScope.THREAD, proxyMode = ScopedProxyMode.INTERFACES)
 public class HttpServletRequestHolderImpl implements HttpServletRequestHolder {
     private static final ThreadLocal<HttpServletRequest> THREAD_LOCAL_CONTEXT = new InheritableThreadLocal<>();
 

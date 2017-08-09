@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.xml;
@@ -21,7 +20,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.pipeline.server.PipelineEntityService;
-import stroom.pipeline.server.PipelineMarshaller;
+import stroom.pipeline.server.PipelineTestUtil;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.server.factory.Pipeline;
@@ -29,7 +28,6 @@ import stroom.pipeline.server.factory.PipelineFactory;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
-import stroom.test.PipelineTestUtil;
 import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.spring.StroomScope;
 
@@ -48,8 +46,6 @@ public class XMLValidator {
     private PipelineFactory pipelineFactory;
     @Resource
     private PipelineEntityService pipelineEntityService;
-    @Resource
-    private PipelineMarshaller pipelineMarshaller;
     @Resource
     private ErrorReceiverProxy errorReceiver;
 
@@ -73,7 +69,7 @@ public class XMLValidator {
                 errorReceiver.setErrorReceiver(new LoggingErrorReceiver());
 
                 // Create the pipeline.
-                PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineEntityService, pipelineMarshaller,
+                PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineEntityService,
                         StroomProcessTestFileUtil.getString("F2XTestUtil/validation.Pipeline.data.xml"));
                 final PipelineData pipelineData = pipelineEntity.getPipelineData();
 

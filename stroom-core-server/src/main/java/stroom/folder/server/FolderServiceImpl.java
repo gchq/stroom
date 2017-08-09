@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.folder.server;
@@ -70,7 +69,7 @@ public class FolderServiceImpl extends DocumentEntityServiceImpl<Folder, FindFol
     public Folder save(Folder entity) throws RuntimeException {
         // If existing already check that any move is valid
         if (entity.isPersistent()) {
-            final Folder origFolder = getEntityServiceHelper().load(entity);
+            final Folder origFolder = getEntityServiceHelper().load(entity, Collections.emptySet(), getQueryAppender());
             Long origParent = null;
             if (origFolder.getFolder() != null) {
                 origParent = origFolder.getFolder().getId();
@@ -82,13 +81,13 @@ public class FolderServiceImpl extends DocumentEntityServiceImpl<Folder, FindFol
 
             if (CompareUtil.compareLong(origParent, newParent) != 0) {
                 // Some move... check new parent is not related to us
-                Folder newParentGroup = getEntityServiceHelper().load(entity.getFolder());
+                Folder newParentGroup = getEntityServiceHelper().load(entity.getFolder(), Collections.emptySet(), getQueryAppender());
                 while (newParentGroup != null) {
                     if (newParentGroup.equals(entity)) {
                         throw new EntityServiceException(
                                 "A folder cannot be a child of itself or of a descendant");
                     }
-                    newParentGroup = getEntityServiceHelper().load(newParentGroup.getFolder());
+                    newParentGroup = getEntityServiceHelper().load(newParentGroup.getFolder(), Collections.emptySet(), getQueryAppender());
                 }
             }
         }

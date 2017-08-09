@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.server;
@@ -39,7 +38,6 @@ import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.RecordCount;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.ComparisonHelper;
-import stroom.test.PipelineTestUtil;
 import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
@@ -66,8 +64,6 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
     private TextConverterService textConverterService;
     @Resource
     private PipelineEntityService pipelineEntityService;
-    @Resource
-    private PipelineMarshaller pipelineMarshaller;
     @Resource
     private PipelineDataCache pipelineDataCache;
 
@@ -99,7 +95,7 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
                                           final XSLT xslt) {
         // Load the pipeline config.
         final String data = StroomProcessTestFileUtil.getString(pipelineFile);
-        final PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineEntityService, pipelineMarshaller, data);
+        final PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineEntityService, data);
 
         if (textConverter != null) {
             pipelineEntity.getPipelineData().addProperty(

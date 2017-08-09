@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.headless;
@@ -50,7 +49,6 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.task.ExternalShutdownController;
 import stroom.util.task.TaskScopeRunnable;
-import stroom.util.thread.ThreadScopeRunnable;
 
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
@@ -170,12 +168,7 @@ public class Headless extends AbstractCommandLineTool {
             new TaskScopeRunnable(GenericServerTask.create("Headless Stroom", null)) {
                 @Override
                 protected void exec() {
-                    new ThreadScopeRunnable() {
-                        @Override
-                        protected void exec() {
-                            process();
-                        }
-                    }.run();
+                    process();
                 }
             }.run();
         } finally {

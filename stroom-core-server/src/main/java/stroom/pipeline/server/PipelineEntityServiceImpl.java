@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.server;
@@ -31,12 +30,14 @@ import stroom.query.api.v1.DocRef;
 import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
+import java.util.Collections;
 
 @Component("pipelineEntityService")
 @Transactional
 @AutoMarshal
 public class PipelineEntityServiceImpl extends DocumentEntityServiceImpl<PipelineEntity, FindPipelineEntityCriteria>
         implements PipelineEntityService {
+
     @Inject
     PipelineEntityServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext) {
         super(entityManager, importExportHelper, securityContext);
@@ -53,27 +54,42 @@ public class PipelineEntityServiceImpl extends DocumentEntityServiceImpl<Pipelin
     }
 
     @Override
+    public PipelineEntity saveWithoutMarshal(final PipelineEntity pipelineEntity) {
+        return save(pipelineEntity, null);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public PipelineEntity loadByIdWithoutUnmarshal(final long id) {
+        return loadById(id, Collections.emptySet(), null);
+    }
+
+    @Override
     protected QueryAppender<PipelineEntity, FindPipelineEntityCriteria> createQueryAppender(final StroomEntityManager entityManager) {
         return new PipelineEntityQueryAppender(entityManager);
     }
 
     private static class PipelineEntityQueryAppender extends QueryAppender<PipelineEntity, FindPipelineEntityCriteria> {
         private final ObjectMarshaller<DocRef> docRefMarshaller;
+        private final PipelineMarshaller marshaller;
 
-        public PipelineEntityQueryAppender(final StroomEntityManager entityManager) {
+        PipelineEntityQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
             docRefMarshaller = new ObjectMarshaller<>(DocRef.class);
+            marshaller = new PipelineMarshaller();
         }
 
         @Override
         protected void preSave(final PipelineEntity entity) {
             super.preSave(entity);
             entity.setParentPipelineXML(docRefMarshaller.marshal(entity.getParentPipeline()));
+            marshaller.marshal(entity);
         }
 
         @Override
         protected void postLoad(final PipelineEntity entity) {
             entity.setParentPipeline(docRefMarshaller.unmarshal(entity.getParentPipelineXML()));
+            marshaller.unmarshal(entity);
             super.postLoad(entity);
         }
     }

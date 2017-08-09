@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ import stroom.streamstore.shared.StreamType;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.spring.StroomSpringProfiles;
-import stroom.util.thread.ThreadScopeRunnable;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -133,44 +132,39 @@ public class StreamGrepTool extends AbstractCommandLineTool {
         final FeedServiceImpl feedService = appContext.getBean(FeedServiceImpl.class);
         final StreamTypeServiceImpl streamTypeService = appContext.getBean(StreamTypeServiceImpl.class);
 
-        new ThreadScopeRunnable() {
-            @Override
-            protected void exec() {
-                Feed definition = null;
-                if (feed != null) {
-                    definition = feedService.loadByName(feed);
-                    if (definition == null) {
-                        throw new RuntimeException("Unable to locate Feed " + feed);
-                    }
-                    criteria.obtainFeeds().obtainInclude().add(definition.getId());
-                }
-
-                if (streamType != null) {
-                    final StreamType type = streamTypeService.loadByName(streamType);
-                    if (type == null) {
-                        throw new RuntimeException("Unable to locate stream type " + streamType);
-                    }
-                    criteria.obtainStreamTypeIdSet().add(type.getId());
-                } else {
-                    criteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS.getId());
-                }
-
-                // Query the stream store
-                final List<Stream> results = streamStore.find(criteria);
-
-                int count = 0;
-                for (final Stream stream : results) {
-                    // TODO : Add caching here to load stream types.
-                    final StreamType streamType = streamTypeService.load(stream.getStreamType());
-                    count++;
-                    LOGGER.info("processing() - " + count + "/" + results.size() + " "
-                            + FileSystemStreamTypeUtil.getDirectory(stream, streamType) + " "
-                            + FileSystemStreamTypeUtil.getBaseName(stream));
-
-                    processFile(streamStore, stream.getId(), match);
-                }
+        Feed definition = null;
+        if (feed != null) {
+            definition = feedService.loadByName(feed);
+            if (definition == null) {
+                throw new RuntimeException("Unable to locate Feed " + feed);
             }
-        }.run();
+            criteria.obtainFeeds().obtainInclude().add(definition.getId());
+        }
+
+        if (streamType != null) {
+            final StreamType type = streamTypeService.loadByName(streamType);
+            if (type == null) {
+                throw new RuntimeException("Unable to locate stream type " + streamType);
+            }
+            criteria.obtainStreamTypeIdSet().add(type.getId());
+        } else {
+            criteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS.getId());
+        }
+
+        // Query the stream store
+        final List<Stream> results = streamStore.find(criteria);
+
+        int count = 0;
+        for (final Stream stream : results) {
+            // TODO : Add caching here to load stream types.
+            final StreamType streamType = streamTypeService.load(stream.getStreamType());
+            count++;
+            LOGGER.info("processing() - " + count + "/" + results.size() + " "
+                    + FileSystemStreamTypeUtil.getDirectory(stream, streamType) + " "
+                    + FileSystemStreamTypeUtil.getBaseName(stream));
+
+            processFile(streamStore, stream.getId(), match);
+        }
     }
 
     private ApplicationContext getAppContext() {

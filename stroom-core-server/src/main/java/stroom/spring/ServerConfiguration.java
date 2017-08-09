@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,7 @@ package stroom.spring;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Scope;
-import stroom.node.shared.Node;
 import stroom.util.config.StroomProperties;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomScope;
@@ -39,20 +37,6 @@ public class ServerConfiguration {
         final ThreadLocalBuffer threadLocalBuffer = new ThreadLocalBuffer();
         threadLocalBuffer.setBufferSize(StroomProperties.getProperty("stroom.buffersize"));
         return threadLocalBuffer;
-    }
-
-    @Bean
-    @Lazy
-    @Scope(StroomScope.THREAD)
-    public Node sourceNode() {
-        return new Node();
-    }
-
-    @Bean
-    @Lazy
-    @Scope(StroomScope.THREAD)
-    public Node targetNode() {
-        return new Node();
     }
 
     @Bean

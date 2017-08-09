@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.concurrent.SimpleExecutor;
 import stroom.util.shared.Monitor;
-import stroom.util.thread.ThreadScopeRunnable;
 
 public abstract class StroomZipRepositorySimpleExecutorProcessor extends StroomZipRepositoryProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomZipRepositorySimpleExecutorProcessor.class);
@@ -62,15 +61,10 @@ public abstract class StroomZipRepositorySimpleExecutorProcessor extends StroomZ
 
     @Override
     public void execute(final String message, final Runnable runnable) {
-        simpleExecutor.execute(new ThreadScopeRunnable() {
-            @Override
-            protected void exec() {
-                try {
-                    runnable.run();
-                } catch (final Exception ex) {
-                    LOGGER.error("doRunWork()", ex);
-                }
-            }
-        });
+        try {
+            runnable.run();
+        } catch (final Exception ex) {
+            LOGGER.error("doRunWork()", ex);
+        }
     }
 }

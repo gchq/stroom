@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.server;
@@ -24,4 +23,7 @@ import stroom.pipeline.shared.PipelineEntity;
 
 public interface PipelineEntityService
         extends DocumentEntityService<PipelineEntity>, FindService<PipelineEntity, FindPipelineEntityCriteria> {
+    PipelineEntity saveWithoutMarshal(PipelineEntity pipelineEntity);
+
+    PipelineEntity loadByIdWithoutUnmarshal(long id);
 }

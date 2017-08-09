@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.streamtask.server;
@@ -53,10 +52,10 @@ public class StreamProcessorFilterServiceImpl
 
     @Inject
     public StreamProcessorFilterServiceImpl(final StroomEntityManager entityManager,
-                                            final StreamProcessorService streamProcessorService, final StreamProcessorFilterMarshaller marshaller) {
+                                            final StreamProcessorService streamProcessorService) {
         super(entityManager);
         this.streamProcessorService = streamProcessorService;
-        this.marshaller = marshaller;
+        this.marshaller = new StreamProcessorFilterMarshaller();
     }
 
     @Override
@@ -159,8 +158,11 @@ public class StreamProcessorFilterServiceImpl
     }
 
     private static class StreamProcessorFilterQueryAppender extends QueryAppender<StreamProcessorFilter, FindStreamProcessorFilterCriteria> {
-        public StreamProcessorFilterQueryAppender(StroomEntityManager entityManager) {
+        private final StreamProcessorFilterMarshaller marshaller;
+
+        StreamProcessorFilterQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
+            marshaller = new StreamProcessorFilterMarshaller();
         }
 
         @Override
@@ -199,6 +201,18 @@ public class StreamProcessorFilterServiceImpl
             sql.appendEntityIdSetQuery(alias + ".streamProcessor", criteria.getStreamProcessorIdSet());
 
             sql.appendValueQuery(alias + ".createUser", criteria.getCreateUser());
+        }
+
+        @Override
+        protected void preSave(final StreamProcessorFilter entity) {
+            super.preSave(entity);
+            marshaller.marshal(entity);
+        }
+
+        @Override
+        protected void postLoad(final StreamProcessorFilter entity) {
+            marshaller.unmarshal(entity);
+            super.postLoad(entity);
         }
     }
 }

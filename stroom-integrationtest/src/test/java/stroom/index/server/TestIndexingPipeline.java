@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.index.server;
@@ -26,7 +25,7 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
 import stroom.pipeline.server.PipelineEntityService;
-import stroom.pipeline.server.PipelineMarshaller;
+import stroom.pipeline.server.PipelineTestUtil;
 import stroom.pipeline.server.XSLTService;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
@@ -40,7 +39,6 @@ import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.StreamHolder;
 import stroom.streamstore.shared.Stream;
 import stroom.test.AbstractProcessIntegrationTest;
-import stroom.test.PipelineTestUtil;
 import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.io.StreamUtil;
 
@@ -66,8 +64,6 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
     private MockIndexShardWriterCache indexShardWriterCache;
     @Resource
     private PipelineEntityService pipelineEntityService;
-    @Resource
-    private PipelineMarshaller pipelineMarshaller;
     @Resource
     private StreamHolder streamHolder;
     @Resource
@@ -110,7 +106,7 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
         streamHolder.setStream(stream);
 
         // Create the pipeline.
-        PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineEntityService, pipelineMarshaller,
+        PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineEntityService,
                 StroomProcessTestFileUtil.getString(PIPELINE));
         pipelineEntity.getPipelineData().addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xslt));
         pipelineEntity.getPipelineData().addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", index));

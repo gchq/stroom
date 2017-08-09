@@ -20,7 +20,6 @@ import org.eclipse.jetty.server.session.SessionHandler;
 import stroom.resources.ResourcePaths;
 import stroom.security.spring.SecurityConfiguration;
 import stroom.util.spring.StroomSpringProfiles;
-import stroom.util.thread.ThreadScopeContextHolder;
 
 /**
  * Configures  the environment, including the Dropwizard Environment as well as system properties and misc.
@@ -37,8 +36,5 @@ public class Environment {
         // We need to set this otherwise we won't have all the beans we need.
         System.setProperty("spring.profiles.active",
                 String.format("%s,%s", StroomSpringProfiles.PROD, SecurityConfiguration.PROD_SECURITY));
-
-        // We need to prime this otherwise we won't have a thread scope context and bean initialisation will fail
-        ThreadScopeContextHolder.createContext();
     }
 }

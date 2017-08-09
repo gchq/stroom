@@ -21,7 +21,6 @@ import io.dropwizard.jetty.MutableServletContextHandler;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.springframework.web.filter.DelegatingFilterProxy;
 import stroom.servlet.RejectPostFilter;
-import stroom.util.thread.ThreadScopeContextFilter;
 import stroom.util.upgrade.UpgradeDispatcherFilter;
 
 import javax.servlet.DispatcherType;
@@ -33,7 +32,6 @@ public class Filters {
 
     private static final String MATCH_ALL_PATHS = "/*";
     final FilterHolder upgradeFilterHolder;
-    final FilterHolder threadScopeContextFilterHolder;
     final FilterHolder rejectPostFilterHolder;
     final FilterHolder clusterCallCertificateRequiredFilterHolder;
     final FilterHolder exportCertificateRequiredFilterHolder;
@@ -45,9 +43,6 @@ public class Filters {
 
         upgradeFilterHolder = createFilter(UpgradeDispatcherFilter.class, "upgradeFilter", null);
         addFilter(upgradeFilterHolder, MATCH_ALL_PATHS);
-
-        threadScopeContextFilterHolder = createFilter(ThreadScopeContextFilter.class, "threadScopeContextFilter", null);
-        addFilter(threadScopeContextFilterHolder, MATCH_ALL_PATHS);
 
         rejectPostFilterHolder = createFilter(RejectPostFilter.class, "rejectPostFilter",
                 ImmutableMap.<String, String>builder().put("rejectUri", "/").build());

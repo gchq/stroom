@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.dashboard.server;
@@ -219,8 +218,11 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
     }
 
     private static class QueryQueryAppender extends QueryAppender<QueryEntity, FindQueryCriteria> {
-        public QueryQueryAppender(final StroomEntityManager entityManager) {
+        private final QueryEntityMarshaller marshaller;
+
+        QueryQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
+            marshaller = new QueryEntityMarshaller();
         }
 
         @Override
@@ -233,6 +235,18 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
 
             sql.appendValueQuery(alias + ".dashboardId", criteria.getDashboardId());
             sql.appendValueQuery(alias + ".queryId", criteria.getQueryId());
+        }
+
+        @Override
+        protected void preSave(final QueryEntity entity) {
+            super.preSave(entity);
+            marshaller.marshal(entity);
+        }
+
+        @Override
+        protected void postLoad(final QueryEntity entity) {
+            marshaller.unmarshal(entity);
+            super.postLoad(entity);
         }
     }
 }

@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.server;
@@ -36,7 +35,6 @@ import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.RecordCount;
 import stroom.test.AbstractProcessIntegrationTest;
-import stroom.test.PipelineTestUtil;
 import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
@@ -111,8 +109,7 @@ public class TestXMLWithErrorsInTransform extends AbstractProcessIntegrationTest
         errorReceiver.setErrorReceiver(recordErrorReceiver);
 
         // Create the parser.
-        PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineEntityService, pipelineMarshaller,
-                StroomProcessTestFileUtil.getString(PIPELINE));
+        PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineEntityService, StroomProcessTestFileUtil.getString(PIPELINE));
         pipelineEntity.getPipelineData().addProperty(
                 PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", textConverter));
         pipelineEntity.getPipelineData()
