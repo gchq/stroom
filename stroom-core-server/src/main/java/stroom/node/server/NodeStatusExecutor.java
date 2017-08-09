@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.jobsystem.server.JobTrackedSchedule;
-import stroom.statistics.internal.InternalStatistics;
+import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 
@@ -33,14 +33,14 @@ public class NodeStatusExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(NodeStatusExecutor.class);
 
     private final NodeStatusServiceUtil nodeStatusServiceUtil;
-    private final InternalStatistics internalStatistics;
+    private final InternalStatisticsReceiver internalStatisticsReceiver;
 
     @Inject
     public NodeStatusExecutor(final NodeStatusServiceUtil nodeStatusServiceUtil,
-                              final InternalStatistics internalStatistics) {
+                              final InternalStatisticsReceiver internalStatisticsReceiver) {
 
         this.nodeStatusServiceUtil = nodeStatusServiceUtil;
-        this.internalStatistics = internalStatistics;
+        this.internalStatisticsReceiver = internalStatisticsReceiver;
     }
 
     /**
@@ -52,6 +52,6 @@ public class NodeStatusExecutor {
     @JobTrackedSchedule(jobName = "Node Status", advanced = false, description = "Job to record status of node (CPU and Memory usage)")
     public void exec() {
         LOGGER.debug("Updating the status for this node.");
-        internalStatistics.putEvents(nodeStatusServiceUtil.buildNodeStatus());
+        internalStatisticsReceiver.putEvents(nodeStatusServiceUtil.buildNodeStatus());
     }
 }

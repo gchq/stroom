@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 import stroom.feed.MetaMap;
 import stroom.statistics.internal.InternalStatisticEvent;
-import stroom.statistics.internal.InternalStatistics;
+import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;
@@ -36,13 +36,13 @@ import java.util.Map;
 public class MetaDataStatisticImpl implements MetaDataStatistic {
     private static final Logger LOGGER = LoggerFactory.getLogger(MetaDataStatisticImpl.class);
 
-    private final InternalStatistics internalStatistics;
+    private final InternalStatisticsReceiver internalStatisticsReceiver;
 
     private List<MetaDataStatisticTemplate> templates;
 
     @Inject
-    public MetaDataStatisticImpl(final InternalStatistics internalStatistics) {
-        this.internalStatistics = internalStatistics;
+    public MetaDataStatisticImpl(final InternalStatisticsReceiver internalStatisticsReceiver) {
+        this.internalStatisticsReceiver = internalStatisticsReceiver;
     }
 
     /**
@@ -106,7 +106,7 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
             try {
                 final InternalStatisticEvent statisticEvent = buildStatisticEvent(template, metaData);
                 if (statisticEvent != null) {
-                    internalStatistics.putEvent(statisticEvent);
+                    internalStatisticsReceiver.putEvent(statisticEvent);
                 } else {
                     LOGGER.trace("recordStatistics() - abort {} {}", metaData, template);
                 }

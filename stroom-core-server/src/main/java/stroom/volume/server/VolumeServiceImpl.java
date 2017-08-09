@@ -45,7 +45,7 @@ import stroom.node.shared.VolumeState;
 import stroom.security.Insecure;
 import stroom.security.Secured;
 import stroom.statistics.internal.InternalStatisticEvent;
-import stroom.statistics.internal.InternalStatistics;
+import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.config.StroomProperties;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomFrequencySchedule;
@@ -124,19 +124,19 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     private final NodeCache nodeCache;
     private final StroomPropertyService stroomPropertyService;
     private final StroomBeanStore stroomBeanStore;
-    private final InternalStatistics internalStatistics;
+    private final InternalStatisticsReceiver internalStatisticsReceiver;
     private final AtomicReference<List<Volume>> currentVolumeState = new AtomicReference<>();
 
     @Inject
     VolumeServiceImpl(final StroomEntityManager stroomEntityManager, final NodeCache nodeCache,
                       final StroomPropertyService stroomPropertyService, final StroomBeanStore stroomBeanStore,
-                      final InternalStatistics internalStatistics) {
+                      final InternalStatisticsReceiver internalStatisticsReceiver) {
         super(stroomEntityManager);
         this.stroomEntityManager = stroomEntityManager;
         this.nodeCache = nodeCache;
         this.stroomPropertyService = stroomPropertyService;
         this.stroomBeanStore = stroomBeanStore;
-        this.internalStatistics = internalStatistics;
+        this.internalStatisticsReceiver = internalStatisticsReceiver;
     }
 
     private static void registerVolumeSelector(final VolumeSelector volumeSelector) {
@@ -356,7 +356,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
             addStatisticEvent(events, now, volume, "Used", volumeState.getBytesUsed());
             addStatisticEvent(events, now, volume, "Free", volumeState.getBytesFree());
             addStatisticEvent(events, now, volume, "Total", volumeState.getBytesTotal());
-            internalStatistics.putEvents(events);
+            internalStatisticsReceiver.putEvents(events);
         } catch (final Throwable t) {
             LOGGER.warn(t.getMessage());
             LOGGER.debug(t.getMessage(), t);

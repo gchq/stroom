@@ -54,7 +54,7 @@ import stroom.pipeline.state.SearchIdHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.statistics.internal.InternalStatisticEvent;
-import stroom.statistics.internal.InternalStatistics;
+import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
@@ -118,7 +118,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     private final RecordErrorReceiver recordErrorReceiver;
     private final NodeCache nodeCache;
     private final PipelineDataCache pipelineDataCache;
-    private final InternalStatistics internalStatistics;
+    private final InternalStatisticsReceiver internalStatisticsReceiver;
 
     private StreamProcessor streamProcessor;
     private StreamProcessorFilter streamProcessorFilter;
@@ -146,7 +146,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                                    final RecordErrorReceiver recordErrorReceiver,
                                    final NodeCache nodeCache,
                                    final PipelineDataCache pipelineDataCache,
-                                   final InternalStatistics internalStatistics) {
+                                   final InternalStatisticsReceiver internalStatisticsReceiver) {
         this.pipelineFactory = pipelineFactory;
         this.streamStore = streamStore;
         this.feedService = feedService;
@@ -166,7 +166,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         this.recordErrorReceiver = recordErrorReceiver;
         this.nodeCache = nodeCache;
         this.pipelineDataCache = pipelineDataCache;
-        this.internalStatistics = internalStatistics;
+        this.internalStatisticsReceiver = internalStatisticsReceiver;
     }
 
     @Override
@@ -349,7 +349,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                             "Pipeline", pipelineEntity.getName(),
                             "Node", nodeCache.getDefaultNode().getName()));
 
-            internalStatistics.putEvent(event);
+            internalStatisticsReceiver.putEvent(event);
 
         } catch (final Exception ex) {
             LOGGER.error("recordStats", ex);

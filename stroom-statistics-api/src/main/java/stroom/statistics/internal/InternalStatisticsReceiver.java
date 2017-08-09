@@ -2,7 +2,7 @@ package stroom.statistics.internal;
 
 import java.util.List;
 
-public interface InternalStatistics {
+public interface InternalStatisticsReceiver {
     /**
      * @param event A statistic event to record.
      *                               For the statistic event to be record by an implementing service there must be

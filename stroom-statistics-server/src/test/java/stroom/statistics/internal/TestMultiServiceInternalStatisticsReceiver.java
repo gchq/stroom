@@ -20,9 +20,9 @@ import java.util.Map;
 import java.util.UUID;
 
 @RunWith(MockitoJUnitRunner.class)
-public class TestMultiServiceInternalStatisticsFacade {
+public class TestMultiServiceInternalStatisticsReceiver {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestMultiServiceInternalStatisticsFacade.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestMultiServiceInternalStatisticsReceiver.class);
 
     private static final String STAT_KEY_A = "MyKeyA";
     private static final String STAT_KEY_B = "MyKeyB";
@@ -78,7 +78,7 @@ public class TestMultiServiceInternalStatisticsFacade {
                 DOC_REF_TYPE_1, internalStatisticsService1, //i.e. docRefA1 and B1
                 DOC_REF_TYPE_2, internalStatisticsService2); //i.e. docRefA2
 
-        InternalStatisticsImpl.MultiServiceInternalStatistics facade = new InternalStatisticsImpl.MultiServiceInternalStatistics(
+        MultiServiceInternalStatisticsReceiver facade = new MultiServiceInternalStatisticsReceiver(
                 internalStatisticDocRefCache,
                 docRefTypeToServiceMap);
 

@@ -18,12 +18,12 @@ package stroom.headless;
 
 import org.springframework.stereotype.Component;
 import stroom.statistics.internal.InternalStatisticEvent;
-import stroom.statistics.internal.InternalStatistics;
+import stroom.statistics.internal.InternalStatisticsReceiver;
 
 import java.util.List;
 
 @Component
-public class HeadlessInternalStatistics implements InternalStatistics {
+public class HeadlessInternalStatisticsReceiver implements InternalStatisticsReceiver {
     @Override
     public void putEvent(final InternalStatisticEvent internalStatisticEvent) {
         // Do nothing.
