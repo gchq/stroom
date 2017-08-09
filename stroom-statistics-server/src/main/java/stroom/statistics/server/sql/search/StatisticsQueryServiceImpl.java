@@ -1,6 +1,8 @@
 package stroom.statistics.server.sql.search;
 
 import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.dashboard.expression.FieldIndexMap;
 import stroom.datasource.api.v1.DataSource;
@@ -34,6 +36,8 @@ import java.util.stream.Collectors;
 
 @Component
 public class StatisticsQueryServiceImpl implements StatisticsQueryService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsQueryServiceImpl.class);
 
     private static final Map<String, Function<StatisticDataPoint, String>> fieldMapperMap = new HashMap<>();
 
@@ -115,7 +119,9 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
 
     @Override
     public Boolean destroy(final QueryKey queryKey) {
-        throw new UnsupportedOperationException("Destroy is not currently support for SQL Statistics queries");
+        LOGGER.trace("destroy called for queryKey {}", queryKey);
+        //No concept of destroying a search for sql statistics so just return true
+        return Boolean.TRUE;
     }
 
     private SearchResponse buildResponse(final SearchRequest searchRequest,
