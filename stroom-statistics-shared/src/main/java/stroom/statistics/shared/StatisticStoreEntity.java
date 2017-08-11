@@ -48,9 +48,6 @@ public class StatisticStoreEntity extends DocumentEntity implements StatisticSto
     public static final String FIELD_NAME_DATE_TIME = "Date Time";
     public static final String FIELD_NAME_VALUE = "Statistic Value";
     public static final String FIELD_NAME_COUNT = "Statistic Count";
-    public static final String FIELD_NAME_MIN_VALUE = "Min Statistic Value";
-    public static final String FIELD_NAME_MAX_VALUE = "Max Statistic Value";
-    public static final String FIELD_NAME_PRECISION = "Precision";
     public static final String FIELD_NAME_PRECISION_MS = "Precision ms";
 
 
@@ -70,16 +67,12 @@ public class StatisticStoreEntity extends DocumentEntity implements StatisticSto
         STATIC_FIELDS_MAP.put(StatisticType.COUNT, Arrays.asList(
                 FIELD_NAME_DATE_TIME,
                 FIELD_NAME_COUNT,
-                FIELD_NAME_PRECISION,
                 FIELD_NAME_PRECISION_MS
         ));
         STATIC_FIELDS_MAP.put(StatisticType.VALUE, Arrays.asList(
                 FIELD_NAME_DATE_TIME,
                 FIELD_NAME_VALUE,
                 FIELD_NAME_COUNT,
-                FIELD_NAME_MIN_VALUE,
-                FIELD_NAME_MAX_VALUE,
-                FIELD_NAME_PRECISION,
                 FIELD_NAME_PRECISION_MS
         ));
     }

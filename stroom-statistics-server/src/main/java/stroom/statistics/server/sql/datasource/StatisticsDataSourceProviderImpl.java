@@ -88,11 +88,8 @@ public class StatisticsDataSourceProviderImpl implements StatisticsDataSourcePro
 
         if (entity.getStatisticType().equals(StatisticType.VALUE)) {
             addField(StatisticStoreEntity.FIELD_NAME_VALUE, DataSourceFieldType.NUMERIC_FIELD, false, null, fields);
-            addField(StatisticStoreEntity.FIELD_NAME_MIN_VALUE, DataSourceFieldType.NUMERIC_FIELD, false, null, fields);
-            addField(StatisticStoreEntity.FIELD_NAME_MAX_VALUE, DataSourceFieldType.NUMERIC_FIELD, false, null, fields);
         }
 
-        addField(StatisticStoreEntity.FIELD_NAME_PRECISION, DataSourceFieldType.NUMERIC_FIELD, false, null, fields);
         addField(StatisticStoreEntity.FIELD_NAME_PRECISION_MS, DataSourceFieldType.NUMERIC_FIELD, false, null, fields);
 
         // Filter fields.

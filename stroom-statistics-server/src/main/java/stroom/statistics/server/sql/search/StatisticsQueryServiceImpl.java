@@ -39,18 +39,6 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsQueryServiceImpl.class);
 
-    private static final Map<String, Function<StatisticDataPoint, String>> fieldMapperMap = new HashMap<>();
-
-    static {
-        fieldMapperMap.put(StatisticStoreEntity.FIELD_NAME_DATE_TIME, dataPoint -> Long.toString(dataPoint.getTimeMs()));
-        fieldMapperMap.put(StatisticStoreEntity.FIELD_NAME_PRECISION, StatisticsQueryServiceImpl::getPrecision);
-        fieldMapperMap.put(StatisticStoreEntity.FIELD_NAME_PRECISION_MS, dataPoint -> Long.toString(dataPoint.getPrecisionMs()));
-        fieldMapperMap.put(StatisticStoreEntity.FIELD_NAME_COUNT, dataPoint -> Long.toString(dataPoint.getCount()));
-        fieldMapperMap.put(StatisticStoreEntity.FIELD_NAME_VALUE, dataPoint -> Double.toString(dataPoint.getValue()));
-        fieldMapperMap.put(StatisticStoreEntity.FIELD_NAME_MIN_VALUE, dataPoint -> Double.toString(dataPoint.getMinValue()));
-        fieldMapperMap.put(StatisticStoreEntity.FIELD_NAME_MAX_VALUE, dataPoint -> Double.toString(dataPoint.getMaxValue()));
-    }
-
     private final StatisticsDataSourceProvider statisticsDataSourceProvider;
     private final StatisticStoreCache statisticStoreCache;
     private final SQLStatisticEventStore sqlStatisticEventStore;
@@ -210,7 +198,7 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
                 int posInDataArray = fieldIndexMap.get(fieldName);
                 //if the fieldIndexMap returns -1 the field has not been requested
                 if (posInDataArray != -1) {
-                    dataArray[posInDataArray] = statisticDataPoint.getTagValue(fieldName);
+                    dataArray[posInDataArray] = statisticDataPoint.getFieldValue(fieldName);
                 }
             });
             return dataArray;
