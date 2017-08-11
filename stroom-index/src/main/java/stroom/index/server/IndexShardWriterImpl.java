@@ -25,7 +25,7 @@ import org.apache.lucene.index.LiveIndexWriterConfig;
 import org.apache.lucene.store.AlreadyClosedException;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
-import org.apache.lucene.store.SimpleFSLockFactory;
+import org.apache.lucene.store.SingleInstanceLockFactory;
 import org.apache.lucene.util.Version;
 import stroom.index.server.analyzer.AnalyzerFactory;
 import stroom.index.shared.IndexShard;
@@ -127,24 +127,19 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         // If we already have a directory then this is an existing index.
         if (dir.isDirectory()) {
             final File[] files = dir.listFiles();
-            if (files != null && files.length > 0) {
-                // The directory exists and contains files so make sure it
-                // is unlocked.
-                new SimpleFSLockFactory(dir).clearLock(IndexWriter.WRITE_LOCK_NAME);
-            } else {
+            if (files == null || files.length == 0) {
                 throw new IndexException("Unable to find any index shard data in directory: " + dir.getCanonicalPath());
             }
 
         } else {
             // Make sure the index hasn't been deleted.
             if (indexShard.getDocumentCount() > 0) {
-                throw new IndexException("Unable to find index shard data in directory: " + dir.getCanonicalPath());
+                throw new IndexException("Unable to find any index shard data in directory: " + dir.getCanonicalPath());
             }
 
             // Try and make all required directories.
             if (!dir.mkdirs()) {
-                throw new IndexException(
-                        "Unable to create directories for new index in \"" + dir.getAbsolutePath() + "\"");
+                throw new IndexException("Unable to create directories for new index in \"" + dir.getAbsolutePath() + "\"");
             }
         }
 
@@ -166,7 +161,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         }
 
         // Create lucene directory object.
-        directory = new NIOFSDirectory(dir, new SimpleFSLockFactory(dir));
+        directory = new NIOFSDirectory(dir, new SingleInstanceLockFactory());
 
         // IndexWriter to use for adding data to the index.
         indexWriter = new IndexWriter(directory, indexWriterConfig);
