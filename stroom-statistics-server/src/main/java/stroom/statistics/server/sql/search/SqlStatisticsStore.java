@@ -43,6 +43,17 @@ public class SqlStatisticsStore implements Store {
         TablePayload tablePayload = (TablePayload) payload;
         UnsafePairQueue<Key, Item> queue = tablePayload.getQueue();
 
+        //TODO create a resultStoreCreator (expose it as public) then call
+
+
+//        final ResultStoreCreator resultStoreCreator = new ResultStoreCreator(compiledSorter);
+//        resultStoreCreator.read(queue);
+//
+//        // Trim the number of results in the store.
+//        resultStoreCreator.trim(trimSettings);
+
+        //TODO then may need to do something with compileSorter
+
         Map<Key, Items<Item>> childMap = new HashMap<>();
         // We should now have a reduction in the reducedQueue.
         queue.forEach(pair -> {
