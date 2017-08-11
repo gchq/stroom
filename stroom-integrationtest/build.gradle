@@ -44,7 +44,9 @@ test {
 
     //Use full logging for test exceptions so we can see where the failure occurred 
     testLogging {
+        events "failed"
         exceptionFormat = 'full'
+        showStackTraces = true
     }
 }
 
