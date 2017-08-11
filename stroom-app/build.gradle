@@ -84,9 +84,11 @@ dependencies {
     compile libs.jackson_annotations
     compile libs.javax_inject
     compile libs.javax_servlet_api
+    compile libs.javax_validation
     compile libs.jersey_server
     compile libs.jetty_server
     compile libs.jetty_servlet
+    compile libs.jetty_servlets
     compile libs.logback_classic
     compile libs.shiro_core
     compile libs.slf4j_api

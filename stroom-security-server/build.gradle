@@ -43,6 +43,7 @@ dependencies {
     compile libs.spring_context_support
     compile libs.spring_core
     compile libs.spring_tx
+    compile libs.spring_web
 
     runtime libs.shiro_aspectj
 
