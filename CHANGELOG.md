@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#364** : Switched index writer lock factory to a SingleInstanceLockFactory as index shards are accessed by a single process.
+
 ## [v5.0-beta.45] - 2017-08-08
 
 * Issue **#356** : Changed the way index shard writers are cached to improve indexing performance and reduce blocking.
