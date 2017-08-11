@@ -22,10 +22,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 import stroom.feed.MetaMap;
 import stroom.statistics.internal.InternalStatisticEvent;
-import stroom.statistics.internal.InternalStatisticsFacadeFactory;
+import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.date.DateUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,12 +36,13 @@ import java.util.Map;
 public class MetaDataStatisticImpl implements MetaDataStatistic {
     private static final Logger LOGGER = LoggerFactory.getLogger(MetaDataStatisticImpl.class);
 
-    private List<MetaDataStatisticTemplate> templates;
-    private InternalStatisticsFacadeFactory internalStatisticsFacadeFactory;
+    private final InternalStatisticsReceiver internalStatisticsReceiver;
 
-    @Resource
-    public void setInternalStatisticsFacadeFactory(final InternalStatisticsFacadeFactory internalStatisticsFacadeFactory) {
-        this.internalStatisticsFacadeFactory = internalStatisticsFacadeFactory;
+    private List<MetaDataStatisticTemplate> templates;
+
+    @Inject
+    public MetaDataStatisticImpl(final InternalStatisticsReceiver internalStatisticsReceiver) {
+        this.internalStatisticsReceiver = internalStatisticsReceiver;
     }
 
     /**
@@ -105,7 +106,7 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
             try {
                 final InternalStatisticEvent statisticEvent = buildStatisticEvent(template, metaData);
                 if (statisticEvent != null) {
-                    internalStatisticsFacadeFactory.create().putEvent(statisticEvent);
+                    internalStatisticsReceiver.putEvent(statisticEvent);
                 } else {
                     LOGGER.trace("recordStatistics() - abort {} {}", metaData, template);
                 }

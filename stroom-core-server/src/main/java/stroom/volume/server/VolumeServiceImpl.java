@@ -45,8 +45,7 @@ import stroom.node.shared.VolumeState;
 import stroom.security.Insecure;
 import stroom.security.Secured;
 import stroom.statistics.internal.InternalStatisticEvent;
-import stroom.statistics.internal.InternalStatisticsFacade;
-import stroom.statistics.internal.InternalStatisticsFacadeFactory;
+import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.config.StroomProperties;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomFrequencySchedule;
@@ -125,19 +124,19 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     private final NodeCache nodeCache;
     private final StroomPropertyService stroomPropertyService;
     private final StroomBeanStore stroomBeanStore;
-    private final InternalStatisticsFacadeFactory internalStatisticsFacadeFactory;
+    private final InternalStatisticsReceiver internalStatisticsReceiver;
     private final AtomicReference<List<Volume>> currentVolumeState = new AtomicReference<>();
 
     @Inject
     VolumeServiceImpl(final StroomEntityManager stroomEntityManager, final NodeCache nodeCache,
                       final StroomPropertyService stroomPropertyService, final StroomBeanStore stroomBeanStore,
-                      final InternalStatisticsFacadeFactory internalStatisticsFacadeFactory) {
+                      final InternalStatisticsReceiver internalStatisticsReceiver) {
         super(stroomEntityManager);
         this.stroomEntityManager = stroomEntityManager;
         this.nodeCache = nodeCache;
         this.stroomPropertyService = stroomPropertyService;
         this.stroomBeanStore = stroomBeanStore;
-        this.internalStatisticsFacadeFactory = internalStatisticsFacadeFactory;
+        this.internalStatisticsReceiver = internalStatisticsReceiver;
     }
 
     private static void registerVolumeSelector(final VolumeSelector volumeSelector) {
@@ -352,19 +351,19 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
             final VolumeState volumeState = volume.getVolumeState();
 
             final long now = System.currentTimeMillis();
-            InternalStatisticsFacade.BatchBuilder batchBuilder = internalStatisticsFacadeFactory.create().batchBuilder();
-            addStatisticEvent(batchBuilder, now, volume, "Limit", volume.getBytesLimit());
-            addStatisticEvent(batchBuilder, now, volume, "Used", volumeState.getBytesUsed());
-            addStatisticEvent(batchBuilder, now, volume, "Free", volumeState.getBytesFree());
-            addStatisticEvent(batchBuilder, now, volume, "Total", volumeState.getBytesTotal());
-            batchBuilder.putBatch();
+            final List<InternalStatisticEvent> events = new ArrayList<>();
+            addStatisticEvent(events, now, volume, "Limit", volume.getBytesLimit());
+            addStatisticEvent(events, now, volume, "Used", volumeState.getBytesUsed());
+            addStatisticEvent(events, now, volume, "Free", volumeState.getBytesFree());
+            addStatisticEvent(events, now, volume, "Total", volumeState.getBytesTotal());
+            internalStatisticsReceiver.putEvents(events);
         } catch (final Throwable t) {
             LOGGER.warn(t.getMessage());
             LOGGER.debug(t.getMessage(), t);
         }
     }
 
-    private void addStatisticEvent(final InternalStatisticsFacade.BatchBuilder batchBuilder,
+    private void addStatisticEvent(final List<InternalStatisticEvent> events,
                                    final long timeMs,
                                    final Volume volume,
                                    final String type,
@@ -379,7 +378,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
 
             InternalStatisticEvent event = InternalStatisticEvent.createValueStat(
                     INTERNAL_STAT_KEY_VOLUMES, timeMs, tags, bytes.doubleValue());
-            batchBuilder.addEvent(event);
+            events.add(event);
         }
     }
 

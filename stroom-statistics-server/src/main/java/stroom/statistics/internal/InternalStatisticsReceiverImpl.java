@@ -12,22 +12,21 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 @SuppressWarnings("unused")
 @Component
-public class InternalStatisticsFacadeFactoryImpl implements InternalStatisticsFacadeFactory {
-    private static final Logger LOGGER = LoggerFactory.getLogger(InternalStatisticsFacadeFactoryImpl.class);
+public class InternalStatisticsReceiverImpl implements InternalStatisticsReceiver {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(InternalStatisticsReceiverImpl.class);
 
     private final StroomBeanStore stroomBeanStore;
     private final InternalStatisticDocRefCache internalStatisticDocRefCache;
-    private final Map<String, InternalStatisticsService> docRefTypeToServiceMap = new HashMap<>();
 
-    private volatile InternalStatisticsFacade internalStatisticsFacade = new DoNothingInternalStatisticsFacade();
+    private volatile InternalStatisticsReceiver internalStatisticsReceiver = new DoNothingInternalStatisticsReceiver();
 
     @Inject
-    public InternalStatisticsFacadeFactoryImpl(final StroomBeanStore stroomBeanStore,
-                                               final InternalStatisticDocRefCache internalStatisticDocRefCache) {
+    InternalStatisticsReceiverImpl(final StroomBeanStore stroomBeanStore,
+                                   final InternalStatisticDocRefCache internalStatisticDocRefCache) {
         this.stroomBeanStore = stroomBeanStore;
         this.internalStatisticDocRefCache = internalStatisticDocRefCache;
     }
@@ -37,6 +36,8 @@ public class InternalStatisticsFacadeFactoryImpl implements InternalStatisticsFa
     public void initStatisticEventStoreBeanNames() {
         final List<String> allBeans = new ArrayList<>(
                 stroomBeanStore.getStroomBeanByType(InternalStatisticsService.class));
+
+        final Map<String, InternalStatisticsService> docRefTypeToServiceMap = new HashMap<>();
         for (final String beanName : allBeans) {
             final InternalStatisticsService internalStatisticsService = (InternalStatisticsService) stroomBeanStore.getBean(beanName);
 
@@ -51,28 +52,17 @@ public class InternalStatisticsFacadeFactoryImpl implements InternalStatisticsFa
             }
         }
 
-        internalStatisticsFacade = new MultiServiceInternalStatisticsFacade(internalStatisticDocRefCache, docRefTypeToServiceMap);
+        internalStatisticsReceiver = new MultiServiceInternalStatisticsReceiver(internalStatisticDocRefCache, docRefTypeToServiceMap);
     }
 
-    /**
-     * @return An instance of the facade for recording internal statistics.  Do not hold on to the returned instance.
-     * Call create, use it then throw it away.
-     */
     @Override
-    public InternalStatisticsFacade create() {
-        return internalStatisticsFacade;
+    public void putEvent(final InternalStatisticEvent event) {
+        internalStatisticsReceiver.putEvent(event);
     }
 
-    /**
-     * Provides protection in case client code calls create when the proper facade has not been initialised, allowing
-     * the system to function albeit with the loss of the stats.
-     */
-    private static class DoNothingInternalStatisticsFacade implements InternalStatisticsFacade {
-        @Override
-        public void putEvents(List<InternalStatisticEvent> statisticEvents, Consumer<Throwable> exceptionHandler) {
-            InternalStatisticsFacade.LOGGER.warn(
-                    "putEvents called when internalStatisticsFacade has not been initialised. The statistics will not be recorded");
-
-        }
+    @Override
+    public void putEvents(final List<InternalStatisticEvent> events) {
+        internalStatisticsReceiver.putEvents(events);
     }
+
 }

@@ -41,7 +41,6 @@ public class StroomKafkaProducer {
 
     public StroomKafkaProducer(
             @Value("#{propertyConfigurer.getProperty('stroom.kafka.bootstrap.servers')}") final String bootstrapServers) {
-
         this.bootstrapServers = bootstrapServers;
         if (Strings.isNullOrEmpty(bootstrapServers)) {
             LOGGER.error("Stroom is not properly configured to connect to Kafka: 'stroom.kafka.bootstrap.servers' is required.");
