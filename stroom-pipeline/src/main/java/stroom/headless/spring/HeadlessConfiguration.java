@@ -39,6 +39,7 @@ import org.springframework.context.annotation.FilterType;
         "stroom.lifecycle",
         "stroom.node",
         "stroom.pipeline",
+        "stroom.connectors",
         "stroom.pool",
         "stroom.process",
         "stroom.resource",

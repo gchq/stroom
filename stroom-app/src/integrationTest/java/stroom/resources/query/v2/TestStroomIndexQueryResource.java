@@ -5,10 +5,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientResponse;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
+import stroom.Config;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionBuilder;
 import stroom.query.api.v2.ExpressionOperator;
@@ -21,6 +25,7 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.resources.RegisteredService;
 import stroom.resources.ResourcePaths;
 import stroom.resources.authorisation.v1.AuthorizationHelper;
+import stroom.startup.App;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -39,6 +44,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * This is not currently a test. It is a way of exercising the query api, i.e. it is support for manual testing.
  */
 public class TestStroomIndexQueryResource {
+
+    @ClassRule
+    public static final DropwizardAppRule<Config> RULE = new DropwizardAppRule<>(App.class, "dev.yml");
 
     public static final String SEARCH_TARGET = "http://localhost:8080" +
             ResourcePaths.ROOT_PATH +
@@ -86,6 +94,7 @@ public class TestStroomIndexQueryResource {
         jwtToken = AuthorizationHelper.fetchJwtToken();
     }
 
+    @Ignore
     @Test
     public void testSavedFromFile() throws IOException {
         // Given
@@ -110,6 +119,7 @@ public class TestStroomIndexQueryResource {
         System.out.println(response.toString());
     }
 
+    @Ignore
     @Test
     public void test() throws JsonProcessingException {
         // Given

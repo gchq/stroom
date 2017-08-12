@@ -1,9 +1,9 @@
 package stroom.pipeline.destination;
 
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.kafka.StroomKafkaProducer;
+import stroom.connectors.kafka.StroomKafkaProducer;
+import stroom.connectors.kafka.StroomKafkaProducerRecord;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -16,7 +16,7 @@ public class RollingKafkaDestination extends RollingDestination {
 
     private final String topic;
     private final String recordKey;
-    private final StroomKafkaProducer.FlushMode flushMode;
+    private final boolean flushOnSend;
 
     private StringBuilder data = new StringBuilder();
 
@@ -27,12 +27,12 @@ public class RollingKafkaDestination extends RollingDestination {
                                    final StroomKafkaProducer stroomKafkaProducer,
                                    final String recordKey,
                                    final String topic,
-                                   final StroomKafkaProducer.FlushMode flushMode) {
+                                   final boolean flushOnSend) {
         super(key, frequency, maxSize, creationTime);
         this.stroomKafkaProducer = stroomKafkaProducer;
         this.recordKey = recordKey;
         this.topic = topic;
-        this.flushMode = flushMode;
+        this.flushOnSend = flushOnSend;
 
         setOutputStream(new ByteCountOutputStream(new OutputStream() {
             @Override
@@ -50,11 +50,16 @@ public class RollingKafkaDestination extends RollingDestination {
 
     @Override
     void onFooterWritten(final Consumer<Throwable> exceptionConsumer) {
-        final ProducerRecord<String, String> newRecord = new ProducerRecord<>(topic, recordKey, data.toString());
+        final StroomKafkaProducerRecord<String, String> newRecord =
+                new StroomKafkaProducerRecord.Builder<String, String>()
+                        .topic(topic)
+                        .key(recordKey)
+                        .value(data.toString())
+                        .build();
         try {
-            stroomKafkaProducer.send(newRecord, flushMode, e -> {
-                LOGGER.error("Unable to send record to Kafka!", e);
-            });
+            stroomKafkaProducer.send(newRecord, flushOnSend, e ->
+                LOGGER.error("Unable to send record to Kafka!", e)
+            );
         } catch (RuntimeException e) {
             exceptionConsumer.accept(wrapRollException(e));
         }

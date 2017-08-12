@@ -11,7 +11,7 @@ mainClassName = 'stroom.startup.App'
 
 jar {
     //we need to first generate the swagger spec files so they can be added in to the jar
-    dependsOn generateSwaggerDocumentation
+    mustRunAfter generateSwaggerDocumentation
 
     manifest {
         attributes(
@@ -51,21 +51,6 @@ shadowJar {
     }
 }
 
-configurations {
-    all {
-        resolutionStrategy.eachDependency { DependencyResolveDetails details ->
-            if (details.requested.name == 'log4j') {
-                details.useTarget "org.slf4j:log4j-over-slf4j:1.7.5"
-            }
-        }
-        exclude group: "org.slf4j", module: "slf4j-log4j12"
-        exclude group: "log4j", module: "log4j"
-    }
-
-    // This means our integration tests get all the dependencies from our tests and we don't need to specify them twice.
-    integrationTestCompile.extendsFrom testCompile
-    integrationTestRuntime.extendsFrom testRuntime
-}
 
 dependencies {
 
@@ -88,8 +73,8 @@ dependencies {
     runtime project(':stroom-dashboard-server')
     runtime project(':stroom-statistics-server')
 
-    compile urlDependencies.get(versions.stroomQueryApi)
-    compile urlDependencies.get(versions.stroomQueryCommon)
+    compile urlDependencies.get(urlLibs.stroomQueryApi)
+    compile urlDependencies.get(urlLibs.stroomQueryCommon)
 
     compile libs.curator_client
     compile libs.curator_framework
@@ -136,45 +121,21 @@ dependencies {
     integrationTestCompile libs.dropwizard_client
 }
 
-sourceSets {
-    // This lets us use different directories for our integration tests.
-    integrationTest {
-        java {
-            compileClasspath += main.output + test.output
-            runtimeClasspath += main.output + test.output
-            srcDir file('src/integrationTest/java')
-        }
-        resources.srcDir file('src/integrationTest/resources')
-    }
-}
-
-// This task lets us run the actual integration tests.
-task integrationTest(type: Test) {
-    testClassesDirs = sourceSets.integrationTest.output.classesDirs
-    classpath = sourceSets.integrationTest.runtimeClasspath
-}
-
-// TODO: Integration tests currently require manual setup of resources, which means hey cannot be included in the build as automated tests.
-// These lines pull the integration test task into our build process.
-//check.dependsOn integrationTest
-//integrationTest.mustRunAfter test
-
-// This means the reports from our integration tests won't over-write the reports from our unit tests.
-tasks.withType(Test) {
-    reports.html.destination = file("${reporting.baseDir}/${name}")
-}
-
 run {
+    //Ensure we have the latest kafka plugin jar available for runtime
+    dependsOn ':stroom-kafka-client-impl_0_10_0_1:copyPluginJar'
     args 'server', './dev.yml'
 }
 
 runShadow {
+    //Ensure we have the latest kafka plugin jar available for runtime
+    dependsOn ':stroom-kafka-client-impl_0_10_0_1:copyPluginJar'
     args 'server', './dev.yml'
 }
 
 //The gwtCompile tasks create files in stroom-app/src/main/resources/ui
-//so those tasks MUST be run first else this jar and the fat jar will be
-//missing all the GWT generated files and the UI will fail to start
+//so those tasks MUST be run before processResource else this jar and 
+//the fat jar will be missing all the GWT generated files and the UI will fail to start
 processResources.mustRunAfter(':stroom-app-gwt:gwtCompile')
 processResources.mustRunAfter(':stroom-dashboard-gwt:gwtCompile')
 
@@ -208,3 +169,7 @@ swagger {
         swaggerDirectory = "${project.buildDir}/swagger"
     }
 }
+
+//make generateSwaggerDocumentation and shadowJar happen as part of a build
+tasks.build.dependsOn generateSwaggerDocumentation
+tasks.build.dependsOn shadowJar
