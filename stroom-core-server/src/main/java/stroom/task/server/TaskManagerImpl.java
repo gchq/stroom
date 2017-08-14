@@ -62,7 +62,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * NB: we also define this in Spring XML so we can set some of the properties.
  */
 @Component("taskManager")
-public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskProgressCriteria> {
+public class TaskManagerImpl implements TaskManager, ExecutorProvider, SupportsCriteriaLogging<FindTaskProgressCriteria> {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(TaskManagerImpl.class);
 
     private static final ThreadPool DEFAULT_THREAD_POOL = new SimpleThreadPool("Default", 2);
@@ -96,7 +96,8 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
         return getExecutor(DEFAULT_THREAD_POOL);
     }
 
-    private ThreadPoolExecutor getExecutor(final ThreadPool threadPool) {
+    @Override
+    public Executor getExecutor(final ThreadPool threadPool) {
         ThreadPoolExecutor executor = threadPoolMap.get(threadPool);
         if (executor == null) {
             poolCreationLock.lock();
@@ -332,7 +333,7 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
 
             // Now we have a task scoped runnable we will execute it in a new
             // thread.
-            final ThreadPoolExecutor executor = getExecutor(threadPool);
+            final Executor executor = getExecutor(threadPool);
             if (executor != null) {
                 currentAsyncTaskCount.incrementAndGet();
                 currentTasks.put(task.getId(), taskThread);
