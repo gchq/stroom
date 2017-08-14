@@ -107,6 +107,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final ButtonView deleteItemButton;
     private final ButtonView historyButton;
     private final ButtonView favouriteButton;
+    private final ButtonView downloadQueryButton;
     private final ButtonView warningsButton;
 
     private String params;
@@ -159,6 +160,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         deleteItemButton = view.addButton(SvgPresets.DELETE);
         historyButton = view.addButton(SvgPresets.HISTORY.enabled(true));
         favouriteButton = view.addButton(SvgPresets.FAVOURITES.enabled(true));
+        downloadQueryButton = view.addButton(SvgPresets.DOWNLOAD.enabled(true));
 
         if (securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)) {
             processButton = view.addButton(SvgPresets.PROCESS.enabled(true));
