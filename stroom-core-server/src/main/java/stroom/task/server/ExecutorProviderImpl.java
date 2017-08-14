@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 import stroom.security.SecurityContext;
 import stroom.util.shared.Task;
 import stroom.util.shared.ThreadPool;
+import stroom.util.task.ServerTask;
 
 import javax.inject.Inject;
 import java.util.concurrent.Executor;
@@ -38,15 +39,8 @@ public class ExecutorProviderImpl implements ExecutorProvider {
     @Override
     public Executor getExecutor() {
         return command -> {
-            final String userId = securityContext.getUserId();
             final Task<?> parentTask = CurrentTaskState.currentTask();
-
-            String taskName = "Generic Task";
-            if (parentTask != null) {
-                taskName = parentTask.getTaskName();
-            }
-
-            final GenericServerTask genericServerTask = GenericServerTask.create(parentTask, userId, taskName, null);
+            final GenericServerTask genericServerTask = GenericServerTask.create(parentTask, getUserToken(parentTask), getTaskName(parentTask, "Generic Task"), null);
             genericServerTask.setRunnable(command);
             taskManager.execAsync(genericServerTask);
         };
@@ -55,17 +49,26 @@ public class ExecutorProviderImpl implements ExecutorProvider {
     @Override
     public Executor getExecutor(final ThreadPool threadPool) {
         return command -> {
-            final String userId = securityContext.getUserId();
             final Task<?> parentTask = CurrentTaskState.currentTask();
-
-            String taskName = threadPool.getName();
-            if (parentTask != null) {
-                taskName = parentTask.getTaskName();
-            }
-
-            final GenericServerTask genericServerTask = GenericServerTask.create(parentTask, userId, taskName, null);
+            final GenericServerTask genericServerTask = GenericServerTask.create(parentTask, getUserToken(parentTask), getTaskName(parentTask, threadPool.getName()), null);
             genericServerTask.setRunnable(command);
             taskManager.execAsync(genericServerTask, threadPool);
         };
+    }
+
+    private String getTaskName(final Task<?> parentTask, final String defaultName) {
+        if (parentTask != null && parentTask.getTaskName() != null) {
+            return parentTask.getTaskName();
+        }
+
+        return defaultName;
+    }
+
+    private String getUserToken(final Task<?> parentTask) {
+        if (parentTask != null && parentTask.getUserToken() != null) {
+            return parentTask.getUserToken();
+        }
+
+        return ServerTask.INTERNAL_PROCESSING_USER_TOKEN;
     }
 }
