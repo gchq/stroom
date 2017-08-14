@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,19 @@
  * limitations under the License.
  */
 
-package stroom.util.shared;
+package stroom.task.server;
 
-import java.io.Serializable;
+import org.springframework.stereotype.Component;
 
-public interface Monitor extends HasTerminateHandlers, HasTerminate, HasInfo, Serializable {
-    String getName();
+@Component
+class TaskContextImpl implements TaskContext {
+    @Override
+    public void setName(final String name) {
+        CurrentTaskState.setName(name);
+    }
 
-    void setName(String name);
-
-    Monitor getParent();
+    @Override
+    public void setInfo(final Object... args) {
+        CurrentTaskState.setInfo(args);
+    }
 }

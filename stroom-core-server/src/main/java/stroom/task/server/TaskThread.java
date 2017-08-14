@@ -16,8 +16,6 @@
 
 package stroom.task.server;
 
-import java.util.concurrent.locks.ReentrantLock;
-
 import stroom.util.shared.Monitor;
 import stroom.util.shared.Task;
 import stroom.util.task.HasMonitor;
@@ -44,13 +42,14 @@ public class TaskThread<R> {
     }
 
     @SuppressWarnings("deprecation")
-    public synchronized void kill() {
+    synchronized void kill() {
+        final Thread thread = this.thread;
         if (thread != null) {
             thread.stop();
         }
     }
 
-    public String getThreadName() {
+    String getThreadName() {
         final Thread threadCopy = thread;
         if (threadCopy != null) {
             return threadCopy.getName();
@@ -58,8 +57,26 @@ public class TaskThread<R> {
         return null;
     }
 
-    public long getSubmitTimeMs() {
+    long getSubmitTimeMs() {
         return submitTimeMs;
+    }
+
+    public String getName() {
+        String name = null;
+        if (task instanceof HasMonitor) {
+            final Monitor monitor = ((HasMonitor) task).getMonitor();
+            if (monitor != null) {
+                name = monitor.getName();
+            }
+        }
+        if (name == null) {
+            name = task.getTaskName();
+        }
+        if (task.isTerminated()) {
+            name = "<<terminated>> " + name;
+        }
+
+        return name;
     }
 
     public String getInfo() {

@@ -62,7 +62,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * NB: we also define this in Spring XML so we can set some of the properties.
  */
 @Component("taskManager")
-public class TaskManagerImpl implements TaskManager, ExecutorProvider, SupportsCriteriaLogging<FindTaskProgressCriteria> {
+public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskProgressCriteria> {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(TaskManagerImpl.class);
 
     private static final ThreadPool DEFAULT_THREAD_POOL = new SimpleThreadPool("Default", 2);
@@ -91,13 +91,11 @@ public class TaskManagerImpl implements TaskManager, ExecutorProvider, SupportsC
         ExternalShutdownController.addTerminateHandler(TaskManagerImpl.class, () -> shutdown());
     }
 
-    @Override
-    public Executor getExecutor() {
+    private Executor getExecutor() {
         return getExecutor(DEFAULT_THREAD_POOL);
     }
 
-    @Override
-    public Executor getExecutor(final ThreadPool threadPool) {
+    private Executor getExecutor(final ThreadPool threadPool) {
         ThreadPoolExecutor executor = threadPoolMap.get(threadPool);
         if (executor == null) {
             poolCreationLock.lock();
@@ -394,12 +392,18 @@ public class TaskManagerImpl implements TaskManager, ExecutorProvider, SupportsC
                     taskMonitor.setMonitor(hasMonitor.getMonitor());
                 }
 
-                // Get the task handler that will deal with this task.
-                final TaskHandler<Task<R>, R> taskHandler = taskHandlerBeanRegistry.findHandler(task);
+                CurrentTaskState.pushState(task, taskMonitor);
+                try {
+                    // Get the task handler that will deal with this task.
+                    final TaskHandler<Task<R>, R> taskHandler = taskHandlerBeanRegistry.findHandler(task);
 
-                LOGGER.debug("doExec() - exec >> '%s' %s", task.getClass().getName(), task);
-                taskHandler.exec(task, callback);
-                LOGGER.debug("doExec() - exec << '%s' %s", task.getClass().getName(), task);
+                    LOGGER.debug("doExec() - exec >> '%s' %s", task.getClass().getName(), task);
+                    taskHandler.exec(task, callback);
+                    LOGGER.debug("doExec() - exec << '%s' %s", task.getClass().getName(), task);
+
+                } finally {
+                    CurrentTaskState.popState();
+                }
 
             } finally {
                 securityContext.popUser();
@@ -494,11 +498,7 @@ public class TaskManagerImpl implements TaskManager, ExecutorProvider, SupportsC
     private TaskProgress buildTaskProgress(final long timeNowMs, final TaskThread<?> taskThread, final Task<?> task) {
         final TaskProgress taskProgress = new TaskProgress();
         taskProgress.setId(task.getId());
-        if (task.isTerminated()) {
-            taskProgress.setTaskName("<<terminated>> " + task.getTaskName());
-        } else {
-            taskProgress.setTaskName(task.getTaskName());
-        }
+        taskProgress.setTaskName(taskThread.getName());
         taskProgress.setSessionId(UserTokenUtil.getSessionId(task.getUserToken()));
         taskProgress.setUserName(UserTokenUtil.getUserId(task.getUserToken()));
         taskProgress.setThreadName(taskThread.getThreadName());

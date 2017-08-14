@@ -17,6 +17,8 @@
 package stroom.index.server;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.SearcherManager;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -121,9 +123,15 @@ public class TestIndexShardIO extends StroomUnitTest {
             writer.close();
             Assert.assertEquals(i, writer.getDocumentCount());
 
-            final IndexShardSearcher searcher = new IndexShardSearcherImpl(idx1);
-            Assert.assertEquals(i, searcher.getReader().maxDoc());
-            searcher.destroy();
+            final IndexShardSearcher indexShardSearcher = new IndexShardSearcherImpl(idx1);
+            final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
+            final IndexSearcher searcher = searcherManager.acquire();
+            try {
+                Assert.assertEquals(i, searcher.getIndexReader().maxDoc());
+            } finally {
+                searcherManager.release(searcher);
+            }
+            indexShardSearcher.destroy();
         }
     }
 

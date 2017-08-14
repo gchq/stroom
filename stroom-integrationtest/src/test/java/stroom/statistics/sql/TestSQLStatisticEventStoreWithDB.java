@@ -34,6 +34,7 @@ import stroom.statistics.common.StatisticTag;
 import stroom.statistics.common.exception.StatisticsEventValidationException;
 import stroom.statistics.shared.StatisticRollUpType;
 import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.task.server.TaskMonitorImpl;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Monitor;
 import stroom.util.shared.TerminateHandler;
@@ -252,7 +253,7 @@ public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTes
         }
 
         final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                sqlStatisticValueBatchSaveService, new MockTaskMonitor());
+                sqlStatisticValueBatchSaveService, new TaskMonitorImpl());
 
         final SQLStatisticFlushTask flushTask = new SQLStatisticFlushTask(sqlStatisticAggregateMap);
 
@@ -291,43 +292,45 @@ public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTes
         return statisticsDataSource.getConnection();
     }
 
-    private static class MockTaskMonitor implements TaskMonitor {
-        private static final long serialVersionUID = -8415095958756818805L;
-
-        @Override
-        public Monitor getParent() {
-            // TODO Auto-generated method stub
-            return null;
-        }
-
-        @Override
-        public void addTerminateHandler(final TerminateHandler handler) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void terminate() {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public boolean isTerminated() {
-
-            return false;
-        }
-
-        @Override
-        public String getInfo() {
-            // TODO Auto-generated method stub
-            return null;
-        }
-
-        @Override
-        public void info(final Object... args) {
-            // do nothing
-
-        }
-    }
+//    private static class MockTaskMonitor implements TaskMonitor {
+//        private static final long serialVersionUID = -8415095958756818805L;
+//
+//        @Override
+//        public Monitor getParent() {
+//            // TODO Auto-generated method stub
+//            return null;
+//        }
+//
+//        @Override
+//        public void addTerminateHandler(final TerminateHandler handler) {
+//            // TODO Auto-generated method stub
+//
+//        }
+//
+//        @Override
+//        public void terminate() {
+//            // TODO Auto-generated method stub
+//
+//        }
+//
+//        @Override
+//        public boolean isTerminated() {
+//
+//            return false;
+//        }
+//
+//
+//
+//        @Override
+//        public String getInfo() {
+//            // TODO Auto-generated method stub
+//            return null;
+//        }
+//
+//        @Override
+//        public void info(final Object... args) {
+//            // do nothing
+//
+//        }
+//    }
 }

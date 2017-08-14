@@ -21,5 +21,7 @@ import stroom.util.shared.ThreadPool;
 import java.util.concurrent.Executor;
 
 public interface ExecutorProvider {
+    Executor getExecutor();
+
     Executor getExecutor(ThreadPool threadPool);
 }
