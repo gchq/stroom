@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#364** : Switched index writer lock factory to a SingleInstanceLockFactory as index shards are accessed by a single process.
 
+* Issue **#363** : IndexShardWriterCacheImpl now closes and flushes writers using an executor provided by the TaskManager. Writers are now also closed in LRU order when sweeping up writers that exceed TTL and TTI constraints.
+
+* Issue **#361** : Information has been added to threads executing index writer and index searcher maintenance tasks.
+
 ## [v5.0-beta.45] - 2017-08-08
 
 * Issue **#356** : Changed the way index shard writers are cached to improve indexing performance and reduce blocking.
