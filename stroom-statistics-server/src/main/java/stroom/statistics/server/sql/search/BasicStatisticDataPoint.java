@@ -25,11 +25,10 @@ import stroom.statistics.server.sql.StatisticTag;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 class BasicStatisticDataPoint implements StatisticDataPoint {
 
@@ -55,11 +54,11 @@ class BasicStatisticDataPoint implements StatisticDataPoint {
 
         this.timeMs = timeMs;
         this.precisionMs = precisionMs;
-        this.tags = Collections.unmodifiableList(tags);
+        this.tags = Collections.unmodifiableList(new ArrayList<>(tags));
 
-        ImmutableMap.Builder<String, String> mapBuilder = ImmutableMap.builder();
-        tags.forEach(tag -> mapBuilder.put(tag.getTag(), tag.getValue()));
-        this.tagToValueMap = mapBuilder.build();
+        final Map<String, String> tempMap = new HashMap<>();
+        tags.forEach(tag -> tempMap.put(tag.getTag(), tag.getValue()));
+        this.tagToValueMap = Collections.unmodifiableMap(tempMap);
     }
 
     public long getTimeMs() {
