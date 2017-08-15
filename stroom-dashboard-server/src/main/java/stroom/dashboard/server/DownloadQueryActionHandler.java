@@ -16,14 +16,12 @@
 
 package stroom.dashboard.server;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import stroom.dashboard.shared.DownloadQueryAction;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
-import stroom.query.api.v1.SearchRequest;
 import stroom.servlet.SessionResourceStore;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
@@ -32,11 +30,11 @@ import stroom.util.shared.ResourceKey;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
+@SuppressWarnings("unused")
 @TaskHandlerBean(task = DownloadQueryAction.class)
 @Scope(value = StroomScope.TASK)
 class DownloadQueryActionHandler extends AbstractTaskHandler<DownloadQueryAction, ResourceGeneration> {
@@ -63,11 +61,11 @@ class DownloadQueryActionHandler extends AbstractTaskHandler<DownloadQueryAction
             if (action.getSearchRequest() == null) {
                 throw new EntityServiceException("Query is empty");
             }
-            stroom.query.api.v1.SearchRequest mappedRequest = searchRequestMapper.mapRequest(
+            stroom.query.api.v1.SearchRequest apiSearchRequest = searchRequestMapper.mapRequest(
                     action.getDashboardQueryKey(),
                     action.getSearchRequest());
 
-            if (mappedRequest == null) {
+            if (apiSearchRequest == null) {
                 throw new EntityServiceException("Query could not be mapped to a SearchRequest");
             }
 
@@ -78,24 +76,13 @@ class DownloadQueryActionHandler extends AbstractTaskHandler<DownloadQueryAction
             fileName = fileName + ".json";
 
             ResourceKey resourceKey = sessionResourceStore.createTempFile(fileName);
-            final Path file = sessionResourceStore.getTempFile(resourceKey);
+            final Path outputFile = sessionResourceStore.getTempFile(resourceKey);
 
-            downloadRequest(mappedRequest, file);
+            JsonUtil.writeValue(outputFile, apiSearchRequest);
 
             return new ResourceGeneration(resourceKey, new ArrayList<>());
         } catch (final Exception ex) {
             throw EntityServiceExceptionUtil.create(ex);
-        }
-    }
-
-    private void downloadRequest(final SearchRequest searchRequest, final Path path) {
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            objectMapper.writeValue(path.toFile(), searchRequest);
-        } catch (IOException e) {
-            throw new RuntimeException(String.format("Error serializing search request to file %s",
-                    path.toAbsolutePath().toString()), e);
         }
     }
 }
