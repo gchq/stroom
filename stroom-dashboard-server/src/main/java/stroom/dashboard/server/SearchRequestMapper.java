@@ -80,12 +80,18 @@ public class SearchRequestMapper {
         this.visualisationService = visualisationService;
     }
 
-    public stroom.query.api.v1.SearchRequest mapRequest(final DashboardQueryKey queryKey, final stroom.dashboard.shared.SearchRequest searchRequest) {
+    public stroom.query.api.v1.SearchRequest mapRequest(final DashboardQueryKey queryKey,
+                                                        final stroom.dashboard.shared.SearchRequest searchRequest) {
         if (searchRequest == null) {
             return null;
         }
 
-        final stroom.query.api.v1.SearchRequest copy = new stroom.query.api.v1.SearchRequest(new QueryKey(queryKey.getUuid()), mapQuery(searchRequest), mapResultRequests(searchRequest), searchRequest.getDateTimeLocale(), searchRequest.getSearch().isIncremental());
+        final stroom.query.api.v1.SearchRequest copy = new stroom.query.api.v1.SearchRequest(
+                new QueryKey(queryKey.getUuid()),
+                mapQuery(searchRequest),
+                mapResultRequests(searchRequest),
+                searchRequest.getDateTimeLocale(),
+                searchRequest.getSearch().isIncremental());
 
         return copy;
     }
