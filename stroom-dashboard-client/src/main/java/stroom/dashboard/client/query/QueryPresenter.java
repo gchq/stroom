@@ -42,6 +42,8 @@ import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DataSourceFieldsMap;
 import stroom.dashboard.shared.DownloadQueryAction;
 import stroom.dashboard.shared.QueryComponentSettings;
+import stroom.dashboard.shared.Search;
+import stroom.dashboard.shared.SearchRequest;
 import stroom.datasource.api.v1.DataSourceField;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.ExportFileCompleteUtil;
@@ -103,6 +105,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final MenuListPresenter menuListPresenter;
     private final ClientDispatchAsync dispatcher;
     private final LocationManager locationManager;
+    private final TimeZones timeZones;
 
     private final IndexLoader indexLoader;
     private final SearchModel searchModel;
@@ -149,6 +152,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         this.menuListPresenter = menuListPresenter;
         this.dispatcher = dispatcher;
         this.locationManager = locationManager;
+        this.timeZones = timeZones;
 
         view.setExpressionView(expressionPresenter.getView());
         view.setUiHandlers(this);
@@ -172,7 +176,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         deleteItemButton = view.addButton(SvgPresets.DELETE);
         historyButton = view.addButton(SvgPresets.HISTORY.enabled(true));
         favouriteButton = view.addButton(SvgPresets.FAVOURITES.enabled(true));
-        downloadQueryButton = view.addButton(SvgPresets.DOWNLOAD.enabled(true));
+        downloadQueryButton = view.addButton(SvgPresets.DOWNLOAD);
 
         if (securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)) {
             processButton = view.addButton(SvgPresets.PROCESS.enabled(true));
@@ -282,10 +286,21 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             deleteItemButton.setEnabled(true);
             deleteItemButton.setTitle("Delete");
         }
+
+        final DocRef dataSourceRef = queryComponentSettings.getDataSource();
+
+        if (dataSourceRef == null) {
+            downloadQueryButton.setEnabled(false);
+            downloadQueryButton.setTitle("");
+        } else {
+            downloadQueryButton.setEnabled(true);
+            downloadQueryButton.setTitle("Download Query");
+        }
     }
 
     private void loadDataSource(final DocRef dataSourceRef) {
         searchModel.getIndexLoader().loadDataSource(dataSourceRef);
+        setButtonsEnabled();
     }
 
     private void loadedDataSource(final DocRef dataSourceRef, final DataSourceFieldsMap dataSourceFieldsMap) {
@@ -313,6 +328,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         getView().setEnabled(dataSourceRef != null && fields.size() > 0);
 
         init();
+        setButtonsEnabled();
     }
 
     private void addOperator() {
@@ -638,11 +654,20 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
 
     private void downloadQuery() {
-        if (searchModel != null) {
-            final DashboardQueryKey dashboardQueryKey = searchModel.getCurrentQueryKey();
+        if (queryComponentSettings.getDataSource() != null) {
+            final Dashboard dashboard = getComponents().getDashboard();
+            final DashboardUUID dashboardUUID = new DashboardUUID(dashboard.getId(), dashboard.getName(), getComponentData().getId());
+            final DashboardQueryKey dashboardQueryKey = DashboardQueryKey.create(
+                    dashboardUUID.getUUID(),
+                    dashboard.getId(),
+                    dashboardUUID.getComponentId());
+
+            Search search = new Search(queryComponentSettings.getDataSource(), queryComponentSettings.getExpression());
+            SearchRequest searchRequest = new SearchRequest(search, Collections.emptyMap(), timeZones.getTimeZone());
+
             if (dashboardQueryKey != null) {
                 dispatcher.exec(
-                        new DownloadQueryAction(dashboardQueryKey, searchModel.getRequest()))
+                        new DownloadQueryAction(dashboardQueryKey, searchRequest))
                         .onSuccess(result ->
                                 ExportFileCompleteUtil.onSuccess(locationManager, null, result));
             }
