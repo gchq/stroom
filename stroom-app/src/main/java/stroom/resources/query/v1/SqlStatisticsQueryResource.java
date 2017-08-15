@@ -18,6 +18,8 @@ package stroom.resources.query.v1;
 
 import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.health.HealthCheck;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v1.DataSource;
 import stroom.query.api.v1.DocRef;
 import stroom.query.api.v1.QueryKey;
@@ -25,6 +27,7 @@ import stroom.query.api.v1.SearchRequest;
 import stroom.query.api.v1.SearchResponse;
 import stroom.resources.ResourcePaths;
 import stroom.statistics.server.sql.StatisticsQueryService;
+import stroom.util.json.JsonUtil;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -35,6 +38,9 @@ import javax.ws.rs.core.MediaType;
 @Path(ResourcePaths.SQL_STATISTICS + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public class SqlStatisticsQueryResource implements QueryResource {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticsQueryResource.class);
+
     private StatisticsQueryService statisticsQueryService;
 
     @POST
@@ -52,7 +58,14 @@ public class SqlStatisticsQueryResource implements QueryResource {
     @Path(QueryResource.SEARCH_ENDPOINT)
     @Timed
     public SearchResponse search(final SearchRequest request) {
-        return statisticsQueryService.search(request);
+
+        if (LOGGER.isDebugEnabled()) {
+            String json = JsonUtil.writeValueAsString(request);
+            LOGGER.debug("/search called with searchRequest:\n{}", json);
+        }
+
+        SearchResponse response = statisticsQueryService.search(request);
+        return response;
     }
 
     @POST
@@ -79,4 +92,5 @@ public class SqlStatisticsQueryResource implements QueryResource {
             return HealthCheck.Result.healthy();
         }
     }
+
 }

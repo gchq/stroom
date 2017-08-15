@@ -25,6 +25,7 @@ import stroom.entity.shared.EntityServiceException;
 import stroom.servlet.SessionResourceStore;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+import stroom.util.json.JsonUtil;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.spring.StroomScope;
