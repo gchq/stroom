@@ -86,7 +86,12 @@ public class SearchRequestMapper {
             return null;
         }
 
-        final stroom.query.api.v1.SearchRequest copy = new stroom.query.api.v1.SearchRequest(new QueryKey(queryKey.getUuid()), mapQuery(searchRequest), mapResultRequests(searchRequest), searchRequest.getDateTimeLocale(), searchRequest.getSearch().isIncremental());
+        final stroom.query.api.v1.SearchRequest copy = new stroom.query.api.v1.SearchRequest(
+                new QueryKey(queryKey.getUuid()),
+                mapQuery(searchRequest),
+                mapResultRequests(searchRequest),
+                searchRequest.getDateTimeLocale(),
+                searchRequest.getSearch().isIncremental());
 
         return copy;
     }

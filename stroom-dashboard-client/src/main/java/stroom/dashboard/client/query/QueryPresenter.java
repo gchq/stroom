@@ -25,6 +25,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
+import stroom.core.client.LocationManager;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.DashboardUUID;
@@ -37,10 +38,13 @@ import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.Dashboard;
+import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DataSourceFieldsMap;
+import stroom.dashboard.shared.DownloadQueryAction;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.datasource.api.v1.DataSourceField;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
@@ -98,6 +102,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final ProcessorLimitsPresenter processorLimitsPresenter;
     private final MenuListPresenter menuListPresenter;
     private final ClientDispatchAsync dispatcher;
+    private final LocationManager locationManager;
 
     private final IndexLoader indexLoader;
     private final SearchModel searchModel;
@@ -120,14 +125,20 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private Timer autoRefreshTimer;
 
     @Inject
-    public QueryPresenter(final EventBus eventBus, final QueryView view, final SearchBus searchBus,
+    public QueryPresenter(final EventBus eventBus,
+                          final QueryView view,
+                          final SearchBus searchBus,
                           final Provider<QuerySettingsPresenter> settingsPresenterProvider,
-                          final ExpressionTreePresenter expressionPresenter, final QueryHistoryPresenter historyPresenter,
+                          final ExpressionTreePresenter expressionPresenter,
+                          final QueryHistoryPresenter historyPresenter,
                           final QueryFavouritesPresenter favouritesPresenter,
                           final Provider<EntityChooser> pipelineSelection,
                           final ProcessorLimitsPresenter processorLimitsPresenter,
-                          final MenuListPresenter menuListPresenter, final ClientDispatchAsync dispatcher,
-                          final ClientSecurityContext securityContext, final ClientPropertyCache clientPropertyCache,
+                          final MenuListPresenter menuListPresenter,
+                          final ClientDispatchAsync dispatcher,
+                          final ClientSecurityContext securityContext,
+                          final ClientPropertyCache clientPropertyCache,
+                          final LocationManager locationManager,
                           final TimeZones timeZones) {
         super(eventBus, view, settingsPresenterProvider);
         this.expressionPresenter = expressionPresenter;
@@ -137,6 +148,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         this.processorLimitsPresenter = processorLimitsPresenter;
         this.menuListPresenter = menuListPresenter;
         this.dispatcher = dispatcher;
+        this.locationManager = locationManager;
 
         view.setExpressionView(expressionPresenter.getView());
         view.setUiHandlers(this);
@@ -221,7 +233,11 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         registerHandler(favouriteButton.addClickHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
                 final ExpressionOperator root = expressionPresenter.write();
-                favouritesPresenter.show(QueryPresenter.this, getComponents().getDashboard().getId(), getSettings().getDataSource(), root);
+                favouritesPresenter.show(
+                        QueryPresenter.this,
+                        getComponents().getDashboard().getId(),
+                        getSettings().getDataSource(),
+                        root);
 
             }
         }));
@@ -237,7 +253,10 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                 showWarnings();
             }
         }));
-        registerHandler(indexLoader.addChangeDataHandler(event -> loadedDataSource(indexLoader.getLoadedDataSourceRef(), indexLoader.getDataSourceFieldsMap())));
+        registerHandler(indexLoader.addChangeDataHandler(event ->
+                loadedDataSource(indexLoader.getLoadedDataSourceRef(), indexLoader.getDataSourceFieldsMap())));
+
+        registerHandler(downloadQueryButton.addClickHandler(event -> downloadQuery()));
     }
 
     public void setErrors(final String errors) {
@@ -615,6 +634,19 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             }
         };
         ShowPopupEvent.fire(this, menuListPresenter, PopupType.POPUP, popupPosition, popupUiHandlers);
+    }
+
+
+    private void downloadQuery() {
+        if (searchModel != null) {
+            final DashboardQueryKey dashboardQueryKey = searchModel.getCurrentQueryKey();
+            if (dashboardQueryKey != null) {
+                dispatcher.exec(
+                        new DownloadQueryAction(dashboardQueryKey, searchModel.getRequest()))
+                        .onSuccess(result ->
+                                ExportFileCompleteUtil.onSuccess(locationManager, null, result));
+            }
+        }
     }
 
     public interface QueryView extends View, HasUiHandlers<QueryUiHandlers> {
