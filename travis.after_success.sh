@@ -22,6 +22,8 @@ if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then
     echo "versionStr: ${versionStr}"
     SPECIFIC_TAG="--tag=${DOCKER_REPO}:${versionStr}"
     echo "SPECIFIC_TAG: ${SPECIFIC_TAG}"
+    FLOATING_TAG="--tag=${DOCKER_REPO}:${STROOM_VERSION}-SNAPSHOT"
+    echo "FLOATING_TAG: ${FLOATING_TAG}"
     gitTag=${versionStr}
     echo "gitTag: ${gitTag}"
     echo "commit hash: ${TRAVIS_COMMIT}"
