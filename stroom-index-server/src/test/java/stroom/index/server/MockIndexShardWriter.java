@@ -19,80 +19,66 @@ package stroom.index.server;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexableField;
-import stroom.index.shared.Index;
-import stroom.index.shared.IndexShard;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class MockIndexShardWriter implements IndexShardWriter {
     private static AtomicLong idGen = new AtomicLong();
-    private final List<Document> documents = new ArrayList<Document>();
+    //    private final IndexShardManager indexShardManager;
+    private final List<Document> documents = new ArrayList<>();
+    private final long indexShardId;
 
-    @Override
-    public boolean open(final boolean create) {
-        return true;
+    private final int maxDocumentCount;
+    private final AtomicInteger documentCount = new AtomicInteger();
+
+    MockIndexShardWriter(final int maxDocumentCount) {
+//        this.indexShardManager = indexShardManager;
+        indexShardId = idGen.getAndIncrement();
+//        indexShardManager.setStatus(indexShardId, IndexShardStatus.OPEN);
+
+        this.maxDocumentCount = maxDocumentCount;
+
+//
+//        switch (indexShard.getStatus()) {
+//            case DELETED:
+//                throw new IndexException("Attempt to open an index shard that is deleted");
+//            case CORRUPT:
+//                throw new IndexException("Attempt to open an index shard that is corrupt");
+//            case FINAL:
+//                throw new IndexException("Attempt to open an index shard that is final");
+//        }
     }
 
     @Override
-    public boolean isOpen() {
-        return false;
-    }
+    public void addDocument(final Document document) {
+        try {
+            if (documentCount.getAndIncrement() >= maxDocumentCount) {
+                throw new IndexException("Shard is full");
+            }
 
-    @Override
-    public IndexShard getIndexShard() {
-        final IndexShard indexShard = new IndexShard();
-        indexShard.setId(idGen.getAndIncrement());
-        return indexShard;
-    }
+            // Create a new document and copy the fields.
+            final Document doc = new Document();
+            for (final IndexableField field : document.getFields()) {
+                doc.add(field);
+            }
+            documents.add(doc);
 
-    @Override
-    public void destroy() {
-        close();
-    }
-
-    @Override
-    public boolean close() {
-        return true;
-    }
-
-    @Override
-    public void check() {
-    }
-
-    @Override
-    public boolean delete() {
-        return true;
-    }
-
-    @Override
-    public boolean deleteFromDisk() {
-        return false;
-    }
-
-    @Override
-    public boolean addDocument(final Document document) {
-        // Create a new document and copy the fields.
-        final Document doc = new Document();
-        for (final IndexableField field : document.getFields()) {
-            doc.add(field);
+        } catch (final Throwable e) {
+            documentCount.decrementAndGet();
+            throw e;
         }
-        documents.add(doc);
-        return true;
     }
 
-    @Override
-    public void updateIndex(final Index index) {
-    }
-
-    @Override
-    public boolean flush() {
-        return true;
-    }
-
-    public List<Document> getDocuments() {
+    List<Document> getDocuments() {
         return documents;
+    }
+
+    @Override
+    public IndexWriter getWriter() {
+        return null;
     }
 
     @Override
@@ -101,37 +87,14 @@ public class MockIndexShardWriter implements IndexShardWriter {
     }
 
     @Override
-    public Long getFileSize() {
-        return null;
+    public void updateIndexConfig(final IndexConfig indexConfig) {
     }
 
     @Override
-    public boolean isFull() {
-        return false;
+    public void flush() {
     }
 
     @Override
-    public String getPartition() {
-        return null;
-    }
-
-    @Override
-    public boolean isClosed() {
-        return false;
-    }
-
-    @Override
-    public boolean isDeleted() {
-        return false;
-    }
-
-    @Override
-    public boolean isCorrupt() {
-        return false;
-    }
-
-    @Override
-    public IndexWriter getWriter() {
-        return null;
+    public void destroy() {
     }
 }

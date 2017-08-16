@@ -28,21 +28,9 @@ public final class Characters extends BaseEvent {
     private final String chars;
 
     /**
-     * Helper to build a simple Characters element.
-     *
-     * @param chars
-     *            string
-     * @return built object
-     */
-    public static Characters createSimple(final String chars) {
-        return new Characters(chars);
-    }
-
-    /**
      * Used to build a simple Characters element outside of a SAX event.
      *
-     * @param chars
-     *            string
+     * @param chars string
      * @return built object
      */
     private Characters(final String chars) {
@@ -52,24 +40,29 @@ public final class Characters extends BaseEvent {
     /**
      * Stores a characters SAX event.
      *
-     * @param ch
-     *            the characters from the XML document
-     * @param start
-     *            the start position in the array
-     * @param length
-     *            the number of characters to read from the array
+     * @param ch     the characters from the XML document
+     * @param start  the start position in the array
+     * @param length the number of characters to read from the array
      */
     public Characters(final char[] ch, final int start, final int length) {
         chars = new String(ch, start, length);
     }
 
     /**
+     * Helper to build a simple Characters element.
+     *
+     * @param chars string
+     * @return built object
+     */
+    public static Characters createSimple(final String chars) {
+        return new Characters(chars);
+    }
+
+    /**
      * Fires a stored SAX event at the supplied content handler.
      *
-     * @param handler
-     *            The content handler to fire the SAX event at.
-     * @throws SAXException
-     *             Necessary to maintain the SAX event contract.
+     * @param handler The content handler to fire the SAX event at.
+     * @throws SAXException Necessary to maintain the SAX event contract.
      * @see Event#fire(org.xml.sax.ContentHandler)
      */
     @Override
@@ -82,7 +75,6 @@ public final class Characters extends BaseEvent {
      * Returns a string representation of this stores SAX event.
      *
      * @return A string representation of this stored SAX event.
-     *
      * @see java.lang.Object#toString()
      */
     @Override

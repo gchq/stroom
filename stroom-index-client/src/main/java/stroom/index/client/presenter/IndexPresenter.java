@@ -19,8 +19,6 @@ package stroom.index.client.presenter;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.entity.client.event.DirtyEvent;
-import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.EntityEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
@@ -67,6 +65,12 @@ public class IndexPresenter extends EntityEditTabPresenter<LinkTabPanelView, Ind
     @Override
     public void onRead(final Index index) {
         tabContentProvider.read(index);
+    }
+
+    @Override
+    public void onPermissionsCheck(final boolean readOnly) {
+        super.onPermissionsCheck(readOnly);
+        tabContentProvider.onPermissionsCheck(readOnly);
     }
 
     @Override

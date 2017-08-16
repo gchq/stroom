@@ -38,10 +38,6 @@ public class StroomStreamException extends RuntimeException {
         this.stroomStatusCode = stroomStatusCode;
     }
 
-    public StroomStatusCode getStroomStatusCode() {
-        return stroomStatusCode;
-    }
-
     private static String buildMessage(final StroomStatusCode stroomStatusCode, final Object[] args) {
         final StringBuilder builder = new StringBuilder();
         builder.append("Stroom Status ");
@@ -166,5 +162,9 @@ public class StroomStreamException extends RuntimeException {
         stringBuilder.append(" - ");
 
         unwrapMessage(stringBuilder, th.getCause(), depth - 1);
+    }
+
+    public StroomStatusCode getStroomStatusCode() {
+        return stroomStatusCode;
     }
 }

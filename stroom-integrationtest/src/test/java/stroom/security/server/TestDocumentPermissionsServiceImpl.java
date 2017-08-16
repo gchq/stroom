@@ -21,17 +21,15 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.TransactionException;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestScenarioCreator;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefUtil;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
 import stroom.query.api.v1.DocRef;
 import stroom.security.shared.DocumentPermissions;
-import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
-import stroom.security.shared.UserService;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestScenarioCreator;
 import stroom.util.test.FileSystemTestUtil;
 
 import javax.annotation.Resource;
@@ -159,11 +157,11 @@ public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationT
 
         final Set<UserRef> allUsers = new HashSet<>();
         allUsers.add(user);
-        allUsers.addAll(userGroupsCache.get(user));
+        allUsers.addAll(userGroupsCache.getOrCreate(user));
 
         final Set<String> combinedPermissions = new HashSet<>();
         for (final UserRef userRef : allUsers) {
-            final DocumentPermissions documentPermissions = documentPermissionsCache.get(docRef);
+            final DocumentPermissions documentPermissions = documentPermissionsCache.getOrCreate(docRef);
             final Set<String> userPermissions = documentPermissions.getPermissionsForUser(userRef);
             combinedPermissions.addAll(userPermissions);
         }
@@ -175,18 +173,18 @@ public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationT
     }
 
     private UserRef createUser(final String name) {
-        User user = userService.createUser(name);
+        UserRef userRef = userService.createUser(name);
+        Assert.assertNotNull(userRef);
+        final User user = userService.loadByUuid(userRef.getUuid());
         Assert.assertNotNull(user);
-        user = userService.load(user);
-        Assert.assertNotNull(user);
-        return UserRef.create(user);
+        return UserRefFactory.create(user);
     }
 
     private UserRef createUserGroup(final String name) {
-        User user = userService.createUserGroup(name);
+        UserRef userRef = userService.createUserGroup(name);
+        Assert.assertNotNull(userRef);
+        final User user = userService.loadByUuid(userRef.getUuid());
         Assert.assertNotNull(user);
-        user = userService.load(user);
-        Assert.assertNotNull(user);
-        return UserRef.create(user);
+        return UserRefFactory.create(user);
     }
 }

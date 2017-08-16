@@ -22,15 +22,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.GenericEntityService;
-import stroom.entity.server.UserManagerQueryUtil;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocumentEntityService;
-import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.FindFolderCriteria;
 import stroom.entity.shared.Folder;
-import stroom.entity.shared.FolderIdSet;
 import stroom.entity.shared.FolderService;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.security.SecurityContext;
@@ -61,11 +58,6 @@ public class FolderServiceImpl extends DocumentEntityServiceImpl<Folder, FindFol
     @Override
     public Class<Folder> getEntityClass() {
         return Folder.class;
-    }
-
-    @Override
-    public EntityIdSet<Folder> buildNestedFolderList(final FolderIdSet queryFolderIdSet) {
-        return UserManagerQueryUtil.buildNestedFolderList(getEntityManager(), queryFolderIdSet);
     }
 
     @Override

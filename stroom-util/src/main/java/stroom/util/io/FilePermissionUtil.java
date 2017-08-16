@@ -57,7 +57,7 @@ public class FilePermissionUtil {
         System.out.println("Setting Permission ");
         System.out.println();
 
-        Set<PosixFilePermission> newFilePermissions = new HashSet<PosixFilePermission>();
+        Set<PosixFilePermission> newFilePermissions = new HashSet<>();
         for (PosixFilePermission filePermission : filePermissions) {
             if (filePermission.equals(PosixFilePermission.OWNER_WRITE)) {
                 newFilePermissions.add(PosixFilePermission.OWNER_READ);

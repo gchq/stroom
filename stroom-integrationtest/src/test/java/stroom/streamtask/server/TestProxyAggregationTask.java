@@ -18,11 +18,10 @@ package stroom.streamtask.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestScenarioCreator;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.shared.Feed;
 import stroom.io.SeekableInputStream;
+import stroom.proxy.repo.StroomZipFile;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.fs.serializable.NestedInputStream;
@@ -30,12 +29,13 @@ import stroom.streamstore.server.fs.serializable.RANestedInputStream;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.spring.DummyTask;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.util.test.StroomExpectedException;
-import stroom.util.zip.StroomZipFile;
 
 import javax.annotation.Resource;
 import java.io.BufferedOutputStream;
@@ -344,7 +344,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     }
 
     private void writeTestFileWithContext(final File testFile, final Feed eventFeed, final String content,
-            final String context) throws IOException {
+                                          final String context) throws IOException {
         testFile.getParentFile().mkdirs();
         final FileOutputStream fileOutputStream = new FileOutputStream(testFile);
         final ZipOutputStream zipOutputStream = new ZipOutputStream(fileOutputStream);
@@ -353,6 +353,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         printWriter.println("Feed:" + eventFeed.getName());
         printWriter.println("Proxy:ProxyTest");
         printWriter.println("Compression:Zip");
+        printWriter.println("ReceivedTime:2010-01-01T00:00:00.000Z");
         printWriter.flush();
         zipOutputStream.closeEntry();
         zipOutputStream.putNextEntry(new ZipEntry("file1.dat"));
@@ -375,6 +376,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         PrintWriter printWriter = new PrintWriter(zipOutputStream);
         printWriter.println("Feed:" + eventFeed.getName());
         printWriter.println("Proxy:ProxyTest");
+        printWriter.println("ReceivedTime:2010-01-01T00:00:00.000Z");
         printWriter.flush();
         zipOutputStream.closeEntry();
         zipOutputStream.putNextEntry(new ZipEntry(StroomZipFile.SINGLE_DATA_ENTRY.getFullName()));

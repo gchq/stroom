@@ -23,15 +23,14 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import stroom.entity.shared.MockitoEntityServiceUtil;
 import stroom.node.server.MockStroomPropertyService;
-import stroom.security.shared.User;
-import stroom.security.shared.User.UserStatus;
-import stroom.security.shared.UserService;
+import stroom.security.shared.UserStatus;
 import stroom.util.date.DateUtil;
 import stroom.util.test.FileSystemTestUtil;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TestUserManagerImpl {
     private final MockStroomPropertyService mockProperty = new MockStroomPropertyService();
+
     @Mock
     private UserService userService;
 

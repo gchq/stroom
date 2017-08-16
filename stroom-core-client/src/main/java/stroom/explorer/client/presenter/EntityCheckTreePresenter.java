@@ -32,11 +32,7 @@ import java.util.Set;
 
 public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreePresenter.EntityCheckTreeView>
         implements HasDataSelectionHandlers<Set<ExplorerData>> {
-    public interface EntityCheckTreeView extends View {
-        void setCellTree(Widget cellTree);
-    }
-
-//    private final TickBoxSelectionModel<ExplorerData> selectionModel;
+    //    private final TickBoxSelectionModel<ExplorerData> selectionModel;
     private final ExplorerTickBoxTree explorerTree;
 
     @Inject
@@ -139,6 +135,10 @@ public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreeP
         explorerTree.getTreeModel().setRequiredPermissions(requiredPermissions);
     }
 
+    public void refresh() {
+        explorerTree.getTreeModel().refresh();
+    }
+
 //    public void setRemoveOrphans(final boolean removeOrphans) {
 //        treeModel.setRemoveOrphans(removeOrphans);
 //    }
@@ -147,10 +147,6 @@ public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreeP
 //        treeModel.refresh(openItems, depth);
 //    }
 
-    public void refresh() {
-        explorerTree.getTreeModel().refresh();
-    }
-
     public TickBoxSelectionModel getSelectionModel() {
         return explorerTree.getSelectionModel();
     }
@@ -158,5 +154,9 @@ public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreeP
     @Override
     public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<Set<ExplorerData>> handler) {
         return addHandlerToSource(DataSelectionEvent.getType(), handler);
+    }
+
+    public interface EntityCheckTreeView extends View {
+        void setCellTree(Widget cellTree);
     }
 }

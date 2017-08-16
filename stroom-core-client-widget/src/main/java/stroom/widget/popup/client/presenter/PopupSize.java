@@ -37,12 +37,12 @@ public class PopupSize {
     }
 
     public PopupSize(final int width, final int height, final Integer minWidth, final Integer minHeight,
-            final boolean resizable) {
+                     final boolean resizable) {
         this(width, height, minWidth, minHeight, null, null, resizable);
     }
 
     public PopupSize(final int width, final int height, final Integer minWidth, final Integer minHeight,
-            final Integer maxWidth, final Integer maxHeight, final boolean resizable) {
+                     final Integer maxWidth, final Integer maxHeight, final boolean resizable) {
         this.width = width;
         this.height = height;
         this.minWidth = minWidth;

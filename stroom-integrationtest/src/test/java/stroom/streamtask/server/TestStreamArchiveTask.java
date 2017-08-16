@@ -18,9 +18,6 @@ package stroom.streamtask.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestControl;
-import stroom.CommonTestScenarioCreator;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.jobsystem.server.MockTask;
@@ -39,6 +36,9 @@ import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
 import stroom.task.server.TaskManager;
 import stroom.task.server.TaskMonitorImpl;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestControl;
+import stroom.test.CommonTestScenarioCreator;
 import stroom.util.config.StroomProperties;
 import stroom.volume.server.VolumeServiceImpl;
 
@@ -49,7 +49,7 @@ import java.util.List;
 
 /**
  * Test the archiving stuff.
- *
+ * <p>
  * Create some old files and make sure they get archived.
  */
 public class TestStreamArchiveTask extends AbstractCoreIntegrationTest {

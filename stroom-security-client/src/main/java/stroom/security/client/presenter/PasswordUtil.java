@@ -29,8 +29,7 @@ public final class PasswordUtil {
     }
 
     /**
-     * @param password
-     *            Check a password.
+     * @param password Check a password.
      * @return OK or not
      */
     public static boolean isOkPassword(final String password) {

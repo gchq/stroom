@@ -50,7 +50,7 @@ public class TaskExecutor {
         }
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private Task execNextTask() {
         Task<?> task = null;
 

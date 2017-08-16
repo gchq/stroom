@@ -16,7 +16,6 @@
 
 package stroom.help.client;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -26,7 +25,7 @@ import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 public class HelpPlugin extends Plugin {
@@ -45,13 +44,11 @@ public class HelpPlugin extends Plugin {
         clientPropertyCache.get()
                 .onSuccess(result -> {
                     IconMenuItem helpMenuItem;
-                    String helpUrl = result.get(ClientProperties.HELP_URL);
-                    if (helpUrl != null && !helpUrl.equals("")) {
-                        helpMenuItem = new IconMenuItem(1, GlyphIcons.HELP, GlyphIcons.HELP, "Help", null, true, () -> Window.open(GWT.getHostPageBaseURL() + result.get(ClientProperties.HELP_URL), "_blank", ""));
+                    final String helpUrl = result.get(ClientProperties.HELP_URL);
+                    if (helpUrl != null && helpUrl.trim().length() > 0) {
+                        helpMenuItem = new IconMenuItem(1, SvgPresets.HELP, SvgPresets.HELP, "Help", null, true, () -> Window.open(helpUrl, "_blank", ""));
                     } else {
-                        helpMenuItem = new IconMenuItem(1, GlyphIcons.HELP, GlyphIcons.HELP, "Help is not configured!", null, true, () -> {
-                            // We're not going to try and do anything here.
-                        });
+                        helpMenuItem = new IconMenuItem(1, SvgPresets.HELP, SvgPresets.HELP, "Help is not configured!", null, false, null);
                     }
 
                     event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU, helpMenuItem);

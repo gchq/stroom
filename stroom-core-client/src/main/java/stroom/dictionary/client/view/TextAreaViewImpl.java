@@ -28,11 +28,7 @@ import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.dictionary.client.presenter.TextAreaPresenter.TextAreaView;
 
 public class TextAreaViewImpl extends ViewImpl implements TextAreaView {
-    public interface Binder extends UiBinder<Widget, TextAreaViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     TextArea textArea;
 
@@ -64,5 +60,8 @@ public class TextAreaViewImpl extends ViewImpl implements TextAreaView {
     @Override
     public void fireEvent(final GwtEvent<?> event) {
         widget.fireEvent(event);
+    }
+
+    public interface Binder extends UiBinder<Widget, TextAreaViewImpl> {
     }
 }

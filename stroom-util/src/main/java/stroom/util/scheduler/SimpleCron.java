@@ -25,7 +25,7 @@ import java.util.TimeZone;
 /**
  * Class to figure out the next time we should fire based on a simple CRON
  * expression.
- *
+ * <p>
  * E.g. 0 * * Every Hour 1,30 * * Every Half Hour
  */
 public class SimpleCron {
@@ -53,7 +53,7 @@ public class SimpleCron {
             throw new MalformedCronException("Cron expression must contain 3 parts");
         }
 
-        cronParts = new ArrayList<CronPart>(3);
+        cronParts = new ArrayList<>(3);
         cronParts.add(new CronPart(Calendar.MINUTE, parts[0]));
         cronParts.add(new CronPart(Calendar.HOUR_OF_DAY, parts[1]));
         cronParts.add(new CronPart(Calendar.DAY_OF_MONTH, parts[2]));
@@ -64,8 +64,7 @@ public class SimpleCron {
      * SimpleCron object. Note that any errors in the expression will result in
      * a MalformedCronException being thrown.
      *
-     * @param expression
-     *            The cron expression to compile into this SimpleCron object.
+     * @param expression The cron expression to compile into this SimpleCron object.
      */
     public static SimpleCron compile(final String expression) {
         return new SimpleCron(expression);
@@ -178,7 +177,7 @@ public class SimpleCron {
     /**
      * Used when the time wraps to set the time to the best CRON match. e.g. 2,8
      * for hours would move 0H to 2H.
-     *
+     * <p>
      * Also recurses into lower order CRON's.
      */
     private void reset(final int cronIndex, final Calendar time, final boolean forward) {

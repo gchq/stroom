@@ -30,11 +30,10 @@ public class ServiceDiscoveryRegistrar implements HasHealthCheck {
 
     private static final String PROP_KEY_SERVICE_HOST_OR_IP = "stroom.serviceDiscovery.servicesHostNameOrIpAddress";
     private static final String PROP_KEY_SERVICE_PORT = "stroom.serviceDiscovery.servicesPort";
-
-    private HealthCheck.Result health;
     private final ServiceDiscoveryManager serviceDiscoveryManager;
     private final String hostNameOrIpAddress;
     private final int servicePort;
+    private HealthCheck.Result health;
 
     @Inject
     public ServiceDiscoveryRegistrar(final ServiceDiscoveryManager serviceDiscoveryManager,
@@ -97,7 +96,7 @@ public class ServiceDiscoveryRegistrar implements HasHealthCheck {
     }
 
     private ServiceInstance<String> registerResource(final RegisteredService registeredService,
-                                  final ServiceDiscovery<String> serviceDiscovery) {
+                                                     final ServiceDiscovery<String> serviceDiscovery) {
         try {
             UriSpec uriSpec = new UriSpec("{scheme}://{address}:{port}" +
                     ResourcePaths.ROOT_PATH +

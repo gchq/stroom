@@ -87,7 +87,7 @@ public class TestStatisticsDataSourceMarshaller extends StroomUnitTest {
     }
 
     private CustomRollUpMask buildMask(final int... positions) {
-        final List<Integer> list = new ArrayList<Integer>();
+        final List<Integer> list = new ArrayList<>();
 
         for (final int pos : positions) {
             list.add(pos);

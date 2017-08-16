@@ -54,7 +54,7 @@ class SessionListHandler extends AbstractTaskHandler<SessionListAction, ResultLi
                         new FindServiceClusterTask<BaseCriteria, SessionDetails>(ServerTask.INTERNAL_PROCESSING_USER_TOKEN, "Get session list", SessionListService.class, null),
                         TargetType.ACTIVE);
 
-        final ArrayList<SessionDetails> rtnList = new ArrayList<SessionDetails>();
+        final ArrayList<SessionDetails> rtnList = new ArrayList<>();
 
         for (final Entry<Node, ClusterCallEntry<ResultList<SessionDetails>>> call : collector.getResponseMap()
                 .entrySet()) {

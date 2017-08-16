@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -76,28 +76,28 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
             long time = DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z");
             long baseTime = effectiveStreamPool.getBaseTime(time);
             effectiveStreamPool
-                    .get(new EffectiveStreamKey(feedRef, StreamType.REFERENCE.getName(), baseTime));
+                    .getOrCreate(new EffectiveStreamKey(feedRef, StreamType.REFERENCE.getName(), baseTime));
             Assert.assertEquals("Database call", 1, findEffectiveStreamSourceCount);
 
             // Still in window
             time = DateUtil.parseNormalDateTimeString("2010-01-01T13:00:00.000Z");
             baseTime = effectiveStreamPool.getBaseTime(time);
             effectiveStreamPool
-                    .get(new EffectiveStreamKey(feedRef, StreamType.REFERENCE.getName(), baseTime));
+                    .getOrCreate(new EffectiveStreamKey(feedRef, StreamType.REFERENCE.getName(), baseTime));
             Assert.assertEquals("Database call", 1, findEffectiveStreamSourceCount);
 
             // After window ...
             time = DateUtil.parseNormalDateTimeString("2010-01-15T13:00:00.000Z");
             baseTime = effectiveStreamPool.getBaseTime(time);
             effectiveStreamPool
-                    .get(new EffectiveStreamKey(feedRef, StreamType.REFERENCE.getName(), baseTime));
+                    .getOrCreate(new EffectiveStreamKey(feedRef, StreamType.REFERENCE.getName(), baseTime));
             Assert.assertEquals("Database call", 2, findEffectiveStreamSourceCount);
 
             // Before window ...
             time = DateUtil.parseNormalDateTimeString("2009-12-15T13:00:00.000Z");
             baseTime = effectiveStreamPool.getBaseTime(time);
             effectiveStreamPool
-                    .get(new EffectiveStreamKey(feedRef, StreamType.REFERENCE.getName(), baseTime));
+                    .getOrCreate(new EffectiveStreamKey(feedRef, StreamType.REFERENCE.getName(), baseTime));
             Assert.assertEquals("Database call", 3, findEffectiveStreamSourceCount);
         } catch (final Exception e) {
             throw new RuntimeException(e.getMessage(), e);

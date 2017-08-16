@@ -32,14 +32,14 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ScriptPlugin extends EntityPlugin<Script> {
-    public static final Set<String> FETCH_SET = new HashSet<String>();
+    public static final Set<String> FETCH_SET = new HashSet<>();
 
     private final Provider<ScriptPresenter> editorProvider;
 
     @Inject
     public ScriptPlugin(final EventBus eventBus, final Provider<ScriptPresenter> editorProvider,
-            final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
-            final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager) {
+                        final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
+                        final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager) {
         super(eventBus, dispatcher, securityContext, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
     }

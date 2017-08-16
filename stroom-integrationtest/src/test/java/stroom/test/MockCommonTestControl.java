@@ -21,7 +21,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-import stroom.CommonTestControl;
 import stroom.entity.shared.Clearable;
 import stroom.util.spring.StroomSpringProfiles;
 

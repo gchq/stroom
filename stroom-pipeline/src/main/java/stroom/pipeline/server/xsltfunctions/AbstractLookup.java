@@ -38,67 +38,11 @@ import javax.annotation.Resource;
 import java.util.List;
 
 public abstract class AbstractLookup extends StroomExtensionFunctionCall {
-    public static class SequenceMaker {
-        private final XPathContext context;
-        private Builder builder;
-        private EventListConsumer consumer;
-
-        public SequenceMaker(final XPathContext context) {
-            this.context = context;
-        }
-
-        public void open() throws XPathException {
-            // Make sure we have made a consumer.
-            ensureConsumer();
-
-            // TODO : Possibly replace NPEventList with TinyTree to improve
-            // performance.
-            consumer.startDocument();
-        }
-
-        public void close() throws XPathException {
-            consumer.endDocument();
-        }
-
-        public void consume(final NPEventList eventList) throws XPathException {
-            // TODO : Possibly replace NPEventList with TinyTree to improve
-            // performance.
-            consumer.consume(eventList);
-        }
-
-        private void ensureConsumer() {
-            if (consumer == null) {
-                // We have some reference data so build a tiny tree.
-                final Configuration configuration = context.getConfiguration();
-
-                final PipelineConfiguration pipe = configuration.makePipelineConfiguration();
-
-                builder = new TinyBuilder(pipe);
-                consumer = new EventListConsumer(builder, pipe);
-            }
-        }
-
-        public Sequence toSequence() {
-            if (builder == null) {
-                return EmptyAtomicSequence.getInstance();
-            }
-
-            final Sequence sequence = builder.getCurrentRoot();
-
-            // Reset the builder, detaching it from the constructed document.
-            builder.reset();
-
-            return sequence;
-        }
-    }
-
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLookup.class);
-
     @Resource
     private ReferenceData referenceData;
     @Resource
     private StreamHolder streamHolder;
-
     private long defaultMs = -1;
 
     @Override
@@ -163,11 +107,11 @@ public abstract class AbstractLookup extends StroomExtensionFunctionCall {
     }
 
     protected abstract Sequence doLookup(final XPathContext context, final String map, final String key,
-            final long eventTime, final boolean ignoreWarnings, final StringBuilder lookupIdentifier)
-                    throws XPathException;
+                                         final long eventTime, final boolean ignoreWarnings, final StringBuilder lookupIdentifier)
+            throws XPathException;
 
     EventList getReferenceData(final String map, final String key, final long eventTime,
-            final StringBuilder lookupIdentifier) {
+                               final StringBuilder lookupIdentifier) {
         EventList result = null;
 
         final List<PipelineReference> pipelineReferences = getPipelineReferences();
@@ -189,7 +133,7 @@ public abstract class AbstractLookup extends StroomExtensionFunctionCall {
     }
 
     void createLookupFailWarning(final XPathContext context, final String map, final String key, final long eventTime,
-            final Throwable e) {
+                                 final Throwable e) {
         // Create the message.
         final StringBuilder sb = new StringBuilder();
         sb.append("Lookup failed ");
@@ -206,5 +150,59 @@ public abstract class AbstractLookup extends StroomExtensionFunctionCall {
         sb.append(", eventTime = ");
         sb.append(DateUtil.createNormalDateTimeString(eventTime));
         sb.append(")");
+    }
+
+    public static class SequenceMaker {
+        private final XPathContext context;
+        private Builder builder;
+        private EventListConsumer consumer;
+
+        public SequenceMaker(final XPathContext context) {
+            this.context = context;
+        }
+
+        public void open() throws XPathException {
+            // Make sure we have made a consumer.
+            ensureConsumer();
+
+            // TODO : Possibly replace NPEventList with TinyTree to improve
+            // performance.
+            consumer.startDocument();
+        }
+
+        public void close() throws XPathException {
+            consumer.endDocument();
+        }
+
+        public void consume(final NPEventList eventList) throws XPathException {
+            // TODO : Possibly replace NPEventList with TinyTree to improve
+            // performance.
+            consumer.consume(eventList);
+        }
+
+        private void ensureConsumer() {
+            if (consumer == null) {
+                // We have some reference data so build a tiny tree.
+                final Configuration configuration = context.getConfiguration();
+
+                final PipelineConfiguration pipe = configuration.makePipelineConfiguration();
+
+                builder = new TinyBuilder(pipe);
+                consumer = new EventListConsumer(builder, pipe);
+            }
+        }
+
+        public Sequence toSequence() {
+            if (builder == null) {
+                return EmptyAtomicSequence.getInstance();
+            }
+
+            final Sequence sequence = builder.getCurrentRoot();
+
+            // Reset the builder, detaching it from the constructed document.
+            builder.reset();
+
+            return sequence;
+        }
     }
 }

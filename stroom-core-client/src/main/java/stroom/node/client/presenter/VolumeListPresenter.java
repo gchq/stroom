@@ -36,7 +36,7 @@ public class VolumeListPresenter extends MyPresenterWidget<DataGridView<Volume>>
 
     @Inject
     public VolumeListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
-        super(eventBus, new DataGridViewImpl<Volume>(true, true));
+        super(eventBus, new DataGridViewImpl<>(true, true));
 
 //        selectionModel = new MySingleSelectionModel<>();
 //        getView().setSelectionModel(selectionModel);
@@ -111,7 +111,7 @@ public class VolumeListPresenter extends MyPresenterWidget<DataGridView<Volume>>
         };
         getView().addResizableColumn(indexStatusColumn, "Index Status", 90);
 
-        getView().addEndColumn(new EndColumn<Volume>());
+        getView().addEndColumn(new EndColumn<>());
     }
 
     public void setData(final List<Volume> volumes) {

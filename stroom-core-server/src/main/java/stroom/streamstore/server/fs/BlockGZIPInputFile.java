@@ -35,30 +35,6 @@ public class BlockGZIPInputFile extends BlockGZIPInput {
 
     private final StreamCloser streamCloser = new StreamCloser();
 
-    RandomAccessFile getRaFile() {
-        return raFile;
-    }
-
-    /**
-     * Class to interface a stream to a random access file.
-     */
-    class RAInputStreamBufferAdaptor extends InputStream {
-        @Override
-        public int read() throws IOException {
-            return getRaFile().read();
-        }
-
-        @Override
-        public int read(final byte[] b) throws IOException {
-            return getRaFile().read(b);
-        }
-
-        @Override
-        public int read(final byte[] b, final int off, final int len) throws IOException {
-            return getRaFile().read(b, off, len);
-        }
-    }
-
     /**
      * Constructor to open a Block GZIP File.
      */
@@ -86,6 +62,23 @@ public class BlockGZIPInputFile extends BlockGZIPInput {
 
         // Make sure the streams are closed.
         streamCloser.add(raFile);
+    }
+
+    public static void main(final String[] args) throws IOException {
+        final BlockGZIPInputFile is = new BlockGZIPInputFile(new File(args[0]));
+
+        final byte[] buffer = new byte[1024];
+        int len = 0;
+
+        while ((len = is.read(buffer)) != -1) {
+            System.out.write(buffer, 0, len);
+        }
+
+        System.out.flush();
+    }
+
+    RandomAccessFile getRaFile() {
+        return raFile;
     }
 
     /**
@@ -229,22 +222,29 @@ public class BlockGZIPInputFile extends BlockGZIPInput {
         return position;
     }
 
-    public static void main(final String[] args) throws IOException {
-        final BlockGZIPInputFile is = new BlockGZIPInputFile(new File(args[0]));
-
-        final byte[] buffer = new byte[1024];
-        int len = 0;
-
-        while ((len = is.read(buffer)) != -1) {
-            System.out.write(buffer, 0, len);
-        }
-
-        System.out.flush();
-    }
-
     @Override
     protected InputStream getRawStream() {
         return new RAInputStreamBufferAdaptor();
+    }
+
+    /**
+     * Class to interface a stream to a random access file.
+     */
+    class RAInputStreamBufferAdaptor extends InputStream {
+        @Override
+        public int read() throws IOException {
+            return getRaFile().read();
+        }
+
+        @Override
+        public int read(final byte[] b) throws IOException {
+            return getRaFile().read(b);
+        }
+
+        @Override
+        public int read(final byte[] b, final int off, final int len) throws IOException {
+            return getRaFile().read(b, off, len);
+        }
     }
 
 }

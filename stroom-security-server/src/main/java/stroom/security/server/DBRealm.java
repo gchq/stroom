@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,10 +37,8 @@ import stroom.security.server.exception.DisabledException;
 import stroom.security.server.exception.LockedException;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.PermissionNames;
-import stroom.security.shared.User;
-import stroom.security.shared.User.UserStatus;
 import stroom.security.shared.UserRef;
-import stroom.security.shared.UserService;
+import stroom.security.shared.UserStatus;
 import stroom.util.cert.CertificateUtil;
 import stroom.util.shared.EqualsUtil;
 
@@ -51,7 +49,7 @@ import java.util.regex.Pattern;
 public class DBRealm extends AuthenticatingRealm {
     private static final Logger LOGGER = LoggerFactory.getLogger(DBRealm.class);
 
-    public static final String ADMINISTRATORS = "Administrators";
+    private static final String ADMINISTRATORS = "Administrators";
 
     private final UserService userService;
     private final UserAppPermissionService userAppPermissionService;
@@ -74,8 +72,9 @@ public class DBRealm extends AuthenticatingRealm {
 
     @Override
     public boolean supports(final AuthenticationToken token) {
-        return token != null
-                && (token instanceof JWTAuthenticationToken || token instanceof UsernamePasswordToken || token instanceof CertificateAuthenticationToken);
+        return token != null && (token instanceof UsernamePasswordToken ||
+                token instanceof CertificateAuthenticationToken ||
+                token instanceof JWTAuthenticationToken);
     }
 
     @Override
@@ -114,7 +113,7 @@ public class DBRealm extends AuthenticatingRealm {
 
         if (user != null) {
             check(user);
-            return new SimpleAuthenticationInfo(user, user.getPasswordHash(), getName());
+            return new SimpleAuthenticationInfo(UserRefFactory.create(user), user.getPasswordHash(), getName());
         }
 
         return null;
@@ -149,12 +148,12 @@ public class DBRealm extends AuthenticatingRealm {
 
             if (user != null) {
                 check(user);
-                return new SimpleAuthenticationInfo(user, user.getPasswordHash(), getName());
+                return new SimpleAuthenticationInfo(UserRefFactory.create(user), user.getPasswordHash(), getName());
             }
         } catch (final AuthenticationException e) {
             throw e;
         } catch (final Exception e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.debug(e.getMessage(), e);
             throw new BadCredentialsException(e.getMessage());
         }
 
@@ -179,12 +178,12 @@ public class DBRealm extends AuthenticatingRealm {
 
             if (user != null) {
                 check(user);
-                return new SimpleAuthenticationInfo(user, user.getPasswordHash(), getName());
+                return new SimpleAuthenticationInfo(UserRefFactory.create(user), user.getPasswordHash(), getName());
             }
         } catch (final AuthenticationException e) {
             throw e;
         } catch (final Exception e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.debug(e.getMessage(), e);
             throw new BadCredentialsException(e.getMessage());
         }
 
@@ -236,7 +235,7 @@ public class DBRealm extends AuthenticatingRealm {
                 createOrRefreshAdminUserGroup();
             }
 
-            UserRef userRef = userService.getUserRefByName(username);
+            UserRef userRef = userService.getUserByName(username);
             if (userRef == null) {
                 // The requested system user does not exist.
                 if (UserService.INITIAL_ADMIN_ACCOUNT.equals(username)) {
@@ -245,7 +244,7 @@ public class DBRealm extends AuthenticatingRealm {
             }
 
             if (userRef != null) {
-                user = userService.loadByUuidInsecure(userRef.getUuid());
+                user = userService.loadByUuid(userRef.getUuid());
             }
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
@@ -262,7 +261,7 @@ public class DBRealm extends AuthenticatingRealm {
         // Ensure all perms have been created
         userAppPermissionService.init();
 
-        UserRef userRef = userService.getUserRefByName(UserService.INITIAL_ADMIN_ACCOUNT);
+        UserRef userRef = userService.getUserByName(UserService.INITIAL_ADMIN_ACCOUNT);
         if (userRef == null) {
             User user = new User();
             user.setName(UserService.INITIAL_ADMIN_ACCOUNT);
@@ -271,13 +270,13 @@ public class DBRealm extends AuthenticatingRealm {
 
             final UserRef userGroup = createOrRefreshAdminUserGroup();
             try {
-                userService.addUserToGroup(UserRef.create(user), userGroup);
+                userService.addUserToGroup(UserRefFactory.create(user), userGroup);
             } catch (final RuntimeException e) {
                 // Expected.
                 LOGGER.debug(e.getMessage());
             }
 
-            userRef = UserRef.create(user);
+            userRef = UserRefFactory.create(user);
         }
 
         return userRef;
@@ -296,18 +295,19 @@ public class DBRealm extends AuthenticatingRealm {
         final FindUserCriteria findUserGroupCriteria = new FindUserCriteria(userGroupName, true);
         findUserGroupCriteria.getFetchSet().add(Permission.ENTITY_TYPE);
 
-        User userGroup = userService.find(findUserGroupCriteria).getFirst();
-        if (userGroup == null) {
-            userGroup = userService.createUserGroup(userGroupName);
-
-            try {
-                userAppPermissionService.addPermission(UserRef.create(userGroup), PermissionNames.ADMINISTRATOR);
-            } catch (final RuntimeException e) {
-                // Expected.
-                LOGGER.debug(e.getMessage());
-            }
+        final User userGroup = userService.find(findUserGroupCriteria).getFirst();
+        if (userGroup != null) {
+            return UserRefFactory.create(userGroup);
         }
 
-        return UserRef.create(userGroup);
+        final UserRef newUserGroup = userService.createUserGroup(userGroupName);
+        try {
+            userAppPermissionService.addPermission(newUserGroup, PermissionNames.ADMINISTRATOR);
+        } catch (final RuntimeException e) {
+            // Expected.
+            LOGGER.debug(e.getMessage());
+        }
+
+        return newUserGroup;
     }
 }

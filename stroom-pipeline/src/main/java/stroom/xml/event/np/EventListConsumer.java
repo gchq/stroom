@@ -19,6 +19,7 @@ package stroom.xml.event.np;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
 import net.sf.saxon.event.ReceiverOptions;
+import net.sf.saxon.expr.parser.Location;
 import net.sf.saxon.om.CodedName;
 import net.sf.saxon.om.NamePool;
 import net.sf.saxon.trans.XPathException;
@@ -30,6 +31,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class EventListConsumer {
+    private static final Location NULL_LOCATION = new NullLocation();
+
     private static final String EMPTY = "";
     private final Receiver receiver;
     private final PipelineConfiguration pipe;
@@ -72,27 +75,27 @@ public class EventListConsumer {
         for (eventTypeIndex = 0; eventTypeIndex < eventList.eventTypeArr.length; eventTypeIndex++) {
             {
                 switch (eventList.eventTypeArr[eventTypeIndex]) {
-                case NPEventList.START_ELEMENT:
-                    nameCode = eventList.nameCodeArr[nameCodeIndex++];
-                    startElement(namePool, nameCode);
-                    receiver.startContent();
-                    break;
-                case NPEventList.START_ELEMENT_WITH_ATTS:
-                    nameCode = eventList.nameCodeArr[nameCodeIndex++];
-                    startElement(namePool, nameCode);
-                    atts = eventList.attsArr[attsIndex++];
-                    attributes(namePool, atts);
-                    receiver.startContent();
-                    break;
-                case NPEventList.END_ELEMENT:
-                    receiver.endElement();
-                    break;
-                case NPEventList.CHARACTERS:
-                    final int pos = eventList.charPosArr[charPosIndex++];
-                    final CharSlice slice = new CharSlice(eventList.charArr, lastPos, pos - lastPos);
-                    receiver.characters(slice, 0, ReceiverOptions.WHOLE_TEXT_NODE);
-                    lastPos = pos;
-                    break;
+                    case NPEventList.START_ELEMENT:
+                        nameCode = eventList.nameCodeArr[nameCodeIndex++];
+                        startElement(namePool, nameCode);
+                        receiver.startContent();
+                        break;
+                    case NPEventList.START_ELEMENT_WITH_ATTS:
+                        nameCode = eventList.nameCodeArr[nameCodeIndex++];
+                        startElement(namePool, nameCode);
+                        atts = eventList.attsArr[attsIndex++];
+                        attributes(namePool, atts);
+                        receiver.startContent();
+                        break;
+                    case NPEventList.END_ELEMENT:
+                        receiver.endElement();
+                        break;
+                    case NPEventList.CHARACTERS:
+                        final int pos = eventList.charPosArr[charPosIndex++];
+                        final CharSlice slice = new CharSlice(eventList.charArr, lastPos, pos - lastPos);
+                        receiver.characters(slice, NULL_LOCATION, ReceiverOptions.WHOLE_TEXT_NODE);
+                        lastPos = pos;
+                        break;
                 }
             }
         }
@@ -100,7 +103,7 @@ public class EventListConsumer {
 
     private void startElement(final NPEventListNamePool namePool, final int nameCode) throws XPathException {
         final int code = mapCode(namePool, nameCode);
-        receiver.startElement(new CodedName(code, pool), Untyped.getInstance(), 0, ReceiverOptions.NAMESPACE_OK);
+        receiver.startElement(new CodedName(code, pool), Untyped.getInstance(), NULL_LOCATION, ReceiverOptions.NAMESPACE_OK);
     }
 
     private void attributes(final NPEventListNamePool namePool, final NPAttributes atts) throws XPathException {
@@ -108,7 +111,7 @@ public class EventListConsumer {
         for (int a = 0; a < atts.length; a++) {
             code = atts.nameCode[a];
             code = mapCode(namePool, code);
-            receiver.attribute(new CodedName(code, pool), BuiltInAtomicType.UNTYPED_ATOMIC, atts.value[a], 0,
+            receiver.attribute(new CodedName(code, pool), BuiltInAtomicType.UNTYPED_ATOMIC, atts.value[a], NULL_LOCATION,
                     ReceiverOptions.NAMESPACE_OK);
         }
     }
@@ -128,5 +131,32 @@ public class EventListConsumer {
         }
 
         return code;
+    }
+
+    private static class NullLocation implements Location {
+        @Override
+        public String getSystemId() {
+            return null;
+        }
+
+        @Override
+        public String getPublicId() {
+            return null;
+        }
+
+        @Override
+        public int getLineNumber() {
+            return 0;
+        }
+
+        @Override
+        public int getColumnNumber() {
+            return 0;
+        }
+
+        @Override
+        public Location saveLocation() {
+            return this;
+        }
     }
 }

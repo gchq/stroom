@@ -192,6 +192,11 @@ td {
 	z-index: 5;
 }
 
+.stroom-pipeline-stepping-button img {
+	width: 40px;
+	height: 40px;
+}
+
 .stroom-pipeline-stepping-button .face {
 	background: #3385ff;
 }

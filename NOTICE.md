@@ -231,7 +231,7 @@ The table below includes licences for all Maven dependencies. Not included in th
 | org.slf4j                                 | slf4j-api                                    | 1.7.5            | MIT           |         |               |
 | org.slf4j                                 | slf4j-log4j12                                | 1.6.1            | MIT           |         |               |
 | xmlenc                                    | xmlenc                                       | 0.52             | MIT           |         |               |
-| net.sf.saxon                              | Saxon-HE                                     | 9.6.0-6          | MPL 1.0       |         |               |
+| net.sf.saxon                              | Saxon-HE                                     | 9.7.0-18         | MPL 1.0       |         |               |
 | aopalliance                               | aopalliance                                  | 1                | Public domain |         |               |
 | Font Awesome Fonts                        | n/a                                          | 4.4.0            | SIL Open Font |         |               |
 | Font Awesome code                         | n/a                                          | 4.4.0            | MIT           |         |               |

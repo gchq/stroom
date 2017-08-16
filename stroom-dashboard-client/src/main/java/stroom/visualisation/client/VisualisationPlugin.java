@@ -33,8 +33,8 @@ public class VisualisationPlugin extends EntityPlugin<Visualisation> {
 
     @Inject
     public VisualisationPlugin(final EventBus eventBus, final Provider<VisualisationPresenter> editorProvider,
-            final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
-            final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager) {
+                               final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
+                               final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager) {
         super(eventBus, dispatcher, securityContext, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
     }

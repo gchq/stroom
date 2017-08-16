@@ -27,14 +27,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class StreamVolumeUtil {
-    private StreamVolumeUtil() {
-        // NA
-    }
-
     /**
      * Create a positive sequence of numbers
      */
     private static AtomicSequence sequence = new AtomicSequence();
+
+    private StreamVolumeUtil() {
+        // NA
+    }
 
     /**
      * Given a set of volumes pick one that's nearest to us and readable,

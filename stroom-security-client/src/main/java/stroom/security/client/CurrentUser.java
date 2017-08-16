@@ -18,23 +18,17 @@ package stroom.security.client;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.security.client.event.CurrentUserChangedEvent;
 import stroom.security.client.event.RequestLogoutEvent;
 import stroom.security.shared.CheckDocumentPermissionAction;
 import stroom.security.shared.PermissionNames;
-import stroom.security.shared.User;
 import stroom.security.shared.UserAndPermissions;
-import stroom.util.shared.SharedBoolean;
+import stroom.security.shared.UserRef;
 
 import javax.inject.Singleton;
 import java.util.Set;
@@ -43,7 +37,7 @@ import java.util.Set;
 public class CurrentUser implements ClientSecurityContext, HasHandlers {
     private final EventBus eventBus;
     private final Provider<ClientDispatchAsync> dispatcherProvider;
-    private User user;
+    private UserRef userRef;
     private Set<String> permissions;
 
     @Inject
@@ -53,7 +47,7 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     }
 
     public void clear() {
-        this.user = null;
+        this.userRef = null;
         this.permissions = null;
     }
 
@@ -64,7 +58,7 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     public void setUserAndPermissions(final UserAndPermissions userAndPermissions, final boolean fireUserChangedEvent) {
         clear();
         if (userAndPermissions != null) {
-            this.user = userAndPermissions.getUser();
+            this.userRef = userAndPermissions.getUserRef();
             this.permissions = userAndPermissions.getAppPermissionSet();
         }
 
@@ -77,21 +71,21 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
         }
     }
 
-    public User getUser() {
-        return user;
+    public UserRef getUserRef() {
+        return userRef;
     }
 
     @Override
     public String getUserId() {
-        if (user == null) {
+        if (userRef == null) {
             return null;
         }
-        return user.getName();
+        return userRef.getName();
     }
 
     @Override
     public boolean isLoggedIn() {
-        return user != null;
+        return userRef != null;
     }
 
     private boolean isAdmin() {
@@ -110,9 +104,18 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     }
 
     @Override
-    public void hasDocumentPermission(final String documentType, final String documentId, final String permission, final AsyncCallback<Boolean> callback) {
+    public Future<Boolean> hasDocumentPermission(final String documentType, final String documentId, final String permission) {
+        final FutureImpl<Boolean> future = new FutureImpl<>();
+        // Set the default behaviour of the future to show an error.
+        future.onFailure(throwable -> AlertEvent.fireErrorFromException(CurrentUser.this, throwable, null));
+
         final ClientDispatchAsync dispatcher = dispatcherProvider.get();
-        dispatcher.exec(new CheckDocumentPermissionAction(documentType, documentId, permission)).onSuccess(result -> callback.onSuccess(result.getBoolean()));
+
+        dispatcher.exec(new CheckDocumentPermissionAction(documentType, documentId, permission))
+                .onSuccess(result -> future.setResult(result.getBoolean()))
+                .onFailure(future::setThrowable);
+
+        return future;
     }
 
     @Override

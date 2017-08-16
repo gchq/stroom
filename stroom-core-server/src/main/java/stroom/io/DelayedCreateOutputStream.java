@@ -22,7 +22,7 @@ import java.io.OutputStream;
 /**
  * A lazy output stream that only gets created when it is needed. It has a call
  * back that you implement to get hold of the real stream.
- *
+ * <p>
  * If you never write anything to it (i.e. createOutputStream is not called) it
  * does not bother doing anything on close or flush
  */

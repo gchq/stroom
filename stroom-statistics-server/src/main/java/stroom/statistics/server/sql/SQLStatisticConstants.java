@@ -28,9 +28,9 @@ public interface SQLStatisticConstants {
      * when you use the mysql shell and a query like "where name like '%¬%'"
      * will not work. You need to instead do
      * "where name like concat('%',char(172),'%')".
-     *
+     * <p>
      * Stroom can query the table quite happily though.
-     *
+     * <p>
      * e.g StatName1¬Tag1¬Val1¬Tag2¬Val2
      */
     String NAME_SEPARATOR = "¬";

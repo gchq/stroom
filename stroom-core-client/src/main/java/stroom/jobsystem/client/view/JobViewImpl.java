@@ -26,16 +26,11 @@ import stroom.jobsystem.client.presenter.JobPresenter.JobView;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 public class JobViewImpl extends ViewImpl implements JobView {
-    public interface Binder extends UiBinder<Widget, JobViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     ResizeSimplePanel jobList;
     @UiField
     ResizeSimplePanel jobNodeList;
-
     @Inject
     public JobViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -53,5 +48,8 @@ public class JobViewImpl extends ViewImpl implements JobView {
         } else if (JobPresenter.JOB_NODE_LIST.equals(slot)) {
             jobNodeList.setWidget(content);
         }
+    }
+
+    public interface Binder extends UiBinder<Widget, JobViewImpl> {
     }
 }

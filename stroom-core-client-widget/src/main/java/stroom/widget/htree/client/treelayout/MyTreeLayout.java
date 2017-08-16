@@ -21,10 +21,9 @@ import java.util.List;
 import java.util.Map;
 
 public class MyTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
-    private TreeForTreeLayout<TreeNode> tree;
     private final NodeExtentProvider<TreeNode> nodeExtentProvider;
     private final Configuration<TreeNode> configuration;
-
+    private TreeForTreeLayout<TreeNode> tree;
     private Map<TreeNode, Bounds> boundsMap;
     private double boundsX;
     private double boundsY;
@@ -32,7 +31,7 @@ public class MyTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
     private double boundsHeight;
 
     public MyTreeLayout(final NodeExtentProvider<TreeNode> nodeExtentProvider,
-            final Configuration<TreeNode> configuration) {
+                        final Configuration<TreeNode> configuration) {
         this.nodeExtentProvider = nodeExtentProvider;
         this.configuration = configuration;
     }

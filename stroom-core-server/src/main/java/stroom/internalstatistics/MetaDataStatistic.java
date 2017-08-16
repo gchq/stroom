@@ -16,8 +16,8 @@
 
 package stroom.internalstatistics;
 
-import stroom.util.zip.HeaderMap;
+import stroom.feed.MetaMap;
 
 public interface MetaDataStatistic {
-    void recordStatistics(HeaderMap metaData);
+    void recordStatistics(MetaMap metaData);
 }

@@ -36,24 +36,10 @@
 .icon {
     position: absolute;
 	display: inline-block;
+	width: 18px;
+	height: 18px;
 	vertical-align: top;
-}
-
-.face {
-	border: none;
-	outline: none;
-	background: none;
 	cursor: pointer;
-	text-decoration: none;
-	min-width: 16px;
-	min-height: 16px;
-	margin: auto;
-	padding: 0;
-	overflow: hidden;
-	position: relative;
-	color: #5398ff;
-	font-size: 16px;
-	opacity: 1;
 }
 
 .disabled {

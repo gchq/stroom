@@ -70,8 +70,7 @@ public final class ThreadUtil {
      * threads a chance. This helps make test threaded code more random to track
      * synchronized issues.
      *
-     * @param millis
-     *            up to the many ms
+     * @param millis up to the many ms
      * @return actual sleep time
      */
     public static final int sleepUpTo(final long millis) {
@@ -99,10 +98,8 @@ public final class ThreadUtil {
      * Try repeatedly to acquire a lock but give up if the supplied task is
      * terminated.
      *
-     * @param lock
-     *            The lock to acquire.
-     * @param task
-     *            The task to check for termination.
+     * @param lock The lock to acquire.
+     * @param task The task to check for termination.
      * @return True if the lock is acquired successfully.
      */
     public static final boolean acquireLock(final ReentrantLock lock, final ServerTask<?> task) {

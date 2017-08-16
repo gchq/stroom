@@ -40,7 +40,7 @@ public class ErrorReceiverProxy implements ErrorReceiver {
 
     @Override
     public void log(final Severity severity, final Location location, final String elementId, final String message,
-            final Throwable e) {
+                    final Throwable e) {
         errorReceiver.log(severity, location, elementId, message, e);
 
         if (LOGGER.isTraceEnabled()) {

@@ -22,3 +22,8 @@
 	cursor:pointer;
 	cursor:hand;
 }
+
+.expanderIcon {
+    width: 14px;
+    height: 14px;
+}

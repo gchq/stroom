@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,9 +34,10 @@ public class ExtractionTask extends ServerTask<VoidResult> {
     private final FieldIndexMap fieldIndexes;
     private final ResultReceiver resultReceiver;
     private final ErrorReceiver errorReceiver;
+
     public ExtractionTask(final ClusterSearchTask clusterSearchTask, final long streamId, final long[] eventIds,
-            final DocRef pipelineRef, final FieldIndexMap fieldIndexes, final ResultReceiver resultReceiver,
-            final ErrorReceiver errorReceiver) {
+                          final DocRef pipelineRef, final FieldIndexMap fieldIndexes, final ResultReceiver resultReceiver,
+                          final ErrorReceiver errorReceiver) {
         super(clusterSearchTask);
         this.clusterSearchTask = clusterSearchTask;
         this.streamId = streamId;

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -59,8 +59,8 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     private volatile boolean terminated;
 
     private ClusterSearchResultCollector(final TaskManager taskManager, final Task<VoidResult> task, final Node node,
-            final Set<String> highlights, final ClusterResultCollectorCache clusterResultCollectorCache,
-            final ResultHandler resultHandler) {
+                                         final Set<String> highlights, final ClusterResultCollectorCache clusterResultCollectorCache,
+                                         final ResultHandler resultHandler) {
         this.taskManager = taskManager;
         this.task = task;
         this.node = node;
@@ -74,8 +74,8 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     }
 
     public static ClusterSearchResultCollector create(final TaskManager taskManager, final Task<VoidResult> task,
-            final Node node, final Set<String> highlights,
-            final ClusterResultCollectorCache clusterResultCollectorCache, final ResultHandler resultHandler) {
+                                                      final Node node, final Set<String> highlights,
+                                                      final ClusterResultCollectorCache clusterResultCollectorCache, final ResultHandler resultHandler) {
         return new ClusterSearchResultCollector(taskManager, task, node, highlights, clusterResultCollectorCache,
                 resultHandler);
     }

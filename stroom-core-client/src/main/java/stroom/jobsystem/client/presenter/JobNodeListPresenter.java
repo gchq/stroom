@@ -62,7 +62,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
     @Inject
     public JobNodeListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
                                 final TooltipPresenter tooltipPresenter, final SchedulePresenter schedulePresenter) {
-        super(eventBus, new DataGridViewImpl<JobNodeRow>(false));
+        super(eventBus, new DataGridViewImpl<>(false));
         this.schedulePresenter = schedulePresenter;
 
         initTable();
@@ -75,7 +75,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
             }
         };
 
-        dataProvider = new ActionDataProvider<JobNodeRow>(dispatcher, action);
+        dataProvider = new ActionDataProvider<>(dispatcher, action);
         dataProvider.addDataDisplay(getView().getDataDisplay());
 
     }
@@ -243,7 +243,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
         });
         getView().addColumn(enabledColumn, "Enabled", 80);
 
-        getView().addEndColumn(new EndColumn<JobNodeRow>());
+        getView().addEndColumn(new EndColumn<>());
     }
 
     @Override

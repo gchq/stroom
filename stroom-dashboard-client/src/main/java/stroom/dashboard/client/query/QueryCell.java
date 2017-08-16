@@ -51,11 +51,8 @@ public class QueryCell extends AbstractCell<QueryEntity> {
 
             } else {
                 final String time = ClientDateUtil.toISOString(value.getCreateTime());
-                final StringBuilder expression = new StringBuilder();
-                value.getQuery().getExpression().append(expression, "", true);
-
                 sb.append(template.historyLayout(resources.style().outer(), resources.style().time(), time,
-                        resources.style().expression(), expression.toString()));
+                        resources.style().expression(), value.getQuery().getExpression().toString()));
             }
         }
     }

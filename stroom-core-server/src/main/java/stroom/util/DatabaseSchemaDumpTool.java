@@ -32,6 +32,10 @@ public class DatabaseSchemaDumpTool extends AbstractCommandLineTool {
     private String jdbcDriverUsername;
     private String jdbcDriverPassword;
 
+    public static void main(final String[] args) throws Exception {
+        new DatabaseSchemaDumpTool().doMain(args);
+    }
+
     @Override
     public void run() {
         try {
@@ -50,7 +54,7 @@ public class DatabaseSchemaDumpTool extends AbstractCommandLineTool {
     private List<String> buildTableColumns(final Connection connection) throws SQLException {
         final List<String> rtnList = new ArrayList<>();
         final DatabaseMetaData databaseMetaData = connection.getMetaData();
-        final ResultSet tableRs = databaseMetaData.getTables(null, null, null, new String[] { "TABLE" });
+        final ResultSet tableRs = databaseMetaData.getTables(null, null, null, new String[]{"TABLE"});
         final HashSet<String> tables = new HashSet<>();
 
         String cat = null;
@@ -88,10 +92,6 @@ public class DatabaseSchemaDumpTool extends AbstractCommandLineTool {
 
         return rtnList;
 
-    }
-
-    public static void main(final String[] args) throws Exception {
-        new DatabaseSchemaDumpTool().doMain(args);
     }
 
     public String getJdbcDriverClassName() {

@@ -30,8 +30,6 @@ import javax.persistence.Transient;
 @Entity
 @Table(name = "STRM_ATR_VAL")
 public class StreamAttributeValue extends BaseEntityBig {
-    private static final long serialVersionUID = 8411148988526703262L;
-
     public static final String TABLE_NAME = SQLNameConstants.STREAM + SEP + SQLNameConstants.ATTRIBUTE + SEP
             + SQLNameConstants.VALUE;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
@@ -39,12 +37,10 @@ public class StreamAttributeValue extends BaseEntityBig {
     public static final String VALUE_NUMBER = SQLNameConstants.VALUE + SEP + SQLNameConstants.NUMBER;
     public static final String STREAM_ID = SQLNameConstants.STREAM + ID_SUFFIX;
     public static final String CREATE_MS = SQLNameConstants.CREATE + SQLNameConstants.MS_SUFFIX;
-
     public static final String STREAM_ATTRIBUTE_KEY_ID = SQLNameConstants.STREAM + SEP + SQLNameConstants.ATTRIBUTE
             + SEP + SQLNameConstants.KEY + ID_SUFFIX;
-
     public static final String ENTITY_TYPE = "StreamAttributeValue";
-
+    private static final long serialVersionUID = 8411148988526703262L;
     private long streamId;
     private long streamAttributeKeyId;
     private long createMs;

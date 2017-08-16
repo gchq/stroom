@@ -49,8 +49,7 @@ public class JobManagerImpl implements JobManager {
     /**
      * Gets the enabled job status for a named job.
      *
-     * @param jobName
-     *            The name of the job to check the enabled state for.
+     * @param jobName The name of the job to check the enabled state for.
      * @return True if the job is enabled.
      */
     @Override
@@ -70,10 +69,8 @@ public class JobManagerImpl implements JobManager {
      * Sets the enabled flag for a job with this name on all nodes in the
      * cluster.
      *
-     * @param jobName
-     *            The name of the job to change the enabled state of.
-     * @param enabled
-     *            The value of the enabled flag.
+     * @param jobName The name of the job to change the enabled state of.
+     * @param enabled The value of the enabled flag.
      * @return True if successful.
      */
     @Override
@@ -85,10 +82,8 @@ public class JobManagerImpl implements JobManager {
     /**
      * Sets all jobs on the given node to the supplied enabled state.
      *
-     * @param node
-     *            The node to set the enabled state on.
-     * @param enabled
-     *            The value of the enabled flag.
+     * @param node    The node to set the enabled state on.
+     * @param enabled The value of the enabled flag.
      * @return True if successful.
      */
     @Override
@@ -113,8 +108,7 @@ public class JobManagerImpl implements JobManager {
      * Sets the command flag to start a job with this name on all nodes in the
      * cluster.
      *
-     * @param jobName
-     *            The name of the job to start.
+     * @param jobName The name of the job to start.
      * @return True if successful.
      */
     @Override
@@ -139,9 +133,8 @@ public class JobManagerImpl implements JobManager {
      * Used to set the job command for all job instances associated with the
      * specified job name.
      *
-     * @param jobName
-     *            The name of the job that the job instances are associated
-     *            with.
+     * @param jobName The name of the job that the job instances are associated
+     *                with.
      */
     private void modifyJob(final String jobName, final boolean enabled) {
         final FindJobNodeCriteria criteria = new FindJobNodeCriteria();
@@ -158,8 +151,7 @@ public class JobManagerImpl implements JobManager {
      * Used to set the job command for all job instances associated with a
      * specified node.
      *
-     * @param node
-     *            The node that the job instances are associated with.
+     * @param node The node that the job instances are associated with.
      */
     private void modifyNode(final Node node, final boolean enabled) {
         final FindJobNodeCriteria criteria = new FindJobNodeCriteria();

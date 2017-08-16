@@ -26,11 +26,9 @@ public interface JobManager {
     /**
      * Gets the enabled job status for a named job.
      *
-     * @param jobName
-     *            The name of the job to check the enabled state for.
+     * @param jobName The name of the job to check the enabled state for.
      * @return True if the job is enabled.
-     * @throws RuntimeException
-     *             Could be thrown.
+     * @throws RuntimeException Could be thrown.
      */
     Boolean isJobEnabled(String jobName) throws RuntimeException;
 
@@ -38,26 +36,20 @@ public interface JobManager {
      * Sets the enabled flag for a job with this name on all nodes in the
      * cluster.
      *
-     * @param jobName
-     *            The name of the job to change the enabled state of.
-     * @param enabled
-     *            The value of the enabled flag.
+     * @param jobName The name of the job to change the enabled state of.
+     * @param enabled The value of the enabled flag.
      * @return True if successful.
-     * @throws RuntimeException
-     *             Could be thrown.
+     * @throws RuntimeException Could be thrown.
      */
     Boolean setJobEnabled(String jobName, boolean enabled) throws RuntimeException;
 
     /**
      * Sets all jobs on the given node to the supplied enabled state.
      *
-     * @param node
-     *            The node to set the enabled state on.
-     * @param enabled
-     *            The value of the enabled flag.
+     * @param node    The node to set the enabled state on.
+     * @param enabled The value of the enabled flag.
      * @return True if successful.
-     * @throws RuntimeException
-     *             Could be thrown.
+     * @throws RuntimeException Could be thrown.
      */
     Boolean setNodeEnabled(Node node, boolean enabled) throws RuntimeException;
 
@@ -66,8 +58,7 @@ public interface JobManager {
      * unless it is started.
      *
      * @return True if the cluster is enabled.
-     * @throws RuntimeException
-     *             Could be thrown.
+     * @throws RuntimeException Could be thrown.
      */
     Boolean isClusterRunning() throws RuntimeException;
 
@@ -75,8 +66,7 @@ public interface JobManager {
      * Set all jobs to be enabled across the cluster.
      *
      * @return True if successful.
-     * @throws RuntimeException
-     *             Could be thrown.
+     * @throws RuntimeException Could be thrown.
      */
     Boolean enableAllJobs() throws RuntimeException;
 
@@ -84,11 +74,9 @@ public interface JobManager {
      * Sets the command flag to start a job with this name on all nodes in the
      * cluster.
      *
-     * @param jobName
-     *            The name of the job to start.
+     * @param jobName The name of the job to start.
      * @return True if successful.
-     * @throws RuntimeException
-     *             Could be thrown.
+     * @throws RuntimeException Could be thrown.
      */
     Boolean startJob(String jobName) throws RuntimeException;
 }

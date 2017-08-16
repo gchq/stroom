@@ -24,25 +24,6 @@ import stroom.util.thread.ThreadUtil;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestSimpleExecutor {
-    static class TestRunnable implements Runnable {
-        int time;
-        boolean complete = false;
-
-        public TestRunnable(int time) {
-            this.time = time;
-        }
-
-        @Override
-        public void run() {
-            ThreadUtil.sleep(time);
-            complete = true;
-        }
-
-        public boolean isComplete() {
-            return complete;
-        }
-    }
-
     @Test
     public void testSimpleShutDownNow() {
         SimpleExecutor simpleExecutor = new SimpleExecutor(5);
@@ -124,6 +105,25 @@ public class TestSimpleExecutor {
         Assert.assertFalse(simpleExecutor.isStopped());
         simpleExecutor.stop(true);
         Assert.assertTrue(simpleExecutor.isStopped());
+    }
+
+    static class TestRunnable implements Runnable {
+        int time;
+        boolean complete = false;
+
+        public TestRunnable(int time) {
+            this.time = time;
+        }
+
+        @Override
+        public void run() {
+            ThreadUtil.sleep(time);
+            complete = true;
+        }
+
+        public boolean isComplete() {
+            return complete;
+        }
     }
 
 }

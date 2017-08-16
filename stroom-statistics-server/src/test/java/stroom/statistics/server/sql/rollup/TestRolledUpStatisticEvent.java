@@ -17,10 +17,10 @@
 package stroom.statistics.server.sql.rollup;
 
 import org.junit.Test;
-import stroom.statistics.server.sql.StatisticTag;
-import stroom.statistics.shared.StatisticType;
 import stroom.statistics.server.sql.StatisticEvent;
+import stroom.statistics.server.sql.StatisticTag;
 import stroom.statistics.server.sql.TimeAgnosticStatisticEvent;
+import stroom.statistics.shared.StatisticType;
 import stroom.util.test.StroomUnitTest;
 
 import java.util.ArrayList;
@@ -32,7 +32,7 @@ import static org.junit.Assert.assertTrue;
 public class TestRolledUpStatisticEvent extends StroomUnitTest {
     private static final double JUNIT_DOUBLE_EQUALITY_DELTA = 0.001;
 
-    private final List<StatisticTag> tags = new ArrayList<StatisticTag>();
+    private final List<StatisticTag> tags = new ArrayList<>();
     private StatisticEvent event;
 
     @Test

@@ -34,18 +34,6 @@ import java.util.List;
 
 public class CommonAlertPresenter extends MyPresenterWidget<CommonAlertPresenter.CommonAlertView>
         implements PopupUiHandlers {
-    public interface CommonAlertView extends View {
-        void setQuestion(SafeHtml text);
-
-        void setInfo(SafeHtml text);
-
-        void setError(SafeHtml text);
-
-        void setWarn(SafeHtml text);
-
-        void setDetail(SafeHtml text);
-    }
-
     private final List<CommonAlertEvent<?>> stack = new ArrayList<>();
 
     @Inject
@@ -110,5 +98,17 @@ public class CommonAlertPresenter extends MyPresenterWidget<CommonAlertPresenter
         if (stack.size() > 0) {
             doShow();
         }
+    }
+
+    public interface CommonAlertView extends View {
+        void setQuestion(SafeHtml text);
+
+        void setInfo(SafeHtml text);
+
+        void setError(SafeHtml text);
+
+        void setWarn(SafeHtml text);
+
+        void setDetail(SafeHtml text);
     }
 }

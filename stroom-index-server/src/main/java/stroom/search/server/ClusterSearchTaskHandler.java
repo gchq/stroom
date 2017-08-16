@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,6 +26,7 @@ import stroom.dashboard.expression.FieldIndexMap;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexFieldsMap;
 import stroom.index.shared.IndexService;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.MessageUtil;
@@ -313,9 +314,9 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
 
                             // Make sure the query was created successfully.
                             if (query.getQuery() == null) {
-                                throw new SearchException("Failed to build LUCENE query given expression");
+                                throw new SearchException("Failed to build Lucene query given expression");
                             } else if (LOGGER.isDebugEnabled()) {
-                                LOGGER.debug("Lucence Query is " + query.toString());
+                                LOGGER.debug("Lucene Query is " + query.toString());
                             }
                         } catch (final Exception e) {
                             error(e.getMessage(), e);

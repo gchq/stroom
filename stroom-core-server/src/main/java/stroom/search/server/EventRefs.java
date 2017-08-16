@@ -25,29 +25,16 @@ import java.util.List;
 
 public class EventRefs implements Iterable<EventRef>, Serializable {
     private static final long serialVersionUID = -7274144985491220742L;
-
-    private static class EventRefComparator implements Comparator<EventRef> {
-        @Override
-        public int compare(final EventRef o1, final EventRef o2) {
-            if (o1.getStreamId() == o2.getStreamId()) {
-                return Long.compare(o1.getEventId(), o2.getEventId());
-            }
-
-            return Long.compare(o1.getStreamId(), o2.getStreamId());
-        }
-    }
-
     private final EventRef minEvent;
-    private volatile EventRef maxEvent;
     private final long maxStreams;
     private final long maxEvents;
     private final long maxEventsPerStream;
+    private final List<EventRef> list = new ArrayList<>();
+    private volatile EventRef maxEvent;
     private boolean reachedLimit;
 
-    private final List<EventRef> list = new ArrayList<>();
-
     public EventRefs(final EventRef minEvent, final EventRef maxEvent, final long maxStreams, final long maxEvents,
-            final long maxEventsPerStream) {
+                     final long maxEventsPerStream) {
         this.minEvent = minEvent;
         this.maxEvent = maxEvent;
         this.maxStreams = maxStreams;
@@ -68,7 +55,7 @@ public class EventRefs implements Iterable<EventRef>, Serializable {
         if ((ref.getStreamId() > minEvent.getStreamId()
                 || (ref.getStreamId() == minEvent.getStreamId() && ref.getEventId() >= minEvent.getEventId()))
                 && (ref.getStreamId() < maxEvent.getStreamId() || (ref.getStreamId() == maxEvent.getStreamId()
-                        && ref.getEventId() <= maxEvent.getEventId()))) {
+                && ref.getEventId() <= maxEvent.getEventId()))) {
             list.add(ref);
 
             // Trim if the list gets bigger than double the number of events.
@@ -138,5 +125,16 @@ public class EventRefs implements Iterable<EventRef>, Serializable {
 
     public boolean isReachedLimit() {
         return reachedLimit;
+    }
+
+    private static class EventRefComparator implements Comparator<EventRef> {
+        @Override
+        public int compare(final EventRef o1, final EventRef o2) {
+            if (o1.getStreamId() == o2.getStreamId()) {
+                return Long.compare(o1.getEventId(), o2.getEventId());
+            }
+
+            return Long.compare(o1.getStreamId(), o2.getStreamId());
+        }
     }
 }

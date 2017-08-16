@@ -24,13 +24,6 @@ import java.io.InputStream;
 import java.sql.Connection;
 
 public class TestEntityReferenceReplacer {
-    private class Replacer extends EntityReferenceReplacer {
-        @Override
-        String getUUID(Connection connection, String table, String id) {
-            return "uuid";
-        }
-    }
-
     @Test
     public void testEntityStreamType() {
         final String original = "<property><element>test</element><name>streamType</name><value><entity><type>StreamType</type><path>Events</path></entity></value></property>";
@@ -78,5 +71,12 @@ public class TestEntityReferenceReplacer {
         final String actual = new Replacer().replaceEntityReferences(null, original);
 
         Assert.assertEquals(updated, actual);
+    }
+
+    private class Replacer extends EntityReferenceReplacer {
+        @Override
+        String getUUID(Connection connection, String table, String id) {
+            return "uuid";
+        }
     }
 }

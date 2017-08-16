@@ -42,14 +42,6 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 public class ImportConfigPresenter
         extends MyPresenter<ImportConfigPresenter.ImportConfigView, ImportConfigPresenter.ImportProxy>
         implements ImportConfigEvent.Handler {
-    public interface ImportConfigView extends View {
-        FormPanel getForm();
-    }
-
-    @ProxyCodeSplit
-    public interface ImportProxy extends Proxy<ImportConfigPresenter> {
-    }
-
     private final ClientDispatchAsync dispatcher;
 
     @Inject
@@ -138,5 +130,13 @@ public class ImportConfigPresenter
     @Override
     protected void revealInParent() {
         show();
+    }
+
+    public interface ImportConfigView extends View {
+        FormPanel getForm();
+    }
+
+    @ProxyCodeSplit
+    public interface ImportProxy extends Proxy<ImportConfigPresenter> {
     }
 }

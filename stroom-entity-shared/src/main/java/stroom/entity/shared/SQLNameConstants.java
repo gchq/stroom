@@ -98,6 +98,7 @@ public final class SQLNameConstants {
     public static final String PERMISSION = "PERM";
     public static final String PRECISION = "PRES";
     public static final String PIPELINE = "PIPE";
+    public static final String POLICY = "POLICY";
     public static final String POLL = "POLL";
     public static final String PROCESSOR = "PROC";
     public static final String PROPERTY = "PROP";

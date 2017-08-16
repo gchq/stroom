@@ -30,8 +30,8 @@ import java.util.Set;
 
 @Singleton
 public class MenuItems {
-    private final Map<MenuKey, Set<Item>> menuItems = new HashMap<MenuKey, Set<Item>>();
-    private final Map<MenuKey, List<Item>> compressedMenuItems = new HashMap<MenuKey, List<Item>>();
+    private final Map<MenuKey, Set<Item>> menuItems = new HashMap<>();
+    private final Map<MenuKey, List<Item>> compressedMenuItems = new HashMap<>();
     private boolean needsCompression = true;
 
     public List<Item> getMenuItems(final MenuKey menuKey) {
@@ -47,7 +47,7 @@ public class MenuItems {
 
         Set<Item> items = menuItems.get(menuKey);
         if (items == null) {
-            items = new HashSet<Item>();
+            items = new HashSet<>();
             menuItems.put(menuKey, items);
         }
 
@@ -58,10 +58,10 @@ public class MenuItems {
         for (final Entry<MenuKey, Set<Item>> entry : menuItems.entrySet()) {
             final Set<Item> items = entry.getValue();
             // Sort the items.
-            final List<Item> sortedItems = new ArrayList<Item>(items);
+            final List<Item> sortedItems = new ArrayList<>(items);
             Collections.sort(sortedItems, new ItemComparator());
 
-            final List<Item> compressedItems = new ArrayList<Item>();
+            final List<Item> compressedItems = new ArrayList<>();
             for (final Item item : sortedItems) {
                 if (item != null) {
                     compressedItems.add(item);
@@ -113,7 +113,7 @@ public class MenuItems {
 
     @Override
     public String toString() {
-        final List<MenuKey> keys = new ArrayList<MenuKey>(menuItems.keySet());
+        final List<MenuKey> keys = new ArrayList<>(menuItems.keySet());
         Collections.sort(keys, new MenuKeyComparator());
 
         final StringBuilder sb = new StringBuilder();
@@ -124,7 +124,7 @@ public class MenuItems {
 
             final Set<Item> items = menuItems.get(key);
             // Sort the items.
-            final List<Item> sortedItems = new ArrayList<Item>(items);
+            final List<Item> sortedItems = new ArrayList<>(items);
             Collections.sort(sortedItems, new ItemComparator());
 
             for (final Item item : sortedItems) {

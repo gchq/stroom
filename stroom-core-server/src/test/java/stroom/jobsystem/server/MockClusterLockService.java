@@ -35,8 +35,4 @@ public class MockClusterLockService implements ClusterLockService {
     @Override
     public void releaseLock(final String lockName) {
     }
-
-    @Override
-    public void keepAlive() {
-    }
 }

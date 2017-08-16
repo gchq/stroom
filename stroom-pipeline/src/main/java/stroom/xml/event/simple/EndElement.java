@@ -35,34 +35,15 @@ public final class EndElement extends BaseEvent {
     private String prefix;
 
     /**
-     * Helper to build a simple end element.
-     *
-     * @param uri
-     *            the Namespace URI, or the empty string if the element has no
-     *            Namespace URI or if Namespace processing is not being
-     *            performed
-     * @param localName
-     *            the local name (without prefix), or the empty string if
-     *            Namespace processing is not being performed
-     * @return built object
-     */
-    public static EndElement createSimple(final String uri, final String localName) {
-        return new EndElement(uri, localName, localName);
-    }
-
-    /**
      * Stores an endElement SAX event.
      *
-     * @param uri
-     *            the Namespace URI, or the empty string if the element has no
-     *            Namespace URI or if Namespace processing is not being
-     *            performed
-     * @param localName
-     *            the local name (without prefix), or the empty string if
-     *            Namespace processing is not being performed
-     * @param qName
-     *            the qualified XML name (with prefix), or the empty string if
-     *            qualified names are not available
+     * @param uri       the Namespace URI, or the empty string if the element has no
+     *                  Namespace URI or if Namespace processing is not being
+     *                  performed
+     * @param localName the local name (without prefix), or the empty string if
+     *                  Namespace processing is not being performed
+     * @param qName     the qualified XML name (with prefix), or the empty string if
+     *                  qualified names are not available
      */
     public EndElement(final String uri, final String localName, final String qName) {
         this.uri = uri;
@@ -73,6 +54,20 @@ public final class EndElement extends BaseEvent {
         if (index != -1) {
             prefix = qName.substring(0, index);
         }
+    }
+
+    /**
+     * Helper to build a simple end element.
+     *
+     * @param uri       the Namespace URI, or the empty string if the element has no
+     *                  Namespace URI or if Namespace processing is not being
+     *                  performed
+     * @param localName the local name (without prefix), or the empty string if
+     *                  Namespace processing is not being performed
+     * @return built object
+     */
+    public static EndElement createSimple(final String uri, final String localName) {
+        return new EndElement(uri, localName, localName);
     }
 
     public String getUri() {
@@ -90,10 +85,8 @@ public final class EndElement extends BaseEvent {
     /**
      * Fires a stored SAX event at the supplied content handler.
      *
-     * @param handler
-     *            The content handler to fire the SAX event at.
-     * @throws SAXException
-     *             Necessary to maintain the SAX event contract.
+     * @param handler The content handler to fire the SAX event at.
+     * @throws SAXException Necessary to maintain the SAX event contract.
      * @see Event#fire(org.xml.sax.ContentHandler)
      */
     @Override

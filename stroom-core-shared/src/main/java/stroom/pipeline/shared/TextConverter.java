@@ -33,7 +33,7 @@ import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "TXT_CONV", uniqueConstraints = @UniqueConstraint(columnNames = { "FK_FOLDER_ID", "NAME" }) )
+@Table(name = "TXT_CONV", uniqueConstraints = @UniqueConstraint(columnNames = {"FK_FOLDER_ID", "NAME"}))
 public class TextConverter extends DocumentEntity implements Copyable<TextConverter>, HasData {
     public static final String TABLE_NAME = SQLNameConstants.TEXT + SEP + SQLNameConstants.CONVERTER;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
@@ -115,7 +115,7 @@ public class TextConverter extends DocumentEntity implements Copyable<TextConver
     public enum TextConverterType implements HasDisplayValue, HasPrimitiveValue {
         NONE("None", 0, "txt"), DATA_SPLITTER("Data Splitter", 1, "xml"), XML_FRAGMENT("XML Fragment", 3, "xml");
 
-        public static final PrimitiveValueConverter<TextConverterType> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<TextConverterType>(
+        public static final PrimitiveValueConverter<TextConverterType> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
                 TextConverterType.values());
 
         // Add fudge to cope with old DATA_SPLITTER_2 enumeration that mapped to

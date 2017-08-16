@@ -37,8 +37,7 @@ import java.util.List;
 public class ListUtil {
     /**
      * @param <T>
-     * @param list
-     *            [!list.isEmpty()]
+     * @param list [!list.isEmpty()]
      * @return the last element of the list
      */
     public static <T> T getLast(List<T> list) {

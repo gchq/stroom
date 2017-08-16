@@ -30,17 +30,12 @@ import stroom.entity.client.presenter.ManageEntityUiHandlers;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
-public class ManageEntityViewImpl extends ViewWithUiHandlers<ManageEntityUiHandlers>implements ManageEntityView {
-    public interface Binder extends UiBinder<Widget, ManageEntityViewImpl> {
-    }
-
-    private Widget widget;
-
+public class ManageEntityViewImpl extends ViewWithUiHandlers<ManageEntityUiHandlers> implements ManageEntityView {
     @UiField
     QuickFilter nameFilter;
     @UiField
     ResizeSimplePanel dataGrid;
-
+    private Widget widget;
     @Inject
     public ManageEntityViewImpl(final EventBus eventBus, final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -61,5 +56,8 @@ public class ManageEntityViewImpl extends ViewWithUiHandlers<ManageEntityUiHandl
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    public interface Binder extends UiBinder<Widget, ManageEntityViewImpl> {
     }
 }

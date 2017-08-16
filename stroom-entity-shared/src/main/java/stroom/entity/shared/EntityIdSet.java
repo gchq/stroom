@@ -31,11 +31,11 @@ public class EntityIdSet<T extends BaseEntity> extends CriteriaSet<Long> {
     private static final long serialVersionUID = 1L;
 
     public EntityIdSet() {
-        super(new TreeSet<Long>());
+        super(new TreeSet<>());
     }
 
     public EntityIdSet(final Set<T> es) {
-        super(new TreeSet<Long>());
+        super(new TreeSet<>());
         for (final T e : es) {
             add(e);
         }
@@ -54,7 +54,7 @@ public class EntityIdSet<T extends BaseEntity> extends CriteriaSet<Long> {
 
     /**
      * THIS IS HERE ONLY FOR BACKWARD COMPATIBILITY WITH OLD SERIALISED VERSIONS
-     *
+     * <p>
      * DO NOT USE BUT DO NOT REMOVE EITHER
      */
     @Deprecated
@@ -64,7 +64,7 @@ public class EntityIdSet<T extends BaseEntity> extends CriteriaSet<Long> {
 
     /**
      * THIS IS HERE ONLY FOR BACKWARD COMPATIBILITY WITH OLD SERIALISED VERSIONS
-     *
+     * <p>
      * DO NOT USE BUT DO NOT REMOVE EITHER
      */
     @Deprecated
@@ -105,8 +105,7 @@ public class EntityIdSet<T extends BaseEntity> extends CriteriaSet<Long> {
     }
 
     /**
-     * @param id
-     *            update so as not to change JAXB
+     * @param id update so as not to change JAXB
      */
     public void updateSingleId(final Long id) {
         clear();

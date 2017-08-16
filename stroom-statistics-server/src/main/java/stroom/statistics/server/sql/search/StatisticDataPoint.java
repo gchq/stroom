@@ -1,217 +1,60 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This file is part of Stroom-Stats.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * Stroom-Stats is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Stroom-Stats is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Stroom-Stats.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 package stroom.statistics.server.sql.search;
 
 import stroom.statistics.server.sql.StatisticTag;
 import stroom.statistics.shared.StatisticType;
-import stroom.statistics.server.sql.StatisticEvent;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Value object to hold a statistic data point retreived from a statistic store.
- * This differs from a {@link StatisticEvent} in that this data point may
- * represent an aggregated value rather than a single statistic event.
- */
-public class StatisticDataPoint {
-    private final long timeMs;
-    private final long precisionMs;
-    private final List<StatisticTag> tags;
-    private final long count;
-    private final double value;
-    private final double minValue;
-    private final double maxValue;
-    private final StatisticType statisticType;
-    private final Map<String, String> tagToValueMap;
+public interface StatisticDataPoint {
 
     /**
-     * Constructor for a value type statistic data point
-     *
-     * @param timeMs
-     *            The timestamp of the aggregated data point
-     * @param tags
-     *            The list of tav/value pairs that qualify the data point
-     * @param value
-     *            The mean value of the data point in this time period
-     * @param count
-     *            The count of the number of statistic events that have happened
-     *            in this period
-     * @param minValue
-     *            The min value in this time period
-     * @param maxValue
-     *            The max value in this time period
-     * @return A populated {@link StatisticDataPoint} instance
+     * @return The time in ms since epoch that the statistic event(s) bucket started
      */
-    public static StatisticDataPoint valueInstance(final long timeMs, final long precisionMs,
-            final List<StatisticTag> tags, final double value, final long count, final double minValue,
-            final double maxValue) {
-        return new StatisticDataPoint(timeMs, precisionMs, tags, count, value, minValue, maxValue, StatisticType.VALUE);
-    }
+    long getTimeMs();
 
     /**
-     * Constructor for a count type statistic data point
-     *
-     * @param timeMs
-     *            The timestamp of the aggregated data point
-     * @param tags
-     *            The list of tav/value pairs that qualify the data point
-     * @param count
-     *            The count of the number of statistic events that have happened
-     *            in this period
-     * @return A populated {@link StatisticDataPoint} instance
+     * @return The size of the time bucket that the data point represents
      */
-    public static StatisticDataPoint countInstance(final long timeMs, final long precisionMs,
-            final List<StatisticTag> tags, final long count) {
-        return new StatisticDataPoint(timeMs, precisionMs, tags, count, 0D, 0, 0, StatisticType.COUNT);
-    }
+    long getPrecisionMs();
 
-    // private StatisticDataPoint() {
-    //
-    // this.timeMs = 0;
-    // this.count = 0L;
-    // this.value = 0D;
-    // this.minValue = 0;
-    // this.maxValue = 0;
-    // }
+    /**
+     * @return A list of the {@link StatisticTag} objects that qualify the data point
+     */
+    List<StatisticTag> getTags();
 
-    private StatisticDataPoint(final long timeMs, final long precisionMs, final List<StatisticTag> tags,
-            final Long count, final Double value, final double minValue, final double maxValue,
-            StatisticType statisticType) {
-        this.timeMs = timeMs;
-        this.precisionMs = precisionMs;
-        this.tags = tags == null ? Collections.emptyList() : tags;
-        this.count = count;
-        this.value = value;
-        this.minValue = minValue;
-        this.maxValue = maxValue;
-        this.statisticType = statisticType;
-        this.tagToValueMap = new HashMap<>();
-            this.tags.forEach(statisticTag -> tagToValueMap.put(statisticTag.getTag(), statisticTag.getValue()));
-    }
+    /**
+     * @return The qualifying {@link StatisticTag} objects represented as map with the tag as key and tag value as value
+     */
+    Map<String, String> getTagsAsMap();
 
-    public long getTimeMs() {
-        return timeMs;
-    }
+    /**
+     * @return The {@link StatisticType} of the data point, e.g. COUNT, VALUE, etc.
+     */
+    StatisticType getStatisticType();
 
-    public long getPrecisionMs() {
-        return precisionMs;
-    }
-
-    public List<StatisticTag> getTags() {
-        return tags;
-    }
-
-    public Map<String, String> getTagsAsMap() {
-        Map<String, String> map = new HashMap<String, String>();
-        for (StatisticTag tag : tags) {
-            map.put(tag.getTag(), tag.getValue());
-        }
-        return map;
-    }
-
-    public Long getCount() {
-        return count;
-    }
-
-    public Double getValue() {
-        if (!statisticType.equals(StatisticType.VALUE))
-            throw new UnsupportedOperationException("Method only support for value type statistics");
-
-        return value;
-    }
-
-    public String getTagValue(final String tagName) {
-        return tagToValueMap.get(tagName);
-    }
-
-    public double getMinValue() {
-        if (!statisticType.equals(StatisticType.VALUE))
-            throw new UnsupportedOperationException("Method only support for value type statistics");
-
-        return minValue;
-    }
-
-    public double getMaxValue() {
-        if (!statisticType.equals(StatisticType.VALUE))
-            throw new UnsupportedOperationException("Method only support for value type statistics");
-
-        return maxValue;
-    }
-
-    public StatisticType getStatisticType() {
-        return statisticType;
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + (int) (count ^ (count >>> 32));
-        long temp;
-        temp = Double.doubleToLongBits(maxValue);
-        result = prime * result + (int) (temp ^ (temp >>> 32));
-        temp = Double.doubleToLongBits(minValue);
-        result = prime * result + (int) (temp ^ (temp >>> 32));
-        result = prime * result + (int) (precisionMs ^ (precisionMs >>> 32));
-        result = prime * result + ((statisticType == null) ? 0 : statisticType.hashCode());
-        result = prime * result + ((tags == null) ? 0 : tags.hashCode());
-        result = prime * result + (int) (timeMs ^ (timeMs >>> 32));
-        temp = Double.doubleToLongBits(value);
-        result = prime * result + (int) (temp ^ (temp >>> 32));
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        StatisticDataPoint other = (StatisticDataPoint) obj;
-        if (count != other.count)
-            return false;
-        if (Double.doubleToLongBits(maxValue) != Double.doubleToLongBits(other.maxValue))
-            return false;
-        if (Double.doubleToLongBits(minValue) != Double.doubleToLongBits(other.minValue))
-            return false;
-        if (precisionMs != other.precisionMs)
-            return false;
-        if (statisticType != other.statisticType)
-            return false;
-        if (tags == null) {
-            if (other.tags != null)
-                return false;
-        } else if (!tags.equals(other.tags))
-            return false;
-        if (timeMs != other.timeMs)
-            return false;
-        return Double.doubleToLongBits(value) == Double.doubleToLongBits(other.value);
-    }
-
-    @Override
-    public String toString() {
-        return "StatisticDataPoint [timeMs=" + timeMs + ", precisionMs=" + precisionMs + ", tags=" + tags + ", count="
-                + count + ", value=" + value + ", minValue=" + minValue + ", maxValue=" + maxValue + ", statisticType="
-                + statisticType + "]";
-    }
-
+    /**
+     * @param fieldName The name of the field to get a value for
+     * @return The value of the named field (or null if it doesn't exist) represented as a string
+     */
+    String getFieldValue(final String fieldName);
 }

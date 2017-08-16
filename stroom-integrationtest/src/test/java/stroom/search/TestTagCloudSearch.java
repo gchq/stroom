@@ -20,7 +20,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.CommonIndexingTest;
 import stroom.entity.shared.DocRefUtil;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
@@ -36,7 +35,7 @@ import stroom.query.api.v1.OffsetRange;
 import stroom.query.api.v1.Query;
 import stroom.query.api.v1.QueryKey;
 import stroom.query.api.v1.ResultRequest;
-import stroom.query.api.v1.ResultRequest.ResultStyle;
+import stroom.query.api.v1.ResultRequest.Fetch;
 import stroom.query.api.v1.Row;
 import stroom.query.api.v1.SearchRequest;
 import stroom.query.api.v1.SearchResponse;
@@ -97,7 +96,7 @@ public class TestTagCloudSearch extends AbstractSearchTest {
         final ExpressionBuilder expression = buildExpression("user5", "2000-01-01T00:00:00.000Z", "2016-01-02T00:00:00.000Z");
         final Query query = new Query(dataSourceRef, expression.build());
 
-        final ResultRequest tableResultRequest = new ResultRequest(componentId, Collections.singletonList(tableSettings), null, null, ResultRequest.ResultStyle.TABLE, true);
+        final ResultRequest tableResultRequest = new ResultRequest(componentId, Collections.singletonList(tableSettings), null, null, ResultRequest.ResultStyle.TABLE, Fetch.CHANGES);
 
         final List<ResultRequest> resultRequests = Collections.singletonList(tableResultRequest);
 

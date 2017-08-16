@@ -34,7 +34,7 @@ public class ErrorHandlerAdaptor implements ErrorHandler {
     private final ErrorReceiver errorReceiver;
 
     public ErrorHandlerAdaptor(final String elementId, final LocationFactory locationFactory,
-            final ErrorReceiver errorReceiver) {
+                               final ErrorReceiver errorReceiver) {
         this.elementId = elementId;
         this.locationFactory = locationFactory;
         this.errorReceiver = errorReceiver;

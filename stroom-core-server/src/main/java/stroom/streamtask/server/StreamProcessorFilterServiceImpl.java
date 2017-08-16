@@ -24,8 +24,7 @@ import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.SystemEntityServiceImpl;
 import stroom.entity.server.UserManagerQueryUtil;
-import stroom.entity.server.util.SQLBuilder;
-import stroom.entity.server.util.SQLUtil;
+import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
 import stroom.pipeline.shared.PipelineEntity;
@@ -166,7 +165,7 @@ public class StreamProcessorFilterServiceImpl
         }
 
         @Override
-        protected void appendBasicJoin(final SQLBuilder sql, final String alias, final Set<String> fetchSet) {
+        protected void appendBasicJoin(final HqlBuilder sql, final String alias, final Set<String> fetchSet) {
             super.appendBasicJoin(sql, alias, fetchSet);
             if (fetchSet != null) {
                 if (fetchSet.contains(StreamProcessor.ENTITY_TYPE) || fetchSet.contains(PipelineEntity.ENTITY_TYPE)) {
@@ -182,25 +181,25 @@ public class StreamProcessorFilterServiceImpl
         }
 
         @Override
-        protected void appendBasicCriteria(final SQLBuilder sql, final String alias,
+        protected void appendBasicCriteria(final HqlBuilder sql, final String alias,
                                            final FindStreamProcessorFilterCriteria criteria) {
             super.appendBasicCriteria(sql, alias, criteria);
-            SQLUtil.appendRangeQuery(sql, alias + ".priority", criteria.getPriorityRange());
+            sql.appendRangeQuery(alias + ".priority", criteria.getPriorityRange());
 
-            SQLUtil.appendValueQuery(sql, alias + ".streamProcessor.enabled", criteria.getStreamProcessorEnabled());
+            sql.appendValueQuery(alias + ".streamProcessor.enabled", criteria.getStreamProcessorEnabled());
 
-            SQLUtil.appendValueQuery(sql, alias + ".enabled", criteria.getStreamProcessorFilterEnabled());
+            sql.appendValueQuery(alias + ".enabled", criteria.getStreamProcessorFilterEnabled());
 
-            SQLUtil.appendRangeQuery(sql, alias + ".streamProcessorFilterTracker.lastPollMs", criteria.getLastPollPeriod());
+            sql.appendRangeQuery(alias + ".streamProcessorFilterTracker.lastPollMs", criteria.getLastPollPeriod());
 
-            SQLUtil.appendSetQuery(sql, true, alias + ".streamProcessor.pipeline", criteria.getPipelineIdSet());
+            sql.appendEntityIdSetQuery(alias + ".streamProcessor.pipeline", criteria.getPipelineIdSet());
 
-            UserManagerQueryUtil.appendFolderCriteria(criteria.getFolderIdSet(), alias + ".streamProcessor.pipeline.folder",
-                    sql, true, getEntityManager());
+            UserManagerQueryUtil.appendFolderCriteria(criteria.getFolderIdSet(), alias + ".streamProcessor.pipeline.folder", sql,
+                    getEntityManager());
 
-            SQLUtil.appendSetQuery(sql, true, alias + ".streamProcessor", criteria.getStreamProcessorIdSet());
+            sql.appendEntityIdSetQuery(alias + ".streamProcessor", criteria.getStreamProcessorIdSet());
 
-            SQLUtil.appendValueQuery(sql, alias + ".createUser", criteria.getCreateUser());
+            sql.appendValueQuery(alias + ".createUser", criteria.getCreateUser());
         }
     }
 }

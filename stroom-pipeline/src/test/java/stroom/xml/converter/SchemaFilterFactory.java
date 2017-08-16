@@ -67,7 +67,7 @@ public class SchemaFilterFactory {
     }
 
     public void loadXMLSchema(final String schemaGroup, final String schemaName, final String namespaceURI,
-            final String systemId, final String fileName) {
+                              final String systemId, final String fileName) {
         final File dir = FileSystemTestUtil.getConfigXSDDir();
 
         final File file = new File(dir, fileName);

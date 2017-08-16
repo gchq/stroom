@@ -20,27 +20,21 @@ import stroom.util.io.StreamUtil;
 
 /**
  * BlockGZIP has the following format:
- *
+ * <p>
  * [Block GZip Version Marker 'BGZ1'] [Un-Compressed Block Size] [Un-Compressed
  * Data Length] [Index Position] [EOF Position] [Magic Marker] [Block Size]
  * [Block Data] [Magic Marker] [Block Size] [Block Data] ... [Magic Marker] <-
  * (Index Position) [Un-Compressed Index Data] [EOF] <- (EOF)
  */
 public final class BlockGZIPConstants {
-    private BlockGZIPConstants() {
-        // NA
-    }
-
     /**
      * Lock name.
      */
     public static final String LOCK_EXTENSION = ".lock";
-
     /**
      * Default Block we write.
      */
     public static final int DEFAULT_BLOCK_SIZE = 1000000; // 1MB
-
     /**
      * Java IO Read Only.
      */
@@ -49,24 +43,24 @@ public final class BlockGZIPConstants {
      * Java IO Read Write.
      */
     public static final String READ_WRITE = "rw";
-
-    private static final byte MAGIC_HIGH = 127;
-    private static final byte MAGIC_LOW = -128;
-
-    /**
-     * Written at the start to identify .
-     */
-    static final byte[] BLOCK_GZIP_V1_IDENTIFIER = "BGZ1".getBytes(StreamUtil.DEFAULT_CHARSET);
-
-    /**
-     * Made Up Stroom Marker .... used to help check we have not got a corrupt
-     * stream.
-     */
-    static final byte[] MAGIC_MARKER = new byte[] { MAGIC_LOW, MAGIC_LOW, MAGIC_LOW, 0, 0, MAGIC_HIGH, MAGIC_HIGH,
-            MAGIC_HIGH };
     /**
      * How long is a long.
      */
     public static final int LONG_BYTES = 8;
+    /**
+     * Written at the start to identify .
+     */
+    static final byte[] BLOCK_GZIP_V1_IDENTIFIER = "BGZ1".getBytes(StreamUtil.DEFAULT_CHARSET);
+    private static final byte MAGIC_HIGH = 127;
+    private static final byte MAGIC_LOW = -128;
+    /**
+     * Made Up Stroom Marker .... used to help check we have not got a corrupt
+     * stream.
+     */
+    static final byte[] MAGIC_MARKER = new byte[]{MAGIC_LOW, MAGIC_LOW, MAGIC_LOW, 0, 0, MAGIC_HIGH, MAGIC_HIGH,
+            MAGIC_HIGH};
+    private BlockGZIPConstants() {
+        // NA
+    }
 
 }

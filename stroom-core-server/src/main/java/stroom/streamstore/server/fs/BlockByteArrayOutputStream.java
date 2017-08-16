@@ -34,8 +34,7 @@ public class BlockByteArrayOutputStream extends ByteArrayOutputStream {
     private LongBuffer longBuffer = ByteBuffer.wrap(longRawBuffer).asLongBuffer();
 
     /**
-     * @param initialSize
-     *            used if you have a good idea how big you want us to be
+     * @param initialSize used if you have a good idea how big you want us to be
      */
     public BlockByteArrayOutputStream(final int initialSize) {
         super(initialSize);
@@ -51,8 +50,7 @@ public class BlockByteArrayOutputStream extends ByteArrayOutputStream {
     /**
      * Helper to append a long.
      *
-     * @param value
-     *            long to write
+     * @param value long to write
      */
     public void writeLong(final long value) throws IOException {
         longBuffer.rewind();
@@ -63,10 +61,8 @@ public class BlockByteArrayOutputStream extends ByteArrayOutputStream {
     /**
      * Helper to over write a long The buffer must be as big as the offset.
      *
-     * @param offset
-     *            to use
-     * @param value
-     *            long to write
+     * @param offset to use
+     * @param value  long to write
      */
     public void overwriteLongAtOffset(final int offset, final long value) {
         longBuffer.rewind();

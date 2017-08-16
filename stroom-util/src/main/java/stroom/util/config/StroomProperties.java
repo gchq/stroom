@@ -39,11 +39,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class StroomProperties {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StroomProperties.class);
-
     public static final String STROOM_TEMP = "stroom.temp";
-
     public static final String USER_CONF_DIR = ".stroom";
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomProperties.class);
     private static final String USER_CONF_PATH = USER_CONF_DIR + "/stroom.conf";
     private static final String STROOM_TMP_ENV = "STROOM_TMP";
     private static final String JAVA_IO_TMPDIR = "java.io.tmpdir";
@@ -281,7 +279,7 @@ public class StroomProperties {
 
                         // Create the cyclic check set if we haven't already.
                         if (checkSet == null) {
-                            checkSet = new HashSet<String>();
+                            checkSet = new HashSet<>();
 
                             if (propertyName != null) {
                                 checkSet.add(propertyName);
@@ -511,7 +509,7 @@ public class StroomProperties {
     }
 
     private static class PropertyMap {
-        private final Map<String, StroomProperty> map = new ConcurrentHashMap<String, StroomProperty>();
+        private final Map<String, StroomProperty> map = new ConcurrentHashMap<>();
 
         public StroomProperty get(final String key) {
             return map.get(key);
@@ -539,7 +537,7 @@ public class StroomProperties {
 
         @Override
         public String toString() {
-            final List<StroomProperty> list = new ArrayList<StroomProperty>(map.values());
+            final List<StroomProperty> list = new ArrayList<>(map.values());
             Collections.sort(list);
             final StringBuilder sb = new StringBuilder();
             for (final StroomProperty prop : list) {

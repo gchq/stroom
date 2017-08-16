@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,7 +27,7 @@ import stroom.dashboard.shared.FindDashboardCriteria;
 import stroom.dashboard.shared.QueryEntity;
 import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.DocumentEntityServiceImpl;
-import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.importexport.server.ImportExportHelper;
@@ -93,7 +93,7 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
         checkDeletePermission(entity);
 
         // Delete associated queries first.
-        final SQLBuilder sql = new SQLBuilder();
+        final SqlBuilder sql = new SqlBuilder();
         sql.append("DELETE FROM ");
         sql.append(QueryEntity.TABLE_NAME);
         sql.append(" WHERE ");

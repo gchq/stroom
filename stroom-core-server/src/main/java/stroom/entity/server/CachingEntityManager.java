@@ -21,7 +21,8 @@ import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
-import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.HqlBuilder;
+import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
@@ -108,42 +109,42 @@ public class CachingEntityManager implements StroomEntityManager, InitializingBe
     }
 
     @Override
-    public Long executeNativeUpdate(final SQLBuilder sql) {
+    public Long executeNativeUpdate(final SqlBuilder sql) {
         return stroomEntityManager.executeNativeUpdate(sql);
     }
 
     @Override
-    public long executeNativeQueryLongResult(final SQLBuilder sql) {
+    public long executeNativeQueryLongResult(final SqlBuilder sql) {
         return stroomEntityManager.executeNativeQueryLongResult(sql);
     }
 
     @Override
-    public BaseResultList<SummaryDataRow> executeNativeQuerySummaryDataResult(final SQLBuilder sql, final int numberKeys) {
+    public BaseResultList<SummaryDataRow> executeNativeQuerySummaryDataResult(final SqlBuilder sql, final int numberKeys) {
         return stroomEntityManager.executeNativeQuerySummaryDataResult(sql, numberKeys);
     }
 
     @Override
-    public List executeNativeQueryResultList(final SQLBuilder sql) {
+    public List executeNativeQueryResultList(final SqlBuilder sql) {
         return stroomEntityManager.executeNativeQueryResultList(sql);
     }
 
     @Override
-    public <T> List<T> executeNativeQueryResultList(final SQLBuilder sql, final Class<?> clazz) {
+    public <T> List<T> executeNativeQueryResultList(final SqlBuilder sql, final Class<?> clazz) {
         return stroomEntityManager.executeNativeQueryResultList(sql, clazz);
     }
 
     @Override
-    public List executeQueryResultList(final SQLBuilder sql) {
+    public List executeQueryResultList(final HqlBuilder sql) {
         return executeQueryResultList(sql, null, false);
     }
 
     @Override
-    public List executeQueryResultList(final SQLBuilder sql, final BaseCriteria criteria) {
+    public List executeQueryResultList(final HqlBuilder sql, final BaseCriteria criteria) {
         return executeQueryResultList(sql, criteria, false);
     }
 
     @Override
-    public List executeQueryResultList(final SQLBuilder sql, final BaseCriteria criteria, final boolean allowCaching) {
+    public List executeQueryResultList(final HqlBuilder sql, final BaseCriteria criteria, final boolean allowCaching) {
         if (!allowCaching) {
             return stroomEntityManager.executeQueryResultList(sql, criteria, allowCaching);
         }
@@ -166,7 +167,7 @@ public class CachingEntityManager implements StroomEntityManager, InitializingBe
     }
 
     @Override
-    public long executeQueryLongResult(final SQLBuilder sql) {
+    public long executeQueryLongResult(final HqlBuilder sql) {
         return stroomEntityManager.executeQueryLongResult(sql);
 
 //        List result;
@@ -187,7 +188,7 @@ public class CachingEntityManager implements StroomEntityManager, InitializingBe
     }
 
     @Override
-    public String runSubSelectQuery(final SQLBuilder sql, final boolean handleNull) {
+    public String runSubSelectQuery(final HqlBuilder sql, final boolean handleNull) {
         return stroomEntityManager.runSubSelectQuery(sql, handleNull);
     }
 

@@ -25,6 +25,25 @@ import stroom.cell.tickbox.shared.TickBoxState;
 
 public final class TickBoxElement extends ImageElement {
     private static final Resources RESOURCES = GWT.create(Resources.class);
+    private static final String IMAGE_TICK = AbstractImagePrototype.create(RESOURCES.tick()).getHTML();
+    private static final String IMAGE_HALF_TICK = AbstractImagePrototype.create(RESOURCES.halfTick()).getHTML();
+    private static final String IMAGE_UNTICK = AbstractImagePrototype.create(RESOURCES.untick()).getHTML();
+    protected TickBoxElement() {
+    }
+
+    public final void setState(final TickBoxState state) {
+        switch (state) {
+            case TICK:
+                getParentElement().setInnerHTML(IMAGE_TICK);
+                break;
+            case HALF_TICK:
+                getParentElement().setInnerHTML(IMAGE_HALF_TICK);
+                break;
+            case UNTICK:
+                getParentElement().setInnerHTML(IMAGE_UNTICK);
+                break;
+        }
+    }
 
     interface Resources extends ClientBundle {
         ImageResource tick();
@@ -32,26 +51,5 @@ public final class TickBoxElement extends ImageElement {
         ImageResource halfTick();
 
         ImageResource untick();
-    }
-
-    private static final String IMAGE_TICK = AbstractImagePrototype.create(RESOURCES.tick()).getHTML();
-    private static final String IMAGE_HALF_TICK = AbstractImagePrototype.create(RESOURCES.halfTick()).getHTML();
-    private static final String IMAGE_UNTICK = AbstractImagePrototype.create(RESOURCES.untick()).getHTML();
-
-    protected TickBoxElement() {
-    }
-
-    public final void setState(final TickBoxState state) {
-        switch (state) {
-        case TICK:
-            getParentElement().setInnerHTML(IMAGE_TICK);
-            break;
-        case HALF_TICK:
-            getParentElement().setInnerHTML(IMAGE_HALF_TICK);
-            break;
-        case UNTICK:
-            getParentElement().setInnerHTML(IMAGE_UNTICK);
-            break;
-        }
     }
 }

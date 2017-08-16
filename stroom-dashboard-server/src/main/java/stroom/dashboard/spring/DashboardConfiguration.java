@@ -27,12 +27,7 @@ import org.springframework.context.annotation.FilterType;
  * component scan as configurations should be specified explicitly.
  */
 @Configuration
-@ComponentScan(basePackages = { "stroom.dashboard.server", "stroom.dashboard.shared" }, excludeFilters = {
-        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class), })
+@ComponentScan(basePackages = {"stroom.dashboard.server", "stroom.dashboard.shared"}, excludeFilters = {
+        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
 public class DashboardConfiguration {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DashboardConfiguration.class);
-
-    public DashboardConfiguration() {
-        LOGGER.info("DashboardConfiguration loading...");
-    }
 }

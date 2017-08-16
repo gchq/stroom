@@ -25,7 +25,7 @@ import stroom.util.shared.Severity;
 public class IgnorantErrorReceiver implements ErrorReceiver {
     @Override
     public void log(final Severity severity, final Location location, final String elementId, final String message,
-            final Throwable e) {
+                    final Throwable e) {
         // Do nothing.
     }
 }

@@ -31,40 +31,13 @@ import stroom.util.shared.Indicators;
 import stroom.util.shared.Severity;
 
 public class RightBar extends Composite {
-    public interface Style extends CssResource {
-        String rightBar();
-
-        String summaryContainer();
-
-        String summary();
-
-        String marker();
-
-        String info();
-
-        String warning();
-
-        String error();
-
-        String fatal();
-    }
-
-    public interface Resources extends ClientBundle {
-        @Source("rightbar.css")
-        Style style();
-    }
-
-    private static volatile Resources resources;
-
     private static final int SUMMARY_CONTAINER_HEIGHT = 13;
     private static final int OVERVIEW_WIDTH = 13;
-
     private static final IndicatorPopup indicatorPopup = new IndicatorPopup();
+    private static volatile Resources resources;
     private Indicators indicators;
     private int width;
-
     private Editor editor;
-
     public RightBar() {
         sinkEvents(Event.ONMOUSEDOWN);
 
@@ -134,18 +107,18 @@ public class RightBar extends Composite {
                     sb.append(resources.style().summary());
                     sb.append(" ");
                     switch (maxSeverity) {
-                    case FATAL_ERROR:
-                        sb.append(resources.style().fatal());
-                        break;
-                    case ERROR:
-                        sb.append(resources.style().error());
-                        break;
-                    case WARNING:
-                        sb.append(resources.style().warning());
-                        break;
-                    default:
-                        sb.append(resources.style().info());
-                        break;
+                        case FATAL_ERROR:
+                            sb.append(resources.style().fatal());
+                            break;
+                        case ERROR:
+                            sb.append(resources.style().error());
+                            break;
+                        case WARNING:
+                            sb.append(resources.style().warning());
+                            break;
+                        default:
+                            sb.append(resources.style().info());
+                            break;
                     }
                     sb.append("\">");
                     sb.append("</div>");
@@ -194,18 +167,18 @@ public class RightBar extends Composite {
                                     sb.append(resources.style().marker());
                                     sb.append(" ");
                                     switch (severity) {
-                                    case FATAL_ERROR:
-                                        sb.append(resources.style().fatal());
-                                        break;
-                                    case ERROR:
-                                        sb.append(resources.style().error());
-                                        break;
-                                    case WARNING:
-                                        sb.append(resources.style().warning());
-                                        break;
-                                    default:
-                                        sb.append(resources.style().info());
-                                        break;
+                                        case FATAL_ERROR:
+                                            sb.append(resources.style().fatal());
+                                            break;
+                                        case ERROR:
+                                            sb.append(resources.style().error());
+                                            break;
+                                        case WARNING:
+                                            sb.append(resources.style().warning());
+                                            break;
+                                        default:
+                                            sb.append(resources.style().info());
+                                            break;
                                     }
                                     sb.append("\" style=\"top:");
                                     sb.append(top);
@@ -309,5 +282,28 @@ public class RightBar extends Composite {
 
     public void setEditor(final Editor editor) {
         this.editor = editor;
+    }
+
+    public interface Style extends CssResource {
+        String rightBar();
+
+        String summaryContainer();
+
+        String summary();
+
+        String marker();
+
+        String info();
+
+        String warning();
+
+        String error();
+
+        String fatal();
+    }
+
+    public interface Resources extends ClientBundle {
+        @Source("rightbar.css")
+        Style style();
     }
 }

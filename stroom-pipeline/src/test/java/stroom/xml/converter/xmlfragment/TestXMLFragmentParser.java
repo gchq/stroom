@@ -35,30 +35,30 @@ import java.io.IOException;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestXMLFragmentParser extends StroomUnitTest {
-	@Test
-	public void test() throws Exception {
-		final String outerXML = "<?xml version=\"1.1\"?><!DOCTYPE Record [<!ENTITY fragment SYSTEM \"fragment\">]><records>&fragment;</records>";
-		final String innerXML = "<record><data name=\"Test\" value=\"Test\"/></record>";
-		final String expected = "<?xml version=\"1.1\" encoding=\"UTF-8\"?><records><record><data name=\"Test\" value=\"Test\"/></record></records>";
+    @Test
+    public void test() throws Exception {
+        final String outerXML = "<?xml version=\"1.1\"?><!DOCTYPE Record [<!ENTITY fragment SYSTEM \"fragment\">]><records>&fragment;</records>";
+        final String innerXML = "<record><data name=\"Test\" value=\"Test\"/></record>";
+        final String expected = "<?xml version=\"1.1\" encoding=\"UTF-8\"?><records><record><data name=\"Test\" value=\"Test\"/></record></records>";
 
         doParse(outerXML, innerXML, expected);
     }
 
-	@Test
-	public void testLotsOfText() throws Exception {
-		final String outerXML = "<?xml version=\"1.1\"?><!DOCTYPE Record [<!ENTITY fragment SYSTEM \"fragment\">]><Records>&fragment;</Records>";
-		final String value = "This is a load of text ldkjsf slkdfjlkjsdflkjsdf sdlkfjsdf lkjsdflkjsdflkjsdf sdflkjsdflkhj sdflkjsdf lkjsdf lkjsdfl sdflkjsfdlkjsdf lkjsdf lkjsdf lkjsdfl kjsdflkjsdf lkjsdflkhjsdflkj sdfljhsdgflkhweripuweroijsdjfvnsv,jnsdfl hsdlfkj sdflkjhsdflkjwerlkhwef dwsflkjsdf lkjwefrlkjhsdf sdflkjwef weflkjwef weflkjwef weflkjwe flkjwf";
-		final String innerXML = "<Record><Data Name=\"Test\" Value=\"" + value + "\"/></Record>";
-		final String expected = "<?xml version=\"1.1\" encoding=\"UTF-8\"?><Records><Record><Data Name=\"Test\" Value=\""
-				+ value + "\"/></Record></Records>";
+    @Test
+    public void testLotsOfText() throws Exception {
+        final String outerXML = "<?xml version=\"1.1\"?><!DOCTYPE Record [<!ENTITY fragment SYSTEM \"fragment\">]><Records>&fragment;</Records>";
+        final String value = "This is a load of text ldkjsf slkdfjlkjsdflkjsdf sdlkfjsdf lkjsdflkjsdflkjsdf sdflkjsdflkhj sdflkjsdf lkjsdf lkjsdfl sdflkjsfdlkjsdf lkjsdf lkjsdf lkjsdfl kjsdflkjsdf lkjsdflkhjsdflkj sdfljhsdgflkhweripuweroijsdjfvnsv,jnsdfl hsdlfkj sdflkjhsdflkjwerlkhwef dwsflkjsdf lkjwefrlkjhsdf sdflkjwef weflkjwef weflkjwef weflkjwe flkjwf";
+        final String innerXML = "<Record><Data Name=\"Test\" Value=\"" + value + "\"/></Record>";
+        final String expected = "<?xml version=\"1.1\" encoding=\"UTF-8\"?><Records><Record><Data Name=\"Test\" Value=\""
+                + value + "\"/></Record></Records>";
 
-		doParse(outerXML, innerXML, expected);
-	}
+        doParse(outerXML, innerXML, expected);
+    }
 
-	@Test(expected = SAXParseException.class)
-	public void testBadChar() throws Exception {
-		final String outerXML = "<?xml version=\"1.1\"?><!DOCTYPE Record [<!ENTITY fragment SYSTEM \"fragment\">]><records>&fragment;</records>";
-		final String innerXML = "<record><data name=\"Test\" value=\"Test\u0092x\"/></record>";
+    @Test(expected = SAXParseException.class)
+    public void testBadChar() throws Exception {
+        final String outerXML = "<?xml version=\"1.1\"?><!DOCTYPE Record [<!ENTITY fragment SYSTEM \"fragment\">]><records>&fragment;</records>";
+        final String innerXML = "<record><data name=\"Test\" value=\"Test\u0092x\"/></record>";
 
         doParse(outerXML, innerXML, null);
     }
@@ -75,7 +75,7 @@ public class TestXMLFragmentParser extends StroomUnitTest {
 
         parser.parse(new InputSource(StreamUtil.stringToStream(innerXML)));
 
-		Assert.assertEquals(expectedXML, outputStream.toString());
-	}
+        Assert.assertEquals(expectedXML, outputStream.toString());
+    }
 
 }

@@ -35,9 +35,7 @@ import stroom.security.shared.CanEmailPasswordResetAction;
 import stroom.security.shared.EmailPasswordResetForUserNameAction;
 import stroom.security.shared.LoginAction;
 import stroom.security.shared.LogoutAction;
-import stroom.security.shared.User;
-import stroom.security.shared.UserAndPermissions;
-import stroom.util.shared.SharedBoolean;
+import stroom.security.shared.UserRef;
 
 public class LoginManager implements HasHandlers {
     private final EventBus eventBus;
@@ -79,22 +77,22 @@ public class LoginManager implements HasHandlers {
 
     private void login(final String userName, final String password) {
         dispatcher.exec(new LoginAction(userName, password), "Logging on. Please wait...").onSuccess(userAndPermissions -> {
-            if (userAndPermissions == null || userAndPermissions.getUser() == null) {
+            if (userAndPermissions == null || userAndPermissions.getUserRef() == null) {
                 LoginFailedEvent.fire(LoginManager.this, "Incorrect user name or password!");
 
             } else {
-                final User user = userAndPermissions.getUser();
+                final UserRef userRef = userAndPermissions.getUserRef();
 
                 // Some accounts never expire (e.g. in dev mode)
-                if (user.getPasswordExpiryMs() != null) {
-                    final int daysToExpiry = getDaysToExpiry(user.getPasswordExpiryMs());
+                if (userAndPermissions.getDaysToPasswordExpiry() != null) {
+                    final int daysToExpiry = userAndPermissions.getDaysToPasswordExpiry();
 
                     if (daysToExpiry < 1) {
                         ConfirmEvent.fire(LoginManager.this,
                                 "Your password has expired.  You must change it now",
                                 result -> {
                                     if (result) {
-                                        ChangePasswordEvent.fire(LoginManager.this, user, true);
+                                        ChangePasswordEvent.fire(LoginManager.this, userRef, true);
                                     }
                                 });
 
@@ -110,7 +108,7 @@ public class LoginManager implements HasHandlers {
                         message.append(". Would you like to change the password now?");
                         ConfirmEvent.fire(LoginManager.this, message.toString(), result -> {
                             if (result) {
-                                ChangePasswordEvent.fire(LoginManager.this, user, true);
+                                ChangePasswordEvent.fire(LoginManager.this, userRef, true);
                             } else {
                                 currentUser.setUserAndPermissions(userAndPermissions);
                             }
@@ -165,12 +163,6 @@ public class LoginManager implements HasHandlers {
                 }
             });
         }
-    }
-
-    private int getDaysToExpiry(final Long expiry) {
-        final long milliseconds = expiry - System.currentTimeMillis();
-        final int days = (int) (milliseconds / 1000 / 60 / 60 / 24);
-        return days;
     }
 
     @Override

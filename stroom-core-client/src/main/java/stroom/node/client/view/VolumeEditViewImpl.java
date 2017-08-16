@@ -30,11 +30,7 @@ import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.Volume.VolumeUseStatus;
 
 public class VolumeEditViewImpl extends ViewImpl implements VolumeEditView {
-    public interface Binder extends UiBinder<Widget, VolumeEditViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     ItemListBox<Node> node;
     @UiField
@@ -47,7 +43,6 @@ public class VolumeEditViewImpl extends ViewImpl implements VolumeEditView {
     ItemListBox<VolumeUseStatus> indexStatus;
     @UiField
     TextBox bytesLimit;
-
     @Inject
     public VolumeEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -86,5 +81,8 @@ public class VolumeEditViewImpl extends ViewImpl implements VolumeEditView {
     @Override
     public HasText getBytesLimit() {
         return bytesLimit;
+    }
+
+    public interface Binder extends UiBinder<Widget, VolumeEditViewImpl> {
     }
 }

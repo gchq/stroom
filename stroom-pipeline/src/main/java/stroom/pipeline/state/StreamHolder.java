@@ -34,11 +34,10 @@ import java.util.Map;
 @Component
 @Scope(StroomScope.TASK)
 public class StreamHolder implements Holder {
+    private final Map<StreamType, StreamSourceInputStreamProvider> streamProviders = new HashMap<>();
     @Resource
     private StreamCloser streamCloser;
-
     private Stream stream;
-    private final Map<StreamType, StreamSourceInputStreamProvider> streamProviders = new HashMap<>();
     private long streamNo;
 
     public Stream getStream() {
@@ -70,11 +69,11 @@ public class StreamHolder implements Holder {
         return streamProviders.get(streamType);
     }
 
-    public void setStreamNo(final long streamNo) {
-        this.streamNo = streamNo;
-    }
-
     public long getStreamNo() {
         return streamNo;
+    }
+
+    public void setStreamNo(final long streamNo) {
+        this.streamNo = streamNo;
     }
 }

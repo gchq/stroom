@@ -18,7 +18,6 @@ package stroom.feed.shared;
 
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.FindDocumentEntityCriteria;
-import stroom.entity.shared.OrderBy;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 
@@ -26,13 +25,11 @@ import stroom.util.shared.HashCodeBuilder;
  * Class used to find feed definitions.
  */
 public class FindFeedCriteria extends FindDocumentEntityCriteria {
+    public static final String FIELD_TYPE = "Type";
+    public static final String FIELD_CLASSIFICATION = "Classification";
     private static final long serialVersionUID = 1L;
-
-    public static final OrderBy ORDER_BY_TYPE = new OrderBy("Type", "reference");
-    public static final OrderBy ORDER_BY_CLASSIFICATION = new OrderBy("Classification", "classification");
-
     private Boolean reference;
-    private EntityIdSet<Feed> feedIdSet = new EntityIdSet<Feed>();
+    private EntityIdSet<Feed> feedIdSet = new EntityIdSet<>();
 
     public FindFeedCriteria() {
         // Default constructor necessary for GWT serialisation.

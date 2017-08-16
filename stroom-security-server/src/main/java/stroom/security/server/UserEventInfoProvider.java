@@ -21,11 +21,11 @@ import event.logging.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import stroom.dashboard.server.logging.EventInfoProvider;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.Entity;
 import stroom.entity.shared.FolderService;
-import stroom.logging.EventInfoProvider;
 import stroom.security.shared.FindUserCriteria;
 
 import javax.annotation.Resource;
@@ -41,8 +41,8 @@ public class UserEventInfoProvider implements EventInfoProvider {
     public BaseObject createBaseObject(final java.lang.Object obj) {
         if (obj instanceof BaseEntity) {
             final Entity entity = (Entity) obj;
-            if (entity instanceof stroom.security.shared.User) {
-                final stroom.security.shared.User user = (stroom.security.shared.User) entity;
+            if (entity instanceof stroom.security.server.User) {
+                final stroom.security.server.User user = (stroom.security.server.User) entity;
                 final User usr = new User();
                 usr.setId(user.getName());
 

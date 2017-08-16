@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,9 +18,6 @@ package stroom.importexport.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestControl;
-import stroom.CommonTestScenarioCreator;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
@@ -36,6 +33,9 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
 import stroom.query.api.v1.DocRef;
 import stroom.streamstore.server.fs.FileSystemUtil;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestControl;
+import stroom.test.CommonTestScenarioCreator;
 import stroom.test.ComparisonHelper;
 import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.test.FileSystemTestUtil;
@@ -70,7 +70,7 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
     private DocRefs buildFindFolderCriteria() {
         final DocRefs criteria = new DocRefs();
-        criteria.add(new DocRef(Folder.ENTITY_TYPE,"0", "System"));
+        criteria.add(new DocRef(Folder.ENTITY_TYPE, "0", "System"));
         return criteria;
     }
 

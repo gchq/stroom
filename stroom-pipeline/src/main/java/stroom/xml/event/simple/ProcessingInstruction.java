@@ -34,12 +34,10 @@ public final class ProcessingInstruction extends BaseEvent {
     /**
      * Stores a processingInstruction SAX event.
      *
-     * @param target
-     *            the processing instruction target
-     * @param data
-     *            the processing instruction data, or null if none was supplied.
-     *            The data does not include any whitespace separating it from
-     *            the target
+     * @param target the processing instruction target
+     * @param data   the processing instruction data, or null if none was supplied.
+     *               The data does not include any whitespace separating it from
+     *               the target
      */
     public ProcessingInstruction(final String target, final String data) {
         this.target = target;
@@ -49,10 +47,8 @@ public final class ProcessingInstruction extends BaseEvent {
     /**
      * Fires a stored SAX event at the supplied content handler.
      *
-     * @param handler
-     *            The content handler to fire the SAX event at.
-     * @throws SAXException
-     *             Necessary to maintain the SAX event contract.
+     * @param handler The content handler to fire the SAX event at.
+     * @throws SAXException Necessary to maintain the SAX event contract.
      * @see Event#fire(org.xml.sax.ContentHandler)
      */
     @Override

@@ -38,22 +38,21 @@ public class RingBuffer implements CharSequence, Serializable {
     /**
      * Create a buffer with a specified initial size.
      *
-     * @param initialSize
-     *            The initial size of the buffer.
+     * @param initialSize The initial size of the buffer.
      */
     public RingBuffer(final int initialSize) {
         buffer = new char[initialSize];
-    }
-
-    public static RingBuffer fromString(final String string) {
-        char[] chars = string.toCharArray();
-        return new RingBuffer(chars, 0, chars.length);
     }
 
     private RingBuffer(final char[] buffer, final int off, final int len) {
         this.buffer = buffer;
         this.offset = off;
         this.length = len;
+    }
+
+    public static RingBuffer fromString(final String string) {
+        char[] chars = string.toCharArray();
+        return new RingBuffer(chars, 0, chars.length);
     }
 
     public RingBuffer append(final char c) {

@@ -19,42 +19,30 @@ package stroom.jobsystem.client;
 import com.google.gwt.cell.client.AbstractInputCell;
 import com.google.gwt.cell.client.SelectionCell;
 import com.google.gwt.cell.client.ValueUpdater;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.SelectElement;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import stroom.jobsystem.shared.JobNode.JobType;
 import stroom.jobsystem.shared.TaskType;
 
 import java.util.HashMap;
 
 public class TaskTypeCell extends AbstractInputCell<TaskType, TaskType> {
-    public interface Resources extends ClientBundle {
-        ImageResource schedule();
-    }
-
-    private String button = null;
-
-    private HashMap<JobType, Integer> indexForOption = new HashMap<JobType, Integer>();
-
     private final JobType[] options;
+    private String button = null;
+    private HashMap<JobType, Integer> indexForOption = new HashMap<>();
 
     /**
      * Construct a new {@link SelectionCell} with the specified options.
      *
-     * @param options
-     *            the options in the cell
+     * @param options the options in the cell
      */
     public TaskTypeCell() {
         super("change", "click");
         if (button == null) {
-            final Resources res = GWT.create(Resources.class);
-            button = AbstractImagePrototype.create(res.schedule()).getHTML();
+            button = "<img style=\"width:16px;height:16px\" src=\"images/history.svg\"/>";
         }
         this.options = JobType.values();
         int index = 0;
@@ -65,7 +53,7 @@ public class TaskTypeCell extends AbstractInputCell<TaskType, TaskType> {
 
     @Override
     public void onBrowserEvent(Context context, Element parent, TaskType value, NativeEvent event,
-            ValueUpdater<TaskType> valueUpdater) {
+                               ValueUpdater<TaskType> valueUpdater) {
         if (value != null) {
             super.onBrowserEvent(context, parent, value, event, valueUpdater);
             final String type = event.getType();
@@ -102,7 +90,7 @@ public class TaskTypeCell extends AbstractInputCell<TaskType, TaskType> {
 
     @Override
     protected void onEnterKeyDown(Context context, Element parent, TaskType value, NativeEvent event,
-            ValueUpdater<TaskType> valueUpdater) {
+                                  ValueUpdater<TaskType> valueUpdater) {
         if (valueUpdater != null) {
             valueUpdater.update(value);
         }

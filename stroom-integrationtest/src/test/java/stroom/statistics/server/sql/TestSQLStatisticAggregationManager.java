@@ -20,13 +20,13 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestControl;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.statistics.server.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.server.sql.rollup.RolledUpStatisticEvent;
 import stroom.statistics.shared.StatisticType;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestControl;
 import stroom.util.config.StroomProperties;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
@@ -47,7 +47,9 @@ import java.util.concurrent.TimeUnit;
 
 public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestSQLStatisticAggregationManager.class);
-
+    private static final long STAT_VALUE = 10L;
+    private static final String COL_NAME_VAL = "VAL";
+    private static final String COL_NAME_CNT = "CT";
     @Resource
     private CommonTestControl commonTestControl;
     @Resource
@@ -60,11 +62,6 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
     private SQLStatisticAggregationTransactionHelper sqlStatisticAggregationTransactionHelper;
     @Resource
     private StroomDatabaseInfo stroomDatabaseInfo;
-
-    private static final long STAT_VALUE = 10L;
-
-    private static final String COL_NAME_VAL = "VAL";
-    private static final String COL_NAME_CNT = "CT";
 
     @Override
     public void onBefore() {

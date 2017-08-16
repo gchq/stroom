@@ -34,43 +34,14 @@ import java.util.List;
 import java.util.Map;
 
 public class XMLWriter implements ContentHandler {
-    public enum XMLVersion {
-        VERSION_1_0("1.0"), VERSION_1_1("1.1");
-
-        private final String output;
-
-        XMLVersion(final String output) {
-            this.output = output;
-        }
-
-        public String getOutput() {
-            return output;
-        }
-    }
-
-    private static class AttributeNameComparator implements Comparator<String>, Serializable {
-        private static final long serialVersionUID = -9219753718768871842L;
-
-        @Override
-        public int compare(final String o1, final String o2) {
-            if (o1.startsWith("xsi:") && o2.startsWith("xsi:")) {
-                return o1.compareTo(o2);
-            } else if (o1.startsWith("xsi:")) {
-                return -1;
-            } else if (o2.startsWith("xsi:")) {
-                return 1;
-            }
-
-            return o1.compareTo(o2);
-        }
-    }
-
     public static final char SURROGATE1_MIN = 0xD800;
     public static final char SURROGATE1_MAX = 0xDBFF;
     // Lookup table for special characters in text
     private static final boolean[] specialInText;
     // Lookup table for special characters in attributes
     private static final boolean[] specialInAtt;
+    private static final XMLVersion DEFAULT_VERSION = XMLVersion.VERSION_1_1;
+    private static final int DEFAULT_INDENTATION = 2;
 
     // Create look-up table for ASCII characters that need special treatment
     static {
@@ -110,18 +81,7 @@ public class XMLWriter implements ContentHandler {
         specialInAtt['\"'] = true;
     }
 
-    private static final XMLVersion DEFAULT_VERSION = XMLVersion.VERSION_1_1;
-    private static final int DEFAULT_INDENTATION = 2;
-
-    private char[] indentChars = { '\n', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' };
-
-    // Output Options
-    private boolean sortAtts = true;
-    private boolean outputXMLDecl = false;
     private final XMLVersion version = DEFAULT_VERSION;
-    private int indentation = DEFAULT_INDENTATION;
-    private boolean normalizeSpace = false;
-
     private final List<String> attList = new ArrayList<>();
     private final Map<String, String> prefixMap = new HashMap<>();
     private final List<String> unwrittenPrefixes = new ArrayList<>();
@@ -129,10 +89,15 @@ public class XMLWriter implements ContentHandler {
     private final StringBuilder buf = new StringBuilder();
     private final StringWriter stringWriter = new StringWriter();
     private final AttributeNameComparator attributeNameComparator = new AttributeNameComparator();
+    private char[] indentChars = {'\n', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '};
+    // Output Options
+    private boolean sortAtts = true;
+    private boolean outputXMLDecl = false;
+    private int indentation = DEFAULT_INDENTATION;
+    private boolean normalizeSpace = false;
     private boolean inStart;
     private int level;
     private int attIndent = 1;
-
     private boolean sameline;
     private boolean afterStartTag = false;
     private boolean afterEndTag = false;
@@ -140,7 +105,6 @@ public class XMLWriter implements ContentHandler {
     // Line and column measure the number of lines and columns
     private int line = 0;
     private int column = 0; // .. in whitespace text nodes between tags
-
     public XMLWriter(final Writer writer) {
         this.writer = writer;
     }
@@ -500,8 +464,7 @@ public class XMLWriter implements ContentHandler {
     /**
      * Test whether the given character is a high surrogate
      *
-     * @param ch
-     *            The character to test.
+     * @param ch The character to test.
      * @return true if the character is the first character in a surrogate pair
      */
     private boolean isHighSurrogate(final int ch) {
@@ -557,5 +520,36 @@ public class XMLWriter implements ContentHandler {
 
     public void setNormalizeSpace(final boolean normalizeSpace) {
         this.normalizeSpace = normalizeSpace;
+    }
+
+    public enum XMLVersion {
+        VERSION_1_0("1.0"), VERSION_1_1("1.1");
+
+        private final String output;
+
+        XMLVersion(final String output) {
+            this.output = output;
+        }
+
+        public String getOutput() {
+            return output;
+        }
+    }
+
+    private static class AttributeNameComparator implements Comparator<String>, Serializable {
+        private static final long serialVersionUID = -9219753718768871842L;
+
+        @Override
+        public int compare(final String o1, final String o2) {
+            if (o1.startsWith("xsi:") && o2.startsWith("xsi:")) {
+                return o1.compareTo(o2);
+            } else if (o1.startsWith("xsi:")) {
+                return -1;
+            } else if (o2.startsWith("xsi:")) {
+                return 1;
+            }
+
+            return o1.compareTo(o2);
+        }
     }
 }

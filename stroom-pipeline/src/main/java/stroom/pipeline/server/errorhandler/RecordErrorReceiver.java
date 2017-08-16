@@ -37,16 +37,14 @@ import java.util.TreeMap;
 @Component
 @Scope(value = StroomScope.TASK)
 public class RecordErrorReceiver implements ErrorReceiver, ErrorStatistics {
-    private Map<Severity, StoredErrorStats> statsMap = new TreeMap<Severity, StoredErrorStats>();
-
     public static final int MAX_TOTAL_WRITTEN_MARKERS = 1000;
-
+    private Map<Severity, StoredErrorStats> statsMap = new TreeMap<>();
     @Resource
     private ErrorWriterProxy errorWriter;
 
     @Override
     public void log(final Severity severity, final Location location, final String elementId, final String message,
-            final Throwable e) {
+                    final Throwable e) {
         final String msg = MessageUtil.getMessage(message, e);
 
         // Record the number of errors.

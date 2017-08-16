@@ -45,11 +45,8 @@ public class FixedNodeExtentProvider<T> implements NodeExtentProvider<T> {
     /**
      * Specifies the constants to be used as the width and height of the nodes.
      *
-     * @param width
-     *            [default=0]
-     *
-     * @param height
-     *            [default=0]
+     * @param width  [default=0]
+     * @param height [default=0]
      */
     public FixedNodeExtentProvider(final double width, final double height) {
         checkArg(width >= 0, "width must be >= 0");

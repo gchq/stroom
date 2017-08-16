@@ -18,12 +18,12 @@ package stroom.pipeline.server.task;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractProcessIntegrationTest;
-import stroom.CommonTranslationTest;
 import stroom.streamstore.server.MockStreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.server.StreamProcessorTaskExecutor;
+import stroom.test.AbstractProcessIntegrationTest;
+import stroom.test.CommonTranslationTest;
 import stroom.test.ComparisonHelper;
 import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.shared.Severity;
@@ -47,8 +47,7 @@ public class TestTranslationTask extends AbstractProcessIntegrationTest {
     /**
      * Tests Task with a valid resource and feed.
      *
-     * @throws Exception
-     *             Could be thrown.
+     * @throws Exception Could be thrown.
      */
     @Test
     public void testBothValid() throws Exception {
@@ -88,8 +87,7 @@ public class TestTranslationTask extends AbstractProcessIntegrationTest {
     /**
      * Tests Task with an invalid resource and valid feed.
      *
-     * @throws Exception
-     *             Could be thrown.
+     * @throws Exception Could be thrown.
      */
     @Test
     public void testInvalidResource() throws Exception {

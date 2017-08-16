@@ -32,15 +32,9 @@ import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.stepping.client.presenter.StepLocationPresenter.StepLocationView;
 import stroom.pipeline.stepping.client.presenter.StepLocationUIHandlers;
 
-public class StepLocationViewImpl extends ViewWithUiHandlers<StepLocationUIHandlers>implements StepLocationView {
-    public interface Binder extends UiBinder<Widget, StepLocationViewImpl> {
-    }
-
+public class StepLocationViewImpl extends ViewWithUiHandlers<StepLocationUIHandlers> implements StepLocationView {
     private static final String EMPTY = "&nbsp;-&nbsp;";
     private final Widget widget;
-    private StepLocation stepLocation;
-    private boolean editing;
-
     @UiField
     HTML lblStreamId;
     @UiField
@@ -53,7 +47,8 @@ public class StepLocationViewImpl extends ViewWithUiHandlers<StepLocationUIHandl
     HTML lblRecordNo;
     @UiField
     TextBox txtRecordNo;
-
+    private StepLocation stepLocation;
+    private boolean editing;
     @Inject
     public StepLocationViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -187,5 +182,8 @@ public class StepLocationViewImpl extends ViewWithUiHandlers<StepLocationUIHandl
         }
 
         return null;
+    }
+
+    public interface Binder extends UiBinder<Widget, StepLocationViewImpl> {
     }
 }

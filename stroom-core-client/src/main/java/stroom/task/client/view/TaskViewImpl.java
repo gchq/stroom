@@ -32,12 +32,8 @@ import stroom.task.client.presenter.TaskUiHandlers;
 import stroom.util.shared.TaskId;
 import stroom.widget.button.client.ImageButton;
 
-public class TaskViewImpl extends ViewWithUiHandlers<TaskUiHandlers>implements TaskView {
-    public interface Binder extends UiBinder<Widget, TaskViewImpl> {
-    }
-
+public class TaskViewImpl extends ViewWithUiHandlers<TaskUiHandlers> implements TaskView {
     private final Widget widget;
-
     @UiField
     HorizontalPanel layout;
     @UiField
@@ -48,10 +44,8 @@ public class TaskViewImpl extends ViewWithUiHandlers<TaskUiHandlers>implements T
     Label taskAge;
     @UiField
     ImageButton terminate;
-
     private TaskId id;
     private String taskNameString;
-
     @Inject
     public TaskViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -97,5 +91,8 @@ public class TaskViewImpl extends ViewWithUiHandlers<TaskUiHandlers>implements T
                 getUiHandlers().onTerminate(id, taskNameString);
             }
         }
+    }
+
+    public interface Binder extends UiBinder<Widget, TaskViewImpl> {
     }
 }

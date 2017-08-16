@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,8 +18,11 @@ package stroom.stats;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.entity.shared.*;
+import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.DocRefUtil;
+import stroom.entity.shared.DocRefs;
+import stroom.entity.shared.FolderService;
+import stroom.entity.shared.ImportState;
 import stroom.importexport.server.ImportExportSerializer;
 import stroom.query.api.v1.DocRef;
 import stroom.statistics.server.sql.datasource.StatisticsDataSourceProvider;
@@ -31,6 +34,7 @@ import stroom.stats.shared.StatisticField;
 import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.stats.shared.StroomStatsStoreEntityData;
 import stroom.streamstore.server.fs.FileSystemUtil;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.test.FileSystemTestUtil;
 
 import javax.annotation.Resource;

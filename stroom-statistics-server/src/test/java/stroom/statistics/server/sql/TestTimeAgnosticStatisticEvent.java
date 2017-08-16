@@ -26,7 +26,7 @@ import java.util.List;
 public class TestTimeAgnosticStatisticEvent {
     @Test
     public void serialiseTest() {
-        final List<StatisticTag> tagList = new ArrayList<StatisticTag>();
+        final List<StatisticTag> tagList = new ArrayList<>();
         tagList.add(new StatisticTag("tag1", "val1"));
         tagList.add(new StatisticTag("tag2", "val2"));
 

@@ -21,13 +21,13 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
+import stroom.feed.MetaMap;
 import stroom.pipeline.server.ErrorWriter;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.filter.AbstractXMLFilter;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
-import stroom.util.zip.HeaderMap;
 import stroom.xml.event.simple.StartElement;
 import stroom.xml.event.simple.StartPrefixMapping;
 
@@ -55,13 +55,12 @@ public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
     private static final String ERROR = "Error";
     private static final String SPACE = " ";
     private static final String COLON = ":";
-
-    private HeaderMap metaData;
+    private final Deque<StartPrefixMapping> prefixDeque = new ArrayDeque<>();
+    private final List<StoredError> errors = new ArrayList<>();
+    private MetaMap metaData;
     private boolean started;
     private int depth;
     private StartElement root;
-    private final Deque<StartPrefixMapping> prefixDeque = new ArrayDeque<>();
-    private final List<StoredError> errors = new ArrayList<>();
 
     public void beginOutput() throws SAXException {
     }
@@ -89,7 +88,7 @@ public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
         }
     }
 
-    public void changeMetaData(final HeaderMap metaData) {
+    public void changeMetaData(final MetaMap metaData) {
         this.metaData = metaData;
 
         if (depth == 1) {
@@ -188,12 +187,9 @@ public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
     }
 
     /**
-     * @param ch
-     *            the characters from the XML document
-     * @param start
-     *            the start position in the array
-     * @param length
-     *            the number of characters to read from the array
+     * @param ch     the characters from the XML document
+     * @param start  the start position in the array
+     * @param length the number of characters to read from the array
      */
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
@@ -203,12 +199,9 @@ public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
     }
 
     /**
-     * @param ch
-     *            the characters from the XML document
-     * @param start
-     *            the start position in the array
-     * @param length
-     *            the number of characters to read from the array
+     * @param ch     the characters from the XML document
+     * @param start  the start position in the array
+     * @param length the number of characters to read from the array
      */
     @Override
     public void ignorableWhitespace(final char[] ch, final int start, final int length) throws SAXException {
@@ -257,14 +250,14 @@ public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
             for (int i = 0; i < chars.length; i++) {
                 final char c = chars[i];
                 switch (c) {
-                case '\n':
-                    sb.append(' ');
-                    break;
-                case '\r':
-                    break;
-                default:
-                    sb.append(c);
-                    break;
+                    case '\n':
+                        sb.append(' ');
+                        break;
+                    case '\r':
+                        break;
+                    default:
+                        sb.append(c);
+                        break;
                 }
             }
         }

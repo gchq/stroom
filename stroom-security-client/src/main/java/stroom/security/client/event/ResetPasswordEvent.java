@@ -20,23 +20,23 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import stroom.security.client.event.ResetPasswordEvent.ResetPasswordHandler;
-import stroom.security.shared.User;
+import stroom.security.shared.UserRef;
 
 public class ResetPasswordEvent extends GwtEvent<ResetPasswordHandler> {
     private static Type<ResetPasswordHandler> TYPE;
-    private User user;
+    private final UserRef userRef;
 
-    private ResetPasswordEvent(final User user) {
-        this.user = user;
+    private ResetPasswordEvent(final UserRef userRef) {
+        this.userRef = userRef;
     }
 
-    public static void fire(final HasHandlers handlers, final User user) {
-        handlers.fireEvent(new ResetPasswordEvent(user));
+    public static void fire(final HasHandlers handlers, final UserRef userRef) {
+        handlers.fireEvent(new ResetPasswordEvent(userRef));
     }
 
     public static Type<ResetPasswordHandler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<ResetPasswordHandler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }
@@ -51,12 +51,8 @@ public class ResetPasswordEvent extends GwtEvent<ResetPasswordHandler> {
         handler.onResetPassword(this);
     }
 
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(final User user) {
-        this.user = user;
+    public UserRef getUserRef() {
+        return userRef;
     }
 
     public interface ResetPasswordHandler extends EventHandler {

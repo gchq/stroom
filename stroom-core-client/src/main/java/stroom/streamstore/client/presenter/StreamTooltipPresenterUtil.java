@@ -28,7 +28,7 @@ public class StreamTooltipPresenterUtil {
     }
 
     public static final void addRowNameString(final StringBuilder html, final String label,
-            final NamedEntity namedEntity) {
+                                              final NamedEntity namedEntity) {
         if (namedEntity != null) {
             TooltipUtil.addRowData(html, label, namedEntity.getName() + " (" + namedEntity.getId() + ")");
         }

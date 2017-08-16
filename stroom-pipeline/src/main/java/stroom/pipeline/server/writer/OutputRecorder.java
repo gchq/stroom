@@ -32,10 +32,59 @@ import java.io.OutputStream;
 @Component
 @Scope(StroomScope.PROTOTYPE)
 public class OutputRecorder extends AbstractDestinationProvider implements Recorder {
+    private static final Logger LOGGER = LoggerFactory.getLogger(OutputRecorder.class);
+    private final MemoryDestination destination = new MemoryDestination();
+    private String elementId;
+
+    @Override
+    public void startProcessing() {
+    }
+
+    @Override
+    public void endProcessing() {
+    }
+
+    @Override
+    public void startStream() {
+    }
+
+    @Override
+    public void endStream() {
+    }
+
+    @Override
+    public Destination borrowDestination() throws IOException {
+        return destination;
+    }
+
+    @Override
+    public void returnDestination(final Destination destination) throws IOException {
+    }
+
+    @Override
+    public Object getData() {
+        return destination.getData();
+    }
+
+    @Override
+    public void clear() {
+        destination.clear();
+    }
+
+    @Override
+    public String getElementId() {
+        return elementId;
+    }
+
+    @Override
+    public void setElementId(final String elementId) {
+        this.elementId = elementId;
+    }
+
     private static class MemoryDestination implements Destination {
+        private final ByteArrayOutputStream outputStream = new ByteArrayOutputStream(4096);
         private byte[] header;
         private byte[] footer;
-        private final ByteArrayOutputStream outputStream = new ByteArrayOutputStream(4096);
 
         @Override
         public OutputStream getOutputStream() throws IOException {
@@ -81,56 +130,5 @@ public class OutputRecorder extends AbstractDestinationProvider implements Recor
         public void clear() {
             outputStream.reset();
         }
-    }
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(OutputRecorder.class);
-
-    private String elementId;
-
-    private final MemoryDestination destination = new MemoryDestination();
-
-    @Override
-    public void startProcessing() {
-    }
-
-    @Override
-    public void endProcessing() {
-    }
-
-    @Override
-    public void startStream() {
-    }
-
-    @Override
-    public void endStream() {
-    }
-
-    @Override
-    public Destination borrowDestination() throws IOException {
-        return destination;
-    }
-
-    @Override
-    public void returnDestination(final Destination destination) throws IOException {
-    }
-
-    @Override
-    public Object getData() {
-        return destination.getData();
-    }
-
-    @Override
-    public void clear() {
-        destination.clear();
-    }
-
-    @Override
-    public String getElementId() {
-        return elementId;
-    }
-
-    @Override
-    public void setElementId(final String elementId) {
-        this.elementId = elementId;
     }
 }

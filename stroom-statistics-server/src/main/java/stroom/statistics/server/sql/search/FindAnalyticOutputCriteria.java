@@ -24,10 +24,14 @@ public class FindAnalyticOutputCriteria {
     private final Integer rowNumber;
 
     private FindAnalyticOutputCriteria(final Period period, final FilterTermsTree filterTermsTree,
-            final Integer rowNumber) {
+                                       final Integer rowNumber) {
         this.period = period;
         this.filterTermsTree = filterTermsTree;
         this.rowNumber = rowNumber;
+    }
+
+    public static Builder getBuilder() {
+        return new Builder();
     }
 
     public Period getPeriod() {
@@ -42,8 +46,10 @@ public class FindAnalyticOutputCriteria {
         return filterTermsTree;
     }
 
-    public static Builder getBuilder() {
-        return new Builder();
+    @Override
+    public String toString() {
+        return "FindAnalyticOutputCriteria [period=" + period + ", filterTermsTree=" + filterTermsTree + ", rowNumber="
+                + rowNumber + "]";
     }
 
     public static class Builder {
@@ -75,11 +81,5 @@ public class FindAnalyticOutputCriteria {
             }
             return new FindAnalyticOutputCriteria(period, filterTermsTree, rowNumber);
         }
-    }
-
-    @Override
-    public String toString() {
-        return "FindAnalyticOutputCriteria [period=" + period + ", filterTermsTree=" + filterTermsTree + ", rowNumber="
-                + rowNumber + "]";
     }
 }

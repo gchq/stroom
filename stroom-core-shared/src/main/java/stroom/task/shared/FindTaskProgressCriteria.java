@@ -17,7 +17,8 @@
 package stroom.task.shared;
 
 import stroom.entity.shared.FindNamedEntityCriteria;
-import stroom.entity.shared.OrderBy;
+import stroom.entity.shared.Sort;
+import stroom.entity.shared.Sort.Direction;
 import stroom.util.shared.CompareUtil;
 
 import java.util.Comparator;
@@ -25,12 +26,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class FindTaskProgressCriteria extends FindNamedEntityCriteria implements Comparator<TaskProgress> {
+    public static final String FIELD_USER = "User";
+    public static final String FIELD_SUBMIT_TIME = "Submit Time";
+    public static final String FIELD_AGE = "Age";
     private static final long serialVersionUID = 2014515855795611224L;
-
-    public static final OrderBy ORDER_BY_USER = new OrderBy("User");
-    public static final OrderBy ORDER_BY_SUBMIT_TIME = new OrderBy("Submit Time");
-    public static final OrderBy ORDER_BY_AGE = new OrderBy("Age");
-
     private FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
     private String sessionId;
     private Set<TaskProgress> expandedTasks;
@@ -59,20 +58,31 @@ public class FindTaskProgressCriteria extends FindNamedEntityCriteria implements
 
     @Override
     public int compare(final TaskProgress o1, final TaskProgress o2) {
-        int compare = 0;
-        if (ORDER_BY_NAME.equals(getOrderBy())) {
-            compare = CompareUtil.compareString(o1.getTaskName(), o2.getTaskName());
-        } else if (ORDER_BY_USER.equals(getOrderBy())) {
-            compare = CompareUtil.compareString(o1.getUserName(), o2.getUserName());
-        } else if (ORDER_BY_SUBMIT_TIME.equals(getOrderBy())) {
-            compare = CompareUtil.compareLong(o1.getSubmitTimeMs(), o2.getSubmitTimeMs());
-        } else if (ORDER_BY_AGE.equals(getOrderBy())) {
-            compare = CompareUtil.compareLong(o1.getSubmitTimeMs(), o2.getSubmitTimeMs());
+        if (getSortList() != null) {
+            for (final Sort sort : getSortList()) {
+                final String field = sort.getField();
+
+                int compare = 0;
+                if (FIELD_NAME.equals(field)) {
+                    compare = CompareUtil.compareString(o1.getTaskName(), o2.getTaskName());
+                } else if (FIELD_USER.equals(field)) {
+                    compare = CompareUtil.compareString(o1.getUserName(), o2.getUserName());
+                } else if (FIELD_SUBMIT_TIME.equals(field)) {
+                    compare = CompareUtil.compareLong(o1.getSubmitTimeMs(), o2.getSubmitTimeMs());
+                } else if (FIELD_AGE.equals(field)) {
+                    compare = CompareUtil.compareLong(o1.getSubmitTimeMs(), o2.getSubmitTimeMs());
+                }
+                if (Direction.DESCENDING.equals(sort.getDirection())) {
+                    compare = compare * -1;
+                }
+
+                if (compare != 0) {
+                    return compare;
+                }
+            }
         }
-        if (getOrderByDirection() == OrderByDirection.DESCENDING) {
-            compare = compare * -1;
-        }
-        return compare;
+
+        return 0;
     }
 
     public void setExpanded(final TaskProgress taskProgress, final boolean expanded) {

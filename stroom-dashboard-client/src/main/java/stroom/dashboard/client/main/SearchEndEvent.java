@@ -23,6 +23,7 @@ import com.google.gwt.event.shared.HasHandlers;
 public class SearchEndEvent extends GwtEvent<SearchEndEvent.Handler> {
     private static Type<Handler> TYPE;
     private final boolean forceUpdate;
+
     private SearchEndEvent(final boolean forceUpdate) {
         this.forceUpdate = forceUpdate;
     }

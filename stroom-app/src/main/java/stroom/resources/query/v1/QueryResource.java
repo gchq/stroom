@@ -10,7 +10,7 @@ import stroom.resources.NamedResource;
 
 public interface QueryResource extends HasHealthCheck, NamedResource {
 
-    String DATASOURCE_ENDPOINT = "/datasource";
+    String DATA_SOURCE_ENDPOINT = "/dataSource";
     String SEARCH_ENDPOINT = "/search";
     String DESTROY_ENDPOINT = "/destroy";
 

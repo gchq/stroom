@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.SqlBuilder;
 import stroom.jobsystem.server.ClusterLockService;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.StroomPropertyService;
@@ -45,8 +45,8 @@ public class StreamAttributeValueDeleteExecutor extends AbstractBatchDeleteExecu
 
     @Inject
     public StreamAttributeValueDeleteExecutor(final BatchIdTransactionHelper batchIdTransactionHelper,
-            final ClusterLockService clusterLockService, final StroomPropertyService propertyService,
-            final TaskMonitor taskMonitor) {
+                                              final ClusterLockService clusterLockService, final StroomPropertyService propertyService,
+                                              final TaskMonitor taskMonitor) {
         super(batchIdTransactionHelper, clusterLockService, propertyService, taskMonitor, TASK_NAME, LOCK_NAME,
                 STREAM_ATTRIBUTE_DELETE_AGE_PROPERTY, STREAM_ATTRIBUTE_DELETE_BATCH_SIZE_PROPERTY,
                 DEFAULT_STREAM_ATTRIBUTE_DELETE_BATCH_SIZE, TEMP_STRM_ATTRIBUTE_ID_TABLE);
@@ -67,8 +67,8 @@ public class StreamAttributeValueDeleteExecutor extends AbstractBatchDeleteExecu
     }
 
     @Override
-    protected String getTempIdSelectSql(final long age, final int batchSize) {
-        final SQLBuilder sql = new SQLBuilder();
+    protected SqlBuilder getTempIdSelectSql(final long age, final int batchSize) {
+        final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT ");
         sql.append(StreamAttributeValue.ID);
         sql.append(" FROM ");
@@ -76,11 +76,11 @@ public class StreamAttributeValueDeleteExecutor extends AbstractBatchDeleteExecu
         sql.append(" WHERE ");
         sql.append(StreamAttributeValue.CREATE_MS);
         sql.append(" < ");
-        sql.append(age);
+        sql.arg(age);
         sql.append(" ORDER BY ");
         sql.append(StreamAttributeValue.ID);
         sql.append(" LIMIT ");
-        sql.append(batchSize);
-        return sql.toString();
+        sql.arg(batchSize);
+        return sql;
     }
 }

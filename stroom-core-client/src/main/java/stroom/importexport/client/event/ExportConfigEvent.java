@@ -21,10 +21,6 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
 public class ExportConfigEvent extends GwtEvent<ExportConfigEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onExport(ExportConfigEvent event);
-    }
-
     private static Type<Handler> TYPE;
 
     private ExportConfigEvent() {
@@ -37,7 +33,7 @@ public class ExportConfigEvent extends GwtEvent<ExportConfigEvent.Handler> {
 
     public static Type<Handler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<Handler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }
@@ -50,5 +46,9 @@ public class ExportConfigEvent extends GwtEvent<ExportConfigEvent.Handler> {
     @Override
     protected void dispatch(final Handler handler) {
         handler.onExport(this);
+    }
+
+    public interface Handler extends EventHandler {
+        void onExport(ExportConfigEvent event);
     }
 }

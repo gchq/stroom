@@ -26,7 +26,7 @@ import javax.xml.bind.annotation.XmlType;
 import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "Pipeline", propOrder = { "elements", "properties", "pipelineReferences", "links" })
+@XmlType(name = "Pipeline", propOrder = {"elements", "properties", "pipelineReferences", "links"})
 @XmlRootElement(name = "pipeline")
 public class PipelineData implements SharedObject {
     private static final long serialVersionUID = -4874097335141550178L;

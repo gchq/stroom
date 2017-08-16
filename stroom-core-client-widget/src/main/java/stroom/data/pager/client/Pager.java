@@ -32,25 +32,21 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.HasRows;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.RangeChangeEvent;
-import stroom.widget.button.client.GlyphButton;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.SvgButton;
 
 public class Pager extends AbstractPager {
-    public interface Binder extends UiBinder<Widget, Pager> {
-    }
-
     private static Binder binder;
-
     @UiField(provided = true)
-    GlyphButton first;
+    SvgButton first;
     @UiField(provided = true)
-    GlyphButton prev;
+    SvgButton prev;
     @UiField(provided = true)
-    GlyphButton next;
+    SvgButton next;
     @UiField(provided = true)
-    GlyphButton last;
+    SvgButton last;
     @UiField(provided = true)
-    GlyphButton refresh;
+    SvgButton refresh;
     @UiField
     Label lblFrom;
     @UiField
@@ -65,7 +61,6 @@ public class Pager extends AbstractPager {
     Label lblToSeparator;
     @UiField
     Label lblOfSeparator;
-
     private boolean editing;
 
     public Pager() {
@@ -73,11 +68,11 @@ public class Pager extends AbstractPager {
             binder = GWT.create(Binder.class);
         }
 
-        first = GlyphButton.create("fa fa-fast-backward", GlyphIcons.BLUE, "First", false);
-        prev = GlyphButton.create("fa fa-step-backward", GlyphIcons.BLUE, "Backward", false);
-        next = GlyphButton.create("fa fa-step-forward", GlyphIcons.BLUE, "Forward", false);
-        last = GlyphButton.create("fa fa-fast-forward", GlyphIcons.BLUE, "Last", false);
-        refresh = GlyphButton.create("fa fa-refresh", GlyphIcons.BLUE, "Refresh", false);
+        first = SvgButton.create(SvgPresets.FAST_BACKWARD_BLUE);
+        prev = SvgButton.create(SvgPresets.STEP_BACKWARD_BLUE);
+        next = SvgButton.create(SvgPresets.STEP_FORWARD_BLUE);
+        last = SvgButton.create(SvgPresets.FAST_FORWARD_BLUE);
+        refresh = SvgButton.create(SvgPresets.REFRESH_BLUE);
 
         initWidget(binder.createAndBindUi(this));
 
@@ -89,7 +84,7 @@ public class Pager extends AbstractPager {
         setupButton(refresh);
     }
 
-    private void setupButton(GlyphButton button) {
+    private void setupButton(SvgButton button) {
         button.setEnabled(false);
         button.getElement().getStyle().setPaddingLeft(1, Style.Unit.PX);
         button.getElement().getStyle().setPaddingRight(1, Style.Unit.PX);
@@ -211,6 +206,11 @@ public class Pager extends AbstractPager {
     }
 
     @Override
+    public void setPage(final int index) {
+        super.setPage(index);
+    }
+
+    @Override
     public int getPageCount() {
         return super.getPageCount();
     }
@@ -258,11 +258,6 @@ public class Pager extends AbstractPager {
     @Override
     public void previousPage() {
         super.previousPage();
-    }
-
-    @Override
-    public void setPage(final int index) {
-        super.setPage(index);
     }
 
     @Override
@@ -339,5 +334,8 @@ public class Pager extends AbstractPager {
         } else {
             refresh.getElement().removeClassName("fa-spin");
         }
+    }
+
+    public interface Binder extends UiBinder<Widget, Pager> {
     }
 }

@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,181 +17,89 @@
 package stroom.index.server;
 
 import net.sf.ehcache.CacheManager;
-import net.sf.ehcache.Element;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import stroom.cache.AbstractCacheBean;
-import stroom.entity.server.event.EntityEvent;
-import stroom.entity.server.event.EntityEventHandler;
-import stroom.entity.shared.EntityAction;
-import stroom.index.shared.FindIndexShardCriteria;
+import stroom.entity.shared.DocRefUtil;
 import stroom.index.shared.Index;
-import stroom.index.shared.IndexFields;
-import stroom.index.shared.IndexService;
 import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShardKey;
-import stroom.index.shared.IndexShardService;
 import stroom.jobsystem.server.JobTrackedSchedule;
-import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;
-import stroom.node.shared.Node;
 import stroom.task.server.GenericServerTask;
-import stroom.task.server.TaskManager;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.spring.StroomFrequencySchedule;
-import stroom.util.spring.StroomShutdown;
 import stroom.util.spring.StroomSpringProfiles;
-import stroom.util.spring.StroomStartup;
+import stroom.util.task.TaskScopeRunnable;
 import stroom.util.thread.ThreadScopeRunnable;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Pool API into open index shards.
- */
-@Component("indexShardWriterCache")
+@Component
 @Profile(StroomSpringProfiles.PROD)
-@EntityEventHandler(type = Index.ENTITY_TYPE)
-public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, IndexShardWriter>
-        implements IndexShardWriterCache, EntityEvent.Handler {
+public class IndexShardWriterCacheImpl extends AbstractCacheBean<Long, IndexShardWriter> implements IndexShardWriterCache {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardWriterCacheImpl.class);
     private static final int MAX_CACHE_ENTRIES = 1000000;
 
-    private final IndexService indexService;
-    private final IndexShardService indexShardService;
-    private final NodeCache nodeCache;
-    private final TaskManager taskManager;
-
+    private final IndexConfigCache indexConfigCache;
+    private final IndexShardManager indexShardManager;
     private final StroomPropertyService stroomPropertyService;
 
-    private final ConcurrentHashMap<IndexShard, IndexShardWriter> ownedWriters = new ConcurrentHashMap<>();
-    private final AtomicBoolean deletingShards = new AtomicBoolean();
+    // We have to keep a separate map of writers so that readers can get them without touching Ehcache.
+    // Touching Ehcache causes expired elements to be evicted which causes them to be destroyed. Destruction happens in
+    // the same thread and can take a while to commit and close index writers. This can seriously impact searching if
+    // search has to wait for writers to be destroyed.
+    private final Map<Long, IndexShardWriter> activeWriters = new ConcurrentHashMap<>();
 
     @Inject
-    IndexShardWriterCacheImpl(final CacheManager cacheManager, final StroomPropertyService stroomPropertyService,
-                              final IndexService indexService, final IndexShardService indexShardService, final NodeCache nodeCache, final TaskManager taskManager) {
+    IndexShardWriterCacheImpl(final CacheManager cacheManager,
+                              final StroomPropertyService stroomPropertyService,
+                              final IndexConfigCache indexConfigCache,
+                              final IndexShardManager indexShardManager) {
         super(cacheManager, "Index Shard Writer Cache", MAX_CACHE_ENTRIES);
         this.stroomPropertyService = stroomPropertyService;
-        this.indexService = indexService;
-        this.indexShardService = indexShardService;
-        this.nodeCache = nodeCache;
-        this.taskManager = taskManager;
+        this.indexConfigCache = indexConfigCache;
+        this.indexShardManager = indexShardManager;
 
         setMaxIdleTime(10, TimeUnit.SECONDS);
-        setMaxLiveTime(1, TimeUnit.DAYS);
     }
 
-    /**
-     * Overrides method in simple pool. Will be called when an item is created
-     * by the pool.
-     */
     @Override
-    public IndexShardWriter create(final IndexShardKey key) {
-        // Try and get an existing writer.
-        IndexShardWriter writer = getExistingWriter(key);
-        if (writer == null) {
-            // Create a new one
-            writer = createNewWriter(key);
-        }
-
-        return writer;
+    public IndexShardWriter getOrCreate(final Long indexShardId) {
+        return computeIfAbsent(indexShardId, this::create);
     }
 
-    /**
-     * Finds an existing writer in the list of writers and that matches the
-     * index shard key and then opens it for writing. Returns null if no
-     * existing writer can be found.
-     */
-    private IndexShardWriter getExistingWriter(final IndexShardKey key) {
-        for (final Entry<IndexShard, IndexShardWriter> entry : ownedWriters.entrySet()) {
-            final IndexShard indexShard = entry.getKey();
-            final IndexShardWriter writer = entry.getValue();
-
-            // Look for closed, non deleted, non full, non corrupt index shard
-            // to add to
-            if (indexShard.getIndex().getId() == key.getIndex().getId()
-                    && writer.getPartition().equals(key.getPartition()) && writer.isClosed() && !writer.isFull()) {
-                try {
-                    // Open the writer.
-                    final boolean success = writer.open(false);
-                    if (success) {
-                        LOGGER.debug(() -> "getOrCreateIndexShard() - Opened index shard " + indexShard.getId() + " for index " + key.getIndex().getName() + " and partition " + key.getPartition());
-                        return writer;
-                    }
-                } catch (final Exception e) {
-                    LOGGER.error(e::getMessage, e);
-                }
-            }
-        }
-
-        return null;
+    @Override
+    public IndexShardWriter getQuiet(final Long indexShardId) {
+        return activeWriters.get(indexShardId);
     }
 
-    /**
-     * Creates a new shard for the specified key, attaches a writer and opens it
-     * for creation.
-     */
-    private IndexShardWriter createNewWriter(final IndexShardKey key) {
-        // Create a new one
-        final IndexShard indexShard = indexShardService.createIndexShard(key, nodeCache.getDefaultNode());
+    private IndexShardWriter create(final Long indexShardId) {
+        // Load the current index shard.
+        final IndexShard loaded = indexShardManager.load(indexShardId);
 
-        // Create a writer to use the location.
-        final IndexShardWriter writer = connectWrapper(indexShard, new HashMap<>());
-
-        // Open the writer.
-        final boolean success = writer.open(true);
-        if (!success) {
-            try {
-                indexShardService.delete(indexShard);
-            } catch (final Exception e) {
-                LOGGER.error(e::getMessage, e);
-            }
-            throw new IndexException("Unable to create new index shard for index " + key.getIndex().getName()
-                    + " and partition " + key.getPartition());
+        if (loaded == null) {
+            throw new IndexException("Index shard is no longer in the database");
         }
 
-        LOGGER.debug(() -> "getOrCreateIndexShard() - Created new index shard " + indexShard.getId() + " for index " + key.getIndex().getName() + " and partition " + key.getPartition());
-
-        // Remember this writer for future use.
-        ownedWriters.put(indexShard, writer);
-
-        return writer;
-    }
-
-    /**
-     * Wrap the entity bean with our manager class
-     */
-    private IndexShardWriter connectWrapper(final IndexShard indexShard, final Map<Index, Index> loadedIndexes) {
         // Load the index.
-        Index index = indexShard.getIndex();
-        // In tests the index service is often null but normally we want to load
-        // the index so we unmarshal fields.
-        if (indexService != null) {
-            index = loadedIndexes.computeIfAbsent(index, indexService::load);
-        }
-
-        final int ramBufferSizeMB = getRamBufferSize();
+        final Index index = loaded.getIndex();
 
         // Get the index fields.
-        final IndexFields indexFields = index.getIndexFieldsObject();
+        final IndexConfig indexConfig = indexConfigCache.getOrCreate(DocRefUtil.create(index));
 
         // Create the writer.
-        return new IndexShardWriterImpl(indexShardService, indexFields, index, indexShard,
-                ramBufferSizeMB);
+        final int ramBufferSizeMB = getRamBufferSize();
+        final IndexShardWriter indexShardWriter = new IndexShardWriterImpl(indexShardManager, indexConfig, loaded, ramBufferSizeMB);
+        activeWriters.put(indexShardId, indexShardWriter);
+        return indexShardWriter;
     }
 
     private int getRamBufferSize() {
@@ -209,339 +117,71 @@ public class IndexShardWriterCacheImpl extends AbstractCacheBean<IndexShardKey, 
         return ramBufferSizeMB;
     }
 
-    @StroomStartup
-    public void startup() {
-        final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        loadAllAtStartup();
-
-        // Asynchronously check that all of the shards can be opened etc.
-        checkShards();
-
-        // Asynchronously delete all logically deleted shards.
-        deleteLogicallyDeleted();
-
-        LOGGER.debug(() -> "Started in " + logExecutionTime);
-    }
-
     @Override
-    @StroomShutdown
-    public void shutdown() {
-        final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        findClose(criteria);
-        super.clear();
-        ownedWriters.clear();
-        LOGGER.debug(() -> "Shutdown in " + logExecutionTime);
-    }
+    public void clear() {
+        LOGGER.info(() -> "Clearing index shard writer cache");
+        ScheduledExecutorService executor = null;
 
-    /**
-     * ONLY EVER DO ONCE AT JVM Start Up. When we start find all open or closed
-     * indexes and check their state. From this point on thee indexes will be
-     * cached so that they can be used by the index filter.
-     */
-    private void loadAllAtStartup() {
-        final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        // Get all index shards that are owned by this node.
-        final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getNodeIdSet().add(nodeCache.getDefaultNode());
-        criteria.getFetchSet().add(Index.ENTITY_TYPE);
-        criteria.getFetchSet().add(Node.ENTITY_TYPE);
+        try {
+            if (size() > 0) {
+                // Create a scheduled executor for us to continually log index shard writer action progress.
+                executor = Executors.newSingleThreadScheduledExecutor();
+                // Start logging action progress.
+                executor.scheduleAtFixedRate(() -> LOGGER.info(() -> "Waiting for " + size() + " index shards to close"), 10, 10, TimeUnit.SECONDS);
+            }
 
-        final List<IndexShard> list = indexShardService.find(criteria);
-        final Map<Index, Index> loadedIndexes = new HashMap<>();
+            super.clear();
 
-        for (final IndexShard indexShard : list) {
-            try {
-                final IndexShardWriter writer = connectWrapper(indexShard, loadedIndexes);
-                // Take ownership and remember this writer.
-                ownedWriters.put(indexShard, writer);
-
-            } catch (final Exception e) {
-                LOGGER.error(e::getMessage, e);
+        } finally {
+            if (executor != null) {
+                // Shut down the progress logging executor.
+                executor.shutdown();
             }
         }
-        LOGGER.debug(() -> "loadAllAtStartup() - Completed in " + logExecutionTime);
+
+        LOGGER.info(() -> "Finished clearing index shard writer cache");
     }
 
     /**
-     * Check the health of all owned shards.
+     * This is called by the lifecycle service and will call flush on all open writers.
      */
-    private void checkShards() {
-        final GenericServerTask task = GenericServerTask.create("Check Shards", "Checking Shards...");
-        final Runnable runnable = () -> {
-            final LogExecutionTime logExecutionTime = new LogExecutionTime();
-            final Iterator<Entry<IndexShard, IndexShardWriter>> iter = ownedWriters.entrySet().iterator();
-            while (!task.isTerminated() && iter.hasNext()) {
-                final Entry<IndexShard, IndexShardWriter> entry = iter.next();
-                final IndexShardWriter writer = entry.getValue();
-                try {
-                    if (writer != null) {
-                        LOGGER.debug(() -> "checkShards() - Checking index shard " + writer.getIndexShard().getId());
-                        writer.check();
-                    }
-                } catch (final Exception e) {
-                    LOGGER.error(e::getMessage, e);
-                }
-            }
-            LOGGER.debug(() -> "checkShards() - Completed in " + logExecutionTime);
-        };
-
-        // In tests we don't have a task manager.
-        if (taskManager == null) {
-            runnable.run();
-        } else {
-            task.setRunnable(runnable);
-            taskManager.execAsync(task);
-        }
-    }
-
-    /**
-     * Delete anything that has been marked to delete
-     */
-    private void deleteLogicallyDeleted() {
-        if (deletingShards.compareAndSet(false, true)) {
-            try {
-                final GenericServerTask task = GenericServerTask.create("Delete Logically Deleted Shards", "Deleting Logically Deleted Shards...");
-                final Runnable runnable = () -> {
-                    try {
-                        final LogExecutionTime logExecutionTime = new LogExecutionTime();
-                        final Iterator<Entry<IndexShard, IndexShardWriter>> iter = ownedWriters.entrySet().iterator();
-                        while (!task.isTerminated() && iter.hasNext()) {
-                            final Entry<IndexShard, IndexShardWriter> entry = iter.next();
-                            final IndexShardWriter writer = entry.getValue();
-                            try {
-                                if (writer != null && writer.isDeleted()) {
-                                    LOGGER.debug(() -> "deleteLogicallyDeleted() - Deleting index shard " + writer.getIndexShard().getId());
-
-                                    if (writer.deleteFromDisk()) {
-                                        iter.remove();
-                                    }
-                                }
-                            } catch (final Exception e) {
-                                LOGGER.error(e::getMessage, e);
-                            }
-                        }
-                        LOGGER.debug(() -> "deleteLogicallyDeleted() - Completed in " + logExecutionTime);
-                    } finally {
-                        deletingShards.set(false);
-                    }
-                };
-
-                // In tests we don't have a task manager.
-                if (taskManager == null) {
-                    runnable.run();
-                } else {
-                    task.setRunnable(runnable);
-                    taskManager.execAsync(task);
-                }
-
-            } catch (final Exception e) {
-                LOGGER.error(e::getMessage, e);
-                deletingShards.set(false);
-            }
-        }
-    }
-
-    /**
-     * This is called by the lifecycle service and will call flush on all
-     * objects in the pool without locking the pool for use in the mean time.
-     */
+    @StroomFrequencySchedule("10m")
+    @JobTrackedSchedule(jobName = "Index Writer Flush", description = "Job to flush index shard data to disk")
     @Override
     public void flushAll() {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        try {
-            final List<?> keys = getCache().getKeys();
-            for (final Object key : keys) {
-                try {
-                    // Try and get the element quietly as we don't want this
-                    // call to extend the life of sessions
-                    // that should be dying.
-                    final Element element = getCache().getQuiet(key);
-                    flush(element);
-                } catch (final Throwable t) {
-                    LOGGER.error(t::getMessage, t);
-                }
+
+        final List<Long> keys = getKeys();
+        keys.parallelStream().forEach(key -> {
+            try {
+                new TaskScopeRunnable(GenericServerTask.create("Flush all", null)) {
+                    @Override
+                    protected void exec() {
+                        new ThreadScopeRunnable() {
+                            @Override
+                            protected void exec() {
+                                final IndexShardWriter indexShardWriter = IndexShardWriterCacheImpl.super.getQuiet(key);
+                                if (indexShardWriter != null) {
+                                    indexShardWriter.flush();
+                                }
+                            }
+                        }.run();
+                    }
+                }.run();
+            } catch (final Throwable t) {
+                LOGGER.error(t::getMessage, t);
             }
-        } catch (final Throwable t) {
-            LOGGER.error(t::getMessage, t);
-        }
+        });
+
         LOGGER.debug(() -> "flushAll() - Completed in " + logExecutionTime);
     }
 
-    private void flush(final Element element) {
-        if (element != null && element.getObjectValue() != null
-                && element.getObjectValue() instanceof IndexShardWriter) {
-            final IndexShardWriter indexShardWriter = (IndexShardWriter) element.getObjectValue();
-            try {
-                indexShardWriter.flush();
-            } catch (final Exception ex) {
-                LOGGER.error(() -> "flush() - Error flushing writer " + indexShardWriter);
-            }
-        }
-    }
-
-    /**
-     * This is called by the node command service and is a result of a user
-     * interaction. The map is synchronised so no writers will be created or
-     * destroyed while this is called.
-     */
     @Override
-    public Long findFlush(final FindIndexShardCriteria criteria) {
-        return performAction(criteria, IndexShardAction.FLUSH);
-    }
-
-    /**
-     * This is called when a user wants to close some index shards or during shutdown.
-     * This method returns the number of index shard writers that have been closed.
-     */
-    @Override
-    public Long findClose(final FindIndexShardCriteria criteria) {
-        return performAction(criteria, IndexShardAction.CLOSE);
-    }
-
-    /**
-     * This is called by the node command service and is a result of a user
-     * interaction. The map is synchronised so no writers will be created or
-     * destroyed while this is called.
-     */
-    @Override
-    public Long findDelete(final FindIndexShardCriteria criteria) {
-        return performAction(criteria, IndexShardAction.DELETE);
-    }
-
-    private Long performAction(final FindIndexShardCriteria criteria, final IndexShardAction action) {
-        final List<IndexShardWriter> writers = getFilteredWriters(criteria);
-        if (writers.size() == 0) {
-            LOGGER.info(() -> "No index shard writers have been found that need " + action.getActivity());
-        } else {
-            LOGGER.info(() -> "Preparing to " + action.getName() + " " + writers.size() + " index shards");
-        }
-
-        if (writers.size() > 0) {
-            // Create an atomic integer to count the number of index shard writers yet to complete the specified action.
-            final AtomicInteger remaining = new AtomicInteger(writers.size());
-
-            // Create a scheduled executor for us to continually log index shard writer action progress.
-            final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-            // Start logging action progress.
-            executor.scheduleAtFixedRate(() -> LOGGER.info(() -> "Waiting for " + remaining.get() + " index shards to " + action.getName()), 10, 10, TimeUnit.SECONDS);
-
-            // Perform action on all of the index shard writers in parallel.
-            writers.parallelStream().forEach(writer -> new ThreadScopeRunnable() {
-                @Override
-                protected void exec() {
-                    try {
-                        LOGGER.debug(() -> action.getActivity() + " index shard " + writer.getIndexShard().getId());
-                        switch (action) {
-                            case FLUSH:
-                                writer.flush();
-                                break;
-                            case CLOSE:
-                                writer.close();
-                                break;
-                            case DELETE:
-                                writer.delete();
-                                break;
-                        }
-                    } catch (final Exception e) {
-                        LOGGER.error(e::getMessage, e);
-                    }
-
-                    remaining.getAndDecrement();
-                }
-            }.run());
-
-            // Shut down the progress logging executor.
-            executor.shutdown();
-
-            LOGGER.info(() -> "Finished " + action.getActivity() + " index shards");
-        }
-
-        return (long) writers.size();
-    }
-
-    /**
-     * Gets a list of index shard writers filtered using the supplied criteria.
-     */
-    private List<IndexShardWriter> getFilteredWriters(final FindIndexShardCriteria criteria) {
-        final List<IndexShardWriter> filteredWriters = new ArrayList<>();
-
-        for (final Entry<IndexShard, IndexShardWriter> entry : ownedWriters.entrySet()) {
-            final IndexShard indexShard = entry.getKey();
-            final IndexShardWriter writer = entry.getValue();
-            if (indexShard != null && writer != null) {
-                if (criteria.isMatch(indexShard)) {
-                    filteredWriters.add(writer);
-                }
-            }
-        }
-
-        return filteredWriters;
-    }
-
-    @StroomFrequencySchedule("10m")
-    @JobTrackedSchedule(jobName = "Index Shard Retention", description = "Job to delete index shards that have past their retention period")
-    public void execute() {
-        flushAll();
-        deleteLogicallyDeleted();
-        updateAllIndexes();
-    }
-
-    @Override
-    public IndexShardWriter getWriter(final IndexShard indexShard) {
-        return ownedWriters.get(indexShard);
-    }
-
-    @Override
-    public void onChange(final EntityEvent event) {
-        // If an index has been updated then update field analyzers for the
-        // index.
-        if (EntityAction.UPDATE.equals(event.getAction()) && Index.ENTITY_TYPE.equals(event.getDocRef().getType())) {
-            final Index index = indexService.loadByUuid(event.getDocRef().getUuid());
-            if (index != null) {
-                for (final Entry<IndexShard, IndexShardWriter> entry : ownedWriters.entrySet()) {
-                    final IndexShard indexShard = entry.getKey();
-                    final IndexShardWriter writer = entry.getValue();
-                    if (indexShard != null && writer != null) {
-                        if (indexShard.getIndex().equals(index)) {
-                            writer.updateIndex(index);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private void updateAllIndexes() {
-        for (final Entry<IndexShard, IndexShardWriter> entry : ownedWriters.entrySet()) {
-            final IndexShard indexShard = entry.getKey();
-            final IndexShardWriter writer = entry.getValue();
-            if (indexShard != null && writer != null) {
-                final Index index = indexService.load(indexShard.getIndex());
-                if (index != null) {
-                    writer.updateIndex(index);
-                }
-            }
-        }
-    }
-
-    private enum IndexShardAction {
-        FLUSH("flush", "flushing"), CLOSE("close", "closing"), DELETE("delete", "deleting");
-
-        private final String name;
-        private final String activity;
-
-        IndexShardAction(final String name, final String activity) {
-            this.name = name;
-            this.activity = activity;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getActivity() {
-            return activity;
+    protected void destroy(final Long indexShardId, final IndexShardWriter indexShardWriter) {
+        try {
+            super.destroy(indexShardId, indexShardWriter);
+        } finally {
+            activeWriters.remove(indexShardId);
         }
     }
 }

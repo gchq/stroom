@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -76,13 +76,13 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
 
     private void createList(final boolean enabled) {
         if (enabled) {
-            selectionModel = new MySingleSelectionModel<DocRef>();
-            list = new CellTableViewImpl<DocRef>(true, GWT.create(DefaultResources.class));
+            selectionModel = new MySingleSelectionModel<>();
+            list = new CellTableViewImpl<>(true, GWT.create(DefaultResources.class));
 
             registerHandler(selectionModel.addSelectionChangeHandler(event -> enableButtons()));
         } else {
             selectionModel = null;
-            list = new CellTableViewImpl<DocRef>(false, GWT.create(DisabledResources.class));
+            list = new CellTableViewImpl<>(false, GWT.create(DisabledResources.class));
         }
 
         // Text.

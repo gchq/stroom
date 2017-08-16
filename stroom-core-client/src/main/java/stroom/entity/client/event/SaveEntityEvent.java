@@ -22,12 +22,7 @@ import com.google.gwt.event.shared.HasHandlers;
 import stroom.entity.client.EntityTabData;
 
 public class SaveEntityEvent extends GwtEvent<SaveEntityEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onSave(final SaveEntityEvent event);
-    }
-
     private static Type<Handler> TYPE;
-
     private final EntityTabData tabData;
 
     private SaveEntityEvent(final EntityTabData tabData) {
@@ -40,7 +35,7 @@ public class SaveEntityEvent extends GwtEvent<SaveEntityEvent.Handler> {
 
     public static Type<Handler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<Handler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }
@@ -57,5 +52,9 @@ public class SaveEntityEvent extends GwtEvent<SaveEntityEvent.Handler> {
 
     public EntityTabData getTabData() {
         return tabData;
+    }
+
+    public interface Handler extends EventHandler {
+        void onSave(final SaveEntityEvent event);
     }
 }

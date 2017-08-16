@@ -45,90 +45,23 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 public class ResizableDialog extends AbstractPopupPanel {
-    private static Binder binder = GWT.create(Binder.class);
-
-    public interface Binder extends UiBinder<Widget, ResizableDialog> {
-    }
-
-    private enum DragType {
-        MOVE, RESIZE
-    }
-
-    private class MouseHandler implements MouseDownHandler, MouseUpHandler, MouseMoveHandler {
-        @Override
-        public void onMouseDown(final MouseDownEvent event) {
-            if ((Event.BUTTON_LEFT & event.getNativeButton()) != 0) {
-                beginDragging(event);
-            }
-        }
-
-        @Override
-        public void onMouseMove(final MouseMoveEvent event) {
-            continueDragging(event);
-        }
-
-        @Override
-        public void onMouseUp(final MouseUpEvent event) {
-            endDragging(event);
-        }
-    }
-
-    public interface Style extends CssResource {
-        String DEFAULT_STYLE = "ResizableDialog.css";
-
-        String popup();
-
-        String container();
-
-        String background();
-
-        String content();
-
-        String titleBar();
-
-        String titleText();
-
-        String resizeHandle();
-    }
-
-    public interface Resources extends ClientBundle {
-        @Source("resizeBottomRight.png")
-        ImageResource resizeBottomRight();
-
-        @Source(Style.DEFAULT_STYLE)
-        Style style();
-    }
-
     private static final Resources RESOURCES = GWT.create(Resources.class);
-
-    private DragType dragType;
-    private boolean dragging;
-    private int dragStartX, dragStartY;
-    private int windowWidth;
+    private static Binder binder = GWT.create(Binder.class);
     private final int clientLeft;
     private final int clientTop;
-
-    private HandlerRegistration resizeHandlerRegistration;
     private final PopupUiHandlers popupUiHandlers;
     private final PopupSize popupSize;
-
     @UiField
     Label titleText;
     @UiField
     SimplePanel content;
     @UiField
     SimplePanel resizeHandle;
-
-    @Override
-    public void setCaption(final String text) {
-        titleText.setText(text);
-    }
-
-    @Override
-    public void setContent(final Widget widget) {
-        content.setWidget(widget);
-    }
-
+    private DragType dragType;
+    private boolean dragging;
+    private int dragStartX, dragStartY;
+    private int windowWidth;
+    private HandlerRegistration resizeHandlerRegistration;
     /**
      * Creates an empty dialog box. It should not be shown until its child
      * widget has been added using {@link #add(Widget)}.
@@ -136,7 +69,6 @@ public class ResizableDialog extends AbstractPopupPanel {
     public ResizableDialog(final PopupUiHandlers popupUiHandlers, final PopupSize popupSize) {
         this(popupUiHandlers, false, popupSize);
     }
-
     /**
      * Creates an empty dialog box specifying its "auto-hide" property. It
      * should not be shown until its child widget has been added using
@@ -180,6 +112,16 @@ public class ResizableDialog extends AbstractPopupPanel {
         addDomHandler(mouseHandler, MouseMoveEvent.getType());
 
         setResizeEnabled(popupSize.isResizable());
+    }
+
+    @Override
+    public void setCaption(final String text) {
+        titleText.setText(text);
+    }
+
+    @Override
+    public void setContent(final Widget widget) {
+        content.setWidget(widget);
     }
 
     @Override
@@ -352,5 +294,57 @@ public class ResizableDialog extends AbstractPopupPanel {
 
     public void setResizeEnabled(final boolean enabled) {
         resizeHandle.setVisible(enabled);
+    }
+
+    private enum DragType {
+        MOVE, RESIZE
+    }
+
+    public interface Binder extends UiBinder<Widget, ResizableDialog> {
+    }
+
+    public interface Style extends CssResource {
+        String DEFAULT_STYLE = "ResizableDialog.css";
+
+        String popup();
+
+        String container();
+
+        String background();
+
+        String content();
+
+        String titleBar();
+
+        String titleText();
+
+        String resizeHandle();
+    }
+
+    public interface Resources extends ClientBundle {
+        @Source("resizeBottomRight.png")
+        ImageResource resizeBottomRight();
+
+        @Source(Style.DEFAULT_STYLE)
+        Style style();
+    }
+
+    private class MouseHandler implements MouseDownHandler, MouseUpHandler, MouseMoveHandler {
+        @Override
+        public void onMouseDown(final MouseDownEvent event) {
+            if ((Event.BUTTON_LEFT & event.getNativeButton()) != 0) {
+                beginDragging(event);
+            }
+        }
+
+        @Override
+        public void onMouseMove(final MouseMoveEvent event) {
+            continueDragging(event);
+        }
+
+        @Override
+        public void onMouseUp(final MouseUpEvent event) {
+            endDragging(event);
+        }
     }
 }

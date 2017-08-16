@@ -26,7 +26,7 @@ public class StoredXsltExecutable {
     private final StoredErrorReceiver errorReceiver;
 
     public StoredXsltExecutable(final XsltExecutable xsltExecutable, final StroomXSLTFunctionLibrary functionLibrary,
-            final StoredErrorReceiver errorReceiver) {
+                                final StoredErrorReceiver errorReceiver) {
         this.xsltExecutable = xsltExecutable;
         this.functionLibrary = functionLibrary;
         this.errorReceiver = errorReceiver;

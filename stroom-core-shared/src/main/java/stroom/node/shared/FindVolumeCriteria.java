@@ -25,10 +25,10 @@ import stroom.node.shared.Volume.VolumeUseStatus;
 public class FindVolumeCriteria extends BaseCriteria {
     private static final long serialVersionUID = 3581257401217841946L;
 
-    private EntityIdSet<Node> nodeIdSet = new EntityIdSet<Node>();
-    private CriteriaSet<VolumeType> volumeTypeSet = new CriteriaSet<Volume.VolumeType>();
-    private CriteriaSet<VolumeUseStatus> streamStatusSet = new CriteriaSet<Volume.VolumeUseStatus>();
-    private CriteriaSet<VolumeUseStatus> indexStatusSet = new CriteriaSet<Volume.VolumeUseStatus>();
+    private EntityIdSet<Node> nodeIdSet = new EntityIdSet<>();
+    private CriteriaSet<VolumeType> volumeTypeSet = new CriteriaSet<>();
+    private CriteriaSet<VolumeUseStatus> streamStatusSet = new CriteriaSet<>();
+    private CriteriaSet<VolumeUseStatus> indexStatusSet = new CriteriaSet<>();
 
     public EntityIdSet<Node> getNodeIdSet() {
         return nodeIdSet;

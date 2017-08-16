@@ -20,22 +20,22 @@ import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityMatcher;
-import stroom.entity.shared.OrderBy;
 import stroom.entity.shared.Range;
+import stroom.entity.shared.StringCriteria;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 
 public class FindIndexShardCriteria extends BaseCriteria implements EntityMatcher<IndexShard> {
-    public static final OrderBy ORDER_BY_ID = new OrderBy("Id", "id", IndexShard.ID);
-    public static final OrderBy ORDER_BY_PARTITION = new OrderBy("Partition", "partition", IndexShard.PARTITION);
+    public static final String FIELD_PARTITION = "Partition";
     private static final long serialVersionUID = 3552286394659242683L;
-    private Range<Integer> documentCountRange = new Range<Integer>();
-    private EntityIdSet<Node> nodeIdSet = new EntityIdSet<Node>();
-    private EntityIdSet<Volume> volumeIdSet = new EntityIdSet<Volume>();
-    private EntityIdSet<Index> indexIdSet = new EntityIdSet<Index>();
-    private EntityIdSet<IndexShard> indexShardSet = new EntityIdSet<IndexShard>();
-    private CriteriaSet<IndexShardStatus> indexShardStatusSet = new CriteriaSet<IndexShardStatus>();
+    private Range<Integer> documentCountRange = new Range<>();
+    private EntityIdSet<Node> nodeIdSet = new EntityIdSet<>();
+    private EntityIdSet<Volume> volumeIdSet = new EntityIdSet<>();
+    private EntityIdSet<Index> indexIdSet = new EntityIdSet<>();
+    private EntityIdSet<IndexShard> indexShardSet = new EntityIdSet<>();
+    private CriteriaSet<IndexShardStatus> indexShardStatusSet = new CriteriaSet<>();
+    private StringCriteria partition = new StringCriteria();
 
     public FindIndexShardCriteria() {
         // Default constructor necessary for GWT serialisation.
@@ -49,6 +49,7 @@ public class FindIndexShardCriteria extends BaseCriteria implements EntityMatche
         indexIdSet.copyFrom(criteria.indexIdSet);
         indexShardSet.copyFrom(criteria.indexShardSet);
         indexShardStatusSet.copyFrom(criteria.indexShardStatusSet);
+        partition.copyFrom(criteria.partition);
     }
 
     public CriteriaSet<IndexShardStatus> getIndexShardStatusSet() {
@@ -79,6 +80,10 @@ public class FindIndexShardCriteria extends BaseCriteria implements EntityMatche
         return volumeIdSet;
     }
 
+    public StringCriteria getPartition() {
+        return partition;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
@@ -101,7 +106,9 @@ public class FindIndexShardCriteria extends BaseCriteria implements EntityMatche
         if (!indexShardSet.isMatch(indexShard)) {
             return false;
         }
-        return indexShardStatusSet.isMatch(indexShard.getStatus());
-
+        if (!indexShardStatusSet.isMatch(indexShard.getStatus())) {
+            return false;
+        }
+        return partition.isMatch(indexShard.getPartition());
     }
 }

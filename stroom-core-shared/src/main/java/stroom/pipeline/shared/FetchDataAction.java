@@ -35,15 +35,15 @@ public class FetchDataAction extends Action<AbstractFetchDataResult> {
     private transient boolean fireEvents;
 
     public FetchDataAction() {
-        streamRange = new OffsetRange<Long>(0L, 1L);
-        pageRange = new OffsetRange<Long>(0L, 100L);
+        streamRange = new OffsetRange<>(0L, 1L);
+        pageRange = new OffsetRange<>(0L, 100L);
     }
 
     public FetchDataAction(final Long streamId, final Long segmentId, final boolean showAsHtml) {
         this.streamId = streamId;
 
-        streamRange = new OffsetRange<Long>(0L, 1L);
-        pageRange = new OffsetRange<Long>(segmentId - 1, 1L);
+        streamRange = new OffsetRange<>(0L, 1L);
+        pageRange = new OffsetRange<>(segmentId - 1, 1L);
 
         this.showAsHtml = showAsHtml;
     }

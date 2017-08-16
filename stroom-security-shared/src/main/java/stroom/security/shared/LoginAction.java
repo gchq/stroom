@@ -25,6 +25,7 @@ public class LoginAction extends Action<UserAndPermissions> {
     private String password;
 
     public LoginAction() {
+        // Default constructor necessary for GWT serialisation.
     }
 
     public LoginAction(String userName, String password) {
@@ -36,16 +37,8 @@ public class LoginAction extends Action<UserAndPermissions> {
         return userName;
     }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
     public String getPassword() {
         return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     @Override

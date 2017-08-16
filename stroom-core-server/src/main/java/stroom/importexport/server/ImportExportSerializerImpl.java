@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -52,6 +52,7 @@ import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -61,7 +62,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Component
@@ -74,8 +74,8 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
     private final FolderService folderService;
     private final GenericEntityService genericEntityService;
     private final ClassTypeMap classTypeMap = new ClassTypeMap();
-    private volatile boolean entitiesInitialised = false;
     private final SecurityContext securityContext;
+    private volatile boolean entitiesInitialised = false;
 
     @Inject
     public ImportExportSerializerImpl(final FolderService folderService,
@@ -179,8 +179,33 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
         });
     }
 
+    private void getPaths(final Path parent, final Path parentSourcePath, final Path parentExplorerPath, final String entityType, final Map<Path, Path> map) {
+        try (final Stream<Path> paths = Files.list(parent)) {
+            final String match = "." + entityType + ".xml";
+            paths.forEach(path -> {
+                final String fileName = path.getFileName().toString();
+                final Path sourcePath = parentSourcePath.resolve(fileName);
+                final Path explorerPath = parentExplorerPath.resolve(fileName);
+
+                if (Files.isDirectory(path)) {
+                    final String folderConfig = fileName + "." + Folder.ENTITY_TYPE + ".xml";
+                    if (Files.isRegularFile(parent.resolve(folderConfig))) {
+                        getPaths(path, sourcePath, explorerPath, entityType, map);
+                    } else {
+                        // This isn't a config folder so recurse into sub directory with the same parent explorer folder.
+                        getPaths(path, sourcePath, parentExplorerPath, entityType, map);
+                    }
+                } else if (fileName.endsWith(match)) {
+                    map.computeIfAbsent(sourcePath, k -> explorerPath);
+                }
+            });
+        } catch (final IOException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+    }
+
     /**
-     * Import a config type
+     * Public for testing.
      */
     public <E extends DocumentEntity> void performImport(final Path dir,
                                                          final String entityType, final Map<DocRef, ImportState> confirmMap,
@@ -192,204 +217,192 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
         }
 
         try {
-            // Look for matching files
-            final String match = "." + entityType + ".";
-            List<Path> paths;
-            try (final Stream<Path> stream = Files.walk(dir)) {
-                final Set<Path> set = stream
-                        .filter(p -> p.getFileName().toString().contains(match))
-                        .map(p -> {
-                            String name = p.getFileName().toString();
-                            name = name.substring(0, name.indexOf(match) + match.length() - 1);
-                            return p.getParent().resolve(name);
-                        })
-                        .collect(Collectors.toSet());
-                try (Stream<Path> s = set.stream()) {
-                    paths = s
-                            .sorted(Comparator.comparingInt(Path::getNameCount))
-                            .collect(Collectors.toList());
-                }
-            }
+            // Get a map of actual paths to relative entity paths.
+            final Map<Path, Path> pathMap = new HashMap<>();
+            getPaths(dir, Paths.get(""), Paths.get(""), entityType, pathMap);
 
-            paths.forEach(path -> {
-                ImportState importState = null;
+            pathMap.entrySet().stream()
+                    .sorted(Map.Entry.comparingByValue(Comparator.comparingInt(Path::getNameCount)))
+                    .forEachOrdered(entry -> {
+                        ImportState importState = null;
 
-                try {
-                    final Path relativePath = dir.relativize(path);
-                    final String sourcePath = relativePath.toString().substring(0, relativePath.toString().lastIndexOf("."));
+                        try {
+                            final Path sourcePath = entry.getKey();
+                            final Path explorerPath = entry.getValue();
 
-                    LOGGER.info("Importing " + entityType + " '" + sourcePath + "'");
+                            LOGGER.debug("Importing " + entityType + " '" + sourcePath + "'");
 
-                    // Find all of the files associated with this document config.
-                    final String matchingConfig = relativePath.getFileName().toString();
+                            // Find all of the files associated with this document config.
+                            String matchingConfig = sourcePath.getFileName().toString();
+                            matchingConfig = matchingConfig.substring(0, matchingConfig.lastIndexOf(".") + 1);
+                            final String stem = matchingConfig;
 
-                    // Create a map of all of the data required to import this document.
-                    final Map<String, String> dataMap = new HashMap<>();
-                    try (final Stream<Path> stream = Files.list(path.getParent())) {
-                        final List<Path> parts = stream
-                                .filter(p -> p.getFileName().toString().startsWith(matchingConfig))
-                                .collect(Collectors.toList());
-
-                        parts.forEach(part -> {
-                            try {
-                                final String key = dir.relativize(part).toString();
-                                final String content = new String(Files.readAllBytes(part), Charset.forName("UTF-8"));
-                                dataMap.put(key, content);
-                            } catch (final Throwable e) {
-                                LOGGER.error(e.getMessage(), e);
-                                LOGGER.error("DATA SIZE = " + dataMap.size());
+                            // Create a map of all of the data required to import this document.
+                            final Map<String, String> dataMap = new HashMap<>();
+                            final Path parentPath = dir.resolve(sourcePath).getParent();
+                            try (final Stream<Path> stream = Files.list(parentPath)) {
+                                stream
+                                        .filter(p -> p.getFileName().toString().startsWith(stem))
+                                        .forEach(p -> {
+                                            try {
+                                                final String key = parentPath.relativize(p).toString();
+                                                final String content = new String(Files.readAllBytes(p), Charset.forName("UTF-8"));
+                                                dataMap.put(key, content);
+                                            } catch (final Throwable e) {
+                                                LOGGER.error(e.getMessage(), e);
+                                                LOGGER.error("DATA SIZE = " + dataMap.size());
+                                            }
+                                        });
                             }
-                        });
-                    }
 
-                    // Find out if this item exists.
-                    // TODO : In v6 the UUID will be part of the file name so that we don't have to read the config to get it.
-                    final Config config = new Config();
-                    config.read(new StringReader(dataMap.get(relativePath + ".xml")));
-                    final String uuid = config.getString("uuid");
-                    if (uuid == null) {
-                        throw new RuntimeException("Unable to get UUID for " + entityType + " '" + sourcePath + "'");
-                    }
+                            // Find out if this item exists.
+                            // TODO : In v6 the UUID will be part of the file name so that we don't have to read the config to get it.
+                            final Config config = new Config();
+                            config.read(new StringReader(dataMap.get(sourcePath.getFileName().toString())));
+                            final String uuid = config.getString("uuid");
+                            if (uuid == null) {
+                                throw new RuntimeException("Unable to get UUID for " + entityType + " '" + sourcePath + "'");
+                            }
 
-                    // Create a doc ref.
-                    final DocRef docRef = new DocRef(entityType, uuid);
-                    // Create or get the import state.
-                    importState = confirmMap.computeIfAbsent(docRef, k -> new ImportState(docRef, sourcePath));
-                    // See if there is already a folder for this item, i.e. it exists and is in a folder.
-                    DocRef folderRef = getExistingFolder(docRef);
+                            // Create a doc ref.
+                            final DocRef docRef = new DocRef(entityType, uuid);
+                            // Create or get the import state.
+                            importState = confirmMap.computeIfAbsent(docRef, k -> new ImportState(docRef, sourcePath.toString()));
+                            // See if there is already a folder for this item, i.e. it exists and is in a folder.
+                            DocRef folderRef = getExistingFolder(docRef);
 
-                    if (folderRef == null) {
-                        // This is a new item so check that the user has permission to import it.
+                            if (folderRef == null) {
+                                // This is a new item so check that the user has permission to import it.
 
-                        // Find the nearest parent folder and see if we are allowed to import/create items in the parent folder.
-                        int pathIndex = 0;
-                        DocRef nearestFolder = SYSTEM_FOLDER;
-                        if (relativePath.getNameCount() == 1) {
-                            folderRef = nearestFolder;
-                        } else {
-                            Folder parentFolder = null;
-                            for (pathIndex = 0; pathIndex < relativePath.getNameCount() - 1; pathIndex++) {
-                                final String folderName = relativePath.getName(pathIndex).toString();
-                                Folder folder = folderService.loadByName(DocRefUtil.create(parentFolder), folderName);
-                                if (folder != null) {
-                                    nearestFolder = DocRefUtil.create(folder);
+                                // Find the nearest parent folder and see if we are allowed to import/create items in the parent folder.
+                                int pathIndex = 0;
+                                DocRef nearestFolder = SYSTEM_FOLDER;
+                                if (explorerPath.getNameCount() == 1) {
                                     folderRef = nearestFolder;
                                 } else {
-                                    folderRef = null;
-                                    break;
+                                    Folder parentFolder = null;
+                                    for (pathIndex = 0; pathIndex < explorerPath.getNameCount() - 1; pathIndex++) {
+                                        final String folderName = explorerPath.getName(pathIndex).toString();
+                                        Folder folder = folderService.loadByName(DocRefUtil.create(parentFolder), folderName);
+                                        if (folder != null) {
+                                            nearestFolder = DocRefUtil.create(folder);
+                                            folderRef = nearestFolder;
+                                        } else {
+                                            folderRef = null;
+                                            break;
+                                        }
+
+                                        parentFolder = folder;
+                                    }
                                 }
 
-                                parentFolder = folder;
-                            }
-                        }
-
-                        // Only allow administrators to import documents with no folder.
-                        // TODO : In v6 the root folder will be a real folder.
-                        if (SYSTEM_FOLDER.equals(nearestFolder)) {
-                            if (!securityContext.isAdmin()) {
-                                throw new PermissionException("Only administrators can create root level entries");
-                            }
-                        }
-
-                        // If the nearest folder is not the same as the folder reference then we have only got part way to the folder structure we need.
-                        // If this is the case then we will need to create folders in the nearest folder.
-                        if (nearestFolder != folderRef) {
-                            if (!securityContext.hasDocumentPermission(nearestFolder.getType(), nearestFolder.getUuid(), DocumentPermissionNames.getDocumentCreatePermission(Folder.ENTITY_TYPE))) {
-                                throw new PermissionException("You do not have permission to create a folder in '" + nearestFolder);
-                            }
-
-                            if (!securityContext.hasDocumentPermission(nearestFolder.getType(), nearestFolder.getUuid(), DocumentPermissionNames.IMPORT)) {
-                                throw new PermissionException("You do not have permission to import folders into '" + nearestFolder);
-                            }
-
-                            // Add the required folders for this new item.
-                            if (importMode == ImportMode.IGNORE_CONFIRMATION
-                                    || (importMode == ImportMode.ACTION_CONFIRMATION && importState.isAction())) {
-                                if (pathIndex > 0) {
-                                    pathIndex = pathIndex - 1;
+                                // Only allow administrators to import documents with no folder.
+                                // TODO : In v6 the root folder will be a real folder.
+                                if (SYSTEM_FOLDER.equals(nearestFolder)) {
+                                    if (!securityContext.isAdmin()) {
+                                        throw new PermissionException("Only administrators can create root level entries");
+                                    }
                                 }
-                                for (; pathIndex < relativePath.getNameCount() - 1; pathIndex++) {
-                                    final String folderName = relativePath.getName(pathIndex).toString();
-                                    Folder folder = folderService.create(nearestFolder, folderName);
-                                    nearestFolder = DocRefUtil.create(folder);
-                                    folderRef = nearestFolder;
+
+                                // If the nearest folder is not the same as the folder reference then we have only got part way to the folder structure we need.
+                                // If this is the case then we will need to create folders in the nearest folder.
+                                if (nearestFolder != folderRef) {
+                                    if (!securityContext.hasDocumentPermission(nearestFolder.getType(), nearestFolder.getUuid(), DocumentPermissionNames.getDocumentCreatePermission(Folder.ENTITY_TYPE))) {
+                                        throw new PermissionException("You do not have permission to create a folder in '" + nearestFolder);
+                                    }
+
+                                    if (!securityContext.hasDocumentPermission(nearestFolder.getType(), nearestFolder.getUuid(), DocumentPermissionNames.IMPORT)) {
+                                        throw new PermissionException("You do not have permission to import folders into '" + nearestFolder);
+                                    }
+
+                                    // Add the required folders for this new item.
+                                    if (importMode == ImportMode.IGNORE_CONFIRMATION
+                                            || (importMode == ImportMode.ACTION_CONFIRMATION && importState.isAction())) {
+                                        if (pathIndex > 0) {
+                                            pathIndex = pathIndex - 1;
+                                        }
+                                        for (; pathIndex < explorerPath.getNameCount() - 1; pathIndex++) {
+                                            final String folderName = explorerPath.getName(pathIndex).toString();
+                                            Folder folder = folderService.create(nearestFolder, folderName);
+                                            nearestFolder = DocRefUtil.create(folder);
+                                            folderRef = nearestFolder;
+                                        }
+                                    }
+
+
+                                } else {
+                                    if (!securityContext.hasDocumentPermission(folderRef.getType(), folderRef.getUuid(), DocumentPermissionNames.getDocumentCreatePermission(entityType))) {
+                                        throw new PermissionException("You do not have permission to create '" + docRef + "' in '" + folderRef);
+                                    }
+
+                                    if (!securityContext.hasDocumentPermission(folderRef.getType(), folderRef.getUuid(), DocumentPermissionNames.IMPORT)) {
+                                        throw new PermissionException("You do not have permission to import '" + docRef + "' into '" + folderRef);
+                                    }
                                 }
-                            }
-
-
-                        } else {
-                            if (!securityContext.hasDocumentPermission(folderRef.getType(), folderRef.getUuid(), DocumentPermissionNames.getDocumentCreatePermission(entityType))) {
-                                throw new PermissionException("You do not have permission to create '" + docRef + "' in '" + folderRef);
-                            }
-
-                            if (!securityContext.hasDocumentPermission(folderRef.getType(), folderRef.getUuid(), DocumentPermissionNames.IMPORT)) {
-                                throw new PermissionException("You do not have permission to import '" + docRef + "' into '" + folderRef);
-                            }
-                        }
 
 //                        if (importMode == ImportMode.CREATE_CONFIRMATION) {
 //                            importState.setState(State.NEW);
 //                        }
-                    } else {
-                        if (!securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.UPDATE)) {
-                            throw new PermissionException("You do not have permission to update '" + docRef + "'");
-                        }
+                            } else {
+                                if (!securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.UPDATE)) {
+                                    throw new PermissionException("You do not have permission to update '" + docRef + "'");
+                                }
 
-                        if (!securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.IMPORT)) {
-                            throw new PermissionException("You do not have permission to import '" + docRef + "'");
-                        }
+                                if (!securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.IMPORT)) {
+                                    throw new PermissionException("You do not have permission to import '" + docRef + "'");
+                                }
 
 //                        if (importMode == ImportMode.CREATE_CONFIRMATION) {
 //                            importState.setState(State.UPDATE);
 //                        }
-                    }
+                            }
 //
 //                    // If we have got here then see if the user wants to import this item (this is usually after they have had a chance to confirm changes)
 //                    if ((ImportMode.ACTION_CONFIRMATION.equals(importMode) && importState.isAction()) || ImportMode.IGNORE_CONFIRMATION.equals(importMode)) {
 
-                    // Get the path for the destination...
+                            // Get the path for the destination...
 
-                    if (folderRef == null) {
-                        // If we haven't got a folder then this is a new item and we haven't yet created a folder for it.
-                        // This might be because we didn't have permission to do so.
-                        importState.setState(State.NEW);
-                        importState.setDestPath(sourcePath);
+                            if (folderRef == null) {
+                                // If we haven't got a folder then this is a new item and we haven't yet created a folder for it.
+                                // This might be because we didn't have permission to do so.
+                                importState.setState(State.NEW);
+                                importState.setDestPath(explorerPath.toString());
 
-                    } else {
-                        // Import the item via the appropriate document service.
-                        final DocumentEntityService documentEntityService = getService(docRef);
-                        if (documentEntityService == null) {
-                            throw new RuntimeException("Unable to find service to import " + docRef);
-                        }
+                            } else {
+                                // Import the item via the appropriate document service.
+                                final DocumentEntityService documentEntityService = getService(docRef);
+                                if (documentEntityService == null) {
+                                    throw new RuntimeException("Unable to find service to import " + docRef);
+                                }
 
-                        // TODO : In v6 we won't pass down the folder.
-                        Folder folder = null;
-                        if (!SYSTEM_FOLDER.equals(folderRef)) {
-                            folder = folderService.loadByUuid(folderRef.getUuid());
-                            if (folder == null) {
-                                throw new RuntimeException("Unable to find parent folder: " + folderRef);
+                                // TODO : In v6 we won't pass down the folder.
+                                Folder folder = null;
+                                if (!SYSTEM_FOLDER.equals(folderRef)) {
+                                    folder = folderService.loadByUuid(folderRef.getUuid());
+                                    if (folder == null) {
+                                        throw new RuntimeException("Unable to find parent folder: " + folderRef);
+                                    }
+                                }
+                                final DocRef imported = documentEntityService.importDocument(folder, dataMap, importState, importMode);
+
+                                // TODO : In v6.0 add folders afterwards on successful import as they won't be controlled by doc service.
+
+
+                                if (imported != null) {
+                                    importState.setDestPath(getFolderPath(imported));
+                                }
+                            }
+
+
+                        } catch (final IOException e) {
+                            LOGGER.error(e.getMessage(), e);
+                            if (importState != null) {
+                                importState.addMessage(Severity.ERROR, e.getMessage());
                             }
                         }
-                        final DocRef imported = documentEntityService.importDocument(folder, dataMap, importState, importMode);
+                    });
 
-                        // TODO : In v6.0 add folders afterwards on successful import as they won't be controlled by doc service.
-
-
-                        if (imported != null) {
-                            importState.setDestPath(getFolderPath(imported));
-                        }
-                    }
-
-
-                } catch (final IOException e) {
-                    LOGGER.error(e.getMessage(), e);
-                    if (importState != null) {
-                        importState.addMessage(Severity.ERROR, e.getMessage());
-                    }
-                }
-            });
-
-        } catch (final IOException e) {
+        } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
     }
@@ -537,7 +550,7 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
     }
 
     private void performExport(final Path dir, final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) throws IOException {
-        LOGGER.info("Exporting: " + docRef);
+        LOGGER.debug("Exporting: " + docRef);
 
         // TODO : In v6 get the folder structure from the explorer tree service and not the entity service.
         final Entity entity = genericEntityService.loadByUuid(docRef.getType(), docRef.getUuid(), RESOURCE_FETCH_SET);

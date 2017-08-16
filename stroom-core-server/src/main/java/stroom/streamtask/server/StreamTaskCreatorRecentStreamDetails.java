@@ -42,7 +42,7 @@ public class StreamTaskCreatorRecentStreamDetails {
     private final Set<Long> recentFeedIdSet = new HashSet<>();
 
     public StreamTaskCreatorRecentStreamDetails(final StreamTaskCreatorRecentStreamDetails lastRecentStreamInfo,
-            final long maxStreamId) {
+                                                final long maxStreamId) {
         if (lastRecentStreamInfo != null) {
             this.earliestStreamId = lastRecentStreamInfo.earliestStreamId;
             this.recentStreamId = lastRecentStreamInfo.maxStreamId;

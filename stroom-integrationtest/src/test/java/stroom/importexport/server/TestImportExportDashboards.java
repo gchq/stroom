@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,8 +18,6 @@ package stroom.importexport.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestControl;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardConfig;
@@ -52,6 +50,8 @@ import stroom.query.api.v1.ExpressionTerm.Condition;
 import stroom.resource.server.ResourceStore;
 import stroom.script.shared.Script;
 import stroom.script.shared.ScriptService;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestControl;
 import stroom.util.shared.ResourceKey;
 import stroom.visualisation.shared.FindVisualisationCriteria;
 import stroom.visualisation.shared.Visualisation;
@@ -284,7 +284,7 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     private ExpressionBuilder createExpression(final Dictionary dictionary) {
         final ExpressionBuilder root = new ExpressionBuilder(Op.AND);
         root.addTerm("EventTime", Condition.LESS_THAN, "2020-01-01T00:00:00.000Z");
-        root.addTerm("User", Condition.IN_DICTIONARY, DocRefUtil.create(dictionary));
+        root.addDictionaryTerm("User", Condition.IN_DICTIONARY, DocRefUtil.create(dictionary));
         return root;
     }
 }

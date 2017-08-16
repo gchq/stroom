@@ -32,9 +32,9 @@ import stroom.streamstore.client.presenter.ClassificationWrappedStreamPresenter;
 import stroom.streamstore.client.presenter.StreamTaskPresenter;
 import stroom.streamstore.shared.Stream;
 import stroom.streamtask.shared.StreamProcessor;
+import stroom.svg.client.Icon;
+import stroom.svg.client.SvgPreset;
 import stroom.util.client.ImageUtil;
-import stroom.widget.tab.client.presenter.Icon;
-import stroom.widget.tab.client.presenter.ImageIcon;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -101,6 +101,6 @@ public class FolderRootPresenter extends LinkTabPanelPresenter implements TabDat
 
     @Override
     public Icon getIcon() {
-        return ImageIcon.create(ImageUtil.getImageURL() + DocumentType.DOC_IMAGE_URL + getLabel() + ".png");
+        return new SvgPreset(ImageUtil.getImageURL() + DocumentType.DOC_IMAGE_URL + getLabel() + ".svg", null, true);
     }
 }

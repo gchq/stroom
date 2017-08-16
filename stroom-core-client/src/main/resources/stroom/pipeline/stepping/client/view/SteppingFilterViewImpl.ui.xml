@@ -29,9 +29,9 @@
       <g:DockLayoutPanel unit="PX" width="100%" height="100%">
         <g:west size="20">
           <g:FlowPanel>
-            <v:GlyphButton ui:field="addXPath" />
-            <v:GlyphButton ui:field="editXPath" />
-            <v:GlyphButton ui:field="removeXPath" />
+            <v:SvgButton ui:field="addXPath" />
+            <v:SvgButton ui:field="editXPath" />
+            <v:SvgButton ui:field="removeXPath" />
           </g:FlowPanel>
         </g:west>
         <g:center>

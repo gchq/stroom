@@ -18,11 +18,11 @@ package stroom.pipeline.destination;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.feed.MetaMap;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.shared.StreamAttributeConstants;
-import stroom.util.zip.HeaderMap;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -41,19 +41,16 @@ public class RollingStreamDestination extends RollingDestination {
     private final StreamTarget streamTarget;
     private final String nodeName;
     private final long creationTime;
-
+    private final ByteCountOutputStream outputStream;
+    private final AtomicLong recordCount = new AtomicLong();
     private volatile long lastFlushTime;
     private byte[] footer;
-
     private volatile boolean rolled;
-
-    private final ByteCountOutputStream outputStream;
     private RASegmentOutputStream segmentOutputStream;
-    private final AtomicLong recordCount = new AtomicLong();
 
     public RollingStreamDestination(final StreamKey key, final long frequency, final long maxSize,
-            final StreamStore streamStore, final StreamTarget streamTarget, final String nodeName,
-            final long creationTime) throws IOException {
+                                    final StreamStore streamStore, final StreamTarget streamTarget, final String nodeName,
+                                    final long creationTime) throws IOException {
         this.key = key;
 
         this.frequency = frequency;
@@ -185,10 +182,10 @@ public class RollingStreamDestination extends RollingDestination {
         }
 
         // Write meta data to stream target.
-        final HeaderMap headerMap = new HeaderMap();
-        headerMap.put(StreamAttributeConstants.REC_WRITE, recordCount.toString());
-        headerMap.put(StreamAttributeConstants.NODE, nodeName);
-        streamTarget.getAttributeMap().putAll(headerMap);
+        final MetaMap metaMap = new MetaMap();
+        metaMap.put(StreamAttributeConstants.REC_WRITE, recordCount.toString());
+        metaMap.put(StreamAttributeConstants.NODE, nodeName);
+        streamTarget.getAttributeMap().putAll(metaMap);
         streamStore.closeStreamTarget(streamTarget);
 
         if (exception != null) {

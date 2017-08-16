@@ -40,8 +40,7 @@ public interface SegmentOutputStream extends IOutputStream {
      * All bytes written between the start of the output or the last boundary
      * will be considered a segment by the <code>SegmentInputStream</code>.
      *
-     * @param position
-     *            The byte position of the end of the segment.
+     * @param position The byte position of the end of the segment.
      */
     void addSegment(final long position) throws IOException;
 

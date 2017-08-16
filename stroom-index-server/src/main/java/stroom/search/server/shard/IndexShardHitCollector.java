@@ -40,7 +40,7 @@ public class IndexShardHitCollector extends SimpleCollector {
     private Long pauseTime;
 
     public IndexShardHitCollector(final Monitor taskMonitor, final TransferList<Integer> docIdStore,
-            final AtomicLong hitCount) {
+                                  final AtomicLong hitCount) {
         this.docIdStore = docIdStore;
         this.taskMonitor = taskMonitor;
         this.hitCount = hitCount;

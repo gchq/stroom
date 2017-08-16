@@ -28,7 +28,7 @@ import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "XML_SCHEMA", uniqueConstraints = @UniqueConstraint(columnNames = { "FK_FOLDER_ID", "NAME" }) )
+@Table(name = "XML_SCHEMA", uniqueConstraints = @UniqueConstraint(columnNames = {"FK_FOLDER_ID", "NAME"}))
 public class XMLSchema extends DocumentEntity {
     public static final String TABLE_NAME = SQLNameConstants.XML + SEP + SQLNameConstants.SCHEMA;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;

@@ -33,8 +33,16 @@ public class NodeInfoResult extends EntityRow<Node> {
         return ping;
     }
 
+    public void setPing(final String ping) {
+        this.ping = ping;
+    }
+
     public boolean isMaster() {
         return master;
+    }
+
+    public void setMaster(final boolean master) {
+        this.master = master;
     }
 
     public long getPingMs() {
@@ -43,13 +51,5 @@ public class NodeInfoResult extends EntityRow<Node> {
 
     public void setPingMs(final long pingMs) {
         this.pingMs = pingMs;
-    }
-
-    public void setPing(final String ping) {
-        this.ping = ping;
-    }
-
-    public void setMaster(final boolean master) {
-        this.master = master;
     }
 }

@@ -46,7 +46,7 @@ public class MoveEntityPresenter
 
     @Inject
     public MoveEntityPresenter(final EventBus eventBus, final MoveEntityView view, final MoveEntityProxy proxy,
-            final EntityTreePresenter entityTreePresenter) {
+                               final EntityTreePresenter entityTreePresenter) {
         super(eventBus, view, proxy);
         this.entityTreePresenter = entityTreePresenter;
         view.setFolderView(entityTreePresenter.getView());

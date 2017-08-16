@@ -31,7 +31,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public class StreamTypeUiManager {
-    private List<StreamType> streamTypeList = new ArrayList<StreamType>();
+    private List<StreamType> streamTypeList = new ArrayList<>();
 
     @Inject
     public StreamTypeUiManager(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
@@ -46,6 +46,39 @@ public class StreamTypeUiManager {
 
     private void updateList(final List<StreamType> list) {
         streamTypeList = list;
+    }
+
+    public List<StreamType> getRawStreamTypeList() {
+        final List<StreamType> rtn = new ArrayList<>();
+        for (final StreamType streamType : streamTypeList) {
+            if (streamType.isStreamTypeRaw()) {
+                rtn.add(streamType);
+            }
+        }
+        Collections.sort(rtn, new StreamTypeCompare());
+        return rtn;
+    }
+
+    public List<StreamType> getProcessedStreamTypeList() {
+        final List<StreamType> rtn = new ArrayList<>();
+        for (final StreamType streamType : streamTypeList) {
+            if (streamType.isStreamTypeProcessed()) {
+                rtn.add(streamType);
+            }
+        }
+        Collections.sort(rtn, new StreamTypeCompare());
+        return rtn;
+    }
+
+    public List<StreamType> getRootStreamTypeList() {
+        final List<StreamType> rtnList = new ArrayList<>();
+        for (final StreamType streamType : streamTypeList) {
+            if (!streamType.isStreamTypeChild()) {
+                rtnList.add(streamType);
+            }
+        }
+        Collections.sort(rtnList, new StreamTypeCompare());
+        return rtnList;
     }
 
     static class StreamTypeCompare implements Comparator<StreamType> {
@@ -67,39 +100,6 @@ public class StreamTypeUiManager {
             }
 
         }
-    }
-
-    public List<StreamType> getRawStreamTypeList() {
-        final List<StreamType> rtn = new ArrayList<StreamType>();
-        for (final StreamType streamType : streamTypeList) {
-            if (streamType.isStreamTypeRaw()) {
-                rtn.add(streamType);
-            }
-        }
-        Collections.sort(rtn, new StreamTypeCompare());
-        return rtn;
-    }
-
-    public List<StreamType> getProcessedStreamTypeList() {
-        final List<StreamType> rtn = new ArrayList<StreamType>();
-        for (final StreamType streamType : streamTypeList) {
-            if (streamType.isStreamTypeProcessed()) {
-                rtn.add(streamType);
-            }
-        }
-        Collections.sort(rtn, new StreamTypeCompare());
-        return rtn;
-    }
-
-    public List<StreamType> getRootStreamTypeList() {
-        final List<StreamType> rtnList = new ArrayList<StreamType>();
-        for (final StreamType streamType : streamTypeList) {
-            if (!streamType.isStreamTypeChild()) {
-                rtnList.add(streamType);
-            }
-        }
-        Collections.sort(rtnList, new StreamTypeCompare());
-        return rtnList;
     }
 
 }

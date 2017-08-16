@@ -44,8 +44,8 @@ import java.util.Deque;
  */
 @Component
 @Scope("prototype")
-@ConfigurableElement(type = "JSONWriter", category = Category.WRITER, roles = { PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_WRITER, PipelineElementType.ROLE_MUTATOR, PipelineElementType.VISABILITY_STEPPING }, icon = ElementIcons.JSON)
+@ConfigurableElement(type = "JSONWriter", category = Category.WRITER, roles = {PipelineElementType.ROLE_TARGET,
+        PipelineElementType.ROLE_WRITER, PipelineElementType.ROLE_MUTATOR, PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.JSON)
 public class JSONWriter extends AbstractWriter {
     private final boolean addTrailingRootValueSeparator = true;
     private final String rootValueSeparator = "\n";
@@ -111,28 +111,22 @@ public class JSONWriter extends AbstractWriter {
     }
 
     /**
-     * @param uri
-     *            the Namespace URI, or the empty string if the element has no
-     *            Namespace URI or if Namespace processing is not being
-     *            performed
-     * @param localName
-     *            the local name (without prefix), or the empty string if
-     *            Namespace processing is not being performed
-     * @param qName
-     *            the qualified name (with prefix), or the empty string if
-     *            qualified names are not available
-     * @param atts
-     *            the attributes attached to the element. If there are no
-     *            attributes, it shall be an empty Attributes object. The value
-     *            of this object after startElement returns is undefined
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
-     *
+     * @param uri       the Namespace URI, or the empty string if the element has no
+     *                  Namespace URI or if Namespace processing is not being
+     *                  performed
+     * @param localName the local name (without prefix), or the empty string if
+     *                  Namespace processing is not being performed
+     * @param qName     the qualified name (with prefix), or the empty string if
+     *                  qualified names are not available
+     * @param atts      the attributes attached to the element. If there are no
+     *                  attributes, it shall be an empty Attributes object. The value
+     *                  of this object after startElement returns is undefined
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #endElement
      * @see org.xml.sax.Attributes
      * @see org.xml.sax.helpers.AttributesImpl
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#startElement(java.lang.String,
-     *      java.lang.String, java.lang.String, org.xml.sax.Attributes)
+     * java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
@@ -176,21 +170,16 @@ public class JSONWriter extends AbstractWriter {
     }
 
     /**
-     * @param uri
-     *            the Namespace URI, or the empty string if the element has no
-     *            Namespace URI or if Namespace processing is not being
-     *            performed
-     * @param localName
-     *            the local name (without prefix), or the empty string if
-     *            Namespace processing is not being performed
-     * @param qName
-     *            the qualified XML name (with prefix), or the empty string if
-     *            qualified names are not available
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
-     *
+     * @param uri       the Namespace URI, or the empty string if the element has no
+     *                  Namespace URI or if Namespace processing is not being
+     *                  performed
+     * @param localName the local name (without prefix), or the empty string if
+     *                  Namespace processing is not being performed
+     * @param qName     the qualified XML name (with prefix), or the empty string if
+     *                  qualified names are not available
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#endElement(java.lang.String,
-     *      java.lang.String, java.lang.String)
+     * java.lang.String, java.lang.String)
      */
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
@@ -280,19 +269,14 @@ public class JSONWriter extends AbstractWriter {
     }
 
     /**
-     * @param ch
-     *            the characters from the XML document
-     * @param start
-     *            the start position in the array
-     * @param length
-     *            the number of characters to read from the array
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
-     *
+     * @param ch     the characters from the XML document
+     * @param start  the start position in the array
+     * @param length the number of characters to read from the array
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #ignorableWhitespace
      * @see org.xml.sax.Locator
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#characters(char[],
-     *      int, int)
+     * int, int)
      */
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {

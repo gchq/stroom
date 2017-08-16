@@ -67,7 +67,7 @@ public class BaseEntityBeanWrapper {
         beanWrapper.setPropertyValue(propertyName, new HashSet());
     }
 
-    @SuppressWarnings({ "unchecked" })
+    @SuppressWarnings({"unchecked"})
     public <T extends BaseEntity> void addToPropertySet(String propertyName, T baseEntity) {
         Set<T> set = (Set<T>) beanWrapper.getPropertyValue(propertyName);
         set.add(baseEntity);

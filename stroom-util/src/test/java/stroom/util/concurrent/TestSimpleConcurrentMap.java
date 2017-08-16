@@ -25,13 +25,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestSimpleConcurrentMap {
-    private static class ExampleSimpleConcurrentMap extends SimpleConcurrentMap<String, AtomicInteger> {
-        @Override
-        protected AtomicInteger initialValue(final String key) {
-            return new AtomicInteger(0);
-        }
-    }
-
     @Test
     public void testSimple() {
         ExampleSimpleConcurrentMap test = new ExampleSimpleConcurrentMap();
@@ -43,6 +36,13 @@ public class TestSimpleConcurrentMap {
         Assert.assertEquals(1, test.keySet().size());
         Assert.assertEquals(1, test.get("TEST1").incrementAndGet());
         Assert.assertEquals(2, test.keySet().size());
+    }
+
+    private static class ExampleSimpleConcurrentMap extends SimpleConcurrentMap<String, AtomicInteger> {
+        @Override
+        protected AtomicInteger initialValue(final String key) {
+            return new AtomicInteger(0);
+        }
     }
 
 }

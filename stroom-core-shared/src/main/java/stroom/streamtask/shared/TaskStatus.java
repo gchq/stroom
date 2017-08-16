@@ -23,17 +23,17 @@ import stroom.util.shared.HasDisplayValue;
 /**
  * The status of this stream process.
  */
-public enum TaskStatus implements HasDisplayValue,HasPrimitiveValue {
+public enum TaskStatus implements HasDisplayValue, HasPrimitiveValue {
     /**
      * Unprocessed - yet to be locked
      */
     UNPROCESSED("Unprocessed", 1), /**
-                                     * Assigned - some one has locked it
-                                     */
+     * Assigned - some one has locked it
+     */
     ASSIGNED("Assigned", 2), PROCESSING("Processing", 3), COMPLETE("Complete", 10), FAILED("Failed",
             22), DELETED("Deleted", 99);
 
-    public static final PrimitiveValueConverter<TaskStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<TaskStatus>(
+    public static final PrimitiveValueConverter<TaskStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
             TaskStatus.values());
 
     private final String displayValue;

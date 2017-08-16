@@ -52,43 +52,25 @@ import java.util.List;
  * buffered SAX events this filter can then fire them at a content handler.
  */
 public class XMLRecordEmitter extends XMLFilterAdaptor implements HasElementId {
-    private static class MyWriter extends CharArrayWriter {
-        public MyWriter(final int initialSize) {
-            super(initialSize);
-        }
-
-        public char[] getBuffer() {
-            return buf;
-        }
-
-        public int getCount() {
-            return count;
-        }
-    }
-
     private final SAXTransformerFactory transformerFactory = (SAXTransformerFactory) TransformerFactoryFactory
             .newInstance();
     private final MyWriter outputStreamWriter = new MyWriter(1000);
-    private LocationFactory locationFactory;
     private final List<DestinationProvider> appenders;
-
+    private final List<StartPrefixMapping> prefixList = new ArrayList<>();
+    private LocationFactory locationFactory;
     private String id;
 
     private ContentHandler handler;
     private int depth;
     private StartElement root;
-    private final List<StartPrefixMapping> prefixList = new ArrayList<StartPrefixMapping>();
     private StartPrefixMapping[] prefixes;
-
     private ErrorReceiver errorReceiver;
     private Locator locator;
     private boolean indentOutput = false;
     private String encoding;
-
     private String header;
     private String footer;
     private String body;
-
     public XMLRecordEmitter(final List<DestinationProvider> appenders) {
         this.appenders = appenders;
     }
@@ -325,5 +307,19 @@ public class XMLRecordEmitter extends XMLFilterAdaptor implements HasElementId {
 
     public void setEncoding(final String encoding) {
         this.encoding = encoding;
+    }
+
+    private static class MyWriter extends CharArrayWriter {
+        public MyWriter(final int initialSize) {
+            super(initialSize);
+        }
+
+        public char[] getBuffer() {
+            return buf;
+        }
+
+        public int getCount() {
+            return count;
+        }
     }
 }

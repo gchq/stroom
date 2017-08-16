@@ -69,44 +69,13 @@ import java.util.Set;
  * markers.
  */
 public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> implements EditorView {
-    /**
-     * Declare styles.
-     */
-    public interface Style extends CssResource {
-        String filterButtons();
-
-        String filterButton();
-    }
-
-    /**
-     * Bundle for the indicator icons and styles.
-     */
-    public interface Resources extends ClientBundle {
-        ImageResource filterActive();
-
-        ImageResource filterInactive();
-
-        @Source("codeeditor.css")
-        Style style();
-    }
-
-    public interface Binder extends UiBinder<DockLayoutPanel, EditorViewImpl> {
-    }
-
+    private static final IndicatorPopup indicatorPopup = new IndicatorPopup();
     private static volatile Binder binder;
     private static volatile Resources resources;
-
-    private static final IndicatorPopup indicatorPopup = new IndicatorPopup();
-
-    private Indicators indicators;
-
-    private AceEditorMode mode = AceEditorMode.XML;
-
     private final Option stylesOption;
     private final Option lineNumbersOption;
     private final Option indicatorsOption;
     private final Option lineWrapOption;
-
     @UiField(provided = true)
     DockLayoutPanel layout;
     @UiField
@@ -119,7 +88,8 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     Image filterInactive;
     @UiField
     Image filterActive;
-
+    private Indicators indicators;
+    private AceEditorMode mode = AceEditorMode.XML;
     @Inject
     public EditorViewImpl() {
         if (binder == null) {
@@ -386,5 +356,29 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     @Override
     public void fireEvent(final GwtEvent<?> event) {
         layout.fireEvent(event);
+    }
+
+    /**
+     * Declare styles.
+     */
+    public interface Style extends CssResource {
+        String filterButtons();
+
+        String filterButton();
+    }
+
+    /**
+     * Bundle for the indicator icons and styles.
+     */
+    public interface Resources extends ClientBundle {
+        ImageResource filterActive();
+
+        ImageResource filterInactive();
+
+        @Source("codeeditor.css")
+        Style style();
+    }
+
+    public interface Binder extends UiBinder<DockLayoutPanel, EditorViewImpl> {
     }
 }

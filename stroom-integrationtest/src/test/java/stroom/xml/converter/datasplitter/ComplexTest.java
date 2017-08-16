@@ -18,7 +18,7 @@ package stroom.xml.converter.datasplitter;
 
 import org.junit.Ignore;
 import org.junit.Test;
-import stroom.AbstractProcessIntegrationTest;
+import stroom.test.AbstractProcessIntegrationTest;
 import stroom.util.spring.StroomBeanStore;
 
 import javax.annotation.Resource;

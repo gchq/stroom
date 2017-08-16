@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,6 +18,7 @@ package stroom.index.server;
 
 import stroom.index.shared.Index;
 import stroom.index.shared.Index.PartitionBy;
+import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.util.concurrent.AtomicSequence;
 
@@ -44,6 +45,11 @@ public final class IndexShardKeyUtil {
 
     private IndexShardKeyUtil() {
         // Utility class
+    }
+
+    public static IndexShardKey createKey(final IndexShard indexShard) {
+        final int shardNo = SEQUENCE.next(indexShard.getIndex().getShardsPerPartition());
+        return new IndexShardKey(indexShard.getIndex(), indexShard.getPartition(), indexShard.getPartitionFromTime(), indexShard.getPartitionToTime(), shardNo);
     }
 
     public static IndexShardKey createTestKey(final Index index) {

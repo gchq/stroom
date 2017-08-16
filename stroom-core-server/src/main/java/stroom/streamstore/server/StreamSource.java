@@ -16,9 +16,9 @@
 
 package stroom.streamstore.server;
 
+import stroom.feed.MetaMap;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.zip.HeaderMap;
 
 import java.io.Closeable;
 import java.io.InputStream;
@@ -32,7 +32,7 @@ import java.io.InputStream;
 public interface StreamSource extends Closeable {
     /**
      * @return a type associated with the stream. Used to differentiate between
-     *         child streams ("ctx", "idx", etc).
+     * child streams ("ctx", "idx", etc).
      */
     StreamType getType();
 
@@ -49,15 +49,14 @@ public interface StreamSource extends Closeable {
     /**
      * Any attributes regarding the stream
      */
-    HeaderMap getAttributeMap();
+    MetaMap getAttributeMap();
 
     /**
      * Depending on the type of stream we we may return back null if the stream
      * does not exist. Some streams a null file means empty where as others mean
      * not stream. The STORE_LAZY map in FileSystem util governs this.
      *
-     * @param type
-     *            to get
+     * @param type to get
      * @return back the child stream based on type
      */
     StreamSource getChildStream(StreamType type);

@@ -17,10 +17,9 @@
 package stroom.test;
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import stroom.CommonTestControl;
+import stroom.dashboard.server.logging.spring.EventLoggingConfiguration;
 import stroom.dashboard.spring.DashboardConfiguration;
 import stroom.index.spring.IndexConfiguration;
-import stroom.logging.spring.EventLoggingConfiguration;
 import stroom.pipeline.spring.PipelineConfiguration;
 import stroom.script.spring.ScriptConfiguration;
 import stroom.search.spring.SearchConfiguration;
@@ -49,8 +48,7 @@ public final class SetupSampleData {
         try {
             TaskScopeContextHolder.addContext();
             try {
-                @SuppressWarnings("resource")
-                final AnnotationConfigApplicationContext appContext = new AnnotationConfigApplicationContext();
+                @SuppressWarnings("resource") final AnnotationConfigApplicationContext appContext = new AnnotationConfigApplicationContext();
                 appContext.getEnvironment().setActiveProfiles(StroomSpringProfiles.PROD,
                         SecurityConfiguration.MOCK_SECURITY);
                 appContext.register(ScopeConfiguration.class, PersistenceConfiguration.class,

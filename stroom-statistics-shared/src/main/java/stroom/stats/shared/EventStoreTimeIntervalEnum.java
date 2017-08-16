@@ -42,13 +42,8 @@ public enum EventStoreTimeIntervalEnum implements HasDisplayValue {
     // Fifty two Weekly with 364 1day column intervals
     DAY(31_449_600_000L, 86_400_000L, "Day", "d");
 
-    private final long rowKeyInterval;
-    private final long columnInterval;
-    private final String longName;
-    private final String shortName;
-
-    private static final Map<Long, EventStoreTimeIntervalEnum> fromColumnIntervalMap = new HashMap<Long, EventStoreTimeIntervalEnum>();
-    private static final Map<String, EventStoreTimeIntervalEnum> fromShortnameMap = new HashMap<String, EventStoreTimeIntervalEnum>();
+    private static final Map<Long, EventStoreTimeIntervalEnum> fromColumnIntervalMap = new HashMap<>();
+    private static final Map<String, EventStoreTimeIntervalEnum> fromShortnameMap = new HashMap<>();
 
     static {
         for (final EventStoreTimeIntervalEnum interval : values()) {
@@ -57,24 +52,43 @@ public enum EventStoreTimeIntervalEnum implements HasDisplayValue {
         }
     }
 
+    private final long rowKeyInterval;
+    private final long columnInterval;
+    private final String longName;
+    private final String shortName;
+
     /**
      * Constructor
      *
-     * @param rowKeyInterval
-     *            The time interval in milliseconds for the row key
-     * @param columnInterval
-     *            The time interval in milliseconds for the column qualifier
-     * @param longName
-     *            The Human readable name for the interval
-     * @param shortName
-     *            The short name for the interval, used in the hbase table name
+     * @param rowKeyInterval The time interval in milliseconds for the row key
+     * @param columnInterval The time interval in milliseconds for the column qualifier
+     * @param longName       The Human readable name for the interval
+     * @param shortName      The short name for the interval, used in the hbase table name
      */
     EventStoreTimeIntervalEnum(final long rowKeyInterval, final long columnInterval, final String longName,
-            final String shortName) {
+                               final String shortName) {
         this.rowKeyInterval = rowKeyInterval;
         this.columnInterval = columnInterval;
         this.longName = longName;
         this.shortName = shortName;
+    }
+
+    public static EventStoreTimeIntervalEnum fromColumnInterval(final long columnInterval) {
+        try {
+            return fromColumnIntervalMap.get(columnInterval);
+        } catch (final Exception e) {
+            throw new IllegalArgumentException(
+                    "The provided columnInterval [" + columnInterval + "] is not a valid event store interval", e);
+        }
+    }
+
+    public static EventStoreTimeIntervalEnum fromShortName(final String shortName) {
+        try {
+            return fromShortnameMap.get(shortName);
+        } catch (final Exception e) {
+            throw new IllegalArgumentException(
+                    "The provided shortName [" + shortName + "] is not a valid name for an event store", e);
+        }
     }
 
     /**
@@ -135,24 +149,6 @@ public enum EventStoreTimeIntervalEnum implements HasDisplayValue {
         sb.append(weeks);
 
         return sb.toString();
-    }
-
-    public static EventStoreTimeIntervalEnum fromColumnInterval(final long columnInterval) {
-        try {
-            return fromColumnIntervalMap.get(columnInterval);
-        } catch (final Exception e) {
-            throw new IllegalArgumentException(
-                    "The provided columnInterval [" + columnInterval + "] is not a valid event store interval", e);
-        }
-    }
-
-    public static EventStoreTimeIntervalEnum fromShortName(final String shortName) {
-        try {
-            return fromShortnameMap.get(shortName);
-        } catch (final Exception e) {
-            throw new IllegalArgumentException(
-                    "The provided shortName [" + shortName + "] is not a valid name for an event store", e);
-        }
     }
 
     public long roundTimeToColumnInterval(final long timestampMillis) {

@@ -23,14 +23,15 @@ import java.io.OutputStream;
 /**
  * An output stream buffer that tries to use a given buffer first and once that
  * is not big enough it delegates all calls to a real ByteArrayOutputStream.
- *
+ * <p>
  * It also allows access to the buffer and pos without a copy of the array.
  */
 public class InitialByteArrayOutputStream extends OutputStream {
     private byte[] preBuffer;
     private int preBufferPos = 0;
     private GetBufferByteArrayOutputStream postBuffer;
-    @SuppressWarnings({ "EI_EXPOSE_REP", "EI_EXPOSE_REP2" })
+
+    @SuppressWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
     public InitialByteArrayOutputStream(byte[] initialBuffer) {
         preBuffer = initialBuffer;
     }

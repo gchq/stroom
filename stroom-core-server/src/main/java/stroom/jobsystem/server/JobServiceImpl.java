@@ -16,25 +16,27 @@
 
 package stroom.jobsystem.server;
 
-import org.apache.commons.lang.builder.CompareToBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.NamedEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
+import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.StroomEntityManager;
+import stroom.entity.shared.Sort;
+import stroom.entity.shared.Sort.Direction;
 import stroom.jobsystem.shared.FindJobCriteria;
 import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobService;
 import stroom.security.Secured;
+import stroom.util.shared.CompareUtil;
 import stroom.util.spring.StroomBeanMethod;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomStartup;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -105,6 +107,11 @@ public class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria>
         return new JobQueryAppender(entityManager);
     }
 
+    protected FieldMap createFieldMap() {
+        return super.createFieldMap()
+                .add(FindJobCriteria.FIELD_ADVANCED, null, null);
+    }
+
     private static class JobQueryAppender extends QueryAppender<Job, FindJobCriteria> {
         private final Map<String, String> jobDescriptionMap = new HashMap<>();
         private final Set<String> jobAdvancedSet = new HashSet<>();
@@ -122,20 +129,40 @@ public class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria>
 
         @Override
         protected List<Job> postLoad(final FindJobCriteria findJobCriteria, final List<Job> list) {
-            if (FindJobCriteria.ORDER_BY_ADVANCED_AND_NAME.equals(findJobCriteria.getOrderBy())) {
-                list.stream().forEach(this::postLoad);
+            final List<Job> postLoadList = super.postLoad(findJobCriteria, list);
 
-                final ArrayList<Job> rtnList = new ArrayList<>(list);
-                Collections.sort(rtnList, (o1, o2) -> {
-                    final CompareToBuilder compareToBuilder = new CompareToBuilder();
-                    compareToBuilder.append(o1.isAdvanced(), o2.isAdvanced());
-                    compareToBuilder.append(o1.getName(), o2.getName());
-                    return compareToBuilder.toComparison();
+            if (findJobCriteria.getSortList() != null && findJobCriteria.getSortList().size() > 0) {
+                final ArrayList<Job> rtnList = new ArrayList<>(postLoadList);
+                rtnList.sort((o1, o2) -> {
+                    if (findJobCriteria.getSortList() != null) {
+                        for (final Sort sort : findJobCriteria.getSortList()) {
+                            final String field = sort.getField();
+
+                            int compare = 0;
+                            if (FindJobCriteria.FIELD_ID.equals(field)) {
+                                compare = CompareUtil.compareLong(o1.getId(), o2.getId());
+                            } else if (FindJobCriteria.FIELD_NAME.equals(field)) {
+                                compare = CompareUtil.compareString(o1.getName(), o2.getName());
+                            } else if (FindJobCriteria.FIELD_ADVANCED.equals(field)) {
+                                compare = CompareUtil.compareBoolean(o1.isAdvanced(), o2.isAdvanced());
+                            }
+                            if (Direction.DESCENDING.equals(sort.getDirection())) {
+                                compare = compare * -1;
+                            }
+
+                            if (compare != 0) {
+                                return compare;
+                            }
+                        }
+                    }
+
+                    return 0;
                 });
+
                 return rtnList;
-            } else {
-                return super.postLoad(findJobCriteria, list);
             }
+
+            return postLoadList;
         }
 
         public Map<String, String> getJobDescriptionMap() {

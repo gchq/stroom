@@ -56,8 +56,7 @@ public class StroomSpringJUnit4ClassRunner extends SpringJUnit4ClassRunner {
      * <p>
      * Can be overridden by subclasses.
      *
-     * @param clazz
-     *            the test class to be managed
+     * @param clazz the test class to be managed
      */
     @Override
     protected TestContextManager createTestContextManager(final Class<?> clazz) {

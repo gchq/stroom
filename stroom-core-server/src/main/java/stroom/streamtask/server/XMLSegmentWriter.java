@@ -81,10 +81,8 @@ public class XMLSegmentWriter extends XMLFilterImpl {
     }
 
     /**
-     * @param locator
-     *            an object that can return the location of any SAX document
-     *            event
-     *
+     * @param locator an object that can return the location of any SAX document
+     *                event
      * @see org.xml.sax.Locator
      */
     @Override
@@ -112,12 +110,9 @@ public class XMLSegmentWriter extends XMLFilterImpl {
     }
 
     /**
-     * @param prefix
-     *            the Namespace prefix being declared. An empty string is used
-     *            for the default element namespace, which has no prefix.
-     * @param uri
-     *            the Namespace URI the prefix is mapped to
-     *
+     * @param prefix the Namespace prefix being declared. An empty string is used
+     *               for the default element namespace, which has no prefix.
+     * @param uri    the Namespace URI the prefix is mapped to
      * @see #endPrefixMapping
      * @see #startElement
      */
@@ -130,10 +125,8 @@ public class XMLSegmentWriter extends XMLFilterImpl {
     }
 
     /**
-     * @param prefix
-     *            the prefix that was being mapped. This is the empty string
-     *            when a default mapping scope ends.
-     *
+     * @param prefix the prefix that was being mapped. This is the empty string
+     *               when a default mapping scope ends.
      * @see #startPrefixMapping
      * @see #endElement
      */
@@ -146,21 +139,16 @@ public class XMLSegmentWriter extends XMLFilterImpl {
     }
 
     /**
-     * @param uri
-     *            the Namespace URI, or the empty string if the element has no
-     *            Namespace URI or if Namespace processing is not being
-     *            performed
-     * @param localName
-     *            the local name (without prefix), or the empty string if
-     *            Namespace processing is not being performed
-     * @param qName
-     *            the qualified name (with prefix), or the empty string if
-     *            qualified names are not available
-     * @param atts
-     *            the attributes attached to the element. If there are no
-     *            attributes, it shall be an empty Attributes object. The value
-     *            of this object after startElement returns is undefined
-     *
+     * @param uri       the Namespace URI, or the empty string if the element has no
+     *                  Namespace URI or if Namespace processing is not being
+     *                  performed
+     * @param localName the local name (without prefix), or the empty string if
+     *                  Namespace processing is not being performed
+     * @param qName     the qualified name (with prefix), or the empty string if
+     *                  qualified names are not available
+     * @param atts      the attributes attached to the element. If there are no
+     *                  attributes, it shall be an empty Attributes object. The value
+     *                  of this object after startElement returns is undefined
      * @see #endElement
      * @see org.xml.sax.Attributes
      * @see org.xml.sax.helpers.AttributesImpl
@@ -209,16 +197,13 @@ public class XMLSegmentWriter extends XMLFilterImpl {
     }
 
     /**
-     * @param uri
-     *            the Namespace URI, or the empty string if the element has no
-     *            Namespace URI or if Namespace processing is not being
-     *            performed
-     * @param localName
-     *            the local name (without prefix), or the empty string if
-     *            Namespace processing is not being performed
-     * @param qName
-     *            the qualified XML name (with prefix), or the empty string if
-     *            qualified names are not available
+     * @param uri       the Namespace URI, or the empty string if the element has no
+     *                  Namespace URI or if Namespace processing is not being
+     *                  performed
+     * @param localName the local name (without prefix), or the empty string if
+     *                  Namespace processing is not being performed
+     * @param qName     the qualified XML name (with prefix), or the empty string if
+     *                  qualified names are not available
      */
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
@@ -244,13 +229,9 @@ public class XMLSegmentWriter extends XMLFilterImpl {
     }
 
     /**
-     * @param ch
-     *            the characters from the XML document
-     * @param start
-     *            the start position in the array
-     * @param length
-     *            the number of characters to read from the array
-     *
+     * @param ch     the characters from the XML document
+     * @param start  the start position in the array
+     * @param length the number of characters to read from the array
      * @see #ignorableWhitespace
      * @see org.xml.sax.Locator
      */
@@ -268,13 +249,9 @@ public class XMLSegmentWriter extends XMLFilterImpl {
     }
 
     /**
-     * @param ch
-     *            the characters from the XML document
-     * @param start
-     *            the start position in the array
-     * @param length
-     *            the number of characters to read from the array
-     *
+     * @param ch     the characters from the XML document
+     * @param start  the start position in the array
+     * @param length the number of characters to read from the array
      * @see #characters
      */
     @Override
@@ -286,12 +263,10 @@ public class XMLSegmentWriter extends XMLFilterImpl {
     }
 
     /**
-     * @param target
-     *            the processing instruction target
-     * @param data
-     *            the processing instruction data, or null if none was supplied.
-     *            The data does not include any whitespace separating it from
-     *            the target
+     * @param target the processing instruction target
+     * @param data   the processing instruction data, or null if none was supplied.
+     *               The data does not include any whitespace separating it from
+     *               the target
      */
     @Override
     public void processingInstruction(final String target, final String data) throws SAXException {
@@ -302,10 +277,9 @@ public class XMLSegmentWriter extends XMLFilterImpl {
     }
 
     /**
-     * @param name
-     *            the name of the skipped entity. If it is a parameter entity,
-     *            the name will begin with '%', and if it is the external DTD
-     *            subset, it will be the string "[dtd]"
+     * @param name the name of the skipped entity. If it is a parameter entity,
+     *             the name will begin with '%', and if it is the external DTD
+     *             subset, it will be the string "[dtd]"
      */
     @Override
     public void skippedEntity(final String name) throws SAXException {

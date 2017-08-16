@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,6 @@
 
 package stroom.security.server;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.JWTCreationException;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.UnavailableSecurityManagerException;
 import org.apache.shiro.session.InvalidSessionException;
@@ -40,10 +37,8 @@ import stroom.security.server.exception.AuthenticationServiceException;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.PermissionNames;
-import stroom.security.shared.User;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
-import stroom.security.shared.UserService;
 import stroom.security.spring.SecurityConfiguration;
 import stroom.util.spring.StroomScope;
 
@@ -58,19 +53,17 @@ import java.util.Set;
 @Scope(value = StroomScope.PROTOTYPE, proxyMode = ScopedProxyMode.INTERFACES)
 class SecurityContextImpl implements SecurityContext {
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityContextImpl.class);
-
+    private static final String INTERNAL = "INTERNAL";
+    private static final String SYSTEM = "system";
+    private static final String USER = "user";
+    private static final UserRef INTERNAL_PROCESSING_USER = new UserRef(User.ENTITY_TYPE, "0", INTERNAL, false, true);
     private final DocumentPermissionsCache documentPermissionsCache;
     private final UserGroupsCache userGroupsCache;
     private final UserAppPermissionsCache userAppPermissionsCache;
     private final UserService userService;
     private final DocumentPermissionService documentPermissionService;
     private final GenericEntityService genericEntityService;
-    private JWTService jwtService;
-
-    private static final String INTERNAL = "INTERNAL";
-    private static final String SYSTEM = "system";
-    private static final String USER = "user";
-    private static final UserRef INTERNAL_PROCESSING_USER = new UserRef(User.ENTITY_TYPE, "0", INTERNAL, false, true);
+    private final JWTService jwtService;
 
     @Inject
     SecurityContextImpl(
@@ -114,7 +107,7 @@ class SecurityContextImpl implements SecurityContext {
                 }
             } else if (USER.equals(type)) {
                 if (name.length() > 0) {
-                    userRef = userService.getUserRefByName(name);
+                    userRef = userService.getUserByName(name);
                     if (userRef == null) {
                         final String message = "Unable to push user '" + name + "' as user is unknown";
                         LOGGER.error(message);
@@ -158,10 +151,7 @@ class SecurityContextImpl implements SecurityContext {
             if (userRef == null) {
                 final Subject subject = getSubject();
                 if (subject != null && subject.isAuthenticated()) {
-                    final User user = (User) subject.getPrincipal();
-                    if (user != null) {
-                        userRef = UserRef.create(user);
-                    }
+                    userRef = (UserRef) subject.getPrincipal();
                 }
             }
         } catch (final InvalidSessionException e) {
@@ -239,7 +229,7 @@ class SecurityContextImpl implements SecurityContext {
 
         // See if the user belongs to a group that has permission.
         if (!result) {
-            final List<UserRef> userGroups = userGroupsCache.get(userRef);
+            final List<UserRef> userGroups = userGroupsCache.getOrCreate(userRef);
             result = hasUserGroupsAppPermission(userGroups, permission);
         }
 
@@ -259,7 +249,7 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     private boolean hasUserAppPermission(final UserRef userRef, final String permission) {
-        final UserAppPermissions userAppPermissions = userAppPermissionsCache.get(userRef);
+        final UserAppPermissions userAppPermissions = userAppPermissionsCache.getOrCreate(userRef);
         if (userAppPermissions != null) {
             return userAppPermissions.getUserPermissons().contains(permission);
         }
@@ -300,7 +290,7 @@ class SecurityContextImpl implements SecurityContext {
 
         // See if the user belongs to a group that has permission.
         if (!result) {
-            final List<UserRef> userGroups = userGroupsCache.get(userRef);
+            final List<UserRef> userGroups = userGroupsCache.getOrCreate(userRef);
             result = hasUserGroupsDocumentPermission(userGroups, docRef, permission);
         }
 
@@ -320,7 +310,7 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     private boolean hasUserDocumentPermission(final UserRef userRef, final DocRef docRef, final String permission) {
-        final DocumentPermissions documentPermissions = documentPermissionsCache.get(docRef);
+        final DocumentPermissions documentPermissions = documentPermissionsCache.getOrCreate(docRef);
         if (documentPermissions != null) {
             final Set<String> permissions = documentPermissions.getPermissionsForUser(userRef);
             if (permissions != null) {

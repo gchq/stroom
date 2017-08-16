@@ -20,12 +20,7 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class ChangeDataEvent<T> extends GwtEvent<ChangeDataEvent.ChangeDataHandler<T>> {
-    public interface ChangeDataHandler<T> extends EventHandler {
-        void onChange(ChangeDataEvent<T> event);
-    }
-
     private static Type<ChangeDataHandler<?>> TYPE;
-
     private final T data;
 
     private ChangeDataEvent(final T data) {
@@ -33,17 +28,17 @@ public class ChangeDataEvent<T> extends GwtEvent<ChangeDataEvent.ChangeDataHandl
     }
 
     public static <T> void fire(final HasChangeDataHandlers<T> source, final T data) {
-        source.fireEvent(new ChangeDataEvent<T>(data));
+        source.fireEvent(new ChangeDataEvent<>(data));
     }
 
     public static Type<ChangeDataHandler<?>> getType() {
         if (TYPE == null) {
-            TYPE = new Type<ChangeDataHandler<?>>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
     public Type<ChangeDataHandler<T>> getAssociatedType() {
         return (Type) TYPE;
@@ -56,5 +51,9 @@ public class ChangeDataEvent<T> extends GwtEvent<ChangeDataEvent.ChangeDataHandl
 
     public T getData() {
         return data;
+    }
+
+    public interface ChangeDataHandler<T> extends EventHandler {
+        void onChange(ChangeDataEvent<T> event);
     }
 }

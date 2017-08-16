@@ -34,74 +34,37 @@ import java.util.TreeSet;
 /**
  * This is an implementation of <code>SegmentInputStream</code> that uses random
  * access files for the data and index.
- *
+ * <p>
  * Also new handles working within a windows on the underlying data. With this
  * mode the segments are logical (i.e. they start at 0 regardless of the
  * window).
  */
 public class RASegmentInputStream extends InputStream implements SegmentInputStream {
-    private static class ByteRange {
-        private final long start;
-        private final long end;
-
-        public ByteRange(final long start, final long end) {
-            this.start = start;
-            this.end = end;
-
-            assert start >= 0 && end >= 0;
-            assert start <= end;
-        }
-
-        public long getStart() {
-            return start;
-        }
-
-        public long getEnd() {
-            return end;
-        }
-
-        @Override
-        public String toString() {
-            return start + ":" + end;
-        }
-    }
-
     private static final Logger LOGGER = LoggerFactory.getLogger(RASegmentInputStream.class);
-
     private static final int INT8 = 8;
-
-    private InputStream data;
-    private InputStream index;
-
-    private Set<Long> included;
-    private Iterator<Long> includedIterator;
-
-    private Set<Long> excluded;
-    private Iterator<Long> excludedIterator;
-
-    private boolean includeAll = true;
-
     private final byte[] eightBytes = new byte[INT8];
     private final byte[] singleByte = new byte[1];
     private final LongBuffer longBuffer = ByteBuffer.wrap(eightBytes).asLongBuffer();
-
+    private InputStream data;
+    private InputStream index;
+    private Set<Long> included;
+    private Iterator<Long> includedIterator;
+    private Set<Long> excluded;
+    private Iterator<Long> excludedIterator;
+    private boolean includeAll = true;
     private ByteRange range;
-
     private long windowPos = 0;
     private long windowByteStart = 0;
     private long windowByteEnd = 0;
-
     // The segment we start including data at
     private long windowSegmentStart = 0;
     private long windowSegmentCount = 0;
     private long totalSegmentCount;
-
     /**
      * Read a segment stream from a stream source (opens the child segment
      * stream for us).
      *
-     * @param streamSource
-     *            to read from
+     * @param streamSource to read from
      */
     public RASegmentInputStream(final StreamSource streamSource) throws IOException {
         this(streamSource.getInputStream(), streamSource.getChildStream(StreamType.SEGMENT_INDEX).getInputStream());
@@ -115,7 +78,7 @@ public class RASegmentInputStream extends InputStream implements SegmentInputStr
     }
 
     public RASegmentInputStream(final InputStream data, final InputStream index, final long byteStart,
-            final long byteEnd) throws IOException {
+                                final long byteEnd) throws IOException {
         this.data = data;
         this.index = index;
 
@@ -165,7 +128,7 @@ public class RASegmentInputStream extends InputStream implements SegmentInputStr
      * this input stream.
      *
      * @return The total number of segments that can be read from this input
-     *         stream.
+     * stream.
      */
     @Override
     public long count() {
@@ -175,8 +138,7 @@ public class RASegmentInputStream extends InputStream implements SegmentInputStr
     /**
      * Includes a specific segment number when reading from this input stream.
      *
-     * @param segment
-     *            The segment to include.
+     * @param segment The segment to include.
      */
     @Override
     public void include(final long segment) {
@@ -207,8 +169,7 @@ public class RASegmentInputStream extends InputStream implements SegmentInputStr
      * Initially all segments are included so setting this will exclude only the
      * specified segment.
      *
-     * @param segment
-     *            The segment to exclude.
+     * @param segment The segment to exclude.
      */
     @Override
     public void exclude(final long segment) {
@@ -241,9 +202,7 @@ public class RASegmentInputStream extends InputStream implements SegmentInputStr
      * throw an IOException if the data and index files are closed.
      *
      * @return 1 if there are bytes to read, 0 otherwise.
-     * @throws IOException
-     *             Thrown if either the data or index streams are closed.
-     *
+     * @throws IOException Thrown if either the data or index streams are closed.
      * @see java.io.InputStream#available()
      */
     @Override
@@ -262,9 +221,7 @@ public class RASegmentInputStream extends InputStream implements SegmentInputStr
     /**
      * Closes the data and index input streams.
      *
-     * @throws IOException
-     *             Could be thrown while closing the data or index.
-     *
+     * @throws IOException Could be thrown while closing the data or index.
      * @see java.io.InputStream#close()
      */
     @Override
@@ -321,18 +278,18 @@ public class RASegmentInputStream extends InputStream implements SegmentInputStr
      * array of bytes. An attempt is made to read as many as <code>len</code>
      * bytes, but a smaller number may be read. The number of bytes actually
      * read is returned as an integer.
-     *
+     * <p>
      * <p>
      * This method blocks until input data is available, end of file is
      * detected, or an exception is thrown.
-     *
+     * <p>
      * <p>
      * If <code>len</code> is zero, then no bytes are read and <code>0</code> is
      * returned; otherwise, there is an attempt to read at least one byte. If no
      * byte is available because the stream is at end of file, the value
      * <code>-1</code> is returned; otherwise, at least one byte is read and
      * stored into <code>b</code>.
-     *
+     * <p>
      * <p>
      * The first byte read is stored into element <code>b[off]</code>, the next
      * one into <code>b[off+1]</code>, and so on. The number of bytes read is,
@@ -341,12 +298,12 @@ public class RASegmentInputStream extends InputStream implements SegmentInputStr
      * through <code>b[off+</code><i>k</i><code>-1]</code>, leaving elements
      * <code>b[off+</code><i>k</i><code>]</code> through
      * <code>b[off+len-1]</code> unaffected.
-     *
+     * <p>
      * <p>
      * In every case, elements <code>b[0]</code> through <code>b[off]</code> and
      * elements <code>b[off+len]</code> through <code>b[b.length-1]</code> are
      * unaffected.
-     *
+     * <p>
      * <p>
      * The <code>read(b,</code> <code>off,</code> <code>len)</code> method for
      * class <code>InputStream</code> simply calls the method
@@ -362,20 +319,16 @@ public class RASegmentInputStream extends InputStream implements SegmentInputStr
      * file is detected, or an exception is thrown. Subclasses are encouraged to
      * provide a more efficient implementation of this method.
      *
-     * @param b
-     *            the buffer into which the data is read.
-     * @param off
-     *            the start offset in array <code>b</code> at which the data is
+     * @param b   the buffer into which the data is read.
+     * @param off the start offset in array <code>b</code> at which the data is
      *            written.
-     * @param len
-     *            the maximum number of bytes to read.
+     * @param len the maximum number of bytes to read.
      * @return the total number of bytes read into the buffer, or
-     *         <code>-1</code> if there is no more data because the end of the
-     *         stream has been reached.
-     * @exception IOException
-     *                If the first byte cannot be read for any reason other than
-     *                end of file, or if the input stream has been closed, or if
-     *                some other I/O error occurs.
+     * <code>-1</code> if there is no more data because the end of the
+     * stream has been reached.
+     * @throws IOException If the first byte cannot be read for any reason other than
+     *                     end of file, or if the input stream has been closed, or if
+     *                     some other I/O error occurs.
      * @see java.io.InputStream#read()
      */
     @Override
@@ -526,7 +479,7 @@ public class RASegmentInputStream extends InputStream implements SegmentInputStr
      * input is yet available.
      *
      * @return the next byte of data, or <code>-1</code> if the end of the file
-     *         is reached.
+     * is reached.
      */
     @Override
     public int read() throws IOException {
@@ -583,8 +536,7 @@ public class RASegmentInputStream extends InputStream implements SegmentInputStr
      * Gets the byte offset in the data file for a specified position in the
      * index.
      *
-     * @param pos
-     *            The index position.
+     * @param pos The index position.
      * @return The byte offset in the data file.
      */
     private long getOffset(final long pos) throws IOException {
@@ -651,10 +603,8 @@ public class RASegmentInputStream extends InputStream implements SegmentInputStr
     }
 
     /**
-     * @param segment
-     *            to find the byte offset of
-     * @param lowerBound
-     *            if you want the start of the end byte pos
+     * @param segment    to find the byte offset of
+     * @param lowerBound if you want the start of the end byte pos
      */
     public long byteOffset(final long segment, final boolean lowerBound) throws IOException {
         // start pos ?
@@ -699,7 +649,7 @@ public class RASegmentInputStream extends InputStream implements SegmentInputStr
      * Perform a search for a segment given a byte offset.
      */
     private long segmentAtByteOffset(final long findBytePos, final long workingLowerSegment,
-            final long workingUpperSegment, final boolean lowerBound) throws IOException {
+                                     final long workingUpperSegment, final boolean lowerBound) throws IOException {
         // Get the mid point
         long midPointSegment = (workingLowerSegment + workingUpperSegment) / 2;
         long midPointBytePos = byteOffset(midPointSegment);
@@ -744,5 +694,31 @@ public class RASegmentInputStream extends InputStream implements SegmentInputStr
 
     public long size() {
         return windowByteEnd - windowByteStart;
+    }
+
+    private static class ByteRange {
+        private final long start;
+        private final long end;
+
+        public ByteRange(final long start, final long end) {
+            this.start = start;
+            this.end = end;
+
+            assert start >= 0 && end >= 0;
+            assert start <= end;
+        }
+
+        public long getStart() {
+            return start;
+        }
+
+        public long getEnd() {
+            return end;
+        }
+
+        @Override
+        public String toString() {
+            return start + ":" + end;
+        }
     }
 }

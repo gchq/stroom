@@ -40,8 +40,8 @@ import java.util.List;
  */
 @Component
 @Scope(StroomScope.PROTOTYPE)
-@ConfigurableElement(type = "RecordOutputFilter", category = Category.FILTER, roles = { PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_HAS_TARGETS }, icon = ElementIcons.RECORD_OUTPUT)
+@ConfigurableElement(type = "RecordOutputFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
+        PipelineElementType.ROLE_HAS_TARGETS}, icon = ElementIcons.RECORD_OUTPUT)
 public class RecordOutputFilter extends BufferFilter {
     @Resource
     private ErrorReceiverProxy errorReceiverProxy;
@@ -95,22 +95,17 @@ public class RecordOutputFilter extends BufferFilter {
     /**
      * Fired on start element.
      *
-     * @param uri
-     *            the Namespace URI, or the empty string if the element has no
-     *            Namespace URI or if Namespace processing is not being
-     *            performed
-     * @param localName
-     *            the local name (without prefix), or the empty string if
-     *            Namespace processing is not being performed
-     * @param qName
-     *            the qualified name (with prefix), or the empty string if
-     *            qualified names are not available
-     * @param atts
-     *            the attributes attached to the element. If there are no
-     *            attributes, it shall be an empty Attributes object. The value
-     *            of this object after startElement returns is undefined
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param uri       the Namespace URI, or the empty string if the element has no
+     *                  Namespace URI or if Namespace processing is not being
+     *                  performed
+     * @param localName the local name (without prefix), or the empty string if
+     *                  Namespace processing is not being performed
+     * @param qName     the qualified name (with prefix), or the empty string if
+     *                  qualified names are not available
+     * @param atts      the attributes attached to the element. If there are no
+     *                  attributes, it shall be an empty Attributes object. The value
+     *                  of this object after startElement returns is undefined
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #endElement
      * @see org.xml.sax.Attributes
      * @see org.xml.sax.helpers.AttributesImpl
@@ -136,18 +131,14 @@ public class RecordOutputFilter extends BufferFilter {
     /**
      * Fired on an end element.
      *
-     * @param uri
-     *            the Namespace URI, or the empty string if the element has no
-     *            Namespace URI or if Namespace processing is not being
-     *            performed
-     * @param localName
-     *            the local name (without prefix), or the empty string if
-     *            Namespace processing is not being performed
-     * @param qName
-     *            the qualified XML name (with prefix), or the empty string if
-     *            qualified names are not available
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param uri       the Namespace URI, or the empty string if the element has no
+     *                  Namespace URI or if Namespace processing is not being
+     *                  performed
+     * @param localName the local name (without prefix), or the empty string if
+     *                  Namespace processing is not being performed
+     * @param qName     the qualified XML name (with prefix), or the empty string if
+     *                  qualified names are not available
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      */
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {

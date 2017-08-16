@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,15 +32,15 @@ import java.util.Arrays;
 import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "table", propOrder = { "queryId", "fields", "extractValues", "extractionPipeline", "maxResults",
-        "showDetail" })
+@XmlType(name = "table", propOrder = {"queryId", "fields", "extractValues", "extractionPipeline", "maxResults",
+        "showDetail"})
 public class TableComponentSettings extends ComponentSettings {
-    public static final int[] DEFAULT_MAX_RESULTS = { 1000000 };
+    public static final int[] DEFAULT_MAX_RESULTS = {1000000};
     private static final long serialVersionUID = -2530827581046882396L;
     @XmlElement(name = "queryId")
     private String queryId;
     @XmlElementWrapper(name = "fields")
-    @XmlElements({ @XmlElement(name = "field", type = Field.class) })
+    @XmlElements({@XmlElement(name = "field", type = Field.class)})
     private List<Field> fields;
     @XmlElement(name = "extractValues")
     private Boolean extractValues;
@@ -78,7 +78,7 @@ public class TableComponentSettings extends ComponentSettings {
 
     public void addField(final Field field) {
         if (fields == null) {
-            fields = new ArrayList<Field>();
+            fields = new ArrayList<>();
         }
 
         fields.add(field);
@@ -86,7 +86,7 @@ public class TableComponentSettings extends ComponentSettings {
 
     public void addField(final int index, final Field field) {
         if (fields == null) {
-            fields = new ArrayList<Field>();
+            fields = new ArrayList<>();
         }
 
         fields.add(index, field);

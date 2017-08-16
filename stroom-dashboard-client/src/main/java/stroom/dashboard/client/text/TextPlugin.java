@@ -24,7 +24,7 @@ import stroom.dashboard.client.main.ComponentRegistry;
 public class TextPlugin {
     @Inject
     public TextPlugin(final EventBus eventBus, final ComponentRegistry componentRegistry,
-            final Provider<TextPresenter> provider) {
+                      final Provider<TextPresenter> provider) {
         componentRegistry.register(TextPresenter.TYPE, provider);
     }
 }

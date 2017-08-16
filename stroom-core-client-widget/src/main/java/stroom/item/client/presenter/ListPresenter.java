@@ -21,13 +21,13 @@ import com.gwtplatform.mvp.client.PresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 public class ListPresenter<V extends ListPresenter.ListView> extends PresenterWidget<ListPresenter.ListView> {
+    public ListPresenter(final EventBus eventBus, final V view) {
+        super(eventBus, view);
+    }
+
     public interface ListView extends View {
         void add(View item);
 
         void clear();
-    }
-
-    public ListPresenter(final EventBus eventBus, final V view) {
-        super(eventBus, view);
     }
 }

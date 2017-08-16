@@ -25,8 +25,8 @@ import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "layout", propOrder = { "preferredSize" })
-@XmlSeeAlso({ SplitLayoutConfig.class, TabLayoutConfig.class })
+@XmlType(name = "layout", propOrder = {"preferredSize"})
+@XmlSeeAlso({SplitLayoutConfig.class, TabLayoutConfig.class})
 public abstract class LayoutConfig implements SharedObject {
     private static final long serialVersionUID = 8743223047838956165L;
 

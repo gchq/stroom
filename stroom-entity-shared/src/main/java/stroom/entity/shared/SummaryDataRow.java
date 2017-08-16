@@ -25,14 +25,14 @@ import java.util.List;
 
 /**
  * Used to get summary data from services
- *
+ * <p>
  * Heading1 Heading2 Heading3 .... RowLabel Count1 Count2 ....
  */
 public class SummaryDataRow implements SharedObject {
     private static final long serialVersionUID = 5631193345714122209L;
 
-    private List<String> label = new ArrayList<String>();
-    private List<Long> key = new ArrayList<Long>();
+    private List<String> label = new ArrayList<>();
+    private List<Long> key = new ArrayList<>();
     private Long count = null;
 
     public List<String> getLabel() {

@@ -28,14 +28,10 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.entity.client.presenter.SaveAsEntityPresenter.SaveAsEntityView;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
-public class SaveAsEntityViewImpl extends ViewWithUiHandlers<PopupUiHandlers>implements SaveAsEntityView {
-    public interface Binder extends UiBinder<Widget, SaveAsEntityViewImpl> {
-    }
-
+public class SaveAsEntityViewImpl extends ViewWithUiHandlers<PopupUiHandlers> implements SaveAsEntityView {
+    private final Widget widget;
     @UiField
     TextBox name;
-
-    private final Widget widget;
 
     @Inject
     public SaveAsEntityViewImpl(final Binder binder) {
@@ -63,5 +59,8 @@ public class SaveAsEntityViewImpl extends ViewWithUiHandlers<PopupUiHandlers>imp
         if (event.getNativeKeyCode() == '\r') {
             getUiHandlers().onHideRequest(false, true);
         }
+    }
+
+    public interface Binder extends UiBinder<Widget, SaveAsEntityViewImpl> {
     }
 }

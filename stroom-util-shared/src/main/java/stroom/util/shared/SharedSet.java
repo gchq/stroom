@@ -27,11 +27,11 @@ public class SharedSet<E extends SharedObject> implements Set<E>, SharedObject {
     private Set<E> set;
 
     public SharedSet() {
-        this.set = new HashSet<E>();
+        this.set = new HashSet<>();
     }
 
     public SharedSet(final int initialCapacity) {
-        this.set = new HashSet<E>(initialCapacity);
+        this.set = new HashSet<>(initialCapacity);
     }
 
     public SharedSet(final Set<E> set) {

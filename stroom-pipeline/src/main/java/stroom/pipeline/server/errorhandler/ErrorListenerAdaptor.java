@@ -35,7 +35,7 @@ public class ErrorListenerAdaptor implements ErrorListener {
     private final ErrorReceiver errorReceiver;
 
     public ErrorListenerAdaptor(final String elementId, final LocationFactory locationFactory,
-            final ErrorReceiver errorReceiver) {
+                                final ErrorReceiver errorReceiver) {
         this.elementId = elementId;
         this.locationFactory = locationFactory;
         this.errorReceiver = errorReceiver;

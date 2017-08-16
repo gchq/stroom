@@ -26,16 +26,16 @@ import stroom.util.shared.HasDisplayValue;
  * and unlocked.
  * </p>
  */
-public enum StreamStatus implements HasDisplayValue,HasPrimitiveValue {
+public enum StreamStatus implements HasDisplayValue, HasPrimitiveValue {
     UNLOCKED("Unlocked", 0), /**
-                                 * Open exclusive lock.
-                                 */
+     * Open exclusive lock.
+     */
     LOCKED("Locked", 1), /**
-                             * Logical Delete
-                             */
+     * Logical Delete
+     */
     DELETED("Deleted", 99);
 
-    public static final PrimitiveValueConverter<StreamStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<StreamStatus>(
+    public static final PrimitiveValueConverter<StreamStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
             StreamStatus.values());
 
     private final String displayValue;

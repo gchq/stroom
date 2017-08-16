@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.ObjectMarshaller;
 import stroom.entity.server.QueryAppender;
-import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.PermissionInheritance;
@@ -90,7 +90,7 @@ public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScr
         }
 
         @Override
-        protected void appendBasicJoin(final SQLBuilder sql, final String alias, final Set<String> fetchSet) {
+        protected void appendBasicJoin(final HqlBuilder sql, final String alias, final Set<String> fetchSet) {
             super.appendBasicJoin(sql, alias, fetchSet);
             if (fetchSet != null) {
                 if (fetchSet.contains("all") || fetchSet.contains(Script.FETCH_RESOURCE)) {

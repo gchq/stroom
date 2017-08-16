@@ -27,14 +27,6 @@ import stroom.alert.client.event.PromptEvent;
 
 public class PromptPresenter extends MyPresenter<PromptPresenter.PromptView, PromptPresenter.PromptProxy>
         implements PromptEvent.Handler {
-    @ProxyStandard
-    public interface PromptProxy extends Proxy<PromptPresenter> {
-    }
-
-    public interface PromptView extends View {
-        String prompt(String message, String initialValue);
-    }
-
     @Inject
     public PromptPresenter(EventBus eventBus, final PromptView view, final PromptProxy proxy) {
         super(eventBus, view, proxy);
@@ -50,5 +42,13 @@ public class PromptPresenter extends MyPresenter<PromptPresenter.PromptView, Pro
     @Override
     protected void revealInParent() {
         // Do nothing.
+    }
+
+    @ProxyStandard
+    public interface PromptProxy extends Proxy<PromptPresenter> {
+    }
+
+    public interface PromptView extends View {
+        String prompt(String message, String initialValue);
     }
 }

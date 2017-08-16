@@ -25,11 +25,11 @@ import java.util.Set;
  * <p>
  * A file system stream store.
  * </p>
- *
+ * <p>
  * <p>
  * Stores streams in the stream store indexed by some meta data.
  * </p>
  */
 public interface FileSystemStreamStore extends StreamStore {
-	Set<StreamVolume> findStreamVolume(Long metaDataId);
+    Set<StreamVolume> findStreamVolume(Long metaDataId);
 }

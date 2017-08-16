@@ -31,6 +31,8 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.UriUtils;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import stroom.util.shared.Expander;
 
@@ -39,28 +41,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ExpanderCell extends AbstractCell<Expander> {
-    interface Resources extends ClientBundle {
-        ImageResource open();
-
-        ImageResource closed();
-
-        ImageResource leaf();
-
-        @Source("expander.css")
-        Style style();
-    }
-
-    interface Style extends CssResource {
-        String active();
-    }
-
-    interface Template extends SafeHtmlTemplates {
-        @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
-        SafeHtml outerDiv(String className, SafeStyles style, SafeHtml icon);
-    }
-
     private static final Set<String> ENABLED_EVENTS = new HashSet<>(Arrays.asList("click", "keydown"));
-
     private static volatile Resources resources;
     private static volatile Template template;
 
@@ -79,7 +60,7 @@ public class ExpanderCell extends AbstractCell<Expander> {
 
     @Override
     public void onBrowserEvent(final Context context, final Element parent, final Expander value,
-            final NativeEvent event, final ValueUpdater<Expander> valueUpdater) {
+                               final NativeEvent event, final ValueUpdater<Expander> valueUpdater) {
         super.onBrowserEvent(context, parent, value, event, valueUpdater);
         if ("click".equals(event.getType())) {
             final EventTarget eventTarget = event.getEventTarget();
@@ -95,7 +76,7 @@ public class ExpanderCell extends AbstractCell<Expander> {
 
     @Override
     protected void onEnterKeyDown(final Context context, final Element parent, final Expander value,
-            final NativeEvent event, final ValueUpdater<Expander> valueUpdater) {
+                                  final NativeEvent event, final ValueUpdater<Expander> valueUpdater) {
         if (valueUpdater != null && value != null && !value.isLeaf()) {
             valueUpdater.update(value);
         }
@@ -111,12 +92,15 @@ public class ExpanderCell extends AbstractCell<Expander> {
             SafeHtml icon = null;
 
             if (value.isLeaf()) {
-                icon = getImageHtml(resources.leaf());
+                icon = template.icon(resources.style().expanderIcon(), UriUtils.fromTrustedString("images/tree-leaf.svg"));
+//                icon = getImageHtml(resources.leaf());
             } else if (value.isExpanded()) {
-                icon = getImageHtml(resources.open());
+                icon = template.icon(resources.style().expanderIcon(), UriUtils.fromTrustedString("images/tree-open.svg"));
+//                icon = getImageHtml(resources.open());
                 className = resources.style().active();
             } else {
-                icon = getImageHtml(resources.closed());
+                icon = template.icon(resources.style().expanderIcon(), UriUtils.fromTrustedString("images/tree-closed.svg"));
+//                icon = getImageHtml(resources.closed());
                 className = resources.style().active();
             }
 
@@ -132,5 +116,24 @@ public class ExpanderCell extends AbstractCell<Expander> {
         final AbstractImagePrototype proto = AbstractImagePrototype.create(res);
         final SafeHtml image = SafeHtmlUtils.fromTrustedString(proto.getHTML());
         return image;
+    }
+
+    interface Resources extends ClientBundle {
+        @Source("expander.css")
+        Style style();
+    }
+
+    interface Style extends CssResource {
+        String expanderIcon();
+
+        String active();
+    }
+
+    interface Template extends SafeHtmlTemplates {
+        @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
+        SafeHtml outerDiv(String className, SafeStyles style, SafeHtml icon);
+
+        @Template("<img class=\"{0}\" src=\"{1}\" />")
+        SafeHtml icon(String iconClass, SafeUri iconUrl);
     }
 }

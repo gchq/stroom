@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import stroom.feed.MetaMap;
 import stroom.jobsystem.server.ClusterLockService;
 import stroom.node.server.StroomPropertyService;
 import stroom.streamstore.shared.Stream;
@@ -33,7 +34,6 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomShutdown;
-import stroom.util.zip.HeaderMap;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -45,8 +45,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Component
 public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush {
+    public static final String LOCK_NAME = "StreamAttributeDelete";
+    public static final int MONTH_OLD_MS = 1000 * 60 * 60 * 24 * 30;
+    public static final int BATCH_SIZE = 1000;
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeValueFlushImpl.class);
-
+    final Queue<AsyncFlush> queue = new ConcurrentLinkedQueue<>();
     @Resource
     private StreamAttributeKeyService streamAttributeKeyService;
     @Resource
@@ -58,36 +61,8 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
     @Resource
     private ClusterLockService clusterLockService;
 
-    public static final String LOCK_NAME = "StreamAttributeDelete";
-
-    public static class AsyncFlush {
-        private final Stream stream;
-        private final boolean append;
-        private final HeaderMap headerMap;
-
-        public AsyncFlush(final Stream stream, final boolean append, final HeaderMap headerMap) {
-            this.stream = stream;
-            this.append = append;
-            this.headerMap = headerMap;
-        }
-
-        public Stream getStream() {
-            return stream;
-        }
-
-        public boolean isAppend() {
-            return append;
-        }
-
-        public HeaderMap getHeaderMap() {
-            return headerMap;
-        }
-    }
-
-    final Queue<AsyncFlush> queue = new ConcurrentLinkedQueue<>();
-
     @Override
-    public void persitAttributes(final Stream stream, final boolean append, final HeaderMap metaMap) {
+    public void persitAttributes(final Stream stream, final boolean append, final MetaMap metaMap) {
         queue.add(new AsyncFlush(stream, append, metaMap));
     }
 
@@ -96,9 +71,6 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
         flush();
 
     }
-
-    public static final int MONTH_OLD_MS = 1000 * 60 * 60 * 24 * 30;
-    public static final int BATCH_SIZE = 1000;
 
     /**
      * @return The oldest stream attribute that we should keep
@@ -128,7 +100,7 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
         while (!ranOutOfItems) {
             final FindStreamAttributeValueCriteria criteria = new FindStreamAttributeValueCriteria();
 
-            final ArrayList<AsyncFlush> batchInsert = new ArrayList<AsyncFlush>();
+            final ArrayList<AsyncFlush> batchInsert = new ArrayList<>();
             AsyncFlush item = null;
             while ((item = queue.poll()) != null && batchInsert.size() < BATCH_SIZE) {
                 batchInsert.add(item);
@@ -164,8 +136,8 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
                     for (final AsyncFlush asyncFlush : batchInsert) {
                         if (asyncFlush.getStream().getCreateMs() > applicableStreamAgeMs) {
                             // Found a key
-                            if (asyncFlush.getHeaderMap().containsKey(streamMDKey.getName())) {
-                                final String newValue = asyncFlush.getHeaderMap().get(streamMDKey.getName());
+                            if (asyncFlush.getMetaMap().containsKey(streamMDKey.getName())) {
+                                final String newValue = asyncFlush.getMetaMap().get(streamMDKey.getName());
                                 boolean dirty = false;
                                 StreamAttributeValue streamAttributeValue = null;
                                 final Map<Long, StreamAttributeValue> map = streamToAttributeMap
@@ -220,12 +192,36 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
 
                 if (logExecutionTime.getDuration() > 1000) {
                     LOGGER.warn("flush() - Saved {} updates, skipped {}, queue size is {}, completed in {}",
-                            new Object[] {batchUpdate.size(), skipCount, queue.size(), logExecutionTime});
+                            new Object[]{batchUpdate.size(), skipCount, queue.size(), logExecutionTime});
                 } else {
                     LOGGER.debug("flush() - Saved {} updates, skipped {}, queue size is {}, completed in {}",
-                            new Object[] {batchUpdate.size(), skipCount, queue.size(), logExecutionTime});
+                            new Object[]{batchUpdate.size(), skipCount, queue.size(), logExecutionTime});
                 }
             }
+        }
+    }
+
+    public static class AsyncFlush {
+        private final Stream stream;
+        private final boolean append;
+        private final MetaMap metaMap;
+
+        public AsyncFlush(final Stream stream, final boolean append, final MetaMap metaMap) {
+            this.stream = stream;
+            this.append = append;
+            this.metaMap = metaMap;
+        }
+
+        public Stream getStream() {
+            return stream;
+        }
+
+        public boolean isAppend() {
+            return append;
+        }
+
+        public MetaMap getMetaMap() {
+            return metaMap;
         }
     }
 }

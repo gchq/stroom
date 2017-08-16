@@ -24,24 +24,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.DOM;
 
 public class BasicTabSelector extends AbstractTabSelector {
-    public interface Style extends CssResource {
-        String basicTabSelector();
-
-        String arrows();
-
-        String text();
-    }
-
-    public interface Resources extends ClientBundle {
-        @Source("arrows.png")
-        ImageResource arrows();
-
-        @Source("BasicTabSelector.css")
-        Style style();
-    }
-
     private static Resources resources;
-
     private final Element text;
     private final Element element;
 
@@ -69,5 +52,21 @@ public class BasicTabSelector extends AbstractTabSelector {
     @Override
     public void setText(final String text) {
         this.text.setInnerText(text);
+    }
+
+    public interface Style extends CssResource {
+        String basicTabSelector();
+
+        String arrows();
+
+        String text();
+    }
+
+    public interface Resources extends ClientBundle {
+        @Source("arrows.png")
+        ImageResource arrows();
+
+        @Source("BasicTabSelector.css")
+        Style style();
     }
 }

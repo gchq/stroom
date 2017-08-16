@@ -37,40 +37,12 @@ public class LSInputImpl implements LSInput {
     }
 
     @Override
-    public void setSystemId(String systemId) {
-    }
-
-    @Override
-    public void setStringData(String stringData) {
-    }
-
-    @Override
-    public void setPublicId(String publicId) {
-    }
-
-    @Override
-    public void setEncoding(String encoding) {
-    }
-
-    @Override
-    public void setCharacterStream(Reader characterStream) {
-    }
-
-    @Override
-    public void setCertifiedText(boolean certifiedText) {
-    }
-
-    @Override
-    public void setByteStream(InputStream byteStream) {
-    }
-
-    @Override
-    public void setBaseURI(String baseURI) {
-    }
-
-    @Override
     public String getSystemId() {
         return systemId;
+    }
+
+    @Override
+    public void setSystemId(String systemId) {
     }
 
     @Override
@@ -79,8 +51,16 @@ public class LSInputImpl implements LSInput {
     }
 
     @Override
+    public void setStringData(String stringData) {
+    }
+
+    @Override
     public String getPublicId() {
         return publicId;
+    }
+
+    @Override
+    public void setPublicId(String publicId) {
     }
 
     @Override
@@ -89,8 +69,16 @@ public class LSInputImpl implements LSInput {
     }
 
     @Override
+    public void setEncoding(String encoding) {
+    }
+
+    @Override
     public Reader getCharacterStream() {
         return new StringReader(data);
+    }
+
+    @Override
+    public void setCharacterStream(Reader characterStream) {
     }
 
     @Override
@@ -99,12 +87,24 @@ public class LSInputImpl implements LSInput {
     }
 
     @Override
+    public void setCertifiedText(boolean certifiedText) {
+    }
+
+    @Override
     public InputStream getByteStream() {
         return StreamUtil.stringToStream(data);
     }
 
     @Override
+    public void setByteStream(InputStream byteStream) {
+    }
+
+    @Override
     public String getBaseURI() {
         return baseURI;
+    }
+
+    @Override
+    public void setBaseURI(String baseURI) {
     }
 }

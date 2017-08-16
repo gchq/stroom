@@ -24,7 +24,7 @@ public class SQLStatisticsEventValidator {
     private static final Pattern DIRTY_CHARACTER_PATTERN = Pattern.compile(SQLStatisticConstants.NAME_SEPARATOR);
 
     public static List<String> validateEvent(final StatisticEvent statisticEvent) {
-        final List<String> warningList = new ArrayList<String>();
+        final List<String> warningList = new ArrayList<>();
 
         for (final StatisticTag tag : statisticEvent.getTagList()) {
             if (DIRTY_CHARACTER_PATTERN.matcher(tag.getTag()).find()) {

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -80,7 +80,7 @@ public interface SecurityContext {
      * id.
      *
      * @param documentType The type of document.
-     * @param documentUuid   The id of the document.
+     * @param documentUuid The id of the document.
      * @param permission   The permission we are checking for.
      * @return True if the user associated with the security context has the
      * requested permission.

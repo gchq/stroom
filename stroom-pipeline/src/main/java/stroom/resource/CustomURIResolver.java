@@ -35,7 +35,7 @@ import java.io.IOException;
  * This class is used to resolve resources found by the XSL transformation
  * engine. The resource catalogue is used to try and find the resource.
  * </p>
- *
+ * <p>
  * <p>
  * We also allow standard common translation includes
  * </p>
@@ -52,16 +52,12 @@ public class CustomURIResolver implements URIResolver {
      * Called by the processor when it encounters an xsl:include, xsl:import, or
      * document() function.
      *
-     * @param href
-     *            An href attribute, which may be relative or absolute.
-     * @param base
-     *            The base URI against which the first argument will be made
-     *            absolute if the absolute URI is required.
-     *
+     * @param href An href attribute, which may be relative or absolute.
+     * @param base The base URI against which the first argument will be made
+     *             absolute if the absolute URI is required.
      * @return A Source object, or null if the href cannot be resolved, and the
-     *         processor should try to resolve the URI itself.
-     * @throws TransformerException
-     *             Thrown if the referenced resource cannot be found.
+     * processor should try to resolve the URI itself.
+     * @throws TransformerException Thrown if the referenced resource cannot be found.
      */
     public Source resolve(final String href, final String base) throws TransformerException {
         try {

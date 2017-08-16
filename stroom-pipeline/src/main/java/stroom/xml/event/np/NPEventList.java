@@ -37,7 +37,7 @@ public final class NPEventList implements EventList {
     private final int hash;
 
     public NPEventList(final NPEventListNamePool namePool, final byte[] eventTypeArr, final int[] nameCodeArr,
-            final NPAttributes[] attsArr, final char[] charArr, final int[] charPosArr) {
+                       final NPAttributes[] attsArr, final char[] charArr, final int[] charPosArr) {
         this.namePool = namePool;
         this.eventTypeArr = eventTypeArr;
         this.nameCodeArr = nameCodeArr;
@@ -210,37 +210,37 @@ public final class NPEventList implements EventList {
         for (eventTypeIndex = 0; eventTypeIndex < eventTypeArr.length; eventTypeIndex++) {
             {
                 switch (eventTypeArr[eventTypeIndex]) {
-                case START_ELEMENT:
-                    nameCode = nameCodeArr[nameCodeIndex++];
-                    sb.append(START_ELEMENT);
-                    sb.append(namePool.getURI(nameCode));
-                    sb.append(DELIMITER);
-                    sb.append(namePool.getLocalName(nameCode));
-                    sb.append(DELIMITER);
-                    sb.append(namePool.getDisplayName(nameCode));
-                    sb.append(DELIMITER);
-                    break;
-                case START_ELEMENT_WITH_ATTS:
-                    nameCode = nameCodeArr[nameCodeIndex++];
-                    sb.append(START_ELEMENT);
-                    sb.append(namePool.getURI(nameCode));
-                    sb.append(DELIMITER);
-                    sb.append(namePool.getLocalName(nameCode));
-                    sb.append(DELIMITER);
-                    sb.append(namePool.getDisplayName(nameCode));
-                    sb.append(DELIMITER);
+                    case START_ELEMENT:
+                        nameCode = nameCodeArr[nameCodeIndex++];
+                        sb.append(START_ELEMENT);
+                        sb.append(namePool.getURI(nameCode));
+                        sb.append(DELIMITER);
+                        sb.append(namePool.getLocalName(nameCode));
+                        sb.append(DELIMITER);
+                        sb.append(namePool.getDisplayName(nameCode));
+                        sb.append(DELIMITER);
+                        break;
+                    case START_ELEMENT_WITH_ATTS:
+                        nameCode = nameCodeArr[nameCodeIndex++];
+                        sb.append(START_ELEMENT);
+                        sb.append(namePool.getURI(nameCode));
+                        sb.append(DELIMITER);
+                        sb.append(namePool.getLocalName(nameCode));
+                        sb.append(DELIMITER);
+                        sb.append(namePool.getDisplayName(nameCode));
+                        sb.append(DELIMITER);
 
-                    atts = attsArr[attsIndex++];
-                    sb.append(atts.toString());
-                    break;
-                case END_ELEMENT:
-                    sb.append(END_ELEMENT);
-                    break;
-                case CHARACTERS:
-                    final int pos = charPosArr[charPosIndex++];
-                    sb.append(charArr, lastPos, pos);
-                    lastPos = pos;
-                    break;
+                        atts = attsArr[attsIndex++];
+                        sb.append(atts.toString());
+                        break;
+                    case END_ELEMENT:
+                        sb.append(END_ELEMENT);
+                        break;
+                    case CHARACTERS:
+                        final int pos = charPosArr[charPosIndex++];
+                        sb.append(charArr, lastPos, pos);
+                        lastPos = pos;
+                        break;
                 }
             }
         }

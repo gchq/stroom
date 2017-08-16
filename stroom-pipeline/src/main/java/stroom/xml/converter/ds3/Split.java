@@ -66,7 +66,7 @@ public class Split extends Expression implements Match {
         int innerStart = 0;
         int innerEnd = -1;
 
-        for (; outerEnd < cs.length();) {
+        for (; outerEnd < cs.length(); ) {
             // See if we have a delimiter.
             if (!escape) {
                 if (!inContainer && isSubstring(cs, outerEnd, factory.getDelimiter())) {
@@ -208,7 +208,7 @@ public class Split extends Expression implements Match {
                 int pos = start[1];
 
                 final StringBuilder sb = new StringBuilder();
-                for (; pos < end[1];) {
+                for (; pos < end[1]; ) {
                     if (!escape) {
                         if (isSubstring(cs, pos, factory.getEscape())) {
                             escape = true;

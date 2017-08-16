@@ -26,32 +26,9 @@ import com.google.gwt.user.client.ui.Widget;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 public class SimplePopup extends AbstractPopupPanel {
-    private static Binder binder = GWT.create(Binder.class);
-
-    public interface Binder extends UiBinder<Widget, SimplePopup> {
-    }
-
-    public interface Style extends CssResource {
-        String DEFAULT_STYLE = "SimplePopup.css";
-
-        String popup();
-
-        String container();
-
-        String background();
-
-        String content();
-    }
-
-    public interface Resources extends ClientBundle {
-        @Source(Style.DEFAULT_STYLE)
-        Style style();
-    }
-
     private static final Resources RESOURCES = GWT.create(Resources.class);
-
+    private static Binder binder = GWT.create(Binder.class);
     private final PopupUiHandlers popupUiHandlers;
-
     @UiField
     SimplePanel content;
 
@@ -68,9 +45,8 @@ public class SimplePopup extends AbstractPopupPanel {
      * should not be shown until its child widget has been added using
      * {@link #add(Widget)}.
      *
-     * @param autoHide
-     *            <code>true</code> if the dialog should be automatically hidden
-     *            when the user clicks outside of it
+     * @param autoHide <code>true</code> if the dialog should be automatically hidden
+     *                 when the user clicks outside of it
      */
     public SimplePopup(final PopupUiHandlers popupUiHandlers, final boolean autoHide) {
         this(popupUiHandlers, autoHide, false);
@@ -81,12 +57,10 @@ public class SimplePopup extends AbstractPopupPanel {
      * should not be shown until its child widget has been added using
      * {@link #add(Widget)}.
      *
-     * @param autoHide
-     *            <code>true</code> if the dialog should be automatically hidden
-     *            when the user clicks outside of it
-     * @param modal
-     *            <code>true</code> if keyboard and mouse events for widgets not
-     *            contained by the dialog should be ignored
+     * @param autoHide <code>true</code> if the dialog should be automatically hidden
+     *                 when the user clicks outside of it
+     * @param modal    <code>true</code> if keyboard and mouse events for widgets not
+     *                 contained by the dialog should be ignored
      */
     public SimplePopup(final PopupUiHandlers popupUiHandlers, final boolean autoHide, final boolean modal) {
         super(autoHide, modal);
@@ -124,5 +98,25 @@ public class SimplePopup extends AbstractPopupPanel {
     @Override
     public void hide(final boolean autoClosed) {
         popupUiHandlers.onHideRequest(autoClosed, false);
+    }
+
+    public interface Binder extends UiBinder<Widget, SimplePopup> {
+    }
+
+    public interface Style extends CssResource {
+        String DEFAULT_STYLE = "SimplePopup.css";
+
+        String popup();
+
+        String container();
+
+        String background();
+
+        String content();
+    }
+
+    public interface Resources extends ClientBundle {
+        @Source(Style.DEFAULT_STYLE)
+        Style style();
     }
 }

@@ -27,24 +27,63 @@ import stroom.streamtask.server.StreamProcessorTaskFactory;
 
 /**
  * Configures the context for core integration tests.
- *
+ * <p>
  * Reuses production configurations but defines its own component scan.
- *
+ * <p>
  * This configuration relies on @ActiveProfile(StroomSpringProfiles.PROD) being
  * applied to the tests.
  */
+
 /**
  * Exclude other configurations that might be found accidentally during a
  * component scan as configurations should be specified explicitly.
  */
 @Configuration
-@ComponentScan(basePackages = { "stroom" }, excludeFilters = {
+@ComponentScan(basePackages = {
+        "stroom.cache",
+        "stroom.cluster",
+        "stroom.datafeed",
+        "stroom.datasource",
+        "stroom.db",
+        "stroom.dictionary",
+        "stroom.dispatch",
+        "stroom.entity",
+        "stroom.explorer",
+        "stroom.feed",
+        "stroom.folder",
+        "stroom.importexport",
+        "stroom.internalstatistics",
+        "stroom.io",
+        "stroom.jobsystem",
+        "stroom.kafka",
+        "stroom.lifecycle",
+        "stroom.logging",
+        "stroom.node",
+        "stroom.policy",
+        "stroom.pool",
+        "stroom.process",
+        "stroom.proxy",
+        "stroom.query",
+        "stroom.resource",
+        "stroom.search",
+        "stroom.servicediscovery",
+        "stroom.servlet",
+        "stroom.spring",
+        "stroom.streamstore",
+        "stroom.streamtask",
+        "stroom.task",
+        "stroom.test",
+        "stroom.upgrade",
+        "stroom.util",
+        "stroom.volume",
+        "stroom.xmlschema"
+}, excludeFilters = {
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),
 
         // Exclude these so we get the mocks instead.
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = NodeConfigImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ClusterNodeManagerImpl.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = StreamProcessorTaskFactory.class) })
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = StreamProcessorTaskFactory.class)})
 public class ServerComponentScanTestConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerComponentScanTestConfiguration.class);
 

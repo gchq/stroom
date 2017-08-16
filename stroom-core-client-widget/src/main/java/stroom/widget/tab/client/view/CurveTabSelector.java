@@ -27,56 +27,8 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 
 public class CurveTabSelector extends AbstractTabSelector {
-    interface Binder extends UiBinder<DivElement, CurveTabSelector> {
-    }
-
-    public interface Style extends CssResource {
-        String DEFAULT_CSS = "CurveTabSelector.css";
-
-        /** Containers. */
-        String curveTabSelector();
-
-        /** Backgrounds. */
-        String background();
-
-        String leftBackground();
-
-        String midBackground();
-
-        String rightBackground();
-
-        /** Over behaviour */
-        String hover();
-
-        /** Content */
-        String foreground();
-
-        String arrows();
-
-        String text();
-    }
-
-    public interface Resources extends ClientBundle {
-        @Source("tabSelectorLeft.png")
-        ImageResource left();
-
-        @Source("tabSelectorMiddle.png")
-        @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
-        ImageResource middle();
-
-        @Source("tabSelectorRight.png")
-        ImageResource right();
-
-        @Source("arrows.png")
-        ImageResource arrows();
-
-        @Source(Style.DEFAULT_CSS)
-        Style style();
-    }
-
     private static Binder binder = GWT.create(Binder.class);
     private static Resources resources = GWT.create(Resources.class);
-
     @UiField
     DivElement text;
 
@@ -100,5 +52,60 @@ public class CurveTabSelector extends AbstractTabSelector {
     @Override
     public void setText(final String text) {
         this.text.setInnerText(text);
+    }
+
+    interface Binder extends UiBinder<DivElement, CurveTabSelector> {
+    }
+
+    public interface Style extends CssResource {
+        String DEFAULT_CSS = "CurveTabSelector.css";
+
+        /**
+         * Containers.
+         */
+        String curveTabSelector();
+
+        /**
+         * Backgrounds.
+         */
+        String background();
+
+        String leftBackground();
+
+        String midBackground();
+
+        String rightBackground();
+
+        /**
+         * Over behaviour
+         */
+        String hover();
+
+        /**
+         * Content
+         */
+        String foreground();
+
+        String arrows();
+
+        String text();
+    }
+
+    public interface Resources extends ClientBundle {
+        @Source("tabSelectorLeft.png")
+        ImageResource left();
+
+        @Source("tabSelectorMiddle.png")
+        @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
+        ImageResource middle();
+
+        @Source("tabSelectorRight.png")
+        ImageResource right();
+
+        @Source("arrows.png")
+        ImageResource arrows();
+
+        @Source(Style.DEFAULT_CSS)
+        Style style();
     }
 }

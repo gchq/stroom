@@ -28,9 +28,9 @@ public class StreamProgressMonitor {
 
     private final Monitor monitor;
     private final String prefix;
+    private final long INTERVAL_MS = 1000;
     private long totalBytes = 0;
     private long lastProgressTime = System.currentTimeMillis();
-    private final long INTERVAL_MS = 1000;
 
     public StreamProgressMonitor(final Monitor monitor, final String prefix) {
         this.monitor = monitor;

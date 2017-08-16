@@ -21,7 +21,7 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.shared.Expander;
 import stroom.util.shared.TreeRow;
 
-public class StreamProcessorRow extends EntityRow<StreamProcessor>implements TreeRow {
+public class StreamProcessorRow extends EntityRow<StreamProcessor> implements TreeRow {
     private static final long serialVersionUID = -2511849708703770119L;
 
     private Expander expander;

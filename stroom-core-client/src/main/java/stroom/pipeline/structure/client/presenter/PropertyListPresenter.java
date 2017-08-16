@@ -40,9 +40,9 @@ import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.shared.data.SourcePipeline;
+import stroom.svg.client.SvgPresets;
 import stroom.util.shared.HasDisplayValue;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -56,44 +56,26 @@ import java.util.Map;
 
 public class PropertyListPresenter extends MyPresenterWidget<DataGridView<PipelineProperty>>
         implements HasDirtyHandlers {
-    public enum Source implements HasDisplayValue {
-        LOCAL("Local"), INHERIT("Inherit"), DEFAULT("Default");
-
-        private final String displayValue;
-
-        Source(final String displayValue) {
-            this.displayValue = displayValue;
-        }
-
-        @Override
-        public String getDisplayValue() {
-            return displayValue;
-        }
-    }
-
     private static final SafeHtml ADDED = SafeHtmlUtils.fromSafeConstant("<div style=\"font-weight:500\">");
     private static final SafeHtml REMOVED = SafeHtmlUtils
             .fromSafeConstant("<div style=\"font-weight:500;text-decoration:line-through\">");
     private static final SafeHtml INHERITED = SafeHtmlUtils.fromSafeConstant("<div style=\"color:black\">");
     private static final SafeHtml DEFAULT = SafeHtmlUtils.fromSafeConstant("<div style=\"color:grey\">");
     private static final SafeHtml END = SafeHtmlUtils.fromSafeConstant("</div>");
-
-    private final GlyphButtonView editButton;
+    private final ButtonView editButton;
     private final Provider<NewPropertyPresenter> newPropertyPresenter;
-
     private Map<PipelineElementType, Map<String, PipelinePropertyType>> allPropertyTypes;
     private PipelineEntity pipelineEntity;
     private PipelineModel pipelineModel;
-
     private List<PipelineProperty> defaultProperties;
 
     @Inject
     public PropertyListPresenter(final EventBus eventBus,
                                  final Provider<NewPropertyPresenter> newPropertyPresenter) {
-        super(eventBus, new DataGridViewImpl<PipelineProperty>(true));
+        super(eventBus, new DataGridViewImpl<>(true));
         this.newPropertyPresenter = newPropertyPresenter;
 
-        editButton = getView().addButton(GlyphIcons.EDIT);
+        editButton = getView().addButton(SvgPresets.EDIT);
         editButton.setTitle("Edit Property");
 
         addColumns();
@@ -308,7 +290,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
     }
 
     private void addEndColumn() {
-        getView().addEndColumn(new EndColumn<PipelineProperty>());
+        getView().addEndColumn(new EndColumn<>());
     }
 
     public void setPipeline(final PipelineEntity pipelineEntity) {
@@ -320,7 +302,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
     }
 
     public void setCurrentElement(final PipelineElement currentElement) {
-        final List<PipelineProperty> defaultProperties = new ArrayList<PipelineProperty>();
+        final List<PipelineProperty> defaultProperties = new ArrayList<>();
         if (currentElement != null && allPropertyTypes != null) {
             final Map<String, PipelinePropertyType> propertyTypes = allPropertyTypes
                     .get(currentElement.getElementType());
@@ -482,5 +464,20 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
     @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
+    }
+
+    public enum Source implements HasDisplayValue {
+        LOCAL("Local"), INHERIT("Inherit"), DEFAULT("Default");
+
+        private final String displayValue;
+
+        Source(final String displayValue) {
+            this.displayValue = displayValue;
+        }
+
+        @Override
+        public String getDisplayValue() {
+            return displayValue;
+        }
     }
 }

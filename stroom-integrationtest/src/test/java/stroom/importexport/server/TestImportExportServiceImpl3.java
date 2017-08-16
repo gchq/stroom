@@ -18,8 +18,6 @@ package stroom.importexport.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestScenarioCreator;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
@@ -29,6 +27,8 @@ import stroom.feed.shared.FeedService;
 import stroom.pipeline.shared.PipelineEntityService;
 import stroom.query.api.v1.DocRef;
 import stroom.resource.server.ResourceStore;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestScenarioCreator;
 import stroom.util.shared.Message;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.util.zip.ZipUtil;

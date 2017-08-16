@@ -13,8 +13,8 @@
   <g:DockLayoutPanel unit="PX" styleName="{style.outer}">
     <g:south size="18">
       <g:FlowPanel>
-        <v:GlyphButton ui:field="add" />
-        <v:GlyphButton ui:field="remove" />
+        <v:SvgButton ui:field="add" />
+        <v:SvgButton ui:field="remove" />
       </g:FlowPanel>
     </g:south>
     <g:center>

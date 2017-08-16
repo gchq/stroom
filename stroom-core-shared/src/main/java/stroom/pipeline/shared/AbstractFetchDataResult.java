@@ -39,8 +39,8 @@ public abstract class AbstractFetchDataResult implements SharedObject {
     }
 
     public AbstractFetchDataResult(final StreamType streamType, final String classification,
-            final OffsetRange<Long> streamRange, final RowCount<Long> streamRowCount, final OffsetRange<Long> pageRange,
-            final RowCount<Long> pageRowCount, final List<StreamType> availableChildStreamTypes) {
+                                   final OffsetRange<Long> streamRange, final RowCount<Long> streamRowCount, final OffsetRange<Long> pageRange,
+                                   final RowCount<Long> pageRowCount, final List<StreamType> availableChildStreamTypes) {
         this.streamType = streamType;
         this.classification = classification;
         this.streamRange = streamRange;

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,9 +28,10 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
-public class FilterPresenter extends MyPresenterWidget<FilterPresenter.FilterView>implements PopupUiHandlers {
+public class FilterPresenter extends MyPresenterWidget<FilterPresenter.FilterView> implements PopupUiHandlers {
     private TablePresenter tablePresenter;
     private Field field;
+
     @Inject
     public FilterPresenter(final EventBus eventBus, final FilterView view) {
         super(eventBus, view);

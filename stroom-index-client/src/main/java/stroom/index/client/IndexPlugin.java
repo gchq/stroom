@@ -33,8 +33,8 @@ public class IndexPlugin extends EntityPlugin<Index> {
 
     @Inject
     public IndexPlugin(final EventBus eventBus, final Provider<IndexPresenter> editorProvider,
-            final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
-            final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager) {
+                       final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
+                       final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager) {
         super(eventBus, dispatcher, securityContext, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
     }

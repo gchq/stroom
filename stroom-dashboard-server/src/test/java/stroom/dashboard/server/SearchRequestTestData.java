@@ -34,17 +34,17 @@ import stroom.query.api.v1.DocRef;
 import stroom.query.api.v1.ExpressionBuilder;
 import stroom.query.api.v1.ExpressionOperator;
 import stroom.query.api.v1.ExpressionTerm;
+import stroom.query.api.v1.ResultRequest.Fetch;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class SearchRequestTestData {
-
-    static stroom.query.api.v1.SearchRequest apiSearchRequest(){
+    static stroom.query.api.v1.SearchRequest apiSearchRequest() {
         stroom.dashboard.shared.SearchRequest dashboardSearchRequest = dashboardSearchRequest();
 
         SearchRequestMapper searchRequestMapper = new SearchRequestMapper(new MockVisualisationService());
-        stroom.query.api.v1.SearchRequest apiSearchRequest = searchRequestMapper.mapRequest(DashboardQueryKey.create("queryKeyUuid", 1l), dashboardSearchRequest);
+        stroom.query.api.v1.SearchRequest apiSearchRequest = searchRequestMapper.mapRequest(DashboardQueryKey.create("queryKeyUuid", 1l, "queryId-1"), dashboardSearchRequest);
 
         return apiSearchRequest;
     }
@@ -79,13 +79,13 @@ public class SearchRequestTestData {
         paramMap.put("param1", "val1");
         paramMap.put("param2", "val2");
 
-        final Search search = new Search(docRef, expressionOperator.build(), componentSettingsMap, paramMap, true);
+        final Search search = new Search(docRef, expressionOperator.build(), componentSettingsMap, paramMap, true, false);
 
         final Map<String, ComponentResultRequest> componentResultRequestMap = new HashMap<>();
         for (final Map.Entry<String, ComponentSettings> entry : componentSettingsMap.entrySet()) {
             TableResultRequest tableResultRequest = new TableResultRequest();
             tableResultRequest.setTableSettings((TableComponentSettings) entry.getValue());
-            tableResultRequest.setWantsData(true);
+            tableResultRequest.setFetch(Fetch.CHANGES);
             componentResultRequestMap.put(entry.getKey(), tableResultRequest);
         }
 

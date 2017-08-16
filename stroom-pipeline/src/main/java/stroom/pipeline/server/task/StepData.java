@@ -26,15 +26,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class StepData {
-    private List<Highlight> sourceHighlights;
     private final Map<String, ElementData> elementMap = new HashMap<>();
-
-    public void setSourceHighlights(final List<Highlight> sourceHighlights) {
-        this.sourceHighlights = sourceHighlights;
-    }
+    private List<Highlight> sourceHighlights;
 
     public List<Highlight> getSourceHighlights() {
         return sourceHighlights;
+    }
+
+    public void setSourceHighlights(final List<Highlight> sourceHighlights) {
+        this.sourceHighlights = sourceHighlights;
     }
 
     public Map<String, ElementData> getElementMap() {

@@ -18,10 +18,10 @@ package stroom.node.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeService;
+import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.annotation.Resource;
 import java.util.List;

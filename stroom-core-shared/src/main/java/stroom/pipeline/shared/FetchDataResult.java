@@ -33,9 +33,9 @@ public class FetchDataResult extends AbstractFetchDataResult {
     }
 
     public FetchDataResult(final StreamType streamType, final String classification,
-            final OffsetRange<Long> streamRange, final RowCount<Long> streamRowCount, final OffsetRange<Long> pageRange,
-            final RowCount<Long> pageRowCount, final List<StreamType> availableChildStreamTypes, final String data,
-            final boolean html) {
+                           final OffsetRange<Long> streamRange, final RowCount<Long> streamRowCount, final OffsetRange<Long> pageRange,
+                           final RowCount<Long> pageRowCount, final List<StreamType> availableChildStreamTypes, final String data,
+                           final boolean html) {
         super(streamType, classification, streamRange, streamRowCount, pageRange, pageRowCount,
                 availableChildStreamTypes);
         this.data = data;

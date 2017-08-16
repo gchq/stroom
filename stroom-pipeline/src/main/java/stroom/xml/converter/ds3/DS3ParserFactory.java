@@ -45,16 +45,15 @@ public class DS3ParserFactory implements ParserFactory {
     public static final String SCHEMA_GROUP = "DATA_SPLITTER";
 
     private static final SAXParserFactory PARSER_FACTORY;
-
-	static {
-		PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
-		PARSER_FACTORY.setNamespaceAware(true);
-		PARSER_FACTORY.setValidating(false);
-	}
-
-    private RootFactory factory;
     private static long comp;
 
+    static {
+        PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
+        PARSER_FACTORY.setNamespaceAware(true);
+        PARSER_FACTORY.setValidating(false);
+    }
+
+    private RootFactory factory;
     private SchemaFilter schemaFilter;
 
     public void configure(final Reader inputStream, final ErrorHandler errorHandler) {

@@ -26,16 +26,11 @@ import stroom.streamstore.client.presenter.StreamTaskPresenter.StreamTaskView;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 public class StreamTaskViewImpl extends ViewImpl implements StreamTaskView {
-    public interface Binder extends UiBinder<Widget, StreamTaskViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     ResizeSimplePanel streamTaskSummary;
     @UiField
     ResizeSimplePanel streamTaskList;
-
     @Inject
     public StreamTaskViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -53,5 +48,8 @@ public class StreamTaskViewImpl extends ViewImpl implements StreamTaskView {
         } else if (StreamTaskPresenter.STREAM_TASK_SUMMARY.equals(slot)) {
             streamTaskSummary.setWidget(content);
         }
+    }
+
+    public interface Binder extends UiBinder<Widget, StreamTaskViewImpl> {
     }
 }

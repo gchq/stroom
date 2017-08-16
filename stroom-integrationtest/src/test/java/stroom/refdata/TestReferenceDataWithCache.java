@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,7 +21,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
-import stroom.AbstractCoreIntegrationTest;
 import stroom.cache.CacheManagerAutoCloseable;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.FolderService;
@@ -34,6 +33,7 @@ import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.query.api.v1.DocRef;
 import stroom.streamstore.shared.StreamType;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
 import stroom.util.spring.StroomBeanStore;
 import stroom.xml.event.EventList;
@@ -116,8 +116,8 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
 
             // Add multiple reference data items to prove that looping over maps
             // works.
-            addData(referenceData, pipeline1, new String[] { "SID_TO_PF_1", "SID_TO_PF_2" });
-            addData(referenceData, pipeline2, new String[] { "SID_TO_PF_3", "SID_TO_PF_4" });
+            addData(referenceData, pipeline1, new String[]{"SID_TO_PF_1", "SID_TO_PF_2"});
+            addData(referenceData, pipeline2, new String[]{"SID_TO_PF_3", "SID_TO_PF_4"});
             checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_1");
             checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_2");
             checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_3");
@@ -151,7 +151,7 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     }
 
     private void checkData(final ReferenceData data, final List<PipelineReference> referenceFeedSet,
-            final ErrorReceiver errorReceiver, final String mapName) {
+                           final ErrorReceiver errorReceiver, final String mapName) {
         Assert.assertEquals("B1111", getStringFromEvents(data.getValue(referenceFeedSet, errorReceiver,
                 DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.111Z"), mapName, "user1")));
         Assert.assertEquals("B1111", getStringFromEvents(data.getValue(referenceFeedSet, errorReceiver,

@@ -30,8 +30,8 @@ import javax.persistence.UniqueConstraint;
  * users.
  */
 @Entity
-@Table(name = "USR_GRP_USR", uniqueConstraints = @UniqueConstraint(columnNames = { UserGroupUser.GROUP_UUID,
-        UserGroupUser.USER_UUID }) )
+@Table(name = "USR_GRP_USR", uniqueConstraints = @UniqueConstraint(columnNames = {UserGroupUser.GROUP_UUID,
+        UserGroupUser.USER_UUID}))
 public class UserGroupUser extends BaseEntityBig {
     public static final String TABLE_NAME = SQLNameConstants.USER + SEP + SQLNameConstants.GROUP + SEP
             + SQLNameConstants.USER;

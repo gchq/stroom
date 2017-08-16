@@ -40,22 +40,13 @@ import java.util.List;
 public class StreamAttributeListPresenter
         extends MyPresenterWidget<StreamAttributeListPresenter.StreamAttributeListView>
         implements StreamAttributeListUiHandlers {
-    public interface StreamAttributeListView extends View, HasUiHandlers<StreamAttributeListUiHandlers> {
-        void setListView(View view);
-
-        void setAddEnabled(boolean enabled);
-
-        void setRemoveEnabled(boolean enabled);
-    }
-
     private final StreamAttributePresenter streamAttributePresenter;
     private final MySingleSelectionModel<StreamAttributeCondition> selectionModel;
     private final CellTableView<StreamAttributeCondition> list;
     private List<StreamAttributeCondition> data;
-
     @Inject
     public StreamAttributeListPresenter(final EventBus eventBus, final StreamAttributeListView view,
-            final StreamAttributePresenter streamAttributePresenter) {
+                                        final StreamAttributePresenter streamAttributePresenter) {
         super(eventBus, view);
         this.streamAttributePresenter = streamAttributePresenter;
 
@@ -155,5 +146,13 @@ public class StreamAttributeListPresenter
     private void enableButtons() {
         final StreamAttributeCondition selected = selectionModel.getSelectedObject();
         getView().setRemoveEnabled(selected != null);
+    }
+
+    public interface StreamAttributeListView extends View, HasUiHandlers<StreamAttributeListUiHandlers> {
+        void setListView(View view);
+
+        void setAddEnabled(boolean enabled);
+
+        void setRemoveEnabled(boolean enabled);
     }
 }

@@ -61,6 +61,7 @@ public class IndexShard extends AuditedEntity {
             + SQLNameConstants.MS_SUFFIX;
     public static final String INDEX_VERSION = SQLNameConstants.INDEX + SEP + SQLNameConstants.VERSION;
     public static final String ENTITY_TYPE = "IndexShard";
+    public static final String MANAGE_INDEX_SHARDS_PERMISSION = "Manage Index Shards";
     public static final Set<IndexShardStatus> NON_DELETED_INDEX_SHARD_STATUS = Collections.unmodifiableSet(
             new HashSet<>(Arrays.asList(IndexShardStatus.OPEN, IndexShardStatus.CLOSED, IndexShardStatus.CORRUPT)));
     public static final Set<IndexShardStatus> READABLE_INDEX_SHARD_STATUS = Collections
@@ -292,12 +293,18 @@ public class IndexShard extends AuditedEntity {
         CLOSED("Closed", 0),
         // Open - We are writing to it (maybe index or merge)
         OPEN("Open", 1),
+        //        // Final - used to mark that a shard is full or will no longer be used.
+//        FINAL("Final", 3),
+//        // Closing - We are in the process of closing the index shard.
+//        CLOSING("Closing", 10),
+//        // Opening - We are in the process of opening an index shard.
+//        OPENING("Opening", 20),
         // Deleted - Used to mark shard for deletion
         DELETED("Deleted", 99),
         // Corrupt - Used to mark shard has been corrupted
         CORRUPT("Corrupt", 666);
 
-        public static final PrimitiveValueConverter<IndexShardStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<IndexShardStatus>(
+        public static final PrimitiveValueConverter<IndexShardStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
                 IndexShardStatus.values());
 
         private final String displayValue;

@@ -25,12 +25,10 @@ import stroom.util.date.DateUtil;
  */
 public class StreamRange extends Range<Long> {
     private static final long serialVersionUID = -6549930015935794660L;
-
+    private static final long DAY_MS = 1000 * 60 * 60 * 24;
     private String streamTypePath;
     private Period createPeriod;
     private boolean invalidPath;
-
-    private static final long DAY_MS = 1000 * 60 * 60 * 24;
 
     public StreamRange(final String repoPath) {
         final String[] parts = repoPath.split("/");

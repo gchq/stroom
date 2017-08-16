@@ -43,10 +43,6 @@ public class ElementData {
         return elementType;
     }
 
-    public void setInput(final Object input) {
-        this.input = input;
-    }
-
     public String getInput() {
         if (input != null) {
             return input.toString();
@@ -54,12 +50,12 @@ public class ElementData {
         return null;
     }
 
-    public void setFormatInput(final boolean formatInput) {
-        this.formatInput = formatInput;
+    public void setInput(final Object input) {
+        this.input = input;
     }
 
-    public void setOutput(final Object output) {
-        this.output = output;
+    public void setFormatInput(final boolean formatInput) {
+        this.formatInput = formatInput;
     }
 
     public String getOutput() {
@@ -67,6 +63,10 @@ public class ElementData {
             return output.toString();
         }
         return null;
+    }
+
+    public void setOutput(final Object output) {
+        this.output = output;
     }
 
     public void setFormatOutput(final boolean formatOutput) {

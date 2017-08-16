@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,8 +23,10 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.datasource.api.v1.DataSourceField;
+import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.structure.client.view.DraggableTreePanel;
+import stroom.query.api.v1.DocRef;
 import stroom.query.client.ExpressionTreePresenter.ExpressionTreeView;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
@@ -94,8 +96,8 @@ public class ExpressionTreeViewImpl extends ViewWithUiHandlers<ExpressionUiHandl
     }
 
     @Override
-    public void setFields(final List<DataSourceField> fields) {
-        treePanel.setFields(fields);
+    public void init(final ClientDispatchAsync dispatcher, final DocRef dataSource, final List<DataSourceField> fields) {
+        treePanel.init(dispatcher, dataSource, fields);
     }
 
     @Override

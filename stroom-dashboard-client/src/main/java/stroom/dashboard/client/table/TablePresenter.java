@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,8 +34,8 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.core.client.LocationManager;
 import stroom.cell.expander.client.ExpanderCell;
+import stroom.core.client.LocationManager;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
@@ -55,6 +55,7 @@ import stroom.dashboard.shared.Format;
 import stroom.dashboard.shared.Format.Type;
 import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.Search;
+import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.data.grid.client.DataGridView;
@@ -67,11 +68,12 @@ import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
+import stroom.query.api.v1.ResultRequest.Fetch;
 import stroom.security.client.ClientSecurityContext;
+import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ParamUtil;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -82,7 +84,9 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class TablePresenter extends AbstractComponentPresenter<TableView>
@@ -94,8 +98,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final TableResultRequest tableResultRequest = new TableResultRequest(0, 100);
     private final List<Column<Row, ?>> existingColumns = new ArrayList<>();
     private final List<HandlerRegistration> searchModelHandlerRegistrations = new ArrayList<>();
-    private final GlyphButtonView addFieldButton;
-    private final GlyphButtonView downloadButton;
+    private final ButtonView addFieldButton;
+    private final ButtonView downloadButton;
     private final Provider<FieldAddPresenter> fieldAddPresenterProvider;
     private final DownloadPresenter downloadPresenter;
     private final ClientDispatchAsync dispatcher;
@@ -143,11 +147,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         view.setTableView(dataGrid);
 
         // Add the 'add field' button.
-        addFieldButton = dataGrid.addButton(GlyphIcons.ADD);
+        addFieldButton = dataGrid.addButton(SvgPresets.ADD);
         addFieldButton.setTitle("Add Field");
 
         // Download
-        downloadButton = dataGrid.addButton(GlyphIcons.DOWNLOAD);
+        downloadButton = dataGrid.addButton(SvgPresets.DOWNLOAD);
         downloadButton.setVisible(securityContext.hasAppPermission(Dashboard.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
 
         fieldsManager = new FieldsManager(this, menuListPresenter, expressionPresenter, formatPresenter,
@@ -282,15 +286,25 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private void download() {
         if (currentSearchModel != null) {
-            final Search search = currentSearchModel.getActiveSearch();
+            final Search activeSearch = currentSearchModel.getActiveSearch();
             final DashboardQueryKey queryKey = currentSearchModel.getCurrentQueryKey();
-            if (search != null && queryKey != null) {
+            if (activeSearch != null && queryKey != null) {
                 final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
                     @Override
                     public void onHideRequest(final boolean autoClose, final boolean ok) {
                         if (ok) {
+                            final TableResultRequest tableResultRequest = new TableResultRequest(0, Integer.MAX_VALUE);
+                            tableResultRequest.setTableSettings(TablePresenter.this.tableSettings);
+                            tableResultRequest.setFetch(Fetch.ALL);
+
+                            final Map<String, ComponentResultRequest> requestMap = new HashMap<>();
+                            requestMap.put(getComponentData().getId(), tableResultRequest);
+
+                            final Search search = new Search(activeSearch.getDataSourceRef(), activeSearch.getExpression(), activeSearch.getComponentSettingsMap(), activeSearch.getParamMap(), true, false);
+                            final SearchRequest searchRequest = new SearchRequest(search, requestMap, timeZones.getTimeZone());
+
                             dispatcher.exec(
-                                    new DownloadSearchResultsAction(queryKey, search, getComponentData().getId(),
+                                    new DownloadSearchResultsAction(queryKey, searchRequest, getComponentData().getId(),
                                             downloadPresenter.getFileType(), downloadPresenter.isSample(),
                                             downloadPresenter.getPercent(), timeZones.getTimeZone()))
                                     .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result));
@@ -322,7 +336,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     @Override
     public void setWantsData(final boolean wantsData) {
         getView().setRefreshing(wantsData);
-        tableResultRequest.setWantsData(wantsData);
+        if (wantsData) {
+            tableResultRequest.setFetch(Fetch.CHANGES);
+        } else {
+            tableResultRequest.setFetch(Fetch.NONE);
+        }
     }
 
     @Override
@@ -698,6 +716,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         return null;
     }
 
+    public interface TableView extends View {
+        void setTableView(View view);
+
+        void setRefreshing(boolean refreshing);
+    }
+
     private class AddSelectionHandler implements SelectionChangeEvent.Handler {
         private final FieldAddPresenter presenter;
 
@@ -713,11 +737,5 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 fieldsManager.addField(field);
             }
         }
-    }
-
-    public interface TableView extends View {
-        void setTableView(View view);
-
-        void setRefreshing(boolean refreshing);
     }
 }

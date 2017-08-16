@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -47,7 +47,7 @@ public class StroomIndexQueryResource implements QueryResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Path(QueryResource.DATASOURCE_ENDPOINT)
+    @Path(QueryResource.DATA_SOURCE_ENDPOINT)
     @Timed
     public DataSource getDataSource(final DocRef docRef) {
         final Index index = indexService.loadByUuid(docRef.getUuid());
@@ -60,9 +60,7 @@ public class StroomIndexQueryResource implements QueryResource {
     @Path(QueryResource.SEARCH_ENDPOINT)
     @Timed
     public SearchResponse search(final SearchRequest request) {
-//        final SearchResponseCreator searchResponseCreator = searchResultCreatorCache.computeIfAbsent(request.getValues(), k -> new SearchResponseCreator(luceneSearchStoreFactory.create(request)));
-
-        final SearchResponseCreator searchResponseCreator = searchResultCreatorManager.get(new Key(request));
+        final SearchResponseCreator searchResponseCreator = searchResultCreatorManager.getOrCreate(new Key(request));
         return searchResponseCreator.create(request);
     }
 
@@ -85,20 +83,19 @@ public class StroomIndexQueryResource implements QueryResource {
     }
 
     public HealthCheck.Result getHealth() {
-        if(searchResultCreatorManager == null || indexService == null) {
+        if (searchResultCreatorManager == null || indexService == null) {
             StringBuilder errorMessageBuilder = new StringBuilder();
             errorMessageBuilder.append("Dependency error!");
             String searchResultCreatorManagerMessage = " 'searchResultCreatorManager' has not been set!";
             String indexServiceMessage = " 'indexService' has not been set!";
-            if(searchResultCreatorManager == null){
+            if (searchResultCreatorManager == null) {
                 errorMessageBuilder.append(searchResultCreatorManagerMessage);
             }
-            if(indexService == null){
+            if (indexService == null) {
                 errorMessageBuilder.append(indexServiceMessage);
             }
             return HealthCheck.Result.unhealthy(errorMessageBuilder.toString());
-        }
-        else{
+        } else {
             return HealthCheck.Result.healthy();
         }
     }

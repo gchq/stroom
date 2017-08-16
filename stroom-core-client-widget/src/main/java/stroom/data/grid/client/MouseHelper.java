@@ -31,7 +31,7 @@ public final class MouseHelper {
     }
 
     public static boolean mouseIsOverElement(final Event event, final int left, final int right, final int top,
-            final int bottom) {
+                                             final int bottom) {
         return left <= event.getClientX() && right >= event.getClientX() && top <= event.getClientY()
                 && bottom >= event.getClientY();
     }
@@ -42,7 +42,7 @@ public final class MouseHelper {
     }
 
     public static boolean mouseIsOverElement(final NativeEvent event, final int left, final int right, final int top,
-            final int bottom) {
+                                             final int bottom) {
         return left <= event.getClientX() && right >= event.getClientX() && top <= event.getClientY()
                 && bottom >= event.getClientY();
     }
@@ -50,8 +50,7 @@ public final class MouseHelper {
     /**
      * Gets the mouse x-position relative to a given element.
      *
-     * @param target
-     *            the element whose coordinate system is to be used
+     * @param target the element whose coordinate system is to be used
      * @return the relative x-position
      */
     public static int getRelativeX(final NativeEvent e, final Element target) {
@@ -62,8 +61,7 @@ public final class MouseHelper {
     /**
      * Gets the mouse y-position relative to a given element.
      *
-     * @param target
-     *            the element whose coordinate system is to be used
+     * @param target the element whose coordinate system is to be used
      * @return the relative y-position
      */
     public static int getRelativeY(final NativeEvent e, final Element target) {

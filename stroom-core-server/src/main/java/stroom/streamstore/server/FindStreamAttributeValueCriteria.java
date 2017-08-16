@@ -47,6 +47,10 @@ public class FindStreamAttributeValueCriteria extends BaseCriteria {
         return streamIdSet;
     }
 
+    public void setStreamIdSet(EntityIdSet<Stream> streamIdSet) {
+        this.streamIdSet = streamIdSet;
+    }
+
     public EntityIdSet<Stream> obtainStreamIdSet() {
         if (streamIdSet == null) {
             streamIdSet = new EntityIdSet<>();
@@ -54,12 +58,12 @@ public class FindStreamAttributeValueCriteria extends BaseCriteria {
         return streamIdSet;
     }
 
-    public void setStreamIdSet(EntityIdSet<Stream> streamIdSet) {
-        this.streamIdSet = streamIdSet;
-    }
-
     public Period getCreatePeriod() {
         return createPeriod;
+    }
+
+    public void setCreatePeriod(final Period createPeriod) {
+        this.createPeriod = createPeriod;
     }
 
     public Period obtainCreatePeriod() {
@@ -68,10 +72,6 @@ public class FindStreamAttributeValueCriteria extends BaseCriteria {
         }
         return createPeriod;
 
-    }
-
-    public void setCreatePeriod(final Period createPeriod) {
-        this.createPeriod = createPeriod;
     }
 
 }

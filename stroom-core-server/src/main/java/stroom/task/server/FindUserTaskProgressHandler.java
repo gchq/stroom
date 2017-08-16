@@ -17,8 +17,8 @@
 package stroom.task.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.Sort.Direction;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.shared.FindTaskProgressCriteria;
@@ -43,7 +43,7 @@ class FindUserTaskProgressHandler
     @Override
     public BaseResultList<TaskProgress> exec(final FindUserTaskProgressAction action) {
         final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
-        criteria.setOrderBy(FindTaskProgressCriteria.ORDER_BY_AGE, OrderByDirection.DESCENDING);
+        criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, Direction.DESCENDING, false);
         criteria.setSessionId(getSessionId());
         return doExec(action, criteria);
     }

@@ -39,27 +39,23 @@ import java.util.concurrent.locks.ReentrantLock;
 @Component
 @Scope(value = StroomScope.TASK)
 public class SQLStatisticAggregationManager {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticAggregationManager.class);
-
-    /**
-     * The cluster lock to acquire to prevent other nodes from concurrently
-     * aggregating statistics.
-     */
-    private static final String LOCK_NAME = "SQLStatisticAggregationManager";
-
-    private static final ReentrantLock guard = new ReentrantLock();
-
-    private final ClusterLockService clusterLockService;
-    private final SQLStatisticAggregationTransactionHelper helper;
-    private final TaskMonitor taskMonitor;
-    private final StroomDatabaseInfo stroomDatabaseInfo;
-    private int batchSize;
-
     /**
      * The number of records to add to the aggregate from the aggregate source
      * table on each pass
      */
     public static final int DEFAULT_BATCH_SIZE = 1000000;
+    private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticAggregationManager.class);
+    /**
+     * The cluster lock to acquire to prevent other nodes from concurrently
+     * aggregating statistics.
+     */
+    private static final String LOCK_NAME = "SQLStatisticAggregationManager";
+    private static final ReentrantLock guard = new ReentrantLock();
+    private final ClusterLockService clusterLockService;
+    private final SQLStatisticAggregationTransactionHelper helper;
+    private final TaskMonitor taskMonitor;
+    private final StroomDatabaseInfo stroomDatabaseInfo;
+    private int batchSize;
 
     @Inject
     public SQLStatisticAggregationManager(final ClusterLockService clusterLockService,

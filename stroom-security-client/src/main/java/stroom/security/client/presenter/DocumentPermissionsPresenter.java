@@ -45,7 +45,7 @@ public class DocumentPermissionsPresenter
     private final ClientDispatchAsync dispatcher;
     private final Provider<DocumentPermissionsTabPresenter> documentPermissionsListPresenterProvider;
     private final Provider<FolderPermissionsTabPresenter> folderPermissionsListPresenterProvider;
-    private final ChangeSet<UserPermission> changeSet = new ChangeSet<UserPermission>();
+    private final ChangeSet<UserPermission> changeSet = new ChangeSet<>();
 
     @Inject
     public DocumentPermissionsPresenter(final EventBus eventBus, final DocumentPermissionsView view, final LinkTabsPresenter tabPresenter,

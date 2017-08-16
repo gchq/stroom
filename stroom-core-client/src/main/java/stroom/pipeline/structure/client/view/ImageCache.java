@@ -28,10 +28,6 @@ import java.util.Map;
 public class ImageCache {
     private static Map<String, ImageElement> imageCache = new HashMap<>();
 
-    public interface LoadCallback {
-        void onLoad(ImageElement imageElement);
-    }
-
     public static void getImage(final ImageResource imageResource, final LoadCallback callback) {
         if (imageResource == null) {
             callback.onLoad(null);
@@ -97,5 +93,9 @@ public class ImageCache {
                 RootPanel.get().add(image);
             }
         }
+    }
+
+    public interface LoadCallback {
+        void onLoad(ImageElement imageElement);
     }
 }

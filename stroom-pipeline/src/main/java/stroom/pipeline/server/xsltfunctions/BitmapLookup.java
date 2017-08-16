@@ -30,7 +30,7 @@ import stroom.xml.event.np.NPEventList;
 public class BitmapLookup extends AbstractLookup {
     @Override
     protected Sequence doLookup(final XPathContext context, final String map, final String key, final long eventTime,
-            final boolean ignoreWarnings, final StringBuilder lookupIdentifier) throws XPathException {
+                                final boolean ignoreWarnings, final StringBuilder lookupIdentifier) throws XPathException {
         SequenceMaker sequenceMaker = null;
 
         int val = 0;

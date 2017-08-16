@@ -35,10 +35,6 @@ public class EmailPasswordResetForUserNameAction extends Action<SharedBoolean> {
         return resetUserName;
     }
 
-    public void setResetUserName(String resetUserName) {
-        this.resetUserName = resetUserName;
-    }
-
     @Override
     public String getTaskName() {
         return "Reset Password";

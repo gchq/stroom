@@ -53,8 +53,8 @@ public class RollingFileDestination extends RollingDestination {
     private volatile boolean rolled;
 
     public RollingFileDestination(final String key, final String fileName, final String rolledFileName,
-            final long frequency, final long maxSize, final File dir, final File file, final long creationTime)
-                    throws IOException {
+                                  final long frequency, final long maxSize, final File dir, final File file, final long creationTime)
+            throws IOException {
         this.key = key;
 
         this.fileName = fileName;
@@ -329,7 +329,7 @@ public class RollingFileDestination extends RollingDestination {
     }
 
     private IOException handleRollException(final File sourceFile, final File destFile,
-            final IOException existingException, final Throwable newException) {
+                                            final IOException existingException, final Throwable newException) {
         final StringBuilder sb = new StringBuilder();
         sb.append("Failed to roll file '");
         sb.append(getFullPath(sourceFile));

@@ -22,16 +22,15 @@ import stroom.util.shared.HasDisplayValue;
 
 import java.io.Serializable;
 
-public enum StatisticRollUpType implements HasDisplayValue,HasPrimitiveValue,Serializable {
+public enum StatisticRollUpType implements HasDisplayValue, HasPrimitiveValue, Serializable {
     NONE("None", 1),
     ALL("All", 2),
     CUSTOM("Custom", 3);
 
-    private final String displayValue;
-    private final byte primitiveValue;
-
     public static final PrimitiveValueConverter<StatisticRollUpType> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
             StatisticRollUpType.values());
+    private final String displayValue;
+    private final byte primitiveValue;
 
     StatisticRollUpType(final String displayValue, final int primitiveValue) {
         this.displayValue = displayValue;

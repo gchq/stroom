@@ -42,49 +42,6 @@ import stroom.widget.tab.client.event.CloseEvent;
 
 public class VolumeEditPresenter extends MyPresenterWidget<VolumeEditPresenter.VolumeEditView> {
     private final PopupSize popupSize = new PopupSize(400, 197, 400, 197, 1000, 197, true);
-
-    public interface VolumeEditView extends View {
-        ItemListBox<Node> getNode();
-
-        HasText getPath();
-
-        ItemListBox<VolumeType> getVolumeType();
-
-        ItemListBox<VolumeUseStatus> getStreamStatus();
-
-        ItemListBox<VolumeUseStatus> getIndexStatus();
-
-        HasText getBytesLimit();
-    }
-
-    private class DelegatePopupUiHandlers extends DefaultPopupUiHandlers {
-        private final PopupUiHandlers popupUiHandlers;
-
-        public DelegatePopupUiHandlers(final PopupUiHandlers popupUiHandlers) {
-            this.popupUiHandlers = popupUiHandlers;
-        }
-
-        @Override
-        public void onHideRequest(final boolean autoClose, final boolean ok) {
-            if (ok) {
-                write();
-            } else {
-                HidePopupEvent.fire(VolumeEditPresenter.this, VolumeEditPresenter.this, autoClose, ok);
-            }
-
-            if (popupUiHandlers != null) {
-                popupUiHandlers.onHideRequest(autoClose, ok);
-            }
-        }
-
-        @Override
-        public void onHide(final boolean autoClose, final boolean ok) {
-            if (popupUiHandlers != null) {
-                popupUiHandlers.onHide(autoClose, ok);
-            }
-        }
-    }
-
     private final ClientDispatchAsync clientDispatchAsync;
     private Volume volume;
 
@@ -157,6 +114,48 @@ public class VolumeEditPresenter extends MyPresenterWidget<VolumeEditPresenter.V
 
         } catch (final Exception e) {
             AlertEvent.fireError(this, e.getMessage(), null);
+        }
+    }
+
+    public interface VolumeEditView extends View {
+        ItemListBox<Node> getNode();
+
+        HasText getPath();
+
+        ItemListBox<VolumeType> getVolumeType();
+
+        ItemListBox<VolumeUseStatus> getStreamStatus();
+
+        ItemListBox<VolumeUseStatus> getIndexStatus();
+
+        HasText getBytesLimit();
+    }
+
+    private class DelegatePopupUiHandlers extends DefaultPopupUiHandlers {
+        private final PopupUiHandlers popupUiHandlers;
+
+        public DelegatePopupUiHandlers(final PopupUiHandlers popupUiHandlers) {
+            this.popupUiHandlers = popupUiHandlers;
+        }
+
+        @Override
+        public void onHideRequest(final boolean autoClose, final boolean ok) {
+            if (ok) {
+                write();
+            } else {
+                HidePopupEvent.fire(VolumeEditPresenter.this, VolumeEditPresenter.this, autoClose, ok);
+            }
+
+            if (popupUiHandlers != null) {
+                popupUiHandlers.onHideRequest(autoClose, ok);
+            }
+        }
+
+        @Override
+        public void onHide(final boolean autoClose, final boolean ok) {
+            if (popupUiHandlers != null) {
+                popupUiHandlers.onHide(autoClose, ok);
+            }
         }
     }
 }

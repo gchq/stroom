@@ -72,7 +72,7 @@ public class MarkerListCreator {
     }
 
     private void addLine(final String line, final Map<Severity, Integer> totals,
-            final Map<Severity, List<StoredError>> markers, final Severity[] expandedSeverities) {
+                         final Map<Severity, List<StoredError>> markers, final Severity[] expandedSeverities) {
         final String ln = line.trim();
         if (ln.length() > 0) {
             boolean added = false;

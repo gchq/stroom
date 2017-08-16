@@ -18,11 +18,11 @@ package stroom.pipeline.server.task;
 
 import org.junit.Ignore;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.tools.StoreCreationTool;
 import stroom.task.server.TaskManager;
+import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.annotation.Resource;
 
@@ -61,8 +61,8 @@ public class TestTranslationStepping extends AbstractCoreIntegrationTest {
     }
 
     private void test(final String converterDefinitionLocation, final String xsltLocation, final String inputDir,
-            final String extension, final TextConverterType textConverterType, final String outputName)
-                    throws Exception {
+                      final String extension, final TextConverterType textConverterType, final String outputName)
+            throws Exception {
         // FIXME : Fix this.
     }
 }

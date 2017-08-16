@@ -28,18 +28,13 @@ import stroom.widget.tab.client.presenter.LayerContainer;
 import stroom.widget.tab.client.presenter.TabBar;
 
 public class CurveTabLayoutViewImpl extends ViewImpl implements CurveTabLayoutView {
-    public interface Binder extends UiBinder<Widget, CurveTabLayoutViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     ResizeSimplePanel tabBarOuter;
     @UiField
     TabBar tabBar;
     @UiField
     LayerContainer layerContainer;
-
     @Inject
     public CurveTabLayoutViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -63,5 +58,8 @@ public class CurveTabLayoutViewImpl extends ViewImpl implements CurveTabLayoutVi
     @Override
     public void setRightIndent(final int indent) {
         tabBarOuter.getElement().getStyle().setRight(indent, Unit.PX);
+    }
+
+    public interface Binder extends UiBinder<Widget, CurveTabLayoutViewImpl> {
     }
 }

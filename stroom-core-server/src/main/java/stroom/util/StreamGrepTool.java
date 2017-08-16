@@ -205,7 +205,7 @@ public class StreamGrepTool extends AbstractCommandLineTool {
 
                 String aline = null;
                 while ((aline = lineNumberReader.readLine()) != null) {
-                    String lines[] = new String[] { aline };
+                    String lines[] = new String[]{aline};
                     if (addLineBreak != null) {
                         lines = aline.split(addLineBreak);
 

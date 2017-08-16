@@ -21,12 +21,10 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.framework.Advised;
-import stroom.AbstractCoreIntegrationTest;
 import stroom.security.shared.PermissionNames;
-import stroom.security.shared.User;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
-import stroom.security.shared.UserService;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.test.FileSystemTestUtil;
 
 import javax.annotation.Resource;
@@ -94,7 +92,7 @@ public class TestAppPermissionServiceImpl extends AbstractCoreIntegrationTest {
                 .getTargetSource().getTarget();
         final Set<String> set = userAppPermissionServiceImpl.getRequiredPermissionSet();
         Assert.assertNotNull(set);
-        Assert.assertEquals(19, set.size());
+        Assert.assertEquals(21, set.size());
 
         final Permission permission = new Permission();
         permission.setName(PermissionNames.ADMINISTRATOR);
@@ -162,11 +160,11 @@ public class TestAppPermissionServiceImpl extends AbstractCoreIntegrationTest {
 
         final Set<UserRef> allUsers = new HashSet<>();
         allUsers.add(user);
-        allUsers.addAll(userGroupsCache.get(user));
+        allUsers.addAll(userGroupsCache.getOrCreate(user));
 
         final Set<String> combinedPermissions = new HashSet<>();
         for (final UserRef userRef : allUsers) {
-            final UserAppPermissions userAppPermissions = userAppPermissionsCache.get(userRef);
+            final UserAppPermissions userAppPermissions = userAppPermissionsCache.getOrCreate(userRef);
             final Set<String> userPermissions = userAppPermissions.getUserPermissons();
             combinedPermissions.addAll(userPermissions);
         }
@@ -178,18 +176,18 @@ public class TestAppPermissionServiceImpl extends AbstractCoreIntegrationTest {
     }
 
     private UserRef createUser(final String name) {
-        User user = userService.createUser(name);
+        UserRef userRef = userService.createUser(name);
+        Assert.assertNotNull(userRef);
+        final User user = userService.loadByUuid(userRef.getUuid());
         Assert.assertNotNull(user);
-        user = userService.load(user);
-        Assert.assertNotNull(user);
-        return UserRef.create(user);
+        return UserRefFactory.create(user);
     }
 
     private UserRef createUserGroup(final String name) {
-        User user = userService.createUserGroup(name);
+        UserRef userRef = userService.createUserGroup(name);
+        Assert.assertNotNull(userRef);
+        final User user = userService.loadByUuid(userRef.getUuid());
         Assert.assertNotNull(user);
-        user = userService.load(user);
-        Assert.assertNotNull(user);
-        return UserRef.create(user);
+        return UserRefFactory.create(user);
     }
 }

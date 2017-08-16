@@ -21,6 +21,6 @@ import stroom.util.shared.SharedObject;
 import java.io.File;
 import java.util.ArrayList;
 
-public class FileArrayList extends ArrayList<File>implements SharedObject {
+public class FileArrayList extends ArrayList<File> implements SharedObject {
     private static final long serialVersionUID = -8296402199606588230L;
 }

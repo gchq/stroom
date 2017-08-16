@@ -35,11 +35,11 @@ import javax.persistence.Transient;
  * <p>
  * Class that stores meta data about streams (events or reference data).
  * </p>
- *
+ * <p>
  * <p>
  * This class is also used to 'key' the file on the file system.
  * </p>
- *
+ * <p>
  * <p>
  * Each stream has a overall status. This would be one of:
  * <ol>
@@ -134,7 +134,7 @@ public class Stream extends BaseEntityBig {
     }
 
     public static final Stream createStreamForTesting(final StreamType type, final Feed feed, final Long effectiveMs,
-            final long createMs) {
+                                                      final long createMs) {
         final Stream stream = new Stream();
 
         stream.streamType = type;
@@ -152,7 +152,7 @@ public class Stream extends BaseEntityBig {
     }
 
     public static final Stream createProcessedStream(final Stream parent, final Feed feed, final StreamType streamType,
-            final StreamProcessor streamProcessor, final StreamTask streamTask) {
+                                                     final StreamProcessor streamProcessor, final StreamTask streamTask) {
         final Stream stream = new Stream();
 
         if (parent != null) {
@@ -315,18 +315,18 @@ public class Stream extends BaseEntityBig {
         this.checkImmutable = checkImmutable;
     }
 
-	@Override
-	protected void toString(final StringBuilder sb) {
-		super.toString(sb);
-		if (streamType != null) {
-			sb.append(", type=");
-			sb.append(streamType.getId());
-		}
-		if (feed != null) {
-			sb.append(", feed=");
-			sb.append(feed.getId());
-		}
-	}
+    @Override
+    protected void toString(final StringBuilder sb) {
+        super.toString(sb);
+        if (streamType != null) {
+            sb.append(", type=");
+            sb.append(streamType.getId());
+        }
+        if (feed != null) {
+            sb.append(", feed=");
+            sb.append(feed.getId());
+        }
+    }
 
     @Transient
     @Override

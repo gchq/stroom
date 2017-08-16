@@ -36,20 +36,22 @@ import stroom.query.api.v1.ExpressionOperator;
 import stroom.query.api.v1.ExpressionTerm;
 import stroom.query.api.v1.SearchRequest;
 import stroom.statistics.server.sql.datasource.StatisticStoreCache;
+import stroom.statistics.server.sql.datasource.StatisticStoreValidator;
 import stroom.statistics.server.sql.exception.StatisticsEventValidationException;
+import stroom.statistics.server.sql.rollup.RollUpBitMask;
+import stroom.statistics.server.sql.rollup.RolledUpStatisticEvent;
+import stroom.statistics.server.sql.search.CountStatisticDataPoint;
 import stroom.statistics.server.sql.search.FilterTermsTree;
 import stroom.statistics.server.sql.search.FilterTermsTreeBuilder;
 import stroom.statistics.server.sql.search.FindEventCriteria;
 import stroom.statistics.server.sql.search.StatisticDataPoint;
 import stroom.statistics.server.sql.search.StatisticDataSet;
-import stroom.statistics.server.sql.datasource.StatisticStoreValidator;
-import stroom.statistics.server.sql.rollup.RollUpBitMask;
+import stroom.statistics.server.sql.search.ValueStatisticDataPoint;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.shared.common.CustomRollUpMask;
 import stroom.statistics.shared.common.StatisticRollUpType;
-import stroom.statistics.server.sql.rollup.RolledUpStatisticEvent;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomFrequencySchedule;
 
@@ -81,8 +83,7 @@ public class SQLStatisticEventStore implements Statistics {
 
     private static final int DEFAULT_POOL_SIZE = 10;
     private static final long DEFAULT_SIZE_THRESHOLD = 1000000L;
-    private static final Set<String> BLACK_LISTED_INDEX_FIELDS = new HashSet<>(
-            Arrays.asList(StatisticStoreEntity.FIELD_NAME_MIN_VALUE, StatisticStoreEntity.FIELD_NAME_MAX_VALUE));
+    private static final Set<String> BLACK_LISTED_INDEX_FIELDS = Collections.emptySet();
     /**
      * Keep half the time out our SQL insert threshold
      */
@@ -98,6 +99,11 @@ public class SQLStatisticEventStore implements Statistics {
             + "AND V." + SQLStatisticNames.TIME_MS + " < ?";
 
     // @formatter:on
+    private final StatisticStoreValidator statisticsDataSourceValidator;
+    private final StatisticStoreCache statisticsDataSourceCache;
+    private final SQLStatisticCache statisticCache;
+    private final DataSource statisticsDataSource;
+    private final StroomPropertyService propertyService;
     /**
      * SQL for testing querying the stat/tag names
      * <p>
@@ -118,13 +124,7 @@ public class SQLStatisticEventStore implements Statistics {
     private long poolAgeMsThreshold = DEFAULT_AGE_MS_THRESHOLD;
     private long aggregatorSizeThreshold = DEFAULT_SIZE_THRESHOLD;
     private int poolSize = DEFAULT_POOL_SIZE;
-
     private GenericObjectPool<SQLStatisticAggregateMap> objectPool;
-    private final StatisticStoreValidator statisticsDataSourceValidator;
-    private final StatisticStoreCache statisticsDataSourceCache;
-    private final SQLStatisticCache statisticCache;
-    private final DataSource statisticsDataSource;
-    private final StroomPropertyService propertyService;
 
     @Inject
     SQLStatisticEventStore(final StatisticStoreValidator statisticsDataSourceValidator,
@@ -654,7 +654,7 @@ public class SQLStatisticEventStore implements Statistics {
 
     private StatisticDataSet performStatisticQuery(final StatisticStoreEntity dataSource,
                                                    final FindEventCriteria criteria) {
-        final Set<StatisticDataPoint> dataPoints = new HashSet<StatisticDataPoint>();
+        final Set<StatisticDataPoint> dataPoints = new HashSet<>();
 
         // TODO need to fingure out how we get the precision
         final StatisticDataSet statisticDataSet = new StatisticDataSet(dataSource.getName(),
@@ -679,7 +679,7 @@ public class SQLStatisticEventStore implements Statistics {
                         StatisticDataPoint statisticDataPoint;
 
                         if (StatisticType.COUNT.equals(statisticType)) {
-                            statisticDataPoint = StatisticDataPoint.countInstance(timeMs, precisionMs, statisticTags,
+                            statisticDataPoint = new CountStatisticDataPoint(timeMs, precisionMs, statisticTags,
                                     rs.getLong(SQLStatisticNames.COUNT));
                         } else {
                             final double aggregatedValue = rs.getDouble(SQLStatisticNames.VALUE);
@@ -691,8 +691,8 @@ public class SQLStatisticEventStore implements Statistics {
                             final double averagedValue = count != 0 ? (aggregatedValue / count) : 0;
 
                             // min/max are not supported by SQL stats so use -1
-                            statisticDataPoint = StatisticDataPoint.valueInstance(timeMs, precisionMs, statisticTags,
-                                    averagedValue, count, -1, -1);
+                            statisticDataPoint = new ValueStatisticDataPoint(timeMs, precisionMs, statisticTags,
+                                    count, averagedValue);
                         }
 
                         statisticDataSet.addDataPoint(statisticDataPoint);
@@ -714,7 +714,7 @@ public class SQLStatisticEventStore implements Statistics {
      */
     private List<StatisticTag> extractStatisticTagsFromColumn(final String columnValue) {
         final String[] tokens = columnValue.split(SQLStatisticConstants.NAME_SEPARATOR);
-        final List<StatisticTag> statisticTags = new ArrayList<StatisticTag>();
+        final List<StatisticTag> statisticTags = new ArrayList<>();
 
         if (tokens.length == 1) {
             // no separators so there are no tags
@@ -801,7 +801,12 @@ public class SQLStatisticEventStore implements Statistics {
     private void putBatch(final List<StatisticEvent> eventsBatch) {
         if (eventsBatch.size() > 0) {
             final StatisticEvent firstEventInBatch = eventsBatch.get(0);
-            final StatisticStoreEntity statisticsDataSource = getStatisticsDataSource(firstEventInBatch.getName());
+            final String statName = firstEventInBatch.getName();
+            final StatisticStoreEntity statisticsDataSource = getStatisticsDataSource(statName);
+
+            if (statisticsDataSource == null) {
+                throw new RuntimeException(String.format("No statistic data source exists for name %s", statName));
+            }
             putEvents(eventsBatch, statisticsDataSource);
             eventsBatch.clear();
         }

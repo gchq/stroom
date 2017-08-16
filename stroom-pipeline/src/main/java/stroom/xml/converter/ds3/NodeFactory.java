@@ -25,26 +25,11 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class NodeFactory {
-    public enum NodeType {
-        ROOT("dataSplitter"), SPLIT("split"), REGEX("regex"), ALL("all"), GROUP("group"), VAR("var"), DATA("data");
-
-        private final String name;
-
-        NodeType(final String name) {
-            this.name = name;
-        }
-
-        public String getName() {
-            return name;
-        }
-    }
-
     private final String id;
-    private String xml;
     private final String xPath;
-    private String debugId;
     private final List<NodeFactory> childNodes;
-
+    private String xml;
+    private String debugId;
     public NodeFactory(final NodeFactory parent, final String id) {
         this.id = id;
 
@@ -173,4 +158,18 @@ public abstract class NodeFactory {
     }
 
     public abstract NodeType getNodeType();
+
+    public enum NodeType {
+        ROOT("dataSplitter"), SPLIT("split"), REGEX("regex"), ALL("all"), GROUP("group"), VAR("var"), DATA("data");
+
+        private final String name;
+
+        NodeType(final String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+    }
 }

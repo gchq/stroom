@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,7 +29,7 @@ import stroom.dashboard.shared.Sort.SortDirection;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.data.grid.client.DataGridViewImpl.Heading;
 import stroom.data.grid.client.DataGridViewImpl.HeadingListener;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
@@ -260,7 +260,7 @@ public class FieldsManager implements HeadingListener {
     }
 
     private void updateMenuItems(final Field field) {
-        final List<Item> menuItems = new ArrayList<Item>();
+        final List<Item> menuItems = new ArrayList<>();
         final Set<Item> highlights = new HashSet<>();
 
         // Create expression menu.
@@ -295,7 +295,7 @@ public class FieldsManager implements HeadingListener {
     }
 
     private Item createSortMenu(final Field field, final Set<Item> highlights) {
-        final List<Item> menuItems = new ArrayList<Item>();
+        final List<Item> menuItems = new ArrayList<>();
         menuItems.add(
                 createSortOption(field, highlights, 0, resources.sortaz(), "Sort A to Z", SortDirection.ASCENDING));
         menuItems.add(
@@ -318,7 +318,7 @@ public class FieldsManager implements HeadingListener {
     }
 
     private Item createGroupByMenu(final Field field, final Set<Item> highlights) {
-        final List<Item> menuItems = new ArrayList<Item>();
+        final List<Item> menuItems = new ArrayList<>();
         final int maxGroup = fixGroups(tableSettings.getFields());
         for (int i = 0; i < maxGroup; i++) {
             final int group = i;
@@ -387,13 +387,13 @@ public class FieldsManager implements HeadingListener {
 
     private int fixGroups(final List<Field> fields) {
         // Make a map that groups fields by group depth.
-        final Map<Integer, List<Field>> map = new HashMap<Integer, List<Field>>();
+        final Map<Integer, List<Field>> map = new HashMap<>();
         for (final Field field : fields) {
             final Integer group = field.getGroup();
             if (group != null) {
                 List<Field> groupedFields = map.get(group);
                 if (groupedFields == null) {
-                    groupedFields = new ArrayList<Field>();
+                    groupedFields = new ArrayList<>();
                     map.put(group, groupedFields);
                 }
 
@@ -402,7 +402,7 @@ public class FieldsManager implements HeadingListener {
         }
 
         // Fix group depths and add fields to grouped fields list.
-        final List<Integer> depths = new ArrayList<Integer>(map.keySet());
+        final List<Integer> depths = new ArrayList<>(map.keySet());
         Collections.sort(depths);
 
         for (int i = 0; i < depths.size(); i++) {
@@ -417,7 +417,7 @@ public class FieldsManager implements HeadingListener {
     }
 
     private Item createFilterMenu(final Field field, final Set<Item> highlights) {
-        final Item item = new IconMenuItem(3, GlyphIcons.FILTER, GlyphIcons.FILTER, "Filter", null, true, () -> filterField(field));
+        final Item item = new IconMenuItem(3, SvgPresets.FILTER, SvgPresets.FILTER, "Filter", null, true, () -> filterField(field));
         if (field.getFilter() != null && ((field.getFilter().getIncludes() != null
                 && field.getFilter().getIncludes().trim().length() > 0)
                 || (field.getFilter().getExcludes() != null && field.getFilter().getExcludes().trim().length() > 0))) {
@@ -436,7 +436,7 @@ public class FieldsManager implements HeadingListener {
     }
 
     private Item createRemoveMenu(final Field field, final Set<Item> highlights) {
-        final Item item = new IconMenuItem(5, GlyphIcons.REMOVE, GlyphIcons.REMOVE, "Remove", null, true, () -> deleteField(field));
+        final Item item = new IconMenuItem(5, SvgPresets.REMOVE, SvgPresets.REMOVE, "Remove", null, true, () -> deleteField(field));
         return item;
     }
 

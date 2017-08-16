@@ -22,6 +22,7 @@ import stroom.entity.server.MarshalOptions;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventBus;
 import stroom.security.Insecure;
+import stroom.task.server.GenericServerTask;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.task.TaskScopeRunnable;
 
@@ -88,7 +89,7 @@ public class ExplorerTreeModel implements InitializingBean {
 
     private TreeModel createModel() {
         final TreeModel treeModel = new TreeModelImpl();
-        final TaskScopeRunnable runnable = new TaskScopeRunnable(null) {
+        final TaskScopeRunnable runnable = new TaskScopeRunnable(GenericServerTask.create("Create Explorer Model", null)) {
             @Override
             protected void exec() {
                 // We don't need to do marshaling.

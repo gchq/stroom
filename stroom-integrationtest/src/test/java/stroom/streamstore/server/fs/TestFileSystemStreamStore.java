@@ -19,7 +19,6 @@ package stroom.streamstore.server.fs;
 import org.hibernate.LazyInitializationException;
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
 import stroom.entity.server.util.PeriodUtil;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
@@ -52,6 +51,7 @@ import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
 import stroom.streamtask.server.StreamTaskCreator;
 import stroom.task.server.TaskMonitorImpl;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.config.StroomProperties;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
@@ -138,22 +138,22 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         testCriteria(findStreamCriteria, 0);
     }
 
-	@Test
-	public void testFeedFindAll() throws Exception {
-		final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
-		findStreamCriteria.obtainFeeds().obtainInclude().add(feed1);
-		findStreamCriteria.obtainFeeds().obtainInclude().add(feed2);
-		testCriteria(findStreamCriteria, 2);
-	}
+    @Test
+    public void testFeedFindAll() throws Exception {
+        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
+        findStreamCriteria.obtainFeeds().obtainInclude().add(feed1);
+        findStreamCriteria.obtainFeeds().obtainInclude().add(feed2);
+        testCriteria(findStreamCriteria, 2);
+    }
 
-	@Test
-	public void testFeedFindSome() throws Exception {
-		final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
-		findStreamCriteria.setPageRequest(new PageRequest(0L, 1));
-		findStreamCriteria.obtainFeeds().obtainInclude().add(feed1);
-		findStreamCriteria.obtainFeeds().obtainInclude().add(feed2);
-		testCriteria(findStreamCriteria, 1);
-	}
+    @Test
+    public void testFeedFindSome() throws Exception {
+        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
+        findStreamCriteria.setPageRequest(new PageRequest(0L, 1));
+        findStreamCriteria.obtainFeeds().obtainInclude().add(feed1);
+        findStreamCriteria.obtainFeeds().obtainInclude().add(feed2);
+        testCriteria(findStreamCriteria, 1);
+    }
 
     @Test
     public void testFeedFindNone() throws Exception {
@@ -280,7 +280,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         findStreamCriteria.setPageRequest(new PageRequest(0L, 100));
         findStreamCriteria.obtainStatusSet().clear();
         findStreamCriteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
-        findStreamCriteria.setOrderBy(FindStreamCriteria.ORDER_BY_CREATE_MS);
+        findStreamCriteria.setSort(FindStreamCriteria.FIELD_CREATE_MS);
 
         findStreamCriteria.setCreatePeriod(PeriodUtil.createToDateWithOffset(System.currentTimeMillis(), 1));
         findStreamCriteria.setEffectivePeriod(PeriodUtil.createToDateWithOffset(System.currentTimeMillis(), 1));
@@ -606,7 +606,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     }
 
     private Stream buildRefData(final String feed, final int year, final int month, final StreamType type,
-            final boolean lock) throws IOException {
+                                final boolean lock) throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
         final Feed sample = setupFeed(feed);
@@ -744,8 +744,8 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
      * Test.
      */
     @Test
-    @StroomExpectedException(exception = { FileNotFoundException.class, StreamException.class, IOException.class,
-            RuntimeException.class })
+    @StroomExpectedException(exception = {FileNotFoundException.class, StreamException.class, IOException.class,
+            RuntimeException.class})
     public void testIOErrors() throws Exception {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 

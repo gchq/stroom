@@ -17,16 +17,17 @@
 package stroom.entity.server.util;
 
 import org.slf4j.Logger;
+import org.slf4j.spi.LocationAwareLogger;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 
 import java.util.Collection;
 
 public final class EntityServiceLogUtil {
-    static String FQCN = EntityServiceLogUtil.class.getName();
+    private static String FQCN = EntityServiceLogUtil.class.getName();
 
-    public static final void logQuery(final Logger logger, final String prefix,
-                                      final LogExecutionTime logExecutionTime, final Collection<?> rtnList, final SQLBuilder sql) {
+    public static void logQuery(final Logger logger, final String prefix,
+                                final LogExecutionTime logExecutionTime, final Collection<?> rtnList, final AbstractSqlBuilder sql) {
         final long duration = logExecutionTime.getDuration();
 
         if (duration > 1000 || logger.isDebugEnabled()) {
@@ -44,15 +45,15 @@ public final class EntityServiceLogUtil {
                 log.append(sql.toTraceString());
             }
             if (duration > 1000) {
-                logger.warn("{}, {}", FQCN, log.toString());
+                log(logger, LocationAwareLogger.WARN_INT, log.toString(), null);
             } else {
-                logger.debug("{}, {}", FQCN, log.toString());
+                log(logger, LocationAwareLogger.DEBUG_INT, log.toString(), null);
             }
         }
     }
 
     public static final void logUpdate(final Logger logger, final String prefix,
-                                       final LogExecutionTime logExecutionTime, final Long updateCount, final SQLBuilder sql) {
+                                       final LogExecutionTime logExecutionTime, final Long updateCount, final AbstractSqlBuilder sql) {
         final long duration = logExecutionTime.getDuration();
 
         if (duration > 1000 || logger.isDebugEnabled()) {
@@ -70,9 +71,38 @@ public final class EntityServiceLogUtil {
                 log.append(sql.toTraceString());
             }
             if (duration > 1000) {
-                logger.warn("{}, {}", FQCN, log.toString());
+                log(logger, LocationAwareLogger.WARN_INT, log.toString(), null);
             } else {
-                logger.debug("{}, {}", FQCN, log.toString());
+                log(logger, LocationAwareLogger.DEBUG_INT, log.toString(), null);
+            }
+        }
+    }
+
+    private static void log(final Logger logger, final int severity, final String message, final Throwable t) {
+        if (logger instanceof LocationAwareLogger) {
+            final LocationAwareLogger locationAwareLogger = (LocationAwareLogger) logger;
+            locationAwareLogger.log(null, FQCN, severity, message, null, t);
+
+        } else {
+            switch (severity) {
+                case LocationAwareLogger.TRACE_INT:
+                    logger.trace(message, t);
+                    break;
+                case LocationAwareLogger.DEBUG_INT:
+                    logger.debug(message, t);
+                    break;
+                case LocationAwareLogger.INFO_INT:
+                    logger.info(message, t);
+                    break;
+                case LocationAwareLogger.WARN_INT:
+                    logger.warn(message, t);
+                    break;
+                case LocationAwareLogger.ERROR_INT:
+                    logger.error(message, t);
+                    break;
+                default:
+                    logger.error(message, t);
+                    break;
             }
         }
     }

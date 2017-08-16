@@ -21,16 +21,10 @@ import org.xml.sax.Attributes;
 public class DataAttributes implements Attributes {
     private static final String BLANK = "";
     private static final String STRING = "string";
-
-    private enum Type {
-        NAME_VALUE, NAME_ONLY, VALUE_ONLY, NONE
-    }
-
-    private static final String[] NAME_VALUE = { "name", "value" };
-    private static final String[] NAME_ONLY = { "name" };
-    private static final String[] VALUE_ONLY = { "value" };
+    private static final String[] NAME_VALUE = {"name", "value"};
+    private static final String[] NAME_ONLY = {"name"};
+    private static final String[] VALUE_ONLY = {"value"};
     private static final String[] NONE = new String[0];
-
     private Type type;
     private String[] names;
     private String[] atts;
@@ -129,5 +123,9 @@ public class DataAttributes implements Attributes {
     @Override
     public String getValue(String qName) {
         return getValue(getIndex(qName));
+    }
+
+    private enum Type {
+        NAME_VALUE, NAME_ONLY, VALUE_ONLY, NONE
     }
 }

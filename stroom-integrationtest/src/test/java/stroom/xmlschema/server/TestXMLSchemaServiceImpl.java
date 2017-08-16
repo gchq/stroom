@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,8 +18,8 @@ package stroom.xmlschema.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestControl;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestControl;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XMLSchema;
 import stroom.xmlschema.shared.XMLSchemaService;
@@ -49,7 +49,7 @@ public class TestXMLSchemaServiceImpl extends AbstractCoreIntegrationTest {
         criteria.setNamespaceURI("event-logging:3");
         list = xmlSchemaService.find(criteria);
         Assert.assertNotNull(list);
-        Assert.assertEquals(1, list.size());
+        Assert.assertEquals(2, list.size());
 
         criteria = new FindXMLSchemaCriteria();
         criteria.setSystemId("file://event-logging-v3.0.0.xsd");
@@ -61,6 +61,6 @@ public class TestXMLSchemaServiceImpl extends AbstractCoreIntegrationTest {
         criteria.setSchemaGroup("EVENTS");
         list = xmlSchemaService.find(criteria);
         Assert.assertNotNull(list);
-        Assert.assertEquals(1, list.size());
+        Assert.assertEquals(2, list.size());
     }
 }

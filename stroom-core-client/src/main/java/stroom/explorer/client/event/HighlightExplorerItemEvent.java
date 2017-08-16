@@ -22,12 +22,7 @@ import com.google.gwt.event.shared.HasHandlers;
 import stroom.explorer.shared.ExplorerData;
 
 public class HighlightExplorerItemEvent extends GwtEvent<HighlightExplorerItemEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onHighlight(HighlightExplorerItemEvent event);
-    }
-
     private static Type<Handler> TYPE;
-
     private final ExplorerData item;
 
     private HighlightExplorerItemEvent(final ExplorerData item) {
@@ -40,7 +35,7 @@ public class HighlightExplorerItemEvent extends GwtEvent<HighlightExplorerItemEv
 
     public static Type<Handler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<Handler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }
@@ -57,5 +52,9 @@ public class HighlightExplorerItemEvent extends GwtEvent<HighlightExplorerItemEv
 
     public ExplorerData getItem() {
         return item;
+    }
+
+    public interface Handler extends EventHandler {
+        void onHighlight(HighlightExplorerItemEvent event);
     }
 }

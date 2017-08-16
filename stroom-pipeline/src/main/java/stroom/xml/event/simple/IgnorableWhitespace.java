@@ -30,13 +30,6 @@ public final class IgnorableWhitespace extends BaseEvent {
     private final String chars;
 
     /**
-     * Helper to build a simple IgnorableWhitespace element.
-     */
-    public static IgnorableWhitespace createSimple(final String chars) {
-        return new IgnorableWhitespace(chars);
-    }
-
-    /**
      * Used to build a simple IgnorableWhitespace element outside of a SAX
      * event.
      */
@@ -47,24 +40,26 @@ public final class IgnorableWhitespace extends BaseEvent {
     /**
      * Stores an ignorableWhitespace SAX event.
      *
-     * @param ch
-     *            the characters from the XML document
-     * @param start
-     *            the start position in the array
-     * @param length
-     *            the number of characters to read from the array
+     * @param ch     the characters from the XML document
+     * @param start  the start position in the array
+     * @param length the number of characters to read from the array
      */
     public IgnorableWhitespace(final char[] ch, final int start, final int length) {
         chars = new String(ch, start, length);
     }
 
     /**
+     * Helper to build a simple IgnorableWhitespace element.
+     */
+    public static IgnorableWhitespace createSimple(final String chars) {
+        return new IgnorableWhitespace(chars);
+    }
+
+    /**
      * Fires a stored SAX event at the supplied content handler.
      *
-     * @param handler
-     *            The content handler to fire the SAX event at.
-     * @throws SAXException
-     *             Necessary to maintain the SAX event contract.
+     * @param handler The content handler to fire the SAX event at.
+     * @throws SAXException Necessary to maintain the SAX event contract.
      * @see Event#fire(org.xml.sax.ContentHandler)
      */
     @Override

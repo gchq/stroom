@@ -47,10 +47,17 @@ import java.util.Map;
 import java.util.Set;
 
 public abstract class AbstractTabBar extends Widget implements TabBar, RequiresResize {
-    private final Map<TabData, AbstractTab> tabWidgetMap = new HashMap<TabData, AbstractTab>();
-    private final List<TabData> tabPriority = new ArrayList<TabData>();
-    private final List<TabData> tabs = new ArrayList<TabData>();
+    private final Map<TabData, AbstractTab> tabWidgetMap = new HashMap<>();
+    private final List<TabData> tabPriority = new ArrayList<>();
+    private final List<TabData> tabs = new ArrayList<>();
+    private final DoubleClickTest doubleClickTest = new DoubleClickTest();
     private TabData selectedTab;
+    private int overflowTabCount;
+    private TabListPresenter tabItemListPresenter;
+    private PopupSupport popupSupport;
+    private Object currentTargetObject;
+    private AbstractTabSelector tabSelector;
+    private List<Element> separators;
 
     public AbstractTabBar() {
         sinkEvents(Event.ONMOUSEDOWN | Event.ONMOUSEUP | Event.ONMOUSEOVER | Event.ONMOUSEOUT);
@@ -63,15 +70,6 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
     }
 
     protected abstract AbstractTabSelector createTabSelector();
-
-    private int overflowTabCount;
-    private TabListPresenter tabItemListPresenter;
-    private PopupSupport popupSupport;
-
-    private Object currentTargetObject;
-    private final DoubleClickTest doubleClickTest = new DoubleClickTest();
-    private AbstractTabSelector tabSelector;
-    private List<Element> separators;
 
     @Override
     public void addTab(final TabData tabData) {
@@ -179,7 +177,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
             overflowTabCount = 0;
 
             // Find the index of the last displayable tab.
-            final Set<TabData> displayable = new HashSet<TabData>();
+            final Set<TabData> displayable = new HashSet<>();
             boolean overflow = false;
             for (int i = 0; i < tabPriority.size(); i++) {
                 final TabData tabData = tabPriority.get(i);
@@ -258,7 +256,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
         final Element separator = createSeparator();
         if (separator != null) {
             if (separators == null) {
-                separators = new ArrayList<Element>();
+                separators = new ArrayList<>();
             }
             separators.add(separator);
             getElement().appendChild(separator);

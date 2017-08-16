@@ -51,7 +51,7 @@ public class RemoteServiceHandlerAdapter extends RemoteServiceServlet implements
     // jar. If you change where the webapp/ui files are stored, which is currently 'ui', then this path must change too.
     private static final String GWT_RPC_PATH = "/ui/stroom/%s.gwt.rpc";
     private static final long serialVersionUID = -7421136737990135393L;
-    private static ThreadLocal<Object> handlerHolder = new ThreadLocal<Object>();
+    private static ThreadLocal<Object> handlerHolder = new ThreadLocal<>();
     private transient ServletContext servletContext;
 
     @Resource
@@ -64,7 +64,7 @@ public class RemoteServiceHandlerAdapter extends RemoteServiceServlet implements
 
     @Override
     public ModelAndView handle(final HttpServletRequest request, final HttpServletResponse response,
-            final Object handler) throws Exception {
+                               final Object handler) throws Exception {
         try {
             if (!ThreadScopeContextHolder.contextExists()) {
                 throw new IllegalStateException("ThreadScopeContext MUST EXIST");
@@ -182,7 +182,7 @@ public class RemoteServiceHandlerAdapter extends RemoteServiceServlet implements
 
         String serializationPolicyFilePath = String.format(GWT_RPC_PATH, strongName);
 
-        try(InputStream is = getClass().getResourceAsStream(serializationPolicyFilePath)){
+        try (InputStream is = getClass().getResourceAsStream(serializationPolicyFilePath)) {
             return SerializationPolicyLoader.loadFromStream(is, null);
         } catch (ParseException | IOException e) {
             throw new RuntimeException(e);

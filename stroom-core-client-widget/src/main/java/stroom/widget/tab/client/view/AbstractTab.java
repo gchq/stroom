@@ -26,14 +26,14 @@ public abstract class AbstractTab extends Widget {
 
     protected abstract void setText(String text);
 
+    public boolean isHidden() {
+        return hidden;
+    }
+
     public void setHidden(final boolean hidden) {
         if (this.hidden != hidden) {
             this.hidden = hidden;
         }
-    }
-
-    public boolean isHidden() {
-        return hidden;
     }
 
     protected Element getCloseElement() {

@@ -36,8 +36,8 @@ public class SteppingResult implements SharedObject {
     }
 
     public SteppingResult(final Map<String, SteppingFilterSettings> stepFilterMap, final StepLocation stepLocation,
-            final SharedStepData stepData, final Integer currentStreamOffset, final boolean foundRecord,
-            final Set<String> generalErrors) {
+                          final SharedStepData stepData, final Integer currentStreamOffset, final boolean foundRecord,
+                          final Set<String> generalErrors) {
         // Copy the step filter map so it can be remembered across multiple
         // requests.
         this.stepFilterMap = stepFilterMap;

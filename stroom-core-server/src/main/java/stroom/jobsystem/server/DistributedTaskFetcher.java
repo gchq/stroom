@@ -63,28 +63,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Component
 public class DistributedTaskFetcher implements BeanFactoryAware {
     private static final Logger LOGGER = LoggerFactory.getLogger(DistributedTaskFetcher.class);
-
-    private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
-
     private static final long ONE_MINUTE = 60 * 1000;
     // Wait time for master to return tasks (5 minutes)
     private static final long WAIT_TIME = 5;
-
+    private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
+    private final AtomicBoolean stopping = new AtomicBoolean();
+    private final AtomicBoolean stopped = new AtomicBoolean();
+    private final AtomicBoolean fetchingTasks = new AtomicBoolean();
+    private final AtomicBoolean waitingToFetchTasks = new AtomicBoolean();
+    private final Set<Task<?>> runningTasks = Collections.newSetFromMap(new ConcurrentHashMap<>());
     @Resource
     private TaskManager taskManager;
     @Resource
     private JobNodeTrackerCache jobNodeTrackerCache;
     @Resource
     private NodeCache nodeCache;
-
     private BeanFactory beanFactory;
-
-    private final AtomicBoolean stopping = new AtomicBoolean();
-    private final AtomicBoolean stopped = new AtomicBoolean();
-    private final AtomicBoolean fetchingTasks = new AtomicBoolean();
-    private final AtomicBoolean waitingToFetchTasks = new AtomicBoolean();
-    private final Set<Task<?>> runningTasks = Collections.newSetFromMap(new ConcurrentHashMap<>());
-
     private long lastFetch;
 
     /**

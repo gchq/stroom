@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,8 +36,8 @@ public class Format implements Serializable {
     public static List<Type> TYPES = Arrays.asList(Type.GENERAL, Type.NUMBER, Type.DATE_TIME, Type.TEXT);
     @XmlElement(name = "type")
     private Type type;
-    @XmlElements({ @XmlElement(name = "numberFormatSettings", type = NumberFormatSettings.class),
-            @XmlElement(name = "dateTimeFormatSettings", type = DateTimeFormatSettings.class) })
+    @XmlElements({@XmlElement(name = "numberFormatSettings", type = NumberFormatSettings.class),
+            @XmlElement(name = "dateTimeFormatSettings", type = DateTimeFormatSettings.class)})
     private FormatSettings settings;
     @XmlElement(name = "wrap")
     private Boolean wrap;

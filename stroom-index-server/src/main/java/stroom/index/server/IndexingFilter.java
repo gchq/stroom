@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,36 +20,34 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MarkerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-import stroom.index.server.CachedIndexService.CachedIndex;
+import stroom.entity.shared.DocRefUtil;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldType;
+import stroom.index.shared.IndexFieldsMap;
 import stroom.index.shared.IndexShardKey;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ErrorStatistics;
 import stroom.pipeline.server.errorhandler.LoggedException;
 import stroom.pipeline.server.factory.ConfigurableElement;
+import stroom.pipeline.server.factory.ElementIcons;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.server.filter.AbstractXMLFilter;
-import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.StreamHolder;
-import stroom.search.server.IndexFieldsMap;
 import stroom.util.CharBuffer;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
-import java.util.concurrent.locks.Lock;
+import javax.inject.Inject;
 
 /**
  * The index filter... takes the index XML and builds the LUCENE documents
@@ -58,35 +56,41 @@ import java.util.concurrent.locks.Lock;
 @Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(type = "IndexingFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE}, icon = ElementIcons.INDEX)
-public class IndexingFilter extends AbstractXMLFilter {
+class IndexingFilter extends AbstractXMLFilter {
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexingFilter.class);
-
-    private static final StripedLock WRITER_KEY_LOCKS = new StripedLock();
 
     private static final String RECORD = "record";
     private static final String DATA = "data";
     private static final String NAME = "name";
     private static final String VALUE = "value";
+
+    private final StreamHolder streamHolder;
+    private final LocationFactoryProxy locationFactory;
+    private final Indexer indexer;
+    private final ErrorReceiverProxy errorReceiverProxy;
+    private final IndexConfigCache indexConfigCache;
     private final CharBuffer debugBuffer = new CharBuffer(10);
-    @Resource
-    private StreamHolder streamHolder;
-    @Resource
-    private LocationFactoryProxy locationFactory;
-    @Resource
-    private IndexShardWriterCache indexShardCache;
-    @Resource
-    private ErrorReceiverProxy errorReceiverProxy;
-    @Resource
-    private CachedIndexService cachedIndexService;
     private IndexFieldsMap indexFieldsMap;
     private Index index;
     private IndexShardKey indexShardKey;
-    private IndexShardWriter indexShardWriter;
     private Document document;
 
     private int fieldsIndexed = 0;
 
     private Locator locator;
+
+    @Inject
+    IndexingFilter(final StreamHolder streamHolder,
+                   final LocationFactoryProxy locationFactory,
+                   final Indexer indexer,
+                   final ErrorReceiverProxy errorReceiverProxy,
+                   final IndexConfigCache indexConfigCache) {
+        this.streamHolder = streamHolder;
+        this.locationFactory = locationFactory;
+        this.indexer = indexer;
+        this.errorReceiverProxy = errorReceiverProxy;
+        this.indexConfigCache = indexConfigCache;
+    }
 
     /**
      * Initialise
@@ -100,14 +104,14 @@ public class IndexingFilter extends AbstractXMLFilter {
             }
 
             // Get the index and index fields from the cache.
-            final CachedIndex cachedIndex = cachedIndexService.get(index);
-            if (cachedIndex == null) {
+            final IndexConfig indexConfig = indexConfigCache.getOrCreate(DocRefUtil.create(index));
+            if (indexConfig == null) {
                 log(Severity.FATAL_ERROR, "Unable to load index", null);
                 throw new LoggedException("Unable to load index");
             }
 
-            index = cachedIndex.getIndex();
-            indexFieldsMap = cachedIndex.getIndexFieldsMap();
+            index = indexConfig.getIndex();
+            indexFieldsMap = indexConfig.getIndexFieldsMap();
 
             // Create a key to create shards with.
             if (streamHolder == null || streamHolder.getStream() == null) {
@@ -190,38 +194,7 @@ public class IndexingFilter extends AbstractXMLFilter {
         // have indexed some fields.
         if (fieldsIndexed > 0) {
             try {
-                boolean success = false;
-                while (!success) {
-                    success = indexShardWriter != null && indexShardWriter.addDocument(document);
-
-                    if (!success) {
-                        // If we failed then try under lock to make sure we get a new writer.
-                        final Lock lock = WRITER_KEY_LOCKS.getLockForKey(indexShardKey);
-                        lock.lock();
-                        try {
-                            // Ask the cache for the current one (it might have been changed by another thread) and try again.
-                            indexShardWriter = getIndexShardWriter();
-                            success = indexShardWriter.addDocument(document);
-
-                            if (!success) {
-                                // Failed to add it so remove this object from the cache and try to get another one.
-                                indexShardCache.remove(indexShardKey);
-
-                                // Ask the pool for another one and try again
-                                final IndexShardWriter newWriter = getIndexShardWriter();
-                                if (newWriter == indexShardWriter) {
-                                    LOGGER.error(MarkerFactory.getMarker("FATAL"), "Expected a new writer but got the same one back!!!");
-                                    throw new IndexException("Expected a new writer but got the same one back!!!");
-                                }
-
-                                indexShardWriter = newWriter;
-                            }
-
-                        } finally {
-                            lock.unlock();
-                        }
-                    }
-                }
+                indexer.addDocument(indexShardKey, document);
             } catch (final RuntimeException e) {
                 log(Severity.FATAL_ERROR, e.getMessage(), e);
                 // Terminate processing as this is a fatal error.
@@ -272,16 +245,6 @@ public class IndexingFilter extends AbstractXMLFilter {
         } catch (final RuntimeException e) {
             log(Severity.ERROR, e.getMessage(), e);
         }
-    }
-
-    private IndexShardWriter getIndexShardWriter() throws IndexException {
-        indexShardWriter = indexShardCache.get(indexShardKey);
-        if (indexShardWriter == null) {
-            throw new IndexException("Unable to get writer for index '" + indexShardKey.getIndex().getName()
-                    + "'. Please check the index has active volumes.");
-        }
-
-        return indexShardWriter;
     }
 
     @PipelineProperty(description = "The index to send records to.")

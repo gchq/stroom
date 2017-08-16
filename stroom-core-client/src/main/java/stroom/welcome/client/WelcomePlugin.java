@@ -25,10 +25,10 @@ import stroom.security.client.event.CurrentUserChangedEvent;
 import stroom.security.client.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
 import stroom.welcome.client.presenter.WelcomePresenter;
 
-public class WelcomePlugin extends ContentPlugin<WelcomePresenter>implements CurrentUserChangedHandler {
+public class WelcomePlugin extends ContentPlugin<WelcomePresenter> implements CurrentUserChangedHandler {
     @Inject
     public WelcomePlugin(final EventBus eventBus, final ContentManager eventManager,
-            final Provider<WelcomePresenter> presenterProvider) {
+                         final Provider<WelcomePresenter> presenterProvider) {
         super(eventBus, eventManager, presenterProvider);
 
         registerHandler(getEventBus().addHandler(CurrentUserChangedEvent.getType(), this));

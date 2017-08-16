@@ -17,6 +17,8 @@
 package stroom.dispatch.client;
 
 public interface RestService {
+    Response send(String path, String json);
+
     interface SuccessHandler {
         void handle(String json);
     }
@@ -30,6 +32,4 @@ public interface RestService {
 
         void onFailure(FailureHandler handler);
     }
-
-    Response send(String path, String json);
 }

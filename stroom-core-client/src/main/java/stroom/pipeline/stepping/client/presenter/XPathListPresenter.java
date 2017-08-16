@@ -39,10 +39,10 @@ public class XPathListPresenter extends MyPresenterWidget<DataGridView<XPathFilt
 
     @Inject
     public XPathListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
-        super(eventBus, new DataGridViewImpl<XPathFilter>(true, true));
+        super(eventBus, new DataGridViewImpl<>(true, true));
         initTableColumns();
 
-        dataProvider = new ListDataProvider<XPathFilter>(new ArrayList<XPathFilter>());
+        dataProvider = new ListDataProvider<>(new ArrayList<>());
         dataProvider.addDataDisplay(getView().getDataDisplay());
     }
 

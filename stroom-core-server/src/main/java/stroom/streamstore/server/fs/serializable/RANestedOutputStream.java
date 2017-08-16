@@ -36,8 +36,7 @@ public class RANestedOutputStream extends NestedOutputStream {
      * Create a default segment output stream for a given target (creates a
      * child stream for you).
      *
-     * @param streamTarget
-     *            to write the data to.
+     * @param streamTarget to write the data to.
      */
     public RANestedOutputStream(final StreamTarget streamTarget) throws IOException {
         segmentOutputStream = new RASegmentOutputStream(streamTarget.getOutputStream(),

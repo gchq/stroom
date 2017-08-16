@@ -65,7 +65,7 @@ public final class EventListUtils {
             th.setResult(new StreamResult(outputStream));
 
             // Unwind all buffered events into the handler.
-            final Deque<Event> openElements = new ArrayDeque<Event>();
+            final Deque<Event> openElements = new ArrayDeque<>();
             for (final Event event : events) {
                 if (event.isStartElement()) {
                     openElements.push(event);
@@ -170,7 +170,7 @@ public final class EventListUtils {
      * {@link javax.xml.transform.Transformer#getOutputProperties()}
      *
      * @return a newly-constructed Properties object holding the declared
-     *         serialization properties
+     * serialization properties
      */
     private static Properties getOutputProperties() {
         final Map<Property, String> properties = new HashMap<>(10);

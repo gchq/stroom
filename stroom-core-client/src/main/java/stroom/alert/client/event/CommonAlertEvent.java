@@ -24,19 +24,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 public abstract class CommonAlertEvent<H extends EventHandler> extends GwtEvent<H> {
     private final SafeHtml message;
     private final SafeHtml detail;
-
-    public enum Level {
-        INFO, QUESTION, WARN, ERROR
-    }
-
     private Level level = Level.WARN;
-
-    static SafeHtml fromString(final String string) {
-        if (string == null) {
-            return null;
-        }
-        return SafeHtmlUtils.fromString(string);
-    }
 
     protected CommonAlertEvent(final SafeHtml message) {
         this.message = message;
@@ -55,6 +43,13 @@ public abstract class CommonAlertEvent<H extends EventHandler> extends GwtEvent<
         this.detail = null;
     }
 
+    static SafeHtml fromString(final String string) {
+        if (string == null) {
+            return null;
+        }
+        return SafeHtmlUtils.fromString(string);
+    }
+
     public SafeHtml getMessage() {
         return message;
     }
@@ -65,5 +60,9 @@ public abstract class CommonAlertEvent<H extends EventHandler> extends GwtEvent<
 
     public SafeHtml getDetail() {
         return detail;
+    }
+
+    public enum Level {
+        INFO, QUESTION, WARN, ERROR
     }
 }

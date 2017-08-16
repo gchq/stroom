@@ -34,7 +34,7 @@ import java.util.zip.ZipOutputStream;
  * <p>
  * Runnable Java Program that can act as a test client to the data feed.
  * </p>
- *
+ * <p>
  * <p>
  * Duplicate class with no reuse to allow copy to be placed in documentation.
  * </p>
@@ -64,7 +64,7 @@ public final class ErrorDataFeedClient {
 
     public static void main(final String[] args) {
         try {
-            final HashMap<String, String> argsMap = new HashMap<String, String>();
+            final HashMap<String, String> argsMap = new HashMap<>();
             for (int i = 0; i < args.length; i++) {
                 final String[] split = args[i].split("=");
                 if (split.length > 1) {

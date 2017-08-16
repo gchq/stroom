@@ -18,8 +18,8 @@ package stroom.xml.converter.xmlfragment;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractProcessIntegrationTest;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
+import stroom.test.AbstractProcessIntegrationTest;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.task.TaskScopeContextHolder;
 import stroom.xml.F2XTestUtil;
@@ -35,8 +35,7 @@ public class TestXMLFragmentWrapper extends AbstractProcessIntegrationTest {
     /**
      * Tests a basic XML fragment.
      *
-     * @throws Exception
-     *             Might be thrown while performing the test.
+     * @throws Exception Might be thrown while performing the test.
      */
     @Test
     public void testBasicFragment() throws Exception {

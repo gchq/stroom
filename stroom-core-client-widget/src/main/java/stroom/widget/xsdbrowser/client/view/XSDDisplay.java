@@ -43,13 +43,11 @@ import java.util.List;
 import java.util.Map;
 
 public class XSDDisplay extends Composite {
-    private final FlowPanel contentPanel = new FlowPanel();
-
-    XSDModel model;
-
-    private final Map<XSDNode, Integer> rowMap = new HashMap<>();
-    SelectionMap selectionMap;
     private static final Resources resources = GWT.create(Resources.class);
+    private final FlowPanel contentPanel = new FlowPanel();
+    private final Map<XSDNode, Integer> rowMap = new HashMap<>();
+    XSDModel model;
+    SelectionMap selectionMap;
 
     public XSDDisplay() {
         contentPanel.setStyleName("content");
@@ -201,8 +199,8 @@ public class XSDDisplay extends Composite {
     }
 
     private Grid getNodeListDisplay(final VerticalPanel layoutColumn, final SelectionMap map, final XSDNode node,
-            final boolean showAttributes, final boolean showElements, final boolean showComplexTypes,
-            final boolean showSimpleTypes, final boolean showOccurance) {
+                                    final boolean showAttributes, final boolean showElements, final boolean showComplexTypes,
+                                    final boolean showSimpleTypes, final boolean showOccurance) {
         Grid layout = null;
 
         if (node != null) {
@@ -306,8 +304,8 @@ public class XSDDisplay extends Composite {
     }
 
     private int addNode(final VerticalPanel layoutColumn, final Grid layout, final SelectionMap map, final XSDNode node,
-            final boolean showOccurrence, final boolean addSeparator, final int initialRow, final int initialCol,
-            final XSDTypeFilter typeFilter) {
+                        final boolean showOccurrence, final boolean addSeparator, final int initialRow, final int initialCol,
+                        final XSDTypeFilter typeFilter) {
         int row = initialRow;
         final int col = initialCol;
 
@@ -366,7 +364,7 @@ public class XSDDisplay extends Composite {
     }
 
     private void addChild(final Grid layout, final SelectionMap map, final XSDNode node, final boolean showOccurance,
-            final int row, final int col) {
+                          final int row, final int col) {
         // Ensure layout size.
         if (layout.getRowCount() < row + 1) {
             layout.resizeRows(row + 1);
@@ -521,41 +519,41 @@ public class XSDDisplay extends Composite {
         String title = null;
 
         switch (type) {
-        case ALL:
-            resource = resources.xsdAll();
-            title = "All";
-            break;
-        case ANY:
-            resource = resources.xsdAny();
-            break;
-        case ATTRIBUTE:
-            resource = resources.xsdAttribute();
-            break;
-        case CHOICE:
-            resource = resources.xsdChoice();
-            title = "Choice";
-            break;
-        case COMPLEX_TYPE:
-            resource = resources.xsdComplexType();
-            break;
-        case ELEMENT:
-            resource = resources.xsdElement();
-            break;
-        case ELEMENT_REF:
-            resource = resources.xsdElementRef();
-            break;
-        case SCHEMA:
-            resource = resources.xsdTitleSchema();
-            break;
-        case SEQUENCE:
-            resource = resources.xsdSequence();
-            title = "Sequence";
-            break;
-        case SIMPLE_TYPE:
-            resource = resources.xsdSimpleType();
-            break;
-        default:
-            break;
+            case ALL:
+                resource = resources.xsdAll();
+                title = "All";
+                break;
+            case ANY:
+                resource = resources.xsdAny();
+                break;
+            case ATTRIBUTE:
+                resource = resources.xsdAttribute();
+                break;
+            case CHOICE:
+                resource = resources.xsdChoice();
+                title = "Choice";
+                break;
+            case COMPLEX_TYPE:
+                resource = resources.xsdComplexType();
+                break;
+            case ELEMENT:
+                resource = resources.xsdElement();
+                break;
+            case ELEMENT_REF:
+                resource = resources.xsdElementRef();
+                break;
+            case SCHEMA:
+                resource = resources.xsdTitleSchema();
+                break;
+            case SEQUENCE:
+                resource = resources.xsdSequence();
+                title = "Sequence";
+                break;
+            case SIMPLE_TYPE:
+                resource = resources.xsdSimpleType();
+                break;
+            default:
+                break;
         }
 
         if (resource != null) {

@@ -8,7 +8,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class EqualsBuilderTest {
 
     @Test
-    public void testIntArrays(){
+    public void testIntArrays() {
         int[] array1 = {1, 2, 3};
         int[] array2 = {1, 2, 3};
         int[] array3 = {1, 2, 99};

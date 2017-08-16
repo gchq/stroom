@@ -25,7 +25,7 @@ import stroom.node.shared.Node;
 
 import javax.annotation.Resource;
 
-@EntityEventHandler(type = Node.ENTITY_TYPE, action = { EntityAction.UPDATE, EntityAction.DELETE })
+@EntityEventHandler(type = Node.ENTITY_TYPE, action = {EntityAction.UPDATE, EntityAction.DELETE})
 @Component
 public class NodeCache implements Clearable, EntityEvent.Handler {
     private volatile NodeServiceGetDefaultNode nodeService;

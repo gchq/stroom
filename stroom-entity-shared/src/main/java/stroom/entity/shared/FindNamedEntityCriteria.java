@@ -17,7 +17,7 @@
 package stroom.entity.shared;
 
 public abstract class FindNamedEntityCriteria extends BaseCriteria {
-    public static final OrderBy ORDER_BY_NAME = new OrderBy("Name", "name", true);
+    public static final String FIELD_NAME = "Name";
     private static final long serialVersionUID = -970306839701196839L;
     private StringCriteria name = new StringCriteria();
 

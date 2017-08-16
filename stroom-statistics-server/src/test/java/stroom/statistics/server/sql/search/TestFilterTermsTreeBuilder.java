@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,27 +16,26 @@
 
 package stroom.statistics.server.sql.search;
 
+import org.junit.Assert;
 import org.junit.Test;
 import stroom.query.api.v1.ExpressionBuilder;
 import stroom.query.api.v1.ExpressionOperator.Op;
 import stroom.query.api.v1.ExpressionTerm.Condition;
+import stroom.statistics.server.sql.datasource.StatisticStoreEntityService;
 import stroom.statistics.server.sql.search.FilterTermsTree.OperatorNode;
 import stroom.statistics.server.sql.search.FilterTermsTree.TermNode;
 import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.statistics.server.sql.datasource.StatisticStoreEntityService;
 import stroom.util.test.StroomUnitTest;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.junit.Assert.*;
-
 public class TestFilterTermsTreeBuilder extends StroomUnitTest {
     Set<String> fieldBlackList = new HashSet<>(Arrays.asList(StatisticStoreEntity.FIELD_NAME_DATE_TIME));
 
     /**
-     * Verify that a tree of {@link stroom.query.api.ExpressionItem} objects can be converted
+     * Verify that a tree of {@link stroom.query.api.v1.ExpressionItem} objects can be converted
      * correctly into a {@link FilterTermsTree}
      */
     @Test
@@ -80,40 +79,40 @@ public class TestFilterTermsTreeBuilder extends StroomUnitTest {
 
         final OperatorNode newOp1 = (OperatorNode) filterTermsTree.getRootNode();
 
-        assertEquals(op1.build().getOp().toString(), newOp1.getFilterOperationMode().toString());
+        Assert.assertEquals(op1.build().getOp().toString(), newOp1.getFilterOperationMode().toString());
 
         final OperatorNode newTerm1OpNode = (OperatorNode) newOp1.getChildren().get(0);
-        assertEquals(Op.OR.toString(), newTerm1OpNode.getFilterOperationMode().toString());
-        assertEquals(3, newTerm1OpNode.getChildren().size());
+        Assert.assertEquals(Op.OR.toString(), newTerm1OpNode.getFilterOperationMode().toString());
+        Assert.assertEquals(3, newTerm1OpNode.getChildren().size());
 
         final TermNode newTerm1SubTerm1 = (TermNode) newTerm1OpNode.getChildren().get(0);
         final TermNode newTerm1SubTerm2 = (TermNode) newTerm1OpNode.getChildren().get(1);
         final TermNode newTerm1SubTerm3 = (TermNode) newTerm1OpNode.getChildren().get(2);
 
-        assertEquals("term1field", newTerm1SubTerm1.getTag());
-        assertEquals(term1value1, newTerm1SubTerm1.getValue());
-        assertEquals("term1field", newTerm1SubTerm2.getTag());
-        assertEquals(term1value2, newTerm1SubTerm2.getValue());
-        assertEquals("term1field", newTerm1SubTerm3.getTag());
-        assertEquals(term1value3, newTerm1SubTerm3.getValue());
+        Assert.assertEquals("term1field", newTerm1SubTerm1.getTag());
+        Assert.assertEquals(term1value1, newTerm1SubTerm1.getValue());
+        Assert.assertEquals("term1field", newTerm1SubTerm2.getTag());
+        Assert.assertEquals(term1value2, newTerm1SubTerm2.getValue());
+        Assert.assertEquals("term1field", newTerm1SubTerm3.getTag());
+        Assert.assertEquals(term1value3, newTerm1SubTerm3.getValue());
 
         final OperatorNode newOp2 = (OperatorNode) newOp1.getChildren().get(1);
 
-        assertEquals(op2.build().getOp().toString(), newOp2.getFilterOperationMode().toString());
+        Assert.assertEquals(op2.build().getOp().toString(), newOp2.getFilterOperationMode().toString());
 
         final TermNode newTerm2 = (TermNode) newOp2.getChildren().get(0);
         final TermNode newTerm3 = (TermNode) newOp2.getChildren().get(1);
         final OperatorNode newOp3 = (OperatorNode) newOp2.getChildren().get(2);
 
-        assertEquals("term2field", newTerm2.getTag());
-        assertEquals("term2value", newTerm2.getValue());
-        assertEquals("term3field", newTerm3.getTag());
-        assertEquals("term3value", newTerm3.getValue());
-        assertEquals(op3.build().getOp().toString(), newOp3.getFilterOperationMode().toString());
+        Assert.assertEquals("term2field", newTerm2.getTag());
+        Assert.assertEquals("term2value", newTerm2.getValue());
+        Assert.assertEquals("term3field", newTerm3.getTag());
+        Assert.assertEquals("term3value", newTerm3.getValue());
+        Assert.assertEquals(op3.build().getOp().toString(), newOp3.getFilterOperationMode().toString());
 
         final TermNode newTerm4 = (TermNode) newOp3.getChildren().get(0);
-        assertEquals("term4field", newTerm4.getTag());
-        assertEquals("term4value", newTerm4.getValue());
+        Assert.assertEquals("term4field", newTerm4.getTag());
+        Assert.assertEquals("term4value", newTerm4.getValue());
     }
 
     @Test
@@ -155,7 +154,7 @@ public class TestFilterTermsTreeBuilder extends StroomUnitTest {
         final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(and.build(), fieldBlackList);
 
         // if we get here without an exception then it has worked as planned
-        assertTrue(filterTermsTree != null);
+        Assert.assertTrue(filterTermsTree != null);
 
     }
 
@@ -169,8 +168,8 @@ public class TestFilterTermsTreeBuilder extends StroomUnitTest {
 
         final TermNode term2Node = (TermNode) filterTermsTree.getRootNode();
 
-        assertEquals("term1field", term2Node.getTag());
-        assertEquals("123456789", term2Node.getValue());
+        Assert.assertEquals("term1field", term2Node.getTag());
+        Assert.assertEquals("123456789", term2Node.getValue());
 
     }
 
@@ -184,6 +183,6 @@ public class TestFilterTermsTreeBuilder extends StroomUnitTest {
 
         final TermNode term2Node = (TermNode) filterTermsTree.getRootNode();
 
-        assertNull(term2Node);
+        Assert.assertNull(term2Node);
     }
 }

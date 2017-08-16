@@ -17,27 +17,7 @@
 package stroom.streamstore.client.view;
 
 public class FileData {
-    public enum Status {
-        UPLOADING("Uploading"), COMPLETE("Complete"), FAILED("Failed");
-
-        private final String displayValue;
-
-        Status(final String displayValue) {
-            this.displayValue = displayValue;
-        }
-
-        public String getDisplayValue() {
-            return displayValue;
-        }
-
-        @Override
-        public String toString() {
-            return getDisplayValue();
-        }
-    }
-
     private String fileName;
-
     private Long effectiveMs;
     private Status status = Status.UPLOADING;
     private String size = "";
@@ -72,5 +52,24 @@ public class FileData {
 
     public void setSize(String size) {
         this.size = size;
+    }
+
+    public enum Status {
+        UPLOADING("Uploading"), COMPLETE("Complete"), FAILED("Failed");
+
+        private final String displayValue;
+
+        Status(final String displayValue) {
+            this.displayValue = displayValue;
+        }
+
+        public String getDisplayValue() {
+            return displayValue;
+        }
+
+        @Override
+        public String toString() {
+            return getDisplayValue();
+        }
     }
 }

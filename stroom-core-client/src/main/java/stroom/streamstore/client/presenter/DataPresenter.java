@@ -66,15 +66,15 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private final ClientDispatchAsync dispatcher;
     private final PagerRows pageRows;
     private final PagerRows streamRows;
-    private final Map<StreamType, OffsetRange<Long>> streamTypeOffsetRangeMap = new HashMap<StreamType, OffsetRange<Long>>();
+    private final Map<StreamType, OffsetRange<Long>> streamTypeOffsetRangeMap = new HashMap<>();
     private final boolean userHasPipelineSteppingPermission;
 
     private boolean errorMarkerMode = true;
     private Long currentStreamId;
     private StreamType currentStreamType;
     private StreamType currentChildStreamType;
-    private OffsetRange<Long> currentStreamRange = new OffsetRange<Long>(0L, 1L);
-    private OffsetRange<Long> currentPageRange = new OffsetRange<Long>(0L, 100L);
+    private OffsetRange<Long> currentStreamRange = new OffsetRange<>(0L, 1L);
+    private OffsetRange<Long> currentPageRange = new OffsetRange<>(0L, 100L);
     private AbstractFetchDataResult lastResult;
     private List<FetchDataAction> actionQueue;
     private Timer delayedFetchDataTimer;
@@ -180,12 +180,12 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     private void fetchDataForCurrentStreamNo(final StreamType childStreamType) {
-        currentStreamRange = new OffsetRange<Long>(currentStreamRange.getOffset(), 1L);
+        currentStreamRange = new OffsetRange<>(currentStreamRange.getOffset(), 1L);
 
         streamTypeOffsetRangeMap.put(currentChildStreamType, currentPageRange);
         currentPageRange = streamTypeOffsetRangeMap.get(childStreamType);
         if (currentPageRange == null) {
-            currentPageRange = new OffsetRange<Long>(0L, 100L);
+            currentPageRange = new OffsetRange<>(0L, 100L);
         }
 
         this.currentChildStreamType = childStreamType;
@@ -195,8 +195,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     public void fetchData(final boolean fireEvents, final Long streamId, final StreamType childStreamType) {
         this.currentStreamId = streamId;
         this.currentChildStreamType = childStreamType;
-        currentStreamRange = new OffsetRange<Long>(0L, 1L);
-        currentPageRange = new OffsetRange<Long>(0L, 100L);
+        currentStreamRange = new OffsetRange<>(0L, 1L);
+        currentPageRange = new OffsetRange<>(0L, 100L);
         streamTypeOffsetRangeMap.clear();
         markerListPresenter.resetExpandedSeverities();
         update(fireEvents);
@@ -205,8 +205,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     public void fetchData(final Stream stream) {
         this.currentStreamId = stream.getId();
         this.currentStreamType = stream.getStreamType();
-        currentStreamRange = new OffsetRange<Long>(0L, 1L);
-        currentPageRange = new OffsetRange<Long>(0L, 100L);
+        currentStreamRange = new OffsetRange<>(0L, 1L);
+        currentPageRange = new OffsetRange<>(0L, 100L);
         streamTypeOffsetRangeMap.clear();
         markerListPresenter.resetExpandedSeverities();
         update(true);
@@ -482,8 +482,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         if (!EqualsUtil.isEquals(currentStreamId, highlightStreamId)
                 || !EqualsUtil.isEquals(currentChildStreamType, highlightChildStreamType) || oldStreamNo != newStreamNo
                 || oldPageOffset != newPageOffset) {
-            currentStreamRange = new OffsetRange<Long>(newStreamNo, 1L);
-            currentPageRange = new OffsetRange<Long>(newPageOffset, pageLength);
+            currentStreamRange = new OffsetRange<>(newStreamNo, 1L);
+            currentPageRange = new OffsetRange<>(newPageOffset, pageLength);
 
             fetchData(false, highlightStreamId, highlightChildStreamType);
         } else {
@@ -522,7 +522,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private static abstract class PagerRows implements HasRows {
         private final SimpleEventBus simpleEventBus = new SimpleEventBus();
         private Range visibleRange;
-        private RowCount<Integer> rowCount = new RowCount<Integer>(0, false);
+        private RowCount<Integer> rowCount = new RowCount<>(0, false);
 
         public PagerRows(final int length) {
             visibleRange = new Range(0, length);
@@ -546,7 +546,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         @Override
         public void setRowCount(final int count, final boolean exact) {
-            rowCount = new RowCount<Integer>(count, exact);
+            rowCount = new RowCount<>(count, exact);
         }
 
         @Override
@@ -581,7 +581,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         }
 
         public void updateRowCount(final int count, final boolean exact) {
-            rowCount = new RowCount<Integer>(count, exact);
+            rowCount = new RowCount<>(count, exact);
             RowCountChangeEvent.fire(this, count, exact);
         }
     }
@@ -595,8 +595,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         @Override
         public void setVisibleRange(final Range range) {
-            currentStreamRange = new OffsetRange<Long>((long) streamRows.visibleRange.getStart(), 1L);
-            currentPageRange = new OffsetRange<Long>((long) range.getStart(), (long) range.getLength());
+            currentStreamRange = new OffsetRange<>((long) streamRows.visibleRange.getStart(), 1L);
+            currentPageRange = new OffsetRange<>((long) range.getStart(), (long) range.getLength());
             update(false);
         }
     }
@@ -608,8 +608,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         @Override
         public void setVisibleRange(final Range range) {
-            currentStreamRange = new OffsetRange<Long>((long) range.getStart(), 1L);
-            currentPageRange = new OffsetRange<Long>(0L, 100L);
+            currentStreamRange = new OffsetRange<>((long) range.getStart(), 1L);
+            currentPageRange = new OffsetRange<>(0L, 100L);
             update(false);
         }
     }

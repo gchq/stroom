@@ -27,18 +27,6 @@ import stroom.pipeline.stepping.client.presenter.StepControlEvent.StepControlHan
 
 public class StepControlPresenter extends MyPresenterWidget<StepControlPresenter.StepControlView>
         implements StepControlUIHandlers {
-    public interface StepControlView extends View, HasUiHandlers<StepControlUIHandlers> {
-        void setStepFirstEnabled(boolean enabled);
-
-        void setStepBackwardEnabled(boolean enabled);
-
-        void setStepForwardEnabled(boolean enabled);
-
-        void setStepLastEnabled(boolean enabled);
-
-        void setStepRefreshEnabled(boolean enabled);
-    }
-
     @Inject
     public StepControlPresenter(final EventBus eventBus, final StepControlView view) {
         super(eventBus, view);
@@ -71,7 +59,7 @@ public class StepControlPresenter extends MyPresenterWidget<StepControlPresenter
     }
 
     public void setEnabledButtons(final boolean justStepped, final StepType stepType, final boolean tasksSelected,
-            final boolean showingData, final boolean foundRecord) {
+                                  final boolean showingData, final boolean foundRecord) {
         if (justStepped) {
             if (stepType == StepType.FIRST) {
                 getView().setStepFirstEnabled(false);
@@ -127,5 +115,17 @@ public class StepControlPresenter extends MyPresenterWidget<StepControlPresenter
 
     public HandlerRegistration addStepControlHandler(final StepControlHandler handler) {
         return addHandlerToSource(StepControlEvent.getType(), handler);
+    }
+
+    public interface StepControlView extends View, HasUiHandlers<StepControlUIHandlers> {
+        void setStepFirstEnabled(boolean enabled);
+
+        void setStepBackwardEnabled(boolean enabled);
+
+        void setStepForwardEnabled(boolean enabled);
+
+        void setStepLastEnabled(boolean enabled);
+
+        void setStepRefreshEnabled(boolean enabled);
     }
 }

@@ -26,8 +26,7 @@ public interface CollectorCallback {
      * Called when one of the indexes that is being searched throws an
      * exception.
      *
-     * @param e
-     *            The exception that was thrown by the index.
+     * @param e The exception that was thrown by the index.
      */
     void onIndexException(final Exception e);
 

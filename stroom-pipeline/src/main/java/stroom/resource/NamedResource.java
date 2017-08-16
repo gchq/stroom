@@ -35,14 +35,11 @@ public final class NamedResource implements Serializable {
     private int hashCode = -1;
 
     /**
-     * @param name
-     *            The resource name for the resource.
-     * @param version
-     *            The version of the resource. This is used when we are caching
-     *            resources to ensure we can cache more than one version and
-     *            expire old versions as needed.
-     * @param stream
-     *            The input stream for the resource.
+     * @param name    The resource name for the resource.
+     * @param version The version of the resource. This is used when we are caching
+     *                resources to ensure we can cache more than one version and
+     *                expire old versions as needed.
+     * @param stream  The input stream for the resource.
      */
     public NamedResource(final String name, final int version, final InputStream stream) {
         this.name = name;

@@ -219,7 +219,7 @@ public final class FileSystemUtil {
     public static boolean deleteDirectory(final Path path) {
         if (deleteContents(path)) {
             try {
-                Files.delete(path);
+                Files.deleteIfExists(path);
                 LOGGER.debug("Deleted file " + path);
                 return true;
             } catch (final IOException e) {
@@ -239,12 +239,14 @@ public final class FileSystemUtil {
             if (Files.isDirectory(path)) {
                 try (final Stream<Path> stream = Files.walk(path)) {
                     stream.sorted(Comparator.reverseOrder()).forEach(p -> {
-                        try {
-                            Files.delete(p);
-                            LOGGER.debug("Deleted file " + p);
-                        } catch (final IOException e) {
-                            LOGGER.error("Failed to delete file " + p);
-                            success.set(false);
+                        if (!p.equals(path)) {
+                            try {
+                                Files.delete(p);
+                                LOGGER.debug("Deleted file " + p);
+                            } catch (final IOException e) {
+                                LOGGER.error("Failed to delete file " + p);
+                                success.set(false);
+                            }
                         }
                     });
                 }

@@ -30,21 +30,20 @@ import java.util.zip.GZIPInputStream;
  * @see BlockGZIPConstants
  */
 public abstract class BlockGZIPInput extends InputStream implements SeekableInputStream {
+    // Use to help track non-closed streams
+    private final StreamCloser streamCloser = new StreamCloser();
     /**
      * Pointer to the current GZIPstream
      */
     protected GZIPInputStream currentStream;
-
     /**
      * We read data into a buffer (rather than hit the RA file)
      */
     protected BlockBufferedInputStream currentRawStreamBuffer;
-
     /**
      * Size of our read buffer (can be set by caller)
      */
     protected Integer rawBufferSize = null;
-
     /**
      * Header info
      */
@@ -53,12 +52,10 @@ public abstract class BlockGZIPInput extends InputStream implements SeekableInpu
     protected long idxStart;
     protected long dataLength;
     protected long eof;
-
     /**
      * When using seek etc we check the index.
      */
     protected boolean checkedIndex = false;
-
     /**
      * Used a a buffer to read longs into
      */
@@ -66,17 +63,25 @@ public abstract class BlockGZIPInput extends InputStream implements SeekableInpu
     protected LongBuffer longBuffer = ByteBuffer.wrap(longRawBuffer).asLongBuffer();
     protected byte[] magicMarkerRawBufffer = new byte[BlockGZIPConstants.MAGIC_MARKER.length];
     protected byte[] headerMarkerRawBuffer = new byte[BlockGZIPConstants.BLOCK_GZIP_V1_IDENTIFIER.length];
-
     protected long position = 0;
     protected long lastMarkPosition = 0;
-
     /**
      * Used for debug purposes
      */
     protected long currentBlockRawGzipSize = 0;
 
-    // Use to help track non-closed streams
-    private final StreamCloser streamCloser = new StreamCloser();
+    /**
+     * Constructor to open a Block GZIP File.
+     */
+    public BlockGZIPInput() throws IOException {
+    }
+
+    /**
+     * Constructor to open a Block GZIP File with a internal buffer size.
+     */
+    public BlockGZIPInput(final int rawBufferSize) throws IOException {
+        this.rawBufferSize = rawBufferSize;
+    }
 
     /**
      * @return for our inner classes
@@ -90,61 +95,6 @@ public abstract class BlockGZIPInput extends InputStream implements SeekableInpu
      */
     int getCurrentBlockRawGzipSize() {
         return (int) currentBlockRawGzipSize;
-    }
-
-    /**
-     * Adaptor to create a stream over the raw buffer and ensures that we don't
-     * read more than we are allowed to (for the gzip stream)
-     */
-    class GzipInputStreamAdaptor extends InputStream {
-        private int bytesRead;
-
-        // Start a new adaptor.
-        public GzipInputStreamAdaptor() {
-            this.bytesRead = 0;
-        }
-
-        @Override
-        public int read() throws IOException {
-            if (bytesRead < getCurrentBlockRawGzipSize()) {
-                bytesRead++;
-                return getCurrentRawStreamBuffer().read();
-            }
-            return -1;
-        }
-
-        @Override
-        public int read(final byte[] b, final int off, final int tryLen) throws IOException {
-            // Make sure we don't max
-            final long maxSize = getCurrentBlockRawGzipSize();
-            int realLen = tryLen;
-            if (tryLen + bytesRead > maxSize) {
-                // Trim the length
-                realLen = (int) (maxSize - bytesRead);
-                // Nothing more to read
-                if (realLen == 0) {
-                    return -1;
-                }
-            }
-            // Do the read
-            final int realBytesRead = getCurrentRawStreamBuffer().read(b, off, realLen);
-            // We may end up reading a smaller amount
-            bytesRead += realBytesRead;
-            return realBytesRead;
-        }
-    }
-
-    /**
-     * Constructor to open a Block GZIP File.
-     */
-    public BlockGZIPInput() throws IOException {
-    }
-
-    /**
-     * Constructor to open a Block GZIP File with a internal buffer size.
-     */
-    public BlockGZIPInput(final int rawBufferSize) throws IOException {
-        this.rawBufferSize = rawBufferSize;
     }
 
     /**
@@ -170,8 +120,7 @@ public abstract class BlockGZIPInput extends InputStream implements SeekableInpu
     protected abstract InputStream getRawStream();
 
     /**
-     * @param recycle
-     *            can we reuse the last buffer?
+     * @param recycle can we reuse the last buffer?
      * @return create a buffer for accessing the RA file
      */
     protected BlockBufferedInputStream createBufferedInputStream(final boolean recycle) {
@@ -424,5 +373,47 @@ public abstract class BlockGZIPInput extends InputStream implements SeekableInpu
 
     public int getBlockCount() {
         return blockCount;
+    }
+
+    /**
+     * Adaptor to create a stream over the raw buffer and ensures that we don't
+     * read more than we are allowed to (for the gzip stream)
+     */
+    class GzipInputStreamAdaptor extends InputStream {
+        private int bytesRead;
+
+        // Start a new adaptor.
+        public GzipInputStreamAdaptor() {
+            this.bytesRead = 0;
+        }
+
+        @Override
+        public int read() throws IOException {
+            if (bytesRead < getCurrentBlockRawGzipSize()) {
+                bytesRead++;
+                return getCurrentRawStreamBuffer().read();
+            }
+            return -1;
+        }
+
+        @Override
+        public int read(final byte[] b, final int off, final int tryLen) throws IOException {
+            // Make sure we don't max
+            final long maxSize = getCurrentBlockRawGzipSize();
+            int realLen = tryLen;
+            if (tryLen + bytesRead > maxSize) {
+                // Trim the length
+                realLen = (int) (maxSize - bytesRead);
+                // Nothing more to read
+                if (realLen == 0) {
+                    return -1;
+                }
+            }
+            // Do the read
+            final int realBytesRead = getCurrentRawStreamBuffer().read(b, off, realLen);
+            // We may end up reading a smaller amount
+            bytesRead += realBytesRead;
+            return realBytesRead;
+        }
     }
 }

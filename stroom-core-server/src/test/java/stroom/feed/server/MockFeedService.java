@@ -32,7 +32,7 @@ import javax.inject.Inject;
  * <p>
  * Very simple mock that keeps everything in memory.
  * </p>
- *
+ * <p>
  * <p>
  * You can call clear at any point to clear everything down.
  * </p>

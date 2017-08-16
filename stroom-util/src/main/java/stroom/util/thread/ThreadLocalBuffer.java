@@ -29,7 +29,7 @@ public class ThreadLocalBuffer {
 
     private String bufferSize = null;
 
-    private ThreadLocal<byte[]> threadLocalBuffer = new ThreadLocal<byte[]>();
+    private ThreadLocal<byte[]> threadLocalBuffer = new ThreadLocal<>();
 
     public byte[] getBuffer() {
         byte[] buffer = threadLocalBuffer.get();

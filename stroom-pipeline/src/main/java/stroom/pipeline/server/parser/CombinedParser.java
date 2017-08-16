@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -58,18 +58,18 @@ import java.io.Reader;
 
 @Component
 @Scope(value = StroomScope.TASK)
-@ConfigurableElement(type = "CombinedParser", category = Category.PARSER, roles = { PipelineElementType.ROLE_PARSER,
+@ConfigurableElement(type = "CombinedParser", category = Category.PARSER, roles = {PipelineElementType.ROLE_PARSER,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
         PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
-        PipelineElementType.ROLE_HAS_CODE }, icon = ElementIcons.TEXT)
+        PipelineElementType.ROLE_HAS_CODE}, icon = ElementIcons.TEXT)
 public class CombinedParser extends AbstractParser implements SupportsCodeInjection {
     public static final String DEFAULT_NAME = "combinedParser";
     private static final SAXParserFactory PARSER_FACTORY;
 
-	static {
-		PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
-		PARSER_FACTORY.setNamespaceAware(true);
-	}
+    static {
+        PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
+        PARSER_FACTORY.setNamespaceAware(true);
+    }
 
     private final ParserFactoryPool parserFactoryPool;
     private final TextConverterService textConverterService;
@@ -79,9 +79,10 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
     private boolean usePool = true;
     private TextConverter textConverter;
     private PoolItem<VersionedEntityDecorator<TextConverter>, StoredParserFactory> poolItem;
+
     @Inject
     public CombinedParser(final ErrorReceiverProxy errorReceiverProxy, final LocationFactoryProxy locationFactory,
-            final ParserFactoryPool parserFactoryPool, final TextConverterService textConverterService) {
+                          final ParserFactoryPool parserFactoryPool, final TextConverterService textConverterService) {
         super(errorReceiverProxy, locationFactory);
         this.parserFactoryPool = parserFactoryPool;
         this.textConverterService = textConverterService;
@@ -183,19 +184,22 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
             charsetName = inputSource.getEncoding();
         }
 
-        // Put the BOM removal input stream in place so that any BOM
-        // found is removed.
-        final BOMRemovalInputStream bris = new BOMRemovalInputStream(inputSource.getByteStream(), charsetName);
+        InputSource internalInputSource = inputSource;
+        if (inputSource.getByteStream() != null) {
+            // Put the BOM removal input stream in place so that any BOM
+            // found is removed.
+            final BOMRemovalInputStream bris = new BOMRemovalInputStream(inputSource.getByteStream(), charsetName);
 
-        Reader inputStreamReader = new InputStreamReader(bris, charsetName);
-        if (fixInvalidChars) {
-            inputStreamReader = new InvalidCharFilterReader(inputStreamReader);
+            Reader inputStreamReader = new InputStreamReader(bris, charsetName);
+            if (fixInvalidChars) {
+                inputStreamReader = new InvalidCharFilterReader(inputStreamReader);
+            }
+
+            final BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+
+            internalInputSource = new InputSource(bufferedReader);
+            internalInputSource.setEncoding(charsetName);
         }
-
-        final BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-
-        final InputSource internalInputSource = new InputSource(bufferedReader);
-        internalInputSource.setEncoding(charsetName);
 
         return internalInputSource;
     }

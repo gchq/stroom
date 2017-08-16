@@ -87,7 +87,7 @@ public class XSLTPresenter extends EntityEditTabPresenter<LinkTabPanelView, XSLT
     }
 
     @Override
-    protected void onPermissionsCheck(final boolean readOnly) {
+    public void onPermissionsCheck(final boolean readOnly) {
         super.onPermissionsCheck(readOnly);
 
         codePresenter = editorPresenterProvider.get();

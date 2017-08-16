@@ -26,16 +26,11 @@ import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 import stroom.widget.tab.client.presenter.TabBar;
 
 public class LinkTabViewImpl extends ViewImpl implements LinkTabsLayoutView {
-    public interface Binder extends UiBinder<Widget, LinkTabViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     TabBar tabBar;
     @UiField
     LayerContainer layerContainer;
-
     @Inject
     public LinkTabViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -55,5 +50,8 @@ public class LinkTabViewImpl extends ViewImpl implements LinkTabsLayoutView {
     @Override
     public LayerContainer getLayerContainer() {
         return layerContainer;
+    }
+
+    public interface Binder extends UiBinder<Widget, LinkTabViewImpl> {
     }
 }

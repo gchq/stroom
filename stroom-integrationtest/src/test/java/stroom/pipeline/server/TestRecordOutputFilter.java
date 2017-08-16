@@ -18,7 +18,6 @@ package stroom.pipeline.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractProcessIntegrationTest;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.server.factory.Pipeline;
@@ -40,6 +39,7 @@ import stroom.pipeline.shared.XSLTService;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.RecordCount;
+import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.ComparisonHelper;
 import stroom.test.PipelineTestUtil;
 import stroom.test.StroomProcessTestFileUtil;
@@ -98,7 +98,7 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
     }
 
     private PipelineEntity createPipeline(final String pipelineFile, final TextConverter textConverter,
-            final XSLT xslt) {
+                                          final XSLT xslt) {
         // Load the pipeline config.
         final String data = StroomProcessTestFileUtil.getString(pipelineFile);
         final PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineEntityService, pipelineMarshaller, data);
@@ -116,7 +116,7 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
     }
 
     private TextConverter createTextConverter(final String textConverterFile, final String name,
-            final TextConverterType textConverterType) {
+                                              final TextConverterType textConverterType) {
         // Create a record for the TextConverter.
         final InputStream textConverterInputStream = StroomProcessTestFileUtil.getInputStream(textConverterFile);
         TextConverter textConverter = textConverterService.create(null, name);
@@ -136,7 +136,7 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
     }
 
     private void test(final PipelineEntity pipelineEntity, final String dir, final String inputStem,
-            final String outputXMLStem, final String outputSAXStem, final String encoding) throws Exception {
+                      final String outputXMLStem, final String outputSAXStem, final String encoding) throws Exception {
         final File tempDir = getCurrentTestDir();
 
         final File outputFile = new File(tempDir, "TestRecordOutputFilter.xml");
@@ -154,7 +154,7 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
         errorReceiver.setErrorReceiver(loggingErrorReceiver);
 
         // Create the parser.
-        final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+        final PipelineData pipelineData = pipelineDataCache.getOrCreate(pipelineEntity);
         final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
         // Add a SAX event filter.
@@ -205,7 +205,7 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
     }
 
     private <T extends XMLFilter> void insertFilter(final Pipeline pipeline, final Class<T> parentFilterType,
-            final XMLFilter filterToAdd) {
+                                                    final XMLFilter filterToAdd) {
         final List<T> parentFilters = pipeline.findFilters(parentFilterType);
         final AbstractXMLFilter parentFilter = (AbstractXMLFilter) parentFilters.get(0);
         final XMLFilter existingChild = parentFilter.getFilter();

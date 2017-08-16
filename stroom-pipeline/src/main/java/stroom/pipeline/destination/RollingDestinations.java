@@ -27,7 +27,7 @@ import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomShutdown;
 import stroom.util.task.TaskMonitor;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,11 +43,15 @@ public class RollingDestinations {
     private static final ConcurrentHashMap<Object, RollingDestination> currentDestinations = new ConcurrentHashMap<>();
     private static final ReentrantLock destCreationLock = new ReentrantLock();
 
-    @Resource
-    private StroomPropertyService stroomPropertyService;
+    private final StroomPropertyService stroomPropertyService;
+
+    @Inject
+    public RollingDestinations(final StroomPropertyService stroomPropertyService) {
+        this.stroomPropertyService = stroomPropertyService;
+    }
 
     public RollingDestination borrow(final TaskMonitor taskMonitor, final Object key,
-            final RollingDestinationFactory destinationFactory) throws IOException {
+                                     final RollingDestinationFactory destinationFactory) throws IOException {
         if (taskMonitor != null && taskMonitor.isTerminated()) {
             throw new TerminatedException();
         }
@@ -58,19 +62,23 @@ public class RollingDestinations {
 
         // Try a number of times to get a destination.
         for (int i = 0; destination == null && i < MAX_TRY_COUNT; i++) {
-            destination = getDestination(taskMonitor, key, destinationFactory);
+            destination = getDestination(key, destinationFactory);
         }
 
         return destination;
     }
 
-    private RollingDestination getDestination(final TaskMonitor taskMonitor, final Object key,
-            final RollingDestinationFactory destinationFactory) throws IOException {
-        RollingDestination destination = null;
-        boolean rolled = false;
+    private RollingDestination getDestination(final Object key,
+                                              final RollingDestinationFactory destinationFactory) throws IOException {
+        RollingDestination destination;
 
         // Try and get an existing destination for the key.
         destination = currentDestinations.get(key);
+
+        if (destination != null) {
+            destination = lockAndRoll(key, destination);
+        }
+
         if (destination == null) {
             destCreationLock.lock();
             try {
@@ -91,36 +99,53 @@ public class RollingDestinations {
                     destination = destinationFactory.createDestination();
 
                     currentDestinations.put(key, destination);
-
-                    // Lock the destination so only the current thread can use
-                    // it.
-                    destination.lock();
-
-                    // Try and roll the destination as there are some cases
-                    // where
-                    // a destination needs to be rolled immediately after
-                    // creation.
-                    rolled = destination.tryFlushAndRoll(false, System.currentTimeMillis());
                 }
+
+                // Try and roll the destination as there are some cases where a destination needs to be rolled
+                // immediately after creation.
+                destination = lockAndRoll(key, destination);
+
             } finally {
                 destCreationLock.unlock();
             }
-        } else {
-            // Lock the destination so only the current thread can use it.
-            destination.lock();
-
-            // Try and roll the destination.
-            rolled = destination.tryFlushAndRoll(false, System.currentTimeMillis());
-        }
-
-        // Try and roll the destination.
-        if (rolled) {
-            removeDestination(key, destination);
-            destination.unlock();
-            destination = null;
         }
 
         return destination;
+    }
+
+    /**
+     * Try and lock this destination so that the current thread has exclusive access. Once locked we will attempt to
+     * roll this destination if it needs rolling.
+     * <p>
+     * If it is rolled then this method will return null as this destination can no longer be used, if the destination
+     * does not need rolling yet then it will be returned for use.
+     *
+     * @param key         The key that this destination is associated with.
+     * @param destination The destination to lock and attempt to roll.
+     * @return The destination if it didn't need rolling and can be used, null otherwise. The returned destination is locked for exclusive use by the current thread.
+     * @throws IOException Could be thrown while attempting to flush or close the destination on roll.
+     */
+    private RollingDestination lockAndRoll(final Object key, final RollingDestination destination) throws IOException {
+        RollingDestination dest = destination;
+
+        // Lock the destination so only the current thread can use it.
+        dest.lock();
+
+        boolean rolled = true;
+        try {
+            // Try and roll the destination.
+            rolled = dest.tryFlushAndRoll(false, System.currentTimeMillis());
+
+        } finally {
+            // If we rolled the destination then remove it and unlock it.
+            if (rolled) {
+                removeDestination(key, dest);
+                dest.unlock();
+                dest = null;
+            }
+        }
+
+        return dest;
     }
 
     public void returnDestination(final RollingDestination destination) {
@@ -130,7 +155,7 @@ public class RollingDestinations {
     private void removeDestination(final Object key, final RollingDestination destination) {
         destCreationLock.lock();
         try {
-            // Try and get an existing destination again under lock.
+            // Only remove the destination if it is the same one that is already in the map.
             if (destination == currentDestinations.get(key)) {
                 currentDestinations.remove(key);
             }

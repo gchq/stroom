@@ -25,28 +25,22 @@ import stroom.util.shared.ResourceKey;
 import java.util.List;
 
 public class ImportConfigConfirmEvent extends GwtEvent<ImportConfigConfirmEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onConfirmImport(ImportConfigConfirmEvent event);
-    }
-
     private static Type<Handler> TYPE;
-
     private ResourceKey resourceKey;
     private List<ImportState> confirmList;
-
     private ImportConfigConfirmEvent(final ResourceKey resourceKey, final List<ImportState> confirmList) {
         this.resourceKey = resourceKey;
         this.confirmList = confirmList;
     }
 
     public static void fire(final HasHandlers source, final ResourceKey resourceKey,
-            final List<ImportState> confirmList) {
+                            final List<ImportState> confirmList) {
         source.fireEvent(new ImportConfigConfirmEvent(resourceKey, confirmList));
     }
 
     public static Type<Handler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<Handler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }
@@ -67,5 +61,9 @@ public class ImportConfigConfirmEvent extends GwtEvent<ImportConfigConfirmEvent.
 
     public List<ImportState> getConfirmList() {
         return confirmList;
+    }
+
+    public interface Handler extends EventHandler {
+        void onConfirmImport(ImportConfigConfirmEvent event);
     }
 }

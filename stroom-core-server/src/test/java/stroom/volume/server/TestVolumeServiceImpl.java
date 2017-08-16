@@ -24,7 +24,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
-import stroom.statistics.internal.InternalStatisticsFacadeFactory;
 import stroom.node.server.MockStroomPropertyService;
 import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;
@@ -34,6 +33,7 @@ import stroom.node.shared.Rack;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.VolumeState;
+import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 import stroom.util.spring.StroomBeanStore;
@@ -58,18 +58,14 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
 
     private static final Path DEFAULT_INDEX_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(VolumeServiceImpl.DEFAULT_INDEX_VOLUME_SUBDIR);
     private static final Path DEFAULT_STREAM_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(VolumeServiceImpl.DEFAULT_STREAM_VOLUME_SUBDIR);
-
-
+    final MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
     private final Rack rack1 = Rack.create("rack1");
     private final Rack rack2 = Rack.create("rack2");
-
     private final Node node1a = Node.create(rack1, "1a");
     private final Node node1b = Node.create(rack1, "1b");
     private final Node node1c = Node.create(rack1, "1c");
-
     private final Node node2a = Node.create(rack2, "2a");
     private final Node node2b = Node.create(rack2, "2b");
-
     private final Volume public1a = Volume.create(node1a, FileUtil.getTempDir().getAbsolutePath() + "/PUBLIC_1A", VolumeType.PUBLIC,
             VolumeState.create(0, 1000));
     private final Volume public1b = Volume.create(node1b, FileUtil.getTempDir().getAbsolutePath() + "/PUBLIC_1B", VolumeType.PUBLIC,
@@ -78,12 +74,8 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
             VolumeState.create(0, 1000));
     private final Volume public2b = Volume.create(node2b, FileUtil.getTempDir().getAbsolutePath() + "/PUBLIC_2B", VolumeType.PUBLIC,
             VolumeState.create(0, 1000));
-
     private List<Volume> volumeList = null;
     private MockVolumeService volumeServiceImpl = null;
-
-    final MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
-
     @Mock
     private StroomEntityManager stroomEntityManager;
 
@@ -215,8 +207,8 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
 
         public MockVolumeService(final StroomEntityManager stroomEntityManager, final NodeCache nodeCache,
                                  final StroomPropertyService stroomPropertyService, final StroomBeanStore stroomBeanStore,
-                                 final InternalStatisticsFacadeFactory internalStatisticsFacadeFactory) {
-            super(stroomEntityManager, nodeCache, stroomPropertyService, stroomBeanStore, internalStatisticsFacadeFactory);
+                                 final InternalStatisticsReceiver internalStatisticsReceiver) {
+            super(stroomEntityManager, nodeCache, stroomPropertyService, stroomBeanStore, internalStatisticsReceiver);
         }
 
         @Override

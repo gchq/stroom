@@ -69,7 +69,7 @@ public class CertificateAuthenticationToken implements HostAuthenticationToken, 
      * </p>
      *
      * @return the host from where the authentication attempt occurs, or
-     *         <tt>null</tt> if it is unknown or explicitly omitted.
+     * <tt>null</tt> if it is unknown or explicitly omitted.
      * @since 1.0
      */
     @Override
@@ -87,8 +87,7 @@ public class CertificateAuthenticationToken implements HostAuthenticationToken, 
      * localhost and proxy server environments).
      * </p>
      *
-     * @param host
-     *            the host name or IP string from where the attempt is occuring
+     * @param host the host name or IP string from where the attempt is occuring
      * @since 1.0
      */
     public void setHost(final String host) {
@@ -101,8 +100,8 @@ public class CertificateAuthenticationToken implements HostAuthenticationToken, 
      * otherwise. Unless overridden, this value is <tt>false</tt> by default.
      *
      * @return <tt>true</tt> if the submitting user wishes their identity
-     *         (principal(s)) to be remembered across sessions, <tt>false</tt>
-     *         otherwise (<tt>false</tt> by default).
+     * (principal(s)) to be remembered across sessions, <tt>false</tt>
+     * otherwise (<tt>false</tt> by default).
      * @since 0.9
      */
     @Override
@@ -115,9 +114,8 @@ public class CertificateAuthenticationToken implements HostAuthenticationToken, 
      * remembered across sessions. Unless overridden, the default value is
      * <tt>false</tt>, indicating <em>not</em> to be remembered across sessions.
      *
-     * @param rememberMe
-     *            value inidicating if the user wishes their identity
-     *            (principal(s)) to be remembered across sessions.
+     * @param rememberMe value inidicating if the user wishes their identity
+     *                   (principal(s)) to be remembered across sessions.
      * @since 0.9
      */
     public void setRememberMe(final boolean rememberMe) {

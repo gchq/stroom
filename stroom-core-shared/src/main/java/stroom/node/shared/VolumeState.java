@@ -29,24 +29,19 @@ import javax.persistence.Transient;
  */
 @Entity(name = "VOL_STATE")
 public class VolumeState extends BaseEntitySmall {
-    private static final long serialVersionUID = 5718264595570654559L;
-
     public static final String TABLE_NAME = SQLNameConstants.VOLUME + SEP + SQLNameConstants.STATE;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-
     public static final String BYTES_USED = SQLNameConstants.BYTES + SEP + SQLNameConstants.USED;
     public static final String BYTES_FREE = SQLNameConstants.BYTES + SEP + SQLNameConstants.FREE;
     public static final String BYTES_TOTAL = SQLNameConstants.BYTES + SEP + SQLNameConstants.TOTAL;
     public static final String STATUS_MS = SQLNameConstants.STATUS_MS;
-
     public static final String ENTITY_TYPE = "VolumeState";
-
+    private static final long serialVersionUID = 5718264595570654559L;
+    private static final double ONE_HUNDRED = 100D;
     private Long bytesUsed;
     private Long bytesFree;
     private Long bytesTotal;
     private Long statusMs;
-
-    private static final double ONE_HUNDRED = 100D;
 
     public static VolumeState create(final long bytesUsed, final long bytesTotal) {
         final VolumeState state = new VolumeState();

@@ -16,9 +16,9 @@
 
 package stroom.statistics.shared.common;
 
-import java.util.Set;
-
 import stroom.util.shared.SharedObject;
+
+import java.util.Set;
 
 public class CustomRollUpMaskFields implements SharedObject, Comparable<CustomRollUpMaskFields> {
     private static final long serialVersionUID = 5490835313079322510L;

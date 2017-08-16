@@ -18,7 +18,6 @@ package stroom.pipeline.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractProcessIntegrationTest;
 import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
@@ -36,6 +35,7 @@ import stroom.pipeline.shared.XSLTService;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.RecordCount;
+import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.ComparisonHelper;
 import stroom.test.PipelineTestUtil;
 import stroom.test.StroomProcessTestFileUtil;
@@ -94,7 +94,7 @@ public class TestRollingFileAppender extends AbstractProcessIntegrationTest {
     }
 
     private PipelineEntity createPipeline(final String pipelineFile, final TextConverter textConverter,
-            final XSLT xslt) {
+                                          final XSLT xslt) {
         // Load the pipeline config.
         final String data = StroomProcessTestFileUtil.getString(pipelineFile);
         final PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineEntityService, pipelineMarshaller, data);
@@ -112,7 +112,7 @@ public class TestRollingFileAppender extends AbstractProcessIntegrationTest {
     }
 
     private TextConverter createTextConverter(final String textConverterFile, final String name,
-            final TextConverterType textConverterType) {
+                                              final TextConverterType textConverterType) {
         // Create a record for the TextConverter.
         final InputStream textConverterInputStream = StroomProcessTestFileUtil.getInputStream(textConverterFile);
         TextConverter textConverter = textConverterService.create(null, name);
@@ -134,7 +134,7 @@ public class TestRollingFileAppender extends AbstractProcessIntegrationTest {
     // TODO This method is 80% the same in a whole bunch of test classes -
     // refactor some of the repetition out.
     private void test(final PipelineEntity pipelineEntity, final String inputPath, final String inputStem,
-            final String outputReference, final String encoding, final boolean text) throws Exception {
+                      final String outputReference, final String encoding, final boolean text) throws Exception {
         String fileName = inputStem;
         if (text) {
             fileName += ".txt";
@@ -159,7 +159,7 @@ public class TestRollingFileAppender extends AbstractProcessIntegrationTest {
         errorReceiver.setErrorReceiver(loggingErrorReceiver);
 
         // Create the parser.
-        final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+        final PipelineData pipelineData = pipelineDataCache.getOrCreate(pipelineEntity);
         final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
         // Get the input streams.

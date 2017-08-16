@@ -24,14 +24,14 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class XSDDisplayBox extends Composite implements SelectableItem {
-    private boolean selected;
     private final XSDDisplayBoxTitle boxTitle;
     private final VerticalPanel layout;
     private final VerticalPanel outerBox;
+    private boolean selected;
 
     public XSDDisplayBox(final ImageResource image, final String title, final Widget content,
-            final SelectionMap selectionMap, final XSDModel model, final XSDNode node, final String width,
-            final String height) {
+                         final SelectionMap selectionMap, final XSDModel model, final XSDNode node, final String width,
+                         final String height) {
         selectionMap.addSelectionItem(node, this);
         boxTitle = new XSDDisplayBoxTitle(image, title, model, node);
         boxTitle.setStylePrimaryName("boxTitle");

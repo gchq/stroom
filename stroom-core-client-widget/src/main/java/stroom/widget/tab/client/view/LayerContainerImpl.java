@@ -34,84 +34,12 @@ import java.util.Iterator;
 import java.util.Set;
 
 public class LayerContainerImpl extends Composite implements LayerContainer, RequiresResize, ProvidesResize {
-    public interface Style extends CssResource {
-        String container();
-
-        String layer();
-    }
-
-    public interface Resources extends ClientBundle {
-        @Source("LayerContainer.css")
-        Style style();
-    }
-
-    private static class TransitionTimer extends Timer {
-        private static final int FREQUENCY = 40;
-
-        private final Set<Layer> layers;
-        private final double duration;
-
-        private Layer selectedLayer;
-        private long start;
-
-        public TransitionTimer(final Set<Layer> layers, final double duration) {
-            this.layers = layers;
-            this.duration = duration;
-        }
-
-        @Override
-        public void run() {
-            final long elapsed = System.currentTimeMillis() - start;
-            final double percent = Math.max(0, Math.min(1, elapsed / duration));
-
-            final Iterator<Layer> iter = layers.iterator();
-            while (iter.hasNext()) {
-                final Layer layer = iter.next();
-                if (layer != null) {
-                    double opacity = layer.getOpacity();
-
-                    if (layer == selectedLayer) {
-                        opacity = percent;
-                    } else {
-                        opacity = 1 - percent;
-                    }
-
-                    // Change the opacity on the layer.
-                    layer.setOpacity(opacity);
-
-                    if (opacity == 0) {
-                        if (layer.removeLayer()) {
-                            iter.remove();
-                        }
-                    }
-                }
-            }
-
-            if (percent == 1) {
-                this.cancel();
-            }
-        }
-
-        public void update() {
-            cancel();
-            start = System.currentTimeMillis();
-            scheduleRepeating(FREQUENCY);
-        }
-
-        public void setSelectedContent(final Layer selectedLayer) {
-            this.selectedLayer = selectedLayer;
-        }
-    }
-
     private static Resources resources;
-
     private final FlowPanel panel;
+    private final Set<Layer> layers = new HashSet<>();
     private boolean fade;
     private TransitionTimer transitionTimer;
-
-    private final Set<Layer> layers = new HashSet<>();
     private Layer selectedLayer;
-
     public LayerContainerImpl() {
         if (resources == null) {
             resources = GWT.create(Resources.class);
@@ -197,5 +125,74 @@ public class LayerContainerImpl extends Composite implements LayerContainer, Req
 
         widget.addStyleName(resources.style().layer());
         panel.add(widget);
+    }
+
+    public interface Style extends CssResource {
+        String container();
+
+        String layer();
+    }
+
+    public interface Resources extends ClientBundle {
+        @Source("LayerContainer.css")
+        Style style();
+    }
+
+    private static class TransitionTimer extends Timer {
+        private static final int FREQUENCY = 40;
+
+        private final Set<Layer> layers;
+        private final double duration;
+
+        private Layer selectedLayer;
+        private long start;
+
+        public TransitionTimer(final Set<Layer> layers, final double duration) {
+            this.layers = layers;
+            this.duration = duration;
+        }
+
+        @Override
+        public void run() {
+            final long elapsed = System.currentTimeMillis() - start;
+            final double percent = Math.max(0, Math.min(1, elapsed / duration));
+
+            final Iterator<Layer> iter = layers.iterator();
+            while (iter.hasNext()) {
+                final Layer layer = iter.next();
+                if (layer != null) {
+                    double opacity = layer.getOpacity();
+
+                    if (layer == selectedLayer) {
+                        opacity = percent;
+                    } else {
+                        opacity = 1 - percent;
+                    }
+
+                    // Change the opacity on the layer.
+                    layer.setOpacity(opacity);
+
+                    if (opacity == 0) {
+                        if (layer.removeLayer()) {
+                            iter.remove();
+                        }
+                    }
+                }
+            }
+
+            if (percent == 1) {
+                this.cancel();
+            }
+        }
+
+        public void update() {
+            cancel();
+            start = System.currentTimeMillis();
+            scheduleRepeating(FREQUENCY);
+        }
+
+        public void setSelectedContent(final Layer selectedLayer) {
+            this.selectedLayer = selectedLayer;
+        }
     }
 }

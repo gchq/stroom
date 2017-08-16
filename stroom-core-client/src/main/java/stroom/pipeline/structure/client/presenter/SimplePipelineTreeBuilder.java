@@ -72,8 +72,8 @@ public class SimplePipelineTreeBuilder extends DefaultPipelineTreeBuilder {
     }
 
     private void addDescendents(final PipelineElement parent,
-            final Map<PipelineElement, List<PipelineElement>> childMap,
-            final Map<PipelineElement, List<PipelineElement>> tempChildMap) {
+                                final Map<PipelineElement, List<PipelineElement>> childMap,
+                                final Map<PipelineElement, List<PipelineElement>> tempChildMap) {
         final List<PipelineElement> descendents = new ArrayList<>();
         getDescendentFilters(parent, childMap, descendents);
 
@@ -86,7 +86,7 @@ public class SimplePipelineTreeBuilder extends DefaultPipelineTreeBuilder {
     }
 
     private void getDescendentFilters(final PipelineElement parent,
-            final Map<PipelineElement, List<PipelineElement>> childMap, final List<PipelineElement> descendents) {
+                                      final Map<PipelineElement, List<PipelineElement>> childMap, final List<PipelineElement> descendents) {
         final List<PipelineElement> children = childMap.get(parent);
         if (children != null && children.size() > 0) {
             for (final PipelineElement child : children) {

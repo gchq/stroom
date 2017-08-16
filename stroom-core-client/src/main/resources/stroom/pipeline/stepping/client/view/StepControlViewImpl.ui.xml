@@ -7,10 +7,10 @@
         }
     </ui:style>
     <g:FlowPanel styleName="{style.layout}">
-        <i:GlyphButton ui:field="refreshButton"/>
-        <i:GlyphButton ui:field="lastButton"/>
-        <i:GlyphButton ui:field="forwardButton"/>
-        <i:GlyphButton ui:field="backwardButton"/>
-        <i:GlyphButton ui:field="firstButton"/>
+        <i:SvgButton ui:field="refreshButton"/>
+        <i:SvgButton ui:field="lastButton"/>
+        <i:SvgButton ui:field="forwardButton"/>
+        <i:SvgButton ui:field="backwardButton"/>
+        <i:SvgButton ui:field="firstButton"/>
     </g:FlowPanel>
 </ui:UiBinder>

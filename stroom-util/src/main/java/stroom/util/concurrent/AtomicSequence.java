@@ -49,7 +49,7 @@ public class AtomicSequence {
      * @return return a sequence within the limit
      */
     public int next(final int limit) {
-        for (;;) {
+        for (; ; ) {
             long current = sequence.get();
 
             if (current > limit) {

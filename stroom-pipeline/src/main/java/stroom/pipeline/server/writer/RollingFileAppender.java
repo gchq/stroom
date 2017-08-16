@@ -41,7 +41,7 @@ import java.io.IOException;
 @Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(type = "RollingFileAppender", category = Category.DESTINATION, roles = {
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_DESTINATION,
-        PipelineElementType.VISABILITY_STEPPING }, icon = ElementIcons.STREAM)
+        PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
 public class RollingFileAppender extends AbstractRollingAppender {
     private static final int MB = 1024 * 1024;
     private static final int DEFAULT_MAX_SIZE = 100 * MB;

@@ -29,15 +29,12 @@ import javax.persistence.Transient;
 
 @MappedSuperclass
 public abstract class TaskBasedEntity extends BaseEntityBig {
-    private static final long serialVersionUID = -6752797140242673318L;
-
     public static final String START_TIME_MS = "START_TIME" + SQLNameConstants.MS_SUFFIX;
     public static final String END_TIME_MS = "END_TIME" + SQLNameConstants.MS_SUFFIX;
-
     public static final String STATUS = SQLNameConstants.STATUS;
     public static final String STATUS_MS = SQLNameConstants.STATUS + SQLNameConstants.MS_SUFFIX;
     public static final String CREATE_MS = SQLNameConstants.CREATE + SQLNameConstants.MS_SUFFIX;
-
+    private static final long serialVersionUID = -6752797140242673318L;
     private Node node;
 
     private Long createMs;
@@ -79,6 +76,10 @@ public abstract class TaskBasedEntity extends BaseEntityBig {
         return startTimeMs;
     }
 
+    public void setStartTimeMs(final Long startTimeMs) {
+        this.startTimeMs = startTimeMs;
+    }
+
     @Column(name = CREATE_MS, columnDefinition = BIGINT_UNSIGNED)
     public Long getCreateMs() {
         return createMs;
@@ -95,10 +96,6 @@ public abstract class TaskBasedEntity extends BaseEntityBig {
 
     public void setStatusMs(final Long statusMs) {
         this.statusMs = statusMs;
-    }
-
-    public void setStartTimeMs(final Long startTimeMs) {
-        this.startTimeMs = startTimeMs;
     }
 
     @Column(name = END_TIME_MS, columnDefinition = BIGINT_UNSIGNED)

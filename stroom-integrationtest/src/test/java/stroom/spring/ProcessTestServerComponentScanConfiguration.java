@@ -22,13 +22,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
-import stroom.DatabaseCommonTestControl;
 import stroom.cluster.server.ClusterNodeManagerImpl;
 import stroom.dashboard.server.QueryServiceImpl;
 import stroom.dictionary.DictionaryServiceImpl;
-import stroom.entity.shared.FolderService;
 import stroom.feed.server.FeedServiceImpl;
-import stroom.feed.shared.FeedService;
+import stroom.feed.server.MockFeedService;
 import stroom.folder.server.FolderServiceImpl;
 import stroom.internalstatistics.MetaDataStatisticImpl;
 import stroom.jobsystem.server.ClusterLockServiceImpl;
@@ -40,23 +38,27 @@ import stroom.node.server.GlobalPropertyServiceImpl;
 import stroom.node.server.NodeConfigImpl;
 import stroom.node.server.NodeServiceImpl;
 import stroom.node.server.RecordCountServiceImpl;
+import stroom.pipeline.server.MockPipelineEntityService;
 import stroom.pipeline.server.PipelineEntityServiceImpl;
 import stroom.pipeline.server.TextConverterServiceImpl;
 import stroom.pipeline.server.XSLTServiceImpl;
-import stroom.pipeline.shared.PipelineEntityService;
+import stroom.policy.server.DataRetentionExecutor;
 import stroom.resource.server.ResourceStoreImpl;
+import stroom.security.server.MockFolderService;
 import stroom.security.server.UserServiceImpl;
+import stroom.streamstore.server.MockStreamTypeService;
 import stroom.streamstore.server.StreamAttributeKeyServiceImpl;
 import stroom.streamstore.server.StreamTypeServiceImpl;
+import stroom.streamstore.server.fs.DataRetentionTransactionHelper;
 import stroom.streamstore.server.fs.FileSystemStreamStore;
-import stroom.streamstore.shared.StreamTypeService;
+import stroom.streamtask.server.MockStreamProcessorFilterService;
+import stroom.streamtask.server.MockStreamProcessorService;
 import stroom.streamtask.server.StreamProcessorFilterServiceImpl;
 import stroom.streamtask.server.StreamProcessorServiceImpl;
 import stroom.streamtask.server.StreamProcessorTaskFactory;
 import stroom.streamtask.server.StreamTaskCreatorImpl;
 import stroom.streamtask.server.StreamTaskServiceImpl;
-import stroom.streamtask.shared.StreamProcessorFilterService;
-import stroom.streamtask.shared.StreamProcessorService;
+import stroom.test.DatabaseCommonTestControl;
 import stroom.volume.server.VolumeServiceImpl;
 import stroom.xmlschema.server.XMLSchemaServiceImpl;
 
@@ -74,7 +76,47 @@ import stroom.xmlschema.server.XMLSchemaServiceImpl;
  * component scan as configurations should be specified explicitly.
  */
 @Configuration
-@ComponentScan(basePackages = {"stroom"}, excludeFilters = {
+@ComponentScan(basePackages = {
+        "stroom.cache",
+        "stroom.cluster",
+        "stroom.datafeed",
+        "stroom.datasource",
+        "stroom.db",
+        "stroom.dictionary",
+        "stroom.dispatch",
+        "stroom.entity",
+        "stroom.explorer",
+        "stroom.feed",
+        "stroom.folder",
+        "stroom.importexport",
+        "stroom.internalstatistics",
+        "stroom.io",
+        "stroom.jobsystem",
+        "stroom.kafka",
+        "stroom.lifecycle",
+        "stroom.logging",
+        "stroom.node",
+        "stroom.pipeline",
+        "stroom.refdata",
+        "stroom.policy",
+        "stroom.pool",
+        "stroom.process",
+        "stroom.proxy",
+        "stroom.query",
+        "stroom.resource",
+        "stroom.servicediscovery",
+        "stroom.servlet",
+        "stroom.spring",
+        "stroom.streamstore",
+        "stroom.streamtask",
+        "stroom.task",
+        "stroom.test",
+        "stroom.upgrade",
+        "stroom.util",
+        "stroom.volume",
+        "stroom.xml",
+        "stroom.xmlschema"
+}, excludeFilters = {
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),
 
         // Exclude these so we get the mocks instead.
@@ -86,6 +128,8 @@ import stroom.xmlschema.server.XMLSchemaServiceImpl;
         // EntityPathResolverImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = FeedServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = FileSystemStreamStore.class),
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = DataRetentionTransactionHelper.class),
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = DataRetentionExecutor.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = GlobalPropertyServiceImpl.class),
         // @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value =
         // ImportExportSerializerImpl.class),
@@ -129,32 +173,32 @@ public class ProcessTestServerComponentScanConfiguration {
     }
 
     @Bean(name = "cachedFolderService")
-    public FolderService getCachedFolderService(final FolderService folderService) {
+    public MockFolderService getCachedFolderService(final MockFolderService folderService) {
         return folderService;
     }
 
     @Bean(name = "cachedStreamTypeService")
-    public StreamTypeService getCachedStreamTypeService(final StreamTypeService streamTypeService) {
+    public MockStreamTypeService getCachedStreamTypeService(final MockStreamTypeService streamTypeService) {
         return streamTypeService;
     }
 
     @Bean(name = "cachedFeedService")
-    public FeedService getCachedFeedService(final FeedService feedService) {
+    public MockFeedService getCachedFeedService(final MockFeedService feedService) {
         return feedService;
     }
 
     @Bean(name = "cachedPipelineEntityService")
-    public PipelineEntityService getCachedPipelineEntityService(final PipelineEntityService pipelineEntityService) {
+    public MockPipelineEntityService getCachedPipelineEntityService(final MockPipelineEntityService pipelineEntityService) {
         return pipelineEntityService;
     }
 
     @Bean(name = "cachedStreamProcessorService")
-    public StreamProcessorService getCachedStreamProcessorService(final StreamProcessorService streamProcessorService) {
+    public MockStreamProcessorService getCachedStreamProcessorService(final MockStreamProcessorService streamProcessorService) {
         return streamProcessorService;
     }
 
     @Bean(name = "cachedStreamProcessorFilterService")
-    public StreamProcessorFilterService getCachedStreamProcessorFilterService(final StreamProcessorFilterService streamProcessorFilterService) {
+    public MockStreamProcessorFilterService getCachedStreamProcessorFilterService(final MockStreamProcessorFilterService streamProcessorFilterService) {
         return streamProcessorFilterService;
     }
 }

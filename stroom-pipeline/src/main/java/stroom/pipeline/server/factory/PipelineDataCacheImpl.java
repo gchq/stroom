@@ -48,13 +48,12 @@ public class PipelineDataCacheImpl extends AbstractCacheBean<VersionedEntityDeco
     }
 
     @Override
-    public PipelineData get(final PipelineEntity pipelineEntity) {
+    public PipelineData getOrCreate(final PipelineEntity pipelineEntity) {
         final VersionedEntityDecorator<PipelineEntity> key = new VersionedEntityDecorator<>(pipelineEntity);
-        return get(key);
+        return computeIfAbsent(key, this::create);
     }
 
-    @Override
-    public PipelineData create(final VersionedEntityDecorator<PipelineEntity> key) {
+    private PipelineData create(final VersionedEntityDecorator<PipelineEntity> key) {
         final PipelineEntity pipelineEntity = key.getEntity();
         final List<PipelineEntity> pipelines = pipelineStackLoader.loadPipelineStack(pipelineEntity);
         // Iterate over the pipeline list reading the deepest ancestor first.

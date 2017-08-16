@@ -43,7 +43,7 @@ public abstract class StroomExtensionFunctionCall {
             throws XPathException;
 
     protected String getSafeString(final String functionName, final XPathContext context, final Sequence[] arguments,
-            final int index) throws XPathException {
+                                   final int index) throws XPathException {
         String string = null;
         final Sequence sequence = arguments[index];
         if (sequence != null) {
@@ -66,7 +66,7 @@ public abstract class StroomExtensionFunctionCall {
     }
 
     protected Boolean getSafeBoolean(final String functionName, final XPathContext context, final Sequence[] arguments,
-            final int index) throws XPathException {
+                                     final int index) throws XPathException {
         Boolean bool = null;
         final Sequence sequence = arguments[index];
         if (sequence != null) {
@@ -124,8 +124,8 @@ public abstract class StroomExtensionFunctionCall {
      * implementation returns null
      *
      * @return an instance of com.saxonica.codegen.IntegratedFunctionCompiler
-     *         that generates Java code to implement the call on this extension
-     *         function
+     * that generates Java code to implement the call on this extension
+     * function
      */
     public Object getCompilerForJava() {
         try {
@@ -140,7 +140,7 @@ public abstract class StroomExtensionFunctionCall {
     }
 
     public void configure(final ErrorReceiver errorReceiver, final LocationFactory locationFactory,
-            final List<PipelineReference> pipelineReferences) {
+                          final List<PipelineReference> pipelineReferences) {
         this.errorReceiver = errorReceiver;
         this.locationFactory = locationFactory;
         this.pipelineReferences = pipelineReferences;

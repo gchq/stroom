@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,17 +16,13 @@
 
 package stroom.dashboard.shared;
 
-import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.FindDocumentEntityCriteria;
-import stroom.entity.shared.OrderBy;
-import stroom.entity.shared.SQLNameConstants;
 
 public class FindQueryCriteria extends FindDocumentEntityCriteria {
-    public static final OrderBy ORDER_BY_TIME = new OrderBy("Time", "createTime", QueryEntity.CREATE_TIME);
-    public static final OrderBy ORDER_BY_NAME = new OrderBy("Name", "name", SQLNameConstants.NAME);
+    public static final String FIELD_TIME = "Time";
     private static final long serialVersionUID = -4421720204507720754L;
-
-    private EntityIdSet<Dashboard> dashboardIdSet;
+    private Long dashboardId;
+    private String queryId;
     private Boolean favourite;
 
     public FindQueryCriteria() {
@@ -37,20 +33,20 @@ public class FindQueryCriteria extends FindDocumentEntityCriteria {
         super(name);
     }
 
-    public EntityIdSet<Dashboard> getDashboardIdSet() {
-        return dashboardIdSet;
+    public Long getDashboardId() {
+        return dashboardId;
     }
 
-    public void setDashboardIdSet(final EntityIdSet<Dashboard> dashboardIdSet) {
-        this.dashboardIdSet = dashboardIdSet;
+    public void setDashboardId(final Long dashboardId) {
+        this.dashboardId = dashboardId;
     }
 
-    public EntityIdSet<Dashboard> obtainDashboardIdSet() {
-        if (dashboardIdSet == null) {
-            dashboardIdSet = new EntityIdSet<>();
-        }
+    public String getQueryId() {
+        return queryId;
+    }
 
-        return dashboardIdSet;
+    public void setQueryId(final String queryId) {
+        this.queryId = queryId;
     }
 
     public Boolean getFavourite() {

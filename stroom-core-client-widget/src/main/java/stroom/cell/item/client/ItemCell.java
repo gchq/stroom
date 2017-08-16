@@ -38,32 +38,21 @@ import java.util.List;
  * A {@link Cell} used to render a drop-down list.
  */
 public class ItemCell<V extends HasDisplayValue> extends AbstractInputCell<V, V> {
-    interface Template extends SafeHtmlTemplates {
-        @Template("<option value=\"{0}\">{0}</option>")
-        SafeHtml deselected(String option);
-
-        @Template("<option value=\"{0}\" selected=\"selected\">{0}</option>")
-        SafeHtml selected(String option);
-    }
-
     private static Template template;
-
-    private HashMap<V, Integer> indexForOption = new HashMap<>();
-
     private final List<V> options;
+    private HashMap<V, Integer> indexForOption = new HashMap<>();
 
     /**
      * Construct a new {@link SelectionCell} with the specified options.
      *
-     * @param options
-     *            the options in the cell
+     * @param options the options in the cell
      */
     public ItemCell(final List<V> options) {
         super(BrowserEvents.CHANGE);
         if (template == null) {
             template = GWT.create(Template.class);
         }
-        this.options = new ArrayList<V>(options);
+        this.options = new ArrayList<>(options);
         int index = 0;
         for (final V option : options) {
             indexForOption.put(option, index++);
@@ -72,7 +61,7 @@ public class ItemCell<V extends HasDisplayValue> extends AbstractInputCell<V, V>
 
     @Override
     public void onBrowserEvent(final Context context, final Element parent, final V value, final NativeEvent event,
-            final ValueUpdater<V> valueUpdater) {
+                               final ValueUpdater<V> valueUpdater) {
         super.onBrowserEvent(context, parent, value, event, valueUpdater);
         final String type = event.getType();
         if (BrowserEvents.CHANGE.equals(type)) {
@@ -116,5 +105,13 @@ public class ItemCell<V extends HasDisplayValue> extends AbstractInputCell<V, V>
             return -1;
         }
         return index.intValue();
+    }
+
+    interface Template extends SafeHtmlTemplates {
+        @Template("<option value=\"{0}\">{0}</option>")
+        SafeHtml deselected(String option);
+
+        @Template("<option value=\"{0}\" selected=\"selected\">{0}</option>")
+        SafeHtml selected(String option);
     }
 }

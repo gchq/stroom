@@ -35,6 +35,11 @@ public abstract class MyPresenter<V extends View, Proxy_ extends Proxy<?>> exten
         super(eventBus, view, proxy);
     }
 
+    @Override
+    public double getOpacity() {
+        return opacity;
+    }
+
     /**************
      * Start Layer
      **************/
@@ -42,11 +47,6 @@ public abstract class MyPresenter<V extends View, Proxy_ extends Proxy<?>> exten
     public void setOpacity(final double opacity) {
         this.opacity = opacity;
         getWidget().getElement().getStyle().setOpacity(opacity);
-    }
-
-    @Override
-    public double getOpacity() {
-        return opacity;
     }
 
     @Override

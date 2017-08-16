@@ -27,35 +27,27 @@ import javax.persistence.Transient;
 
 @Entity(name = "STRM_PROC_FILT_TRAC")
 public class StreamProcessorFilterTracker extends BaseEntitySmall {
-    private static final long serialVersionUID = -2478788451478923825L;
-
     public static final String TABLE_NAME = SQLNameConstants.STREAM + SEP + SQLNameConstants.PROCESSOR + SEP
             + SQLNameConstants.FILTER + SEP + SQLNameConstants.TRACKER;
-
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-
     public static final String MIN_STREAM_CREATE_MS = SQLNameConstants.MIN + SEP + SQLNameConstants.STREAM + SEP
             + SQLNameConstants.CREATE + SQLNameConstants.MS_SUFFIX;
     public static final String MAX_STREAM_CREATE_MS = SQLNameConstants.MAX + SEP + SQLNameConstants.STREAM + SEP
             + SQLNameConstants.CREATE + SQLNameConstants.MS_SUFFIX;
     public static final String STREAM_CREATE_MS = SQLNameConstants.STREAM + SEP + SQLNameConstants.CREATE
             + SQLNameConstants.MS_SUFFIX;
-
     public static final String MIN_STREAM_ID = SQLNameConstants.MIN + SEP + SQLNameConstants.STREAM + SEP + Stream.ID;
     public static final String MIN_EVENT_ID = SQLNameConstants.MIN + SEP + SQLNameConstants.EVENT + SEP + Stream.ID;
-
     public static final String LAST_POLL_MS = SQLNameConstants.LAST + SEP + SQLNameConstants.POLL
             + SQLNameConstants.MS_SUFFIX;
     public static final String LAST_POLL_TASK_COUNT = SQLNameConstants.LAST + SEP + SQLNameConstants.POLL + SEP
             + SQLNameConstants.TASK + SQLNameConstants.COUNT_SUFFIX;
     public static final String STATUS = SQLNameConstants.STATUS;
-
     public static final String STREAM_COUNT = SQLNameConstants.STREAM + SEP + SQLNameConstants.COUNT;
     public static final String EVENT_COUNT = SQLNameConstants.EVENT + SEP + SQLNameConstants.COUNT;
-
     public static final String ENTITY_TYPE = "StreamProcessorFilterTracker";
     public static final String COMPLETE = "Complete";
-
+    private static final long serialVersionUID = -2478788451478923825L;
     // These numbers are inclusive use getStreamRange to get a nice Stroom style
     private long minStreamId;
     private long minEventId;

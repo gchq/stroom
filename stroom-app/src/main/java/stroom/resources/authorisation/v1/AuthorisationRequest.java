@@ -9,9 +9,10 @@ public class AuthorisationRequest {
     @JsonProperty
     private String permissions;
 
-    public AuthorisationRequest() {}
+    public AuthorisationRequest() {
+    }
 
-    public AuthorisationRequest(DocRef docRef, String permissions){
+    public AuthorisationRequest(DocRef docRef, String permissions) {
         this.docRef = docRef;
         this.permissions = permissions;
     }

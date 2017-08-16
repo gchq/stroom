@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -35,7 +35,7 @@ public class SpringContexts {
         // We don't need to register @Configuration classes here because they're loaded in SpringContexts.newUpgradeDispatcherServlet(...)
     }
 
-    public void start(Environment environment, Config configuration){
+    public void start(Environment environment, Config configuration) {
         // We need to set the servlet context otherwise there will be no default servlet handling.
         applicationContext.setServletContext(environment.getApplicationContext().getServletContext());
 

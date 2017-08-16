@@ -19,7 +19,6 @@ package stroom.pipeline.server;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-import stroom.AbstractProcessIntegrationTest;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
@@ -38,6 +37,7 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.RecordCount;
+import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.PipelineTestUtil;
 import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.io.FileUtil;
@@ -79,8 +79,7 @@ public class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
     /**
      * Tests the XMLTransformer on some sample Windows XML events.
      *
-     * @throws Exception
-     *             Could be thrown while running the test.
+     * @throws Exception Could be thrown while running the test.
      */
     @Test
     public void testXMLTransformer() throws Exception {
@@ -124,7 +123,7 @@ public class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
         pipelineEntity = pipelineEntityService.save(pipelineEntity);
 
         // Create the parser.
-        final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+        final PipelineData pipelineData = pipelineDataCache.getOrCreate(pipelineEntity);
         final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
         feedHolder.setFeed(new Feed());

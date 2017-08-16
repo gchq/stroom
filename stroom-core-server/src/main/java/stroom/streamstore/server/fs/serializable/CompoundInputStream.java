@@ -25,7 +25,7 @@ import java.io.InputStream;
 /**
  * Class that wraps 3 streams (data, boundary, and segment) and provides handy
  * access to the nested segments with it.
- *
+ * <p>
  * You can call getNextInputStream() multiple times to get each segment stream.
  */
 public class CompoundInputStream extends RANestedInputStream {

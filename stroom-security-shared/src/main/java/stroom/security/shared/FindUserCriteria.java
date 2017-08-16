@@ -17,19 +17,18 @@
 package stroom.security.shared;
 
 import stroom.entity.shared.FindDocumentEntityCriteria;
-import stroom.entity.shared.OrderBy;
 import stroom.entity.shared.Period;
-import stroom.security.shared.User.UserStatus;
 
 /**
  * Criteria class.
  */
 public class FindUserCriteria extends FindDocumentEntityCriteria {
+    public static final String MANAGE_USERS_PERMISSION = "Manage Users";
+    public static final String FIELD_STATUS = "Status";
+    public static final String FIELD_LAST_LOGIN = "Last Login";
     /**
      * Order by types.
      */
-    public static final OrderBy ORDER_BY_STATUS = new OrderBy("Status", "pstatus");
-    public static final OrderBy ORDER_BY_LAST_LOGIN = new OrderBy("Last Login", "lastLoginMs");
     private static final long serialVersionUID = -6584216681046824635L;
     /**
      * Find by status

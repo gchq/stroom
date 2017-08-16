@@ -35,7 +35,7 @@ public class RefResolver {
     }
 
     public static RefResolver create(final VarFactoryMap varFactoryMap, final StoreFactory owner,
-            final String reference, final Set<String> localVars) {
+                                     final String reference, final Set<String> localVars) {
         // Parse the reference string.
         final RefParser refParser = new RefParser();
         final List<RefFactory> factories = refParser.parse(reference);

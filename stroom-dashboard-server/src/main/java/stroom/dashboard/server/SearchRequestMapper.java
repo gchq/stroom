@@ -80,12 +80,18 @@ public class SearchRequestMapper {
         this.visualisationService = visualisationService;
     }
 
-    public stroom.query.api.v1.SearchRequest mapRequest(final DashboardQueryKey queryKey, final stroom.dashboard.shared.SearchRequest searchRequest) {
+    public stroom.query.api.v1.SearchRequest mapRequest(final DashboardQueryKey queryKey,
+                                                        final stroom.dashboard.shared.SearchRequest searchRequest) {
         if (searchRequest == null) {
             return null;
         }
 
-        final stroom.query.api.v1.SearchRequest copy = new stroom.query.api.v1.SearchRequest(new QueryKey(queryKey.getUuid()), mapQuery(searchRequest), mapResultRequests(searchRequest), searchRequest.getDateTimeLocale(), searchRequest.getSearch().getIncremental());
+        final stroom.query.api.v1.SearchRequest copy = new stroom.query.api.v1.SearchRequest(
+                new QueryKey(queryKey.getUuid()),
+                mapQuery(searchRequest),
+                mapResultRequests(searchRequest),
+                searchRequest.getDateTimeLocale(),
+                searchRequest.getSearch().isIncremental());
 
         return copy;
     }
@@ -121,7 +127,7 @@ public class SearchRequestMapper {
 
                 final TableSettings tableSettings = mapTableSettings(tableResultRequest.getTableSettings());
 
-                final stroom.query.api.v1.ResultRequest copy = new stroom.query.api.v1.ResultRequest(componentId, Collections.singletonList(tableSettings), mapOffsetRange(tableResultRequest.getRequestedRange()), mapCollection(String.class, tableResultRequest.getOpenGroups()), ResultStyle.TABLE, tableResultRequest.wantsData());
+                final stroom.query.api.v1.ResultRequest copy = new stroom.query.api.v1.ResultRequest(componentId, Collections.singletonList(tableSettings), mapOffsetRange(tableResultRequest.getRequestedRange()), mapCollection(String.class, tableResultRequest.getOpenGroups()), ResultStyle.TABLE, tableResultRequest.getFetch());
                 resultRequests.add(copy);
 
             } else if (componentResultRequest instanceof VisResultRequest) {
@@ -130,7 +136,7 @@ public class SearchRequestMapper {
                 final TableSettings parentTableSettings = mapTableSettings(visResultRequest.getVisDashboardSettings().getTableSettings());
                 final TableSettings childTableSettings = mapVisSettingsToTableSettings(visResultRequest.getVisDashboardSettings(), parentTableSettings);
 
-                final stroom.query.api.v1.ResultRequest copy = new stroom.query.api.v1.ResultRequest(componentId, Arrays.asList(parentTableSettings, childTableSettings), null, null, ResultStyle.FLAT, visResultRequest.wantsData());
+                final stroom.query.api.v1.ResultRequest copy = new stroom.query.api.v1.ResultRequest(componentId, Arrays.asList(parentTableSettings, childTableSettings), null, null, ResultStyle.FLAT, visResultRequest.getFetch());
                 resultRequests.add(copy);
 
 //
@@ -368,7 +374,7 @@ public class SearchRequestMapper {
     }
 
 
-    private stroom.query.api.v1.TableSettings  mapVisSettingsToTableSettings(final VisComponentSettings visComponentSettings, final TableSettings parentTableSettings) {
+    private stroom.query.api.v1.TableSettings mapVisSettingsToTableSettings(final VisComponentSettings visComponentSettings, final TableSettings parentTableSettings) {
         DocRef docRef = visComponentSettings.getVisualisation();
         TableSettings tableSettings = null;
 
@@ -443,10 +449,10 @@ public class SearchRequestMapper {
                     }
 
                     tableSettings = new TableSettingsBuilder()
-                        .fields(fields)
-                        .maxResults(limits)
-                        .showDetail(true)
-                        .build();
+                            .fields(fields)
+                            .maxResults(limits)
+                            .showDetail(true)
+                            .build();
                 }
             }
 

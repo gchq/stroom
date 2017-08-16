@@ -19,8 +19,6 @@ package stroom.statistics.client.common.presenter;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.entity.client.event.DirtyEvent;
-import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.EntityEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
@@ -36,7 +34,7 @@ public class StatisticsDataSourcePresenter extends EntityEditTabPresenter<LinkTa
     private static final TabData FIELDS = new TabDataImpl("Fields");
     private static final TabData CUSTOM_ROLLUPS = new TabDataImpl("Custom Roll-ups");
 
-    private final TabContentProvider<StatisticStoreEntity> tabContentProvider = new TabContentProvider<StatisticStoreEntity>();
+    private final TabContentProvider<StatisticStoreEntity> tabContentProvider = new TabContentProvider<>();
 
     @Inject
     public StatisticsDataSourcePresenter(final EventBus eventBus, final LinkTabPanelView view,
@@ -88,6 +86,12 @@ public class StatisticsDataSourcePresenter extends EntityEditTabPresenter<LinkTa
     @Override
     protected void onWrite(final StatisticStoreEntity statisticsDataSource) {
         tabContentProvider.write(statisticsDataSource);
+    }
+
+    @Override
+    public void onPermissionsCheck(final boolean readOnly) {
+        super.onPermissionsCheck(readOnly);
+        tabContentProvider.onPermissionsCheck(readOnly);
     }
 
     @Override

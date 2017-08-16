@@ -21,17 +21,15 @@ public interface Match {
      * Returns the start index of the match.
      *
      * @return The index of the first character matched
-     *
-     * @throws IllegalStateException
-     *             If no match has yet been attempted, or if the previous match
-     *             operation failed
+     * @throws IllegalStateException If no match has yet been attempted, or if the previous match
+     *                               operation failed
      */
     int start();
 
     /**
      * Returns the start index of the subsequence captured by the given group
      * during this match.
-     *
+     * <p>
      * <p>
      * <a href="Pattern.html#cg">Capturing groups</a> are indexed from left to
      * right, starting at one. Group zero denotes the entire pattern, so the
@@ -39,20 +37,14 @@ public interface Match {
      * <tt>start()</tt>.
      * </p>
      *
-     * @param group
-     *            The index of a capturing group in this matcher's pattern
-     *
+     * @param group The index of a capturing group in this matcher's pattern
      * @return The index of the first character captured by the group, or
-     *         <tt>-1</tt> if the match was successful but the group itself did
-     *         not match anything
-     *
-     * @throws IllegalStateException
-     *             If no match has yet been attempted, or if the previous match
-     *             operation failed
-     *
-     * @throws IndexOutOfBoundsException
-     *             If there is no capturing group in the pattern with the given
-     *             index
+     * <tt>-1</tt> if the match was successful but the group itself did
+     * not match anything
+     * @throws IllegalStateException     If no match has yet been attempted, or if the previous match
+     *                                   operation failed
+     * @throws IndexOutOfBoundsException If there is no capturing group in the pattern with the given
+     *                                   index
      */
     int start(int group);
 
@@ -61,17 +53,15 @@ public interface Match {
      * </p>
      *
      * @return @return The offset after the last character matched
-     *
-     * @throws IllegalStateException
-     *             If no match has yet been attempted, or if the previous match
-     *             operation failed
+     * @throws IllegalStateException If no match has yet been attempted, or if the previous match
+     *                               operation failed
      */
     int end();
 
     /**
      * Returns the offset after the last character of the subsequence captured
      * by the given group during this match.
-     *
+     * <p>
      * <p>
      * <a href="Pattern.html#cg">Capturing groups</a> are indexed from left to
      * right, starting at one. Group zero denotes the entire pattern, so the
@@ -79,20 +69,14 @@ public interface Match {
      * <tt>end()</tt>.
      * </p>
      *
-     * @param group
-     *            The index of a capturing group in this matcher's pattern
-     *
+     * @param group The index of a capturing group in this matcher's pattern
      * @return The offset after the last character captured by the group, or
-     *         <tt>-1</tt> if the match was successful but the group itself did
-     *         not match anything
-     *
-     * @throws IllegalStateException
-     *             If no match has yet been attempted, or if the previous match
-     *             operation failed
-     *
-     * @throws IndexOutOfBoundsException
-     *             If there is no capturing group in the pattern with the given
-     *             index
+     * <tt>-1</tt> if the match was successful but the group itself did
+     * not match anything
+     * @throws IllegalStateException     If no match has yet been attempted, or if the previous match
+     *                                   operation failed
+     * @throws IndexOutOfBoundsException If there is no capturing group in the pattern with the given
+     *                                   index
      */
     int end(int group);
 

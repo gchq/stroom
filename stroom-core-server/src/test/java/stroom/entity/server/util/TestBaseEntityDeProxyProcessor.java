@@ -31,6 +31,18 @@ import java.util.HashSet;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestBaseEntityDeProxyProcessor extends StroomUnitTest {
+    @Test
+    public void testDeProxy() {
+        final DummyFeed dummyFeed = new DummyFeed();
+        dummyFeed.setId(Long.valueOf(100));
+        final Stream stream = Stream.createStream(null, dummyFeed, null);
+
+        final Stream deproxy = (Stream) (new BaseEntityDeProxyProcessor(true).process(stream));
+
+        Assert.assertTrue(deproxy.getFeed().getClass().equals(Feed.class));
+        Assert.assertEquals(100L, deproxy.getFeed().getId());
+    }
+
     public static class OurSet<T> extends HashSet<T> {
         private static final long serialVersionUID = -6963635707336015922L;
     }
@@ -41,7 +53,7 @@ public class TestBaseEntityDeProxyProcessor extends StroomUnitTest {
         @Override
         public LazyInitializer getHibernateLazyInitializer() {
             final Object proxy = Proxy.newProxyInstance(this.getClass().getClassLoader(),
-                    new Class<?>[] { LazyInitializer.class }, (proxy1, method, args) -> {
+                    new Class<?>[]{LazyInitializer.class}, (proxy1, method, args) -> {
                         if (method.getName().equals("getEntityName")) {
                             return Feed.class.getName();
                         }
@@ -54,17 +66,5 @@ public class TestBaseEntityDeProxyProcessor extends StroomUnitTest {
         public Object writeReplace() {
             return null;
         }
-    }
-
-    @Test
-    public void testDeProxy() {
-        final DummyFeed dummyFeed = new DummyFeed();
-        dummyFeed.setId(Long.valueOf(100));
-        final Stream stream = Stream.createStream(null, dummyFeed, null);
-
-        final Stream deproxy = (Stream) (new BaseEntityDeProxyProcessor(true).process(stream));
-
-        Assert.assertTrue(deproxy.getFeed().getClass().equals(Feed.class));
-        Assert.assertEquals(100L, deproxy.getFeed().getId());
     }
 }

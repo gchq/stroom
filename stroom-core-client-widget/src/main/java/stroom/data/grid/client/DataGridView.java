@@ -19,7 +19,6 @@ package stroom.data.grid.client;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.Header;
@@ -27,9 +26,8 @@ import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.HasRows;
 import com.gwtplatform.mvp.client.View;
 import stroom.data.grid.client.DataGridViewImpl.HeadingListener;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcon;
-import stroom.widget.button.client.ImageButtonView;
+import stroom.svg.client.SvgPreset;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.List;
@@ -51,9 +49,9 @@ public interface DataGridView<R> extends View, HasRows {
 
     void setColumnWidth(Column<R, ?> column, int width, Unit unit);
 
-    ImageButtonView addButton(String title, ImageResource enabledImage, ImageResource disabledImage, boolean enabled);
+//    ImageButtonView addButton(String title, ImageResource enabledImage, ImageResource disabledImage, boolean enabled);
 
-    GlyphButtonView addButton(GlyphIcon preset);
+    ButtonView addButton(SvgPreset preset);
 
     HandlerRegistration addColumnSortHandler(ColumnSortEvent.Handler handler);
 

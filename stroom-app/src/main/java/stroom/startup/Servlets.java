@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,7 +23,7 @@ public class Servlets {
 
     final ServletHolder upgradeDispatcherServletHolder;
 
-    public Servlets(MutableServletContextHandler servletContextHandler){
+    public Servlets(MutableServletContextHandler servletContextHandler) {
         upgradeDispatcherServletHolder = Servlets.newUpgradeDispatcherServlet();
 
         addServlet(servletContextHandler, upgradeDispatcherServletHolder, 3, "*.rpc", new String[]{
@@ -48,9 +48,9 @@ public class Servlets {
             ServletHolder servletHolder,
             int loadOnStartup,
             String servletMapping,
-            String[] furtherServletMappings){
+            String[] furtherServletMappings) {
         servletContextHandler.addServlet(servletHolder, servletMapping);
-        if(furtherServletMappings != null && furtherServletMappings.length > 0){
+        if (furtherServletMappings != null && furtherServletMappings.length > 0) {
             servletHolder.getRegistration().addMapping(furtherServletMappings);
         }
         servletHolder.getRegistration().setLoadOnStartup(loadOnStartup);
@@ -68,6 +68,7 @@ public class Servlets {
                 "                stroom.spring.ServerConfiguration,\n" +
                 "                stroom.spring.CachedServiceConfiguration,\n" +
                 "                stroom.logging.spring.EventLoggingConfiguration,\n" +
+                "                stroom.pipeline.spring.PipelineConfiguration,\n" +
                 "                stroom.index.spring.IndexConfiguration,\n" +
                 "                stroom.search.spring.SearchConfiguration,\n" +
                 "                stroom.script.spring.ScriptConfiguration,\n" +

@@ -19,6 +19,7 @@ package stroom.util;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.mutable.MutableInt;
 import stroom.entity.shared.SQLNameConstants;
+import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
 import stroom.node.shared.Volume;
 import stroom.streamstore.shared.Stream;
@@ -31,7 +32,6 @@ import stroom.util.io.LineReader;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.thread.ThreadScopeRunnable;
-import stroom.util.zip.HeaderMap;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -260,7 +260,7 @@ public class StreamRestoreTool extends DatabaseTool {
             if (!inspect) {
                 for (final KeyCount keyCount : sortedList) {
                     final char response = readQuestion(keyCount.toString() + " (D)elete, (R)estore, (I)nspect, (S)kip",
-                            new char[] { 'd', 'r', 'i', 's' }, 's');
+                            new char[]{'d', 'r', 'i', 's'}, 's');
 
                     streamTypeResponse.put(keyCount.getKey().get(0), response);
 
@@ -294,7 +294,7 @@ public class StreamRestoreTool extends DatabaseTool {
                             processStreamTypeFeed(fileName, streamType, feed, 'd');
                         } else {
                             final char response = readQuestion(longLabel + " (D)elete, (R)estore, (S)kip",
-                                    new char[] { 'd', 'r', 's' }, 's');
+                                    new char[]{'d', 'r', 's'}, 's');
 
                             if (response == 'd' || response == 'r') {
                                 processStreamTypeFeed(fileName, streamType, feed, response);
@@ -399,18 +399,18 @@ public class StreamRestoreTool extends DatabaseTool {
         final Map<String, String> rtnMap = new HashMap<>();
         final File manifest = new File(rootFile.substring(0, rootFile.lastIndexOf(".")) + ".mf.dat");
         if (manifest.isFile()) {
-            final HeaderMap headerMap = new HeaderMap();
+            final MetaMap metaMap = new MetaMap();
             try (FileInputStream inputStream = new FileInputStream(manifest)) {
-                headerMap.read(inputStream, true);
+                metaMap.read(inputStream, true);
             } catch (final IOException ioEx) {
             }
-            rtnMap.putAll(headerMap);
+            rtnMap.putAll(metaMap);
         }
         return rtnMap;
     }
 
     public void processStreamTypeFeed(final String fileName, final String processStreamType, final String processFeedId,
-            final char action) throws IOException, SQLException {
+                                      final char action) throws IOException, SQLException {
         final LineReader lineReader = new LineReader(new FileInputStream(fileName), StreamUtil.DEFAULT_CHARSET_NAME);
 
         String line = null;

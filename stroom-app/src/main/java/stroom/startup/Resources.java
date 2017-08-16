@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,11 +21,11 @@ import io.dropwizard.jersey.setup.JerseyEnvironment;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.context.ApplicationContext;
 import stroom.index.shared.IndexService;
-import stroom.resources.query.v1.StroomIndexQueryResource;
 import stroom.resources.NamedResource;
-import stroom.resources.query.v1.SqlStatisticsQueryResource;
 import stroom.resources.authentication.v1.AuthenticationResource;
 import stroom.resources.authorisation.v1.AuthorisationResource;
+import stroom.resources.query.v1.SqlStatisticsQueryResource;
+import stroom.resources.query.v1.StroomIndexQueryResource;
 import stroom.search.server.SearchResultCreatorManager;
 import stroom.security.server.AuthenticationService;
 import stroom.security.server.AuthorisationService;
@@ -100,30 +100,30 @@ public class Resources {
         }
     }
 
-    public List<NamedResource> getResources(){
+    public List<NamedResource> getResources() {
         return resources;
     }
 
-    private void configureLuceneQueryResource(ApplicationContext applicationContext){
+    private void configureLuceneQueryResource(ApplicationContext applicationContext) {
         SearchResultCreatorManager searchResultCreatorManager = applicationContext.getBean(SearchResultCreatorManager.class);
         IndexService indexService = applicationContext.getBean(IndexService.class);
         stroomIndexQueryResource.setIndexService(indexService);
         stroomIndexQueryResource.setSearchResultCreatorManager(searchResultCreatorManager);
     }
 
-    private void configureSqlStatisticsQueryResource(ApplicationContext applicationContext){
+    private void configureSqlStatisticsQueryResource(ApplicationContext applicationContext) {
         StatisticsQueryService statisticsQueryService = applicationContext.getBean(StatisticsQueryService.class);
         sqlStatisticsQueryResource.setStatisticsQueryService(statisticsQueryService);
     }
 
-    private void configureAuthenticationResource(ApplicationContext applicationContext){
+    private void configureAuthenticationResource(ApplicationContext applicationContext) {
         AuthenticationService authenticationService = applicationContext.getBean(AuthenticationService.class);
         JWTService jwtService = applicationContext.getBean(JWTService.class);
         authenticationResource.setAuthenticationService(authenticationService);
         authenticationResource.setJwtService(jwtService);
     }
 
-    private void configureAuthorisationResource(ApplicationContext applicationContext){
+    private void configureAuthorisationResource(ApplicationContext applicationContext) {
         AuthorisationService authorisationService = applicationContext.getBean(AuthorisationService.class);
         authorisationResource.setAuthorisationService(authorisationService);
     }

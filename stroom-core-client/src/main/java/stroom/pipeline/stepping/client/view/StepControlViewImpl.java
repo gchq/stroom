@@ -26,40 +26,37 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.pipeline.stepping.client.presenter.StepControlPresenter.StepControlView;
 import stroom.pipeline.stepping.client.presenter.StepControlUIHandlers;
-import stroom.widget.button.client.GlyphButton;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.SvgButton;
 
 public class StepControlViewImpl extends ViewWithUiHandlers<StepControlUIHandlers> implements StepControlView {
-    public interface Binder extends UiBinder<Widget, StepControlViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField(provided = true)
-    GlyphButton firstButton;
+    SvgButton firstButton;
     @UiField(provided = true)
-    GlyphButton backwardButton;
+    SvgButton backwardButton;
     @UiField(provided = true)
-    GlyphButton forwardButton;
+    SvgButton forwardButton;
     @UiField(provided = true)
-    GlyphButton lastButton;
+    SvgButton lastButton;
     @UiField(provided = true)
-    GlyphButton refreshButton;
-
+    SvgButton refreshButton;
     @Inject
     public StepControlViewImpl(final Binder binder) {
 
-        firstButton = createButton("fa fa-fast-backward", "Step First");
-        backwardButton = createButton("fa fa-step-backward", "Step Backward");
-        forwardButton = createButton("fa fa-step-forward", "Step Forward");
-        lastButton = createButton("fa fa-fast-forward", "Step Last");
-        refreshButton = createButton("fa fa-refresh", "Refresh Current Step");
+        firstButton = createButton(SvgPresets.FAST_BACKWARD_GREEN, "Step First");
+        backwardButton = createButton(SvgPresets.STEP_BACKWARD_GREEN, "Step Backward");
+        forwardButton = createButton(SvgPresets.STEP_FORWARD_GREEN, "Step Forward");
+        lastButton = createButton(SvgPresets.FAST_FORWARD_GREEN, "Step Last");
+        refreshButton = createButton(SvgPresets.REFRESH_GREEN, "Refresh Current Step");
 
         widget = binder.createAndBindUi(this);
     }
 
-    private GlyphButton createButton(final String className, final String title) {
-        final GlyphButton button = GlyphButton.create(className, GlyphIcons.GREEN, title, false);
+    private SvgButton createButton(final SvgPreset svgIcon, final String title) {
+        final SvgButton button = SvgButton.create(svgIcon);
+        button.setTitle(title);
         final Style style = button.getElement().getStyle();
         style.setPadding(1, Style.Unit.PX);
         style.setFloat(Style.Float.RIGHT);
@@ -129,5 +126,8 @@ public class StepControlViewImpl extends ViewWithUiHandlers<StepControlUIHandler
         if (getUiHandlers() != null) {
             getUiHandlers().stepRefresh();
         }
+    }
+
+    public interface Binder extends UiBinder<Widget, StepControlViewImpl> {
     }
 }

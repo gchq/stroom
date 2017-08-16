@@ -42,33 +42,12 @@ import java.util.List;
 public class SteppingFilterPresenter extends
         MyPresenter<SteppingFilterPresenter.SteppingFilterSettingsView, SteppingFilterPresenter.SteppingFilterSettingsProxy>
         implements SteppingFilterUiHandlers, ShowSteppingFilterSettingsHandler, PopupUiHandlers {
-    public interface SteppingFilterSettingsView extends View, HasUiHandlers<SteppingFilterUiHandlers> {
-        Severity getSkipToErrors();
-
-        void setSkipToErrors(Severity severity);
-
-        OutputState getSkipToOutput();
-
-        void setSkipToOutput(OutputState skipToOutput);
-
-        void setEditEnabled(boolean enabled);
-
-        void setRemoveEnabled(boolean enabled);
-    }
-
-    @ProxyCodeSplit
-    public interface SteppingFilterSettingsProxy extends Proxy<SteppingFilterPresenter> {
-    }
-
     public static final String LIST = "LIST";
-
+    private final XPathListPresenter xPathListPresenter;
+    private final XPathFilterPresenter xPathFilterPresenter;
     private ShowSteppingFilterSettingsEvent event;
     private SteppingFilterSettings settings;
-    private final XPathListPresenter xPathListPresenter;
     private List<XPathFilter> xPathFilters;
-
-    private final XPathFilterPresenter xPathFilterPresenter;
-
     @Inject
     public SteppingFilterPresenter(final EventBus eventBus, final SteppingFilterSettingsView view,
                                    final SteppingFilterSettingsProxy proxy, final XPathListPresenter xPathListPresenter,
@@ -210,5 +189,23 @@ public class SteppingFilterPresenter extends
         settings.setXPathFilters(new HashSet<>(xPathFilters));
 
         event.getEditor().setFilterActive(settings.isActive());
+    }
+
+    public interface SteppingFilterSettingsView extends View, HasUiHandlers<SteppingFilterUiHandlers> {
+        Severity getSkipToErrors();
+
+        void setSkipToErrors(Severity severity);
+
+        OutputState getSkipToOutput();
+
+        void setSkipToOutput(OutputState skipToOutput);
+
+        void setEditEnabled(boolean enabled);
+
+        void setRemoveEnabled(boolean enabled);
+    }
+
+    @ProxyCodeSplit
+    public interface SteppingFilterSettingsProxy extends Proxy<SteppingFilterPresenter> {
     }
 }

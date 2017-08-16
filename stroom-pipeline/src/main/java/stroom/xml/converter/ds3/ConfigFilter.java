@@ -221,7 +221,7 @@ public class ConfigFilter extends AbstractXMLFilter {
         if (string != null && string.length() > 0) {
             // Turn the comma separated list into integers.
             final String[] arr = string.split(",");
-            final Set<Integer> val = new HashSet<Integer>(arr.length);
+            final Set<Integer> val = new HashSet<>(arr.length);
             for (int i = 0; i < arr.length; i++) {
                 try {
                     final String str = arr[i];

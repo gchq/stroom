@@ -92,7 +92,7 @@ public class TextConverterPresenter extends EntityEditTabPresenter<LinkTabPanelV
     }
 
     @Override
-    protected void onPermissionsCheck(final boolean readOnly) {
+    public void onPermissionsCheck(final boolean readOnly) {
         super.onPermissionsCheck(readOnly);
 
         codePresenter = editorPresenterProvider.get();

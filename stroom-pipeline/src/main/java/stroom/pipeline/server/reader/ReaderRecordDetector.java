@@ -35,12 +35,9 @@ public class ReaderRecordDetector extends FilterReader implements RecordDetector
     private static final Logger LOGGER = LoggerFactory.getLogger(ReaderRecordDetector.class);
 
     private static final int MAX_COUNT = 10000;
-
-    private SteppingController controller;
-
-    private long currentStepNo;
-
     private final char[] buffer = new char[1024];
+    private SteppingController controller;
+    private long currentStepNo;
     private int offset;
     private int length;
     private boolean newStream = true;

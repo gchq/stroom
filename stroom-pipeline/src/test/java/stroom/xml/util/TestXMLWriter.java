@@ -43,14 +43,13 @@ import java.io.FileReader;
 import java.io.FileWriter;
 
 public class TestXMLWriter extends StroomUnitTest {
+    public static final SAXParserFactory PARSER_FACTORY;
     private static final Logger LOGGER = LoggerFactory.getLogger(TestXMLWriter.class);
 
-    public static final SAXParserFactory PARSER_FACTORY;
-
-	static {
-		PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
-		PARSER_FACTORY.setNamespaceAware(true);
-	}
+    static {
+        PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
+        PARSER_FACTORY.setNamespaceAware(true);
+    }
 
     @Test
     public void test() {

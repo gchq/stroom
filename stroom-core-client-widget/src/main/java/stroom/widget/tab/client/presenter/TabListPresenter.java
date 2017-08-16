@@ -23,6 +23,7 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.LegacyHandlerWrapper;
 import com.google.gwt.event.shared.SimpleEventBus;
+import stroom.svg.client.Icon;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItem;
@@ -34,26 +35,6 @@ import java.util.Comparator;
 import java.util.List;
 
 public class TabListPresenter extends MenuPresenter implements HasSelectionHandlers<TabData> {
-    private static class TabDataIconMenuItem extends IconMenuItem {
-        private final TabData tabData;
-
-        public TabDataIconMenuItem(final int priority, final TabData tabData, final Icon enabledIcon, final String text) {
-            super(priority, enabledIcon, null, text, null, true, null);
-            this.tabData = tabData;
-        }
-
-        public TabData getTabData() {
-            return tabData;
-        }
-    }
-
-    private static class TabItemComparator implements Comparator<TabData> {
-        @Override
-        public int compare(final TabData o1, final TabData o2) {
-            return o1.getLabel().compareTo(o2.getLabel());
-        }
-    }
-
     public TabListPresenter() {
         super(new SimpleEventBus());
     }
@@ -95,5 +76,25 @@ public class TabListPresenter extends MenuPresenter implements HasSelectionHandl
     @Override
     public HandlerRegistration addSelectionHandler(final SelectionHandler<TabData> handler) {
         return new LegacyHandlerWrapper(addHandler(SelectionEvent.getType(), handler));
+    }
+
+    private static class TabDataIconMenuItem extends IconMenuItem {
+        private final TabData tabData;
+
+        public TabDataIconMenuItem(final int priority, final TabData tabData, final Icon enabledIcon, final String text) {
+            super(priority, enabledIcon, null, text, null, true, null);
+            this.tabData = tabData;
+        }
+
+        public TabData getTabData() {
+            return tabData;
+        }
+    }
+
+    private static class TabItemComparator implements Comparator<TabData> {
+        @Override
+        public int compare(final TabData o1, final TabData o2) {
+            return o1.getLabel().compareTo(o2.getLabel());
+        }
     }
 }

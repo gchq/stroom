@@ -27,15 +27,7 @@ import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.explorer.client.presenter.EntityCheckTreePresenter.EntityCheckTreeView;
 
 public class EntityCheckTreeViewImpl extends ViewImpl implements EntityCheckTreeView {
-    public interface Binder extends UiBinder<Widget, EntityCheckTreeViewImpl> {
-    }
-
-    public interface Resources extends ClientBundle {
-        ImageResource filter();
-    }
-
     private final Widget widget;
-
     @UiField
     ScrollPanel scrollPanel;
 
@@ -52,5 +44,12 @@ public class EntityCheckTreeViewImpl extends ViewImpl implements EntityCheckTree
     @Override
     public void setCellTree(Widget cellTree) {
         scrollPanel.setWidget(cellTree);
+    }
+
+    public interface Binder extends UiBinder<Widget, EntityCheckTreeViewImpl> {
+    }
+
+    public interface Resources extends ClientBundle {
+        ImageResource filter();
     }
 }

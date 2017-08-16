@@ -36,15 +36,18 @@ import java.util.ArrayDeque;
 @RunWith(StroomSpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = TaskScopeTestConfiguration.class)
 public class TestTaskScope {
+    TaskScopeTestSingleton singleton1;
+    TaskScopeTestSingleton singleton2;
+    Integer num1;
+    Integer num2;
     @Resource
     private TaskScopeTestSingleton scopeTestSingleton;
-
     @Resource
     private StroomBeanStore stroomBeanStore;
 
     @Test
     public void testThreading() {
-        final ArrayDeque<Thread> deque = new ArrayDeque<Thread>();
+        final ArrayDeque<Thread> deque = new ArrayDeque<>();
         for (int i = 0; i < 1; i++) {
             final Thread t = new Thread(new Runnable() {
                 @Override
@@ -88,9 +91,6 @@ public class TestTaskScope {
 
         Assert.assertTrue(singleton1 == singleton2);
     }
-
-    TaskScopeTestSingleton singleton1;
-    TaskScopeTestSingleton singleton2;
 
     @Test
     public void testSingletonScopeBeanTwoThread() {
@@ -143,9 +143,6 @@ public class TestTaskScope {
 
         Assert.assertTrue(num1 == num2);
     }
-
-    Integer num1;
-    Integer num2;
 
     @Test
     public void testThreadScopeBeanTwoThread() {

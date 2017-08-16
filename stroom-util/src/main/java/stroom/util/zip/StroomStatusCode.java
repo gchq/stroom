@@ -33,6 +33,9 @@ public enum StroomStatusCode {
     FEED_IS_NOT_SET_TO_RECEIVED_DATA(HttpServletResponse.SC_NOT_ACCEPTABLE, 110, "Feed is not set to receive data",
             "The feed you have provided has not been setup to receive data"),
 
+    RECEIPT_POLICY_SET_TO_REJECT_DATA(HttpServletResponse.SC_NOT_ACCEPTABLE, 110, "The data receipt policy is set to reject this data",
+            "The data you have provided has been rejected by policy"),
+
     UNKNOWN_COMPRESSION(HttpServletResponse.SC_NOT_ACCEPTABLE, 200, "Unknown compression",
             "Compression argument must be one of ZIP, GZIP and NONE"),
 
@@ -48,6 +51,17 @@ public enum StroomStatusCode {
     UNKNOWN_ERROR(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 999, "Unknown error",
             "An unknown unexpected error occurred");
 
+    private final String message;
+    private final String reason;
+    private final int code;
+    private final int httpCode;
+    StroomStatusCode(final int httpCode, final int code, final String message, final String reason) {
+        this.httpCode = httpCode;
+        this.code = code;
+        this.message = message;
+        this.reason = reason;
+    }
+
     public static StroomStatusCode getStroomStatusCode(int code) {
         for (StroomStatusCode stroomStatusCode : StroomStatusCode.values()) {
             if (stroomStatusCode.getCode() == code) {
@@ -57,16 +71,16 @@ public enum StroomStatusCode {
         return UNKNOWN_ERROR;
     }
 
-    private final String message;
-    private final String reason;
-    private final int code;
-    private final int httpCode;
+    public static void main(String[] args) {
+        System.out.println("{| class=\"wikitable\"");
+        System.out.println("!HTTP Status!!Stroom-Status!!Message!!Reason");
+        for (StroomStatusCode stroomStatusCode : StroomStatusCode.values()) {
+            System.out.println("|-");
+            System.out.println("|" + stroomStatusCode.getHttpCode() + "||" + stroomStatusCode.getCode() + "||"
+                    + stroomStatusCode.getMessage() + "||" + stroomStatusCode.getReason());
 
-    StroomStatusCode(final int httpCode, final int code, final String message, final String reason) {
-        this.httpCode = httpCode;
-        this.code = code;
-        this.message = message;
-        this.reason = reason;
+        }
+        System.out.println("|}");
     }
 
     public int getHttpCode() {
@@ -88,17 +102,5 @@ public enum StroomStatusCode {
     @Override
     public String toString() {
         return httpCode + " - " + code + " - " + message;
-    }
-
-    public static void main(String[] args) {
-        System.out.println("{| class=\"wikitable\"");
-        System.out.println("!HTTP Status!!Stroom-Status!!Message!!Reason");
-        for (StroomStatusCode stroomStatusCode : StroomStatusCode.values()) {
-            System.out.println("|-");
-            System.out.println("|" + stroomStatusCode.getHttpCode() + "||" + stroomStatusCode.getCode() + "||"
-                    + stroomStatusCode.getMessage() + "||" + stroomStatusCode.getReason());
-
-        }
-        System.out.println("|}");
     }
 }

@@ -27,7 +27,7 @@ import java.util.Map;
 
 public class SaveQueue<E extends BaseEntity> {
     private final ClientDispatchAsync dispatcher;
-    private final Map<E, List<SaveTask<E>>> map = new HashMap<E, List<SaveTask<E>>>();
+    private final Map<E, List<SaveTask<E>>> map = new HashMap<>();
 
     public SaveQueue(final ClientDispatchAsync dispatcher) {
         this.dispatcher = dispatcher;

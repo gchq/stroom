@@ -26,12 +26,6 @@ import stroom.widget.xsdbrowser.client.view.XSDNode;
 
 public class XSDBrowserPresenter extends MyPresenterWidget<XSDBrowserPresenter.XSDBrowserView>
         implements XSDBrowserUiHandlers {
-    public interface XSDBrowserView extends View, HasUiHandlers<XSDBrowserUiHandlers> {
-        void setModel(XSDModel model);
-
-        void setSelectedNode(XSDNode node, boolean change);
-    }
-
     private XSDModel model;
 
     @Inject
@@ -61,5 +55,11 @@ public class XSDBrowserPresenter extends MyPresenterWidget<XSDBrowserPresenter.X
     @Override
     public void home() {
         model.home();
+    }
+
+    public interface XSDBrowserView extends View, HasUiHandlers<XSDBrowserUiHandlers> {
+        void setModel(XSDModel model);
+
+        void setSelectedNode(XSDNode node, boolean change);
     }
 }

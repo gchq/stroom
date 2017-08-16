@@ -23,7 +23,7 @@ import stroom.core.client.presenter.Plugin;
 import stroom.importexport.client.event.ExportConfigEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.ClientSecurityContext;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.MenuItem;
 import stroom.widget.menu.client.presenter.Separator;
@@ -41,7 +41,7 @@ public class ExportConfigPlugin extends Plugin {
     @Override
     public void onReveal(final BeforeRevealMenubarEvent event) {
         // Add items to the tools menu.
-        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, new Separator(8));
+        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, new Separator(100));
         if (securityContext.hasAppPermission("Export Configuration")) {
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, createExportMenuItem());
         }
@@ -49,6 +49,6 @@ public class ExportConfigPlugin extends Plugin {
     }
 
     private MenuItem createExportMenuItem() {
-        return new IconMenuItem(10, GlyphIcons.DOWNLOAD, GlyphIcons.DOWNLOAD, "Export", null, true, () -> ExportConfigEvent.fire(ExportConfigPlugin.this));
+        return new IconMenuItem(110, SvgPresets.DOWNLOAD, SvgPresets.DOWNLOAD, "Export", null, true, () -> ExportConfigEvent.fire(ExportConfigPlugin.this));
     }
 }

@@ -37,15 +37,22 @@ import java.util.Properties;
 @Component("propertyFileProvider")
 public class PropertyConfigurer extends PropertyPlaceholderConfigurer
         implements PropertyProvider, ApplicationContextAware, ResourceLoaderAware {
+    private static Properties overrideProperties;
+    private static volatile String webAppPropertiesName = null;
     private Properties properties;
     private Properties defaultProperties;
-    private static Properties overrideProperties;
     private ResourceLoader resourceLoader;
     private Resource[] locations;
-    private static volatile String webAppPropertiesName = null;
 
     public static void setWebAppPropertiesName(String webAppProperties) {
         PropertyConfigurer.webAppPropertiesName = webAppProperties;
+    }
+
+    /**
+     * Hook to add properties.
+     */
+    public static void setOverrideProperties(Properties overrideProperties) {
+        PropertyConfigurer.overrideProperties = overrideProperties;
     }
 
     @Override
@@ -57,13 +64,6 @@ public class PropertyConfigurer extends PropertyPlaceholderConfigurer
         return properties;
     }
 
-    /**
-     * Hook to add properties.
-     */
-    public static void setOverrideProperties(Properties overrideProperties) {
-        PropertyConfigurer.overrideProperties = overrideProperties;
-    }
-
     @Override
     public void setPropertiesArray(Properties[] propertiesArray) {
         if (propertiesArray != null && propertiesArray.length == 1) {
@@ -73,14 +73,14 @@ public class PropertyConfigurer extends PropertyPlaceholderConfigurer
         super.setPropertiesArray(propertiesArray);
     }
 
+    public Properties getProperties() {
+        return properties;
+    }
+
     @Override
     public void setProperties(Properties properties) {
         defaultProperties = properties;
         super.setProperties(properties);
-    }
-
-    public Properties getProperties() {
-        return properties;
     }
 
     public Properties getDefaultProperties() {
@@ -103,7 +103,7 @@ public class PropertyConfigurer extends PropertyPlaceholderConfigurer
             // Use the WAR name in preference to the default properties
             Resource warResource = resourceLoader.getResource("classpath:/" + webAppPropertiesName + ".properties");
             if (warResource.exists() && warResource.isReadable()) {
-                setLocations(new Resource[] { warResource });
+                setLocations(new Resource[]{warResource});
             }
         }
     }
@@ -111,7 +111,7 @@ public class PropertyConfigurer extends PropertyPlaceholderConfigurer
     @Override
     public void setLocation(Resource location) {
         if (locations == null) {
-            this.locations = new Resource[] { location };
+            this.locations = new Resource[]{location};
         }
         setLocations(this.locations);
     }

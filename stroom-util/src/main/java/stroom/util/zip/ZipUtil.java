@@ -71,7 +71,7 @@ public final class ZipUtil {
     }
 
     public static void zip(final File zipFile, final File dir, final Pattern includePattern,
-            final Pattern excludePattern) throws IOException {
+                           final Pattern excludePattern) throws IOException {
         final ZipOutputStream zipStream = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
 
         zip(dir, "", zipStream, includePattern, excludePattern);
@@ -81,7 +81,7 @@ public final class ZipUtil {
     }
 
     private static void zip(final File parent, final String path, final ZipOutputStream zip,
-            final Pattern includePattern, final Pattern excludePattern) throws IOException {
+                            final Pattern includePattern, final Pattern excludePattern) throws IOException {
         final File[] files = parent.listFiles();
         Arrays.sort(files);
 
@@ -195,7 +195,7 @@ public final class ZipUtil {
     }
 
     public static Map<String, Long> pathSize(final File zipFile) throws IOException {
-        final Map<String, Long> pathMap = new HashMap<String, Long>();
+        final Map<String, Long> pathMap = new HashMap<>();
         ZipFile zipFile2 = null;
         try {
             zipFile2 = new ZipFile(zipFile);

@@ -23,96 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class InclusiveRanges {
-    public static class InclusiveRange {
-        private final long min;
-        private final long max;
-
-        public static InclusiveRange create(final long min, final long max) {
-            return new InclusiveRange(min, max);
-        }
-
-        public static InclusiveRange create(final long num) {
-            return new InclusiveRange(num, num);
-        }
-
-        public static InclusiveRange extend(final InclusiveRange existing, final long num) {
-            if (existing == null) {
-                return create(num);
-            }
-
-            if (num < existing.min) {
-                return new InclusiveRange(num, existing.max);
-            } else if (num > existing.max) {
-                return new InclusiveRange(existing.min, num);
-            }
-
-            return existing;
-        }
-
-        public static InclusiveRange extend(final InclusiveRange existing, final long min, final long max) {
-            if (existing == null) {
-                return create(min, max);
-            }
-
-            if (min < existing.min && max > existing.max) {
-                return new InclusiveRange(min, max);
-            } else if (min < existing.min) {
-                return new InclusiveRange(min, existing.max);
-            } else if (max > existing.max) {
-                return new InclusiveRange(existing.min, max);
-            }
-
-            return existing;
-        }
-
-        public InclusiveRange(final long min, final long max) {
-            this.min = min;
-            this.max = max;
-        }
-
-        public long getMin() {
-            return min;
-        }
-
-        public long getMax() {
-            return max;
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (o == this) {
-                return true;
-            } else if (!(o instanceof InclusiveRange)) {
-                return false;
-            }
-
-            final InclusiveRange range = (InclusiveRange) o;
-            final EqualsBuilder builder = new EqualsBuilder();
-            builder.append(min, range.min);
-            builder.append(max, range.max);
-            return builder.isEquals();
-        }
-
-        @Override
-        public int hashCode() {
-            final HashCodeBuilder builder = new HashCodeBuilder();
-            builder.append(min);
-            builder.append(max);
-            return builder.toHashCode();
-        }
-
-        @Override
-        public String toString() {
-            final StringBuilder sb = new StringBuilder();
-            sb.append("[");
-            sb.append(min);
-            sb.append("..");
-            sb.append(max);
-            sb.append("]");
-            return sb.toString();
-        }
-    }
-
     private final List<InclusiveRange> ranges;
 
     public InclusiveRanges() {
@@ -121,6 +31,27 @@ public class InclusiveRanges {
 
     private InclusiveRanges(final List<InclusiveRange> ranges) {
         this.ranges = ranges;
+    }
+
+    public static List<InclusiveRange> rangesFromString(final String string) {
+        final List<InclusiveRange> ranges = new ArrayList<>();
+        if (string != null) {
+            final String[] parts = string.split(",");
+            for (final String part : parts) {
+                final String[] fromAndTo = part.split(">");
+                if (fromAndTo.length == 1) {
+                    final Long from = Long.valueOf(fromAndTo[0]);
+                    final InclusiveRange range = new InclusiveRange(from, from);
+                    ranges.add(range);
+                } else if (fromAndTo.length == 2) {
+                    final Long from = Long.valueOf(fromAndTo[0]);
+                    final Long to = Long.valueOf(fromAndTo[1]);
+                    final InclusiveRange range = new InclusiveRange(from, to);
+                    ranges.add(range);
+                }
+            }
+        }
+        return ranges;
     }
 
     public void addEvent(final long num) {
@@ -197,27 +128,6 @@ public class InclusiveRanges {
         return sb.toString();
     }
 
-    public static List<InclusiveRange> rangesFromString(final String string) {
-        final List<InclusiveRange> ranges = new ArrayList<>();
-        if (string != null) {
-            final String[] parts = string.split(",");
-            for (final String part : parts) {
-                final String[] fromAndTo = part.split(">");
-                if (fromAndTo.length == 1) {
-                    final Long from = Long.valueOf(fromAndTo[0]);
-                    final InclusiveRange range = new InclusiveRange(from, from);
-                    ranges.add(range);
-                } else if (fromAndTo.length == 2) {
-                    final Long from = Long.valueOf(fromAndTo[0]);
-                    final Long to = Long.valueOf(fromAndTo[1]);
-                    final InclusiveRange range = new InclusiveRange(from, to);
-                    ranges.add(range);
-                }
-            }
-        }
-        return ranges;
-    }
-
     public InclusiveRange getOuterRange() {
         if (ranges.size() == 0) {
             return null;
@@ -226,5 +136,95 @@ public class InclusiveRanges {
         final InclusiveRange start = ranges.get(0);
         final InclusiveRange end = ranges.get(ranges.size() - 1);
         return new InclusiveRange(start.min, end.max);
+    }
+
+    public static class InclusiveRange {
+        private final long min;
+        private final long max;
+
+        public InclusiveRange(final long min, final long max) {
+            this.min = min;
+            this.max = max;
+        }
+
+        public static InclusiveRange create(final long min, final long max) {
+            return new InclusiveRange(min, max);
+        }
+
+        public static InclusiveRange create(final long num) {
+            return new InclusiveRange(num, num);
+        }
+
+        public static InclusiveRange extend(final InclusiveRange existing, final long num) {
+            if (existing == null) {
+                return create(num);
+            }
+
+            if (num < existing.min) {
+                return new InclusiveRange(num, existing.max);
+            } else if (num > existing.max) {
+                return new InclusiveRange(existing.min, num);
+            }
+
+            return existing;
+        }
+
+        public static InclusiveRange extend(final InclusiveRange existing, final long min, final long max) {
+            if (existing == null) {
+                return create(min, max);
+            }
+
+            if (min < existing.min && max > existing.max) {
+                return new InclusiveRange(min, max);
+            } else if (min < existing.min) {
+                return new InclusiveRange(min, existing.max);
+            } else if (max > existing.max) {
+                return new InclusiveRange(existing.min, max);
+            }
+
+            return existing;
+        }
+
+        public long getMin() {
+            return min;
+        }
+
+        public long getMax() {
+            return max;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (o == this) {
+                return true;
+            } else if (!(o instanceof InclusiveRange)) {
+                return false;
+            }
+
+            final InclusiveRange range = (InclusiveRange) o;
+            final EqualsBuilder builder = new EqualsBuilder();
+            builder.append(min, range.min);
+            builder.append(max, range.max);
+            return builder.isEquals();
+        }
+
+        @Override
+        public int hashCode() {
+            final HashCodeBuilder builder = new HashCodeBuilder();
+            builder.append(min);
+            builder.append(max);
+            return builder.toHashCode();
+        }
+
+        @Override
+        public String toString() {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("[");
+            sb.append(min);
+            sb.append("..");
+            sb.append(max);
+            sb.append("]");
+            return sb.toString();
+        }
     }
 }

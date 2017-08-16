@@ -22,13 +22,13 @@ import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Period;
+import stroom.feed.MetaMap;
 import stroom.io.SeekableInputStream;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.collections.TypedMap;
 import stroom.util.spring.StroomSpringProfiles;
-import stroom.util.zip.HeaderMap;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -61,207 +61,12 @@ public class MockStreamStore implements StreamStore, Clearable {
      */
     private long currentId;
 
-    private static class SeekableByteArrayInputStream extends ByteArrayInputStream implements SeekableInputStream {
-        public SeekableByteArrayInputStream(final byte[] bytes) {
-            super(bytes);
-        }
-
-        @Override
-        public long getPosition() throws IOException {
-            return pos;
-        }
-
-        @Override
-        public long getSize() throws IOException {
-            return buf.length;
-        }
-
-        @Override
-        public void seek(final long pos) throws IOException {
-            this.pos = (int) pos;
-        }
-    }
-
-    private class MockStreamTarget implements StreamTarget {
-        private ByteArrayOutputStream outputStream = null;
-        private final Stream stream;
-        private final StreamType type;
-        private StreamTarget parent;
-        private final HeaderMap attributeMap = new HeaderMap();
-
-        private final Map<StreamType, MockStreamTarget> childMap = new HashMap<>();
-
-        public MockStreamTarget(final Stream stream) {
-            this.stream = stream;
-            this.type = stream.getStreamType();
-        }
-
-        public MockStreamTarget(final StreamTarget parent, final StreamType type) {
-            this.parent = parent;
-            this.stream = parent.getStream();
-            this.type = type;
-        }
-
-        @Override
-        public OutputStream getOutputStream() {
-            if (outputStream == null) {
-                final TypedMap<Long, ByteArrayOutputStream> typeMap = getOpenOutputStream().get(stream);
-                outputStream = typeMap.get(getStreamTypeId(type));
-            }
-            return outputStream;
-        }
-
-        @Override
-        public void close() {
-            try {
-                if (outputStream != null) {
-                    outputStream.close();
-                }
-            } catch (final IOException ioEx) {
-                // Wrap it
-                throw new RuntimeException(ioEx);
-            }
-        }
-
-        @Override
-        public Stream getStream() {
-            return stream;
-        }
-
-        @Override
-        public StreamTarget addChildStream(final StreamType type) {
-            final TypedMap<Long, ByteArrayOutputStream> typeMap = getOpenOutputStream().get(stream);
-            typeMap.put(getStreamTypeId(type), new ByteArrayOutputStream());
-            childMap.put(type, new MockStreamTarget(this, type));
-            return childMap.get(type);
-        }
-
-        @Override
-        public StreamTarget getChildStream(final StreamType type) {
-            return childMap.get(type);
-        }
-
-        @Override
-        public StreamTarget getParent() {
-            return parent;
-        }
-
-        @Override
-        public StreamType getType() {
-            return type;
-        }
-
-        @Override
-        public HeaderMap getAttributeMap() {
-            return attributeMap;
-        }
-
-        @Override
-        public boolean isAppend() {
-            return false;
-        }
-    }
-
-    private class MockStreamSource implements StreamSource {
-        private InputStream inputStream = null;
-        private final Stream stream;
-        private StreamSource parent;
-        private final StreamType type;
-        private final HeaderMap attributeMap = new HeaderMap();
-
-        public MockStreamSource(final Stream stream) {
-            this.stream = stream;
-            this.type = stream.getStreamType();
-        }
-
-        public MockStreamSource(final StreamSource parent, final StreamType type) {
-            this.parent = parent;
-            this.stream = parent.getStream();
-            this.type = type;
-        }
-
-        @Override
-        public InputStream getInputStream() {
-            if (inputStream == null) {
-                final TypedMap<Long, byte[]> typeMap = getFileData().get(stream);
-                final byte[] data = typeMap.get(getStreamTypeId(type));
-
-                if (data == null) {
-                    throw new IllegalStateException("Some how we have null data stream in the stream store");
-                }
-                inputStream = new SeekableByteArrayInputStream(data);
-            }
-            return inputStream;
-        }
-
-        /**
-         * Close off the stream.
-         */
-        @Override
-        public void close() {
-            try {
-                if (inputStream != null) {
-                    inputStream.close();
-                }
-            } catch (final IOException ioEx) {
-                // Wrap it
-                throw new RuntimeException(ioEx);
-            }
-        }
-
-        @Override
-        public Stream getStream() {
-            return stream;
-        }
-
-        @Override
-        public StreamSource getChildStream(final StreamType type) {
-            final TypedMap<Long, byte[]> typeMap = getFileData().get(stream);
-            if (typeMap.containsKey(getStreamTypeId(type))) {
-                return new MockStreamSource(this, type);
-            }
-
-            if (type == StreamType.BOUNDARY_INDEX) {
-                return new MockBoundaryStreamSource(this);
-            }
-
-            return null;
-        }
-
-        @Override
-        public StreamSource getParent() {
-            return parent;
-        }
-
-        @Override
-        public StreamType getType() {
-            return type;
-        }
-
-        @Override
-        public HeaderMap getAttributeMap() {
-            return attributeMap;
-        }
-    }
-
-    private class MockBoundaryStreamSource extends MockStreamSource {
-        public MockBoundaryStreamSource(final StreamSource parent) {
-            super(parent, StreamType.BOUNDARY_INDEX);
-        }
-
-        @Override
-        public InputStream getInputStream() {
-            return new SeekableByteArrayInputStream(new byte[0]);
-        }
-    }
-
     /**
      * Load a stream by id.
      *
-     * @param id
-     *            The stream id to load a stream for.
+     * @param id The stream id to load a stream for.
      * @return The loaded stream if it exists (has not been physically deleted)
-     *         and is not logically deleted or locked, null otherwise.
+     * and is not logically deleted or locked, null otherwise.
      */
     @Override
     public Stream loadStreamById(final long id) {
@@ -271,19 +76,48 @@ public class MockStreamStore implements StreamStore, Clearable {
     /**
      * Load a stream by id.
      *
-     * @param id
-     *            The stream id to load a stream for.
-     * @param anyStatus
-     *            Used to specify if this method will return streams that are
-     *            logically deleted or locked. If false only unlocked streams
-     *            will be returned, null otherwise.
+     * @param id        The stream id to load a stream for.
+     * @param anyStatus Used to specify if this method will return streams that are
+     *                  logically deleted or locked. If false only unlocked streams
+     *                  will be returned, null otherwise.
      * @return The loaded stream if it exists (has not been physically deleted)
-     *         else null. Also returns null if one exists but is logically
-     *         deleted or locked unless <code>anyStatus</code> is true.
+     * else null. Also returns null if one exists but is logically
+     * deleted or locked unless <code>anyStatus</code> is true.
      */
     @Override
     public Stream loadStreamById(final long id, final boolean anyStatus) {
         return loadStreamById(id, null, anyStatus);
+    }
+
+    private Stream loadStreamById(final long id, final Set<String> fetchSet, final boolean anyStatus) {
+        return streamMap.get(id);
+    }
+
+    /**
+     * Class this API to clear down things.
+     */
+    @Override
+    public void clear() {
+        fileData.clear();
+        openOutputStream.clear();
+        openInputStream.clear();
+        streamMap.clear();
+        currentId = 0;
+    }
+
+    public int getStreamStoreCount() {
+        return fileData.size();
+    }
+
+    @Override
+    public void closeStreamSource(final StreamSource source) {
+        // Close the stream source.
+        try {
+            source.close();
+        } catch (final IOException e) {
+            throw new StreamException(e.getMessage());
+        }
+        openInputStream.remove(source.getStream());
     }
 
     // /**
@@ -320,37 +154,6 @@ public class MockStreamStore implements StreamStore, Clearable {
     // public Stream loadStream(final Stream stream, final boolean anyStatus) {
     // return loadStreamById(stream.getId(), null, anyStatus);
     // }
-
-    private Stream loadStreamById(final long id, final Set<String> fetchSet, final boolean anyStatus) {
-        return streamMap.get(id);
-    }
-
-    /**
-     * Class this API to clear down things.
-     */
-    @Override
-    public void clear() {
-        fileData.clear();
-        openOutputStream.clear();
-        openInputStream.clear();
-        streamMap.clear();
-        currentId = 0;
-    }
-
-    public int getStreamStoreCount() {
-        return fileData.size();
-    }
-
-    @Override
-    public void closeStreamSource(final StreamSource source) {
-        // Close the stream source.
-        try {
-            source.close();
-        } catch (final IOException e) {
-            throw new StreamException(e.getMessage());
-        }
-        openInputStream.remove(source.getStream());
-    }
 
     @Override
     public void closeStreamTarget(final StreamTarget target) {
@@ -465,18 +268,15 @@ public class MockStreamStore implements StreamStore, Clearable {
      * Open a existing stream source.
      * </p>
      *
-     * @param id
-     *            The stream id to open a stream source for.
-     * @param anyStatus
-     *            Used to specify if this method will return stream sources that
-     *            are logically deleted or locked. If false only unlocked stream
-     *            sources will be returned, null otherwise.
+     * @param id        The stream id to open a stream source for.
+     * @param anyStatus Used to specify if this method will return stream sources that
+     *                  are logically deleted or locked. If false only unlocked stream
+     *                  sources will be returned, null otherwise.
      * @return The loaded stream source if it exists (has not been physically
-     *         deleted) else null. Also returns null if one exists but is
-     *         logically deleted or locked unless <code>anyStatus</code> is
-     *         true.
-     * @throws StreamException
-     *             Could be thrown if no volume
+     * deleted) else null. Also returns null if one exists but is
+     * logically deleted or locked unless <code>anyStatus</code> is
+     * true.
+     * @throws StreamException Could be thrown if no volume
      */
     @Override
     public StreamSource openStreamSource(final long streamId, final boolean anyStatus) throws StreamException {
@@ -538,25 +338,11 @@ public class MockStreamStore implements StreamStore, Clearable {
         return streamMap;
     }
 
-    // /**
-    // *
-    // * Overridden.
-    // *
-    // *
-    // * @see stroom.streamstore.server.StreamStore#deleteLocks()
-    // */
-    // @Override
-    // public void deleteLocks() {
-    // // NA for the mock.
-    // }
-
     /**
      * Overridden.
      *
-     * @param findStreamCriteria
-     *            NA
+     * @param findStreamCriteria NA
      * @return NA
-     *
      * @see stroom.streamstore.server.StreamStore#find(stroom.streamstore.shared.FindStreamCriteria)
      */
     @Override
@@ -601,6 +387,18 @@ public class MockStreamStore implements StreamStore, Clearable {
         return openStreamTarget(stream);
     }
 
+    // /**
+    // *
+    // * Overridden.
+    // *
+    // *
+    // * @see stroom.streamstore.server.StreamStore#deleteLocks()
+    // */
+    // @Override
+    // public void deleteLocks() {
+    // // NA for the mock.
+    // }
+
     @Override
     public Period getCreatePeriod() {
         return new Period(0L, Long.MAX_VALUE);
@@ -625,5 +423,198 @@ public class MockStreamStore implements StreamStore, Clearable {
             return null;
         }
         return streamType.getId();
+    }
+
+    private static class SeekableByteArrayInputStream extends ByteArrayInputStream implements SeekableInputStream {
+        public SeekableByteArrayInputStream(final byte[] bytes) {
+            super(bytes);
+        }
+
+        @Override
+        public long getPosition() throws IOException {
+            return pos;
+        }
+
+        @Override
+        public long getSize() throws IOException {
+            return buf.length;
+        }
+
+        @Override
+        public void seek(final long pos) throws IOException {
+            this.pos = (int) pos;
+        }
+    }
+
+    private class MockStreamTarget implements StreamTarget {
+        private final Stream stream;
+        private final StreamType type;
+        private final MetaMap attributeMap = new MetaMap();
+        private final Map<StreamType, MockStreamTarget> childMap = new HashMap<>();
+        private ByteArrayOutputStream outputStream = null;
+        private StreamTarget parent;
+
+        public MockStreamTarget(final Stream stream) {
+            this.stream = stream;
+            this.type = stream.getStreamType();
+        }
+
+        public MockStreamTarget(final StreamTarget parent, final StreamType type) {
+            this.parent = parent;
+            this.stream = parent.getStream();
+            this.type = type;
+        }
+
+        @Override
+        public OutputStream getOutputStream() {
+            if (outputStream == null) {
+                final TypedMap<Long, ByteArrayOutputStream> typeMap = getOpenOutputStream().get(stream);
+                outputStream = typeMap.get(getStreamTypeId(type));
+            }
+            return outputStream;
+        }
+
+        @Override
+        public void close() {
+            try {
+                if (outputStream != null) {
+                    outputStream.close();
+                }
+            } catch (final IOException ioEx) {
+                // Wrap it
+                throw new RuntimeException(ioEx);
+            }
+        }
+
+        @Override
+        public Stream getStream() {
+            return stream;
+        }
+
+        @Override
+        public StreamTarget addChildStream(final StreamType type) {
+            final TypedMap<Long, ByteArrayOutputStream> typeMap = getOpenOutputStream().get(stream);
+            typeMap.put(getStreamTypeId(type), new ByteArrayOutputStream());
+            childMap.put(type, new MockStreamTarget(this, type));
+            return childMap.get(type);
+        }
+
+        @Override
+        public StreamTarget getChildStream(final StreamType type) {
+            return childMap.get(type);
+        }
+
+        @Override
+        public StreamTarget getParent() {
+            return parent;
+        }
+
+        @Override
+        public StreamType getType() {
+            return type;
+        }
+
+        @Override
+        public MetaMap getAttributeMap() {
+            return attributeMap;
+        }
+
+        @Override
+        public boolean isAppend() {
+            return false;
+        }
+    }
+
+    private class MockStreamSource implements StreamSource {
+        private final Stream stream;
+        private final StreamType type;
+        private final MetaMap attributeMap = new MetaMap();
+        private InputStream inputStream = null;
+        private StreamSource parent;
+
+        public MockStreamSource(final Stream stream) {
+            this.stream = stream;
+            this.type = stream.getStreamType();
+        }
+
+        public MockStreamSource(final StreamSource parent, final StreamType type) {
+            this.parent = parent;
+            this.stream = parent.getStream();
+            this.type = type;
+        }
+
+        @Override
+        public InputStream getInputStream() {
+            if (inputStream == null) {
+                final TypedMap<Long, byte[]> typeMap = getFileData().get(stream);
+                final byte[] data = typeMap.get(getStreamTypeId(type));
+
+                if (data == null) {
+                    throw new IllegalStateException("Some how we have null data stream in the stream store");
+                }
+                inputStream = new SeekableByteArrayInputStream(data);
+            }
+            return inputStream;
+        }
+
+        /**
+         * Close off the stream.
+         */
+        @Override
+        public void close() {
+            try {
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+            } catch (final IOException ioEx) {
+                // Wrap it
+                throw new RuntimeException(ioEx);
+            }
+        }
+
+        @Override
+        public Stream getStream() {
+            return stream;
+        }
+
+        @Override
+        public StreamSource getChildStream(final StreamType type) {
+            final TypedMap<Long, byte[]> typeMap = getFileData().get(stream);
+            if (typeMap.containsKey(getStreamTypeId(type))) {
+                return new MockStreamSource(this, type);
+            }
+
+            if (type == StreamType.BOUNDARY_INDEX) {
+                return new MockBoundaryStreamSource(this);
+            }
+
+            return null;
+        }
+
+        @Override
+        public StreamSource getParent() {
+            return parent;
+        }
+
+        @Override
+        public StreamType getType() {
+            return type;
+        }
+
+        @Override
+        public MetaMap getAttributeMap() {
+            return attributeMap;
+        }
+    }
+
+    private class MockBoundaryStreamSource extends MockStreamSource {
+        public MockBoundaryStreamSource(final StreamSource parent) {
+            super(parent, StreamType.BOUNDARY_INDEX);
+        }
+
+        @Override
+        public InputStream getInputStream() {
+            return new SeekableByteArrayInputStream(new byte[0]);
+        }
     }
 }

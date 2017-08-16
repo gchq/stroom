@@ -38,8 +38,8 @@ import java.io.OutputStream;
  */
 @Component
 @Scope(StroomScope.PROTOTYPE)
-@ConfigurableElement(type = "FileAppender", category = Category.DESTINATION, roles = { PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_DESTINATION, PipelineElementType.VISABILITY_STEPPING }, icon = ElementIcons.STREAM)
+@ConfigurableElement(type = "FileAppender", category = Category.DESTINATION, roles = {PipelineElementType.ROLE_TARGET,
+        PipelineElementType.ROLE_DESTINATION, PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
 public class FileAppender extends AbstractAppender {
     private static final String LOCK_EXTENSION = ".lock";
 
@@ -104,8 +104,7 @@ public class FileAppender extends AbstractAppender {
     }
 
     /**
-     * @param outputPaths
-     *            the outputPaths to set
+     * @param outputPaths the outputPaths to set
      */
     @PipelineProperty(description = "One or more destination paths for output files separated with commas. Replacement variables can be used in path strings such as ${feed}.")
     public void setOutputPaths(final String outputPaths) {

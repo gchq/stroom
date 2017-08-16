@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,8 +34,8 @@ import stroom.node.client.view.WrapperView;
 import stroom.query.api.v1.DocRef;
 import stroom.script.shared.Script;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.ButtonView;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,8 +45,8 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
         implements HasRead<Script>, HasWrite<Script>, HasDirtyHandlers {
     private final ScriptListPresenter scriptListPresenter;
     private final EntityChooser explorerDropDownTreePresenter;
-    private final GlyphButtonView addButton;
-    private final GlyphButtonView removeButton;
+    private final ButtonView addButton;
+    private final ButtonView removeButton;
     private DocRefs scripts;
 
     @Inject
@@ -62,9 +62,9 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
 
         view.setView(scriptListPresenter.getView());
 
-        addButton = scriptListPresenter.getView().addButton(GlyphIcons.ADD);
+        addButton = scriptListPresenter.getView().addButton(SvgPresets.ADD);
         addButton.setTitle("Add Dependency");
-        removeButton = scriptListPresenter.getView().addButton(GlyphIcons.REMOVE);
+        removeButton = scriptListPresenter.getView().addButton(SvgPresets.REMOVE);
         removeButton.setTitle("Remove Dependency");
     }
 
@@ -136,7 +136,7 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
 
     private void refresh() {
         if (scripts != null) {
-            final List<DocRef> list = new ArrayList<DocRef>(scripts.getDoc());
+            final List<DocRef> list = new ArrayList<>(scripts.getDoc());
             Collections.sort(list, DocRef::compareTo);
             scriptListPresenter.setData(list);
         } else {

@@ -18,8 +18,8 @@ package stroom.jobsystem.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
 import stroom.entity.server.util.StroomDatabaseInfo;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.thread.ThreadUtil;
 
 import javax.annotation.Resource;

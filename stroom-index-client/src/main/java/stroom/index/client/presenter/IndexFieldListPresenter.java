@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,8 +36,8 @@ import stroom.entity.client.presenter.HasWrite;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 import java.util.ArrayList;
@@ -47,29 +47,29 @@ import java.util.Set;
 public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<IndexField>>
         implements HasRead<Index>, HasWrite<Index>, HasDirtyHandlers {
     private final IndexFieldEditPresenter indexFieldEditPresenter;
-    private final GlyphButtonView newButton;
-    private final GlyphButtonView editButton;
-    private final GlyphButtonView removeButton;
-    private final GlyphButtonView upButton;
-    private final GlyphButtonView downButton;
+    private final ButtonView newButton;
+    private final ButtonView editButton;
+    private final ButtonView removeButton;
+    private final ButtonView upButton;
+    private final ButtonView downButton;
     private IndexFields indexFields;
 
     @SuppressWarnings("unchecked")
     @Inject
     public IndexFieldListPresenter(final EventBus eventBus,
                                    final IndexFieldEditPresenter indexFieldEditPresenter) {
-        super(eventBus, new DataGridViewImpl<IndexField>(true, true));
+        super(eventBus, new DataGridViewImpl<>(true, true));
         this.indexFieldEditPresenter = indexFieldEditPresenter;
 
-        newButton = getView().addButton(GlyphIcons.NEW_ITEM);
+        newButton = getView().addButton(SvgPresets.NEW_ITEM);
         newButton.setTitle("New Field");
-        editButton = getView().addButton(GlyphIcons.EDIT);
+        editButton = getView().addButton(SvgPresets.EDIT);
         editButton.setTitle("Edit Field");
-        removeButton = getView().addButton(GlyphIcons.DELETE);
+        removeButton = getView().addButton(SvgPresets.DELETE);
         removeButton.setTitle("Remove Field");
-        upButton = getView().addButton(GlyphIcons.UP);
+        upButton = getView().addButton(SvgPresets.UP);
         upButton.setTitle("Move Up");
-        downButton = getView().addButton(GlyphIcons.DOWN);
+        downButton = getView().addButton(SvgPresets.DOWN);
         downButton.setTitle("Move Down");
 
         addColumns();
@@ -143,7 +143,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
         addTermVectorColumn();
         addAnalyzerColumn();
         addCaseSensitiveColumn();
-        getView().addEndColumn(new EndColumn<IndexField>());
+        getView().addEndColumn(new EndColumn<>());
     }
 
     private void addNameColumn() {
@@ -328,7 +328,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
 
     public void refresh() {
         if (indexFields == null) {
-            indexFields = new IndexFields(new ArrayList<IndexField>());
+            indexFields = new IndexFields(new ArrayList<>());
         }
 
         getView().setRowData(0, indexFields.getIndexFields());

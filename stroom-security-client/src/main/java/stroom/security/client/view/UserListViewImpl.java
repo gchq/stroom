@@ -36,6 +36,7 @@ public class UserListViewImpl extends ViewWithUiHandlers<UserListUiHandlers> imp
     @UiField
     ResizeSimplePanel dataGrid;
     private Widget widget;
+
     @Inject
     public UserListViewImpl(final EventBus eventBus, final Binder binder) {
         widget = binder.createAndBindUi(this);

@@ -47,11 +47,12 @@ ext.versions = [
     stroom: getPropertyOrDefault('version', 'SNAPSHOT'),
 
     //------Stroom-repos---------------
+    stroomProxyRepo: 'v5.1-beta.8',
     eventLogging: 'v3.1.0',
     hadoopCommonShaded: 'v2.6.4-3',
     hadoopHdfsShaded: 'v2.6.4',
     stroomExpression: 'v0.1.0', //same version for both stroom-query-api and stroom-query-common
-    stroomQuery: 'v1.0.0', //same version for both stroom-query-api and stroom-query-common
+    stroomQuery: 'v1.0.2', //same version for both stroom-query-api and stroom-query-common
     stroomStats: 'v0.4.0-alpha',
 
     //------------3rd-party------------
@@ -78,6 +79,7 @@ ext.urlLibs = [
     stroomQueryCommon: "stroom-query-common-$versions.stroomQuery",
     stroomExpression: "stroom-expression-$versions.stroomExpression",
     stroomStatsApi: "stroom-stats-api-$versions.stroomStats",
+    stroomProxyRepo: "stroom-proxy-repo-$versions.stroomProxyRepo",
     eventLogging: "event-logging-$versions.eventLogging",
     hadoopCommonShaded: "hadoop-common-shaded-$versions.hadoopCommonShaded-all",
     hadoopHdfsShaded: "hadoop-hdfs-shaded-$versions.hadoopHdfsShaded-all",
@@ -87,8 +89,8 @@ ext.urlLibs = [
 //dependency strings for use in sub projects
 ext.libs = [
     aopalliance: "aopalliance:aopalliance:1.0",
-    aspectjrt: "org.aspectj:aspectjrt:1.8.9",
-    aspectjweaver: "org.aspectj:aspectjweaver:1.6.2",
+    aspectjrt: "org.aspectj:aspectjrt:1.8.10",
+    aspectjweaver: "org.aspectj:aspectjweaver:1.8.10",
     assertj_core: "org.assertj:assertj-core:3.6.2",
     c3p0: "com.mchange:c3p0:0.9.5.2",
     commons_compress: "org.apache.commons:commons-compress:1.12",
@@ -159,7 +161,7 @@ ext.libs = [
     mysql_connector_java: "mysql:mysql-connector-java:5.1.40",
     poi: "org.apache.poi:poi:3.15",
     poi_ooxml: "org.apache.poi:poi-ooxml:3.15",
-    saxon_he: "net.sf.saxon:Saxon-HE:9.6.0-6",
+    saxon_he: "net.sf.saxon:Saxon-HE:9.7.0-18",
     shiro_aspectj: "org.apache.shiro:shiro-aspectj:$versions.shiro",
     shiro_core: "org.apache.shiro:shiro-core:$versions.shiro",
     shiro_spring: "org.apache.shiro:shiro-spring:$versions.shiro",
@@ -197,7 +199,7 @@ ext.contentPacks = [
     'internal-statistics-sql': 'v2.0',
     'internal-dashboards': 'v1.1',
     'stroom-101': 'v1.0',
-    'event-logging-xml-schema': 'v1.0'
+    'event-logging-xml-schema': 'v3.1.1'
 ]
 
 task wrapper(type: Wrapper) {
@@ -265,6 +267,15 @@ subprojects {
         mavenLocal()
 
         maven { url "http://repo.maven.apache.org/maven2" }
+    }
+
+    test {
+        //Use full logging for test exceptions so we can see where the failure occurred 
+        testLogging {
+            events "failed"
+            exceptionFormat = 'full'
+            showStackTraces = true
+        }
     }
 }
 
@@ -351,6 +362,9 @@ urlDependencies {
 
     compile(urlLibs.stroomStatsApi,
             "https://github.com/gchq/stroom-stats/releases/download/$versions.stroomStats/${urlLibs.stroomStatsApi}.jar")
+
+    compile(urlLibs.stroomProxyRepo,
+            "https://github.com/gchq/stroom-proxy/releases/download/$versions.stroomProxyRepo/${urlLibs.stroomProxyRepo}.jar")
 
     compile(urlLibs.eventLogging,
             "https://github.com/gchq/event-logging/releases/download/$versions.eventLogging/${urlLibs.eventLogging}.jar")

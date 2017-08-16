@@ -141,6 +141,24 @@ public class ItemListBox<T extends HasDisplayValue> extends Composite implements
         return null;
     }
 
+    @Override
+    public void setSelectedItem(final T item) {
+        if (items == null || items.size() == 0) {
+            if (pendingSelection == null) {
+                pendingSelection = new ArrayList<>();
+            }
+            pendingSelection.add(item);
+
+        } else {
+            int index = items.indexOf(item);
+            if (nonSelectString != null) {
+                index++;
+            }
+
+            listBox.setSelectedIndex(index);
+        }
+    }
+
     public Set<T> getSelectedItems() {
         final Set<T> set = new HashSet<>();
         for (int i = 0; i < items.size(); i++) {
@@ -159,24 +177,6 @@ public class ItemListBox<T extends HasDisplayValue> extends Composite implements
 
     protected List<T> getItems() {
         return items;
-    }
-
-    @Override
-    public void setSelectedItem(final T item) {
-        if (items == null || items.size() == 0) {
-            if (pendingSelection == null) {
-                pendingSelection = new ArrayList<>();
-            }
-            pendingSelection.add(item);
-
-        } else {
-            int index = items.indexOf(item);
-            if (nonSelectString != null) {
-                index++;
-            }
-
-            listBox.setSelectedIndex(index);
-        }
     }
 
     public void setItemSelected(final T item, final boolean selected) {

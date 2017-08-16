@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,6 +22,7 @@ import stroom.util.shared.HasDisplayValue;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -33,16 +34,18 @@ import java.util.List;
  * </p>
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "indexField", propOrder = { "analyzerType", "caseSensitive", "fieldName", "fieldType", "indexed",
-        "stored", "termPositions" })
+@XmlType(name = "indexField", propOrder = {"analyzerType", "caseSensitive", "fieldName", "fieldType", "indexed",
+        "stored", "termPositions"})
 public class IndexField implements HasDisplayValue, Comparable<IndexField>, Serializable {
     private static final long serialVersionUID = 3100770758821157580L;
+
     @XmlElement(name = "fieldType")
     private IndexFieldType fieldType;
     @XmlElement(name = "fieldName")
     private String fieldName;
     @XmlElement(name = "stored")
     private boolean stored = false;
+
     /**
      * Determines whether the field can be queried or not
      */
@@ -54,12 +57,22 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
     private AnalyzerType analyzerType;
     @XmlElement(name = "caseSensitive")
     private boolean caseSensitive = false;
+
+    /**
+     * Defines a list of the {@link Condition} values supported by this field,
+     * can be null in which case a default set will be returned. Not persisted
+     * in the XML
+     */
+    @XmlTransient
+    private List<Condition> supportedConditions;
+
     public IndexField() {
         // Default constructor necessary for GWT serialisation.
     }
 
     private IndexField(final IndexFieldType fieldType, final String fieldName, final AnalyzerType analyzerType,
-                       final boolean caseSensitive, final boolean stored, final boolean indexed, final boolean termPositions) {
+                       final boolean caseSensitive, final boolean stored, final boolean indexed, final boolean termPositions,
+                       final List<Condition> supportedConditions) {
         setFieldType(fieldType);
         setFieldName(fieldName);
         setAnalyzerType(analyzerType);
@@ -67,43 +80,56 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
         setStored(stored);
         setIndexed(indexed);
         setTermPositions(termPositions);
+
+        if (supportedConditions != null) {
+            this.supportedConditions = new ArrayList<>(supportedConditions);
+        }
     }
 
     public static IndexField createField(final String fieldName) {
-        return createField(fieldName, AnalyzerType.ALPHA_NUMERIC, false);
+        return createField(fieldName, AnalyzerType.ALPHA_NUMERIC, false, false, true, false);
     }
 
     public static IndexField createField(final String fieldName, final AnalyzerType analyzerType) {
-        return createField(fieldName, analyzerType, false);
+        return createField(fieldName, analyzerType, false, false, true, false);
     }
 
     public static IndexField createField(final String fieldName, final AnalyzerType analyzerType,
-            final boolean caseSensitive) {
+                                         final boolean caseSensitive) {
         return createField(fieldName, analyzerType, caseSensitive, false, true, false);
     }
 
     public static IndexField createField(final String fieldName, final AnalyzerType analyzerType,
                                          final boolean caseSensitive, final boolean stored, final boolean indexed, final boolean termPositions) {
-        return new IndexField(IndexFieldType.FIELD, fieldName, analyzerType, caseSensitive, stored, indexed, termPositions);
+        return new IndexField(IndexFieldType.FIELD, fieldName, analyzerType, caseSensitive, stored, indexed,
+                termPositions, null);
     }
 
     public static IndexField createNumericField(final String fieldName) {
-        return new IndexField(IndexFieldType.NUMERIC_FIELD, fieldName, AnalyzerType.NUMERIC, false, false, true, false);
+        return new IndexField(IndexFieldType.NUMERIC_FIELD, fieldName, AnalyzerType.NUMERIC, false, false, true, false,
+                null);
     }
 
     public static IndexField createIdField(final String fieldName) {
-        return new IndexField(IndexFieldType.ID, fieldName, AnalyzerType.KEYWORD, false, true, true, false);
+        return new IndexField(IndexFieldType.ID, fieldName, AnalyzerType.KEYWORD, false, true, true, false, null);
     }
 
     public static IndexField createDateField(final String fieldName) {
         return new IndexField(IndexFieldType.DATE_FIELD, fieldName, AnalyzerType.ALPHA_NUMERIC, false, false, true,
-                false);
+                false, null);
     }
 
     public static IndexField create(final IndexFieldType fieldType, final String fieldName,
-            final AnalyzerType analyzerType, final boolean caseSensitive, final boolean stored, final boolean indexed,
-            final boolean termPositions) {
-        return new IndexField(fieldType, fieldName, analyzerType, caseSensitive, stored, indexed, termPositions);
+                                    final AnalyzerType analyzerType, final boolean caseSensitive, final boolean stored, final boolean indexed,
+                                    final boolean termPositions) {
+        return new IndexField(fieldType, fieldName, analyzerType, caseSensitive, stored, indexed, termPositions, null);
+    }
+
+    public static IndexField create(final IndexFieldType fieldType, final String fieldName,
+                                    final AnalyzerType analyzerType, final boolean caseSensitive, final boolean stored, final boolean indexed,
+                                    final boolean termPositions, final List<Condition> supportedConditions) {
+        return new IndexField(fieldType, fieldName, analyzerType, caseSensitive, stored, indexed, termPositions,
+                supportedConditions);
     }
 
     public IndexFieldType getFieldType() {
@@ -170,7 +196,19 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
     }
 
     public List<Condition> getSupportedConditions() {
-        return getDefaultConditions();
+        if (supportedConditions == null) {
+            return getDefaultConditions();
+        } else {
+            return supportedConditions;
+        }
+    }
+
+    public void setSupportedConditions(final List<Condition> supportedConditions) {
+        if (supportedConditions == null) {
+            this.supportedConditions = null;
+        } else {
+            this.supportedConditions = new ArrayList<>(supportedConditions);
+        }
     }
 
     @Override
@@ -207,42 +245,42 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
         if (fieldType != null) {
             // First make sure the operator is set.
             switch (fieldType) {
-            case ID:
-                conditions.add(Condition.EQUALS);
-                conditions.add(Condition.IN);
-                conditions.add(Condition.IN_DICTIONARY);
-                break;
-            case FIELD:
-                if (analyzerType != null && !AnalyzerType.KEYWORD.equals(analyzerType)) {
-                    conditions.add(Condition.CONTAINS);
-                } else {
+                case ID:
                     conditions.add(Condition.EQUALS);
-                }
-                conditions.add(Condition.IN);
-                conditions.add(Condition.IN_DICTIONARY);
-                break;
+                    conditions.add(Condition.IN);
+                    conditions.add(Condition.IN_DICTIONARY);
+                    break;
+                case FIELD:
+                    if (analyzerType != null && !AnalyzerType.KEYWORD.equals(analyzerType)) {
+                        conditions.add(Condition.CONTAINS);
+                    } else {
+                        conditions.add(Condition.EQUALS);
+                    }
+                    conditions.add(Condition.IN);
+                    conditions.add(Condition.IN_DICTIONARY);
+                    break;
 
-            case NUMERIC_FIELD:
-                conditions.add(Condition.EQUALS);
-                conditions.add(Condition.GREATER_THAN);
-                conditions.add(Condition.GREATER_THAN_OR_EQUAL_TO);
-                conditions.add(Condition.LESS_THAN);
-                conditions.add(Condition.LESS_THAN_OR_EQUAL_TO);
-                conditions.add(Condition.BETWEEN);
-                conditions.add(Condition.IN);
-                conditions.add(Condition.IN_DICTIONARY);
-                break;
+                case NUMERIC_FIELD:
+                    conditions.add(Condition.EQUALS);
+                    conditions.add(Condition.GREATER_THAN);
+                    conditions.add(Condition.GREATER_THAN_OR_EQUAL_TO);
+                    conditions.add(Condition.LESS_THAN);
+                    conditions.add(Condition.LESS_THAN_OR_EQUAL_TO);
+                    conditions.add(Condition.BETWEEN);
+                    conditions.add(Condition.IN);
+                    conditions.add(Condition.IN_DICTIONARY);
+                    break;
 
-            case DATE_FIELD:
-                conditions.add(Condition.EQUALS);
-                conditions.add(Condition.GREATER_THAN);
-                conditions.add(Condition.GREATER_THAN_OR_EQUAL_TO);
-                conditions.add(Condition.LESS_THAN);
-                conditions.add(Condition.LESS_THAN_OR_EQUAL_TO);
-                conditions.add(Condition.BETWEEN);
-                conditions.add(Condition.IN);
-                conditions.add(Condition.IN_DICTIONARY);
-                break;
+                case DATE_FIELD:
+                    conditions.add(Condition.EQUALS);
+                    conditions.add(Condition.GREATER_THAN);
+                    conditions.add(Condition.GREATER_THAN_OR_EQUAL_TO);
+                    conditions.add(Condition.LESS_THAN);
+                    conditions.add(Condition.LESS_THAN_OR_EQUAL_TO);
+                    conditions.add(Condition.BETWEEN);
+                    conditions.add(Condition.IN);
+                    conditions.add(Condition.IN_DICTIONARY);
+                    break;
             }
         }
 

@@ -35,9 +35,9 @@ public class FetchMarkerResult extends AbstractFetchDataResult {
     }
 
     public FetchMarkerResult(final StreamType streamType, final String classification,
-            final OffsetRange<Long> streamRange, final RowCount<Long> streamRowCount, final OffsetRange<Long> pageRange,
-            final RowCount<Long> pageRowCount, final List<StreamType> availableChildStreamTypes,
-            final SharedList<Marker> markers) {
+                             final OffsetRange<Long> streamRange, final RowCount<Long> streamRowCount, final OffsetRange<Long> pageRange,
+                             final RowCount<Long> pageRowCount, final List<StreamType> availableChildStreamTypes,
+                             final SharedList<Marker> markers) {
         super(streamType, classification, streamRange, streamRowCount, pageRange, pageRowCount,
                 availableChildStreamTypes);
         this.markers = markers;

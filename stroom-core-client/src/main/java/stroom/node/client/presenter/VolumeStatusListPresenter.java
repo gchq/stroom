@@ -42,7 +42,7 @@ public class VolumeStatusListPresenter extends MyPresenterWidget<DataGridView<Vo
 
     @Inject
     public VolumeStatusListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
-        super(eventBus, new DataGridViewImpl<Volume>(true, true));
+        super(eventBus, new DataGridViewImpl<>(true, true));
 //
 //        selectionModel = new MySingleSelectionModel<>();
 //        getView().setSelectionModel(selectionModel);
@@ -52,9 +52,9 @@ public class VolumeStatusListPresenter extends MyPresenterWidget<DataGridView<Vo
 
         initTableColumns();
 
-        final EntityServiceFindAction<FindVolumeCriteria, Volume> action = new EntityServiceFindAction<FindVolumeCriteria, Volume>(
+        final EntityServiceFindAction<FindVolumeCriteria, Volume> action = new EntityServiceFindAction<>(
                 new FindVolumeCriteria());
-        dataProvider = new ActionDataProvider<Volume>(dispatcher, action);
+        dataProvider = new ActionDataProvider<>(dispatcher, action);
         dataProvider.addDataDisplay(getView().getDataDisplay());
         dataProvider.refresh();
     }
@@ -166,7 +166,7 @@ public class VolumeStatusListPresenter extends MyPresenterWidget<DataGridView<Vo
         };
         getView().addResizableColumn(usageDateColumn, "Usage Date", ColumnSizeConstants.DATE_COL);
 
-        getView().addEndColumn(new EndColumn<Volume>());
+        getView().addEndColumn(new EndColumn<>());
     }
 
     private String getSizeString(final Long size) {

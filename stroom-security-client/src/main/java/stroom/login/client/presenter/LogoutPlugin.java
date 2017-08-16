@@ -16,16 +16,14 @@
 
 package stroom.login.client.presenter;
 
-import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.presenter.ConfirmCallback;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.event.RequestLogoutEvent;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 import stroom.widget.menu.client.presenter.Separator;
@@ -44,18 +42,11 @@ public class LogoutPlugin extends Plugin {
                 new KeyedParentMenuItem(4, "User", event.getMenuItems(), MenuKeys.USER_MENU));
         event.getMenuItems().addMenuItem(MenuKeys.USER_MENU, new Separator(2));
         event.getMenuItems().addMenuItem(MenuKeys.USER_MENU,
-                new IconMenuItem(3, GlyphIcons.LOGOUT, GlyphIcons.LOGOUT, "Logout", null, true, new Command() {
-                    @Override
-                    public void execute() {
-                        ConfirmEvent.fire(LogoutPlugin.this, "Are you sure you want to logout?", new ConfirmCallback() {
-                            @Override
-                            public void onResult(final boolean result) {
-                                if (result) {
-                                    RequestLogoutEvent.fire(LogoutPlugin.this);
-                                }
+                new IconMenuItem(3, SvgPresets.LOGOUT, SvgPresets.LOGOUT, "Logout", null, true, () ->
+                        ConfirmEvent.fire(LogoutPlugin.this, "Are you sure you want to logout?", result -> {
+                            if (result) {
+                                RequestLogoutEvent.fire(LogoutPlugin.this);
                             }
-                        });
-                    }
-                }));
+                        })));
     }
 }

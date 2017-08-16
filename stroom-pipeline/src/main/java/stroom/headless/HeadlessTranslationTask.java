@@ -28,7 +28,7 @@ public class HeadlessTranslationTask extends ServerTask<VoidResult> {
     private final HeadlessFilter headlessFilter;
 
     public HeadlessTranslationTask(final InputStream dataStream, final InputStream metaStream,
-            final InputStream contextStream, final HeadlessFilter headlessFilter) {
+                                   final InputStream contextStream, final HeadlessFilter headlessFilter) {
         this.dataStream = dataStream;
         this.metaStream = metaStream;
         this.contextStream = contextStream;

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -122,19 +122,19 @@ public class ExcelTarget implements SearchResultWriter.Target {
                 }
 
                 switch (type) {
-                case TEXT:
-                    cell.setCellValue(getText(value));
-                    cell.setCellType(Cell.CELL_TYPE_STRING);
-                    break;
-                case NUMBER:
-                    number(wb, cell, value, settings);
-                    break;
-                case DATE_TIME:
-                    dateTime(wb, cell, value, settings);
-                    break;
-                default:
-                    general(wb, cell, value);
-                    break;
+                    case TEXT:
+                        cell.setCellValue(getText(value));
+                        cell.setCellType(Cell.CELL_TYPE_STRING);
+                        break;
+                    case NUMBER:
+                        number(wb, cell, value, settings);
+                        break;
+                    case DATE_TIME:
+                        dateTime(wb, cell, value, settings);
+                        break;
+                    default:
+                        general(wb, cell, value);
+                        break;
                 }
             }
         }

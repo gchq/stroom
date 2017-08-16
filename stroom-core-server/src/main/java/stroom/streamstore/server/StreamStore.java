@@ -29,12 +29,12 @@ import java.util.List;
  * <p>
  * API to the stream store.
  * </p>
- *
+ * <p>
  * <p>
  * The stream store abstracts a repository of large files keyed by some meta
  * data.
  * </p>
- *
+ * <p>
  * <p>
  * When you read or write to a stream the file is locked. You must close the
  * stream to unlock the file.
@@ -45,25 +45,22 @@ public interface StreamStore extends FindService<Stream, FindStreamCriteria>, Fi
     /**
      * Load a stream by id.
      *
-     * @param id
-     *            The stream id to load a stream for.
+     * @param id The stream id to load a stream for.
      * @return The loaded stream if it exists (has not been physically deleted)
-     *         and is not logically deleted or locked, null otherwise.
+     * and is not logically deleted or locked, null otherwise.
      */
     Stream loadStreamById(long id);
 
     /**
      * Load a stream by id.
      *
-     * @param id
-     *            The stream id to load a stream for.
-     * @param anyStatus
-     *            Used to specify if this method will return streams that are
-     *            logically deleted or locked. If false only unlocked streams
-     *            will be returned, null otherwise.
+     * @param id        The stream id to load a stream for.
+     * @param anyStatus Used to specify if this method will return streams that are
+     *                  logically deleted or locked. If false only unlocked streams
+     *                  will be returned, null otherwise.
      * @return The loaded stream if it exists (has not been physically deleted)
-     *         else null. Also returns null if one exists but is logically
-     *         deleted or locked unless <code>anyStatus</code> is true.
+     * else null. Also returns null if one exists but is logically
+     * deleted or locked unless <code>anyStatus</code> is true.
      */
     Stream loadStreamById(long id, boolean anyStatus);
 
@@ -101,13 +98,10 @@ public interface StreamStore extends FindService<Stream, FindStreamCriteria>, Fi
      * Open a existing stream source.
      * </p>
      *
-     * @param streamId
-     *            the id of the stream to open.
-     *
+     * @param streamId the id of the stream to open.
      * @return The stream source if the stream can be found.
-     * @throws StreamException
-     *             in case of a IO error or stream volume not visible or non
-     *             existent.
+     * @throws StreamException in case of a IO error or stream volume not visible or non
+     *                         existent.
      */
     StreamSource openStreamSource(long streamId) throws StreamException;
 
@@ -116,18 +110,15 @@ public interface StreamStore extends FindService<Stream, FindStreamCriteria>, Fi
      * Open a existing stream source.
      * </p>
      *
-     * @param id
-     *            The stream id to open a stream source for.
-     * @param anyStatus
-     *            Used to specify if this method will return stream sources that
-     *            are logically deleted or locked. If false only unlocked stream
-     *            sources will be returned, null otherwise.
+     * @param id        The stream id to open a stream source for.
+     * @param anyStatus Used to specify if this method will return stream sources that
+     *                  are logically deleted or locked. If false only unlocked stream
+     *                  sources will be returned, null otherwise.
      * @return The loaded stream source if it exists (has not been physically
-     *         deleted) else null. Also returns null if one exists but is
-     *         logically deleted or locked unless <code>anyStatus</code> is
-     *         true.
-     * @throws StreamException
-     *             Could be thrown if no volume
+     * deleted) else null. Also returns null if one exists but is
+     * logically deleted or locked unless <code>anyStatus</code> is
+     * true.
+     * @throws StreamException Could be thrown if no volume
      */
     StreamSource openStreamSource(long streamId, boolean anyStatus) throws StreamException;
 
@@ -145,8 +136,7 @@ public interface StreamStore extends FindService<Stream, FindStreamCriteria>, Fi
      * Open a new stream (i.e. new file) based on some meta data
      * </p>
      *
-     * @param append
-     *            allow appending to the stream (or wipe it?)
+     * @param append allow appending to the stream (or wipe it?)
      * @return the stream to write to
      */
     StreamTarget openStreamTarget(Stream stream, boolean append) throws StreamException;
@@ -199,8 +189,7 @@ public interface StreamStore extends FindService<Stream, FindStreamCriteria>, Fi
      * question. This API is only really applicable for reference data searches.
      * </p>
      *
-     * @param criteria
-     *            the search criteria
+     * @param criteria the search criteria
      * @return the list of matches
      */
     List<Stream> findEffectiveStream(EffectiveMetaDataCriteria criteria);

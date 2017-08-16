@@ -26,12 +26,7 @@ import stroom.entity.shared.EntityServiceException;
 import java.io.PrintStream;
 
 public class AlertEvent extends CommonAlertEvent<AlertEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onAlert(AlertEvent event);
-    }
-
     public static GwtEvent.Type<Handler> TYPE;
-
     private final AlertCallback callback;
 
     private AlertEvent(final SafeHtml message, final SafeHtml detail, final Level level, final AlertCallback callback) {
@@ -40,7 +35,7 @@ public class AlertEvent extends CommonAlertEvent<AlertEvent.Handler> {
     }
 
     public static void fireInfo(final HasHandlers handlers, final String message, final String detail,
-            final AlertCallback callback) {
+                                final AlertCallback callback) {
         handlers.fireEvent(new AlertEvent(fromString(message), fromString(detail), Level.INFO, callback));
     }
 
@@ -49,7 +44,7 @@ public class AlertEvent extends CommonAlertEvent<AlertEvent.Handler> {
     }
 
     public static void fireWarn(final HasHandlers handlers, final String message, final String detail,
-            final AlertCallback callback) {
+                                final AlertCallback callback) {
         handlers.fireEvent(new AlertEvent(fromString(message), fromString(detail), Level.WARN, callback));
     }
 
@@ -58,7 +53,7 @@ public class AlertEvent extends CommonAlertEvent<AlertEvent.Handler> {
     }
 
     public static void fireErrorFromException(final HasHandlers handlers, final Throwable throwable,
-            final AlertCallback callback) {
+                                              final AlertCallback callback) {
         String message = throwable.getMessage();
         if (message == null || message.length() <= 1) {
             message = throwable.getClass().getName();
@@ -67,7 +62,7 @@ public class AlertEvent extends CommonAlertEvent<AlertEvent.Handler> {
     }
 
     public static void fireErrorFromException(final HasHandlers handlers, final String message,
-            final Throwable throwable, final AlertCallback callback) {
+                                              final Throwable throwable, final AlertCallback callback) {
         final StringBuilder detail = new StringBuilder();
 
         if (throwable instanceof EntityServiceException) {
@@ -99,7 +94,7 @@ public class AlertEvent extends CommonAlertEvent<AlertEvent.Handler> {
     }
 
     public static void fireError(final HasHandlers handlers, final String message, final String detail,
-            final AlertCallback callback) {
+                                 final AlertCallback callback) {
         handlers.fireEvent(new AlertEvent(fromString(message), fromString(detail), Level.ERROR, callback));
     }
 
@@ -122,5 +117,9 @@ public class AlertEvent extends CommonAlertEvent<AlertEvent.Handler> {
 
     public AlertCallback getCallback() {
         return callback;
+    }
+
+    public interface Handler extends EventHandler {
+        void onAlert(AlertEvent event);
     }
 }

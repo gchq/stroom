@@ -26,11 +26,11 @@ import stroom.util.spring.StroomScope;
 public class FeedHolder implements Holder {
     private Feed feed;
 
-    public void setFeed(final Feed feed) {
-        this.feed = feed;
-    }
-
     public Feed getFeed() {
         return feed;
+    }
+
+    public void setFeed(final Feed feed) {
+        this.feed = feed;
     }
 }

@@ -3,7 +3,8 @@ package stroom.dashboard.client.table;
 import com.google.gwt.core.client.JsonUtils;
 
 public class JsonUtil {
-    protected JsonUtil() {}
+    protected JsonUtil() {
+    }
 
     @SuppressWarnings("unchecked")
     public static <T> T decode(final String json) {

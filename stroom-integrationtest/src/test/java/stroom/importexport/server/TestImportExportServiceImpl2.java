@@ -18,12 +18,12 @@ package stroom.importexport.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
 import stroom.entity.shared.FolderService;
 import stroom.entity.shared.ImportState;
 import stroom.feed.shared.FeedService;
 import stroom.pipeline.shared.PipelineEntityService;
 import stroom.resource.server.ResourceStore;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.zip.ZipUtil;
 

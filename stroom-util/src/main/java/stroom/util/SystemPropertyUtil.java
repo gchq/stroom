@@ -21,20 +21,6 @@ import stroom.util.spring.PropertyProvider;
 import java.util.Set;
 
 public final class SystemPropertyUtil {
-    private static class SystemPropertyProvider implements PropertyProvider {
-        @Override
-        public String getProperty(final String key) {
-            String prop = System.getProperty(key);
-            if (prop == null) {
-                prop = System.getenv(key);
-            }
-            if (prop == null) {
-                throw new RuntimeException("Property or environment variable \"" + key + "\" not found");
-            }
-            return prop;
-        }
-    }
-
     private static final SystemPropertyProvider SYSTEM_PROPERTY_PROVIDER = new SystemPropertyProvider();
 
     public static final String replaceProperty(final String string, final PropertyProvider provider) {
@@ -42,7 +28,7 @@ public final class SystemPropertyUtil {
     }
 
     public static final String replaceProperty(String string, final PropertyProvider provider,
-            final Set<String> ignore) {
+                                               final Set<String> ignore) {
         if (string != null) {
             int start = 0;
             int end = 0;
@@ -74,5 +60,19 @@ public final class SystemPropertyUtil {
 
     public static final String replaceSystemProperty(final String string, final Set<String> ignore) {
         return replaceProperty(string, SYSTEM_PROPERTY_PROVIDER, ignore);
+    }
+
+    private static class SystemPropertyProvider implements PropertyProvider {
+        @Override
+        public String getProperty(final String key) {
+            String prop = System.getProperty(key);
+            if (prop == null) {
+                prop = System.getenv(key);
+            }
+            if (prop == null) {
+                throw new RuntimeException("Property or environment variable \"" + key + "\" not found");
+            }
+            return prop;
+        }
     }
 }

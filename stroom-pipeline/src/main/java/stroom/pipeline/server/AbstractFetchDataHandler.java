@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,11 +18,11 @@ package stroom.pipeline.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.dashboard.server.logging.StreamEventLog;
 import stroom.entity.shared.EntityServiceException;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.io.StreamCloser;
-import stroom.logging.StreamEventLog;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.server.errorhandler.ProcessException;
@@ -52,6 +52,7 @@ import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.streamstore.server.fs.serializable.CompoundInputStream;
 import stroom.streamstore.server.fs.serializable.RASegmentInputStream;
 import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.util.io.StreamUtil;
@@ -188,15 +189,23 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
 
                 return createDataResult(feed, streamType, segmentInputStream, pageRange, availableChildStreamTypes, pipeline, showAsHtml, streamSource);
 
-            } catch (final IOException e) {
+            } catch (final Exception e) {
                 writeEventLog(streamSource.getStream(), feed, streamType, e);
-                exception = new RuntimeException(e);
-                throw exception;
+
+                if (StreamStatus.LOCKED.equals(streamSource.getStream().getStatus())) {
+                    return createErrorResult("You cannot view locked streams.");
+                }
+                if (StreamStatus.DELETED.equals(streamSource.getStream().getStatus())) {
+                    return createErrorResult("This data may no longer exist.");
+                }
+
+                return createErrorResult(e.getMessage());
+
             } finally {
                 // Close all open streams.
                 try {
                     streamCloser.close();
-                } catch (final IOException e) {
+                } catch (final Exception e) {
                     if (exception != null) {
                         exception.addSuppressed(e);
                     } else {
@@ -306,6 +315,15 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                 streamsRowCount, resultPageRange, pageRowCount, availableChildStreamTypes, output, showAsHtml);
     }
 
+    private FetchDataResult createErrorResult(final String error) {
+        final OffsetRange<Long> resultStreamsRange = new OffsetRange<>(0L, 0L);
+        final RowCount<Long> streamsRowCount = new RowCount<>(0L, true);
+        final OffsetRange<Long> resultPageRange = new OffsetRange<>(0L, 0L);
+        final RowCount<Long> pageRowCount = new RowCount<>(0L, true);
+        return new FetchDataResult(StreamType.RAW_EVENTS, null, resultStreamsRange,
+                streamsRowCount, resultPageRange, pageRowCount, null, error, false);
+    }
+
     private void writeEventLog(final Stream stream, final Feed feed, final StreamType streamType,
                                final Exception e) {
         try {
@@ -411,7 +429,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
         streamHolder.addProvider(streamSource.getChildStream(StreamType.META));
         streamHolder.addProvider(streamSource.getChildStream(StreamType.CONTEXT));
 
-        final PipelineData pipelineData = pipelineDataCache.get(loadedPipeline);
+        final PipelineData pipelineData = pipelineDataCache.getOrCreate(loadedPipeline);
         if (pipelineData == null) {
             throw new EntityServiceException("Pipeline has no data");
         }

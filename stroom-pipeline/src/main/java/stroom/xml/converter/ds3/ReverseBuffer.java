@@ -35,8 +35,7 @@ public class ReverseBuffer implements Buffer {
     /**
      * Create a buffer with a specified initial size.
      *
-     * @param initialSize
-     *            The initial size of the buffer.
+     * @param initialSize The initial size of the buffer.
      */
     public ReverseBuffer(final int initialSize) {
         if (initialSize <= 0) {

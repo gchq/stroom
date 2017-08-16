@@ -52,8 +52,8 @@ public class TestConfigure extends StroomUnitTest {
         testFile.delete();
         FileUtils.copyFile(sourceFile, testFile);
 
-        Configure.main(new String[] {
+        Configure.main(new String[]{
                 "parameterFile=./src/test/resources/stroom/util/config/ConfigureTestParameters.xml",
-                "processFile=" + testFile.getAbsolutePath(), "readParameter=false", "exitOnError=false" });
+                "processFile=" + testFile.getAbsolutePath(), "readParameter=false", "exitOnError=false"});
     }
 }

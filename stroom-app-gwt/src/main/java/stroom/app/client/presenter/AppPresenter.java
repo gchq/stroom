@@ -35,7 +35,7 @@ public class AppPresenter extends MyPresenter<AppPresenter.AppView, AppPresenter
 
     @Inject
     public AppPresenter(final EventBus eventBus, final AppView view, final AppProxy proxy,
-            final ClientSecurityContext securityContext) {
+                        final ClientSecurityContext securityContext) {
         super(eventBus, view, proxy);
         this.securityContext = securityContext;
     }

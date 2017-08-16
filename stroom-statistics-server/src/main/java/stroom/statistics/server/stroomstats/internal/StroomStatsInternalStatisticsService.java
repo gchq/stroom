@@ -29,14 +29,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
-@SuppressWarnings("unused") //handled by stroom.statistics.internal.InternalStatisticsFacadeFactory
+@SuppressWarnings("unused")
 @Component
-public class StroomStatsInternalStatisticsService implements InternalStatisticsService {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(StroomStatsInternalStatisticsService.class);
+class StroomStatsInternalStatisticsService implements InternalStatisticsService {
 
     static final String PROP_KEY_DOC_REF_TYPE = "stroom.services.stroomStats.docRefType";
     static final String PROP_KEY_PREFIX_KAFKA_TOPICS = "stroom.services.stroomStats.kafkaTopics.";
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomStatsInternalStatisticsService.class);
     private static final Class<Statistics> STATISTICS_CLASS = Statistics.class;
     private static final TimeZone TIME_ZONE_UTC = TimeZone.getTimeZone(ZoneId.from(ZoneOffset.UTC));
 
@@ -47,8 +46,8 @@ public class StroomStatsInternalStatisticsService implements InternalStatisticsS
     private final DatatypeFactory datatypeFactory;
 
     @Inject
-    public StroomStatsInternalStatisticsService(final StroomKafkaProducer stroomKafkaProducer,
-                                                final StroomPropertyService stroomPropertyService) {
+    StroomStatsInternalStatisticsService(final StroomKafkaProducer stroomKafkaProducer,
+                                         final StroomPropertyService stroomPropertyService) {
 
         this.stroomKafkaProducer = stroomKafkaProducer;
         this.stroomPropertyService = stroomPropertyService;
@@ -89,8 +88,8 @@ public class StroomStatsInternalStatisticsService implements InternalStatisticsS
                         ProducerRecord<String, String> producerRecord = new ProducerRecord<>(topic, statName, message);
                         stroomKafkaProducer.send(producerRecord, StroomKafkaProducer.FlushMode.NO_FLUSH, exception -> {
                             throw new RuntimeException(String.format(
-                                    "Error sending %s internal statistics with name %s to kafka on topic %s",
-                                    events.size(), statName, topic), exception);
+                                    "Error sending %s internal stats with name %s to kafka on topic %s, due to (%s)",
+                                    events.size(), statName, topic, exception.getMessage()), exception);
                         });
                     });
         } finally {

@@ -31,7 +31,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.security.client.presenter.ResetPasswordPresenter.ResetPasswordView;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
-public class ResetPasswordViewImpl extends ViewWithUiHandlers<PopupUiHandlers>implements ResetPasswordView {
+public class ResetPasswordViewImpl extends ViewWithUiHandlers<PopupUiHandlers> implements ResetPasswordView {
     private final Widget widget;
     @UiField
     Label userName;

@@ -19,8 +19,6 @@ package stroom.refdata;
 import stroom.util.task.ServerTask;
 
 public class ReferenceDataLoadTask extends ServerTask<MapStore> {
-    private static final long serialVersionUID = -6755203363700141654L;
-
     private MapStoreCacheKey mapStorePoolKey;
 
     public ReferenceDataLoadTask() {

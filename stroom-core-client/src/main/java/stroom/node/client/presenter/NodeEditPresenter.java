@@ -23,14 +23,6 @@ import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
 
 public class NodeEditPresenter extends MyPresenterWidget<NodeEditPresenter.NodeEditView> {
-    public interface NodeEditView extends View {
-        void setName(String name);
-
-        void setClusterUrl(String clusterUrl);
-
-        String getClusterUrl();
-    }
-
     @Inject
     public NodeEditPresenter(final EventBus eventBus, final NodeEditView view, final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
@@ -40,11 +32,19 @@ public class NodeEditPresenter extends MyPresenterWidget<NodeEditPresenter.NodeE
         getView().setName(name);
     }
 
+    public String getClusterUrl() {
+        return getView().getClusterUrl();
+    }
+
     public void setClusterUrl(final String clusterUrl) {
         getView().setClusterUrl(clusterUrl);
     }
 
-    public String getClusterUrl() {
-        return getView().getClusterUrl();
+    public interface NodeEditView extends View {
+        void setName(String name);
+
+        String getClusterUrl();
+
+        void setClusterUrl(String clusterUrl);
     }
 }

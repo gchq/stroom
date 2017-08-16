@@ -46,7 +46,7 @@ public class ObjectMarshaller<E> {
         if (object != null) {
             try {
                 xml = XMLMarshallerUtil.marshal(jaxbContext, object);
-            } catch( final Exception e){
+            } catch (final Exception e) {
                 LOGGER.debug("Problem marshalling {}", object, e);
                 LOGGER.warn("Problem marshalling {} - {} (enable debug for full trace)", object, String.valueOf(e));
             }

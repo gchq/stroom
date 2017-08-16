@@ -31,11 +31,11 @@ import javax.xml.bind.annotation.XmlType;
 /**
  * <p>
  * Java class for Property complex type.
- *
+ * <p>
  * <p>
  * The following schema fragment specifies the expected content contained within
  * this class.
- *
+ * <p>
  * <pre>
  * &lt;complexType name="Property">
  *   &lt;complexContent>
@@ -51,7 +51,7 @@ import javax.xml.bind.annotation.XmlType;
  * </pre>
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "Property", propOrder = { "element", "name", "value" })
+@XmlType(name = "Property", propOrder = {"element", "name", "value"})
 public class PipelineProperty implements Comparable<PipelineProperty>, SharedObject, Copyable<PipelineProperty> {
     private static final long serialVersionUID = -4634337435985272473L;
 

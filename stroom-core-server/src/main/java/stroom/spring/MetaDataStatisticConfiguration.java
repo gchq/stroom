@@ -1,29 +1,21 @@
 package stroom.spring;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import stroom.internalstatistics.MetaDataStatisticImpl;
 import stroom.internalstatistics.MetaDataStatisticTemplate;
+import stroom.statistics.internal.InternalStatisticsReceiver;
 
 import java.util.Arrays;
 
 @Configuration
 public class MetaDataStatisticConfiguration {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(MetaDataStatisticConfiguration.class);
-
-    public MetaDataStatisticConfiguration() {
-        LOGGER.info("MetaDataStatisticConfiguration loading...");
-    }
-
     /**
      * This bean must be returned as a class and not an interface otherwise annotation scanning will not work.
      */
     @Bean
-    public MetaDataStatisticImpl metaDataStatistic() {
-        final MetaDataStatisticImpl metaDataStatistic = new MetaDataStatisticImpl();
+    public MetaDataStatisticImpl metaDataStatistic(final InternalStatisticsReceiver internalStatisticsReceiver) {
+        final MetaDataStatisticImpl metaDataStatistic = new MetaDataStatisticImpl(internalStatisticsReceiver);
         metaDataStatistic.setTemplates(Arrays.asList(
                 new MetaDataStatisticTemplate(
                         "Meta Data-Streams Received",

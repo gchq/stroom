@@ -39,8 +39,8 @@ import java.util.List;
 
 public class DynamicSettingsPane extends Composite implements Layer, HasReadAndWrite<JSONObject> {
     private final SimplePanel outer;
-    private final List<StringListBox> fieldControls = new ArrayList<StringListBox>();
-    private final List<HasReadAndWrite<JSONObject>> controls = new ArrayList<HasReadAndWrite<JSONObject>>();
+    private final List<StringListBox> fieldControls = new ArrayList<>();
+    private final List<HasReadAndWrite<JSONObject>> controls = new ArrayList<>();
     private double opacity;
 
     public DynamicSettingsPane() {

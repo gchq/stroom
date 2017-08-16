@@ -25,14 +25,13 @@ public interface PipelineStackLoader {
      * Loads and returns a stack of pipelines representing the inheritance
      * chain. The first pipeline in the chain is at the start of the list and
      * the last pipeline (the one we have supplied) is at the end.
-     *
+     * <p>
      * This method will prevent circular pipeline references by ensuring only
      * unique items are added to the list.
      *
-     * @param pipelineEntity
-     *            The pipeline that we want to load the inheritance chain for.
+     * @param pipelineEntity The pipeline that we want to load the inheritance chain for.
      * @return The inheritance chain for the supplied pipeline. The supplied
-     *         pipeline will be the last element in the list.
+     * pipeline will be the last element in the list.
      */
     List<PipelineEntity> loadPipelineStack(PipelineEntity pipelineEntity);
 }

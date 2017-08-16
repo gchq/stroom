@@ -27,11 +27,11 @@ public class SharedMap<K extends SharedObject, V extends SharedObject> implement
     private Map<K, V> map;
 
     public SharedMap() {
-        this.map = new HashMap<K, V>();
+        this.map = new HashMap<>();
     }
 
     public SharedMap(final int initialCapacity) {
-        this.map = new HashMap<K, V>(initialCapacity);
+        this.map = new HashMap<>(initialCapacity);
     }
 
     public SharedMap(final Map<K, V> map) {

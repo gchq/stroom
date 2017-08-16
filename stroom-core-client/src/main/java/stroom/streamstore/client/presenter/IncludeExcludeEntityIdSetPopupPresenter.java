@@ -26,19 +26,12 @@ import stroom.entity.shared.IncludeExcludeEntityIdSet;
 
 public class IncludeExcludeEntityIdSetPopupPresenter
         extends MyPresenterWidget<IncludeExcludeEntityIdSetPopupPresenter.IncludeExcludeEntityIdSetPopupView> {
-    public interface IncludeExcludeEntityIdSetPopupView extends View {
-        void setIncludesView(View view);
-
-        void setExcludesView(View view);
-    }
-
     private final EntityIdSetPresenter includes;
     private final EntityIdSetPresenter excludes;
-
     @Inject
     public IncludeExcludeEntityIdSetPopupPresenter(final EventBus eventBus,
-            final IncludeExcludeEntityIdSetPopupView view, final EntityIdSetPresenter includes,
-            final EntityIdSetPresenter excludes) {
+                                                   final IncludeExcludeEntityIdSetPopupView view, final EntityIdSetPresenter includes,
+                                                   final EntityIdSetPresenter excludes) {
         super(eventBus, view);
         this.includes = includes;
         this.excludes = excludes;
@@ -48,7 +41,7 @@ public class IncludeExcludeEntityIdSetPopupPresenter
     }
 
     public <T extends BaseEntity> void read(final String type, final boolean groupedEntity,
-            final IncludeExcludeEntityIdSet<T> includeExcludeEntityIdSet) {
+                                            final IncludeExcludeEntityIdSet<T> includeExcludeEntityIdSet) {
         EntityIdSet<T> in = null;
         EntityIdSet<T> ex = null;
 
@@ -72,5 +65,11 @@ public class IncludeExcludeEntityIdSetPopupPresenter
         if (!includeExcludeEntityIdSet.obtainExclude().isConstrained()) {
             includeExcludeEntityIdSet.setExclude(null);
         }
+    }
+
+    public interface IncludeExcludeEntityIdSetPopupView extends View {
+        void setIncludesView(View view);
+
+        void setExcludesView(View view);
     }
 }

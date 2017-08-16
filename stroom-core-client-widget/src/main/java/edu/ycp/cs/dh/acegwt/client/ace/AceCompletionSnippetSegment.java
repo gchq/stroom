@@ -24,13 +24,14 @@ package edu.ycp.cs.dh.acegwt.client.ace;
 
 /**
  * A segment of a completion snippet
- * */
-public interface AceCompletionSnippetSegment  {
-	
-	/**
-	 * Gets the escaped and prepared textual representation of this snippet segment (backslash and dollar are escaped in general and the dollar is used for certain special tokens)
-	 * @param tabStopNumber the tab stop number
-	 * @return the prepared textual representation of this snippet segment
-	 */
-	public String getPreparedText(int tabStopNumber);
+ */
+public interface AceCompletionSnippetSegment {
+
+    /**
+     * Gets the escaped and prepared textual representation of this snippet segment (backslash and dollar are escaped in general and the dollar is used for certain special tokens)
+     *
+     * @param tabStopNumber the tab stop number
+     * @return the prepared textual representation of this snippet segment
+     */
+    public String getPreparedText(int tabStopNumber);
 }

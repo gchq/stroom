@@ -24,6 +24,7 @@ public class LoginEvent extends GwtEvent<LoginEvent.LoginHandler> {
     private static Type<LoginHandler> TYPE;
     private final String userName;
     private final String password;
+
     private LoginEvent(final String userName, final String password) {
         this.userName = userName;
         this.password = password;
@@ -31,7 +32,7 @@ public class LoginEvent extends GwtEvent<LoginEvent.LoginHandler> {
 
     public static Type<LoginHandler> getType() {
         if (TYPE == null) {
-            TYPE = new GwtEvent.Type<LoginHandler>();
+            TYPE = new GwtEvent.Type<>();
         }
         return TYPE;
     }

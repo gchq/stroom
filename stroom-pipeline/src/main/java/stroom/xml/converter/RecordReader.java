@@ -25,7 +25,7 @@ import java.io.Reader;
  * <p>
  * Class used to chunk up records from a flat file.
  * </p>
- *
+ * <p>
  * <p>
  * By default delimiters are new lines '\n' but can be set to any sequence of
  * characters, i.e. the input stream can have all of it's content on a single
@@ -33,7 +33,7 @@ import java.io.Reader;
  * </p>
  */
 public final class RecordReader extends WrappedReader {
-    private static final char[] NEW_LINE = { '\n' };
+    private static final char[] NEW_LINE = {'\n'};
     private char[] delimiter = NEW_LINE;
     private long recordCount = 0;
 
@@ -55,8 +55,7 @@ public final class RecordReader extends WrappedReader {
      * used. If a null delimiter is supplied then new line '\n' shall be used by
      * default. Delimiters can be any string of characters, e.g. "----".
      *
-     * @param reader
-     *            input stream
+     * @param reader input stream
      */
     public RecordReader(final Reader reader, final String recordDelimiter) {
         super(reader);

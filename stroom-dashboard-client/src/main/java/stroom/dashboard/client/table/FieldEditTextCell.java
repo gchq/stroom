@@ -60,7 +60,7 @@ public class FieldEditTextCell extends AbstractEditableCell<String, FieldEditTex
 
     @Override
     public void onBrowserEvent(final Context context, final Element parent, final String value, final NativeEvent event,
-            final ValueUpdater<String> valueUpdater) {
+                               final ValueUpdater<String> valueUpdater) {
         final Object key = context.getKey();
         ViewData viewData = getViewData(key);
         if (viewData != null && viewData.isEditing()) {
@@ -132,12 +132,9 @@ public class FieldEditTextCell extends AbstractEditableCell<String, FieldEditTex
     /**
      * Convert the cell to edit mode.
      *
-     * @param context
-     *            the {@link Context} of the cell
-     * @param parent
-     *            the parent element
-     * @param value
-     *            the current value
+     * @param context the {@link Context} of the cell
+     * @param parent  the parent element
+     * @param value   the current value
      */
     protected void edit(final Context context, final Element parent, final String value) {
         setValue(context, parent, value);
@@ -149,12 +146,9 @@ public class FieldEditTextCell extends AbstractEditableCell<String, FieldEditTex
     /**
      * Convert the cell to non-edit mode.
      *
-     * @param context
-     *            the context of the cell
-     * @param parent
-     *            the parent Element
-     * @param value
-     *            the value associated with the cell
+     * @param context the context of the cell
+     * @param parent  the parent Element
+     * @param value   the value associated with the cell
      */
     private void cancel(final Context context, final Element parent, final String value) {
         clearInput(getInputElement(parent));
@@ -166,8 +160,7 @@ public class FieldEditTextCell extends AbstractEditableCell<String, FieldEditTex
      * onblur events after the input is removed from the DOM if selection is not
      * cleared.
      *
-     * @param input
-     *            the input element
+     * @param input the input element
      */
     private native void clearInput(Element input)
     /*-{
@@ -180,17 +173,13 @@ public class FieldEditTextCell extends AbstractEditableCell<String, FieldEditTex
     /**
      * Commit the current value.
      *
-     * @param context
-     *            the context of the cell
-     * @param parent
-     *            the parent Element
-     * @param viewData
-     *            the {@link ViewData} object
-     * @param valueUpdater
-     *            the {@link ValueUpdater}
+     * @param context      the context of the cell
+     * @param parent       the parent Element
+     * @param viewData     the {@link ViewData} object
+     * @param valueUpdater the {@link ValueUpdater}
      */
     private void commit(final Context context, final Element parent, final ViewData viewData,
-            final ValueUpdater<String> valueUpdater) {
+                        final ValueUpdater<String> valueUpdater) {
         final String value = updateViewData(parent, viewData, false);
         clearInput(getInputElement(parent));
         setValue(context, parent, viewData.getOriginal());
@@ -200,7 +189,7 @@ public class FieldEditTextCell extends AbstractEditableCell<String, FieldEditTex
     }
 
     private void editEvent(final Context context, final Element parent, final String value, final ViewData viewData,
-            final NativeEvent event, final ValueUpdater<String> valueUpdater) {
+                           final NativeEvent event, final ValueUpdater<String> valueUpdater) {
         final String type = event.getType();
         final boolean keyUp = BrowserEvents.KEYUP.equals(type);
         final boolean keyDown = BrowserEvents.KEYDOWN.equals(type);
@@ -254,12 +243,9 @@ public class FieldEditTextCell extends AbstractEditableCell<String, FieldEditTex
     /**
      * Update the view data based on the current value.
      *
-     * @param parent
-     *            the parent element
-     * @param viewData
-     *            the {@link ViewData} object to update
-     * @param isEditing
-     *            true if in edit mode
+     * @param parent    the parent element
+     * @param viewData  the {@link ViewData} object to update
+     * @param isEditing true if in edit mode
      * @return the new value
      */
     private String updateViewData(final Element parent, final ViewData viewData, final boolean isEditing) {

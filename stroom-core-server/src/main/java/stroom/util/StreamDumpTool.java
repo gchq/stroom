@@ -167,7 +167,7 @@ public class StreamDumpTool extends AbstractCommandLineTool {
      * Scan a file
      */
     private void processFile(final int count, final int total, final StreamStore streamStore, final long streamId,
-            final File outputDir) {
+                             final File outputDir) {
         StreamSource streamSource = null;
         try {
             streamSource = streamStore.openStreamSource(streamId);

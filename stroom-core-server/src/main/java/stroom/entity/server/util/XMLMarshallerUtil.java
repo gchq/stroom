@@ -61,7 +61,7 @@ public final class XMLMarshallerUtil {
     }
 
     public static <T> T unmarshal(final JAXBContext context, final Class<T> clazz, final String data,
-            final XmlAdapter<?, ?>... adapters) {
+                                  final XmlAdapter<?, ?>... adapters) {
         if (data != null) {
             final String trimmed = data.trim();
             if (trimmed.length() > 0) {

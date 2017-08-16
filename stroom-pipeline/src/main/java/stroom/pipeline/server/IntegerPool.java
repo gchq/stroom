@@ -21,8 +21,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class IntegerPool {
-    private Queue<Integer> pool = new ConcurrentLinkedQueue<Integer>();
     private final AtomicInteger count = new AtomicInteger();
+    private Queue<Integer> pool = new ConcurrentLinkedQueue<>();
 
     public int get() {
         Integer integer = pool.poll();

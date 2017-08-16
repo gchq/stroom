@@ -49,169 +49,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class AbstractIOElement extends AbstractElement implements HasTargets {
-    private static abstract class DestinationProcessor implements Processor {
-        private final List<DestinationProvider> destinationProviders;
-        private Map<DestinationProvider, Destination> destinationMap;
-
-        public DestinationProcessor(final List<DestinationProvider> destinationProviders) {
-            this.destinationProviders = destinationProviders;
-        }
-
-        protected void borrowDestinations() throws Exception {
-            Exception exception = null;
-
-            if (destinationMap == null) {
-                destinationMap = new HashMap<>();
-                for (final DestinationProvider destinationProvider : destinationProviders) {
-                    try {
-                        final Destination destination = destinationProvider.borrowDestination();
-                        destinationMap.put(destinationProvider, destination);
-                    } catch (final Exception e) {
-                        LOGGER.error(e.getMessage(), e);
-                        exception = e;
-                    }
-                }
-            }
-
-            if (exception != null) {
-                throw exception;
-            }
-        }
-
-        protected void returnDestinations() throws Exception {
-            Exception exception = null;
-
-            if (destinationMap != null) {
-                for (final Entry<DestinationProvider, Destination> entry : destinationMap.entrySet()) {
-                    try {
-                        entry.getKey().returnDestination(entry.getValue());
-                    } catch (final Exception e) {
-                        LOGGER.error(e.getMessage(), e);
-                        exception = e;
-                    }
-                }
-                destinationMap = null;
-            }
-
-            if (exception != null) {
-                throw exception;
-            }
-        }
-
-        protected Collection<Destination> getDestinations() {
-            return destinationMap.values();
-        }
-    }
-
-    private static class DestinationOutputProcessor extends DestinationProcessor {
-        private final List<OutputStream> otherOutputStreams;
-        private InputStream inputStream;
-
-        public DestinationOutputProcessor(final List<DestinationProvider> destinationProviders,
-                final List<OutputStream> otherOutputStreams) {
-            super(destinationProviders);
-            this.otherOutputStreams = otherOutputStreams;
-        }
-
-        @Override
-        public void process() {
-            try {
-                try {
-                    borrowDestinations();
-
-                    final List<OutputStream> outputStreams = new ArrayList<>(otherOutputStreams);
-                    for (final Destination destination : getDestinations()) {
-                        outputStreams.add(destination.getOutputStream());
-                    }
-
-                    if (inputStream != null) {
-                        final byte[] buffer = new byte[8192];
-                        int len;
-                        while ((len = inputStream.read(buffer)) != -1) {
-                            for (final OutputStream outputStream : outputStreams) {
-                                outputStream.write(buffer, 0, len);
-                            }
-                        }
-                    }
-                    for (final OutputStream outputStream : outputStreams) {
-                        outputStream.flush();
-
-                        // If the output stream is a piped output stream then we
-                        // must close it or it will block other up stream
-                        // processors.
-                        if (outputStream instanceof PipedOutputStream) {
-                            outputStream.close();
-                        }
-                    }
-
-                } finally {
-                    returnDestinations();
-                }
-            } catch (final Exception e) {
-                throw ProcessException.wrap(e);
-            }
-        }
-
-        public void setInputStream(final InputStream inputStream) throws IOException {
-            this.inputStream = inputStream;
-        }
-    }
-
-    private static class DestinationWriterProcessor extends DestinationProcessor {
-        private final List<Writer> otherWriters;
-        private Reader reader;
-
-        public DestinationWriterProcessor(final List<DestinationProvider> destinationProviders,
-                final List<Writer> otherWriters) {
-            super(destinationProviders);
-            this.otherWriters = otherWriters;
-        }
-
-        @Override
-        public void process() {
-            try {
-                try {
-                    borrowDestinations();
-
-                    final List<Writer> writers = new ArrayList<>(otherWriters);
-                    for (final Destination destination : getDestinations()) {
-                        writers.add(new OutputStreamWriter(destination.getOutputStream(), StreamUtil.DEFAULT_CHARSET));
-                    }
-
-                    final char[] buffer = new char[8192];
-                    int len;
-                    while ((len = reader.read(buffer)) != -1) {
-                        for (final Writer writer : writers) {
-                            writer.write(buffer, 0, len);
-                        }
-                    }
-                    for (final Writer writer : writers) {
-                        writer.flush();
-
-                        // If the writer is a piped writer then we must close it
-                        // or it will block other up stream processors.
-                        if (writer instanceof PipedWriter) {
-                            writer.close();
-                        }
-                    }
-
-                } finally {
-                    returnDestinations();
-                }
-            } catch (final Exception e) {
-                throw ProcessException.wrap(e);
-            }
-        }
-
-        public void setReader(final Reader reader) {
-            this.reader = reader;
-        }
-    }
-
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractIOElement.class);
-
     private final List<Element> targetList = new ArrayList<>();
-
     private InputStream inputStream;
     private Reader reader;
     private String encoding;
@@ -274,51 +113,47 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
                 if (target instanceof DestinationProvider) {
                     destinationProviders.add((DestinationProvider) target);
 
-                } else if (target instanceof TakesInput) {
-                    if (inputStream != null) {
-                        final TakesInput takesInput = (TakesInput) target;
+                } else if (target instanceof TakesInput && inputStream != null) {
+                    final TakesInput takesInput = (TakesInput) target;
+                    takesInput.setInputStream(inputStream, encoding);
 
-                        // Create child processors.
-                        final List<Processor> childProcessors = takesInput.createProcessors();
+                    // Create child processors.
+                    final List<Processor> childProcessors = takesInput.createProcessors();
 
-                        if (forkProcess) {
-                            // Only add a piped output stream if we are going to
-                            // have child processors to consume the data.
-                            if (childProcessors.size() > 0) {
-                                final PipedInputStream pipedInputStream = new PipedInputStream();
-                                final PipedOutputStream pipedOutputStream = new PipedOutputStream(pipedInputStream);
-                                takesInput.setInputStream(pipedInputStream, encoding);
-                                outputStreams.add(pipedOutputStream);
-                                processors.addAll(childProcessors);
-                            }
-
-                        } else {
-                            takesInput.setInputStream(inputStream, encoding);
+                    if (forkProcess) {
+                        // Only add a piped output stream if we are going to
+                        // have child processors consume the data.
+                        if (childProcessors.size() > 0) {
+                            final PipedInputStream pipedInputStream = new PipedInputStream();
+                            final PipedOutputStream pipedOutputStream = new PipedOutputStream(pipedInputStream);
+                            takesInput.setInputStream(pipedInputStream, encoding);
+                            outputStreams.add(pipedOutputStream);
                             processors.addAll(childProcessors);
                         }
+
+                    } else {
+                        processors.addAll(childProcessors);
                     }
 
-                } else if (target instanceof TakesReader) {
-                    if (reader != null) {
-                        final TakesReader takesReader = (TakesReader) target;
+                } else if (target instanceof TakesReader && reader != null) {
+                    final TakesReader takesReader = (TakesReader) target;
+                    takesReader.setReader(reader);
 
-                        // Create child processors.
-                        final List<Processor> childProcessors = takesReader.createProcessors();
+                    // Create child processors.
+                    final List<Processor> childProcessors = takesReader.createProcessors();
 
-                        if (forkProcess) {
-                            // Only add a piped writer if we are going to have
-                            // child processors to consume the data.
-                            if (childProcessors.size() > 0) {
-                                final PipedReader pipedReader = new PipedReader();
-                                final PipedWriter pipedWriter = new PipedWriter(pipedReader);
-                                takesReader.setReader(pipedReader);
-                                writers.add(pipedWriter);
-                                processors.addAll(childProcessors);
-                            }
-                        } else {
-                            takesReader.setReader(reader);
+                    if (forkProcess) {
+                        // Only add a piped writer if we are going to have
+                        // child processors consume the data.
+                        if (childProcessors.size() > 0) {
+                            final PipedReader pipedReader = new PipedReader();
+                            final PipedWriter pipedWriter = new PipedWriter(pipedReader);
+                            takesReader.setReader(pipedReader);
+                            writers.add(pipedWriter);
                             processors.addAll(childProcessors);
                         }
+                    } else {
+                        processors.addAll(childProcessors);
                     }
                 }
             }
@@ -370,6 +205,165 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
     public void endStream() {
         for (final Element target : targetList) {
             target.endStream();
+        }
+    }
+
+    private static abstract class DestinationProcessor implements Processor {
+        private final List<DestinationProvider> destinationProviders;
+        private Map<DestinationProvider, Destination> destinationMap;
+
+        public DestinationProcessor(final List<DestinationProvider> destinationProviders) {
+            this.destinationProviders = destinationProviders;
+        }
+
+        protected void borrowDestinations() throws Exception {
+            Exception exception = null;
+
+            if (destinationMap == null) {
+                destinationMap = new HashMap<>();
+                for (final DestinationProvider destinationProvider : destinationProviders) {
+                    try {
+                        final Destination destination = destinationProvider.borrowDestination();
+                        destinationMap.put(destinationProvider, destination);
+                    } catch (final Exception e) {
+                        LOGGER.error(e.getMessage(), e);
+                        exception = e;
+                    }
+                }
+            }
+
+            if (exception != null) {
+                throw exception;
+            }
+        }
+
+        protected void returnDestinations() throws Exception {
+            Exception exception = null;
+
+            if (destinationMap != null) {
+                for (final Entry<DestinationProvider, Destination> entry : destinationMap.entrySet()) {
+                    try {
+                        entry.getKey().returnDestination(entry.getValue());
+                    } catch (final Exception e) {
+                        LOGGER.error(e.getMessage(), e);
+                        exception = e;
+                    }
+                }
+                destinationMap = null;
+            }
+
+            if (exception != null) {
+                throw exception;
+            }
+        }
+
+        protected Collection<Destination> getDestinations() {
+            return destinationMap.values();
+        }
+    }
+
+    private static class DestinationOutputProcessor extends DestinationProcessor {
+        private final List<OutputStream> otherOutputStreams;
+        private InputStream inputStream;
+
+        public DestinationOutputProcessor(final List<DestinationProvider> destinationProviders,
+                                          final List<OutputStream> otherOutputStreams) {
+            super(destinationProviders);
+            this.otherOutputStreams = otherOutputStreams;
+        }
+
+        @Override
+        public void process() {
+            try {
+                try {
+                    borrowDestinations();
+
+                    final List<OutputStream> outputStreams = new ArrayList<>(otherOutputStreams);
+                    for (final Destination destination : getDestinations()) {
+                        outputStreams.add(destination.getOutputStream());
+                    }
+
+                    if (inputStream != null) {
+                        final byte[] buffer = new byte[8192];
+                        int len;
+                        while ((len = inputStream.read(buffer)) != -1) {
+                            for (final OutputStream outputStream : outputStreams) {
+                                outputStream.write(buffer, 0, len);
+                            }
+                        }
+                    }
+                    for (final OutputStream outputStream : outputStreams) {
+                        outputStream.flush();
+
+                        // If the output stream is a piped output stream then we
+                        // must close it or it will block other up stream
+                        // processors.
+                        if (outputStream instanceof PipedOutputStream) {
+                            outputStream.close();
+                        }
+                    }
+
+                } finally {
+                    returnDestinations();
+                }
+            } catch (final Exception e) {
+                throw ProcessException.wrap(e);
+            }
+        }
+
+        public void setInputStream(final InputStream inputStream) throws IOException {
+            this.inputStream = inputStream;
+        }
+    }
+
+    private static class DestinationWriterProcessor extends DestinationProcessor {
+        private final List<Writer> otherWriters;
+        private Reader reader;
+
+        public DestinationWriterProcessor(final List<DestinationProvider> destinationProviders,
+                                          final List<Writer> otherWriters) {
+            super(destinationProviders);
+            this.otherWriters = otherWriters;
+        }
+
+        @Override
+        public void process() {
+            try {
+                try {
+                    borrowDestinations();
+
+                    final List<Writer> writers = new ArrayList<>(otherWriters);
+                    for (final Destination destination : getDestinations()) {
+                        writers.add(new OutputStreamWriter(destination.getOutputStream(), StreamUtil.DEFAULT_CHARSET));
+                    }
+
+                    final char[] buffer = new char[8192];
+                    int len;
+                    while ((len = reader.read(buffer)) != -1) {
+                        for (final Writer writer : writers) {
+                            writer.write(buffer, 0, len);
+                        }
+                    }
+                    for (final Writer writer : writers) {
+                        writer.flush();
+
+                        // If the writer is a piped writer then we must close it
+                        // or it will block other up stream processors.
+                        if (writer instanceof PipedWriter) {
+                            writer.close();
+                        }
+                    }
+
+                } finally {
+                    returnDestinations();
+                }
+            } catch (final Exception e) {
+                throw ProcessException.wrap(e);
+            }
+        }
+
+        public void setReader(final Reader reader) {
+            this.reader = reader;
         }
     }
 }

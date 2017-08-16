@@ -37,24 +37,9 @@ import stroom.widget.util.client.MySingleSelectionModel;
 
 public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresenter.PipelineTreeView>
         implements ChangeDataHandler<PipelineModel>, HasDirtyHandlers, PipelineTreeUiHandlers, HasContextMenuHandlers {
-    public interface PipelineTreeView extends View, HasContextMenuHandlers, HasUiHandlers<PipelineTreeUiHandlers> {
-        void setTree(DefaultTreeForTreeLayout<PipelineElement> tree);
-
-        void setSelectionModel(SelectionModel<PipelineElement> selectionModel);
-
-        void refresh();
-
-        void setAllowDragging(boolean allowDragging);
-
-        void setAllowNullSelection(boolean allowNullSelection);
-
-        int getTreeHeight();
-    }
-
     private final MySingleSelectionModel<PipelineElement> selectionModel;
     private PipelineModel pipelineModel;
     private PipelineTreeBuilder pipelineTreeBuilder;
-
     @Inject
     public PipelineTreePresenter(final EventBus eventBus, final PipelineTreeView view) {
         super(eventBus, view);
@@ -153,5 +138,19 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
 
     public int getTreeHeight() {
         return getView().getTreeHeight();
+    }
+
+    public interface PipelineTreeView extends View, HasContextMenuHandlers, HasUiHandlers<PipelineTreeUiHandlers> {
+        void setTree(DefaultTreeForTreeLayout<PipelineElement> tree);
+
+        void setSelectionModel(SelectionModel<PipelineElement> selectionModel);
+
+        void refresh();
+
+        void setAllowDragging(boolean allowDragging);
+
+        void setAllowNullSelection(boolean allowNullSelection);
+
+        int getTreeHeight();
     }
 }

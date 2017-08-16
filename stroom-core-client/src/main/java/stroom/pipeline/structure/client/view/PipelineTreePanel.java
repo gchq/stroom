@@ -41,18 +41,14 @@ import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 public class PipelineTreePanel extends TreePanel<PipelineElement> {
     private static final double HORIZONTAL_SEPARATION = 20;
     private static final double VERTICAL_SEPARATION = 10;
-
-    private TreeRenderer2<PipelineElement> renderer;
-    private TreeLayout<PipelineElement> treeLayout;
-
     private final LayeredCanvas canvas;
-    private PipelineElementRenderer2 cellRenderer;
-
     private final FlowPanel panel;
     private final FlowPanel boxPanel;
-    private DefaultTreeForTreeLayout<PipelineElement> tree;
-
     private final PendingOperation pendingOperation = new PendingOperation();
+    private TreeRenderer2<PipelineElement> renderer;
+    private TreeLayout<PipelineElement> treeLayout;
+    private PipelineElementRenderer cellRenderer;
+    private DefaultTreeForTreeLayout<PipelineElement> tree;
 
     public PipelineTreePanel(final PipelineElementBoxFactory pipelineElementBoxFactory) {
         panel = new FlowPanel();
@@ -65,18 +61,18 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
         if (canvas != null) {
             final Context2d arrowContext = canvas.getLayer(TreeRenderer.ARROW_LAYER).getContext2d();
 
-            cellRenderer = new PipelineElementRenderer2(boxPanel, pipelineElementBoxFactory);
-            final ConnectorRenderer<PipelineElement> connectorRenderer = new ArrowConnectorRenderer<PipelineElement>(
+            cellRenderer = new PipelineElementRenderer(boxPanel, pipelineElementBoxFactory);
+            final ConnectorRenderer<PipelineElement> connectorRenderer = new ArrowConnectorRenderer<>(
                     arrowContext);
 
             // setup the tree layout configuration
-            final DefaultConfiguration<PipelineElement> layoutConfig = new DefaultConfiguration<PipelineElement>(
+            final DefaultConfiguration<PipelineElement> layoutConfig = new DefaultConfiguration<>(
                     HORIZONTAL_SEPARATION, VERTICAL_SEPARATION, Location.Left, AlignmentInLevel.TowardsRoot);
             final NodeExtentProvider<PipelineElement> extentProvider = cellRenderer;
 
-            treeLayout = new AbegoTreeLayout<PipelineElement>(extentProvider, layoutConfig);
+            treeLayout = new AbegoTreeLayout<>(extentProvider, layoutConfig);
 
-            renderer = new TreeRenderer2<PipelineElement>(canvas, cellRenderer, connectorRenderer);
+            renderer = new TreeRenderer2<>(canvas, cellRenderer, connectorRenderer);
             renderer.setTreeLayout(treeLayout);
 
             setAbsoluteLeftTop(canvas.getElement());
@@ -92,14 +88,6 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
         style.setPosition(Position.ABSOLUTE);
         style.setLeft(0, Unit.PX);
         style.setTop(0, Unit.PX);
-    }
-
-    @Override
-    public void setTree(final DefaultTreeForTreeLayout<PipelineElement> tree) {
-        this.tree = tree;
-        if (treeLayout != null) {
-            treeLayout.setTree(tree);
-        }
     }
 
     @Override
@@ -171,6 +159,14 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
     @Override
     public DefaultTreeForTreeLayout<PipelineElement> getTree() {
         return tree;
+    }
+
+    @Override
+    public void setTree(final DefaultTreeForTreeLayout<PipelineElement> tree) {
+        this.tree = tree;
+        if (treeLayout != null) {
+            treeLayout.setTree(tree);
+        }
     }
 
     public int getTreeHeight() {

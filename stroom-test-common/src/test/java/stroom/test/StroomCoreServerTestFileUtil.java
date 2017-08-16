@@ -16,13 +16,13 @@
 
 package stroom.test;
 
+import stroom.util.io.StreamUtil;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-
-import stroom.util.io.StreamUtil;
 
 public final class StroomCoreServerTestFileUtil {
     private static File PROJECT_DIR;

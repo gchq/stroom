@@ -33,9 +33,8 @@ public final class SetDocumentLocator extends BaseEvent {
     /**
      * Stores a setDocumentLocator SAX event.
      *
-     * @param locator
-     *            an object that can return the location of any SAX document
-     *            event
+     * @param locator an object that can return the location of any SAX document
+     *                event
      */
     public SetDocumentLocator(final Locator locator) {
         this.locator = locator;
@@ -44,10 +43,8 @@ public final class SetDocumentLocator extends BaseEvent {
     /**
      * Fires a stored SAX event at the supplied content handler.
      *
-     * @param handler
-     *            The content handler to fire the SAX event at.
-     * @throws SAXException
-     *             Necessary to maintain the SAX event contract.
+     * @param handler The content handler to fire the SAX event at.
+     * @throws SAXException Necessary to maintain the SAX event contract.
      * @see Event#fire(org.xml.sax.ContentHandler)
      */
     @Override

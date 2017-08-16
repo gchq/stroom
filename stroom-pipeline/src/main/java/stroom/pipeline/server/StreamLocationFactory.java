@@ -32,11 +32,11 @@ public class StreamLocationFactory implements LocationFactory {
         return new StreamLocation(streamNo, -1, -1);
     }
 
-    public void setStreamNo(final long streamNo) {
-        this.streamNo = streamNo;
-    }
-
     public long getStreamNo() {
         return streamNo;
+    }
+
+    public void setStreamNo(final long streamNo) {
+        this.streamNo = streamNo;
     }
 }

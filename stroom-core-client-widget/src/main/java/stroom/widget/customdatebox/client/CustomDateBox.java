@@ -24,6 +24,50 @@ import stroom.util.shared.HasLongValue;
 import java.util.Date;
 
 public class CustomDateBox extends DateBox implements HasLongValue {
+    /**
+     * Create a date box with a new {@link DatePicker}.
+     */
+    public CustomDateBox() {
+        super(new CustomDatePicker(), null, new CustomDateBoxFormat());
+    }
+
+    @Override
+    public Long getLongValue() {
+        return toLongFromDate(getValue());
+    }
+
+    @Override
+    public void setLongValue(Long date) {
+        setValue(toDateFromLong(date));
+    }
+
+    private Long toLongFromDate(Date date) {
+        if (date == null) {
+            return null;
+        }
+        return date.getTime();
+    }
+
+    private Date toDateFromLong(Long date) {
+        if (date == null) {
+            return null;
+        }
+        return new Date(date.longValue());
+    }
+
+    public void setLongValue(Long date, final boolean fireEvents) {
+        setValue(toDateFromLong(date), fireEvents);
+    }
+
+    @Override
+    public void setValue(final Date date, final boolean fireEvents) {
+        if (!fireEvents && date != null) {
+            ((CustomDateBoxFormat) getFormat()).setLastDate(date);
+        }
+
+        super.setValue(date, fireEvents);
+    }
+
     public static class CustomDateBoxFormat implements Format {
         /**
          * Default style name added when the date box has a format error.
@@ -89,49 +133,5 @@ public class CustomDateBox extends DateBox implements HasLongValue {
         public void setLastDate(final Date lastDate) {
             this.lastDate = lastDate;
         }
-    }
-
-    /**
-     * Create a date box with a new {@link DatePicker}.
-     */
-    public CustomDateBox() {
-        super(new CustomDatePicker(), null, new CustomDateBoxFormat());
-    }
-
-    @Override
-    public Long getLongValue() {
-        return toLongFromDate(getValue());
-    }
-
-    private Long toLongFromDate(Date date) {
-        if (date == null) {
-            return null;
-        }
-        return date.getTime();
-    }
-
-    private Date toDateFromLong(Long date) {
-        if (date == null) {
-            return null;
-        }
-        return new Date(date.longValue());
-    }
-
-    public void setLongValue(Long date, final boolean fireEvents) {
-        setValue(toDateFromLong(date), fireEvents);
-    }
-
-    @Override
-    public void setLongValue(Long date) {
-        setValue(toDateFromLong(date));
-    }
-
-    @Override
-    public void setValue(final Date date, final boolean fireEvents) {
-        if (!fireEvents && date != null) {
-            ((CustomDateBoxFormat) getFormat()).setLastDate(date);
-        }
-
-        super.setValue(date, fireEvents);
     }
 }

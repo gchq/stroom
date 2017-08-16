@@ -18,7 +18,7 @@ package stroom.entity.server;
 
 import org.junit.Before;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
+import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.annotation.Resource;
 

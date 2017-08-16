@@ -34,7 +34,7 @@ public class SharedElementData implements SharedObject {
     }
 
     public SharedElementData(final String input, final String output, final Indicators codeIndicators,
-            final Indicators outputIndicators, final boolean formatInput, final boolean formatOutput) {
+                             final Indicators outputIndicators, final boolean formatInput, final boolean formatOutput) {
         this.input = input;
         this.output = output;
         this.codeIndicators = codeIndicators;

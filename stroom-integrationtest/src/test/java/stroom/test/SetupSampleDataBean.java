@@ -18,8 +18,6 @@ package stroom.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.CommonTestControl;
-import stroom.ContentImportService;
 import stroom.dashboard.shared.Dashboard;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
@@ -125,7 +123,7 @@ public final class SetupSampleDataBean {
     private void createStreamAttributes() {
         final BaseResultList<StreamAttributeKey> list = streamAttributeKeyService
                 .find(new FindStreamAttributeKeyCriteria());
-        final HashSet<String> existingItems = new HashSet<String>();
+        final HashSet<String> existingItems = new HashSet<>();
         for (final StreamAttributeKey streamAttributeKey : list) {
             existingItems.add(streamAttributeKey.getName());
         }
@@ -179,7 +177,7 @@ public final class SetupSampleDataBean {
         // Add volumes to all indexes.
         final BaseResultList<Volume> volumeList = volumeService.find(new FindVolumeCriteria());
         final BaseResultList<Index> indexList = indexService.find(new FindIndexCriteria());
-        final Set<Volume> volumeSet = new HashSet<Volume>(volumeList);
+        final Set<Volume> volumeSet = new HashSet<>(volumeList);
 
         for (final Index index : indexList) {
             index.setVolumes(volumeSet);

@@ -51,7 +51,7 @@ public class ResizeHandle<R> extends Widget {
     private int startPos;
 
     public ResizeHandle(final DataGridViewImpl<R> dataGridView, final DataGrid<R> dataGrid,
-            final List<ColSettings> colSettings, final DefaultResources resources) {
+                        final List<ColSettings> colSettings, final DefaultResources resources) {
         this.dataGrid = dataGrid;
         this.dataGridView = dataGridView;
         this.colSettings = colSettings;

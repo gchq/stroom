@@ -28,7 +28,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.dashboard.client.query.NamePresenter.NameView;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
-public class NameViewImpl extends ViewWithUiHandlers<PopupUiHandlers>implements NameView {
+public class NameViewImpl extends ViewWithUiHandlers<PopupUiHandlers> implements NameView {
     private final Widget widget;
     @UiField
     TextBox name;

@@ -49,26 +49,14 @@ import java.util.Set;
 public class TaskManagerPresenter
         extends Presenter<TaskManagerPresenter.TaskManagerView, TaskManagerPresenter.TaskManagerProxy>
         implements OpenTaskManagerHandler, TaskUiHandlers {
-    public interface TaskManagerView extends View {
-        void addTask(View task);
-
-        void removeTask(View task);
-    }
-
-    @ProxyCodeSplit
-    public interface TaskManagerProxy extends Proxy<TaskManagerPresenter> {
-    }
-
     private final Provider<TaskPresenter> taskPresenterProvider;
     private final ClientDispatchAsync dispatcher;
-
     private final Map<TaskProgress, TaskPresenter> taskPresenterMap = new HashMap<>();
     private final Map<TaskId, TaskProgress> idMap = new HashMap<>();
     private final Set<TaskId> requestTaskKillSet = new HashSet<>();
-    private boolean visible;
     private final Timer refreshTimer;
+    private boolean visible;
     private boolean refreshing;
-
     @Inject
     public TaskManagerPresenter(final EventBus eventBus, final TaskManagerView view, final TaskManagerProxy proxy,
                                 final Provider<TaskPresenter> taskPresenterProvider, final ClientDispatchAsync dispatcher) {
@@ -191,5 +179,15 @@ public class TaskManagerPresenter
 
     @Override
     protected void revealInParent() {
+    }
+
+    public interface TaskManagerView extends View {
+        void addTask(View task);
+
+        void removeTask(View task);
+    }
+
+    @ProxyCodeSplit
+    public interface TaskManagerProxy extends Proxy<TaskManagerPresenter> {
     }
 }

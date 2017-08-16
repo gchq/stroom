@@ -32,14 +32,6 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 public class NewElementPresenter extends MyPresenterWidget<NewElementPresenter.NewElementView> {
-    public interface NewElementView extends View {
-        HasText getId();
-
-        HasKeyDownHandlers getIdBox();
-
-        void focus();
-    }
-
     private PipelineElementType elementType;
 
     @Inject
@@ -73,5 +65,13 @@ public class NewElementPresenter extends MyPresenterWidget<NewElementPresenter.N
 
     public String getElementId() {
         return getView().getId().getText();
+    }
+
+    public interface NewElementView extends View {
+        HasText getId();
+
+        HasKeyDownHandlers getIdBox();
+
+        void focus();
     }
 }

@@ -34,7 +34,7 @@ import java.util.HashMap;
 public class StroomBeanLifeCycleReloadableContextBeanProcessor implements SmartLifecycle {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomBeanLifeCycleReloadableContextBeanProcessor.class);
 
-    private static final HashMap<String, ArrayDeque<StroomBeanLifeCycleReloadableContextBeanProcessor>> nameInstanceStack = new HashMap<String, ArrayDeque<StroomBeanLifeCycleReloadableContextBeanProcessor>>();
+    private static final HashMap<String, ArrayDeque<StroomBeanLifeCycleReloadableContextBeanProcessor>> nameInstanceStack = new HashMap<>();
     private static AtomicSequence instanceCount = new AtomicSequence();
 
     private volatile String name;
@@ -146,7 +146,7 @@ public class StroomBeanLifeCycleReloadableContextBeanProcessor implements SmartL
     public synchronized void setName(final String name) {
         final ArrayDeque<StroomBeanLifeCycleReloadableContextBeanProcessor> stack = nameInstanceStack.get(name);
         if (stack == null) {
-            nameInstanceStack.put(name, new ArrayDeque<StroomBeanLifeCycleReloadableContextBeanProcessor>());
+            nameInstanceStack.put(name, new ArrayDeque<>());
         }
         this.name = name;
     }

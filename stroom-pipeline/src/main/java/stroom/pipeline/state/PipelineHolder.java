@@ -26,11 +26,11 @@ import stroom.util.spring.StroomScope;
 public class PipelineHolder {
     private PipelineEntity pipelineEntity;
 
-    public void setPipeline(final PipelineEntity pipelineEntity) {
-        this.pipelineEntity = pipelineEntity;
-    }
-
     public PipelineEntity getPipeline() {
         return pipelineEntity;
+    }
+
+    public void setPipeline(final PipelineEntity pipelineEntity) {
+        this.pipelineEntity = pipelineEntity;
     }
 }

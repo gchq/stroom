@@ -25,11 +25,16 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.widget.tab.client.presenter.Layer;
 import stroom.widget.tab.client.presenter.LayerContainer;
 
-public class MyPresenterWidget<V extends View> extends PresenterWidget<V>implements Layer {
+public class MyPresenterWidget<V extends View> extends PresenterWidget<V> implements Layer {
     private double opacity;
 
     public MyPresenterWidget(final EventBus eventBus, final V view) {
         super(eventBus, view);
+    }
+
+    @Override
+    public double getOpacity() {
+        return opacity;
     }
 
     /**************
@@ -39,11 +44,6 @@ public class MyPresenterWidget<V extends View> extends PresenterWidget<V>impleme
     public void setOpacity(final double opacity) {
         this.opacity = opacity;
         getWidget().getElement().getStyle().setOpacity(opacity);
-    }
-
-    @Override
-    public double getOpacity() {
-        return opacity;
     }
 
     @Override

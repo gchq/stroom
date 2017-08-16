@@ -19,6 +19,7 @@ package stroom.headless;
 import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.StringCriteria;
+import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
@@ -59,7 +60,6 @@ import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
-import stroom.util.zip.HeaderMap;
 import stroom.util.zip.StroomHeaderArguments;
 
 import javax.annotation.Resource;
@@ -70,34 +70,6 @@ import java.util.List;
 @TaskHandlerBean(task = HeadlessTranslationTask.class)
 @Scope(StroomScope.TASK)
 public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTranslationTask, VoidResult> {
-    private static class BasicInputStreamProvider implements StreamSourceInputStreamProvider {
-        private final StreamSourceInputStream inputStream;
-
-        public BasicInputStreamProvider(final InputStream inputStream, final long size) {
-            this.inputStream = new StreamSourceInputStream(inputStream, size);
-        }
-
-        @Override
-        public long getStreamCount() throws IOException {
-            return 1;
-        }
-
-        @Override
-        public StreamSourceInputStream getStream(final long streamNo) throws IOException {
-            return inputStream;
-        }
-
-        @Override
-        public RASegmentInputStream getSegmentInputStream(final long streamNo) throws IOException {
-            return null;
-        }
-
-        @Override
-        public void close() throws IOException {
-            inputStream.close();
-        }
-    }
-
     @Resource
     private PipelineFactory pipelineFactory;
     @Resource
@@ -142,13 +114,11 @@ public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<Headless
             }
 
             // Load the meta and context data.
-            final HeaderMap metaData = new HeaderMap();
+            final MetaMap metaData = new MetaMap();
             metaData.read(metaStream, false);
 
             // Get the feed.
             final String feedName = metaData.get(StroomHeaderArguments.FEED);
-            final String effectiveTime = metaData.get(StroomHeaderArguments.EFFECTIVE_TIME);
-
             final Feed feed = getFeed(feedName);
             feedHolder.setFeed(feed);
 
@@ -166,7 +136,7 @@ public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<Headless
             pipelineHolder.setPipeline(pipelineEntity);
 
             // Create the parser.
-            final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+            final PipelineData pipelineData = pipelineDataCache.getOrCreate(pipelineEntity);
             final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
             // Find last XSLT filter.
@@ -181,15 +151,25 @@ public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<Headless
             this.metaData.putAll(metaData);
             task.getHeadlessFilter().changeMetaData(metaData);
 
-            // Set the stream.
+            // Create the stream.
             final Stream stream = new Stream();
+            // Set the feed.
             stream.setFeed(feed);
-            stream.setEffectiveMs(DateUtil.parseNormalDateTimeString(effectiveTime));
-            streamHolder.setStream(stream);
+
+            // Set effective time.
+            try {
+                final String effectiveTime = metaData.get(StroomHeaderArguments.EFFECTIVE_TIME);
+                if (effectiveTime != null && effectiveTime.length() > 0) {
+                    stream.setEffectiveMs(DateUtil.parseNormalDateTimeString(effectiveTime));
+                }
+            } catch (final Exception e) {
+                outputError(e);
+            }
 
             // Add stream providers for lookups etc.
             final BasicInputStreamProvider streamProvider = new BasicInputStreamProvider(
                     new IgnoreCloseInputStream(task.getDataStream()), task.getDataStream().available());
+            streamHolder.setStream(stream);
             streamHolder.addProvider(streamProvider, StreamType.RAW_EVENTS);
             if (task.getMetaStream() != null) {
                 final BasicInputStreamProvider metaStreamProvider = new BasicInputStreamProvider(
@@ -267,6 +247,34 @@ public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<Headless
             if (errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics) {
                 ((ErrorStatistics) errorReceiverProxy.getErrorReceiver()).checkRecord(-1);
             }
+        }
+    }
+
+    private static class BasicInputStreamProvider implements StreamSourceInputStreamProvider {
+        private final StreamSourceInputStream inputStream;
+
+        public BasicInputStreamProvider(final InputStream inputStream, final long size) {
+            this.inputStream = new StreamSourceInputStream(inputStream, size);
+        }
+
+        @Override
+        public long getStreamCount() throws IOException {
+            return 1;
+        }
+
+        @Override
+        public StreamSourceInputStream getStream(final long streamNo) throws IOException {
+            return inputStream;
+        }
+
+        @Override
+        public RASegmentInputStream getSegmentInputStream(final long streamNo) throws IOException {
+            return null;
+        }
+
+        @Override
+        public void close() throws IOException {
+            inputStream.close();
         }
     }
 }

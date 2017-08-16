@@ -16,8 +16,6 @@
 
 package stroom.script.spring;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
@@ -28,12 +26,7 @@ import org.springframework.context.annotation.FilterType;
  * component scan as configurations should be specified explicitly.
  */
 @Configuration
-@ComponentScan(basePackages = { "stroom.script.server", "stroom.script.shared" }, excludeFilters = {
-        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class), })
+@ComponentScan(basePackages = {"stroom.script.server", "stroom.script.shared"}, excludeFilters = {
+        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
 public class ScriptConfiguration {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ScriptConfiguration.class);
-
-    public ScriptConfiguration() {
-        LOGGER.info("ScriptConfiguration loading...");
-    }
 }

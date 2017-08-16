@@ -20,11 +20,11 @@ import org.apache.commons.lang.mutable.MutableLong;
 import org.junit.Test;
 import stroom.statistics.server.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.server.sql.rollup.RollUpBitMask;
-import stroom.statistics.shared.common.StatisticField;
-import stroom.statistics.shared.common.StatisticRollUpType;
+import stroom.statistics.server.sql.rollup.RolledUpStatisticEvent;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticsDataSourceData;
-import stroom.statistics.server.sql.rollup.RolledUpStatisticEvent;
+import stroom.statistics.shared.common.StatisticField;
+import stroom.statistics.shared.common.StatisticRollUpType;
 import stroom.util.test.StroomUnitTest;
 
 import java.util.ArrayList;
@@ -429,7 +429,7 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
     }
 
     private List<StatisticTag> buildTagList(final String valueSuffix) {
-        final List<StatisticTag> tagList = new ArrayList<StatisticTag>();
+        final List<StatisticTag> tagList = new ArrayList<>();
 
         tagList.add(new StatisticTag(TAG1_NAME, TAG1_VALUE + valueSuffix));
         tagList.add(new StatisticTag(TAG2_NAME, TAG2_VALUE + valueSuffix));
@@ -443,7 +443,7 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
 
         final StatisticsDataSourceData statisticFields = new StatisticsDataSourceData();
 
-        final List<StatisticField> fields = new ArrayList<StatisticField>();
+        final List<StatisticField> fields = new ArrayList<>();
 
         fields.add(new StatisticField(TAG1_NAME));
         fields.add(new StatisticField(TAG2_NAME));

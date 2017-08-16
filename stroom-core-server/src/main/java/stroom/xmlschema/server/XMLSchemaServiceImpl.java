@@ -20,8 +20,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
-import stroom.entity.server.util.SQLBuilder;
-import stroom.entity.server.util.SQLUtil;
+import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.security.SecurityContext;
@@ -61,12 +60,12 @@ public class XMLSchemaServiceImpl extends DocumentEntityServiceImpl<XMLSchema, F
         }
 
         @Override
-        protected void appendBasicCriteria(final SQLBuilder sql, final String alias, final FindXMLSchemaCriteria criteria) {
+        protected void appendBasicCriteria(final HqlBuilder sql, final String alias, final FindXMLSchemaCriteria criteria) {
             super.appendBasicCriteria(sql, alias, criteria);
 
-            SQLUtil.appendValueQuery(sql, alias + ".namespaceURI", criteria.getNamespaceURI());
-            SQLUtil.appendValueQuery(sql, alias + ".systemId", criteria.getSystemId());
-            SQLUtil.appendValueQuery(sql, alias + ".schemaGroup", criteria.getSchemaGroup());
+            sql.appendValueQuery(alias + ".namespaceURI", criteria.getNamespaceURI());
+            sql.appendValueQuery(alias + ".systemId", criteria.getSystemId());
+            sql.appendValueQuery(alias + ".schemaGroup", criteria.getSchemaGroup());
         }
     }
 }

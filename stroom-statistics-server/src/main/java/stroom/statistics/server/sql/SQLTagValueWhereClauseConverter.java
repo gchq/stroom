@@ -30,14 +30,14 @@ public class SQLTagValueWhereClauseConverter {
     private static final EnumMap<FilterOperationMode, String> OPERATOR_TO_SQL_TERM_MAP;
 
     static {
-        OPERATOR_TO_SQL_TERM_MAP = new EnumMap<FilterOperationMode, String>(FilterOperationMode.class);
+        OPERATOR_TO_SQL_TERM_MAP = new EnumMap<>(FilterOperationMode.class);
         OPERATOR_TO_SQL_TERM_MAP.put(FilterOperationMode.AND, "AND");
         OPERATOR_TO_SQL_TERM_MAP.put(FilterOperationMode.OR, "OR");
         OPERATOR_TO_SQL_TERM_MAP.put(FilterOperationMode.NOT, "NOT");
     }
 
     public static String buildTagValueWhereClause(final FilterTermsTree filterTermsTree,
-            final List<String> bindVariables) {
+                                                  final List<String> bindVariables) {
         final StringBuilder whereClause = new StringBuilder("");
 
         if (filterTermsTree != null && filterTermsTree.getRootNode() != null) {
@@ -52,7 +52,7 @@ public class SQLTagValueWhereClauseConverter {
      * of bind variables) from a tree of {@link PrintableNode} objects
      */
     private static void convertNode(final PrintableNode oldNode, final StringBuilder whereClause,
-            final List<String> bindVariables) {
+                                    final List<String> bindVariables) {
         if (oldNode instanceof FilterTermsTree.TermNode) {
             convertTermNode((FilterTermsTree.TermNode) oldNode, whereClause, bindVariables);
         } else if (oldNode instanceof FilterTermsTree.OperatorNode) {
@@ -90,7 +90,7 @@ public class SQLTagValueWhereClauseConverter {
     }
 
     private static void convertOperatorNode(final FilterTermsTree.OperatorNode oldNode, final StringBuilder whereClause,
-            final List<String> bindVariables) {
+                                            final List<String> bindVariables) {
         if (oldNode.getChildren().size() < 1) {
             throw new RuntimeException("Operator node cannot have no children");
         }

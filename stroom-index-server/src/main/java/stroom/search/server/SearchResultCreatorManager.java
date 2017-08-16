@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -38,8 +38,11 @@ public class SearchResultCreatorManager extends AbstractCacheBean<SearchResultCr
         this.luceneSearchStoreFactory = luceneSearchStoreFactory;
     }
 
-    @Override
-    protected SearchResponseCreator create(final SearchResultCreatorManager.Key key) {
+    public SearchResponseCreator getOrCreate(final SearchResultCreatorManager.Key key) {
+        return computeIfAbsent(key, this::create);
+    }
+
+    private SearchResponseCreator create(final SearchResultCreatorManager.Key key) {
         return new SearchResponseCreator(luceneSearchStoreFactory.create(key.searchRequest));
     }
 

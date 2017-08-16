@@ -18,7 +18,6 @@ package stroom.streamstore.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.shared.GWT;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.web.bindery.event.shared.EventBus;
@@ -44,15 +43,15 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamProcessor;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ModelStringUtil;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcon;
-import stroom.widget.button.client.GlyphIcons;
-import stroom.widget.button.client.ImageButtonView;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -74,7 +73,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
     //    private final MySingleSelectionModel<StreamAttributeMap> selectionModel = new MySingleSelectionModel<StreamAttributeMap>();
     // private final EntityIdSet<Stream> masterEntityIdSet = new
     // EntityIdSet<Stream>();
-    private final EntityIdSet<Stream> entityIdSet = new EntityIdSet<Stream>();
+    private final EntityIdSet<Stream> entityIdSet = new EntityIdSet<>();
     private final ClientDispatchAsync dispatcher;
     protected EntityServiceFindActionDataProvider<FindStreamAttributeMapCriteria, StreamAttributeMap> dataProvider;
     private ResultList<StreamAttributeMap> resultList = null;
@@ -82,7 +81,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
     public AbstractStreamListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
                                        final TooltipPresenter tooltipPresenter, final ClientSecurityContext securityContext,
                                        final boolean allowSelectAll) {
-        super(eventBus, new DataGridViewImpl<StreamAttributeMap>(true));
+        super(eventBus, new DataGridViewImpl<>(true));
         this.tooltipPresenter = tooltipPresenter;
         this.dispatcher = dispatcher;
         this.securityContext = securityContext;
@@ -155,13 +154,15 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
 
             if (entityIdSet.getIdSet() != null && entityIdSet.getIdSet().size() > 0) {
                 final Boolean oldMatchAll = entityIdSet.getMatchAll();
-                final Set<Long> oldIdSet = new HashSet<Long>(entityIdSet.getIdSet());
+                final Set<Long> oldIdSet = new HashSet<>(entityIdSet.getIdSet());
                 entityIdSet.clear();
                 entityIdSet.setMatchAll(oldMatchAll);
-                for (final StreamAttributeMap map : data) {
-                    final long id = map.getStream().getId();
-                    if (oldIdSet.contains(id)) {
-                        entityIdSet.add(id);
+                if (data != null) {
+                    for (final StreamAttributeMap map : data) {
+                        final long id = map.getStream().getId();
+                        if (oldIdSet.contains(id)) {
+                            entityIdSet.add(id);
+                        }
                     }
                 }
             }
@@ -197,7 +198,6 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
             public TickBoxState getValue(final StreamAttributeMap object) {
                 return TickBoxState.fromBoolean(entityIdSet.isMatch(object.getStream()));
             }
-
         };
         if (allowSelectAll) {
             final Header<TickBoxState> header = new Header<TickBoxState>(
@@ -256,27 +256,28 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
                 // masterEntityIdSet.remove(row.getStream());
                 entityIdSet.remove(row.getStream());
             }
+            getView().redrawHeaders();
             DataSelectionEvent.fire(AbstractStreamListPresenter.this, entityIdSet, false);
         });
     }
 
-    public GlyphIcon getInfoCellState(final StreamAttributeMap object) {
+    public SvgPreset getInfoCellState(final StreamAttributeMap object) {
         // Should only show unlocked ones by default
         if (StreamStatus.UNLOCKED.equals(object.getStream().getStatus())) {
-            return GlyphIcons.INFO;
+            return SvgPresets.INFO;
         }
         if (StreamStatus.DELETED.equals(object.getStream().getStatus())) {
-            return GlyphIcons.DELETE;
+            return SvgPresets.DELETE;
         }
 
-        return GlyphIcons.ALERT;
+        return SvgPresets.ALERT;
     }
 
     protected void addInfoColumn() {
         // Info column.
         final InfoColumn<StreamAttributeMap> infoColumn = new InfoColumn<StreamAttributeMap>() {
             @Override
-            public GlyphIcon getValue(final StreamAttributeMap object) {
+            public SvgPreset getValue(final StreamAttributeMap object) {
                 return getInfoCellState(object);
             }
 
@@ -315,7 +316,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
                 }
             }
         };
-        getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.GLYPH_COL);
+        getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
     }
 
     public void buildTipText(final StreamAttributeMap row, final StringBuilder html) {
@@ -351,12 +352,16 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         TooltipUtil.addHeading(html, "Attributes");
 
         try {
-            final List<String> keys = new ArrayList<String>(row.getAttributeKeySet());
+            final List<String> keys = new ArrayList<>(row.getAttributeKeySet());
 
             Collections.sort(keys);
 
             for (final String key : keys) {
-                TooltipUtil.addRowData(html, key, row.formatAttribute(key));
+                if (!key.equals(StreamAttributeConstants.RETENTION_AGE) &&
+                        !key.equals(StreamAttributeConstants.RETENTION_UNTIL) &&
+                        !key.equals(StreamAttributeConstants.RETENTION_RULE)) {
+                    TooltipUtil.addRowData(html, key, row.formatAttribute(key));
+                }
             }
         } catch (final Exception ex) {
             html.append(ex.getMessage());
@@ -371,6 +376,12 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
             }
         }
         // }
+
+        TooltipUtil.addBreak(html);
+        TooltipUtil.addHeading(html, "Retention");
+        TooltipUtil.addRowData(html, StreamAttributeConstants.RETENTION_AGE, row.getAttributeValue(StreamAttributeConstants.RETENTION_AGE));
+        TooltipUtil.addRowData(html, StreamAttributeConstants.RETENTION_UNTIL, row.getAttributeValue(StreamAttributeConstants.RETENTION_UNTIL));
+        TooltipUtil.addRowData(html, StreamAttributeConstants.RETENTION_RULE, row.getAttributeValue(StreamAttributeConstants.RETENTION_RULE));
     }
 
     protected void addCreatedColumn() {
@@ -443,7 +454,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
     }
 
     protected Set<Long> getResultStreamIdSet() {
-        final HashSet<Long> rtn = new HashSet<Long>();
+        final HashSet<Long> rtn = new HashSet<>();
         if (resultList != null) {
             for (final StreamAttributeMap e : resultList) {
                 rtn.add(e.getStream().getId());
@@ -522,12 +533,12 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         return addHandlerToSource(DataSelectionEvent.getType(), handler);
     }
 
-    public ImageButtonView add(final String title, final ImageResource enabledImage, final ImageResource disabledImage,
-                               final boolean enabled) {
-        return getView().addButton(title, enabledImage, disabledImage, enabled);
-    }
+//    public ImageButtonView add(final String title, final ImageResource enabledImage, final ImageResource disabledImage,
+//                               final boolean enabled) {
+//        return getView().addButton(title, enabledImage, disabledImage, enabled);
+//    }
 
-    public GlyphButtonView add(final GlyphIcon preset) {
+    public ButtonView add(final SvgPreset preset) {
         return getView().addButton(preset);
     }
 }
