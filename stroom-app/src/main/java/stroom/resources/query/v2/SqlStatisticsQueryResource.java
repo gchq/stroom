@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.resources.query.v1;
+package stroom.resources.query.v2;
 
 import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.health.HealthCheck;
-import stroom.datasource.api.v1.DataSource;
-import stroom.query.api.v1.DocRef;
-import stroom.query.api.v1.QueryKey;
-import stroom.query.api.v1.SearchRequest;
-import stroom.query.api.v1.SearchResponse;
+import stroom.datasource.api.v2.DataSource;
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchResponse;
 import stroom.resources.ResourcePaths;
 import stroom.statistics.server.sql.StatisticsQueryService;
 

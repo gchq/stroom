@@ -37,7 +37,7 @@ import stroom.entity.shared.ImportState.State;
 import stroom.entity.shared.PermissionException;
 import stroom.folder.server.FolderServiceImpl;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.shared.StreamType;

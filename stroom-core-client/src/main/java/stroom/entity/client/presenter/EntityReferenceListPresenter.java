@@ -27,7 +27,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.EntityServiceFindReferenceAction;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
 public class EntityReferenceListPresenter extends MyPresenterWidget<DataGridView<DocRef>>

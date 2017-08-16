@@ -25,23 +25,23 @@ import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.query.api.v1.DocRef;
-import stroom.query.api.v1.ExpressionBuilder;
-import stroom.query.api.v1.ExpressionOperator.Op;
-import stroom.query.api.v1.ExpressionTerm.Condition;
-import stroom.query.api.v1.Field;
-import stroom.query.api.v1.FieldBuilder;
-import stroom.query.api.v1.Format;
-import stroom.query.api.v1.Query;
-import stroom.query.api.v1.QueryKey;
-import stroom.query.api.v1.Result;
-import stroom.query.api.v1.ResultRequest;
-import stroom.query.api.v1.ResultRequest.Fetch;
-import stroom.query.api.v1.Row;
-import stroom.query.api.v1.SearchRequest;
-import stroom.query.api.v1.SearchResponse;
-import stroom.query.api.v1.TableResult;
-import stroom.query.api.v1.TableSettings;
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionBuilder;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.v2.Field;
+import stroom.query.api.v2.FieldBuilder;
+import stroom.query.api.v2.Format;
+import stroom.query.api.v2.Query;
+import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.Result;
+import stroom.query.api.v2.ResultRequest;
+import stroom.query.api.v2.ResultRequest.Fetch;
+import stroom.query.api.v2.Row;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchResponse;
+import stroom.query.api.v2.TableResult;
+import stroom.query.api.v2.TableSettings;
 import stroom.search.server.EventRef;
 import stroom.search.server.EventRefs;
 import stroom.search.server.EventSearchTask;
@@ -409,7 +409,7 @@ public class TestInteractiveSearch extends AbstractSearchTest {
                 final TableResult tableResult = (TableResult) result;
 
                 if (tableResult.getResultRange() != null && tableResult.getRows() != null) {
-                    final stroom.query.api.v1.OffsetRange range = tableResult.getResultRange();
+                    final stroom.query.api.v2.OffsetRange range = tableResult.getResultRange();
 
                     for (long i = range.getOffset(); i < range.getLength(); i++) {
                         final List<Row> values = rows.computeIfAbsent(componentId, k -> new ArrayList<>());

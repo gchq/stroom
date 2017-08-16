@@ -26,7 +26,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import stroom.node.server.MockStroomPropertyService;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.statistics.server.sql.datasource.StatisticStoreCache;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.util.concurrent.AtomicSequence;

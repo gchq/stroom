@@ -1,16 +1,16 @@
 package stroom.statistics.server.sql.search;
 
-import stroom.mapreduce.UnsafePairQueue;
-import stroom.query.Coprocessor;
-import stroom.query.CoprocessorSettingsMap;
-import stroom.query.Data;
-import stroom.query.Item;
-import stroom.query.Items;
-import stroom.query.ItemsArrayList;
-import stroom.query.Key;
-import stroom.query.Payload;
-import stroom.query.Store;
-import stroom.query.TablePayload;
+import stroom.mapreduce.v2.UnsafePairQueue;
+import stroom.query.v2.Coprocessor;
+import stroom.query.v2.CoprocessorSettingsMap;
+import stroom.query.v2.Data;
+import stroom.query.v2.Item;
+import stroom.query.v2.Items;
+import stroom.query.v2.ItemsArrayList;
+import stroom.query.v2.Key;
+import stroom.query.v2.Payload;
+import stroom.query.v2.Store;
+import stroom.query.v2.TablePayload;
 
 import java.util.HashMap;
 import java.util.List;

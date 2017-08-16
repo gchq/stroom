@@ -1,10 +1,10 @@
 package stroom.streamstore.server;
 
-import stroom.datasource.api.v1.DataSourceField;
-import stroom.datasource.api.v1.DataSourceField.DataSourceFieldType;
+import stroom.datasource.api.v2.DataSourceField;
+import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.query.api.v1.ExpressionTerm.Condition;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 

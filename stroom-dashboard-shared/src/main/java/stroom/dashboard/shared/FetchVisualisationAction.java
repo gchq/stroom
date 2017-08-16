@@ -17,7 +17,7 @@
 package stroom.dashboard.shared;
 
 import stroom.entity.shared.Action;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.visualisation.shared.Visualisation;
 
 public class FetchVisualisationAction extends Action<Visualisation> {

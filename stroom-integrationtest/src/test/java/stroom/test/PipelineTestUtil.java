@@ -19,7 +19,7 @@ package stroom.test;
 import stroom.pipeline.server.PipelineMarshaller;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 public final class PipelineTestUtil {
     private PipelineTestUtil() {

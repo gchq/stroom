@@ -34,9 +34,9 @@ import stroom.datasource.DataSourceProvider;
 import stroom.datasource.DataSourceProviderRegistry;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
-import stroom.query.api.v1.DocRef;
-import stroom.query.api.v1.Result;
-import stroom.query.api.v1.Row;
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.Result;
+import stroom.query.api.v2.Row;
 import stroom.security.Secured;
 import stroom.servlet.SessionResourceStore;
 import stroom.task.server.AbstractTaskHandler;
@@ -112,8 +112,8 @@ class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSearchRes
                     .orElseThrow(() ->
                             new RuntimeException("No search provider found for '" + dataSourceRef.getType() + "' data source"));
 
-            stroom.query.api.v1.SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey, searchRequest);
-            stroom.query.api.v1.SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);
+            stroom.query.api.v2.SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey, searchRequest);
+            stroom.query.api.v2.SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);
 
             if (searchResponse == null || searchResponse.getResults() == null) {
                 throw new EntityServiceException("No results can be found");
@@ -131,11 +131,11 @@ class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSearchRes
                 throw new EntityServiceException("No result for component can be found");
             }
 
-            if (!(result instanceof stroom.query.api.v1.TableResult)) {
+            if (!(result instanceof stroom.query.api.v2.TableResult)) {
                 throw new EntityServiceException("Result is not a table");
             }
 
-            final stroom.query.api.v1.TableResult tableResult = (stroom.query.api.v1.TableResult) result;
+            final stroom.query.api.v2.TableResult tableResult = (stroom.query.api.v2.TableResult) result;
 
             // Import file.
             String fileName = action.getQueryKey().toString();

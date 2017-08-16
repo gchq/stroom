@@ -18,9 +18,9 @@ package stroom.search.server;
 
 import stroom.index.shared.IndexField;
 import stroom.node.shared.Node;
-import stroom.query.CoprocessorSettings;
-import stroom.query.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.query.api.v1.Query;
+import stroom.query.v2.CoprocessorSettings;
+import stroom.query.v2.CoprocessorSettingsMap.CoprocessorKey;
+import stroom.query.api.v2.Query;
 import stroom.task.cluster.ClusterTask;
 
 import java.util.List;

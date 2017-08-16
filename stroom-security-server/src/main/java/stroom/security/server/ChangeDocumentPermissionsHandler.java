@@ -26,7 +26,7 @@ import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.Folder;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.security.shared.ChangeDocumentPermissionsAction;

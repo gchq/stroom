@@ -16,10 +16,10 @@
 
 package stroom.query.client;
 
-import stroom.query.api.v1.ExpressionBuilder;
-import stroom.query.api.v1.ExpressionItem;
-import stroom.query.api.v1.ExpressionOperator;
-import stroom.query.api.v1.ExpressionTerm;
+import stroom.query.api.v2.ExpressionBuilder;
+import stroom.query.api.v2.ExpressionItem;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
 import java.util.List;

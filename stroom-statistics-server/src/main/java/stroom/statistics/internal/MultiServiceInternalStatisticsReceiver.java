@@ -4,7 +4,7 @@ import com.google.common.base.Preconditions;
 import io.vavr.Tuple3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 import java.util.Collections;
 import java.util.List;

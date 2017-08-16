@@ -18,11 +18,11 @@ package stroom.statistics.server.sql;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.query.api.v1.ExpressionBuilder;
-import stroom.query.api.v1.ExpressionOperator.Op;
-import stroom.query.api.v1.ExpressionTerm.Condition;
-import stroom.query.api.v1.Query;
-import stroom.query.api.v1.SearchRequest;
+import stroom.query.api.v2.ExpressionBuilder;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.v2.Query;
+import stroom.query.api.v2.SearchRequest;
 import stroom.statistics.server.sql.datasource.StatisticStoreEntityService;
 import stroom.statistics.server.sql.rollup.RollUpBitMask;
 import stroom.statistics.server.sql.rollup.RolledUpStatisticEvent;

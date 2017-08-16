@@ -16,7 +16,7 @@
 
 package stroom.dashboard.shared;
 
-import stroom.datasource.api.v1.DataSourceField;
+import stroom.datasource.api.v2.DataSourceField;
 
 import java.util.HashMap;
 import java.util.List;

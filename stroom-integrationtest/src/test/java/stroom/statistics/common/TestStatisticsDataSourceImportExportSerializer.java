@@ -18,7 +18,7 @@ package stroom.statistics.common;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.datasource.api.v1.DataSource;
+import stroom.datasource.api.v2.DataSource;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
@@ -26,7 +26,7 @@ import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
 import stroom.entity.shared.ImportState.ImportMode;
 import stroom.importexport.server.ImportExportSerializer;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.statistics.server.sql.datasource.FindStatisticsEntityCriteria;
 import stroom.statistics.server.sql.datasource.StatisticStoreEntityService;
 import stroom.statistics.server.sql.datasource.StatisticsDataSourceProvider;

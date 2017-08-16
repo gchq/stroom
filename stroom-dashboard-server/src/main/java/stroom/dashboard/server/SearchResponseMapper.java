@@ -17,13 +17,13 @@
 package stroom.dashboard.server;
 
 import org.springframework.stereotype.Component;
-import stroom.dashboard.expression.TypeConverter;
+import stroom.dashboard.expression.v1.TypeConverter;
 import stroom.dashboard.server.VisResult.Store;
 import stroom.dashboard.shared.Format.Type;
 import stroom.dashboard.shared.SearchResponse;
-import stroom.query.api.v1.Field;
-import stroom.query.api.v1.FlatResult;
-import stroom.query.api.v1.Result;
+import stroom.query.api.v2.Field;
+import stroom.query.api.v2.FlatResult;
+import stroom.query.api.v2.Result;
 import stroom.util.shared.OffsetRange;
 
 import java.util.ArrayList;
@@ -35,7 +35,7 @@ import java.util.Map.Entry;
 
 @Component
 public class SearchResponseMapper {
-    public SearchResponse mapResponse(final stroom.query.api.v1.SearchResponse searchResponse) {
+    public SearchResponse mapResponse(final stroom.query.api.v2.SearchResponse searchResponse) {
         if (searchResponse == null) {
             return null;
         }
@@ -72,8 +72,8 @@ public class SearchResponseMapper {
             return null;
         }
 
-        if (result instanceof stroom.query.api.v1.TableResult) {
-            final stroom.query.api.v1.TableResult tableResult = (stroom.query.api.v1.TableResult) result;
+        if (result instanceof stroom.query.api.v2.TableResult) {
+            final stroom.query.api.v2.TableResult tableResult = (stroom.query.api.v2.TableResult) result;
             final TableResult copy = new TableResult();
 
             copy.setRows(tableResult.getRows());
@@ -94,10 +94,10 @@ public class SearchResponseMapper {
         return null;
     }
 
-    private List<Row> mapRows(final List<stroom.query.api.v1.Row> rows) {
+    private List<Row> mapRows(final List<stroom.query.api.v2.Row> rows) {
         final List<Row> copy = new ArrayList<>();
         if (rows != null) {
-            for (final stroom.query.api.v1.Row row : rows) {
+            for (final stroom.query.api.v2.Row row : rows) {
                 final Row item = new Row(row.getGroupKey(), row.getValues(), row.getDepth());
                 copy.add(item);
             }

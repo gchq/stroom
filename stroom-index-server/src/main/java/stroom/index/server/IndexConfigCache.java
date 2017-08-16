@@ -17,7 +17,7 @@
 package stroom.index.server;
 
 import stroom.cache.CacheBean;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 public interface IndexConfigCache extends CacheBean<DocRef, IndexConfig> {
     IndexConfig getOrCreate(DocRef key);

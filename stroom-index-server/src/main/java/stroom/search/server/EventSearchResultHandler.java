@@ -18,10 +18,10 @@ package stroom.search.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.query.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.query.Data;
-import stroom.query.Payload;
-import stroom.query.ResultHandler;
+import stroom.query.v2.CoprocessorSettingsMap.CoprocessorKey;
+import stroom.query.v2.Data;
+import stroom.query.v2.Payload;
+import stroom.query.v2.ResultHandler;
 import stroom.util.shared.HasTerminate;
 
 import java.util.Map;

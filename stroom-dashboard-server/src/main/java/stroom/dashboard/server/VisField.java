@@ -17,7 +17,7 @@
 package stroom.dashboard.server;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.query.api.v1.Sort;
+import stroom.query.api.v2.Sort;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;

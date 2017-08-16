@@ -16,9 +16,9 @@
 
 package stroom.query.shared;
 
-import stroom.datasource.api.v1.DataSourceField;
+import stroom.datasource.api.v2.DataSourceField;
 import stroom.entity.shared.Action;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.util.shared.SharedList;
 import stroom.util.shared.SharedString;
 

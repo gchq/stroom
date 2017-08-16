@@ -18,9 +18,9 @@ package stroom.statistics.server.sql.search;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.query.api.v1.ExpressionBuilder;
-import stroom.query.api.v1.ExpressionOperator.Op;
-import stroom.query.api.v1.ExpressionTerm.Condition;
+import stroom.query.api.v2.ExpressionBuilder;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.statistics.server.sql.datasource.StatisticStoreEntityService;
 import stroom.statistics.server.sql.search.FilterTermsTree.OperatorNode;
 import stroom.statistics.server.sql.search.FilterTermsTree.TermNode;
@@ -35,7 +35,7 @@ public class TestFilterTermsTreeBuilder extends StroomUnitTest {
     Set<String> fieldBlackList = new HashSet<>(Arrays.asList(StatisticStoreEntity.FIELD_NAME_DATE_TIME));
 
     /**
-     * Verify that a tree of {@link stroom.query.api.v1.ExpressionItem} objects can be converted
+     * Verify that a tree of {@link stroom.query.api.v2.ExpressionItem} objects can be converted
      * correctly into a {@link FilterTermsTree}
      */
     @Test

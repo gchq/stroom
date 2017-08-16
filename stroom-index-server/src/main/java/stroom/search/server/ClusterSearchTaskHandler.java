@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
-import stroom.dashboard.expression.FieldIndexMap;
+import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
@@ -31,12 +31,12 @@ import stroom.index.shared.IndexService;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.MessageUtil;
 import stroom.pipeline.server.errorhandler.TerminatedException;
-import stroom.query.Coprocessor;
-import stroom.query.CoprocessorSettings;
-import stroom.query.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.query.api.v1.DocRef;
-import stroom.query.api.v1.ExpressionOperator;
-import stroom.query.api.v1.Param;
+import stroom.query.v2.Coprocessor;
+import stroom.query.v2.CoprocessorSettings;
+import stroom.query.v2.CoprocessorSettingsMap.CoprocessorKey;
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.Param;
 import stroom.search.server.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.search.server.extraction.ExtractionTaskExecutor;
 import stroom.search.server.extraction.ExtractionTaskProducer;
@@ -151,7 +151,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                 taskMonitor.info("Initialising...");
 
                 this.task = task;
-                final stroom.query.api.v1.Query query = task.getQuery();
+                final stroom.query.api.v2.Query query = task.getQuery();
 
                 try {
                     final long frequency = task.getResultSendFrequency();
@@ -273,7 +273,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
         }
     }
 
-    private void search(final ClusterSearchTask task, final stroom.query.api.v1.Query query, final String[] storedFieldNames,
+    private void search(final ClusterSearchTask task, final stroom.query.api.v2.Query query, final String[] storedFieldNames,
                         final boolean filterStreams, final IndexFieldsMap indexFieldsMap,
                         final FieldIndexMap extractionFieldIndexMap,
                         final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap) {

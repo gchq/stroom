@@ -16,10 +16,10 @@
 
 package stroom.search.server.extraction;
 
-import stroom.dashboard.expression.FieldIndexMap;
+import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
-import stroom.query.Coprocessor;
-import stroom.query.api.v1.DocRef;
+import stroom.query.v2.Coprocessor;
+import stroom.query.api.v2.DocRef;
 import stroom.search.server.ClusterSearchTask;
 import stroom.search.server.Event;
 import stroom.search.server.extraction.ExtractionTask.ResultReceiver;

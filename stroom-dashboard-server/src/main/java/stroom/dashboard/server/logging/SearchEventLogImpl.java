@@ -31,8 +31,8 @@ import org.springframework.stereotype.Component;
 import stroom.datasource.DataSourceProviderRegistry;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.entity.server.QueryDataLogUtil;
-import stroom.query.api.v1.DocRef;
-import stroom.query.api.v1.ExpressionOperator;
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.Insecure;
 
 import javax.annotation.Resource;

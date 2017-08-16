@@ -28,7 +28,7 @@ import stroom.entity.shared.FindService;
 import stroom.entity.shared.HasLoadById;
 import stroom.entity.shared.HasLoadByName;
 import stroom.entity.shared.HasLoadByUuid;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
