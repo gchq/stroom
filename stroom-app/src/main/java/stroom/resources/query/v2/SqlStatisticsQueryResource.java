@@ -32,7 +32,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Path(ResourcePaths.SQL_STATISTICS + ResourcePaths.V1)
+@Path(ResourcePaths.SQL_STATISTICS + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 public class SqlStatisticsQueryResource implements QueryResource {
     private StatisticsQueryService statisticsQueryService;

@@ -37,7 +37,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Path(ResourcePaths.STROOM_INDEX + ResourcePaths.V1)
+@Path(ResourcePaths.STROOM_INDEX + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 public class StroomIndexQueryResource implements QueryResource {
 
