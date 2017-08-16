@@ -87,6 +87,8 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
 
         DocRef docRef = Preconditions.checkNotNull(
                 Preconditions.checkNotNull(Preconditions.checkNotNull(searchRequest).getQuery()).getDataSource());
+        Preconditions.checkNotNull(searchRequest.getResultRequests(), "searchRequest must have at least one resultRequest");
+        Preconditions.checkArgument(!searchRequest.getResultRequests().isEmpty(), "searchRequest must have at least one resultRequest");
 
         StatisticStoreEntity statisticStoreEntity = statisticStoreCache.getStatisticsDataSource(docRef);
         if (statisticStoreEntity == null) {
