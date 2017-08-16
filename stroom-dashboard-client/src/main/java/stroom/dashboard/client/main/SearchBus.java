@@ -105,7 +105,7 @@ public class SearchBus {
 
 
             final SearchModel searchModel = entry.getValue();
-            final SearchRequest searchAction = searchModel.getRequest();
+            final SearchRequest searchAction = searchModel.getCurrentRequest();
             searchActionMap.put(queryKey, searchAction);
         }
 

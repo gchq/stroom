@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server;
+package stroom.util.json;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;

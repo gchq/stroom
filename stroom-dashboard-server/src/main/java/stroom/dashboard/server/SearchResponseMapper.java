@@ -24,6 +24,7 @@ import stroom.dashboard.shared.SearchResponse;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.Result;
+import stroom.util.json.JsonUtil;
 import stroom.util.shared.OffsetRange;
 
 import java.util.ArrayList;

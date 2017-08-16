@@ -23,8 +23,11 @@ import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.resources.ResourcePaths;
 import stroom.statistics.server.sql.StatisticsQueryService;
+import stroom.util.json.JsonUtil;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -35,6 +38,9 @@ import javax.ws.rs.core.MediaType;
 @Path(ResourcePaths.SQL_STATISTICS + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 public class SqlStatisticsQueryResource implements QueryResource {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticsQueryResource.class);
+
     private StatisticsQueryService statisticsQueryService;
 
     @POST
@@ -43,6 +49,11 @@ public class SqlStatisticsQueryResource implements QueryResource {
     @Path(QueryResource.DATA_SOURCE_ENDPOINT)
     @Timed
     public DataSource getDataSource(final DocRef docRef) {
+
+        if (LOGGER.isDebugEnabled()) {
+            String json = JsonUtil.writeValueAsString(docRef);
+            LOGGER.debug("/dataSource called with docRef:\n{}", json);
+        }
         return statisticsQueryService.getDataSource(docRef);
     }
 
@@ -52,7 +63,14 @@ public class SqlStatisticsQueryResource implements QueryResource {
     @Path(QueryResource.SEARCH_ENDPOINT)
     @Timed
     public SearchResponse search(final SearchRequest request) {
-        return statisticsQueryService.search(request);
+
+        if (LOGGER.isDebugEnabled()) {
+            String json = JsonUtil.writeValueAsString(request);
+            LOGGER.debug("/search called with searchRequest:\n{}", json);
+        }
+
+        SearchResponse response = statisticsQueryService.search(request);
+        return response;
     }
 
     @POST
@@ -61,6 +79,10 @@ public class SqlStatisticsQueryResource implements QueryResource {
     @Path(QueryResource.DESTROY_ENDPOINT)
     @Timed
     public Boolean destroy(final QueryKey queryKey) {
+        if (LOGGER.isDebugEnabled()) {
+            String json = JsonUtil.writeValueAsString(queryKey);
+            LOGGER.debug("/destroy called with queryKey:\n{}", json);
+        }
         return statisticsQueryService.destroy(queryKey);
     }
 
@@ -79,4 +101,5 @@ public class SqlStatisticsQueryResource implements QueryResource {
             return HealthCheck.Result.healthy();
         }
     }
+
 }
