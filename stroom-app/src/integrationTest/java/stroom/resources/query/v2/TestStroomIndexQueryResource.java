@@ -42,7 +42,7 @@ public class TestStroomIndexQueryResource {
 
     public static final String SEARCH_TARGET = "http://localhost:8080" +
             ResourcePaths.ROOT_PATH +
-            RegisteredService.INDEX_V1.getVersionedPath() +
+            RegisteredService.INDEX_V2.getVersionedPath() +
             "/search";
 
     private String jwtToken;
