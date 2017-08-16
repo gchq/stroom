@@ -49,6 +49,11 @@ public class SqlStatisticsQueryResource implements QueryResource {
     @Path(QueryResource.DATA_SOURCE_ENDPOINT)
     @Timed
     public DataSource getDataSource(final DocRef docRef) {
+
+        if (LOGGER.isDebugEnabled()) {
+            String json = JsonUtil.writeValueAsString(docRef);
+            LOGGER.debug("/dataSource called with docRef:\n{}", json);
+        }
         return statisticsQueryService.getDataSource(docRef);
     }
 
@@ -74,6 +79,10 @@ public class SqlStatisticsQueryResource implements QueryResource {
     @Path(QueryResource.DESTROY_ENDPOINT)
     @Timed
     public Boolean destroy(final QueryKey queryKey) {
+        if (LOGGER.isDebugEnabled()) {
+            String json = JsonUtil.writeValueAsString(queryKey);
+            LOGGER.debug("/destroy called with queryKey:\n{}", json);
+        }
         return statisticsQueryService.destroy(queryKey);
     }
 
