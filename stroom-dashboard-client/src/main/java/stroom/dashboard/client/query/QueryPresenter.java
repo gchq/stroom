@@ -42,7 +42,6 @@ import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DataSourceFieldsMap;
 import stroom.dashboard.shared.DownloadQueryAction;
 import stroom.dashboard.shared.QueryComponentSettings;
-import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.datasource.api.v1.DataSourceField;
 import stroom.dispatch.client.ClientDispatchAsync;
@@ -655,15 +654,22 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     private void downloadQuery() {
         if (queryComponentSettings.getDataSource() != null) {
+
+            SearchRequest searchRequest = searchModel.buildSearchRequest(
+                    queryComponentSettings.getExpression(),
+                    params,
+                    false,
+                    false);
+
             final Dashboard dashboard = getComponents().getDashboard();
-            final DashboardUUID dashboardUUID = new DashboardUUID(dashboard.getId(), dashboard.getName(), getComponentData().getId());
+            final DashboardUUID dashboardUUID = new DashboardUUID(
+                    dashboard.getId(),
+                    dashboard.getName(),
+                    getComponentData().getId());
             final DashboardQueryKey dashboardQueryKey = DashboardQueryKey.create(
                     dashboardUUID.getUUID(),
                     dashboard.getId(),
                     dashboardUUID.getComponentId());
-
-            Search search = new Search(queryComponentSettings.getDataSource(), queryComponentSettings.getExpression());
-            SearchRequest searchRequest = new SearchRequest(search, Collections.emptyMap(), timeZones.getTimeZone());
 
             if (dashboardQueryKey != null) {
                 dispatcher.exec(
