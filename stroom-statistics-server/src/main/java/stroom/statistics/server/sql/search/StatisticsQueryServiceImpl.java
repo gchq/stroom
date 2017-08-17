@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.datasource.api.v2.DataSource;
+import stroom.node.server.StroomPropertyService;
+import stroom.node.shared.ClientProperties;
 import stroom.query.v2.Coprocessor;
 import stroom.query.v2.CoprocessorSettings;
 import stroom.query.v2.CoprocessorSettingsMap;
@@ -27,10 +29,7 @@ import stroom.statistics.shared.common.EventStoreTimeIntervalEnum;
 import stroom.util.shared.HasTerminate;
 
 import javax.inject.Inject;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -42,14 +41,17 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
     private final StatisticsDataSourceProvider statisticsDataSourceProvider;
     private final StatisticStoreCache statisticStoreCache;
     private final SQLStatisticEventStore sqlStatisticEventStore;
+    private final StroomPropertyService stroomPropertyService;
 
     @Inject
     public StatisticsQueryServiceImpl(final StatisticsDataSourceProvider statisticsDataSourceProvider,
                                       final StatisticStoreCache statisticStoreCache,
-                                      final SQLStatisticEventStore sqlStatisticEventStore) {
+                                      final SQLStatisticEventStore sqlStatisticEventStore,
+                                      final StroomPropertyService stroomPropertyService) {
         this.statisticsDataSourceProvider = statisticsDataSourceProvider;
         this.statisticStoreCache = statisticStoreCache;
         this.sqlStatisticEventStore = sqlStatisticEventStore;
+        this.stroomPropertyService = stroomPropertyService;
     }
 
     public static Coprocessor createCoprocessor(final CoprocessorSettings settings,
@@ -178,7 +180,7 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
                         Map.Entry::getKey,
                         entry -> entry.getValue().createPayload()));
 
-        SqlStatisticsStore store = new SqlStatisticsStore();
+        SqlStatisticsStore store = new SqlStatisticsStore(getDefaultTrimSizes());
         store.process(coprocessorSettingsMap);
         store.coprocessorMap(coprocessorMap);
         store.payloadMap(payloadMap);
@@ -217,5 +219,23 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
                 Collections.emptyList(),
                 errorMessages,
                 true);
+    }
+
+    private List<Integer> getDefaultTrimSizes() {
+        try {
+            final String value = stroomPropertyService.getProperty(ClientProperties.MAX_RESULTS);
+            if (value != null) {
+                final String[] parts = value.split(",");
+                final List<Integer> list = new ArrayList<>(parts.length);
+                for (int i = 0; i < parts.length; i++) {
+                    list.add(Integer.valueOf(parts[i].trim()));
+                }
+                return list;
+            }
+        } catch (final Exception e) {
+            LOGGER.warn(e.getMessage());
+        }
+
+        return null;
     }
 }

@@ -2,17 +2,7 @@ package stroom.statistics.server.sql.search;
 
 import stroom.mapreduce.v2.UnsafePairQueue;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.v2.CompiledSorter;
-import stroom.query.v2.Coprocessor;
-import stroom.query.v2.CoprocessorSettingsMap;
-import stroom.query.v2.Data;
-import stroom.query.v2.Item;
-import stroom.query.v2.Key;
-import stroom.query.v2.Payload;
-import stroom.query.v2.ResultStoreCreator;
-import stroom.query.v2.Store;
-import stroom.query.v2.TablePayload;
-import stroom.query.v2.TrimSettings;
+import stroom.query.v2.*;
 
 import java.util.List;
 import java.util.Map;
@@ -23,10 +13,10 @@ public class SqlStatisticsStore implements Store {
     private Map<CoprocessorSettingsMap.CoprocessorKey, Coprocessor> coprocessorMap;
     private Map<CoprocessorSettingsMap.CoprocessorKey, Payload> payloadMap;
 
-    private final TableSettings tableSettings;
+    private final List<Integer> defaultTrimSettings;
 
-    public SqlStatisticsStore(final TableSettings tableSettings) {
-        this.tableSettings = tableSettings;
+    public SqlStatisticsStore(final List<Integer> defaultTrimSettings) {
+        this.defaultTrimSettings = defaultTrimSettings;
     }
 
     @Override
@@ -46,6 +36,10 @@ public class SqlStatisticsStore implements Store {
             return null;
         }
 
+        TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) coprocessorSettingsMap.getMap()
+                .get(coprocessorKey);
+        TableSettings tableSettings = tableCoprocessorSettings.getTableSettings();
+
         Payload payload = payloadMap.get(coprocessorKey);
         TablePayload tablePayload = (TablePayload) payload;
         UnsafePairQueue<Key, Item> queue = tablePayload.getQueue();
@@ -58,21 +52,8 @@ public class SqlStatisticsStore implements Store {
 //
 //        // Trim the number of results in the store.
         //TODO where does defaultStoreTrimSizes come from?
-        final TrimSettings trimSettings = new TrimSettings(tableSettings.getMaxResults(), null);
+        final TrimSettings trimSettings = new TrimSettings(tableSettings.getMaxResults(), defaultTrimSettings);
         resultStoreCreator.trim(trimSettings);
-
-
-//        Map<Key, Items<Item>> childMap = new HashMap<>();
-//        // We should now have a reduction in the reducedQueue.
-//        queue.forEach(pair -> {
-//            final Item item = pair.getValue();
-//
-//            if (item.getKey() != null) {
-//                childMap.computeIfAbsent(item.getKey().getParent(), k -> new ItemsArrayList<>()).add(item);
-//            } else {
-//                childMap.computeIfAbsent(null, k -> new ItemsArrayList<>()).add(item);
-//            }
-//        });
 
 //        return new Data(childMap, queue.size(), queue.size());
         //TODO need to check args for this method
