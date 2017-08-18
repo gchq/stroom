@@ -8,6 +8,14 @@ import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.datasource.api.v2.DataSource;
 import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.OffsetRange;
+import stroom.query.api.v2.Param;
+import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.Result;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchResponse;
+import stroom.query.api.v2.TableResult;
 import stroom.query.v2.Coprocessor;
 import stroom.query.v2.CoprocessorSettings;
 import stroom.query.v2.CoprocessorSettingsMap;
@@ -15,11 +23,6 @@ import stroom.query.v2.Payload;
 import stroom.query.v2.SearchResponseCreator;
 import stroom.query.v2.TableCoprocessor;
 import stroom.query.v2.TableCoprocessorSettings;
-import stroom.query.api.v2.DocRef;
-import stroom.query.api.v2.Param;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchResponse;
 import stroom.statistics.server.sql.SQLStatisticEventStore;
 import stroom.statistics.server.sql.StatisticsQueryService;
 import stroom.statistics.server.sql.datasource.StatisticStoreCache;
@@ -29,7 +32,11 @@ import stroom.statistics.shared.common.EventStoreTimeIntervalEnum;
 import stroom.util.shared.HasTerminate;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -95,6 +102,7 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
         StatisticStoreEntity statisticStoreEntity = statisticStoreCache.getStatisticsDataSource(docRef);
         if (statisticStoreEntity == null) {
             return buildEmptyResponse(
+                    searchRequest,
                     "Statistic configuration could not be found for uuid " + docRef.getUuid());
         }
 
@@ -103,7 +111,7 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
                 statisticStoreEntity);
 
         if (statisticDataSet.isEmpty()) {
-            return buildEmptyResponse(Collections.emptyList());
+            return buildEmptyResponse(searchRequest, Collections.emptyList());
         } else {
             return buildResponse(searchRequest, statisticStoreEntity, statisticDataSet);
         }
@@ -209,14 +217,29 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
         };
     }
 
-    private SearchResponse buildEmptyResponse(final String errorMessage) {
-        return buildEmptyResponse(Collections.singletonList(errorMessage));
+    private SearchResponse buildEmptyResponse(final SearchRequest searchRequest, final String errorMessage) {
+        return buildEmptyResponse(searchRequest, Collections.singletonList(errorMessage));
     }
 
-    private SearchResponse buildEmptyResponse(final List<String> errorMessages) {
+    private SearchResponse buildEmptyResponse(final SearchRequest searchRequest, final List<String> errorMessages) {
+
+        List<Result> results;
+        if (searchRequest.getResultRequests() != null) {
+            results = searchRequest.getResultRequests().stream()
+                    .map(resultRequest -> new TableResult(
+                            resultRequest.getComponentId(),
+                            Collections.emptyList(),
+                            new OffsetRange(0,0),
+                            0,
+                            null))
+                    .collect(Collectors.toList());
+        } else {
+            results = Collections.emptyList();
+        }
+
         return new SearchResponse(
                 Collections.emptyList(),
-                Collections.emptyList(),
+                results,
                 errorMessages,
                 true);
     }
