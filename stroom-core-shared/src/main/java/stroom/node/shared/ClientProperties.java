@@ -29,7 +29,8 @@ public class ClientProperties implements SharedObject {
     public static final String NODE_NAME = "stroom.node";
     public static final String UP_DATE = "upDate";
     public static final String MAINTENANCE_MESSAGE = "stroom.maintenance.message";
-    public static final String MAX_RESULTS = "stroom.search.maxResults";
+    //TODO this one should be stroom.dashboard
+    public static final String DEFAULT_MAX_RESULTS = "stroom.dashboard.defaultMaxResults";
     public static final String PROCESS_TIME_LIMIT = "stroom.search.process.defaultTimeLimit";
     public static final String PROCESS_RECORD_LIMIT = "stroom.search.process.defaultRecordLimit";
     public static final String STATISTIC_ENGINES = "stroom.statistics.common.statisticEngines";

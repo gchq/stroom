@@ -48,6 +48,8 @@ public class SqlStatisticsStore implements Store {
         final ResultStoreCreator resultStoreCreator = new ResultStoreCreator(compiledSorter);
         resultStoreCreator.read(queue);
 
+        //TODO migrate the old prop stroom.search.maxResults to stroom.search.storeSize in the DB
+
         // Trim the number of results in the store.
         final TrimSettings trimSettings = new TrimSettings(tableSettings.getMaxResults(), defaultTrimSettings);
         resultStoreCreator.trim(trimSettings);

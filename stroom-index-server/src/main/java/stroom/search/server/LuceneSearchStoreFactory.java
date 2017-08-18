@@ -123,7 +123,7 @@ public class LuceneSearchStoreFactory {
 
     private List<Integer> getDefaultTrimSizes() {
         try {
-            final String value = StroomProperties.getProperty(ClientProperties.MAX_RESULTS);
+            final String value = StroomProperties.getProperty(ClientProperties.DEFAULT_MAX_RESULTS);
             if (value != null) {
                 final String[] parts = value.split(",");
                 final List<Integer> list = new ArrayList<>(parts.length);

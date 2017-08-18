@@ -160,7 +160,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         clientPropertyCache.get()
                 .onSuccess(result -> {
-                    final String value = result.get(ClientProperties.MAX_RESULTS);
+                    final String value = result.get(ClientProperties.DEFAULT_MAX_RESULTS);
                     if (value != null) {
                         final String[] parts = value.split(",");
                         final int[] arr = new int[parts.length];

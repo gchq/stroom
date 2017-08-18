@@ -246,7 +246,7 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
 
     private List<Integer> getDefaultTrimSizes() {
         try {
-            final String value = stroomPropertyService.getProperty(ClientProperties.MAX_RESULTS);
+            final String value = stroomPropertyService.getProperty(ClientProperties.DEFAULT_MAX_RESULTS);
             if (value != null) {
                 final String[] parts = value.split(",");
                 final List<Integer> list = new ArrayList<>(parts.length);
