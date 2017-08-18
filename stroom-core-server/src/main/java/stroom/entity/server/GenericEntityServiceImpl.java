@@ -24,17 +24,12 @@ import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.Entity;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.HasLoadById;
-import stroom.entity.shared.HasLoadByName;
 import stroom.entity.shared.HasLoadByUuid;
 import stroom.query.api.v1.DocRef;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Component
 public class GenericEntityServiceImpl implements GenericEntityService {
@@ -96,48 +91,48 @@ public class GenericEntityServiceImpl implements GenericEntityService {
 
         return null;
     }
-
-    @Override
-    public <E extends Entity> E loadByName(final String entityType, final DocRef folder, final String name) {
-        return loadByName(entityType, folder, name, null);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public <E extends Entity> E loadByName(final String entityType, final DocRef folder, final String name,
-                                           final Set<String> fetchSet) {
-        final EntityService<E> entityService = getEntityService(entityType);
-        if (entityService instanceof HasLoadByName) {
-            return ((HasLoadByName<E>) entityService).loadByName(name, fetchSet);
-        }
-
-        if (entityService instanceof DocumentEntityService) {
-            return (E) ((DocumentEntityService<?>) entityService).loadByName(folder, name, fetchSet);
-        }
-
-        throw new EntityServiceException(
-                "Entity service is not an instance of NamedEntityService or DocumentEntityService: " + entityType, null,
-                false);
-    }
-
-    @Override
-    public <E extends Entity> E loadByName(final String entityType, final String name) {
-        return loadByName(entityType, name, null);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public <E extends Entity> E loadByName(final String entityType, final String name,
-                                           final Set<String> fetchSet) {
-        final EntityService<E> entityService = getEntityService(entityType);
-        if (!(entityService instanceof HasLoadByName)) {
-            throw new EntityServiceException("Entity service is not an instance of HasLoadByName: " + entityType,
-                    null, false);
-        }
-
-        final HasLoadByName<E> hasLoadByName = (HasLoadByName<E>) entityService;
-        return hasLoadByName.loadByName(name, fetchSet);
-    }
+//
+//    @Override
+//    public <E extends Entity> E loadByName(final String entityType, final DocRef folder, final String name) {
+//        return loadByName(entityType, folder, name, null);
+//    }
+//
+//    @SuppressWarnings("unchecked")
+//    @Override
+//    public <E extends Entity> E loadByName(final String entityType, final DocRef folder, final String name,
+        //                                           final Set<String> fetchSet) {
+//        final EntityService<E> entityService = getEntityService(entityType);
+//        if (entityService instanceof HasLoadByName) {
+//            return ((HasLoadByName<E>) entityService).loadByName(name, fetchSet);
+//        }
+//
+//        if (entityService instanceof DocumentService) {
+//            return (E) ((DocumentService<?>) entityService).loadByName(folder, name, fetchSet);
+//        }
+//
+//        throw new EntityServiceException(
+//                "Entity service is not an instance of NamedEntityService or DocumentService: " + entityType, null,
+//                false);
+//    }
+//
+//    @Override
+//    public <E extends Entity> E loadByName(final String entityType, final String name) {
+//        return loadByName(entityType, name, null);
+//    }
+//
+//    @SuppressWarnings("unchecked")
+//    @Override
+//    public <E extends Entity> E loadByName(final String entityType, final String name,
+        //                                           final Set<String> fetchSet) {
+//        final EntityService<E> entityService = getEntityService(entityType);
+//        if (!(entityService instanceof HasLoadByName)) {
+//            throw new EntityServiceException("Entity service is not an instance of HasLoadByName: " + entityType,
+//                    null, false);
+//        }
+//
+//        final HasLoadByName<E> hasLoadByName = (HasLoadByName<E>) entityService;
+//        return hasLoadByName.loadByName(name, fetchSet);
+//    }
 
     @SuppressWarnings("unchecked")
     @Override
@@ -148,28 +143,28 @@ public class GenericEntityServiceImpl implements GenericEntityService {
         return findService.find(criteria);
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public <E extends DocumentEntity> List<E> findByFolder(final String entityType,
-                                                           final DocRef folder, final Set<String> fetchSet) {
-        final EntityService<E> entityService = getEntityService(entityType);
-        if (!(entityService instanceof DocumentEntityService)) {
-            throw new EntityServiceException("Entity service does not implement findByFolder() " + entityType, null,
-                    false);
-        }
-
-        final DocumentEntityService<E> findService = (DocumentEntityService<E>) entityService;
-        return findService.findByFolder(folder, fetchSet);
-    }
-
-    @Override
-    public Collection<DocumentEntityService<?>> findAll() {
-        final Collection<Object> services = entityServiceBeanRegistry
-                .getAllServicesByParent(DocumentEntityService.class);
-        final List<DocumentEntityService<?>> list = new ArrayList<>(services.size());
-        list.addAll(services.stream().map(service -> (DocumentEntityService<?>) service).collect(Collectors.toList()));
-        return list;
-    }
+//    @SuppressWarnings("unchecked")
+//    @Override
+//    public <E extends DocumentEntity> List<E> findByFolder(final String entityType,
+//                                                           final DocRef folder, final Set<String> fetchSet) {
+//        final EntityService<E> entityService = getEntityService(entityType);
+//        if (!(entityService instanceof DocumentService)) {
+//            throw new EntityServiceException("Entity service does not implement findByFolder() " + entityType, null,
+//                    false);
+//        }
+//
+//        final DocumentService<E> findService = (DocumentService<E>) entityService;
+//        return findService.findByFolder(folder, fetchSet);
+//    }
+//
+//    @Override
+//    public Collection<DocumentService<?>> findAll() {
+//        final Collection<Object> services = entityServiceBeanRegistry
+//                .getAllServicesByParent(DocumentService.class);
+//        final List<DocumentService<?>> list = new ArrayList<>(services.size());
+//        list.addAll(services.stream().map(service -> (DocumentService<?>) service).collect(Collectors.toList()));
+//        return list;
+//    }
 
     @Override
     @SuppressWarnings("unchecked")

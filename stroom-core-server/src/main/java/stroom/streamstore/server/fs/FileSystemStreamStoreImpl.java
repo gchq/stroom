@@ -50,7 +50,7 @@ import stroom.feed.shared.FindFeedCriteria;
 import stroom.node.server.NodeCache;
 import stroom.node.server.VolumeService;
 import stroom.node.shared.Volume;
-import stroom.pipeline.server.PipelineEntityService;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v1.DocRef;
 import stroom.query.api.v1.ExpressionTerm;
@@ -125,7 +125,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     private final StroomDatabaseInfo stroomDatabaseInfo;
     private final NodeCache nodeCache;
     private final StreamProcessorService streamProcessorService;
-    private final PipelineEntityService pipelineEntityService;
+    private final PipelineService pipelineService;
     private final FeedService feedService;
     private final StreamTypeService streamTypeService;
     private final VolumeService volumeService;
@@ -172,7 +172,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     FileSystemStreamStoreImpl(final StroomEntityManager entityManager, final StroomDatabaseInfo stroomDatabaseInfo,
                               final NodeCache nodeCache,
                               @Named("cachedStreamProcessorService") final StreamProcessorService streamProcessorService,
-                              @Named("cachedPipelineEntityService") final PipelineEntityService pipelineEntityService,
+                              @Named("cachedPipelineEntityService") final PipelineService pipelineService,
                               @Named("cachedFeedService") final FeedService feedService,
                               @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
                               final VolumeService volumeService, final FileSystemStreamStoreTransactionHelper fileSystemStreamStoreTransactionHelper,
@@ -181,7 +181,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         this.stroomDatabaseInfo = stroomDatabaseInfo;
         this.nodeCache = nodeCache;
         this.streamProcessorService = streamProcessorService;
-        this.pipelineEntityService = pipelineEntityService;
+        this.pipelineService = pipelineService;
         this.feedService = feedService;
         this.streamTypeService = streamTypeService;
         this.volumeService = volumeService;
@@ -777,7 +777,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                 if (stream.getStreamProcessor() != null) {
                     if (originalCriteria.getFetchSet().contains(PipelineEntity.ENTITY_TYPE)) {
                         stream.getStreamProcessor()
-                                .setPipeline(pipelineEntityService.load(stream.getStreamProcessor().getPipeline()));
+                                .setPipeline(pipelineService.load(stream.getStreamProcessor().getPipeline()));
                     }
                 }
             }

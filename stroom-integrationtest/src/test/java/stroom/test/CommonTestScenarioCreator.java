@@ -19,9 +19,6 @@ package stroom.test;
 
 import org.junit.Assert;
 import org.springframework.stereotype.Component;
-import stroom.entity.server.FolderService;
-import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.Folder;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
@@ -34,7 +31,6 @@ import stroom.node.server.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeUseStatus;
-import stroom.query.api.v1.DocRef;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
@@ -62,7 +58,6 @@ import java.util.List;
 public class CommonTestScenarioCreator {
     private final FeedService feedService;
     private final StreamStore streamStore;
-    private final FolderService folderService;
     private final StreamProcessorService streamProcessorService;
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final IndexService indexService;
@@ -70,10 +65,9 @@ public class CommonTestScenarioCreator {
     private final NodeCache nodeCache;
 
     @Inject
-    CommonTestScenarioCreator(final FeedService feedService, final StreamStore streamStore, final FolderService folderService, final StreamProcessorService streamProcessorService, final StreamProcessorFilterService streamProcessorFilterService, final IndexService indexService, final VolumeService volumeService, final NodeCache nodeCache) {
+    CommonTestScenarioCreator(final FeedService feedService, final StreamStore streamStore, final StreamProcessorService streamProcessorService, final StreamProcessorFilterService streamProcessorFilterService, final IndexService indexService, final VolumeService volumeService, final NodeCache nodeCache) {
         this.feedService = feedService;
         this.streamStore = streamStore;
-        this.folderService = folderService;
         this.streamProcessorService = streamProcessorService;
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.indexService = indexService;
@@ -81,14 +75,16 @@ public class CommonTestScenarioCreator {
         this.nodeCache = nodeCache;
     }
 
-    public DocRef getTestFolder() {
-        Folder globalGroup = null;
-        globalGroup = folderService.loadByName(null, "GlobalGroup");
-        if (globalGroup == null) {
-            globalGroup = folderService.create("GlobalGroup");
-        }
-        return DocRefUtil.create(globalGroup);
-    }
+//    public DocRef getTestFolder() {
+////        Folder globalGroup = null;
+////        globalGroup = folderService.loadByName(null, "GlobalGroup");
+////        if (globalGroup == null) {
+////            globalGroup = folderService.create(null, "GlobalGroup");
+////        }
+////        return DocRef.create(globalGroup);
+//
+//        return null;
+//    }
 
     public Feed createSimpleFeed() {
         return createSimpleFeed("Junit");
@@ -98,8 +94,7 @@ public class CommonTestScenarioCreator {
      * @return a basic feed
      */
     public Feed createSimpleFeed(final String name) {
-        final DocRef folder = getTestFolder();
-        Feed feed = feedService.create(folder, FileSystemTestUtil.getUniqueTestString());
+        Feed feed = feedService.create(FileSystemTestUtil.getUniqueTestString());
         feed.setDescription(name);
         feed.setStatus(FeedStatus.RECEIVE);
         feed.setStreamType(StreamType.RAW_EVENTS);
@@ -133,10 +128,8 @@ public class CommonTestScenarioCreator {
     }
 
     public Index createIndex(final String name, final IndexFields indexFields, final int maxDocsPerShard) {
-        final DocRef folder = getTestFolder();
-
         // Create a test index.
-        Index index = indexService.create(folder, name);
+        Index index = indexService.create(name);
         index.setMaxDocsPerShard(maxDocsPerShard);
         index.setIndexFieldsObject(indexFields);
 

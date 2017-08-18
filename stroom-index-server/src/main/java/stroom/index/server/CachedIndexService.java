@@ -61,11 +61,10 @@ public class CachedIndexService implements Clearable, InitializingBean, EntityEv
         selfPopulatingCache = new SelfPopulatingCache(cache, key -> {
             try {
                 final Index index = (Index) key;
-                final Index loaded = indexService.load(index);
+                final Index loaded = indexService.loadByUuid(index.getUuid());
                 if (loaded == null) {
                     throw new NullPointerException("No index can be found for: " + DocRefUtil.create(index));
                 }
-
                 // Create a map of index fields keyed by name.
                 final IndexFields indexFields = loaded.getIndexFieldsObject();
                 if (indexFields == null || indexFields.getIndexFields() == null || indexFields.getIndexFields().size() == 0) {

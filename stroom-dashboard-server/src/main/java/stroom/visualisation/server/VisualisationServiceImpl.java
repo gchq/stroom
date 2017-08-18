@@ -20,6 +20,7 @@ package stroom.visualisation.server;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import stroom.dashboard.server.logging.DocumentEventLog;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.ObjectMarshaller;
 import stroom.entity.server.QueryAppender;
@@ -39,8 +40,8 @@ import javax.inject.Inject;
 public class VisualisationServiceImpl extends DocumentEntityServiceImpl<Visualisation, FindVisualisationCriteria>
         implements VisualisationService {
     @Inject
-    VisualisationServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext) {
-        super(entityManager, importExportHelper, securityContext);
+    VisualisationServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext, final DocumentEventLog documentEventLog) {
+        super(entityManager, importExportHelper, securityContext, documentEventLog);
     }
 
     @Override

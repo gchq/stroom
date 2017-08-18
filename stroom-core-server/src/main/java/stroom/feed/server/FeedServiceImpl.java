@@ -19,11 +19,13 @@ package stroom.feed.server;
 
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import stroom.dashboard.server.logging.DocumentEventLog;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
+import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.importexport.server.ImportExportHelper;
@@ -41,13 +43,13 @@ import java.util.Set;
 @Transactional
 @Component("feedService")
 public class FeedServiceImpl extends DocumentEntityServiceImpl<Feed, FindFeedCriteria> implements FeedService {
-    public static final String FEED_NAME_PATTERN_PROPERTY = "stroom.feedNamePattern";
-    public static final String FEED_NAME_PATTERN_VALUE = "^[A-Z0-9_\\-]{3,}$";
-    public static final Set<String> FETCH_SET = Collections.singleton(StreamType.ENTITY_TYPE);
+    private static final String FEED_NAME_PATTERN_PROPERTY = "stroom.feedNamePattern";
+    private static final String FEED_NAME_PATTERN_VALUE = "^[A-Z0-9_\\-]{3,}$";
+    private static final Set<String> FETCH_SET = Collections.singleton(StreamType.ENTITY_TYPE);
 
     @Inject
-    FeedServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext) {
-        super(entityManager, importExportHelper, securityContext);
+    FeedServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext, final DocumentEventLog documentEventLog) {
+        super(entityManager, importExportHelper, securityContext, documentEventLog);
     }
 
     @SuppressWarnings("unchecked")
@@ -70,14 +72,14 @@ public class FeedServiceImpl extends DocumentEntityServiceImpl<Feed, FindFeedCri
         }
 
         if (feed != null) {
-            checkReadPermission(feed);
+            checkReadPermission(DocRefUtil.create(feed));
         }
 
         return feed;
     }
 
     @Override
-    public Object read(final DocRef docRef) {
+    public Feed readDocument(final DocRef docRef) {
         return loadByUuid(docRef.getUuid(), FETCH_SET);
     }
 
@@ -125,7 +127,7 @@ public class FeedServiceImpl extends DocumentEntityServiceImpl<Feed, FindFeedCri
     }
 
     private static class FeedQueryAppender extends QueryAppender<Feed, FindFeedCriteria> {
-        public FeedQueryAppender(final StroomEntityManager entityManager) {
+        FeedQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
         }
 

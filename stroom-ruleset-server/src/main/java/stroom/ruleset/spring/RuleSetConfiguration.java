@@ -20,6 +20,12 @@ package stroom.ruleset.spring;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
+import stroom.explorer.server.ExplorerActionHandlers;
+import stroom.ruleset.server.RuleSetService;
+import stroom.ruleset.shared.RuleSet;
+
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 /**
  * Exclude other configurations that might be found accidentally during a
@@ -29,4 +35,9 @@ import org.springframework.context.annotation.FilterType;
 @ComponentScan(basePackages = {"stroom.ruleset.server"}, excludeFilters = {
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
 public class RuleSetConfiguration {
+    @Inject
+    public RuleSetConfiguration(final ExplorerActionHandlers explorerActionHandlers,
+                                final Provider<RuleSetService> ruleSetServiceProvider) {
+        explorerActionHandlers.add(100, RuleSet.DOCUMENT_TYPE, "Rule Set", ruleSetServiceProvider);
+    }
 }

@@ -26,6 +26,7 @@ import stroom.pipeline.server.factory.PipelineDataCache;
 import stroom.pipeline.server.factory.PipelineFactory;
 import stroom.pipeline.server.parser.CombinedParser;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.pipeline.shared.XSLT;
@@ -75,7 +76,7 @@ public class TestXMLTransformer extends AbstractProcessIntegrationTest {
     @Resource
     private TextConverterService textConverterService;
     @Resource
-    private PipelineEntityService pipelineEntityService;
+    private PipelineService pipelineService;
     @Resource
     private PipelineDataCache pipelineDataCache;
 
@@ -135,11 +136,11 @@ public class TestXMLTransformer extends AbstractProcessIntegrationTest {
 
         // Get the pipeline config.
         final String data = StroomProcessTestFileUtil.getString(FRAGMENT_PIPELINE);
-        final PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineEntityService, data);
+        final PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService, data);
         pipelineEntity.getPipelineData().addProperty(
                 PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", textConverter));
         pipelineEntity.setParentPipeline(DocRefUtil.create(createTransformerPipeline()));
-        return pipelineEntityService.save(pipelineEntity);
+        return pipelineService.save(pipelineEntity);
     }
 
     private PipelineEntity createTransformerPipeline() {
@@ -151,10 +152,10 @@ public class TestXMLTransformer extends AbstractProcessIntegrationTest {
 
         // Get the pipeline config.
         final String data = StroomProcessTestFileUtil.getString(TRANSFORMER_PIPELINE);
-        final PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineEntityService, data);
+        final PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService, data);
         pipelineEntity.getPipelineData()
                 .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xslt));
-        return pipelineEntityService.save(pipelineEntity);
+        return pipelineService.save(pipelineEntity);
     }
 
     private void test(final PipelineEntity pipelineEntity, final String inputResource, final String encoding)

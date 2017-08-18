@@ -38,7 +38,7 @@ import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.entity.shared.DocRefUtil;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.pipeline.shared.FetchPipelineDataAction;
 import stroom.pipeline.shared.FetchPipelineXMLAction;
 import stroom.pipeline.shared.FetchPropertyTypesAction;
@@ -165,7 +165,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
         registerHandler(pipelineReferenceListPresenter.addDirtyHandler(dirtyHandler));
         registerHandler(pipelinePresenter.addDataSelectionHandler(event -> {
             if (event.getSelectedItem() != null) {
-                final ExplorerData entityData = (ExplorerData) event.getSelectedItem();
+                final ExplorerNode entityData = (ExplorerNode) event.getSelectedItem();
                 if (EqualsUtil.isEquals(entityData.getDocRef().getUuid(), pipelineEntity.getUuid())) {
                     AlertEvent.fireWarn(PipelineStructurePresenter.this, "A pipeline cannot inherit from itself",
                             () -> {
@@ -473,7 +473,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                 }
             };
 
-            dispatcher.exec(new FetchPipelineXMLAction(pipelineEntity.getId())).onSuccess(result -> {
+            dispatcher.exec(new FetchPipelineXMLAction(DocRefUtil.create(pipelineEntity))).onSuccess(result -> {
                 String text = "";
                 if (result != null) {
                     text = result.toString();
@@ -498,7 +498,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     }
 
     private void doActualSave(final EditorPresenter xmlEditor) {
-        dispatcher.exec(new SavePipelineXMLAction(pipelineEntity.getId(), xmlEditor.getText())).onSuccess(result -> {
+        dispatcher.exec(new SavePipelineXMLAction(DocRefUtil.create(pipelineEntity), xmlEditor.getText())).onSuccess(result -> {
             // Hide the popup.
             HidePopupEvent.fire(PipelineStructurePresenter.this, xmlEditor, false, true);
             // Reload the entity.

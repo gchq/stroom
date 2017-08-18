@@ -29,7 +29,7 @@ import stroom.entity.shared.Folder;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.presenter.ExplorerTreePresenter;
 import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.shared.Stream;
 import stroom.streamtask.shared.StreamProcessor;
@@ -67,8 +67,8 @@ public class FolderRootPlugin extends Plugin implements TabData {
                 getEventBus().addHandler(ExplorerTreeSelectEvent.getType(), event -> {
                     final SelectionType selectionType = event.getSelectionType();
                     if (!selectionType.isRightClick() && !selectionType.isMultiSelect()) {
-                        final ExplorerData selected = event.getSelectionModel().getSelected();
-                        if (selected != null && Folder.ENTITY_TYPE.equals(selected.getType()) && selected.getDocRef().getUuid().equals("0")) {
+                        final ExplorerNode selected = event.getSelectionModel().getSelected();
+                        if (selected != null && "System".equals(selected.getType())) {
                             if (presenter == null && selectionType.isDoubleSelect()) {
                                 // If the presenter is null then we haven't got
                                 // this tab open.
@@ -110,7 +110,7 @@ public class FolderRootPlugin extends Plugin implements TabData {
 
     @Override
     public String getLabel() {
-        return SYSTEM;
+        return "System";
     }
 
     @Override

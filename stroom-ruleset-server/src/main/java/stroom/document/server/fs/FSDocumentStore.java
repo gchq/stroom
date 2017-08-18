@@ -43,7 +43,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Stream;
 
-public final class FSDocumentStore<D extends Document> implements ExplorerActionHandler, DocumentActionHandler {
+public final class FSDocumentStore<D extends Document> implements ExplorerActionHandler, DocumentActionHandler<D> {
     private static final String FILE_EXTENSION = ".json";
 
     private final Path dir;
@@ -68,11 +68,11 @@ public final class FSDocumentStore<D extends Document> implements ExplorerAction
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public final DocRef create(final String parentFolderUUID, final String name) {
+    public final DocRef createDocument(final String name, final String parentFolderUUID) {
         final long now = System.currentTimeMillis();
         final String userId = securityContext.getUserId();
 
-        final D document = createDocument(type, UUID.randomUUID().toString(), name);
+        final D document = create(type, UUID.randomUUID().toString(), name);
         document.setParentFolderUUID(parentFolderUUID);
         document.setVersion(UUID.randomUUID().toString());
         document.setCreateTime(now);
@@ -85,7 +85,7 @@ public final class FSDocumentStore<D extends Document> implements ExplorerAction
     }
 
     @Override
-    public final DocRef copy(final String uuid, final String parentFolderUUID) {
+    public final DocRef copyDocument(final String uuid, final String parentFolderUUID) {
         final long now = System.currentTimeMillis();
         final String userId = securityContext.getUserId();
 
@@ -105,7 +105,7 @@ public final class FSDocumentStore<D extends Document> implements ExplorerAction
     }
 
     @Override
-    public final DocRef move(final String uuid, final String parentFolderUUID) {
+    public final DocRef moveDocument(final String uuid, final String parentFolderUUID) {
         final long now = System.currentTimeMillis();
         final String userId = securityContext.getUserId();
 
@@ -130,7 +130,7 @@ public final class FSDocumentStore<D extends Document> implements ExplorerAction
     }
 
     @Override
-    public DocRef rename(final String uuid, final String name) {
+    public DocRef renameDocument(final String uuid, final String name) {
         final long now = System.currentTimeMillis();
         final String userId = securityContext.getUserId();
 
@@ -146,7 +146,7 @@ public final class FSDocumentStore<D extends Document> implements ExplorerAction
     }
 
     @Override
-    public final void delete(final String uuid) {
+    public final void deleteDocument(final String uuid) {
         final Lock lock = stripedLock.getLockForKey(uuid);
         lock.lock();
         try {
@@ -176,34 +176,23 @@ public final class FSDocumentStore<D extends Document> implements ExplorerAction
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public Object read(final DocRef docRef) {
+    public D readDocument(final DocRef docRef) {
         return read(docRef.getUuid());
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public Object write(final Object object) {
-        if (!clazz.isAssignableFrom(object.getClass())) {
-            throw new EntityServiceException("Unexpected document type");
-        }
-
-        final D document = (D) object;
+    public D writeDocument(final D document) {
         return update(document);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public Object fork(final Object object, final String docName, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
-        if (!clazz.isAssignableFrom(object.getClass())) {
-            throw new EntityServiceException("Unexpected document type");
-        }
-
+    public D forkDocument(final D document, final String docName, final DocRef destinationFolderRef) {
         String parentFolderUUID = null;
         if (destinationFolderRef != null) {
             parentFolderUUID = destinationFolderRef.getUuid();
         }
-
-        final D document = (D) object;
 
         final long now = System.currentTimeMillis();
         final String userId = securityContext.getUserId();
@@ -220,11 +209,6 @@ public final class FSDocumentStore<D extends Document> implements ExplorerAction
         return create(parentFolderUUID, document);
 
         // TODO : Call the explorer service to notify it that a new item has been created.
-    }
-
-    @Override
-    public void delete(final DocRef docRef) {
-        delete(docRef.getUuid());
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -264,7 +248,7 @@ public final class FSDocumentStore<D extends Document> implements ExplorerAction
         }
     }
 
-    private D createDocument(final String type, final String uuid, final String name) {
+    private D create(final String type, final String uuid, final String name) {
         try {
             final D document = clazz.newInstance();
             document.setType(type);

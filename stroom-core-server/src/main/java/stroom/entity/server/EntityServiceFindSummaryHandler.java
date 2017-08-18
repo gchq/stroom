@@ -38,12 +38,12 @@ import javax.inject.Inject;
 class EntityServiceFindSummaryHandler
         extends AbstractTaskHandler<EntityServiceFindSummaryAction<BaseCriteria>, ResultList<SummaryDataRow>> {
     private final EntityServiceBeanRegistry beanRegistry;
-    private final DocumentEventLog entityEventLog;
+    private final DocumentEventLog documentEventLog;
 
     @Inject
-    EntityServiceFindSummaryHandler(final EntityServiceBeanRegistry beanRegistry, final DocumentEventLog entityEventLog) {
+    EntityServiceFindSummaryHandler(final EntityServiceBeanRegistry beanRegistry, final DocumentEventLog documentEventLog) {
         this.beanRegistry = beanRegistry;
-        this.entityEventLog = entityEventLog;
+        this.documentEventLog = documentEventLog;
     }
 
     @SuppressWarnings("unchecked")
@@ -69,9 +69,9 @@ class EntityServiceFindSummaryHandler
 
         try {
             result = (BaseResultList<SummaryDataRow>) beanRegistry.invoke("findSummary", action.getCriteria());
-            entityEventLog.searchSummary(action.getCriteria(), query, result);
+            documentEventLog.searchSummary(action.getCriteria(), query, result);
         } catch (final RuntimeException e) {
-            entityEventLog.searchSummary(action.getCriteria(), query, e);
+            documentEventLog.searchSummary(action.getCriteria(), query, e);
 
             throw e;
         }

@@ -21,6 +21,7 @@ import io.dropwizard.jetty.MutableServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import stroom.dashboard.server.logging.spring.EventLoggingConfiguration;
 import stroom.dashboard.spring.DashboardConfiguration;
+import stroom.dictionary.spring.DictionaryConfiguration;
 import stroom.index.spring.IndexConfiguration;
 import stroom.pipeline.spring.PipelineConfiguration;
 import stroom.ruleset.spring.RuleSetConfiguration;
@@ -81,6 +82,7 @@ public class Servlets {
                 ServerConfiguration.class,
                 RuleSetConfiguration.class,
                 EventLoggingConfiguration.class,
+                DictionaryConfiguration.class,
                 PipelineConfiguration.class,
                 IndexConfiguration.class,
                 SearchConfiguration.class,

@@ -25,7 +25,7 @@ import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.pipeline.server.ErrorWriterProxy;
-import stroom.pipeline.server.PipelineEntityService;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ErrorStatistics;
 import stroom.pipeline.server.errorhandler.LoggedException;
@@ -78,7 +78,7 @@ public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<Headless
     @Resource(name = "cachedFeedService")
     private FeedService feedService;
     @Resource(name = "cachedPipelineEntityService")
-    private PipelineEntityService pipelineEntityService;
+    private PipelineService pipelineService;
     @Resource
     private ContextDataLoader contextDataLoader;
     @Resource
@@ -125,7 +125,7 @@ public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<Headless
 
             // Set the pipeline so it can be used by a filter if needed.
             final FindPipelineEntityCriteria findPipelineCriteria = new FindPipelineEntityCriteria(feedName);
-            final BaseResultList<PipelineEntity> pipelines = pipelineEntityService.find(findPipelineCriteria);
+            final BaseResultList<PipelineEntity> pipelines = pipelineService.find(findPipelineCriteria);
             if (pipelines == null || pipelines.size() == 0) {
                 throw new ProcessException("No pipeline found for feed name '" + feedName + "'");
             }

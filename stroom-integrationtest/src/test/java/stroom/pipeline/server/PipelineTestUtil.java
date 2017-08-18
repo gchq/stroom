@@ -37,20 +37,20 @@ public final class PipelineTestUtil {
     }
 
 
-    public static PipelineEntity createTestPipeline(final PipelineEntityService pipelineEntityService, final String data) {
-        return createTestPipeline(pipelineEntityService, null, "test", "test", data);
+    public static PipelineEntity createTestPipeline(final PipelineService pipelineService, final String data) {
+        return createTestPipeline(pipelineService, "test", "test", data);
     }
 
-    public static PipelineEntity createTestPipeline(final PipelineEntityService pipelineEntityService, final DocRef folder, final String name,
+    public static PipelineEntity createTestPipeline(final PipelineService pipelineService, final String name,
                                                     final String description, final String data) {
-        PipelineEntity pipelineEntity = pipelineEntityService.create(folder, name);
+        PipelineEntity pipelineEntity = pipelineService.read(pipelineService.create(null, name));
         pipelineEntity.setName(name);
         pipelineEntity.setDescription(description);
         if (data != null) {
             pipelineEntity.setData(data);
             pipelineEntity = pipelineMarshaller.unmarshal(pipelineEntity, true, false);
         }
-        return pipelineEntityService.save(pipelineEntity);
+        return pipelineService.save(pipelineEntity);
     }
 
     public static PipelineEntity loadPipeline(final PipelineEntity pipeline, final boolean external) {

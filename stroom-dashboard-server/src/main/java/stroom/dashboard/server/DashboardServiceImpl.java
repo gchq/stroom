@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import stroom.dashboard.server.logging.DocumentEventLog;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.FindDashboardCriteria;
 import stroom.dashboard.shared.QueryEntity;
@@ -29,12 +30,12 @@ import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
+import stroom.entity.shared.DocRefUtil;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.security.SecurityContext;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
-import java.util.Arrays;
 
 @Component
 @Transactional
@@ -43,18 +44,12 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
         implements DashboardService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DashboardServiceImpl.class);
 
-    private static final String[] PERMISSIONS = Arrays.copyOf(STANDARD_PERMISSIONS, STANDARD_PERMISSIONS.length + 1);
-
-    static {
-        PERMISSIONS[PERMISSIONS.length - 1] = "Download";
-    }
-
     private final ResourceLoader resourceLoader;
     private String xmlTemplate;
 
     @Inject
-    DashboardServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext, final ResourceLoader resourceLoader) {
-        super(entityManager, importExportHelper, securityContext);
+    DashboardServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext, final DocumentEventLog documentEventLog, final ResourceLoader resourceLoader) {
+        super(entityManager, importExportHelper, securityContext, documentEventLog);
         this.resourceLoader = resourceLoader;
     }
 
@@ -88,7 +83,7 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
 
     @Override
     public Boolean delete(final Dashboard entity) throws RuntimeException {
-        checkDeletePermission(entity);
+        checkDeletePermission(DocRefUtil.create(entity));
 
         // Delete associated queries first.
         final SqlBuilder sql = new SqlBuilder();
@@ -120,11 +115,6 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
         }
 
         return xmlTemplate;
-    }
-
-    @Override
-    public String[] getPermissions() {
-        return PERMISSIONS;
     }
 
     @Override

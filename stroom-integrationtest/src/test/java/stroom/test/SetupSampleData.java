@@ -19,6 +19,7 @@ package stroom.test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import stroom.dashboard.server.logging.spring.EventLoggingConfiguration;
 import stroom.dashboard.spring.DashboardConfiguration;
+import stroom.dictionary.spring.DictionaryConfiguration;
 import stroom.index.spring.IndexConfiguration;
 import stroom.pipeline.spring.PipelineConfiguration;
 import stroom.ruleset.spring.RuleSetConfiguration;
@@ -57,6 +58,7 @@ public final class SetupSampleData {
                     RuleSetConfiguration.class,
                     SecurityConfiguration.class,
                     ScopeTestConfiguration.class,
+                    DictionaryConfiguration.class,
                     PipelineConfiguration.class,
                     EventLoggingConfiguration.class,
                     IndexConfiguration.class,

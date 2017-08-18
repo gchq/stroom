@@ -16,8 +16,8 @@
 
 package stroom.entity.server;
 
-import event.logging.BaseAdvancedQueryItem;
 import org.springframework.transaction.annotation.Transactional;
+import stroom.dashboard.server.logging.DocumentEventLog;
 import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
@@ -36,18 +36,16 @@ import stroom.entity.shared.ImportState.State;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.PermissionException;
-import stroom.entity.shared.PermissionInheritance;
+import stroom.entity.shared.ProvidesNamePattern;
 import stroom.importexport.server.Config;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.query.api.v1.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.config.StroomProperties;
-import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
-import javax.annotation.Resource;
 import javax.persistence.Transient;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -60,34 +58,33 @@ import java.util.stream.Collectors;
 
 @Transactional
 @AutoMarshal
-public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C extends FindDocumentEntityCriteria> implements DocumentEntityService<E>, FindService<E, C>, SupportsCriteriaLogging<C> {
-    public static final String NAME_PATTERN_PROPERTY = "stroom.namePattern";
-    public static final String NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
+public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C extends FindDocumentEntityCriteria> implements DocumentEntityService<E>, BaseEntityService<E>, FindService<E, C>, ProvidesNamePattern {
+    private static final String NAME_PATTERN_PROPERTY = "stroom.namePattern";
+    private static final String NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
     public static final String ID = "@ID@";
     public static final String TYPE = "@TYPE@";
     public static final String NAME = "@NAME@";
 
-    protected static final String[] STANDARD_PERMISSIONS = new String[]{DocumentPermissionNames.USE,
-            DocumentPermissionNames.READ, DocumentPermissionNames.UPDATE, DocumentPermissionNames.DELETE, DocumentPermissionNames.OWNER};
+    //    protected static final String[] STANDARD_PERMISSIONS = new String[]{DocumentPermissionNames.USE,
+//            DocumentPermissionNames.READ, DocumentPermissionNames.UPDATE, DocumentPermissionNames.DELETE, DocumentPermissionNames.OWNER};
     private final StroomEntityManager entityManager;
     private final SecurityContext securityContext;
+    private final DocumentEventLog documentEventLog;
     private final EntityServiceHelper<E> entityServiceHelper;
     private final FindServiceHelper<E, C> findServiceHelper;
     private final ImportExportHelper importExportHelper;
 
-    private final QueryAppender<E, C> queryAppender;
-    // TODO : REMOVE WHEN WE REMOVE FOLDER REFERENCES FROM ENTITIES.
-    @Resource
-    private FolderService folderService;
+    private final QueryAppender<E, ?> queryAppender;
     private String entityType;
     private FieldMap sqlFieldMap;
 
     protected DocumentEntityServiceImpl(final StroomEntityManager entityManager,
                                         final ImportExportHelper importExportHelper,
-                                        final SecurityContext securityContext) {
+                                        final SecurityContext securityContext, final DocumentEventLog documentEventLog) {
         this.entityManager = entityManager;
         this.importExportHelper = importExportHelper;
         this.securityContext = securityContext;
+        this.documentEventLog = documentEventLog;
         this.queryAppender = createQueryAppender(entityManager);
         this.entityServiceHelper = new EntityServiceHelper<>(entityManager, getEntityClass());
         this.findServiceHelper = new FindServiceHelper<>(entityManager, getEntityClass(), queryAppender);
@@ -101,101 +98,48 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return entityServiceHelper;
     }
 
-    protected QueryAppender<E, C> getQueryAppender() {
+    protected QueryAppender<E, ?> getQueryAppender() {
         return queryAppender;
     }
 
     @Override
     public E create(final String name) throws RuntimeException {
-        return create(null, name, PermissionInheritance.NONE);
+        return create(name, null);
     }
 
-    @Override
-    public final E create(final DocRef folder, final String name) throws RuntimeException {
-        return create(folder, name, PermissionInheritance.NONE);
-    }
-
-    protected E create(final DocRef folder, final String name, final PermissionInheritance permissionInheritance) throws RuntimeException {
-        // Create a new entity instance.
+    private E create(final String name, final String parentFolderUUID) throws RuntimeException {
         E entity;
+
         try {
-            entity = getEntityClass().newInstance();
-        } catch (final IllegalAccessException | InstantiationException e) {
-            throw new EntityServiceException(e.getMessage());
-        }
+            // Check create permissions of the parent folder.
+            checkCreatePermission(parentFolderUUID);
 
-        entity.setName(name);
-        setFolder(entity, folder);
-        final E result = create(entity);
-        final DocRef dest = DocRefUtil.create(result);
+            // Create a new entity instance.
+            try {
+                entity = getEntityClass().newInstance();
+            } catch (final IllegalAccessException | InstantiationException e) {
+                throw new EntityServiceException(e.getMessage());
+            }
 
-        // Create the initial user permissions for this new document.
-        switch (permissionInheritance) {
-            case NONE:
-                addDocumentPermissions(null, dest, true);
-                break;
-            case COMBINED:
-                addDocumentPermissions(folder, dest, true);
-                break;
-            case INHERIT:
-                addDocumentPermissions(folder, dest, true);
-                break;
-        }
-
-        return result;
-    }
-
-    // TODO : Temporary for query service.
-    protected E create(final E entity) {
-        return entityServiceHelper.create(entity, queryAppender);
-    }
-
-    @Override
-    public E saveAs(final E entity, final DocRef folder, final String name, final PermissionInheritance permissionInheritance) throws RuntimeException {
-        entity.clearPersistence();
-        entity.setName(name);
-        setFolder(entity, folder);
-        final E result = create(entity);
-        final DocRef dest = DocRefUtil.create(result);
-
-        // Create the initial user permissions for this new document.
-        switch (permissionInheritance) {
-            case NONE:
-                addDocumentPermissions(null, dest, true);
-                break;
-            case COMBINED:
-                addDocumentPermissions(folder, dest, true);
-                break;
-            case INHERIT:
-                addDocumentPermissions(folder, dest, true);
-                break;
-        }
-
-        return result;
-    }
-
-    protected void setFolder(final E entity, final String folderUUID) throws RuntimeException {
-        DocRef folderRef = null;
-        if (folderUUID != null) {
-            folderRef = new DocRef(Folder.ENTITY_TYPE, folderUUID);
-        }
-
-        setFolder(entity, folderRef);
-    }
-
-    private void setFolder(final E entity, final DocRef folderRef) throws RuntimeException {
-        if (entity.getUuid() == null) {
             entity.setUuid(UUID.randomUUID().toString());
+
+            // Validate the entity name.
+            NameValidationUtil.validate(this, name);
+            entity.setName(name);
+
+            entity = entityServiceHelper.save(entity, queryAppender);
+
+            documentEventLog.create(entity, null);
+
+        } catch (final RuntimeException e) {
+            documentEventLog.create(getEntityType(), name, e);
+            throw e;
+        } catch (final Exception e) {
+            documentEventLog.create(getEntityType(), name, e);
+            throw new RuntimeException(e);
         }
 
-        // TODO : Remove this when document entities no longer reference a folder.
-        Folder folder = null;
-        if (folderRef != null && folderRef.getUuid() != null) {
-            folder = folderService.loadByUuid(folderRef.getUuid());
-        }
-        entity.setFolder(folder);
-
-        checkCreatePermission(entity, folderRef);
+        return entity;
     }
 
     @Transactional(readOnly = true)
@@ -226,7 +170,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     }
 
     @SuppressWarnings("unchecked")
-    protected E loadById(final long id, final Set<String> fetchSet, final QueryAppender<E, C> queryAppender) throws RuntimeException {
+    protected E loadById(final long id, final Set<String> fetchSet, final QueryAppender<E, ?> queryAppender) throws RuntimeException {
         E entity = null;
 
         final HqlBuilder sql = new HqlBuilder();
@@ -248,44 +192,53 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         }
 
         if (entity != null) {
-            if (queryAppender != null) {
-                queryAppender.postLoad(entity);
+            try {
+                if (queryAppender != null) {
+                    queryAppender.postLoad(entity);
+                }
+                checkReadPermission(DocRefUtil.create(entity));
+                documentEventLog.view(entity);
+            } catch (final RuntimeException e) {
+                documentEventLog.view(entity, e);
+                throw e;
+            } catch (final Exception e) {
+                documentEventLog.view(entity, e);
+                throw new RuntimeException(e);
             }
-            checkReadPermission(entity);
         }
 
         return entity;
     }
 
-    // TODO : Remove this method when the explorer service is broken out as a separate micro service.
-    @SuppressWarnings("unchecked")
-    @Transactional(readOnly = true)
-    @Override
-    public E loadByIdInsecure(final long id, final Set<String> fetchSet) throws RuntimeException {
-        E entity = null;
-
-        final HqlBuilder sql = new HqlBuilder();
-        sql.append("SELECT e");
-        sql.append(" FROM ");
-        sql.append(getEntityClass().getName());
-        sql.append(" AS e");
-
-        queryAppender.appendBasicJoin(sql, "e", fetchSet);
-
-        sql.append(" WHERE e.id = ");
-        sql.arg(id);
-
-        final List<E> resultList = getEntityManager().executeQueryResultList(sql, null, true);
-        if (resultList != null && resultList.size() > 0) {
-            entity = resultList.get(0);
-        }
-
-        if (entity != null) {
-            queryAppender.postLoad(entity);
-        }
-
-        return entity;
-    }
+//    // TODO : Remove this method when the explorer service is broken out as a separate micro service.
+//    @SuppressWarnings("unchecked")
+//    @Transactional(readOnly = true)
+//    @Override
+//    public E loadByIdInsecure(final long id, final Set<String> fetchSet) throws RuntimeException {
+//        E entity = null;
+//
+//        final HqlBuilder sql = new HqlBuilder();
+//        sql.append("SELECT e");
+//        sql.append(" FROM ");
+//        sql.append(getEntityClass().getName());
+//        sql.append(" AS e");
+//
+//        queryAppender.appendBasicJoin(sql, "e", fetchSet);
+//
+//        sql.append(" WHERE e.id = ");
+//        sql.arg(id);
+//
+//        final List<E> resultList = getEntityManager().executeQueryResultList(sql, null, true);
+//        if (resultList != null && resultList.size() > 0) {
+//            entity = resultList.get(0);
+//        }
+//
+//        if (entity != null) {
+//            queryAppender.postLoad(entity);
+//        }
+//
+//        return entity;
+//    }
 
     @Transactional(readOnly = true)
     @Override
@@ -297,6 +250,8 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     @Transactional(readOnly = true)
     @Override
     public final E loadByUuid(final String uuid, final Set<String> fetchSet) throws RuntimeException {
+        E entity = null;
+
         final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT e FROM ");
         sql.append(getEntityClass().getName());
@@ -305,20 +260,34 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         sql.append(" WHERE e.uuid = ");
         sql.arg(uuid);
 
-        final BaseResultList<E> list = BaseResultList.createUnboundedList(entityManager.executeQueryResultList(sql, null, true));
-        final E entity = list.getFirst();
+        final List<E> resultList = getEntityManager().executeQueryResultList(sql, null, true);
+        if (resultList != null && resultList.size() > 0) {
+            entity = resultList.get(0);
+        }
 
         if (entity != null) {
-            queryAppender.postLoad(entity);
-            checkReadPermission(entity);
+            try {
+                queryAppender.postLoad(entity);
+                checkReadPermission(DocRefUtil.create(entity));
+                documentEventLog.view(entity);
+            } catch (final RuntimeException e) {
+                documentEventLog.view(entity, e);
+                throw e;
+            } catch (final Exception e) {
+                documentEventLog.view(entity, e);
+                throw new RuntimeException(e);
+            }
         }
 
         return entity;
     }
 
     // TODO : Remove this method when the explorer service is broken out as a separate micro service.
+    @SuppressWarnings("unchecked")
     @Transactional(readOnly = true)
-    public final E loadByUuidInsecure(final String uuid, final Set<String> fetchSet) throws RuntimeException {
+    protected E loadByUuidInsecure(final String uuid, final Set<String> fetchSet) throws RuntimeException {
+        E entity = null;
+
         final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT e FROM ");
         sql.append(getEntityClass().getName());
@@ -327,119 +296,250 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         sql.append(" WHERE e.uuid = ");
         sql.arg(uuid);
 
-        final BaseResultList<E> list = BaseResultList.createUnboundedList(entityManager.executeQueryResultList(sql, null, true));
-        final E entity = list.getFirst();
+        final List<E> resultList = getEntityManager().executeQueryResultList(sql, null, true);
+        if (resultList != null && resultList.size() > 0) {
+            entity = resultList.get(0);
+        }
 
         if (entity != null) {
-            queryAppender.postLoad(entity);
+            try {
+                queryAppender.postLoad(entity);
+//                checkReadPermission(DocRefUtil.create(entity));
+                documentEventLog.view(entity);
+            } catch (final RuntimeException e) {
+                documentEventLog.view(entity, e);
+                throw e;
+            } catch (final Exception e) {
+                documentEventLog.view(entity, e);
+                throw new RuntimeException(e);
+            }
         }
 
         return entity;
     }
-
-    @Transactional(readOnly = true)
-    @Override
-    public final E loadByName(final DocRef folder, final String name) throws RuntimeException {
-        return loadByName(folder, name, null);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Transactional(readOnly = true)
-    @Override
-    public final E loadByName(final DocRef folder, final String name, final Set<String> fetchSet) throws RuntimeException {
-        final HqlBuilder sql = new HqlBuilder();
-        sql.append("SELECT e FROM ");
-        sql.append(getEntityClass().getName());
-        sql.append(" AS e");
-        queryAppender.appendBasicJoin(sql, "e", fetchSet);
-        sql.append(" WHERE e.name = ");
-        sql.arg(name);
-
-        final Class<?> clazz = getEntityClass();
-        if (DocumentEntity.class.isAssignableFrom(clazz)) {
-            // For some reason this doesn't work on folders themselves?
-            if (!getEntityClass().equals(Folder.class)) {
-                if (folder == null) {
-                    sql.append(" AND e.folder IS NULL");
-                } else {
-                    sql.append(" AND e.folder.uuid = ");
-                    sql.arg(folder.getUuid());
-                }
-            }
-        }
-
-        final BaseResultList<E> list = BaseResultList.createUnboundedList(entityManager.executeQueryResultList(sql, null, true));
-
-        // FIXME: Fix once folders have been removed from entities. For now filter by parent group id manually
-        E entity = null;
-        if (getEntityClass().equals(Folder.class)) {
-            for (final E e : list) {
-                if (folder == null) {
-                    if (e.getFolder() == null) {
-                        entity = e;
-                        break;
-                    }
-                } else {
-                    if (e.getFolder() != null && EqualsUtil.isEquals(folder.getUuid(), e.getFolder().getUuid())) {
-                        entity = e;
-                        break;
-                    }
-                }
-            }
-        } else {
-            entity = list.getFirst();
-        }
-
-        if (entity != null) {
-            queryAppender.postLoad(entity);
-            checkReadPermission(entity);
-        }
-
-        return entity;
-    }
+//
+//    @Override
+//    public final E loadByName(final DocRef folder, final String name) throws RuntimeException {
+//        return loadByName(folder, name, null);
+//    }
+//
+//    @SuppressWarnings("unchecked")
+//    @Override
+//    public final E loadByName(final DocRef folder, final String name, final Set<String> fetchSet) throws RuntimeException {
+//        final SQLBuilder sql = new SQLBuilder();
+//        sql.append("SELECT e FROM ");
+//        sql.append(getEntityClass().getName());
+//        sql.append(" AS e");
+//        queryAppender.appendBasicJoin(sql, "e", fetchSet);
+//        sql.append(" WHERE e.name = ");
+//        sql.arg(name);
+//
+//        final Class<?> clazz = getEntityClass();
+//        if (DocumentEntity.class.isAssignableFrom(clazz)) {
+//            // For some reason this doesn't work on folders themselves?
+//            if (!getEntityClass().equals(Folder.class)) {
+//                if (folder == null) {
+//                    sql.append(" AND e.folder IS NULL");
+//                } else {
+//                    sql.append(" AND e.folder.uuid = ");
+//                    sql.arg(folder.getUuid());
+//                }
+//            }
+//        }
+//
+//        final BaseResultList<E> list = BaseResultList.createUnboundedList(entityManager.executeQueryResultList(sql));
+//
+//        // FIXME: Fix once folders have been removed from entities. For now filter by parent group id manually
+//        E entity = null;
+//        if (getEntityClass().equals(Folder.class)) {
+//            for (final E e : list) {
+//                if (folder == null) {
+//                    if (e.getFolder() == null) {
+//                        entity = e;
+//                        break;
+//                    }
+//                } else {
+//                    if (EqualsUtil.isEquals(folder.getUuid(), e.getFolder().getUuid())) {
+//                        entity = e;
+//                        break;
+//                    }
+//                }
+//            }
+//        } else {
+//            entity = list.getFirst();
+//        }
+//
+//        if (entity != null) {
+//            queryAppender.postLoad(entity);
+//            checkReadPermission(entity);
+//        }
+//
+//        return entity;
+//    }
 
     @Override
     public E save(final E entity) throws RuntimeException {
         return save(entity, queryAppender);
     }
 
-    protected E save(final E entity, final QueryAppender<E, C> queryAppender) throws RuntimeException {
-        checkUpdatePermission(entity);
+    protected E save(final E entity, final QueryAppender<E, ?> queryAppender) throws RuntimeException {
+        E before = entity;
+        E after = before;
 
-        if (entity.getUuid() == null) {
-            entity.setUuid(UUID.randomUUID().toString());
+        try {
+            if (!entity.isPersistent()) {
+                throw new EntityServiceException("You cannot update an entity that has not been created");
+            }
+
+            checkUpdatePermission(entity);
+
+            if (entity.getUuid() == null) {
+                entity.setUuid(UUID.randomUUID().toString());
+            }
+            after = entityServiceHelper.save(entity, queryAppender);
+            documentEventLog.update(before, after, null);
+        } catch (final RuntimeException e) {
+            documentEventLog.update(before, after, null);
+            throw e;
+        } catch (final Exception e) {
+            documentEventLog.update(before, after, null);
+            throw new RuntimeException(e);
         }
-        return entityServiceHelper.save(entity, queryAppender);
+
+        return after;
     }
+
+//    @Override
+//    public Boolean delete(final DocRef item) {
+//        final E entity = loadByUuid(item.getUuid());
+//        if (entity != null) {
+//            return delete(entity);
+//        }
+//
+//        // If we couldn't find the entity then it must have been deleted already so return true.
+//        return true;
+//    }
 
     @Override
     public Boolean delete(final E entity) throws RuntimeException {
-        checkDeletePermission(entity);
-        return entityManager.deleteEntity(entity);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    @SuppressWarnings("unchecked")
-    public List<E> findByFolder(final DocRef folder, final Set<String> fetchSet) throws RuntimeException {
-        final HqlBuilder sql = new HqlBuilder();
-        sql.append("SELECT e FROM ");
-        sql.append(getEntityClass().getName());
-        sql.append(" AS e");
-
-        queryAppender.appendBasicJoin(sql, "e", fetchSet);
-
-        sql.append(" WHERE 1=1");
-
-        if (folder != null) {
-            sql.append(" AND e.folder.uuid = ");
-            sql.arg(folder.getUuid());
+        Boolean success;
+        try {
+            checkDeletePermission(DocRefUtil.create(entity));
+            success = entityServiceHelper.delete(entity);
+            documentEventLog.delete(entity, null);
+        } catch (final RuntimeException e) {
+            documentEventLog.delete(entity, e);
+            throw e;
+        } catch (final Exception e) {
+            documentEventLog.delete(entity, e);
+            throw new RuntimeException(e);
         }
 
-        final List<E> list = entityManager.executeQueryResultList(sql);
-        return filterResults(list, DocumentPermissionNames.READ);
+        return success;
     }
 
+    private E copy(final E document, final String name, final String parentFolderUUID) {
+        E before = document;
+        E after = before;
+
+        try {
+            // Check create permissions of the parent folder.
+            checkCreatePermission(parentFolderUUID);
+
+            // This is going to be a copy so clear the persistence so save will create a new DB entry.
+            after.clearPersistence();
+
+            after.setUuid(UUID.randomUUID().toString());
+
+            // Validate the entity name.
+            NameValidationUtil.validate(this, name);
+            after.setName(name);
+
+            after = entityServiceHelper.save(after, queryAppender);
+
+            documentEventLog.copy(before, after, null);
+
+        } catch (final RuntimeException e) {
+            documentEventLog.copy(before, after, e);
+            throw e;
+        } catch (final Exception e) {
+            documentEventLog.copy(before, after, e);
+            throw new RuntimeException(e);
+        }
+
+        return after;
+    }
+
+    private E move(final E document, final String parentFolderUUID) {
+        E before = document;
+        E after = before;
+
+        try {
+            // Check create permissions of the parent folder.
+            checkCreatePermission(parentFolderUUID);
+
+            after = entityServiceHelper.save(after, queryAppender);
+
+            documentEventLog.move(before, after, null);
+
+        } catch (final RuntimeException e) {
+            documentEventLog.move(before, after, e);
+            throw e;
+        } catch (final Exception e) {
+            documentEventLog.move(before, after, e);
+            throw new RuntimeException(e);
+        }
+
+        return after;
+    }
+
+    private E rename(final E document, final String name) {
+        E before = document;
+        E after = before;
+
+        try {
+            // Validate the entity name.
+            NameValidationUtil.validate(this, name);
+            after.setName(name);
+
+            after = entityServiceHelper.save(after, queryAppender);
+
+            documentEventLog.rename(before, after, null);
+
+        } catch (final RuntimeException e) {
+            documentEventLog.rename(before, after, e);
+            throw e;
+        } catch (final Exception e) {
+            documentEventLog.rename(before, after, e);
+            throw new RuntimeException(e);
+        }
+
+        return after;
+    }
+
+
+    //    @Override
+//    @Transactional(readOnly = true)
+//    @SuppressWarnings("unchecked")
+//    public List<E> findByFolder(final DocRef folder, final Set<String> fetchSet) throws RuntimeException {
+//        final SQLBuilder sql = new SQLBuilder();
+//        sql.append("SELECT e FROM ");
+//        sql.append(getEntityClass().getName());
+//        sql.append(" AS e");
+//
+//        queryAppender.appendBasicJoin(sql, "e", fetchSet);
+//
+//        sql.append(" WHERE 1=1");
+//
+//        if (folder != null) {
+//            sql.append(" AND e.folder.uuid = ");
+//            sql.arg(folder.getUuid());
+//        }
+//
+//        final List<E> list = entityManager.executeQueryResultList(sql);
+//        return filterResults(list, DocumentPermissionNames.READ);
+//    }
+//
     @Transactional(readOnly = true)
     @Override
     public BaseResultList<E> find(final C criteria) throws RuntimeException {
@@ -492,21 +592,21 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
         return result;
     }
-
-    // TODO : Remove this method when the explorer service is broken out as a separate micro service.
-    @Transactional(readOnly = true)
-    public BaseResultList<E> findInsecure(final C criteria) throws RuntimeException {
-        final List<E> list = findServiceHelper.find(criteria, getSqlFieldMap());
-        return BaseResultList.createCriterialBasedList(list, criteria);
-    }
+//
+//    // TODO : Remove this method when the explorer service is broken out as a separate micro service.
+//    @Transactional(readOnly = true)
+//    public BaseResultList<E> findInsecure(final C criteria) throws RuntimeException {
+//        final List<E> list = findServiceHelper.find(criteria, getSqlFieldMap());
+//        return BaseResultList.createCriterialBasedList(list, criteria);
+//    }
 
     private List<E> filterResults(final List<E> list, final String permission) {
         return list.stream().filter(e -> securityContext.hasDocumentPermission(e.getType(), e.getUuid(), permission)).collect(Collectors.toList());
     }
-
-    protected List<EntityReferenceQuery> getReferenceTableList() {
-        return Collections.emptyList();
-    }
+//
+//    protected List<EntityReferenceQuery> getReferenceTableList() {
+//        return Collections.emptyList();
+//    }
 
     @Override
     public DocRef importDocument(final Folder folder, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
@@ -550,9 +650,6 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
             importExportHelper.performImport(entity, dataMap, mainConfigPath, importState, importMode);
 
-            // We don't want to overwrite any marshaled data so disable marshalling on creation.
-            setFolder(entity, DocRefUtil.create(folder));
-
             // Save directly so there is no marshalling of objects that would destroy imported data.
             if (importMode == ImportMode.IGNORE_CONFIRMATION
                     || (importMode == ImportMode.ACTION_CONFIRMATION && importState.isAction())) {
@@ -584,9 +681,9 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return StroomProperties.getProperty(NAME_PATTERN_PROPERTY, NAME_PATTERN_VALUE);
     }
 
-    private String getDocReference(BaseEntity entity) {
-        return "(" + DocRefUtil.create(entity).toString() + ")";
-    }
+//    private String getDocReference(BaseEntity entity) {
+//        return "(" + DocRefUtil.create(entity).toString() + ")";
+//    }
 
     public abstract Class<E> getEntityClass();
 
@@ -600,11 +697,11 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         }
         return entityType;
     }
-
-    @Override
-    public String[] getPermissions() {
-        return STANDARD_PERMISSIONS;
-    }
+//
+//    @Override
+//    public String[] getPermissions() {
+//        return STANDARD_PERMISSIONS;
+//    }
 
 
     ////////////////////////////////////////////////////////////////////////
@@ -612,132 +709,43 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public final DocRef create(final String parentFolderUUID, final String name) {
-        // Create a new entity instance.
-        E entity;
-        try {
-            entity = getEntityClass().newInstance();
-        } catch (final IllegalAccessException | InstantiationException e) {
-            throw new EntityServiceException(e.getMessage());
+    public final DocRef createDocument(final String name, final String parentFolderUUID) {
+        return DocRefUtil.create(create(name, parentFolderUUID));
+    }
+
+    @Override
+    public DocRef copyDocument(final String uuid, final String parentFolderUUID) {
+        final E entity = loadByUuid(uuid);
+        if (entity == null) {
+            throw new EntityServiceException("Entity not found");
         }
-
-        entity.setName(name);
-        setFolder(entity, parentFolderUUID);
-        final E result = create(entity);
-        return DocRefUtil.create(result);
+        return DocRefUtil.create(copy(entity, "Copy of " + entity.getName(), parentFolderUUID));
     }
 
     @Override
-    public DocRef copy(final String uuid, final String parentFolderUUID) {
+    public DocRef moveDocument(final String uuid, final String parentFolderUUID) {
         final E entity = loadByUuid(uuid);
-
-        // This is going to be a copy so clear the persistence so save will create a new DB entry.
-        entity.clearPersistence();
-
-        entity.setName("Copy of " + entity.getName());
-
-        setFolder(entity, parentFolderUUID);
-
-        final E result = create(entity);
-        return DocRefUtil.create(result);
-    }
-
-//    @Override
-//    public DocRef copy(final DocRef document, final DocRef folder, final String name, final PermissionInheritance permissionInheritance) {
-//        try {
-//            final E entity = loadByUuid(document.getUuid());
-//            // This is going to be a copy so clear the persistence so save will create a new DB entry.
-//            entity.clearPersistence();
-//
-//            entity.setName(name);
-//
-//            setFolder(entity, folder);
-//
-//            final E result = entityServiceHelper.create(entity);
-//            final DocRef dest = DocRefUtil.create(result);
-//
-//            if (permissionInheritance != null) {
-//                switch (permissionInheritance) {
-//                    case NONE:
-//                        addDocumentPermissions(document, dest, true);
-//                        break;
-//                    case COMBINED:
-//                        addDocumentPermissions(document, dest, true);
-//                        addDocumentPermissions(folder, dest, true);
-//                        break;
-//                    case INHERIT:
-//                        addDocumentPermissions(folder, dest, true);
-//                        break;
-//                }
-//            }
-//
-//            documentEventLog.copy(document, folder, name);
-//            return dest;
-//        } catch (final RuntimeException e) {
-//            documentEventLog.copy(document, folder, name, e);
-//            throw e;
-//        }
-//    }
-
-    @Override
-    public DocRef move(final String uuid, final String parentFolderUUID) {
-        final E entity = loadByUuid(uuid);
-
-        setFolder(entity, parentFolderUUID);
-
-        final E result = save(entity);
-        return DocRefUtil.create(result);
-    }
-
-//    @Override
-//    public DocRef move(final DocRef document, final DocRef folder, final String name, final PermissionInheritance permissionInheritance) {
-//        try {
-//            final E entity = loadByUuid(document.getUuid());
-//
-//            entity.setName(name);
-//
-//            setFolder(entity, folder);
-//
-//            final E result = entityServiceHelper.save(entity);
-//            final DocRef dest = DocRefUtil.create(result);
-//
-//            if (permissionInheritance != null) {
-//                switch (permissionInheritance) {
-//                    case NONE:
-//                        addDocumentPermissions(document, dest, true);
-//                        break;
-//                    case COMBINED:
-//                        addDocumentPermissions(document, dest, true);
-//                        addDocumentPermissions(folder, dest, true);
-//                        break;
-//                    case INHERIT:
-//                        addDocumentPermissions(folder, dest, true);
-//                        break;
-//                }
-//            }
-//
-//            documentEventLog.move(document, folder, name);
-//            return dest;
-//        } catch (final RuntimeException e) {
-//            documentEventLog.move(document, folder, name, e);
-//            throw e;
-//        }
-//    }
-
-
-    @Override
-    public DocRef rename(final String uuid, final String name) {
-        final E entity = loadByUuid(uuid);
-
-        entity.setName(name);
-
-        final E result = save(entity);
-        return DocRefUtil.create(result);
+        if (entity == null) {
+            throw new EntityServiceException("Entity not found");
+        }
+        return DocRefUtil.create(move(entity, parentFolderUUID));
     }
 
     @Override
-    public void delete(final String uuid) {
+    public DocRef renameDocument(final String uuid, final String name) {
         final E entity = loadByUuid(uuid);
+        if (entity == null) {
+            throw new EntityServiceException("Entity not found");
+        }
+        return DocRefUtil.create(rename(entity, name));
+    }
+
+    @Override
+    public void deleteDocument(final String uuid) {
+        final E entity = loadByUuid(uuid);
+        if (entity == null) {
+            throw new EntityServiceException("Entity not found");
+        }
         delete(entity);
     }
 
@@ -749,48 +757,27 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
 
+    @Transactional(readOnly = true)
     @Override
-    public Object read(final DocRef docRef) {
+    public E readDocument(final DocRef docRef) {
         return loadByUuid(docRef.getUuid());
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public Object write(final Object document) {
-        if (!getEntityClass().isAssignableFrom(document.getClass())) {
-            throw new EntityServiceException("Unexpected document type");
-        }
-
-        final E entity = (E) document;
-
-        return save(entity);
+    public E writeDocument(final E document) {
+        return save(document);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public Object fork(final Object document, final String docName, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
-        if (!getEntityClass().isAssignableFrom(document.getClass())) {
-            throw new EntityServiceException("Unexpected document type");
+    public E forkDocument(final E document, final String name, final DocRef destinationFolderRef) {
+        String parentFolderUUID = null;
+        if (destinationFolderRef != null) {
+            parentFolderUUID = destinationFolderRef.getUuid();
         }
 
-        final E entity = (E) document;
-
-        // This is going to be a copy so clear the persistence so save will create a new DB entry.
-        entity.clearPersistence();
-
-        entity.setName(docName);
-
-        setFolder(entity, destinationFolderRef.getUuid());
-
-        final E result = create(entity);
-        return DocRefUtil.create(result);
-
-        // TODO : Call the explorer service to notify it that a new item has been created.
-    }
-
-    @Override
-    public void delete(final DocRef docRef) {
-        delete(docRef.getUuid());
+        return copy(document, name, parentFolderUUID);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -798,31 +785,44 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     ////////////////////////////////////////////////////////////////////////
 
     @SuppressWarnings("unchecked")
-    protected QueryAppender<E, C> createQueryAppender(final StroomEntityManager entityManager) {
-        return new QueryAppender(entityManager);
+    protected QueryAppender<E, ?> createQueryAppender(final StroomEntityManager entityManager) {
+        return new QueryAppender<>(entityManager);
     }
 
-    @Override
-    public void appendCriteria(final List<BaseAdvancedQueryItem> items, final C criteria) {
-        CriteriaLoggingUtil.appendPageRequest(items, criteria.getPageRequest());
-    }
+//    @Override
+//    public void appendCriteria(final List<BaseAdvancedQueryItem> items, final C criteria) {
+//        CriteriaLoggingUtil.appendPageRequest(items, criteria.getPageRequest());
+//    }
 
-    private void checkCreatePermission(final E entity, final DocRef folder) {
-        checkCreatePermission(DocRefUtil.create(entity), folder);
-    }
+//    private void checkCreatePermission(final E entity, final DocRef folder) {
+//        checkCreatePermission(DocRefUtil.create(entity), folder);
+//    }
 
-    private void checkCreatePermission(final DocRef docRef, final DocRef folder) {
+    private void checkCreatePermission(final String folderUUID) {
         // Only allow administrators to create documents with no folder.
-        if (folder == null) {
+        if (folderUUID == null) {
             if (!securityContext.isAdmin()) {
                 throw new PermissionException("Only administrators can create root level entries");
             }
         } else {
-            if (!securityContext.hasDocumentPermission(Folder.ENTITY_TYPE, folder.getUuid(), DocumentPermissionNames.getDocumentCreatePermission(getEntityType()))) {
-                throw new PermissionException("You do not have permission to create (" + docRef + ") in folder " + folder);
+            if (!securityContext.hasDocumentPermission(Folder.ENTITY_TYPE, folderUUID, DocumentPermissionNames.getDocumentCreatePermission(getEntityType()))) {
+                throw new PermissionException("You do not have permission to create (" + getEntityType() + ") in folder " + folderUUID);
             }
         }
     }
+
+//    private void checkCreatePermission(final DocRef folder) {
+//        // Only allow administrators to create documents with no folder.
+//        if (folder == null) {
+//            if (!securityContext.isAdmin()) {
+//                throw new PermissionException("Only administrators can create root level entries");
+//            }
+//        } else {
+//            if (!securityContext.hasDocumentPermission(Folder.ENTITY_TYPE, folder.getUuid(), DocumentPermissionNames.getDocumentCreatePermission(getEntityType()))) {
+//                throw new PermissionException("You do not have permission to create (" + getEntityType() + ") in folder " + folder);
+//            }
+//        }
+//    }
 
     protected void checkUpdatePermission(final E entity) {
         if (!entity.isPersistent()) {
@@ -831,7 +831,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         checkUpdatePermission(DocRefUtil.create(entity));
     }
 
-    protected void checkUpdatePermission(final DocRef docRef) {
+    private void checkUpdatePermission(final DocRef docRef) {
         if (!securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.UPDATE)) {
             throw new PermissionException("You do not have permission to update (" + docRef + ")");
         }
@@ -847,11 +847,11 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         }
     }
 
-    protected final void checkDeletePermission(final E entity) {
+    private void checkDeletePermission(final E entity) {
         checkDeletePermission(DocRefUtil.create(entity));
     }
 
-    protected final void checkDeletePermission(final DocRef docRef) {
+    protected void checkDeletePermission(final DocRef docRef) {
         if (!securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.DELETE)) {
             throw new PermissionException("You do not have permission to delete (" + docRef + ")");
         }
@@ -901,28 +901,28 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         }
         return sqlFieldMap;
     }
-
-    public static final class EntityReferenceQuery {
-        private final String entityType;
-        private final String tableName;
-        private final String whereClause;
-
-        public EntityReferenceQuery(final String entityType, final String tableName, final String whereClause) {
-            this.entityType = entityType;
-            this.tableName = tableName;
-            this.whereClause = whereClause;
-        }
-
-        public String getEntityType() {
-            return entityType;
-        }
-
-        public String getTableName() {
-            return tableName;
-        }
-
-        public String getWhereClause() {
-            return whereClause;
-        }
-    }
+//
+//    public static final class EntityReferenceQuery {
+//        private final String entityType;
+//        private final String tableName;
+//        private final String whereClause;
+//
+//        public EntityReferenceQuery(final String entityType, final String tableName, final String whereClause) {
+//            this.entityType = entityType;
+//            this.tableName = tableName;
+//            this.whereClause = whereClause;
+//        }
+//
+//        public String getEntityType() {
+//            return entityType;
+//        }
+//
+//        public String getTableName() {
+//            return tableName;
+//        }
+//
+//        public String getWhereClause() {
+//            return whereClause;
+//        }
+//    }
 }

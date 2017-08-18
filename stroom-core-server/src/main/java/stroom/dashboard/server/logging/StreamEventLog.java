@@ -30,7 +30,6 @@ import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.entity.server.FolderService;
 import stroom.feed.shared.Feed;
 import stroom.security.Insecure;
 import stroom.streamstore.server.StreamStore;
@@ -48,8 +47,6 @@ public class StreamEventLog {
 
     @Resource
     private StroomEventLoggingService eventLoggingService;
-    @Resource
-    private FolderService folderService;
     @Resource
     private StreamStore streamStore;
 

@@ -17,9 +17,7 @@
 
 package stroom.script.server;
 
-import org.springframework.aop.framework.Advised;
 import org.springframework.stereotype.Component;
-import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.shared.Res;
 import stroom.script.shared.Script;
 import stroom.security.SecurityContext;
@@ -84,18 +82,6 @@ public class ScriptServlet extends HttpServlet {
                         pw.close();
                     }
 
-                } else {
-                    final String idString = queryParamMap.get("id");
-                    if (idString != null && idString.length() > 0) {
-                        final long id = Long.parseLong(idString);
-                        final Script script = getScript(id);
-                        final Res res = script.getResource();
-                        if (res != null && res.getData() != null) {
-                            final PrintWriter pw = response.getWriter();
-                            pw.write(res.getData());
-                            pw.close();
-                        }
-                    }
                 }
             }
 
@@ -105,46 +91,8 @@ public class ScriptServlet extends HttpServlet {
         }
     }
 
-    private Script getScript(final long id) {
-        // TODO : Remove this when the explorer service is broken out as a separate micro service.
-        final DocumentEntityServiceImpl documentEntityService = getDocEntityService();
-        if (documentEntityService != null) {
-            return (Script) documentEntityService.loadByIdInsecure(id, FETCH_SET);
-        }
-
-        return scriptService.loadById(id, FETCH_SET);
-    }
-
     private Script getScript(final String uuid) {
-        // TODO : Remove this when the explorer service is broken out as a separate micro service.
-        final DocumentEntityServiceImpl documentEntityService = getDocEntityService();
-        if (documentEntityService != null) {
-            return (Script) documentEntityService.loadByUuidInsecure(uuid, FETCH_SET);
-        }
-
-        return scriptService.loadByUuid(uuid, FETCH_SET);
-    }
-
-    private DocumentEntityServiceImpl getDocEntityService() {
-        final Object target = getTarget(scriptService);
-        if (target instanceof DocumentEntityServiceImpl) {
-            return (DocumentEntityServiceImpl) target;
-        }
-
-        return null;
-    }
-
-    private Object getTarget(Object obj) {
-        if (obj instanceof Advised) {
-            try {
-                final Advised advised = (Advised) obj;
-                return advised.getTargetSource().getTarget();
-            } catch (final Exception e) {
-                // Ignore
-            }
-        }
-
-        return obj;
+        return scriptService.loadByUuidInsecure(uuid, FETCH_SET);
     }
 
     private Map<String, String> createQueryParamMap(final String query) {

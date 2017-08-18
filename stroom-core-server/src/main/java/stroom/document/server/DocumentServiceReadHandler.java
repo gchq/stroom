@@ -54,7 +54,7 @@ class DocumentServiceReadHandler
 //            }
 //
 //            if (result != null) {
-//                entityEventLog.view(result);
+//                documentEventLog.view(result);
 //            }
 //        } catch (final RuntimeException e) {
 //            throw e;
@@ -62,6 +62,6 @@ class DocumentServiceReadHandler
 //
 //        return result;
 
-        return (SharedObject) documentService.read(action.getDocRef());
+        return (SharedObject) documentService.readDocument(action.getDocRef());
     }
 }

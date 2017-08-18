@@ -19,13 +19,14 @@ package stroom.xml;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import stroom.pipeline.server.PipelineEntityService;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.server.PipelineTestUtil;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.server.factory.Pipeline;
 import stroom.pipeline.server.factory.PipelineFactory;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineService;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.test.StroomProcessTestFileUtil;
@@ -45,7 +46,7 @@ public class XMLValidator {
     @Resource
     private PipelineFactory pipelineFactory;
     @Resource
-    private PipelineEntityService pipelineEntityService;
+    private PipelineService pipelineService;
     @Resource
     private ErrorReceiverProxy errorReceiver;
 
@@ -69,7 +70,7 @@ public class XMLValidator {
                 errorReceiver.setErrorReceiver(new LoggingErrorReceiver());
 
                 // Create the pipeline.
-                PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineEntityService,
+                PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService,
                         StroomProcessTestFileUtil.getString("F2XTestUtil/validation.Pipeline.data.xml"));
                 final PipelineData pipelineData = pipelineEntity.getPipelineData();
 
@@ -85,7 +86,7 @@ public class XMLValidator {
                 // schemaFilterElementType, "schemaGroup", "String", false);
                 pipelineData
                         .addProperty(PipelineDataUtil.createProperty("schemaFilter", "schemaGroup", "DATA_SPLITTER"));
-                pipelineEntity = pipelineEntityService.save(pipelineEntity);
+                pipelineEntity = pipelineService.save(pipelineEntity);
 
                 final Pipeline pipeline = pipelineFactory.create(pipelineData);
                 pipeline.process(inputStream);

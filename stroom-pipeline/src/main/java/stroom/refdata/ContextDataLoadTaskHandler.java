@@ -23,7 +23,7 @@ import org.springframework.context.annotation.Scope;
 import stroom.feed.shared.Feed;
 import stroom.io.StreamCloser;
 import stroom.pipeline.server.EncodingSelection;
-import stroom.pipeline.server.PipelineEntityService;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.server.errorhandler.ErrorReceiverIdDecorator;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.StoredErrorReceiver;
@@ -58,7 +58,7 @@ public class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataL
     @Resource
     private ErrorReceiverProxy errorReceiverProxy;
     @Resource(name = "cachedPipelineEntityService")
-    private PipelineEntityService pipelineEntityService;
+    private PipelineService pipelineService;
     @Resource
     private PipelineDataCache pipelineDataCache;
 
@@ -96,7 +96,7 @@ public class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataL
                 }
 
                 // Create the parser.
-                final PipelineEntity pipelineEntity = pipelineEntityService.loadByUuid(task.getContextPipeline().getUuid());
+                final PipelineEntity pipelineEntity = pipelineService.loadByUuid(task.getContextPipeline().getUuid());
                 final PipelineData pipelineData = pipelineDataCache.getOrCreate(pipelineEntity);
                 final Pipeline pipeline = pipelineFactory.create(pipelineData);
 

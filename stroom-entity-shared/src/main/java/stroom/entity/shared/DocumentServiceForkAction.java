@@ -24,7 +24,7 @@ public class DocumentServiceForkAction<D extends SharedObject> extends AbstractE
     private static final long serialVersionUID = 800905016214418723L;
 
     private D document;
-    private String docName;
+    private String name;
     private DocRef destinationFolderRef;
     private PermissionInheritance permissionInheritance;
 
@@ -33,14 +33,14 @@ public class DocumentServiceForkAction<D extends SharedObject> extends AbstractE
     }
 
     @SuppressWarnings("unchecked")
-    public DocumentServiceForkAction(final Entity entity, final String docName, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
-        this(DocRefUtil.create(entity), (D) entity, docName, destinationFolderRef, permissionInheritance);
+    public DocumentServiceForkAction(final Entity entity, final String name, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+        this(DocRefUtil.create(entity), (D) entity, name, destinationFolderRef, permissionInheritance);
     }
 
-    public DocumentServiceForkAction(final DocRef docRef, final D document, final String docName, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+    public DocumentServiceForkAction(final DocRef docRef, final D document, final String name, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
         super(docRef, "Fork: " + docRef);
         this.document = document;
-        this.docName = docName;
+        this.name = name;
         this.destinationFolderRef = destinationFolderRef;
         this.permissionInheritance = permissionInheritance;
     }
@@ -49,8 +49,8 @@ public class DocumentServiceForkAction<D extends SharedObject> extends AbstractE
         return document;
     }
 
-    public String getDocName() {
-        return docName;
+    public String getName() {
+        return name;
     }
 
     public DocRef getDestinationFolderRef() {

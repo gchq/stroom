@@ -21,9 +21,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import stroom.dashboard.shared.FindQueryCriteria;
 import stroom.dashboard.shared.QueryEntity;
-import stroom.entity.server.GenericEntityService;
 import stroom.entity.server.MockDocumentEntityService;
-import stroom.importexport.server.EntityPathResolver;
+import stroom.importexport.server.ImportExportHelper;
 import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Inject;
@@ -33,8 +32,8 @@ import java.util.List;
 @Component("queryService")
 public class MockQueryService extends MockDocumentEntityService<QueryEntity, FindQueryCriteria> implements QueryService {
     @Inject
-    public MockQueryService(final GenericEntityService genericEntityService, final EntityPathResolver entityPathResolver) {
-        super(genericEntityService, entityPathResolver);
+    public MockQueryService(final ImportExportHelper importExportHelper) {
+        super(importExportHelper);
     }
 
     @Override

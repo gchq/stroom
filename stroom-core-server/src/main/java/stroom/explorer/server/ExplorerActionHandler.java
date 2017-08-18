@@ -27,11 +27,11 @@ public interface ExplorerActionHandler {
     /**
      * Called to create a new item in this document store.
      *
-     * @param parentFolderUUID The parent folder that the item wil be created in. This is used to check create permissions.
      * @param name             The name of the document to be created.
+     * @param parentFolderUUID The parent folder that the item wil be created in. This is used to check create permissions.
      * @return A doc ref for the newly created document.
      */
-    DocRef create(String parentFolderUUID, String name);
+    DocRef createDocument(String name, String parentFolderUUID);
 
     /**
      * Copy an existing document identified by uuid, to the specified location.
@@ -40,7 +40,7 @@ public interface ExplorerActionHandler {
      * @param parentFolderUUID The uuid of the parent folder that you want to create the copy in.
      * @return A doc ref for the new document copy.
      */
-    DocRef copy(String uuid, String parentFolderUUID);
+    DocRef copyDocument(String uuid, String parentFolderUUID);
 
     /**
      * Move an existing document identified by uuid, to the specified location.
@@ -49,7 +49,7 @@ public interface ExplorerActionHandler {
      * @param parentFolderUUID The uuid of the parent folder that you want to move the document to.
      * @return A doc ref for the moved document.
      */
-    DocRef move(String uuid, String parentFolderUUID);
+    DocRef moveDocument(String uuid, String parentFolderUUID);
 
     /**
      * Change the name of an existing document identified by uuid, to the specified name.
@@ -58,12 +58,12 @@ public interface ExplorerActionHandler {
      * @param name The new name of the document.
      * @return A doc ref for the renamed document.
      */
-    DocRef rename(String uuid, String name);
+    DocRef renameDocument(String uuid, String name);
 
     /**
      * Delete an existing document identified by uuid.
      *
      * @param uuid The uuid of the document you want to delete.
      */
-    void delete(String uuid);
+    void deleteDocument(String uuid);
 }

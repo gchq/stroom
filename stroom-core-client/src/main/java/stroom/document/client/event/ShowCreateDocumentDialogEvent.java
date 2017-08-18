@@ -20,23 +20,23 @@ package stroom.document.client.event;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.shared.ExplorerNode;
 
 public class ShowCreateDocumentDialogEvent extends GwtEvent<ShowCreateDocumentDialogEvent.Handler> {
     private static Type<Handler> TYPE;
-    private final ExplorerData selected;
+    private final ExplorerNode selected;
     private final String docType;
     private final String docDisplayType;
     private final boolean allowNullFolder;
 
-    private ShowCreateDocumentDialogEvent(final ExplorerData selected, final String docType, final String docDisplayType, final boolean allowNullFolder) {
+    private ShowCreateDocumentDialogEvent(final ExplorerNode selected, final String docType, final String docDisplayType, final boolean allowNullFolder) {
         this.selected = selected;
         this.docType = docType;
         this.docDisplayType = docDisplayType;
         this.allowNullFolder = allowNullFolder;
     }
 
-    public static void fire(final HasHandlers handlers, final ExplorerData selected, final String docType, final String docDisplayType, final boolean allowNullFolder) {
+    public static void fire(final HasHandlers handlers, final ExplorerNode selected, final String docType, final String docDisplayType, final boolean allowNullFolder) {
         handlers.fireEvent(
                 new ShowCreateDocumentDialogEvent(selected, docType, docDisplayType, allowNullFolder));
     }
@@ -58,7 +58,7 @@ public class ShowCreateDocumentDialogEvent extends GwtEvent<ShowCreateDocumentDi
         handler.onCreate(this);
     }
 
-    public ExplorerData getSelected() {
+    public ExplorerNode getSelected() {
         return selected;
     }
 

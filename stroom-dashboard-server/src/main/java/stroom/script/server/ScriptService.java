@@ -22,5 +22,9 @@ import stroom.entity.server.FindService;
 import stroom.script.shared.FindScriptCriteria;
 import stroom.script.shared.Script;
 
+import java.util.Set;
+
 public interface ScriptService extends DocumentEntityService<Script>, FindService<Script, FindScriptCriteria> {
+    // TODO : Remove this when IFrames are able to pass user tokens so that script can be loaded in the context of the current user.
+    Script loadByUuidInsecure(String uuid, Set<String> fetchSet);
 }

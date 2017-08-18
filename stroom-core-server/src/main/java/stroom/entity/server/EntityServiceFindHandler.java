@@ -38,12 +38,12 @@ import javax.inject.Inject;
 class EntityServiceFindHandler
         extends AbstractTaskHandler<EntityServiceFindAction<BaseCriteria, SharedObject>, ResultList<SharedObject>> {
     private final EntityServiceBeanRegistry beanRegistry;
-    private final DocumentEventLog entityEventLog;
+    private final DocumentEventLog documentEventLog;
 
     @Inject
-    EntityServiceFindHandler(final EntityServiceBeanRegistry beanRegistry, final DocumentEventLog entityEventLog) {
+    EntityServiceFindHandler(final EntityServiceBeanRegistry beanRegistry, final DocumentEventLog documentEventLog) {
         this.beanRegistry = beanRegistry;
-        this.entityEventLog = entityEventLog;
+        this.documentEventLog = documentEventLog;
     }
 
     @SuppressWarnings("unchecked")
@@ -69,9 +69,9 @@ class EntityServiceFindHandler
 
         try {
             result = (BaseResultList<SharedObject>) beanRegistry.invoke("find", action.getCriteria());
-            entityEventLog.search(action.getCriteria(), query, result);
+            documentEventLog.search(action.getCriteria(), query, result);
         } catch (final RuntimeException e) {
-            entityEventLog.search(action.getCriteria(), query, e);
+            documentEventLog.search(action.getCriteria(), query, e);
 
             throw e;
         }

@@ -28,26 +28,26 @@ import javax.inject.Inject;
 
 @Component
 class DocumentServiceImpl implements DocumentService {
-    private final DocumentEventLog entityEventLog;
+    private final DocumentEventLog documentEventLog;
     private final EntityServiceBeanRegistry beanRegistry;
 
     @Inject
-    public DocumentServiceImpl(final DocumentEventLog entityEventLog, final EntityServiceBeanRegistry beanRegistry) {
-        this.entityEventLog = entityEventLog;
+    public DocumentServiceImpl(final DocumentEventLog documentEventLog, final EntityServiceBeanRegistry beanRegistry) {
+        this.documentEventLog = documentEventLog;
         this.beanRegistry = beanRegistry;
     }
 
     @Override
-    public Object read(DocRef docRef) {
+    public Object readDocument(DocRef docRef) {
         Object result = null;
         try {
             final DocumentActionHandler documentActionHandler = getDocumentActionHandler(docRef.getType());
-            result = documentActionHandler.read(docRef);
+            result = documentActionHandler.readDocument(docRef);
             if (result != null) {
-                entityEventLog.view(result);
+                documentEventLog.view(result);
             }
         } catch (final RuntimeException e) {
-            entityEventLog.view(result, e);
+            documentEventLog.view(result, e);
             throw e;
         }
 
@@ -55,16 +55,16 @@ class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
-    public Object write(DocRef docRef, final Object document) {
+    public Object writeDocument(DocRef docRef, final Object document) {
         Object result = null;
         try {
             final DocumentActionHandler documentActionHandler = getDocumentActionHandler(docRef.getType());
-            result = documentActionHandler.write(document);
+            result = documentActionHandler.writeDocument(document);
             if (result != null) {
-                entityEventLog.update(document, result);
+                documentEventLog.update(document, result, null);
             }
         } catch (final RuntimeException e) {
-            entityEventLog.update(document, result, e);
+            documentEventLog.update(document, result, e);
             throw e;
         }
 
@@ -72,32 +72,36 @@ class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
-    public Object fork(final DocRef docRef, final Object document, final String docName, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+    public Object forkDocument(final DocRef docRef, final Object document, final String docName, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
         Object result = null;
         try {
             final DocumentActionHandler documentActionHandler = getDocumentActionHandler(docRef.getType());
-            result = documentActionHandler.fork(document, docName, destinationFolderRef, permissionInheritance);
+            result = documentActionHandler.forkDocument(document, docName, destinationFolderRef);
             if (result != null) {
-                entityEventLog.create(result);
+                documentEventLog.create(result, null);
             }
         } catch (final RuntimeException e) {
-            entityEventLog.create(result, e);
+            documentEventLog.create(result, e);
             throw e;
         }
+
+        // TODO : Tell the explorer service that this document has been forked so that it can create an entry and setup permissions.
 
         return result;
     }
 
     @Override
-    public void delete(final DocRef docRef) {
-        try {
-            final DocumentActionHandler documentActionHandler = getDocumentActionHandler(docRef.getType());
-            documentActionHandler.delete(docRef);
-            entityEventLog.delete(docRef);
-        } catch (final RuntimeException e) {
-            entityEventLog.delete(docRef, e);
-            throw e;
-        }
+    public void deleteDocument(final DocRef docRef) {
+//        try {
+//            final DocumentActionHandler documentActionHandler = getDocumentActionHandler(docRef.getType());
+//            documentActionHandler.deleteDocument(docRef);
+//            documentEventLog.delete(docRef, null);
+//        } catch (final RuntimeException e) {
+//            documentEventLog.delete(docRef, e);
+//            throw e;
+//        }
+
+        throw new EntityServiceException("Not implemented");
     }
 
     private DocumentActionHandler getDocumentActionHandler(final String type) {

@@ -27,6 +27,7 @@ import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.entity.shared.EntityReferenceFindAction;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.feed.shared.Feed;
 import stroom.item.client.StringListBox;
 import stroom.pipeline.shared.PipelineEntity;

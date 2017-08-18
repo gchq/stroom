@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.server.PipelineEntityService;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ProcessException;
@@ -73,7 +73,7 @@ public class ExtractionTaskHandler extends AbstractTaskHandler<ExtractionTask, V
     private final PipelineHolder pipelineHolder;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final PipelineFactory pipelineFactory;
-    private final PipelineEntityService pipelineEntityService;
+    private final PipelineService pipelineService;
     private final PipelineDataCache pipelineDataCache;
     private final TaskMonitor taskMonitor;
     private final SecurityContext securityContext;
@@ -85,7 +85,7 @@ public class ExtractionTaskHandler extends AbstractTaskHandler<ExtractionTask, V
                                  final FeedHolder feedHolder, final CurrentUserHolder currentUserHolder, final StreamHolder streamHolder,
                                  final PipelineHolder pipelineHolder, final ErrorReceiverProxy errorReceiverProxy,
                                  final PipelineFactory pipelineFactory,
-                                 @Named("cachedPipelineEntityService") final PipelineEntityService pipelineEntityService,
+                                 @Named("cachedPipelineEntityService") final PipelineService pipelineService,
                                  final PipelineDataCache pipelineDataCache, final TaskMonitor taskMonitor, final SecurityContext securityContext) {
         this.streamStore = streamStore;
         this.feedService = feedService;
@@ -95,7 +95,7 @@ public class ExtractionTaskHandler extends AbstractTaskHandler<ExtractionTask, V
         this.pipelineHolder = pipelineHolder;
         this.errorReceiverProxy = errorReceiverProxy;
         this.pipelineFactory = pipelineFactory;
-        this.pipelineEntityService = pipelineEntityService;
+        this.pipelineService = pipelineService;
         this.pipelineDataCache = pipelineDataCache;
         this.taskMonitor = taskMonitor;
         this.securityContext = securityContext;
@@ -131,7 +131,7 @@ public class ExtractionTaskHandler extends AbstractTaskHandler<ExtractionTask, V
             final DocRef pipelineRef = task.getPipelineRef();
 
             // Get the translation that will be used to display results.
-            final PipelineEntity pipelineEntity = pipelineEntityService.loadByUuid(pipelineRef.getUuid());
+            final PipelineEntity pipelineEntity = pipelineService.loadByUuid(pipelineRef.getUuid());
             if (pipelineEntity == null) {
                 throw new SearchException("Unable to find result pipeline: " + pipelineRef);
             }

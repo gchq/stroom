@@ -28,7 +28,7 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Range;
 import stroom.feed.server.MockFeedService;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.server.MockPipelineEntityService;
+import stroom.pipeline.server.MockPipelineService;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.shared.PipelineEntity;
@@ -51,14 +51,14 @@ public class TestReferenceData extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestReferenceData.class);
 
     private final MockFeedService feedService = new MockFeedService();
-    private final MockPipelineEntityService pipelineEntityService = new MockPipelineEntityService();
+    private final MockPipelineService pipelineService = new MockPipelineService();
 
     @Test
     public void testSimple() {
         final Feed feed1 = feedService.create("TEST_FEED_1");
         final Feed feed2 = feedService.create("TEST_FEED_2");
-        final PipelineEntity pipeline1 = pipelineEntityService.create("TEST_PIPELINE_1");
-        final PipelineEntity pipeline2 = pipelineEntityService.create("TEST_PIPELINE_2");
+        final PipelineEntity pipeline1 = pipelineService.create("TEST_PIPELINE_1");
+        final PipelineEntity pipeline2 = pipelineService.create("TEST_PIPELINE_2");
 
         final List<PipelineReference> pipelineReferences = new ArrayList<>();
         pipelineReferences.add(new PipelineReference(DocRefUtil.create(pipeline1), DocRefUtil.create(feed1),

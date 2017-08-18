@@ -21,11 +21,11 @@ import stroom.entity.shared.PermissionInheritance;
 import stroom.query.api.v1.DocRef;
 
 interface DocumentService {
-    Object read(DocRef docRef);
+    Object readDocument(DocRef docRef);
 
-    Object write(DocRef docRef, Object document);
+    Object writeDocument(DocRef docRef, Object document);
 
-    Object fork(DocRef docRef, Object document, final String docName, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance);
+    Object forkDocument(DocRef docRef, Object document, final String docName, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance);
 
-    void delete(DocRef docRef);
+    void deleteDocument(DocRef docRef);
 }

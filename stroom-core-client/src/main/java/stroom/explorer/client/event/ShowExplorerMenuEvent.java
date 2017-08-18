@@ -19,22 +19,22 @@ package stroom.explorer.client.event;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.widget.util.client.MultiSelectionModel;
 
 public class ShowExplorerMenuEvent extends GwtEvent<ShowExplorerMenuEvent.Handler> {
     private static Type<Handler> TYPE;
-    private final MultiSelectionModel<ExplorerData> selectionModel;
+    private final MultiSelectionModel<ExplorerNode> selectionModel;
     private final int x;
     private final int y;
 
-    private ShowExplorerMenuEvent(final MultiSelectionModel<ExplorerData> selectionModel, final int x, final int y) {
+    private ShowExplorerMenuEvent(final MultiSelectionModel<ExplorerNode> selectionModel, final int x, final int y) {
         this.selectionModel = selectionModel;
         this.x = x;
         this.y = y;
     }
 
-    public static void fire(final HasHandlers handlers, final MultiSelectionModel<ExplorerData> selectionModel, final int x, final int y) {
+    public static void fire(final HasHandlers handlers, final MultiSelectionModel<ExplorerNode> selectionModel, final int x, final int y) {
         handlers.fireEvent(new ShowExplorerMenuEvent(selectionModel, x, y));
     }
 
@@ -55,7 +55,7 @@ public class ShowExplorerMenuEvent extends GwtEvent<ShowExplorerMenuEvent.Handle
         handler.onShow(this);
     }
 
-    public MultiSelectionModel<ExplorerData> getSelectionModel() {
+    public MultiSelectionModel<ExplorerNode> getSelectionModel() {
         return selectionModel;
     }
 

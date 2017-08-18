@@ -19,6 +19,22 @@ package stroom.pipeline.spring;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
+import stroom.dictionary.server.DictionaryService;
+import stroom.dictionary.shared.Dictionary;
+import stroom.explorer.server.ExplorerActionHandlers;
+import stroom.feed.server.FeedService;
+import stroom.feed.shared.Feed;
+import stroom.pipeline.server.PipelineService;
+import stroom.pipeline.server.TextConverterService;
+import stroom.pipeline.server.XSLTService;
+import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.TextConverter;
+import stroom.pipeline.shared.XSLT;
+import stroom.xmlschema.server.XMLSchemaService;
+import stroom.xmlschema.shared.XMLSchema;
+
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 /**
  * Defines the component scanning required for the server module.
@@ -34,4 +50,15 @@ import org.springframework.context.annotation.FilterType;
         // explicitly.
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
 public class PipelineConfiguration {
+    @Inject
+    public PipelineConfiguration(final ExplorerActionHandlers explorerActionHandlers,
+                               final Provider<TextConverterService> textConverterServiceProvider,
+                               final Provider<XSLTService> xsltServiceProvider,
+                               final Provider<PipelineService> pipelineServiceProvider,
+                               final Provider<XMLSchemaService> xmlSchemaServiceProvider) {
+        explorerActionHandlers.add(4, TextConverter.ENTITY_TYPE,"Text Converter", textConverterServiceProvider);
+        explorerActionHandlers.add(5, XSLT.ENTITY_TYPE, XSLT.ENTITY_TYPE, xsltServiceProvider);
+        explorerActionHandlers.add(6, PipelineEntity.ENTITY_TYPE, PipelineEntity.ENTITY_TYPE, pipelineServiceProvider);
+        explorerActionHandlers.add(13, XMLSchema.ENTITY_TYPE, "XML Schema", xmlSchemaServiceProvider);
+    }
 }

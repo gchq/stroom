@@ -43,7 +43,7 @@ public class TestScriptServiceImpl extends AbstractCoreIntegrationTest {
         final Script script = scriptService.create("test");
         script.setResource(res);
         scriptService.save(script);
-        final Script loaded = scriptService.loadByUuid(script.getUuid(), FETCH_SET);
+        final Script loaded = scriptService.load(script, FETCH_SET);
 
         Assert.assertEquals(data, loaded.getResource().getData());
     }

@@ -55,7 +55,7 @@ import java.util.Properties;
  * component scan as configurations should be specified explicitly.
  */
 @Configuration
-@ComponentScan(basePackages = {"stroom.security.server", "stroom.security.shared"}, excludeFilters = {
+@ComponentScan(basePackages = {"stroom.security.server"}, excludeFilters = {
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
 public class SecurityConfiguration {
     public static final String PROD_SECURITY = "PROD_SECURITY";

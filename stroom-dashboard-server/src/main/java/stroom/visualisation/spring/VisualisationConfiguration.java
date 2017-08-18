@@ -19,6 +19,12 @@ package stroom.visualisation.spring;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
+import stroom.explorer.server.ExplorerActionHandlers;
+import stroom.visualisation.server.VisualisationService;
+import stroom.visualisation.shared.Visualisation;
+
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 
 /**
@@ -26,7 +32,12 @@ import org.springframework.context.annotation.FilterType;
  * component scan as configurations should be specified explicitly.
  */
 @Configuration
-@ComponentScan(basePackages = {"stroom.visualisation.server", "stroom.visualisation.shared"}, excludeFilters = {
+@ComponentScan(basePackages = {"stroom.visualisation.server"}, excludeFilters = {
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
 public class VisualisationConfiguration {
+    @Inject
+    public VisualisationConfiguration(final ExplorerActionHandlers explorerActionHandlers,
+                                      final Provider<VisualisationService> visualisationServiceProvider) {
+        explorerActionHandlers.add(9, Visualisation.ENTITY_TYPE, Visualisation.ENTITY_TYPE, visualisationServiceProvider);
+    }
 }

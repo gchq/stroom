@@ -149,7 +149,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
         // TODO: We need to use the cached TextConverter service ideally but
         // before we do it needs to be aware cluster wide when TextConverter has
         // been updated.
-        final TextConverter tc = textConverterService.load(textConverter);
+        final TextConverter tc = textConverterService.loadByUuid(textConverter.getUuid());
         if (tc == null) {
             throw new ProcessException(
                     "TextConverter \"" + textConverter.getName() + "\" appears to have been deleted");

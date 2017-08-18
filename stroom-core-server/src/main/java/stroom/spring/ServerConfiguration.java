@@ -20,10 +20,16 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Scope;
+import stroom.explorer.server.ExplorerActionHandlers;
+import stroom.feed.server.FeedService;
+import stroom.feed.shared.Feed;
 import stroom.util.config.StroomProperties;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomScope;
 import stroom.util.thread.ThreadLocalBuffer;
+
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 /**
  * Defines the application context configuration for the server module.
@@ -31,6 +37,12 @@ import stroom.util.thread.ThreadLocalBuffer;
 @Configuration
 @EnableAspectJAutoProxy
 public class ServerConfiguration {
+    @Inject
+    public ServerConfiguration(final ExplorerActionHandlers explorerActionHandlers,
+                               final Provider<FeedService> feedServiceProvider) {
+        explorerActionHandlers.add(3, Feed.ENTITY_TYPE, Feed.ENTITY_TYPE, feedServiceProvider);
+    }
+
     @Bean
     @Scope(StroomScope.PROTOTYPE)
     public ThreadLocalBuffer prototypeThreadLocalBuffer() {

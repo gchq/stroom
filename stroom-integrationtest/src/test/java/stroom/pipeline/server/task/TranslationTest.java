@@ -29,9 +29,10 @@ import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.importexport.server.ImportExportSerializer;
 import stroom.node.server.NodeCache;
-import stroom.pipeline.server.PipelineEntityService;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.SharedStepData;
 import stroom.pipeline.shared.StepType;
@@ -99,7 +100,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Resource
     private FeedService feedService;
     @Resource
-    private PipelineEntityService pipelineEntityService;
+    private PipelineService pipelineService;
     @Resource
     private StreamProcessorService streamProcessorService;
     @Resource
@@ -140,7 +141,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     protected void processData(final File inputDir, final File outputDir, final boolean reference,
                                final boolean compareOutput, final List<Exception> exceptions) {
         // Create a stream processor for each pipeline.
-        final BaseResultList<PipelineEntity> pipelines = pipelineEntityService.find(new FindPipelineEntityCriteria());
+        final BaseResultList<PipelineEntity> pipelines = pipelineService.find(new FindPipelineEntityCriteria());
         for (final PipelineEntity pipelineEntity : pipelines) {
             final Feed feed = feedService.loadByName(pipelineEntity.getName());
 
@@ -338,7 +339,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final BaseResultList<Feed> feeds = feedService.find(feedCriteria);
         Assert.assertTrue("No feeds found", feeds != null && feeds.size() > 0);
         Assert.assertEquals("Expected 1 feed", 1, feeds.size());
-        final BaseResultList<PipelineEntity> pipelines = pipelineEntityService
+        final BaseResultList<PipelineEntity> pipelines = pipelineService
                 .find(new FindPipelineEntityCriteria(feedName));
         Assert.assertTrue("No pipelines found", pipelines != null && pipelines.size() > 0);
         Assert.assertEquals("Expected 1 pipeline", 1, pipelines.size());

@@ -33,7 +33,7 @@ import stroom.entity.client.presenter.CreateDocumentPresenter.CreateDocumentView
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.explorer.client.presenter.EntityTreePresenter;
-import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.query.api.v1.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -73,8 +73,8 @@ public class CreateDocumentPresenter
         entityTreePresenter.setSelectedItem(null);
 
 //        if (event.getCurrentParents() != null && event.getCurrentParents().size() > 0) {
-//            ExplorerData folder = null;
-//            for (final ExplorerData parent : event.getCurrentParents()) {
+//            ExplorerNode folder = null;
+//            for (final ExplorerNode parent : event.getCurrentParents()) {
 //                if (folder == null && parent != null && parent instanceof EntityData
 //                        && Folder.ENTITY_TYPE.equals(parent.getType())) {
 //                    folder = parent;
@@ -114,7 +114,7 @@ public class CreateDocumentPresenter
         if (ok) {
             final DocRef destinationFolderRef = getFolder();
             if (!allowNullFolder && destinationFolderRef == null) {
-                AlertEvent.fireWarn(CreateDocumentPresenter.this, "No parent group has been selected", null);
+                AlertEvent.fireWarn(CreateDocumentPresenter.this, "No parent folder has been selected", null);
             } else {
                 String docName = getView().getName();
                 if (docName != null) {
@@ -139,7 +139,7 @@ public class CreateDocumentPresenter
     }
 
     private DocRef getFolder() {
-        final ExplorerData selected = entityTreePresenter.getSelectedItem();
+        final ExplorerNode selected = entityTreePresenter.getSelectedItem();
         if (selected != null) {
             return selected.getDocRef();
         }

@@ -18,7 +18,7 @@
 package stroom.process.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.pipeline.server.PipelineEntityService;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.process.shared.CreateProcessorAction;
 import stroom.security.Secured;
@@ -38,11 +38,11 @@ public class CreateProcessorHandler extends AbstractTaskHandler<CreateProcessorA
     @Resource
     private StreamProcessorFilterService streamProcessorFilterService;
     @Resource
-    private PipelineEntityService pipelineEntityService;
+    private PipelineService pipelineService;
 
     @Override
     public StreamProcessorFilter exec(final CreateProcessorAction action) {
-        final PipelineEntity pipelineEntity = pipelineEntityService.loadByUuid(action.getPipeline().getUuid());
+        final PipelineEntity pipelineEntity = pipelineService.loadByUuid(action.getPipeline().getUuid());
         return streamProcessorFilterService.createNewFilter(pipelineEntity, action.getFindStreamCriteria(),
                 action.isEnabled(), action.getPriority());
     }

@@ -30,7 +30,6 @@ import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.entity.server.FolderService;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.ImportState;
 import stroom.importexport.shared.ExportConfigAction;
@@ -47,8 +46,6 @@ public class ImportExportEventLog {
 
     @Resource
     private StroomEventLoggingService eventLoggingService;
-    @Resource
-    private FolderService folderService;
 
     public void export(final ExportConfigAction exportDataAction) {
         try {

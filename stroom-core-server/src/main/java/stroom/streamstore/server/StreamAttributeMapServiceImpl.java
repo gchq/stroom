@@ -32,7 +32,7 @@ import stroom.feed.MetaMap;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.node.shared.Volume;
-import stroom.pipeline.server.PipelineEntityService;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.policy.server.DataRetentionService;
 import stroom.ruleset.shared.DataRetentionPolicy;
@@ -69,7 +69,7 @@ public class StreamAttributeMapServiceImpl
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeMapServiceImpl.class);
 
     private final FeedService feedService;
-    private final PipelineEntityService pipelineEntityService;
+    private final PipelineService pipelineService;
     private final StreamTypeService streamTypeService;
     private final StreamProcessorService streamProcessorService;
     private final StreamStore streamStore;
@@ -82,7 +82,7 @@ public class StreamAttributeMapServiceImpl
 
     @Inject
     StreamAttributeMapServiceImpl(@Named("cachedFeedService") final FeedService feedService,
-                                  @Named("cachedPipelineEntityService") final PipelineEntityService pipelineEntityService,
+                                  @Named("cachedPipelineEntityService") final PipelineService pipelineService,
                                   @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
                                   @Named("cachedStreamProcessorService") final StreamProcessorService streamProcessorService,
                                   final StreamStore streamStore,
@@ -93,7 +93,7 @@ public class StreamAttributeMapServiceImpl
                                   final StreamMaintenanceService streamMaintenanceService,
                                   final SecurityContext securityContext) {
         this.feedService = feedService;
-        this.pipelineEntityService = pipelineEntityService;
+        this.pipelineService = pipelineService;
         this.streamTypeService = streamTypeService;
         this.streamProcessorService = streamProcessorService;
         this.streamStore = streamStore;
@@ -268,7 +268,7 @@ public class StreamAttributeMapServiceImpl
             // failures as we don't mind users seeing streams even if they do
             // not have visibility of the pipeline that created the stream.
             try {
-                streamProcessor.setPipeline(pipelineEntityService.load(streamProcessor.getPipeline()));
+                streamProcessor.setPipeline(pipelineService.load(streamProcessor.getPipeline()));
             } catch (final PermissionException e) {
                 streamProcessor.setPipeline(null);
 

@@ -23,7 +23,7 @@ import stroom.entity.shared.Folder;
 import stroom.entity.shared.SharedDocRef;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.server.PipelineEntityService;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
@@ -43,13 +43,13 @@ import java.util.List;
 @Scope(value = StroomScope.TASK)
 public class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStreamAction, SharedDocRef> {
     private final StreamStore streamStore;
-    private final PipelineEntityService pipelineEntityService;
+    private final PipelineService pipelineService;
     private final FeedService feedService;
 
     @Inject
-    GetPipelineForStreamHandler(final StreamStore streamStore, final PipelineEntityService pipelineEntityService, final FeedService feedService) {
+    GetPipelineForStreamHandler(final StreamStore streamStore, final PipelineService pipelineService, final FeedService feedService) {
         this.streamStore = streamStore;
-        this.pipelineEntityService = pipelineEntityService;
+        this.pipelineService = pipelineService;
         this.feedService = feedService;
     }
 
@@ -84,7 +84,7 @@ public class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipeline
                     if (folder != null) {
                         final FindPipelineEntityCriteria findPipelineCriteria = new FindPipelineEntityCriteria();
                         findPipelineCriteria.getFolderIdSet().add(folder);
-                        final List<PipelineEntity> pipelines = pipelineEntityService.find(findPipelineCriteria);
+                        final List<PipelineEntity> pipelines = pipelineService.find(findPipelineCriteria);
                         if (pipelines != null && pipelines.size() > 0) {
                             final PipelineEntity pipelineEntity = pipelines.get(0);
                             docRef = DocRefUtil.create(pipelineEntity);

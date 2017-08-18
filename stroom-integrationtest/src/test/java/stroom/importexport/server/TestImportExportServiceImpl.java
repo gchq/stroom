@@ -19,14 +19,14 @@ package stroom.importexport.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.entity.server.FolderService;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.ImportState;
+import stroom.explorer.server.ExplorerService;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.server.PipelineEntityService;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v1.DocRef;
 import stroom.resource.server.ResourceStore;
@@ -44,13 +44,13 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
     @Resource
     private ResourceStore resourceStore;
     @Resource
-    private FolderService folderService;
-    @Resource
-    private PipelineEntityService pipelineEntityService;
+    private PipelineService pipelineService;
     @Resource
     private FeedService feedService;
     @Resource
     private CommonTestControl commonTestControl;
+    @Resource
+    private ExplorerService explorerService;
 
     @Test
     public void testExport() {
@@ -58,43 +58,37 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
 
         Assert.assertEquals(0, commonTestControl.countEntity(Folder.class));
 
-        Folder folder1 = folderService.create("Root1_" + FileSystemTestUtil.getUniqueTestString());
-        folder1 = folderService.save(folder1);
-        final DocRef folder1Ref = DocRefUtil.create(folder1);
-
-        Folder folder2 = folderService.create("Root2_" + FileSystemTestUtil.getUniqueTestString());
-        folder2 = folderService.save(folder2);
-        final DocRef folder2Ref = DocRefUtil.create(folder2);
-
-        Folder folder2child1 = folderService.create(folder2Ref, "Root2_Child1_" + FileSystemTestUtil.getUniqueTestString());
-        folder2child1 = folderService.save(folder2child1);
-        final DocRef folder2child1Ref = DocRefUtil.create(folder2child1);
-
-        Folder folder2child2 = folderService.create(folder2Ref, "Root2_Child2_" + FileSystemTestUtil.getUniqueTestString());
-        folder2child2 = folderService.save(folder2child2);
-        final DocRef folder2child2Ref = DocRefUtil.create(folder2child2);
+        final DocRef folder1 = explorerService.create("Folder", "Root1_", null, null);
+        DocRef folder2 = explorerService.create("Folder", "Root2_" + FileSystemTestUtil.getUniqueTestString(), null, null);
+        DocRef folder2child1 = explorerService.create("Folder", "Root2_Child1_" + FileSystemTestUtil.getUniqueTestString(), folder2, null);
+        DocRef folder2child2 = explorerService.create("Folder", "Root2_Child2_" + FileSystemTestUtil.getUniqueTestString(), folder2, null);
 
         Assert.assertEquals(4, commonTestControl.countEntity(Folder.class));
 
-        final PipelineEntity tran1 = pipelineEntityService.create(folder1Ref, FileSystemTestUtil.getUniqueTestString());
+        final DocRef tran1Ref = explorerService.create(PipelineEntity.ENTITY_TYPE, FileSystemTestUtil.getUniqueTestString(), folder1, null);
+        final PipelineEntity tran1 = pipelineService.readDocument(tran1Ref);
         tran1.setDescription("Description");
-        pipelineEntityService.save(tran1);
+        pipelineService.save(tran1);
 
-        PipelineEntity tran2 = pipelineEntityService.create(folder2Ref, FileSystemTestUtil.getUniqueTestString());
+        final DocRef tran2Ref = explorerService.create(PipelineEntity.ENTITY_TYPE, FileSystemTestUtil.getUniqueTestString(), folder2, null);
+        PipelineEntity tran2 = pipelineService.readDocument(tran2Ref);
         tran2.setDescription("Description");
         tran2.setParentPipeline(DocRefUtil.create(tran1));
-        tran2 = pipelineEntityService.save(tran2);
+        tran2 = pipelineService.save(tran2);
 
-        final Feed referenceFeed = feedService.create(folder1Ref, FileSystemTestUtil.getUniqueTestString());
+        final DocRef referenceFeedRef = explorerService.create(Feed.ENTITY_TYPE, FileSystemTestUtil.getUniqueTestString(), folder1, null);
+        final Feed referenceFeed = feedService.readDocument(referenceFeedRef);
         referenceFeed.setDescription("Description");
         feedService.save(referenceFeed);
 
-        Feed eventFeed = feedService.create(folder2Ref, FileSystemTestUtil.getUniqueTestString());
+        final DocRef eventFeedRef = explorerService.create(Feed.ENTITY_TYPE, FileSystemTestUtil.getUniqueTestString(), folder2, null);
+        Feed eventFeed = feedService.readDocument(eventFeedRef);
         eventFeed.setDescription("Description");
         // eventFeed.getReferenceFeed().add(referenceFeed);
         eventFeed = feedService.save(eventFeed);
 
-        final Feed eventFeedChild = feedService.create(folder2child1Ref, FileSystemTestUtil.getUniqueTestString());
+        final DocRef eventFeedChildRef = explorerService.create(Feed.ENTITY_TYPE, FileSystemTestUtil.getUniqueTestString(), folder2child1, null);
+        final Feed eventFeedChild = feedService.readDocument(eventFeedChildRef);
         eventFeedChild.setDescription("Description");
         // eventFeedChild.getReferenceFeed().add(referenceFeed);
         feedService.save(eventFeedChild);
@@ -105,8 +99,8 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
 
         final ResourceKey file = resourceStore.createTempFile("Export.zip");
         final DocRefs docRefs = new DocRefs();
-        docRefs.add(DocRefUtil.create(folder1));
-        docRefs.add(DocRefUtil.create(folder2));
+        docRefs.add(folder1);
+        docRefs.add(folder2);
 
         // Export
         importExportService.exportConfig(docRefs, resourceStore.getTempFile(file), null);
@@ -116,7 +110,7 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         importExportService.exportConfig(docRefs, resourceStore.getTempFile(exportConfig), null);
 
         // Delete it and check
-        pipelineEntityService.delete(tran2);
+        pipelineService.delete(tran2);
         Assert.assertEquals(startTranslationSize - 1, commonTestControl.countEntity(PipelineEntity.class));
 
         feedService.delete(eventFeed);
@@ -140,7 +134,7 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
 
         final ResourceKey fileChild = resourceStore.createTempFile("ExportChild.zip");
         final DocRefs criteriaChild = new DocRefs();
-        criteriaChild.add(DocRefUtil.create(folder2child2));
+        criteriaChild.add(folder2child2);
 
         // Export
         importExportService.exportConfig(criteriaChild, resourceStore.getTempFile(fileChild), null);

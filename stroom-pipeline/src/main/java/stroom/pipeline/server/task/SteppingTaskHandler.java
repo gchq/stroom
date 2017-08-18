@@ -25,7 +25,7 @@ import stroom.feed.shared.Feed;
 import stroom.io.StreamCloser;
 import stroom.pipeline.server.EncodingSelection;
 import stroom.pipeline.server.LocationFactoryProxy;
-import stroom.pipeline.server.PipelineEntityService;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.server.StreamLocationFactory;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggedException;
@@ -111,7 +111,7 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
     @Resource
     private SteppingController controller;
     @Resource
-    private PipelineEntityService pipelineEntityService;
+    private PipelineService pipelineService;
     @Resource
     private PipelineFactory pipelineFactory;
     @Resource
@@ -597,7 +597,7 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
     private Pipeline createPipeline(final SteppingController controller, final Feed feed) {
         if (pipeline == null) {
             // Set the pipeline so it can be used by a filter if needed.
-            final PipelineEntity pipelineEntity = pipelineEntityService
+            final PipelineEntity pipelineEntity = pipelineService
                     .loadByUuid(controller.getRequest().getPipeline().getUuid());
 
             feedHolder.setFeed(feed);

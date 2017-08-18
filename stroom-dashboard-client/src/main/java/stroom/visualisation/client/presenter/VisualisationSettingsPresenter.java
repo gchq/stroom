@@ -29,6 +29,7 @@ import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.script.shared.Script;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;

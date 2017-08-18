@@ -34,7 +34,7 @@ import stroom.pipeline.server.DefaultErrorWriter;
 import stroom.pipeline.server.EncodingSelection;
 import stroom.pipeline.server.ErrorWriterProxy;
 import stroom.pipeline.server.LocationFactoryProxy;
-import stroom.pipeline.server.PipelineEntityService;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.server.StreamLocationFactory;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ErrorStatistics;
@@ -106,7 +106,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     @Resource(name = "cachedFeedService")
     private FeedService feedService;
     @Resource(name = "cachedPipelineEntityService")
-    private PipelineEntityService pipelineEntityService;
+    private PipelineService pipelineService;
     @Resource
     private TaskMonitor taskMonitor;
     @Resource
@@ -186,7 +186,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             feedHolder.setFeed(feed);
 
             // Set the pipeline so it can be used by a filter if needed.
-            final PipelineEntity pipelineEntity = pipelineEntityService.load(streamProcessor.getPipeline());
+            final PipelineEntity pipelineEntity = pipelineService.load(streamProcessor.getPipeline());
             pipelineHolder.setPipeline(pipelineEntity);
 
             // Create the parser.

@@ -24,7 +24,7 @@ import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.StringCriteria;
 import stroom.entity.shared.StringCriteria.MatchStyle;
 import stroom.feed.server.FeedService;
-import stroom.pipeline.server.PipelineEntityService;
+import stroom.pipeline.server.PipelineService;
 import stroom.query.shared.FetchSuggestionsAction;
 import stroom.streamstore.server.StreamFields;
 import stroom.streamstore.server.StreamTypeService;
@@ -42,13 +42,13 @@ import java.util.List;
 @Scope(StroomScope.TASK)
 class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction, SharedList<SharedString>> {
     private final FeedService feedService;
-    private final PipelineEntityService pipelineEntityService;
+    private final PipelineService pipelineService;
     private final StreamTypeService streamTypeService;
 
     @Inject
-    public FetchSuggestionsHandler(final FeedService feedService, final PipelineEntityService pipelineEntityService, final StreamTypeService streamTypeService) {
+    public FetchSuggestionsHandler(final FeedService feedService, final PipelineService pipelineService, final StreamTypeService streamTypeService) {
         this.feedService = feedService;
-        this.pipelineEntityService = pipelineEntityService;
+        this.pipelineService = pipelineService;
         this.streamTypeService = streamTypeService;
     }
 
@@ -61,7 +61,7 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
                 }
 
                 if (task.getField().getName().equals(StreamFields.PIPELINE)) {
-                    return createList(pipelineEntityService, task.getText());
+                    return createList(pipelineService, task.getText());
                 }
 
                 if (task.getField().getName().equals(StreamFields.STREAM_TYPE)) {

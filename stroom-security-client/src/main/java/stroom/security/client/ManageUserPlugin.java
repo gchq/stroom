@@ -45,7 +45,7 @@ public class ManageUserPlugin extends NodeToolsPlugin {
         eventBus.addHandler(ShowPermissionsDialogEvent.getType(), event -> documentPermissionsPresenterProvider.get(new AsyncCallback<DocumentPermissionsPresenter>() {
             @Override
             public void onSuccess(final DocumentPermissionsPresenter presenter) {
-                presenter.show(event.getExplorerData());
+                presenter.show(event.getExplorerNode());
             }
 
             @Override

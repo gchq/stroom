@@ -22,25 +22,39 @@ import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
 
 public interface DocumentEventLog {
-    void create(Object entity);
+//    void create(Object entity);
 
     void create(Object entity, Exception ex);
 
-    void create(String entityType, String entityName);
+//    void create(String entityType, String entityName);
 
     void create(String entityType, String entityName, Exception ex);
 
-    void update(Object before, Object after);
+//    void update(Object before, Object after);
 
-    void update(Object before, Object after, Exception ex);
 
-    void move(Object before, Object after);
+
+//    void copy(Object before, Object after);
+
+    void copy(Object before, Object after, Exception ex);
+
+//    void move(Object before, Object after);
 
     void move(Object before, Object after, Exception ex);
 
-    void delete(Object entity);
+    void rename(Object before, Object after, Exception ex);
+
+//    void delete(Object entity);
 
     void delete(Object entity, Exception ex);
+
+
+
+
+
+
+    void update(Object before, Object after, Exception ex);
+
 
     void view(Object entity);
 

@@ -16,31 +16,28 @@
 
 package stroom.pipeline.server;
 
-import org.springframework.context.annotation.Scope;
 import stroom.pipeline.shared.FetchPipelineXMLAction;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedString;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = FetchPipelineXMLAction.class)
-@Scope(value = StroomScope.TASK)
 class FetchPipelineXMLHandler extends AbstractTaskHandler<FetchPipelineXMLAction, SharedString> {
-    private final PipelineEntityService pipelineEntityService;
+    private final PipelineService pipelineService;
 
     @Inject
-    FetchPipelineXMLHandler(final PipelineEntityService pipelineEntityService) {
-        this.pipelineEntityService = pipelineEntityService;
+    FetchPipelineXMLHandler(final PipelineService pipelineService) {
+        this.pipelineService = pipelineService;
     }
 
     @Override
     public SharedString exec(final FetchPipelineXMLAction action) {
         SharedString result = null;
 
-        final PipelineEntity pipelineEntity = pipelineEntityService.loadByIdWithoutUnmarshal(action.getPipelineId());
+        final PipelineEntity pipelineEntity = pipelineService.loadByIdWithoutUnmarshal(action.getPipeline().getId());
 
         if (pipelineEntity != null) {
             result = SharedString.wrap(pipelineEntity.getData());

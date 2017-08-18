@@ -25,7 +25,6 @@ import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.entity.server.FolderService;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.Document;
@@ -47,15 +46,12 @@ public class BasicEventInfoProvider implements EventInfoProvider {
 
     private final StreamTypeService streamTypeService;
     private final FeedService feedService;
-    private final FolderService folderService;
 
     @Inject
     BasicEventInfoProvider(@Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
-                           @Named("cachedFeedService") final FeedService feedService,
-                           @Named("cachedFolderService") final FolderService folderService) {
+                           @Named("cachedFeedService") final FeedService feedService) {
         this.streamTypeService = streamTypeService;
         this.feedService = feedService;
-        this.folderService = folderService;
     }
 
     @Override
@@ -180,15 +176,15 @@ public class BasicEventInfoProvider implements EventInfoProvider {
 
     private void appendGroup(final Groups groups, final Folder folder) {
         try {
-            if (folder != null) {
-                final Folder loaded = folderService.load(folder);
-
-                final Group group = new Group();
-                group.setType("Folder");
-                group.setId(getId(loaded));
-                group.setName(loaded.getName());
-                groups.getGroup().add(group);
-            }
+//            if (folder != null) {
+//                final Folder loaded = folderService.load(folder);
+//
+//                final Group group = new Group();
+//                group.setType("Folder");
+//                group.setId(getId(loaded));
+//                group.setName(loaded.getName());
+//                groups.getGroup().add(group);
+//            }
         } catch (final Exception e) {
             LOGGER.debug(e.getMessage(), e);
         }

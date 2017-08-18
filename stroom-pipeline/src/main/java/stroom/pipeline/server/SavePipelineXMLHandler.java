@@ -29,20 +29,20 @@ import javax.inject.Inject;
 @TaskHandlerBean(task = SavePipelineXMLAction.class)
 @Scope(value = StroomScope.TASK)
 class SavePipelineXMLHandler extends AbstractTaskHandler<SavePipelineXMLAction, VoidResult> {
-    private final PipelineEntityService pipelineEntityService;
+    private final PipelineService pipelineService;
 
     @Inject
-    SavePipelineXMLHandler(final PipelineEntityService pipelineEntityService) {
-        this.pipelineEntityService = pipelineEntityService;
+    SavePipelineXMLHandler(final PipelineService pipelineService) {
+        this.pipelineService = pipelineService;
     }
 
     @Override
     public VoidResult exec(final SavePipelineXMLAction action) {
-        final PipelineEntity pipelineEntity = pipelineEntityService.loadById(action.getPipelineId());
+        final PipelineEntity pipelineEntity = pipelineService.loadByUuid(action.getPipeline().getUuid());
 
         if (pipelineEntity != null) {
             pipelineEntity.setData(action.getXml());
-            pipelineEntityService.saveWithoutMarshal(pipelineEntity);
+            pipelineService.saveWithoutMarshal(pipelineEntity);
         }
 
         return VoidResult.INSTANCE;

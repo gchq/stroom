@@ -43,8 +43,8 @@ import javax.inject.Inject;
 @Secured(Stream.VIEW_DATA_WITH_PIPELINE_PERMISSION)
 public class FetchDataWithPipelineHandler extends AbstractFetchDataHandler<FetchDataWithPipelineAction> {
     @Inject
-    FetchDataWithPipelineHandler(final StreamStore streamStore, final FeedService feedService, final FeedHolder feedHolder, final PipelineHolder pipelineHolder, final StreamHolder streamHolder, final PipelineEntityService pipelineEntityService, final PipelineFactory pipelineFactory, final ErrorReceiverProxy errorReceiverProxy, final PipelineDataCache pipelineDataCache, final StreamEventLog streamEventLog, final SecurityContext securityContext) {
-        super(streamStore, feedService, feedHolder, pipelineHolder, streamHolder, pipelineEntityService, pipelineFactory, errorReceiverProxy, pipelineDataCache, streamEventLog, securityContext);
+    FetchDataWithPipelineHandler(final StreamStore streamStore, final FeedService feedService, final FeedHolder feedHolder, final PipelineHolder pipelineHolder, final StreamHolder streamHolder, final PipelineService pipelineService, final PipelineFactory pipelineFactory, final ErrorReceiverProxy errorReceiverProxy, final PipelineDataCache pipelineDataCache, final StreamEventLog streamEventLog, final SecurityContext securityContext) {
+        super(streamStore, feedService, feedHolder, pipelineHolder, streamHolder, pipelineService, pipelineFactory, errorReceiverProxy, pipelineDataCache, streamEventLog, securityContext);
     }
 
     @Override

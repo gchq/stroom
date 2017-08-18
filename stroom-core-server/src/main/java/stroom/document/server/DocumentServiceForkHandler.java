@@ -60,14 +60,14 @@ class DocumentServiceForkHandler extends AbstractTaskHandler<DocumentServiceFork
 ////                }
 //
 //                result = entityService.saveAs((DocumentEntity) entity, action.getFolder(), action.getName(), action.getPermissionInheritance());
-//                entityEventLog.create(result);
+//                documentEventLog.create(result);
 //        } catch (final RuntimeException e) {
-//                entityEventLog.create(entity, e);
+//                documentEventLog.create(entity, e);
 //            throw e;
 //        }
 //
 //        return result;
 
-        return (SharedObject) documentService.fork(action.getDocRef(), action.getDocument(), action.getDocName(), action.getDestinationFolderRef(), action.getPermissionInheritance());
+        return (SharedObject) documentService.forkDocument(action.getDocRef(), action.getDocument(), action.getName(), action.getDestinationFolderRef(), action.getPermissionInheritance());
     }
 }

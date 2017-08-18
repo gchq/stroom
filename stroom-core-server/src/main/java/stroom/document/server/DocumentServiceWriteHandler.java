@@ -65,7 +65,7 @@ class DocumentServiceWriteHandler extends AbstractTaskHandler<DocumentServiceWri
 //                }
 //
 //                result = entityService.save(entity);
-//                entityEventLog.update(before, result);
+//                documentEventLog.update(before, result);
 //
 //            } else {
 //                // Validate the entity name.
@@ -75,20 +75,20 @@ class DocumentServiceWriteHandler extends AbstractTaskHandler<DocumentServiceWri
 //                }
 //
 //                result = entityService.save(entity);
-//                entityEventLog.create(result);
+//                documentEventLog.create(result);
 //            }
 //        } catch (final RuntimeException e) {
 //            if (persistent) {
 //                // Get the before version.
-//                entityEventLog.update(null, entity, e);
+//                documentEventLog.update(null, entity, e);
 //            } else {
-//                entityEventLog.create(entity, e);
+//                documentEventLog.create(entity, e);
 //            }
 //            throw e;
 //        }
 //
 //        return result;
 
-        return (SharedObject) documentService.write(action.getDocRef(), action.getDocument());
+        return (SharedObject) documentService.writeDocument(action.getDocRef(), action.getDocument());
     }
 }

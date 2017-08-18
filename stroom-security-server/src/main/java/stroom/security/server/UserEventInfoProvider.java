@@ -23,20 +23,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.dashboard.server.logging.EventInfoProvider;
-import stroom.entity.server.FolderService;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.Entity;
 import stroom.security.shared.FindUserCriteria;
 
-import javax.annotation.Resource;
-
 @Component
 public class UserEventInfoProvider implements EventInfoProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserEventInfoProvider.class);
-
-    @Resource(name = "cachedFolderService")
-    private FolderService folderService;
 
     @Override
     public BaseObject createBaseObject(final java.lang.Object obj) {

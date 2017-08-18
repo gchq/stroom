@@ -19,11 +19,34 @@ package stroom.index.spring;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
+import stroom.dictionary.server.DictionaryService;
+import stroom.dictionary.shared.Dictionary;
+import stroom.explorer.server.ExplorerActionHandlers;
+import stroom.feed.server.FeedService;
+import stroom.feed.shared.Feed;
+import stroom.index.server.IndexService;
+import stroom.index.shared.Index;
+import stroom.pipeline.server.PipelineService;
+import stroom.pipeline.server.TextConverterService;
+import stroom.pipeline.server.XSLTService;
+import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.TextConverter;
+import stroom.pipeline.shared.XSLT;
+import stroom.xmlschema.server.XMLSchemaService;
+import stroom.xmlschema.shared.XMLSchema;
+
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 @Configuration
-@ComponentScan(basePackages = {"stroom.index.server", "stroom.index.shared"}, excludeFilters = {
+@ComponentScan(basePackages = {"stroom.index.server"}, excludeFilters = {
         // Exclude other configurations that might be found accidentally during
         // a component scan as configurations should be specified explicitly.
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
 public class IndexConfiguration {
+    @Inject
+    public IndexConfiguration(final ExplorerActionHandlers explorerActionHandlers,
+                               final Provider<IndexService> indexServiceProvider) {
+        explorerActionHandlers.add(10, Index.ENTITY_TYPE, Index.ENTITY_TYPE, indexServiceProvider, "DataSource");
+    }
 }

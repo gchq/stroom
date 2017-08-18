@@ -19,6 +19,12 @@ package stroom.script.spring;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
+import stroom.explorer.server.ExplorerActionHandlers;
+import stroom.script.server.ScriptService;
+import stroom.script.shared.Script;
+
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 
 /**
@@ -26,7 +32,12 @@ import org.springframework.context.annotation.FilterType;
  * component scan as configurations should be specified explicitly.
  */
 @Configuration
-@ComponentScan(basePackages = {"stroom.script.server", "stroom.script.shared"}, excludeFilters = {
+@ComponentScan(basePackages = {"stroom.script.server"}, excludeFilters = {
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
 public class ScriptConfiguration {
+    @Inject
+    public ScriptConfiguration(final ExplorerActionHandlers explorerActionHandlers,
+                               final Provider<ScriptService> scriptServiceProvider) {
+        explorerActionHandlers.add(99, Script.ENTITY_TYPE, Script.ENTITY_TYPE, scriptServiceProvider);
+    }
 }

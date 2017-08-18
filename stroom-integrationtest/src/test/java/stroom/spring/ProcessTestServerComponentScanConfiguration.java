@@ -28,7 +28,6 @@ import stroom.dashboard.server.QueryServiceImpl;
 import stroom.dictionary.server.DictionaryServiceImpl;
 import stroom.feed.server.FeedServiceImpl;
 import stroom.feed.server.MockFeedService;
-import stroom.folder.server.FolderServiceImpl;
 import stroom.internalstatistics.MetaDataStatisticImpl;
 import stroom.jobsystem.server.ClusterLockServiceImpl;
 import stroom.jobsystem.server.JobManagerImpl;
@@ -39,8 +38,8 @@ import stroom.node.server.GlobalPropertyServiceImpl;
 import stroom.node.server.NodeConfigImpl;
 import stroom.node.server.NodeServiceImpl;
 import stroom.node.server.RecordCountServiceImpl;
-import stroom.pipeline.server.MockPipelineEntityService;
-import stroom.pipeline.server.PipelineEntityServiceImpl;
+import stroom.pipeline.server.MockPipelineService;
+import stroom.pipeline.server.PipelineServiceImpl;
 import stroom.pipeline.server.TextConverterServiceImpl;
 import stroom.pipeline.server.XSLTServiceImpl;
 import stroom.policy.server.DataRetentionExecutor;
@@ -148,7 +147,7 @@ import stroom.xmlschema.server.XMLSchemaServiceImpl;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MetaDataStatisticImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = NodeConfigImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = NodeServiceImpl.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = PipelineEntityServiceImpl.class),
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = PipelineServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = QueryServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = RecordCountServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ResourceStoreImpl.class),
@@ -160,7 +159,6 @@ import stroom.xmlschema.server.XMLSchemaServiceImpl;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = StreamTaskCreatorImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = StreamTaskServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = StreamTypeServiceImpl.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = FolderServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = UserServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = TextConverterServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = VolumeServiceImpl.class),
@@ -189,8 +187,8 @@ public class ProcessTestServerComponentScanConfiguration {
     }
 
     @Bean(name = "cachedPipelineEntityService")
-    public MockPipelineEntityService getCachedPipelineEntityService(final MockPipelineEntityService pipelineEntityService) {
-        return pipelineEntityService;
+    public MockPipelineService getCachedPipelineEntityService(final MockPipelineService pipelineService) {
+        return pipelineService;
     }
 
     @Bean(name = "cachedStreamProcessorService")

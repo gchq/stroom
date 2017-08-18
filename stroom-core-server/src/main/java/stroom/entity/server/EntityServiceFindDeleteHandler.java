@@ -37,12 +37,12 @@ import javax.inject.Inject;
 class EntityServiceFindDeleteHandler
         extends AbstractTaskHandler<EntityServiceFindDeleteAction<BaseCriteria, SharedObject>, SharedLong> {
     private final EntityServiceBeanRegistry beanRegistry;
-    private final DocumentEventLog entityEventLog;
+    private final DocumentEventLog documentEventLog;
 
     @Inject
-    EntityServiceFindDeleteHandler(final EntityServiceBeanRegistry beanRegistry, final DocumentEventLog entityEventLog) {
+    EntityServiceFindDeleteHandler(final EntityServiceBeanRegistry beanRegistry, final DocumentEventLog documentEventLog) {
         this.beanRegistry = beanRegistry;
-        this.entityEventLog = entityEventLog;
+        this.documentEventLog = documentEventLog;
     }
 
     @SuppressWarnings("unchecked")
@@ -68,9 +68,9 @@ class EntityServiceFindDeleteHandler
 
         try {
             result = (Long) beanRegistry.invoke("findDelete", action.getCriteria());
-            entityEventLog.delete(action.getCriteria(), query, result);
+            documentEventLog.delete(action.getCriteria(), query, result);
         } catch (final RuntimeException e) {
-            entityEventLog.delete(action.getCriteria(), query, e);
+            documentEventLog.delete(action.getCriteria(), query, e);
 
             throw e;
         }

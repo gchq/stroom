@@ -17,11 +17,7 @@
 package stroom.entity.server;
 
 public interface Marshaller<E, O> {
-    E marshal(E entity, boolean external, boolean ignoreErrors);
-
     E marshal(E entity);
-
-    E unmarshal(E entity, boolean external, boolean ignoreErrors);
 
     E unmarshal(E entity);
 

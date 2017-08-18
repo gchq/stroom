@@ -18,7 +18,6 @@
 package stroom.feed.server;
 
 import org.springframework.stereotype.Component;
-import stroom.entity.server.FolderService;
 import stroom.feed.remote.GetFeedStatusRequest;
 import stroom.feed.remote.GetFeedStatusResponse;
 import stroom.feed.remote.RemoteFeedService;
@@ -36,8 +35,6 @@ public class RemoteFeedServiceImpl implements RemoteFeedService {
     private SecurityContext securityContext;
     @Resource(name = "cachedFeedService")
     private FeedService feedService;
-    @Resource(name = "cachedFolderService")
-    private FolderService folderService;
 
     @Override
     @Insecure

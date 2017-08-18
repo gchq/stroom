@@ -33,8 +33,8 @@ import stroom.entity.shared.DocumentServiceForkAction;
 import stroom.entity.shared.DocumentServiceReadAction;
 import stroom.entity.shared.DocumentServiceWriteAction;
 import stroom.entity.shared.PermissionInheritance;
-import stroom.explorer.client.event.HighlightExplorerItemEvent;
-import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.client.event.HighlightExplorerNodeEvent;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.query.api.v1.DocRef;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
@@ -437,8 +437,8 @@ public abstract class DocumentPlugin<D extends SharedObject> extends Plugin {
      */
     public void highlight(final DocRef docRef) {
         // Open up parent items.
-        final ExplorerData documentData = ExplorerData.create(docRef);
-        HighlightExplorerItemEvent.fire(DocumentPlugin.this, documentData);
+        final ExplorerNode documentData = ExplorerNode.create(docRef);
+        HighlightExplorerNodeEvent.fire(DocumentPlugin.this, documentData);
     }
 
     protected abstract DocumentEditPresenter<?, ?> createEditor();
@@ -452,7 +452,7 @@ public abstract class DocumentPlugin<D extends SharedObject> extends Plugin {
     }
 
     public Future<D> fork(final DocRef docRef, final D document, final String docName, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
-        return dispatcher.exec(new DocumentServiceForkAction<D>(docRef, document, docName, destinationFolderRef, permissionInheritance));
+        return dispatcher.exec(new DocumentServiceForkAction<>(docRef, document, docName, destinationFolderRef, permissionInheritance));
     }
 
     protected abstract DocRef getDocRef(D document);

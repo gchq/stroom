@@ -22,20 +22,22 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.DocumentEntityService;
-import stroom.entity.server.EntityService;
-import stroom.entity.server.GenericEntityService;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.SQLNameConstants;
+import stroom.explorer.server.ExplorerActionHandlersImpl;
+import stroom.explorer.shared.DocumentType;
 import stroom.query.api.v1.DocRef;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.UserRef;
 import stroom.security.shared.UserStatus;
 
 import javax.inject.Inject;
 import javax.persistence.PersistenceException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -184,13 +186,13 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     }
 
     protected final StroomEntityManager entityManager;
-    private final GenericEntityService genericEntityService;
+    private final DocumentTypePermissions documentTypePermissions;
 
     @Inject
     DocumentPermissionServiceImpl(final StroomEntityManager entityManager,
-                                  final GenericEntityService genericEntityService) {
+                                  final DocumentTypePermissions documentTypePermissions) {
         this.entityManager = entityManager;
-        this.genericEntityService = genericEntityService;
+        this.documentTypePermissions = documentTypePermissions;
     }
 
     @Override
@@ -218,10 +220,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
             throw e;
         }
 
-        final EntityService<BaseEntity> entityService = genericEntityService
-                .getEntityService(document.getType());
-        final DocumentEntityService<?> documentService = (DocumentEntityService<?>) entityService;
-        final String[] permissions = documentService.getPermissions();
+        final String[] permissions = documentTypePermissions.getPermissions(document.getType());
         return new DocumentPermissions(document, permissions, userPermissions);
     }
 

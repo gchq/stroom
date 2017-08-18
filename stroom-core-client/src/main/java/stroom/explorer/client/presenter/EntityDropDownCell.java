@@ -19,7 +19,7 @@ package stroom.explorer.client.presenter;
 
 import com.google.inject.Inject;
 import stroom.cell.dropdowntree.client.DropDownCell;
-import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.query.api.v1.DocRef;
 
 public class EntityDropDownCell extends DropDownCell<DocRef> {
@@ -66,7 +66,7 @@ public class EntityDropDownCell extends DropDownCell<DocRef> {
         explorerDropDownTreePresenter.show();
     }
 
-    private void changeSelection(final ExplorerData selection) {
+    private void changeSelection(final ExplorerNode selection) {
         if (selection == null) {
             setValue(null);
         } else {

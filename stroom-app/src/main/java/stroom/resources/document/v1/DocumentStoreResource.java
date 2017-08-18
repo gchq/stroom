@@ -49,7 +49,7 @@ public class DocumentStoreResource {
     @Path("")
     @Timed
     public DocRef create(final Destination destination) {
-        return documentStore.create(destination.getParentFolderUUID(), destination.getName());
+        return documentStore.createDocument(destination.getParentFolderUUID(), destination.getName());
     }
 
     @POST
@@ -58,7 +58,7 @@ public class DocumentStoreResource {
     @Path("/copy/{uuid}")
     @Timed
     public DocRef copy(final @PathParam("uuid") String uuid, final Destination destination) {
-        return documentStore.copy(uuid, destination.getParentFolderUUID());
+        return documentStore.copyDocument(uuid, destination.getParentFolderUUID());
     }
 
     @PUT
@@ -67,7 +67,7 @@ public class DocumentStoreResource {
     @Path("/move/{uuid}")
     @Timed
     public DocRef move(final @PathParam("uuid") String uuid, final Destination destination) {
-        return documentStore.move(uuid, destination.getParentFolderUUID());
+        return documentStore.moveDocument(uuid, destination.getParentFolderUUID());
     }
 
     @PUT
@@ -76,7 +76,7 @@ public class DocumentStoreResource {
     @Path("/rename/{uuid}")
     @Timed
     public DocRef rename(final @PathParam("uuid") String uuid, final Destination destination) {
-        return documentStore.rename(uuid, destination.getName());
+        return documentStore.renameDocument(uuid, destination.getName());
     }
 
 
@@ -104,6 +104,6 @@ public class DocumentStoreResource {
     @Path("/{uuid}")
     @Timed
     public void delete(final @PathParam("uuid") String uuid) {
-        documentStore.delete(uuid);
+        documentStore.deleteDocument(uuid);
     }
 }

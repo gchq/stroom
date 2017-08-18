@@ -28,9 +28,6 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionException;
-import stroom.entity.server.DocumentEntityService;
-import stroom.entity.server.EntityService;
-import stroom.entity.server.GenericEntityService;
 import stroom.query.api.v1.DocRef;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
@@ -63,7 +60,7 @@ class SecurityContextImpl implements SecurityContext {
     private final UserAppPermissionsCache userAppPermissionsCache;
     private final UserService userService;
     private final DocumentPermissionService documentPermissionService;
-    private final GenericEntityService genericEntityService;
+    private final DocumentTypePermissions documentTypePermissions;
     private final JWTService jwtService;
 
     @Inject
@@ -73,14 +70,14 @@ class SecurityContextImpl implements SecurityContext {
             final UserAppPermissionsCache userAppPermissionsCache,
             final UserService userService,
             final DocumentPermissionService documentPermissionService,
-            final GenericEntityService genericEntityService,
+            final DocumentTypePermissions documentTypePermissions,
             final JWTService jwtService) {
         this.documentPermissionsCache = documentPermissionsCache;
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
         this.userService = userService;
         this.documentPermissionService = documentPermissionService;
-        this.genericEntityService = genericEntityService;
+        this.documentTypePermissions = documentTypePermissions;
         this.jwtService = jwtService;
     }
 
@@ -385,29 +382,21 @@ class SecurityContextImpl implements SecurityContext {
             if (documentPermissions != null) {
                 final Map<UserRef, Set<String>> userPermissions = documentPermissions.getUserPermissions();
                 if (userPermissions != null && userPermissions.size() > 0) {
-
                     final DocRef destDocRef = new DocRef(destType, destUuid);
-                    final EntityService<?> entityService = genericEntityService.getEntityService(destDocRef.getType());
-                    if (entityService != null && entityService instanceof DocumentEntityService) {
-                        final DocumentEntityService<?> documentEntityService = (DocumentEntityService) entityService;
-                        final String[] allowedPermissions = documentEntityService.getPermissions();
+                    final String[] allowedPermissions = documentTypePermissions.getPermissions(destDocRef.getType());
 
-                        for (final Map.Entry<UserRef, Set<String>> entry : userPermissions.entrySet()) {
-                            final UserRef userRef = entry.getKey();
-                            final Set<String> permissions = entry.getValue();
+                    for (final Map.Entry<UserRef, Set<String>> entry : userPermissions.entrySet()) {
+                        final UserRef userRef = entry.getKey();
+                        final Set<String> permissions = entry.getValue();
 
-                            for (final String allowedPermission : allowedPermissions) {
-                                if (permissions.contains(allowedPermission)) {
-//                                    // Don't allow owner permissions to be inherited.
-//                                    if (!DocumentPermissionNames.OWNER.equals(allowedPermission)) {
-                                    try {
-                                        documentPermissionService.addPermission(userRef, destDocRef, allowedPermission);
-                                    } catch (final RollbackException | TransactionException e) {
-                                        LOGGER.debug(e.getMessage(), e);
-                                    } catch (final Exception e) {
-                                        LOGGER.error(e.getMessage(), e);
-                                    }
-//                                    }
+                        for (final String allowedPermission : allowedPermissions) {
+                            if (permissions.contains(allowedPermission)) {
+                                try {
+                                    documentPermissionService.addPermission(userRef, destDocRef, allowedPermission);
+                                } catch (final RollbackException | TransactionException e) {
+                                    LOGGER.debug(e.getMessage(), e);
+                                } catch (final Exception e) {
+                                    LOGGER.error(e.getMessage(), e);
                                 }
                             }
                         }

@@ -26,9 +26,10 @@ import stroom.entity.shared.Folder;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
-import stroom.pipeline.server.PipelineEntityService;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineService;
 import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
@@ -47,7 +48,7 @@ public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
     @Resource
     private FeedService feedService;
     @Resource
-    private PipelineEntityService pipelineEntityService;
+    private PipelineService pipelineService;
     @Resource
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Resource
@@ -215,13 +216,13 @@ public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
         Folder folder = folderService.create("JUNIT");
         folder = folderService.save(folder);
 
-        PipelineEntity translation1 = pipelineEntityService.create(DocRefUtil.create(folder), "JUNIT");
+        PipelineEntity translation1 = pipelineService.create(DocRefUtil.create(folder), "JUNIT");
         translation1.setDescription("Junit");
-        translation1 = pipelineEntityService.save(translation1);
+        translation1 = pipelineService.save(translation1);
 
         final FindPipelineEntityCriteria findTranslationCriteria = new FindPipelineEntityCriteria();
         findTranslationCriteria.getName().setString("JUNIT");
-        translation1 = pipelineEntityService.find(findTranslationCriteria).getFirst();
+        translation1 = pipelineService.find(findTranslationCriteria).getFirst();
 
         Assert.assertNotNull(translation1.getFolder().getId());
     }

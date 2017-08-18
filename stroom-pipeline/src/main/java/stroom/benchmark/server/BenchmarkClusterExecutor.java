@@ -32,7 +32,7 @@ import stroom.jobsystem.shared.JobManager;
 import stroom.node.server.NodeService;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
-import stroom.pipeline.server.PipelineEntityService;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.statistics.server.sql.StatisticEvent;
@@ -89,7 +89,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private static final String BENCHMARK_EVENTS = "BENCHMARK-EVENTS";
 
     private final FeedService feedService;
-    private final PipelineEntityService pipelineEntityService;
+    private final PipelineService pipelineService;
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final StreamProcessorService streamProcessorService;
     private final ClusterDispatchAsyncHelper dispatchHelper;
@@ -113,7 +113,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
     @Inject
     BenchmarkClusterExecutor(final FeedService feedService,
-                             final PipelineEntityService pipelineEntityService,
+                             final PipelineService pipelineService,
                              final StreamProcessorFilterService streamProcessorFilterService,
                              final StreamProcessorService streamProcessorService,
                              final ClusterDispatchAsyncHelper dispatchHelper,
@@ -128,7 +128,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                              @Value("#{propertyConfigurer.getProperty('stroom.benchmark.recordCount')}") final int recordCount,
                              @Value("#{propertyConfigurer.getProperty('stroom.benchmark.concurrentWriters')}") final int concurrentWriters) {
         this.feedService = feedService;
-        this.pipelineEntityService = pipelineEntityService;
+        this.pipelineService = pipelineService;
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.streamProcessorService = streamProcessorService;
         this.dispatchHelper = dispatchHelper;
@@ -211,10 +211,10 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 dispatchHelper.execAsync(new ClearServiceClusterTask(task, null), TargetType.ACTIVE);
 
                 final Feed referenceFeed = feedService.find(new FindFeedCriteria(BENCHMARK_REFERENCE)).getFirst();
-                final PipelineEntity referencePipeline = pipelineEntityService
+                final PipelineEntity referencePipeline = pipelineService
                         .find(new FindPipelineEntityCriteria(BENCHMARK_REFERENCE)).getFirst();
                 final Feed eventFeed = feedService.find(new FindFeedCriteria(BENCHMARK_EVENTS)).getFirst();
-                final PipelineEntity eventsPipeline = pipelineEntityService
+                final PipelineEntity eventsPipeline = pipelineService
                         .find(new FindPipelineEntityCriteria(BENCHMARK_EVENTS)).getFirst();
 
                 // Not setup to run benchmark

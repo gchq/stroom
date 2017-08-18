@@ -19,11 +19,11 @@ package stroom.feed.server;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-import stroom.entity.server.GenericEntityService;
 import stroom.entity.server.MockDocumentEntityService;
+import stroom.entity.shared.BaseResultList;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
-import stroom.importexport.server.EntityPathResolver;
+import stroom.importexport.server.ImportExportHelper;
 import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Inject;
@@ -44,8 +44,8 @@ public class MockFeedService extends MockDocumentEntityService<Feed, FindFeedCri
     }
 
     @Inject
-    public MockFeedService(final GenericEntityService genericEntityService, final EntityPathResolver entityPathResolver) {
-        super(genericEntityService, entityPathResolver);
+    public MockFeedService(final ImportExportHelper importExportHelper) {
+        super(importExportHelper);
     }
 
     @Override
@@ -55,7 +55,14 @@ public class MockFeedService extends MockDocumentEntityService<Feed, FindFeedCri
 
     @Override
     public Feed loadByName(final String name) {
-        return loadByName(null, name);
+        BaseResultList<Feed> list = find(createCriteria());
+        for (final Feed feed : list) {
+            if (feed.getName().equals(name)) {
+                return feed;
+            }
+        }
+
+        return null;
     }
 
     @Override

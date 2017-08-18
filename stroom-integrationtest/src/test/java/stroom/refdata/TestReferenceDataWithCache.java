@@ -27,10 +27,11 @@ import stroom.entity.server.FolderService;
 import stroom.entity.shared.DocRefUtil;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.server.PipelineEntityService;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineService;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.query.api.v1.DocRef;
 import stroom.streamstore.shared.StreamType;
@@ -55,7 +56,7 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     @Resource
     private FeedService feedService;
     @Resource
-    private PipelineEntityService pipelineEntityService;
+    private PipelineService pipelineService;
     @Resource
     private StroomBeanStore beanStore;
 
@@ -77,8 +78,8 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
         feed2.setReference(true);
         feed2 = feedService.save(feed2);
 
-        final PipelineEntity pipeline1 = pipelineEntityService.create("TEST_PIPELINE_1");
-        final PipelineEntity pipeline2 = pipelineEntityService.create("TEST_PIPELINE_2");
+        final PipelineEntity pipeline1 = pipelineService.create("TEST_PIPELINE_1");
+        final PipelineEntity pipeline2 = pipelineService.create("TEST_PIPELINE_2");
 
         final PipelineReference pipelineReference1 = new PipelineReference(DocRefUtil.create(pipeline1),
                 DocRefUtil.create(feed1), StreamType.REFERENCE.getName());

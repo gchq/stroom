@@ -29,7 +29,7 @@ import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
-import stroom.pipeline.server.PipelineEntityService;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.server.PipelineTestUtil;
 import stroom.pipeline.server.TextConverterService;
 import stroom.pipeline.server.XSLTService;
@@ -103,7 +103,7 @@ public final class StoreCreationTool {
     @Resource
     private XSLTService xsltService;
     @Resource
-    private PipelineEntityService pipelineEntityService;
+    private PipelineService pipelineService;
     @Resource
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Resource
@@ -169,7 +169,7 @@ public final class StoreCreationTool {
 
         if (referenceFeed == null) {
             // Setup the feeds in mock feed configuration manager.
-            referenceFeed = feedService.create(commonTestScenarioCreator.getTestFolder(), feedName);
+            referenceFeed = feedService.read(feedService.create(null, feedName));
             referenceFeed.setReference(true);
             referenceFeed.setDescription("Description " + feedName);
             referenceFeed.setStatus(FeedStatus.RECEIVE);
@@ -218,7 +218,7 @@ public final class StoreCreationTool {
         pipeline.getPipelineData().addProperty(PipelineDataUtil.createProperty("storeAppender", "feed", referenceFeed));
         pipeline.getPipelineData()
                 .addProperty(PipelineDataUtil.createProperty("storeAppender", "streamType", StreamType.REFERENCE));
-        return pipelineEntityService.save(pipeline);
+        return pipelineService.save(pipeline);
     }
 
     /**
@@ -306,7 +306,7 @@ public final class StoreCreationTool {
 
         if (eventFeed == null) {
             // Setup the feeds in mock feed configuration manager.
-            eventFeed = feedService.create(commonTestScenarioCreator.getTestFolder(), feedName);
+            eventFeed = feedService.read(feedService.create(null, feedName));
             eventFeed.setStatus(FeedStatus.RECEIVE);
             eventFeed.setDescription("Description " + feedName);
             eventFeed = feedService.save(eventFeed);
@@ -369,7 +369,7 @@ public final class StoreCreationTool {
                     .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", contextXSLT));
         }
 
-        return pipelineEntityService.save(pipeline);
+        return pipelineService.save(pipeline);
     }
 
     private PipelineEntity getReferenceLoaderPipeline() {
@@ -438,7 +438,7 @@ public final class StoreCreationTool {
         //
         // pipeline.setData(data);
 
-        return pipelineEntityService.save(pipeline);
+        return pipelineService.save(pipeline);
     }
 
     private PipelineEntity getIndexingPipeline(final Index index, final File xsltLocation) {
@@ -471,7 +471,7 @@ public final class StoreCreationTool {
         //
         // pipeline.setData(data);
 
-        return pipelineEntityService.save(pipeline);
+        return pipelineService.save(pipeline);
     }
 
     private TextConverter getTextConverter(final String name, final TextConverterType textConverterType,
@@ -494,7 +494,7 @@ public final class StoreCreationTool {
         // Create a new text converter entity.
         TextConverter textConverter = null;
         if (data != null) {
-            textConverter = textConverterService.create(commonTestScenarioCreator.getTestFolder(), name);
+            textConverter = textConverterService.read(textConverterService.create(null, name));
             textConverter.setDescription("Description " + name);
             textConverter.setConverterType(textConverterType);
             textConverter.setData(data);
@@ -523,7 +523,7 @@ public final class StoreCreationTool {
         // Create the new XSLT entity.
         XSLT xslt = null;
         if (data != null) {
-            xslt = xsltService.create(commonTestScenarioCreator.getTestFolder(), name);
+            xslt = xsltService.read(xsltService.create(null, name));
             xslt.setDescription("Description " + name);
             xslt.setData(data);
 
@@ -536,12 +536,12 @@ public final class StoreCreationTool {
         // Try and find an existing pipeline first.
         final FindPipelineEntityCriteria findPipelineCriteria = new FindPipelineEntityCriteria();
         findPipelineCriteria.getName().setString(name);
-        final BaseResultList<PipelineEntity> list = pipelineEntityService.find(findPipelineCriteria);
+        final BaseResultList<PipelineEntity> list = pipelineService.find(findPipelineCriteria);
         if (list != null && list.size() > 0) {
             return list.getFirst();
         }
 
-        return PipelineTestUtil.createTestPipeline(pipelineEntityService, commonTestScenarioCreator.getTestFolder(), name, "Description " + name,
+        return PipelineTestUtil.createTestPipeline(pipelineService, commonTestScenarioCreator.getTestFolder(), name, "Description " + name,
                 data);
     }
 
@@ -620,6 +620,6 @@ public final class StoreCreationTool {
         //
         // pipeline.setData(data);
 
-        return pipelineEntityService.save(pipeline);
+        return pipelineService.save(pipeline);
     }
 }

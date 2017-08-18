@@ -19,12 +19,8 @@ package stroom.entity.server;
 
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.Entity;
-import stroom.query.api.v1.DocRef;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 public interface GenericEntityService {
@@ -40,17 +36,17 @@ public interface GenericEntityService {
 
     <E extends Entity> E loadByUuid(String entityType, String uuid, Set<String> fetchSet);
 
-    <E extends Entity> E loadByName(String entityType, String name);
-
-    <E extends Entity> E loadByName(String entityType, DocRef folder, String name);
-
-    <E extends Entity> E loadByName(String entityType, String name, Set<String> fetchSet);
-
-    <E extends Entity> E loadByName(String entityType, DocRef folder, String name, Set<String> fetchSet);
+//    <E extends Entity> E loadByName(String entityType, String name);
+//
+//    <E extends Entity> E loadByName(String entityType, DocRef folder, String name);
+//
+//    <E extends Entity> E loadByName(String entityType, String name, Set<String> fetchSet);
+//
+//    <E extends Entity> E loadByName(String entityType, DocRef folder, String name, Set<String> fetchSet);
 
     <E extends Entity, C extends BaseCriteria> BaseResultList<E> find(String entityType, C criteria);
 
-    <E extends DocumentEntity> List<E> findByFolder(String entityType, DocRef folder, Set<String> fetchSet);
+//    <E extends DocumentEntity> List<E> findByFolder(String entityType, DocRef folder, Set<String> fetchSet);
 
     <E extends Entity> E save(E entity);
 
@@ -58,7 +54,7 @@ public interface GenericEntityService {
 
     <E extends Entity> Boolean delete(E entity);
 
-    Collection<DocumentEntityService<?>> findAll();
+//    Collection<DocumentService<?>> findAll();
 //
 //    <E extends DocumentEntity> E importEntity(E entity, DocRef folder);
 //

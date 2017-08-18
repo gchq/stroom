@@ -91,10 +91,10 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         return appender;
     }
 
-    @Override
-    public void create(final String objectType, final String objectName) {
-        create(objectType, objectName, null);
-    }
+//    @Override
+//    public void create(final String objectType, final String objectName) {
+//        create(objectType, objectName, null);
+//    }
 
     @Override
     public void create(final String objectType, final String objectName, final Exception ex) {
@@ -115,10 +115,10 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         }
     }
 
-    @Override
-    public void create(final java.lang.Object object) {
-        create(object, null);
-    }
+//    @Override
+//    public void create(final java.lang.Object object) {
+//        create(object, null);
+//    }
 
     @Override
     public void create(final java.lang.Object object, final Exception ex) {
@@ -134,10 +134,10 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         }
     }
 
-    @Override
-    public void update(final java.lang.Object before, final java.lang.Object after) {
-        update(before, after, null);
-    }
+//    @Override
+//    public void update(final java.lang.Object before, final java.lang.Object after) {
+//        update(before, after, null);
+//    }
 
     @Override
     public void update(final java.lang.Object before, final java.lang.Object after, final Exception ex) {
@@ -166,9 +166,42 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         }
     }
 
+//    @Override
+//    public void move(final java.lang.Object before, final java.lang.Object after) {
+//        move(before, after, null);
+//    }
+
+
     @Override
-    public void move(final java.lang.Object before, final java.lang.Object after) {
-        move(before, after, null);
+    public void copy(final java.lang.Object before, final java.lang.Object after, final Exception ex) {
+        try {
+            final Event event = createAction("Copy", "Copying", before);
+            final CopyMove copy = new CopyMove();
+            event.getEventDetail().setCopy(copy);
+
+            if (before != null) {
+                final MultiObject source = new MultiObject();
+                copy.setSource(source);
+                source.getObjects().add(createBaseObject(before));
+            }
+
+            if (after != null) {
+                final MultiObject destination = new MultiObject();
+                copy.setDestination(destination);
+                destination.getObjects().add(createBaseObject(after));
+            }
+
+            if (ex != null && ex.getMessage() != null) {
+                final CopyMoveOutcome outcome = new CopyMoveOutcome();
+                outcome.setSuccess(Boolean.FALSE);
+                outcome.setDescription(ex.getMessage());
+                copy.setOutcome(outcome);
+            }
+
+            eventLoggingService.log(event);
+        } catch (final Exception e) {
+            LOGGER.error("Unable to copy event!", e);
+        }
     }
 
     @Override
@@ -204,9 +237,41 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     }
 
     @Override
-    public void delete(final java.lang.Object object) {
-        delete(object, null);
+    public void rename(final java.lang.Object before, final java.lang.Object after, final Exception ex) {
+        try {
+            final Event event = createAction("Rename", "Renaming", before);
+            final CopyMove move = new CopyMove();
+            event.getEventDetail().setMove(move);
+
+            if (before != null) {
+                final MultiObject source = new MultiObject();
+                move.setSource(source);
+                source.getObjects().add(createBaseObject(before));
+            }
+
+            if (after != null) {
+                final MultiObject destination = new MultiObject();
+                move.setDestination(destination);
+                destination.getObjects().add(createBaseObject(after));
+            }
+
+            if (ex != null && ex.getMessage() != null) {
+                final CopyMoveOutcome outcome = new CopyMoveOutcome();
+                outcome.setSuccess(Boolean.FALSE);
+                outcome.setDescription(ex.getMessage());
+                move.setOutcome(outcome);
+            }
+
+            eventLoggingService.log(event);
+        } catch (final Exception e) {
+            LOGGER.error("Unable to rename event!", e);
+        }
     }
+
+    //    @Override
+//    public void delete(final java.lang.Object object) {
+//        delete(object, null);
+//    }
 
     @Override
     public void delete(final java.lang.Object object, final Exception ex) {

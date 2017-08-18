@@ -27,6 +27,7 @@ import stroom.pipeline.server.factory.PipelineDataCache;
 import stroom.pipeline.server.factory.PipelineFactory;
 import stroom.pipeline.server.parser.CombinedParser;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineService;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.pipeline.shared.XSLT;
@@ -66,7 +67,7 @@ public class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
     @Resource
     private XSLTService xsltService;
     @Resource
-    private PipelineEntityService pipelineEntityService;
+    private PipelineService pipelineService;
     @Resource
     private PipelineMarshaller pipelineMarshaller;
     @Resource
@@ -110,13 +111,13 @@ public class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
         errorReceiver.setErrorReceiver(loggingErrorReceiver);
 
         // Create the pipeline.
-        PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineEntityService,
+        PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService,
                 StroomProcessTestFileUtil.getString(PIPELINE));
         pipelineEntity.getPipelineData().addProperty(
                 PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", textConverter));
         pipelineEntity.getPipelineData()
                 .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xslt));
-        pipelineEntity = pipelineEntityService.save(pipelineEntity);
+        pipelineEntity = pipelineService.save(pipelineEntity);
 
         // Create the parser.
         final PipelineData pipelineData = pipelineDataCache.getOrCreate(pipelineEntity);

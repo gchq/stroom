@@ -20,7 +20,7 @@ package stroom.ruleset.server;
 import stroom.document.server.DocumentStore;
 import stroom.ruleset.shared.RuleSet;
 
-public interface RuleSetService extends DocumentStore {
+public interface RuleSetService extends DocumentStore<RuleSet> {
     RuleSet read(String uuid);
 
     RuleSet update(RuleSet dataReceiptPolicy);

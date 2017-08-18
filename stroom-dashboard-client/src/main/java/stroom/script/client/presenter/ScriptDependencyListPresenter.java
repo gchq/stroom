@@ -30,7 +30,7 @@ import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.client.presenter.EntityChooser;
-import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.node.client.view.WrapperView;
 import stroom.query.api.v1.DocRef;
 import stroom.script.shared.Script;
@@ -80,7 +80,7 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
             removeButton.setEnabled(selected != null);
         }));
         registerHandler(explorerDropDownTreePresenter.addDataSelectionHandler(event -> {
-            final ExplorerData selectedItem = (ExplorerData) event.getSelectedItem();
+            final ExplorerNode selectedItem = (ExplorerNode) event.getSelectedItem();
             if (selectedItem != null) {
                 final DocRef script = selectedItem.getDocRef();
                 if (script != null) {

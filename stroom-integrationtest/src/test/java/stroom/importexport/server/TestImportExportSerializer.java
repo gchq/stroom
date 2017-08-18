@@ -19,7 +19,6 @@ package stroom.importexport.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.entity.server.FolderService;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
@@ -27,9 +26,10 @@ import stroom.entity.shared.Folder;
 import stroom.entity.shared.ImportState;
 import stroom.entity.shared.ImportState.ImportMode;
 import stroom.entity.shared.ImportState.State;
+import stroom.explorer.server.ExplorerService;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.server.PipelineEntityService;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v1.DocRef;
@@ -65,9 +65,9 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
     @Resource
     private ImportExportSerializer importExportSerializer;
     @Resource
-    private PipelineEntityService pipelineEntityService;
+    private PipelineService pipelineService;
     @Resource
-    private FolderService folderService;
+    private ExplorerService explorerService;
 
     private DocRefs buildFindFolderCriteria() {
         final DocRefs criteria = new DocRefs();
@@ -149,14 +149,16 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
     @Test
     public void testPipeline() throws IOException {
-        final DocRef folder = DocRefUtil.create(folderService.create(FileSystemTestUtil.getUniqueTestString()));
-        final PipelineEntity parentPipeline = pipelineEntityService.create(folder, "Parent");
+        final DocRef folder = explorerService.create("Folder", FileSystemTestUtil.getUniqueTestString(), null, null);
+        final DocRef parentPipelineRef = explorerService.create(PipelineEntity.ENTITY_TYPE, "Parent", folder, null);
+        final PipelineEntity parentPipeline = pipelineService.readDocument(parentPipelineRef);
 
-        final PipelineEntity childPipeline = pipelineEntityService.create(folder, "Child");
+        final DocRef childPipelineRef = explorerService.create(PipelineEntity.ENTITY_TYPE, "Child", folder, null);
+        final PipelineEntity childPipeline = pipelineService.readDocument(childPipelineRef);
         childPipeline.setParentPipeline(DocRefUtil.create(parentPipeline));
-        pipelineEntityService.save(childPipeline);
+        pipelineService.save(childPipeline);
 
-        Assert.assertEquals(2, pipelineEntityService.find(new FindPipelineEntityCriteria()).size());
+        Assert.assertEquals(2, pipelineService.find(new FindPipelineEntityCriteria()).size());
 
         final Path testDataDir = getCurrentTestPath().resolve("ExportTest");
 
@@ -173,11 +175,11 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         // Remove all entities from the database.
         clean(true);
 
-        Assert.assertEquals(0, pipelineEntityService.find(new FindPipelineEntityCriteria()).size());
+        Assert.assertEquals(0, pipelineService.find(new FindPipelineEntityCriteria()).size());
 
         importExportSerializer.read(testDataDir, null, ImportMode.IGNORE_CONFIRMATION);
 
-        Assert.assertEquals(2, pipelineEntityService.find(new FindPipelineEntityCriteria()).size());
+        Assert.assertEquals(2, pipelineService.find(new FindPipelineEntityCriteria()).size());
     }
 
     @Test

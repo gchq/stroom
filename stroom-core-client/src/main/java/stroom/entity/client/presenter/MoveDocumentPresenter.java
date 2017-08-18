@@ -31,7 +31,7 @@ import stroom.entity.client.presenter.MoveDocumentPresenter.MoveDocumentView;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.explorer.client.presenter.EntityTreePresenter;
-import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.query.api.v1.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -47,7 +47,7 @@ public class MoveDocumentPresenter
         extends MyPresenter<MoveDocumentView, MoveDocumentProxy>
         implements ShowMoveDocumentDialogEvent.Handler, PopupUiHandlers {
     private final EntityTreePresenter entityTreePresenter;
-    private List<ExplorerData> explorerDataList;
+    private List<ExplorerNode> explorerNodeList;
 
     @Inject
     public MoveDocumentPresenter(final EventBus eventBus, final MoveDocumentView view, final MoveDocumentProxy proxy,
@@ -65,11 +65,11 @@ public class MoveDocumentPresenter
     public void onMove(final ShowMoveDocumentDialogEvent event) {
         getView().setPermissionInheritance(PermissionInheritance.INHERIT);
 
-        this.explorerDataList = event.getExplorerDataList();
+        this.explorerNodeList = event.getExplorerNodeList();
 
         entityTreePresenter.setSelectedItem(null);
 
-        final ExplorerData firstChild = event.getExplorerDataList().get(0);
+        final ExplorerNode firstChild = event.getExplorerNodeList().get(0);
         entityTreePresenter.setSelectedItem(firstChild);
         entityTreePresenter.getModel().reset();
         entityTreePresenter.getModel().setEnsureVisible(firstChild);
@@ -81,8 +81,8 @@ public class MoveDocumentPresenter
     @Override
     protected void revealInParent() {
         String caption = "Move Multiple Items";
-        if (explorerDataList.size() == 1) {
-            caption = "Move " + explorerDataList.get(0).getDisplayValue();
+        if (explorerNodeList.size() == 1) {
+            caption = "Move " + explorerNodeList.get(0).getDisplayValue();
         }
 
         final PopupSize popupSize = new PopupSize(350, 400, 350, 350, 2000, 2000, true);
@@ -92,14 +92,14 @@ public class MoveDocumentPresenter
     @Override
     public void onHideRequest(final boolean autoClose, final boolean ok) {
         if (ok) {
-            final ExplorerData folder = entityTreePresenter.getSelectedItem();
+            final ExplorerNode folder = entityTreePresenter.getSelectedItem();
 
             DocRef destinationFolderRef = null;
             if (folder != null) {
                 destinationFolderRef = folder.getDocRef();
             }
 
-            final List<DocRef> docRefs = explorerDataList.stream().map(ExplorerData::getDocRef).collect(Collectors.toList());
+            final List<DocRef> docRefs = explorerNodeList.stream().map(ExplorerNode::getDocRef).collect(Collectors.toList());
 
             MoveDocumentEvent.fire(this, this, docRefs, destinationFolderRef, getView().getPermissionInheritance());
         } else {

@@ -30,6 +30,7 @@ import stroom.pipeline.server.filter.XMLFilter;
 import stroom.pipeline.server.filter.XMLFilterFork;
 import stroom.pipeline.server.parser.CombinedParser;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineService;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.pipeline.shared.XSLT;
@@ -63,7 +64,7 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
     @Resource
     private TextConverterService textConverterService;
     @Resource
-    private PipelineEntityService pipelineEntityService;
+    private PipelineService pipelineService;
     @Resource
     private PipelineDataCache pipelineDataCache;
 
@@ -95,7 +96,7 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
                                           final XSLT xslt) {
         // Load the pipeline config.
         final String data = StroomProcessTestFileUtil.getString(pipelineFile);
-        final PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineEntityService, data);
+        final PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService, data);
 
         if (textConverter != null) {
             pipelineEntity.getPipelineData().addProperty(
@@ -106,7 +107,7 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
                     .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xslt));
         }
 
-        return pipelineEntityService.save(pipelineEntity);
+        return pipelineService.save(pipelineEntity);
     }
 
     private TextConverter createTextConverter(final String textConverterFile, final String name,

@@ -27,7 +27,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.document.client.event.RenameDocumentEvent;
 import stroom.document.client.event.ShowRenameDocumentDialogEvent;
 import stroom.entity.client.presenter.NameDocumentPresenter.NameDocumentProxy;
-import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -38,8 +38,8 @@ import java.util.List;
 
 public class NameDocumentPresenter extends MyPresenter<NameDocumentView, NameDocumentProxy>
         implements ShowRenameDocumentDialogEvent.Handler, PopupUiHandlers {
-    private List<ExplorerData> explorerDataList;
-    private ExplorerData entity;
+    private List<ExplorerNode> explorerNodeList;
+    private ExplorerNode entity;
 
     @Inject
     public NameDocumentPresenter(final EventBus eventBus, final NameDocumentView view, final NameDocumentProxy proxy) {
@@ -50,7 +50,7 @@ public class NameDocumentPresenter extends MyPresenter<NameDocumentView, NameDoc
     @ProxyEvent
     @Override
     public void onRename(final ShowRenameDocumentDialogEvent event) {
-        explorerDataList = event.getExplorerDataList();
+        explorerNodeList = event.getExplorerNodeList();
         renameNextEntity();
     }
 
@@ -61,9 +61,9 @@ public class NameDocumentPresenter extends MyPresenter<NameDocumentView, NameDoc
         }
     }
 
-    private ExplorerData getNextEntity() {
-        if (explorerDataList.size() > 0) {
-            return explorerDataList.remove(0);
+    private ExplorerNode getNextEntity() {
+        if (explorerNodeList.size() > 0) {
+            return explorerNodeList.remove(0);
         }
         return null;
     }

@@ -19,7 +19,6 @@ package stroom.ruleset.server;
 
 import org.springframework.stereotype.Component;
 import stroom.document.server.fs.FSDocumentStore;
-import stroom.entity.shared.PermissionInheritance;
 import stroom.query.api.v1.DocRef;
 import stroom.ruleset.shared.RuleSet;
 import stroom.security.SecurityContext;
@@ -27,7 +26,6 @@ import stroom.security.SecurityContext;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.Set;
 
 @Component
 public class RuleSetServiceImpl implements RuleSetService {
@@ -43,28 +41,28 @@ public class RuleSetServiceImpl implements RuleSetService {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public DocRef create(final String parentFolderUUID, final String name) {
-        return documentStore.create(parentFolderUUID, name);
+    public DocRef createDocument(final String name, final String parentFolderUUID) {
+        return documentStore.createDocument(parentFolderUUID, name);
     }
 
     @Override
-    public DocRef copy(final String uuid, final String parentFolderUUID) {
-        return documentStore.copy(uuid, parentFolderUUID);
+    public DocRef copyDocument(final String uuid, final String parentFolderUUID) {
+        return documentStore.copyDocument(uuid, parentFolderUUID);
     }
 
     @Override
-    public DocRef move(final String uuid, final String parentFolderUUID) {
-        return documentStore.move(uuid, parentFolderUUID);
+    public DocRef moveDocument(final String uuid, final String parentFolderUUID) {
+        return documentStore.moveDocument(uuid, parentFolderUUID);
     }
 
     @Override
-    public DocRef rename(final String uuid, final String name) {
-        return documentStore.rename(uuid, name);
+    public DocRef renameDocument(final String uuid, final String name) {
+        return documentStore.renameDocument(uuid, name);
     }
 
     @Override
-    public void delete(final String uuid) {
-        documentStore.delete(uuid);
+    public void deleteDocument(final String uuid) {
+        documentStore.deleteDocument(uuid);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -76,23 +74,18 @@ public class RuleSetServiceImpl implements RuleSetService {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public Object read(final DocRef docRef) {
-        return documentStore.read(docRef);
+    public RuleSet readDocument(final DocRef docRef) {
+        return documentStore.readDocument(docRef);
     }
 
     @Override
-    public Object write(final Object document) {
-        return documentStore.write(document);
+    public RuleSet writeDocument(final RuleSet document) {
+        return documentStore.writeDocument(document);
     }
 
     @Override
-    public Object fork(final Object document, final String docName, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
-        return documentStore.fork(document, docName, destinationFolderRef, permissionInheritance);
-    }
-
-    @Override
-    public void delete(final DocRef docRef) {
-        documentStore.delete(docRef);
+    public RuleSet forkDocument(final RuleSet document, String name, DocRef destinationFolderRef) {
+        return documentStore.forkDocument(document, name, destinationFolderRef);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -113,10 +106,5 @@ public class RuleSetServiceImpl implements RuleSetService {
     @Override
     public RuleSet update(final RuleSet dataReceiptPolicy) {
         return documentStore.update(dataReceiptPolicy);
-    }
-
-    // TODO : This is a temporary fudge until the separate explorer service is created.
-    Set<RuleSet> list() {
-        return documentStore.list();
     }
 }

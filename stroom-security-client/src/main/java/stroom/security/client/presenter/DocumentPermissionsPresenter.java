@@ -22,7 +22,8 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.Folder;
-import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.item.client.ItemListBox;
 import stroom.security.shared.ChangeDocumentPermissionsAction;
 import stroom.security.shared.ChangeSet;
@@ -59,17 +60,17 @@ public class DocumentPermissionsPresenter
         view.setTabsView(tabPresenter.getView());
     }
 
-    public void show(final ExplorerData explorerData) {
-        getView().setCascasdeVisible(Folder.ENTITY_TYPE.equals(explorerData.getType()));
-        final DocumentPermissionsTabPresenter usersPresenter = getTabPresenter(explorerData);
-        final DocumentPermissionsTabPresenter groupsPresenter = getTabPresenter(explorerData);
+    public void show(final ExplorerNode explorerNode) {
+        getView().setCascasdeVisible(Folder.ENTITY_TYPE.equals(explorerNode.getType()));
+        final DocumentPermissionsTabPresenter usersPresenter = getTabPresenter(explorerNode);
+        final DocumentPermissionsTabPresenter groupsPresenter = getTabPresenter(explorerNode);
 
             final TabData groups = tabPresenter.addTab("Groups", groupsPresenter);
             final TabData users = tabPresenter.addTab("Users", usersPresenter);
 
             tabPresenter.changeSelectedTab(groups);
 
-        final FetchAllDocumentPermissionsAction fetchAllDocumentPermissionsAction = new FetchAllDocumentPermissionsAction(explorerData.getDocRef());
+        final FetchAllDocumentPermissionsAction fetchAllDocumentPermissionsAction = new FetchAllDocumentPermissionsAction(explorerNode.getDocRef());
             dispatcher.exec(fetchAllDocumentPermissionsAction).onSuccess(documentPermissions -> {
                 usersPresenter.setDocumentPermissions(documentPermissions, false, changeSet);
                 groupsPresenter.setDocumentPermissions(documentPermissions, true, changeSet);
@@ -91,17 +92,17 @@ public class DocumentPermissionsPresenter
                 };
 
                 PopupSize popupSize;
-                if (Folder.ENTITY_TYPE.equals(explorerData.getType())) {
+                if (Folder.ENTITY_TYPE.equals(explorerNode.getType())) {
                     popupSize = new PopupSize(384, 664, 384, 664, true);
                 } else {
                     popupSize = new PopupSize(384, 500, 384, 500, true);
                 }
 
-                ShowPopupEvent.fire(DocumentPermissionsPresenter.this, DocumentPermissionsPresenter.this, PopupView.PopupType.OK_CANCEL_DIALOG, popupSize, "Set " + explorerData.getType() + " Permissions", popupUiHandlers);
+                ShowPopupEvent.fire(DocumentPermissionsPresenter.this, DocumentPermissionsPresenter.this, PopupView.PopupType.OK_CANCEL_DIALOG, popupSize, "Set " + explorerNode.getType() + " Permissions", popupUiHandlers);
             });
     }
 
-    private DocumentPermissionsTabPresenter getTabPresenter(final ExplorerData entity) {
+    private DocumentPermissionsTabPresenter getTabPresenter(final ExplorerNode entity) {
         if (Folder.ENTITY_TYPE.equals(entity.getType())) {
             return folderPermissionsListPresenterProvider.get();
         }

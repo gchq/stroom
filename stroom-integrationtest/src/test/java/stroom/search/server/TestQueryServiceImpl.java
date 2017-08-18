@@ -189,39 +189,39 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         Assert.assertEquals(1, root.getChildren().size());
     }
 
-    @Test
-    public void testLoadById() {
-        final QueryEntity query = queryService.loadById(testQuery.getId());
-
-        Assert.assertNotNull(query);
-        Assert.assertEquals("Test query", query.getName());
-        Assert.assertNotNull(query.getData());
-        final ExpressionOperator root = query.getQuery().getExpression();
-        Assert.assertEquals(1, root.getChildren().size());
-    }
+//    @Test
+//    public void testLoadById() {
+//        final QueryEntity query = queryService.loadById(testQuery.getId());
+//
+//        Assert.assertNotNull(query);
+//        Assert.assertEquals("Test query", query.getName());
+//        Assert.assertNotNull(query.getData());
+//        final ExpressionOperator root = query.getQuery().getExpression();
+//        Assert.assertEquals(1, root.getChildren().size());
+//    }
 
     @Test
     public void testClientSideStuff1() {
-        QueryEntity query = queryService.loadById(refQuery.getId());
+        QueryEntity query = queryService.loadByUuid(refQuery.getUuid());
         query = ((QueryEntity) new BaseEntityDeProxyProcessor(true).process(query));
         queryService.save(query);
     }
 
     @Test
     public void testClientSideStuff2() {
-        QueryEntity query = queryService.loadById(testQuery.getId());
+        QueryEntity query = queryService.loadByUuid(testQuery.getUuid());
         query = ((QueryEntity) new BaseEntityDeProxyProcessor(true).process(query));
         queryService.save(query);
     }
 
 //    @Test
 //    public void testDeleteKids() {
-//        QueryEntity query = queryService.loadById(testQuery.getId());
+//        QueryEntity query = queryService.loadByUuid(testQuery.getUuid());
 //        ExpressionOperator root = query.getQuery().getExpression();
 //        root.remove(0);
 //        queryService.save(query);
 //
-//        query = queryService.loadById(testQuery.getId());
+//        query = queryService.loadByUuid(testQuery.getUuid());
 //
 //        Assert.assertEquals("Test query", query.getName());
 //        root = query.getQuery().getExpression();

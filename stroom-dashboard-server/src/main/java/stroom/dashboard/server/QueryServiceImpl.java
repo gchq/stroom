@@ -16,32 +16,27 @@
 
 package stroom.dashboard.server;
 
-import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import stroom.dashboard.server.logging.DocumentEventLog;
 import stroom.dashboard.shared.FindQueryCriteria;
 import stroom.dashboard.shared.QueryEntity;
 import stroom.entity.server.AutoMarshal;
-import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.shared.EntityServiceException;
-import stroom.entity.shared.PermissionInheritance;
 import stroom.importexport.server.ImportExportHelper;
-import stroom.query.api.v1.DocRef;
 import stroom.security.SecurityContext;
 import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Inject;
 import java.util.List;
-import java.util.UUID;
 
 @Profile(StroomSpringProfiles.PROD)
 @Component("queryService")
@@ -55,8 +50,8 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
     @Inject
     QueryServiceImpl(final StroomEntityManager entityManager,
                      final ImportExportHelper importExportHelper,
-                     final SecurityContext securityContext) {
-        super(entityManager, importExportHelper, securityContext);
+                     final SecurityContext securityContext, final DocumentEventLog documentEventLog) {
+        super(entityManager, importExportHelper, securityContext, documentEventLog);
         this.entityManager = entityManager;
         this.securityContext = securityContext;
     }
@@ -71,23 +66,9 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
         return new FindQueryCriteria();
     }
 
-    // TODO : Remove this when document entities no longer reference a folder.
-    // Don't do any create permission checking as a query doesn't live in a folder and all users are allowed to create queries.
     @Override
-    public QueryEntity create(final DocRef folder, final String name, final PermissionInheritance permissionInheritance) throws RuntimeException {
-        // Create a new entity instance.
-        QueryEntity entity;
-        try {
-            entity = getEntityClass().newInstance();
-        } catch (final IllegalAccessException | InstantiationException e) {
-            throw new EntityServiceException(e.getMessage());
-        }
-
-        entity.setName(name);
-        if (entity.getUuid() == null) {
-            entity.setUuid(UUID.randomUUID().toString());
-        }
-        entity = super.create(entity);
+    public QueryEntity create(final String name) throws RuntimeException {
+        final QueryEntity entity = super.create(name);
 
         // Create the initial user permissions for this new document.
         securityContext.addDocumentPermissions(null, null, entity.getType(), entity.getUuid(), true);
@@ -193,12 +174,12 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
         // Ignore.
     }
 
-    @Override
-    public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindQueryCriteria criteria) {
-        CriteriaLoggingUtil.appendLongTerm(items, "dashboardId", criteria.getDashboardId());
-        CriteriaLoggingUtil.appendStringTerm(items, "queryId", criteria.getQueryId());
-        super.appendCriteria(items, criteria);
-    }
+//    @Override
+//    public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindQueryCriteria criteria) {
+//        CriteriaLoggingUtil.appendLongTerm(items, "dashboardId", criteria.getDashboardId());
+//        CriteriaLoggingUtil.appendStringTerm(items, "queryId", criteria.getQueryId());
+//        super.appendCriteria(items, criteria);
+//    }
 
     @Override
     protected QueryAppender<QueryEntity, FindQueryCriteria> createQueryAppender(final StroomEntityManager entityManager) {

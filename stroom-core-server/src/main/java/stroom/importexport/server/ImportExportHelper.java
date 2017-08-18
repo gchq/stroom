@@ -64,14 +64,12 @@ public class ImportExportHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportHelper.class);
 
     private final GenericEntityService genericEntityService;
-    private final EntityPathResolver entityPathResolver;
     private final ClassTypeMap classTypeMap = new ClassTypeMap();
     private volatile boolean entitiesInitialised = false;
 
     @Inject
-    public ImportExportHelper(final GenericEntityService genericEntityService, final EntityPathResolver entityPathResolver) {
+    public ImportExportHelper(final GenericEntityService genericEntityService) {
         this.genericEntityService = genericEntityService;
-        this.entityPathResolver = entityPathResolver;
     }
 
     /**
@@ -79,55 +77,55 @@ public class ImportExportHelper {
      * been registered.
      */
     private void init() {
-        if (!entitiesInitialised) {
-            synchronized (this) {
-                if (!entitiesInitialised) {
-                    registerEntities();
-                    entitiesInitialised = true;
-                }
-            }
-        }
+//        if (!entitiesInitialised) {
+//            synchronized (this) {
+//                if (!entitiesInitialised) {
+//                    registerEntities();
+//                    entitiesInitialised = true;
+//                }
+//            }
+//        }
     }
 
-    /**
-     * Use the spring registered instances of DocumentEntityServiceImpl to work
-     * out which GroupedEntities to register into the ClassTypeMap The order we
-     * register them in is important as some are dependent on others.
-     */
-    private void registerEntities() {
-        // Stream type is a special case so explicitly register it first.
-        classTypeMap.registerEntityReference(StreamType.class);
-
-        // get all the spring grouped entity service beans.
-        final Collection<DocumentEntityService<?>> services = genericEntityService.findAll();
-
-        final ArrayList<Class<? extends DocumentEntity>> entityClasses = new ArrayList<>(services.size());
-        for (final DocumentEntityService<?> service : services) {
-            final Class<? extends DocumentEntity> clazz = service.getEntityClass();
-            if (clazz == null) {
-                throw new NullPointerException("No entity class provided");
-            } else {
-                entityClasses.add(clazz);
-            }
-        }
-
-        // Sort the list of entity classes to ensure consistent behaviour.
-        Collections.sort(entityClasses, new EntityClassComparator());
-        // Make sure folders are first
-        entityClasses.remove(Folder.class);
-        entityClasses.add(0, Folder.class);
-        // Make sure pipelines are last.
-        entityClasses.remove(PipelineEntity.class);
-        entityClasses.add(PipelineEntity.class);
-
-        // Keep repeating the services loop to ensure all dependencies are
-        // loaded.
-        for (int i = 0; i < entityClasses.size(); i++) {
-            // No dependencies and not already registered.
-            entityClasses.stream().filter(entityClass -> classTypeMap.getEntityType(entityClass) == null)
-                    .forEach(classTypeMap::registerEntity);
-        }
-    }
+//    /**
+//     * Use the spring registered instances of DocumentEntityServiceImpl to work
+//     * out which GroupedEntities to register into the ClassTypeMap The order we
+//     * register them in is important as some are dependent on others.
+//     */
+//    private void registerEntities() {
+//        // Stream type is a special case so explicitly register it first.
+//        classTypeMap.registerEntityReference(StreamType.class);
+//
+//        // get all the spring grouped entity service beans.
+//        final Collection<DocumentEntityService<?>> services = genericEntityService.findAll();
+//
+//        final ArrayList<Class<? extends DocumentEntity>> entityClasses = new ArrayList<>(services.size());
+//        for (final DocumentEntityService<?> service : services) {
+//            final Class<? extends DocumentEntity> clazz = service.getEntityClass();
+//            if (clazz == null) {
+//                throw new NullPointerException("No entity class provided");
+//            } else {
+//                entityClasses.add(clazz);
+//            }
+//        }
+//
+//        // Sort the list of entity classes to ensure consistent behaviour.
+//        Collections.sort(entityClasses, new EntityClassComparator());
+//        // Make sure folders are first
+//        entityClasses.remove(Folder.class);
+//        entityClasses.add(0, Folder.class);
+//        // Make sure pipelines are last.
+//        entityClasses.remove(PipelineEntity.class);
+//        entityClasses.add(PipelineEntity.class);
+//
+//        // Keep repeating the services loop to ensure all dependencies are
+//        // loaded.
+//        for (int i = 0; i < entityClasses.size(); i++) {
+//            // No dependencies and not already registered.
+//            entityClasses.stream().filter(entityClass -> classTypeMap.getEntityType(entityClass) == null)
+//                    .forEach(classTypeMap::registerEntity);
+//        }
+//    }
 
     @SuppressWarnings("unchecked")
     public <E extends DocumentEntity> void performImport(final E entity, final Map<String, String> dataMap, final String mainConfigPath,
@@ -296,27 +294,27 @@ public class ImportExportHelper {
                 final Set<BaseEntity> newSet = new HashSet<>();
 
                 if (values != null && values.size() > 0) {
-                    final Class<? extends Entity> clazz = beanWrapper.getPropertyBaseEntityType(propertyName);
-                    final String entityType = classTypeMap.getEntityType(clazz);
-
-                    // Some entity types are not imported, e.g. Volumes so we
-                    // will sometimes get null entity type here if they are
-                    // unsupported.
-                    if (entityType != null) {
-                        for (final Object obj : values) {
-                            if (obj instanceof String) {
-                                final String string = (String) obj;
-                                if (StringUtils.hasText(string)) {
-                                    final BaseEntity entity = resolveEntityByPath(beanWrapper, clazz, string);
-                                    newSet.add(entity);
-                                }
-                            } else if (obj instanceof DocRef) {
-                                final DocRef docRef = (DocRef) obj;
-                                final BaseEntity entity = resolveEntityByDocRef(beanWrapper, docRef);
-                                newSet.add(entity);
-                            }
-                        }
-                    }
+//                    final Class<? extends Entity> clazz = beanWrapper.getPropertyBaseEntityType(propertyName);
+//                    final String entityType = classTypeMap.getEntityType(clazz);
+//
+//                    // Some entity types are not imported, e.g. Volumes so we
+//                    // will sometimes get null entity type here if they are
+//                    // unsupported.
+//                    if (entityType != null) {
+//                        for (final Object obj : values) {
+//                            if (obj instanceof String) {
+//                                final String string = (String) obj;
+//                                if (StringUtils.hasText(string)) {
+//                                    final BaseEntity entity = resolveEntityByPath(beanWrapper, clazz, string);
+//                                    newSet.add(entity);
+//                                }
+//                            } else if (obj instanceof DocRef) {
+//                                final DocRef docRef = (DocRef) obj;
+//                                final BaseEntity entity = resolveEntityByDocRef(beanWrapper, docRef);
+//                                newSet.add(entity);
+//                            }
+//                        }
+//                    }
                 }
                 @SuppressWarnings("unchecked") final Set<? extends DocumentEntity> oldSet = (Set<? extends DocumentEntity>) beanWrapper
                         .getPropertyValue(propertyName);
@@ -368,39 +366,39 @@ public class ImportExportHelper {
     private void setStringProperty(final BaseEntityBeanWrapper beanWrapper, final String propertyName,
                                    final String value, final ImportState importState,
                                    final ImportMode importMode) {
-        final Class<? extends Entity> clazz = beanWrapper.getPropertyBaseEntityType(propertyName);
-
-        // See if this property is a resource. If it is then create
-        // a new resource or update an existing one.
-        if (Res.class.equals(clazz)) {
-            Res res;
-            final Object existing = beanWrapper.getPropertyValue(propertyName);
-            if (existing == null) {
-                res = new Res();
-            } else {
-                res = (Res) existing;
-            }
-
-            if (importMode == ImportMode.CREATE_CONFIRMATION) {
-                if (!EqualsUtil.isEquals(res.getData(), value)) {
-                    importState.getUpdatedFieldList().add(propertyName);
-                }
-            } else {
-                res.setData(value);
-                beanWrapper.setPropertyValue(propertyName, res);
-            }
-
-        } else {
-            // This property is an entity so get the referenced
-            // entity if we can.
-            final BaseEntity entity = resolveEntityByPath(beanWrapper, clazz, value);
-            if (importMode == ImportMode.CREATE_CONFIRMATION) {
-                if (!entity.equals(beanWrapper.getPropertyValue(propertyName))) {
-                    importState.getUpdatedFieldList().add(propertyName);
-                }
-            }
-            beanWrapper.setPropertyValue(propertyName, entity);
-        }
+//        final Class<? extends Entity> clazz = beanWrapper.getPropertyBaseEntityType(propertyName);
+//
+//        // See if this property is a resource. If it is then create
+//        // a new resource or update an existing one.
+//        if (Res.class.equals(clazz)) {
+//            Res res;
+//            final Object existing = beanWrapper.getPropertyValue(propertyName);
+//            if (existing == null) {
+//                res = new Res();
+//            } else {
+//                res = (Res) existing;
+//            }
+//
+//            if (importMode == ImportMode.CREATE_CONFIRMATION) {
+//                if (!EqualsUtil.isEquals(res.getData(), value)) {
+//                    importState.getUpdatedFieldList().add(propertyName);
+//                }
+//            } else {
+//                res.setData(value);
+//                beanWrapper.setPropertyValue(propertyName, res);
+//            }
+//
+//        } else {
+//            // This property is an entity so get the referenced
+//            // entity if we can.
+//            final BaseEntity entity = resolveEntityByPath(beanWrapper, clazz, value);
+//            if (importMode == ImportMode.CREATE_CONFIRMATION) {
+//                if (!entity.equals(beanWrapper.getPropertyValue(propertyName))) {
+//                    importState.getUpdatedFieldList().add(propertyName);
+//                }
+//            }
+//            beanWrapper.setPropertyValue(propertyName, entity);
+//        }
     }
 
     private void setDocRefProperty(final BaseEntityBeanWrapper beanWrapper, final String propertyName,
@@ -417,25 +415,25 @@ public class ImportExportHelper {
         beanWrapper.setPropertyValue(propertyName, entity);
     }
 
-    private BaseEntity resolveEntityByPath(final BaseEntityBeanWrapper beanWrapper, final Class<? extends Entity> clazz,
-                                           final String val) {
-        NamedEntity entity;
-//        if (DocumentEntity.class.isAssignableFrom(clazz)) {
-//            entity = entityPathResolver.getEntity(classTypeMap.getEntityType(clazz), beanWrapper.getBaseEntity(), val,
-//                    null);
-//        } else {
-        entity = genericEntityService.loadByName(classTypeMap.getEntityType(clazz), val);
+//    private BaseEntity resolveEntityByPath(final BaseEntityBeanWrapper beanWrapper, final Class<? extends Entity> clazz,
+//                                           final String val) {
+//        NamedEntity entity;
+////        if (DocumentEntity.class.isAssignableFrom(clazz)) {
+////            entity = entityPathResolver.getEntity(classTypeMap.getEntityType(clazz), beanWrapper.getBaseEntity(), val,
+////                    null);
+////        } else {
+//        entity = genericEntityService.loadByName(classTypeMap.getEntityType(clazz), val);
+////        }
+//
+//        if (entity == null) {
+//            // If we couldn't find the referenced entity then throw an entity
+//            // dependency exception. We might get the dependency added later in
+//            // this import and be able to add this entity again later.
+//            throw new EntityDependencyServiceException(classTypeMap.getEntityType(clazz), val);
 //        }
-
-        if (entity == null) {
-            // If we couldn't find the referenced entity then throw an entity
-            // dependency exception. We might get the dependency added later in
-            // this import and be able to add this entity again later.
-            throw new EntityDependencyServiceException(classTypeMap.getEntityType(clazz), val);
-        }
-
-        return entity;
-    }
+//
+//        return entity;
+//    }
 
     private BaseEntity resolveEntityByDocRef(final BaseEntityBeanWrapper beanWrapper, final DocRef docRef) {
         NamedEntity entity = genericEntityService.loadByUuid(docRef.getType(), docRef.getUuid());
@@ -528,13 +526,13 @@ public class ImportExportHelper {
                             final List<Object> list = new ArrayList<>();
 
                             for (final Object valueItem : (Collection<?>) value) {
-                                if (valueItem instanceof DocumentEntity) {
-                                    final DocumentEntity documentEntity = (DocumentEntity) valueItem;
-                                    list.add(entityPathResolver.getEntityPath(documentEntity.getType(), entity,
-                                            documentEntity));
-                                } else {
+//                                if (valueItem instanceof DocumentEntity) {
+//                                    final DocumentEntity documentEntity = (DocumentEntity) valueItem;
+//                                    list.add(entityPathResolver.getEntityPath(documentEntity.getType(), entity,
+//                                            documentEntity));
+//                                } else {
                                     list.add(String.valueOf(valueItem));
-                                }
+//                                }
                             }
 
                             config.add(propertyName, list);

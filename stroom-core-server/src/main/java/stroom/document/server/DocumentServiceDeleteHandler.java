@@ -42,18 +42,18 @@ class DocumentServiceDeleteHandler extends AbstractTaskHandler<DocumentServiceDe
 //        try {
 //            entityService.delete(entity);
 //            if (entity != null) {
-//                entityEventLog.delete(entity);
+//                documentEventLog.delete(entity);
 //            }
 //        } catch (final RuntimeException e) {
 //            if (entity != null) {
-//                entityEventLog.delete(entity, e);
+//                documentEventLog.delete(entity, e);
 //            }
 //            throw e;
 //        }
 //
 //        return entity;
 
-        documentService.delete(action.getDocRef());
+        documentService.deleteDocument(action.getDocRef());
         return VoidResult.INSTANCE;
     }
 }

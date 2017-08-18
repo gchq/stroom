@@ -50,14 +50,14 @@ public class PipelinePlugin extends EntityPlugin<PipelineEntity> {
     protected void onBind() {
         super.onBind();
 
-        registerHandler(getEventBus().addHandler(CreateProcessorEvent.getType(), event -> {
-            final StreamProcessor streamProcessor = event.getStreamProcessorFilter().getStreamProcessor();
-            final PipelineEntity pipelineEntity = streamProcessor.getPipeline();
-            final DocRef docRef = DocRefUtil.create(pipelineEntity);
-            // Open the item in the content pane.
-            final PipelinePresenter pipelinePresenter = (PipelinePresenter) open(docRef, true);
-            // Highlight the item in the explorer tree.
-            highlight(docRef);
+        registerHandler(getEventBus().addHandler(CreateProcessorEvent.getType(),  event-> {
+                final StreamProcessor streamProcessor = event.getStreamProcessorFilter().getStreamProcessor();
+                final PipelineEntity pipelineEntity = streamProcessor.getPipeline();
+                final DocRef docRef = DocRefUtil.create(pipelineEntity);
+                // Open the item in the content pane.
+                final PipelinePresenter pipelinePresenter = (PipelinePresenter) open(docRef, true);
+                // Highlight the item in the explorer tree.
+    //            highlight(docRef);
 
             pipelinePresenter.selectTab(PipelinePresenter.PROCESSORS);
             pipelinePresenter.getContent(PipelinePresenter.PROCESSORS, content -> ((ProcessorPresenter) content).refresh(event.getStreamProcessorFilter()));

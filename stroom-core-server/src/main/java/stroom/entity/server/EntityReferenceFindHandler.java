@@ -42,12 +42,12 @@ import java.util.List;
 class EntityReferenceFindHandler
         extends AbstractTaskHandler<EntityReferenceFindAction<BaseCriteria>, ResultList<SharedDocRef>> {
     private final EntityServiceBeanRegistry beanRegistry;
-    private final DocumentEventLog entityEventLog;
+    private final DocumentEventLog documentEventLog;
 
     @Inject
-    EntityReferenceFindHandler(final EntityServiceBeanRegistry beanRegistry, final DocumentEventLog entityEventLog) {
+    EntityReferenceFindHandler(final EntityServiceBeanRegistry beanRegistry, final DocumentEventLog documentEventLog) {
         this.beanRegistry = beanRegistry;
-        this.entityEventLog = entityEventLog;
+        this.documentEventLog = documentEventLog;
     }
 
     @SuppressWarnings("unchecked")
@@ -73,9 +73,9 @@ class EntityReferenceFindHandler
 
         try {
             resultList = (BaseResultList<BaseEntity>) beanRegistry.invoke("find", action.getCriteria());
-            entityEventLog.search(action.getCriteria(), query, resultList);
+            documentEventLog.search(action.getCriteria(), query, resultList);
         } catch (final RuntimeException e) {
-            entityEventLog.search(action.getCriteria(), query, e);
+            documentEventLog.search(action.getCriteria(), query, e);
 
             throw e;
         }

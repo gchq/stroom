@@ -25,7 +25,7 @@ import stroom.feed.shared.Feed;
 import stroom.io.StreamCloser;
 import stroom.pipeline.server.EncodingSelection;
 import stroom.pipeline.server.LocationFactoryProxy;
-import stroom.pipeline.server.PipelineEntityService;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.server.StreamLocationFactory;
 import stroom.pipeline.server.errorhandler.ErrorReceiverIdDecorator;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
@@ -73,7 +73,7 @@ public class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceD
     @Resource(name = "cachedFeedService")
     private FeedService feedService;
     @Resource(name = "cachedPipelineEntityService")
-    private PipelineEntityService pipelineEntityService;
+    private PipelineService pipelineService;
     @Resource
     private PipelineHolder pipelineHolder;
     @Resource
@@ -121,7 +121,7 @@ public class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceD
                     feedHolder.setFeed(feed);
 
                     // Set the pipeline so it can be used by a filter if needed.
-                    final PipelineEntity pipelineEntity = pipelineEntityService
+                    final PipelineEntity pipelineEntity = pipelineService
                             .loadByUuid(mapStorePoolKey.getPipeline().getUuid());
                     pipelineHolder.setPipeline(pipelineEntity);
 

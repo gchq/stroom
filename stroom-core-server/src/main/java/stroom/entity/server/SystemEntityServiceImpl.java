@@ -85,11 +85,11 @@ public abstract class SystemEntityServiceImpl<E extends Entity, C extends BaseCr
         return entityServiceHelper.loadById(id, fetchSet, queryAppender);
     }
 
-    @Transactional(readOnly = true)
-    @Override
-    public E loadByIdInsecure(final long id, final Set<String> fetchSet) throws RuntimeException {
-        return entityServiceHelper.loadById(id, Collections.emptySet(), queryAppender);
-    }
+//    @Transactional(readOnly = true)
+//    @Override
+//    public E loadByIdInsecure(final long id, final Set<String> fetchSet) throws RuntimeException {
+//        return entityServiceHelper.loadById(id, Collections.emptySet(), queryAppender);
+//    }
 
     //    @Secured(permission = DocumentPermissionNames.UPDATE)
     @Override

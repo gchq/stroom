@@ -20,13 +20,24 @@ package stroom.dashboard.spring;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
+import stroom.dashboard.server.DashboardService;
+import stroom.dashboard.shared.Dashboard;
+import stroom.explorer.server.ExplorerActionHandlers;
+
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 /**
  * Exclude other configurations that might be found accidentally during a
  * component scan as configurations should be specified explicitly.
  */
 @Configuration
-@ComponentScan(basePackages = {"stroom.dashboard.server", "stroom.dashboard.shared"}, excludeFilters = {
+@ComponentScan(basePackages = {"stroom.dashboard.server"}, excludeFilters = {
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
 public class DashboardConfiguration {
+    @Inject
+    public DashboardConfiguration(final ExplorerActionHandlers explorerActionHandlers,
+                               final Provider<DashboardService> dashboardServiceProvider) {
+        explorerActionHandlers.add(7, Dashboard.ENTITY_TYPE, Dashboard.ENTITY_TYPE, dashboardServiceProvider);
+    }
 }

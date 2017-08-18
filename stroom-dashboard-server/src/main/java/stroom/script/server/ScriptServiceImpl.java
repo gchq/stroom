@@ -19,22 +19,20 @@ package stroom.script.server;
 
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import stroom.dashboard.server.logging.DocumentEventLog;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.ObjectMarshaller;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
 import stroom.importexport.server.ImportExportHelper;
-import stroom.query.api.v1.DocRef;
 import stroom.script.shared.FindScriptCriteria;
 import stroom.script.shared.Script;
 import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 @Component("scriptService")
@@ -43,8 +41,8 @@ public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScr
     public static final Set<String> FETCH_SET = Collections.singleton(Script.FETCH_RESOURCE);
 
     @Inject
-    ScriptServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext) {
-        super(entityManager, importExportHelper, securityContext);
+    ScriptServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext, final DocumentEventLog documentEventLog) {
+        super(entityManager, importExportHelper, securityContext, documentEventLog);
     }
 
     @Override
@@ -58,25 +56,30 @@ public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScr
     }
 
     @Override
-    public DocRef copy(final String uuid, final String parentFolderUUID) {
-        final Set<String> fetchSet = new HashSet<>();
-        fetchSet.add(Script.FETCH_RESOURCE);
-
-        final Script entity = loadByUuid(uuid, fetchSet);
-
-        // This is going to be a copy so clear the persistence so save will create a new DB entry.
-        entity.clearPersistence();
-
-        setFolder(entity, parentFolderUUID);
-
-        final Script result = create(entity);
-        return DocRefUtil.create(result);
+    public Script loadByUuidInsecure(final String uuid, final Set<String> fetchSet) {
+        return super.loadByUuidInsecure(uuid, fetchSet);
     }
 
-    @Override
-    public Object read(final DocRef docRef) {
-        return loadByUuid(docRef.getUuid(), FETCH_SET);
-    }
+    //    @Override
+//    public DocRef copy(final String uuid, final String parentFolderUUID) {
+//        final Set<String> fetchSet = new HashSet<>();
+//        fetchSet.add(Script.FETCH_RESOURCE);
+//
+//        final Script entity = loadByUuid(uuid, fetchSet);
+//
+//        // This is going to be a copy so clear the persistence so save will create a new DB entry.
+//        entity.clearPersistence();
+//
+//        setFolder(entity, parentFolderUUID);
+//
+//        final Script result = create(entity);
+//        return DocRefUtil.create(result);
+//    }
+//
+//    @Override
+//    public Object read(final DocRef docRef) {
+//        return loadByUuid(docRef.getUuid(), FETCH_SET);
+//    }
 
     @Override
     protected QueryAppender<Script, FindScriptCriteria> createQueryAppender(final StroomEntityManager entityManager) {
@@ -86,7 +89,7 @@ public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScr
     private static class ScriptQueryAppender extends QueryAppender<Script, FindScriptCriteria> {
         private final ObjectMarshaller<DocRefs> docRefSetMarshaller;
 
-        public ScriptQueryAppender(final StroomEntityManager entityManager) {
+        ScriptQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
             docRefSetMarshaller = new ObjectMarshaller<>(DocRefs.class);
         }

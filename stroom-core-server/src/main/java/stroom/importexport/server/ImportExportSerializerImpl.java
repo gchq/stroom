@@ -23,7 +23,6 @@ import org.springframework.stereotype.Component;
 import stroom.entity.server.DocumentEntityService;
 import stroom.entity.server.EntityService;
 import stroom.entity.server.FindService;
-import stroom.entity.server.FolderService;
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
@@ -36,7 +35,6 @@ import stroom.entity.shared.ImportState;
 import stroom.entity.shared.ImportState.ImportMode;
 import stroom.entity.shared.ImportState.State;
 import stroom.entity.shared.PermissionException;
-import stroom.folder.server.FolderServiceImpl;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v1.DocRef;
 import stroom.security.SecurityContext;
@@ -72,17 +70,14 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportSerializerImpl.class);
 
     private static final Set<String> RESOURCE_FETCH_SET = Collections.singleton("all");
-    private final FolderService folderService;
     private final GenericEntityService genericEntityService;
     private final ClassTypeMap classTypeMap = new ClassTypeMap();
     private final SecurityContext securityContext;
     private volatile boolean entitiesInitialised = false;
 
     @Inject
-    public ImportExportSerializerImpl(final FolderService folderService,
-                                      final GenericEntityService genericEntityService,
+    public ImportExportSerializerImpl(final GenericEntityService genericEntityService,
                                       final SecurityContext securityContext) {
-        this.folderService = folderService;
         this.genericEntityService = genericEntityService;
         this.securityContext = securityContext;
     }
@@ -92,55 +87,55 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
      * been registered.
      */
     private void init() {
-        if (!entitiesInitialised) {
-            synchronized (this) {
-                if (!entitiesInitialised) {
-                    registerEntities();
-                    entitiesInitialised = true;
-                }
-            }
-        }
+//        if (!entitiesInitialised) {
+//            synchronized (this) {
+//                if (!entitiesInitialised) {
+//                    registerEntities();
+//                    entitiesInitialised = true;
+//                }
+//            }
+//        }
     }
 
-    /**
-     * Use the spring registered instances of DocumentEntityServiceImpl to work
-     * out which GroupedEntities to register into the ClassTypeMap The order we
-     * register them in is important as some are dependent on others.
-     */
-    private void registerEntities() {
-        // Stream type is a special case so explicitly register it first.
-        classTypeMap.registerEntityReference(StreamType.class);
-
-        // get all the spring grouped entity service beans.
-        final Collection<DocumentEntityService<?>> services = genericEntityService.findAll();
-
-        final ArrayList<Class<? extends DocumentEntity>> entityClasses = new ArrayList<>(services.size());
-        for (final DocumentEntityService<?> service : services) {
-            final Class<? extends DocumentEntity> clazz = service.getEntityClass();
-            if (clazz == null) {
-                throw new NullPointerException("No entity class provided");
-            } else {
-                entityClasses.add(clazz);
-            }
-        }
-
-        // Sort the list of entity classes to ensure consistent behaviour.
-        Collections.sort(entityClasses, new EntityClassComparator());
-        // Make sure folders are first
-        entityClasses.remove(Folder.class);
-        entityClasses.add(0, Folder.class);
-        // Make sure pipelines are last.
-        entityClasses.remove(PipelineEntity.class);
-        entityClasses.add(PipelineEntity.class);
-
-        // Keep repeating the services loop to ensure all dependencies are
-        // loaded.
-        for (int i = 0; i < entityClasses.size(); i++) {
-            // No dependencies and not already registered.
-            entityClasses.stream().filter(entityClass -> classTypeMap.getEntityType(entityClass) == null)
-                    .forEach(classTypeMap::registerEntity);
-        }
-    }
+//    /**
+//     * Use the spring registered instances of DocumentEntityServiceImpl to work
+//     * out which GroupedEntities to register into the ClassTypeMap The order we
+//     * register them in is important as some are dependent on others.
+//     */
+//    private void registerEntities() {
+//        // Stream type is a special case so explicitly register it first.
+//        classTypeMap.registerEntityReference(StreamType.class);
+//
+//        // get all the spring grouped entity service beans.
+//        final Collection<DocumentEntityService<?>> services = genericEntityService.findAll();
+//
+//        final ArrayList<Class<? extends DocumentEntity>> entityClasses = new ArrayList<>(services.size());
+//        for (final DocumentEntityService<?> service : services) {
+//            final Class<? extends DocumentEntity> clazz = service.getEntityClass();
+//            if (clazz == null) {
+//                throw new NullPointerException("No entity class provided");
+//            } else {
+//                entityClasses.add(clazz);
+//            }
+//        }
+//
+//        // Sort the list of entity classes to ensure consistent behaviour.
+//        Collections.sort(entityClasses, new EntityClassComparator());
+//        // Make sure folders are first
+//        entityClasses.remove(Folder.class);
+//        entityClasses.add(0, Folder.class);
+//        // Make sure pipelines are last.
+//        entityClasses.remove(PipelineEntity.class);
+//        entityClasses.add(PipelineEntity.class);
+//
+//        // Keep repeating the services loop to ensure all dependencies are
+//        // loaded.
+//        for (int i = 0; i < entityClasses.size(); i++) {
+//            // No dependencies and not already registered.
+//            entityClasses.stream().filter(entityClass -> classTypeMap.getEntityType(entityClass) == null)
+//                    .forEach(classTypeMap::registerEntity);
+//        }
+//    }
 
     /**
      * IMPORT
@@ -281,20 +276,20 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
                                 if (explorerPath.getNameCount() == 1) {
                                     folderRef = nearestFolder;
                                 } else {
-                                    Folder parentFolder = null;
-                                    for (pathIndex = 0; pathIndex < explorerPath.getNameCount() - 1; pathIndex++) {
-                                        final String folderName = explorerPath.getName(pathIndex).toString();
-                                        Folder folder = folderService.loadByName(DocRefUtil.create(parentFolder), folderName);
-                                        if (folder != null) {
-                                            nearestFolder = DocRefUtil.create(folder);
-                                            folderRef = nearestFolder;
-                                        } else {
-                                            folderRef = null;
-                                            break;
-                                        }
-
-                                        parentFolder = folder;
-                                    }
+//                                    Folder parentFolder = null;
+//                                    for (pathIndex = 0; pathIndex < explorerPath.getNameCount() - 1; pathIndex++) {
+//                                        final String folderName = explorerPath.getName(pathIndex).toString();
+//                                        Folder folder = folderService.loadByName(DocRefUtil.create(parentFolder), folderName);
+//                                        if (folder != null) {
+//                                            nearestFolder = DocRefUtil.create(folder);
+//                                            folderRef = nearestFolder;
+//                                        } else {
+//                                            folderRef = null;
+//                                            break;
+//                                        }
+//
+//                                        parentFolder = folder;
+//                                    }
                                 }
 
                                 // Only allow administrators to import documents with no folder.
@@ -316,19 +311,19 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
                                         throw new PermissionException("You do not have permission to import folders into '" + nearestFolder);
                                     }
 
-                                    // Add the required folders for this new item.
-                                    if (importMode == ImportMode.IGNORE_CONFIRMATION
-                                            || (importMode == ImportMode.ACTION_CONFIRMATION && importState.isAction())) {
-                                        if (pathIndex > 0) {
-                                            pathIndex = pathIndex - 1;
-                                        }
-                                        for (; pathIndex < explorerPath.getNameCount() - 1; pathIndex++) {
-                                            final String folderName = explorerPath.getName(pathIndex).toString();
-                                            Folder folder = folderService.create(nearestFolder, folderName);
-                                            nearestFolder = DocRefUtil.create(folder);
-                                            folderRef = nearestFolder;
-                                        }
-                                    }
+//                                    // Add the required folders for this new item.
+//                                    if (importMode == ImportMode.IGNORE_CONFIRMATION
+//                                            || (importMode == ImportMode.ACTION_CONFIRMATION && importState.isAction())) {
+//                                        if (pathIndex > 0) {
+//                                            pathIndex = pathIndex - 1;
+//                                        }
+//                                        for (; pathIndex < explorerPath.getNameCount() - 1; pathIndex++) {
+//                                            final String folderName = explorerPath.getName(pathIndex).toString();
+//                                            Folder folder = folderService.create(nearestFolder, folderName);
+//                                            nearestFolder = DocRefUtil.create(folder);
+//                                            folderRef = nearestFolder;
+//                                        }
+//                                    }
 
 
                                 } else {
@@ -378,12 +373,12 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
 
                                 // TODO : In v6 we won't pass down the folder.
                                 Folder folder = null;
-                                if (!SYSTEM_FOLDER.equals(folderRef)) {
-                                    folder = folderService.loadByUuid(folderRef.getUuid());
-                                    if (folder == null) {
-                                        throw new RuntimeException("Unable to find parent folder: " + folderRef);
-                                    }
-                                }
+//                                if (!SYSTEM_FOLDER.equals(folderRef)) {
+//                                    folder = folderService.loadByUuid(folderRef.getUuid());
+//                                    if (folder == null) {
+//                                        throw new RuntimeException("Unable to find parent folder: " + folderRef);
+//                                    }
+//                                }
                                 final DocRef imported = documentEntityService.importDocument(folder, dataMap, importState, importMode);
 
                                 // TODO : In v6.0 add folders afterwards on successful import as they won't be controlled by doc service.
@@ -419,20 +414,20 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
 
     private DocRef getExistingFolder(final DocRef docRef) {
         // TODO : In v6 replace this method with calls to local explorer service to get folder.
-        final DocumentEntityService documentEntityService = getService(docRef);
-        if (documentEntityService == null) {
-            throw new RuntimeException("Unable to find service to import " + docRef);
-        }
-
-        final Entity entity = documentEntityService.loadByUuid(docRef.getUuid());
-        if (entity != null && entity instanceof HasFolder) {
-            final Folder folder = ((HasFolder) entity).getFolder();
-            if (folder == null) {
-                // Return the root folder.
-                return SYSTEM_FOLDER;
-            }
-            return DocRefUtil.create(folderService.load(folder));
-        }
+//        final DocumentEntityService documentEntityService = getService(docRef);
+//        if (documentEntityService == null) {
+//            throw new RuntimeException("Unable to find service to import " + docRef);
+//        }
+//
+//        final Entity entity = documentEntityService.loadByUuid(docRef.getUuid());
+//        if (entity != null && entity instanceof HasFolder) {
+//            final Folder folder = ((HasFolder) entity).getFolder();
+//            if (folder == null) {
+//                // Return the root folder.
+//                return SYSTEM_FOLDER;
+//            }
+//            return DocRefUtil.create(folderService.load(folder));
+//        }
 
         return null;
     }
@@ -441,32 +436,32 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
         final StringBuilder path = new StringBuilder();
 
         // TODO : In v6 replace this method with calls to local explorer service to get folder.
-        final DocumentEntityService documentEntityService = getService(docRef);
-        if (documentEntityService == null) {
-            throw new RuntimeException("Unable to find service to import " + docRef);
-        }
-
-        final Entity entity = documentEntityService.loadByUuid(docRef.getUuid());
-        if (entity != null && entity instanceof HasFolder) {
-            if (docRef.getName() != null) {
-                path.append(docRef.getName());
-            } else if (entity instanceof DocumentEntity) {
-                final DocumentEntity documentEntity = (DocumentEntity) entity;
-                if (documentEntity.getName() != null) {
-                    path.append(documentEntity.getName());
-                }
-            }
-
-            Folder folder = ((HasFolder) entity).getFolder();
-            while (folder != null) {
-                folder = folderService.load(folder);
-                if (folder != null) {
-                    path.insert(0, "/");
-                    path.insert(0, folder.getName());
-                    folder = folder.getFolder();
-                }
-            }
-        }
+//        final DocumentEntityService documentEntityService = getService(docRef);
+//        if (documentEntityService == null) {
+//            throw new RuntimeException("Unable to find service to import " + docRef);
+//        }
+//
+//        final Entity entity = documentEntityService.loadByUuid(docRef.getUuid());
+//        if (entity != null && entity instanceof HasFolder) {
+//            if (docRef.getName() != null) {
+//                path.append(docRef.getName());
+//            } else if (entity instanceof DocumentEntity) {
+//                final DocumentEntity documentEntity = (DocumentEntity) entity;
+//                if (documentEntity.getName() != null) {
+//                    path.append(documentEntity.getName());
+//                }
+//            }
+//
+//            Folder folder = ((HasFolder) entity).getFolder();
+//            while (folder != null) {
+//                folder = folderService.load(folder);
+//                if (folder != null) {
+//                    path.insert(0, "/");
+//                    path.insert(0, folder.getName());
+//                    folder = folder.getFolder();
+//                }
+//            }
+//        }
 
         return path.toString();
     }
@@ -504,27 +499,27 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
             set.add(docRef);
         }
 
-        if (Folder.ENTITY_TYPE.equals(docRef.getType())) {
-            for (final String entityType : classTypeMap.getEntityTypeList()) {
-                try {
-                    List<DocumentEntity> entities;
-                    if (SYSTEM_FOLDER.equals(docRef) || docRef == null) {
-                        entities = genericEntityService.findByFolder(entityType, null, RESOURCE_FETCH_SET);
-                    } else {
-                        entities = genericEntityService.findByFolder(entityType, docRef, RESOURCE_FETCH_SET);
-                    }
-
-                    if (entities != null) {
-                        for (final DocumentEntity documentEntity : entities) {
-                            expandDocRefSet(DocRefUtil.create(documentEntity), set);
-                        }
-                    }
-                } catch (final Exception e) {
-                    // We might get a permission exception which is expected for some users.
-                    LOGGER.debug(e.getMessage(), e);
-                }
-            }
-        }
+//        if (Folder.ENTITY_TYPE.equals(docRef.getType())) {
+//            for (final String entityType : classTypeMap.getEntityTypeList()) {
+//                try {
+//                    List<DocumentEntity> entities;
+//                    if (SYSTEM_FOLDER.equals(docRef) || docRef == null) {
+//                        entities = genericEntityService.findByFolder(entityType, null, RESOURCE_FETCH_SET);
+//                    } else {
+//                        entities = genericEntityService.findByFolder(entityType, docRef, RESOURCE_FETCH_SET);
+//                    }
+//
+//                    if (entities != null) {
+//                        for (final DocumentEntity documentEntity : entities) {
+//                            expandDocRefSet(DocRefUtil.create(documentEntity), set);
+//                        }
+//                    }
+//                } catch (final Exception e) {
+//                    // We might get a permission exception which is expected for some users.
+//                    LOGGER.debug(e.getMessage(), e);
+//                }
+//            }
+//        }
     }
 
     @SuppressWarnings("unchecked")
@@ -556,94 +551,94 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
         // TODO : In v6 get the folder structure from the explorer tree service and not the entity service.
         final Entity entity = genericEntityService.loadByUuid(docRef.getType(), docRef.getUuid(), RESOURCE_FETCH_SET);
         if (entity != null && entity instanceof DocumentEntity) {
-            final DocumentEntity documentEntity = (DocumentEntity) entity;
-
-            // Find the folder path to this entity.
-            final List<Folder> folders = getFolderPath(documentEntity);
-
-            // Create directories for the path if not already created by another entity.
-            final Path parentDir = createDirs(dir, folders, messageList);
-
-            // Ensure the parent directory exists.
-            if (!Files.isDirectory(parentDir)) {
-                // Don't output the full path here are we don't want users to see the full file system path.
-                messageList.add(new Message(Severity.FATAL_ERROR, "Unable to create directory for folder: " + parentDir.getFileName()));
-
-            } else {
-                final EntityService<?> entityService = genericEntityService.getEntityService(entity.getType());
-                if (entityService != null && entityService instanceof DocumentEntityService) {
-                    final DocumentEntityService documentEntityService = (DocumentEntityService) entityService;
-                    final Map<String, String> dataMap = documentEntityService.exportDocument(docRef, omitAuditFields, messageList);
-                    if (dataMap != null) {
-                        for (final Entry<String, String> entry : dataMap.entrySet()) {
-                            try {
-                                final Path file = parentDir.resolve(entry.getKey());
-                                try (final Writer writer = Files.newBufferedWriter(file, Charset.forName("UTF-8"))) {
-                                    writer.write(entry.getValue());
-                                }
-                            } catch (final IOException e) {
-                                messageList.add(new Message(Severity.ERROR, "Failed to write file '" + entry.getKey() + "'"));
-                            }
-                        }
-                    }
-                }
-            }
+//            final DocumentEntity documentEntity = (DocumentEntity) entity;
+//
+//            // Find the folder path to this entity.
+//            final List<Folder> folders = getFolderPath(documentEntity);
+//
+//            // Create directories for the path if not already created by another entity.
+//            final Path parentDir = createDirs(dir, folders, messageList);
+//
+//            // Ensure the parent directory exists.
+//            if (!Files.isDirectory(parentDir)) {
+//                // Don't output the full path here are we don't want users to see the full file system path.
+//                messageList.add(new Message(Severity.FATAL_ERROR, "Unable to create directory for folder: " + parentDir.getFileName()));
+//
+//            } else {
+//                final EntityService<?> entityService = genericEntityService.getEntityService(entity.getType());
+//                if (entityService != null && entityService instanceof DocumentEntityService) {
+//                    final DocumentEntityService documentEntityService = (DocumentEntityService) entityService;
+//                    final Map<String, String> dataMap = documentEntityService.exportDocument(docRef, omitAuditFields, messageList);
+//                    if (dataMap != null) {
+//                        for (final Entry<String, String> entry : dataMap.entrySet()) {
+//                            try {
+//                                final Path file = parentDir.resolve(entry.getKey());
+//                                try (final Writer writer = Files.newBufferedWriter(file, Charset.forName("UTF-8"))) {
+//                                    writer.write(entry.getValue());
+//                                }
+//                            } catch (final IOException e) {
+//                                messageList.add(new Message(Severity.ERROR, "Failed to write file '" + entry.getKey() + "'"));
+//                            }
+//                        }
+//                    }
+//                }
+//            }
         }
     }
 
-    private List<Folder> getFolderPath(final DocumentEntity documentEntity) {
-        // Find the folder path to this entity.
-        final List<Folder> path = new ArrayList<>();
-        Folder folder = documentEntity.getFolder();
-        while (folder != null) {
-            if (folderService instanceof FolderServiceImpl) {
-                folder = ((FolderServiceImpl) folderService).loadByIdInsecure(folder.getId(), Collections.emptySet());
-            } else {
-                folder = folderService.loadById(folder.getId(), Collections.emptySet());
-            }
-
-            if (folder != null) {
-                path.add(0, folder);
-                folder = folder.getFolder();
-            }
-        }
-        return path;
-    }
-
-    private Path createDirs(final Path dir, final List<Folder> folders, final List<Message> messageList) throws IOException {
-        Path parentDir = dir;
-        for (final Folder folder : folders) {
-            final Path child = parentDir.resolve(folder.getName());
-
-            // If this folder hasn't been created yet then output data for the folder and create it.
-            if (!Files.isDirectory(child)) {
-                final Map<String, String> dataMap = folderService.exportDocument(DocRefUtil.create(folder), true, messageList);
-                if (dataMap != null) {
-                    for (final Entry<String, String> entry : dataMap.entrySet()) {
-                        try {
-                            final Path file = parentDir.resolve(entry.getKey());
-                            try (final Writer writer = Files.newBufferedWriter(file, Charset.forName("UTF-8"))) {
-                                writer.write(entry.getValue());
-                            }
-                        } catch (final IOException e) {
-                            messageList.add(new Message(Severity.ERROR, "Failed to write file '" + entry.getKey() + "'"));
-                        }
-                    }
-                }
-
-                Files.createDirectories(child);
-            }
-
-            parentDir = child;
-        }
-
-        return parentDir;
-    }
-
-    private static class EntityClassComparator implements Comparator<Class<? extends DocumentEntity>> {
-        @Override
-        public int compare(final Class<? extends DocumentEntity> o1, final Class<? extends DocumentEntity> o2) {
-            return o1.getSimpleName().compareTo(o2.getSimpleName());
-        }
-    }
+//    private List<Folder> getFolderPath(final DocumentEntity documentEntity) {
+//        // Find the folder path to this entity.
+//        final List<Folder> path = new ArrayList<>();
+//        Folder folder = documentEntity.getFolder();
+//        while (folder != null) {
+//            if (folderService instanceof FolderServiceImpl) {
+//                folder = ((FolderServiceImpl) folderService).loadByIdInsecure(folder.getId(), Collections.emptySet());
+//            } else {
+//                folder = folderService.loadById(folder.getId(), Collections.emptySet());
+//            }
+//
+//            if (folder != null) {
+//                path.add(0, folder);
+//                folder = folder.getFolder();
+//            }
+//        }
+//        return path;
+//    }
+//
+//    private Path createDirs(final Path dir, final List<Folder> folders, final List<Message> messageList) throws IOException {
+//        Path parentDir = dir;
+//        for (final Folder folder : folders) {
+//            final Path child = parentDir.resolve(folder.getName());
+//
+//            // If this folder hasn't been created yet then output data for the folder and create it.
+//            if (!Files.isDirectory(child)) {
+//                final Map<String, String> dataMap = folderService.exportDocument(DocRefUtil.create(folder), true, messageList);
+//                if (dataMap != null) {
+//                    for (final Entry<String, String> entry : dataMap.entrySet()) {
+//                        try {
+//                            final Path file = parentDir.resolve(entry.getKey());
+//                            try (final Writer writer = Files.newBufferedWriter(file, Charset.forName("UTF-8"))) {
+//                                writer.write(entry.getValue());
+//                            }
+//                        } catch (final IOException e) {
+//                            messageList.add(new Message(Severity.ERROR, "Failed to write file '" + entry.getKey() + "'"));
+//                        }
+//                    }
+//                }
+//
+//                Files.createDirectories(child);
+//            }
+//
+//            parentDir = child;
+//        }
+//
+//        return parentDir;
+//    }
+//
+//    private static class EntityClassComparator implements Comparator<Class<? extends DocumentEntity>> {
+//        @Override
+//        public int compare(final Class<? extends DocumentEntity> o1, final Class<? extends DocumentEntity> o2) {
+//            return o1.getSimpleName().compareTo(o2.getSimpleName());
+//        }
+//    }
 }

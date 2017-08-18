@@ -55,6 +55,7 @@ include 'stroom-remote'
 
 include 'stroom-util'
 include 'stroom-core-server'
+include 'stroom-explorer-server'
 include 'stroom-pipeline'
 include 'stroom-security-server'
 include 'stroom-index-server'

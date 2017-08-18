@@ -34,7 +34,7 @@ import stroom.entity.client.presenter.ForkDocumentPresenter.ForkDocumentView;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.explorer.client.presenter.EntityTreePresenter;
-import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.query.api.v1.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -72,7 +72,7 @@ public class ForkDocumentPresenter
 
         getView().setName(tabData.getDocRef().getName());
 
-        final ExplorerData entityData = ExplorerData.create(event.getTabData().getDocRef());
+        final ExplorerNode entityData = ExplorerNode.create(event.getTabData().getDocRef());
 
         entityTreePresenter.setSelectedItem(entityData);
         entityTreePresenter.getModel().reset();
@@ -123,7 +123,7 @@ public class ForkDocumentPresenter
     }
 
     private DocRef getFolder() {
-        final ExplorerData selected = entityTreePresenter.getSelectedItem();
+        final ExplorerNode selected = entityTreePresenter.getSelectedItem();
         if (selected != null) {
             return selected.getDocRef();
         }

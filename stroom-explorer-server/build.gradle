@@ -1,0 +1,40 @@
+//repositories {
+//    flatDir {
+//        dirs 'libs'
+//    }
+//}
+
+dependencies {
+//    compile name: 'jpatreedao-1.0'
+
+    compile files('libs/jpatreedao-1.0.jar')
+    compile project(':stroom-core-server')
+//    compile group: 'org.apache.poi', name: 'poi-ooxml', version: '3.15'
+//    compile(group: 'org.apache.hadoop', name: 'hadoop-hdfs', version: '2.6.4') { /* LATEST 2.7.3 */
+//        exclude(module: 'jetty')
+//        exclude(module: 'jetty-util')
+//        exclude(module: 'servlet-api')
+//        exclude(module: 'servlet-api-2.5')
+//        exclude(module: 'jsp-2.1')
+//        exclude(module: 'jsp-api-2.1')
+//        exclude(module: 'jsp-api')
+//        exclude(module: 'jasper-runtime')
+//        exclude(module: 'jasper-compiler')
+//        exclude(module: 'xercesImpl')
+//    }
+//    compile(group: 'org.apache.hadoop', name: 'hadoop-common', version: '2.6.4') { /* LATEST 2.7.3 */
+//        exclude(module: 'asm')
+//        exclude(module: 'jetty')
+//        exclude(module: 'jetty-util')
+//        exclude(module: 'servlet-api')
+//        exclude(module: 'servlet-api-2.5')
+//        exclude(module: 'jsp-2.1')
+//        exclude(module: 'jsp-api-2.1')
+//        exclude(module: 'jsp-api')
+//        exclude(module: 'jasper-runtime')
+//        exclude(module: 'jasper-compiler')
+//    }
+//    testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
+//    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
+}

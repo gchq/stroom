@@ -20,6 +20,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import stroom.dashboard.server.logging.spring.EventLoggingConfiguration;
 import stroom.dashboard.spring.DashboardConfiguration;
+import stroom.dictionary.spring.DictionaryConfiguration;
 import stroom.index.spring.IndexConfiguration;
 import stroom.pipeline.spring.PipelineConfiguration;
 import stroom.script.spring.ScriptConfiguration;
@@ -45,6 +46,7 @@ import stroom.visualisation.spring.VisualisationConfiguration;
         IndexConfiguration.class,
         MetaDataStatisticConfiguration.class,
         PersistenceConfiguration.class,
+        DictionaryConfiguration.class,
         PipelineConfiguration.class,
         ScopeConfiguration.class,
         ScopeTestConfiguration.class,

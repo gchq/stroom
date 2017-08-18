@@ -39,17 +39,17 @@ import java.util.Map;
 @TaskHandlerBean(task = FetchPipelineDataAction.class)
 @Scope(value = StroomScope.TASK)
 public class FetchPipelineDataHandler extends AbstractTaskHandler<FetchPipelineDataAction, SharedList<PipelineData>> {
-    private final PipelineEntityService pipelineEntityService;
+    private final PipelineService pipelineService;
     private final PipelineStackLoader pipelineStackLoader;
     private final PipelineDataValidator pipelineDataValidator;
     private final SecurityContext securityContext;
 
     @Inject
-    public FetchPipelineDataHandler(final PipelineEntityService pipelineEntityService,
+    public FetchPipelineDataHandler(final PipelineService pipelineService,
                                     final PipelineStackLoader pipelineStackLoader,
                                     final PipelineDataValidator pipelineDataValidator,
                                     final SecurityContext securityContext) {
-        this.pipelineEntityService = pipelineEntityService;
+        this.pipelineService = pipelineService;
         this.pipelineStackLoader = pipelineStackLoader;
         this.pipelineDataValidator = pipelineDataValidator;
         this.securityContext = securityContext;
@@ -57,7 +57,7 @@ public class FetchPipelineDataHandler extends AbstractTaskHandler<FetchPipelineD
 
     @Override
     public SharedList<PipelineData> exec(final FetchPipelineDataAction action) {
-        final PipelineEntity pipelineEntity = pipelineEntityService.loadByUuid(action.getPipeline().getUuid());
+        final PipelineEntity pipelineEntity = pipelineService.loadByUuid(action.getPipeline().getUuid());
 
         try {
             // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
