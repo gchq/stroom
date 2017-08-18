@@ -44,19 +44,14 @@ public class SqlStatisticsStore implements Store {
         TablePayload tablePayload = (TablePayload) payload;
         UnsafePairQueue<Key, Item> queue = tablePayload.getQueue();
 
-        //TODO create a resultStoreCreator (expose it as public) then call
-
         CompiledSorter compiledSorter = new CompiledSorter(tableSettings.getFields());
         final ResultStoreCreator resultStoreCreator = new ResultStoreCreator(compiledSorter);
         resultStoreCreator.read(queue);
-//
-//        // Trim the number of results in the store.
-        //TODO where does defaultStoreTrimSizes come from?
+
+        // Trim the number of results in the store.
         final TrimSettings trimSettings = new TrimSettings(tableSettings.getMaxResults(), defaultTrimSettings);
         resultStoreCreator.trim(trimSettings);
 
-//        return new Data(childMap, queue.size(), queue.size());
-        //TODO need to check args for this method
         return resultStoreCreator.create(queue.size(), queue.size());
     }
 
