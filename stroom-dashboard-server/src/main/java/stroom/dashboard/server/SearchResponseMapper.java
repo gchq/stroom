@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 @Component
 public class SearchResponseMapper {
@@ -54,13 +55,9 @@ public class SearchResponseMapper {
         }
 
         if (searchResponse.getErrors() != null) {
-            final StringBuilder sb = new StringBuilder();
-            for (final String error : searchResponse.getErrors()) {
-                sb.append(error);
-                sb.append("\n");
-            }
-            sb.setLength(sb.length() - 1);
-            copy.setErrors(sb.toString());
+            String errorStr = searchResponse.getErrors().stream()
+                    .collect(Collectors.joining("\n"));
+            copy.setErrors(errorStr);
         }
 
         copy.setComplete(searchResponse.complete());
