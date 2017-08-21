@@ -30,7 +30,7 @@ import stroom.datasource.api.v2.DataSourceField;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
 import stroom.node.server.StroomPropertyService;
-import stroom.query.v2.DateExpressionParser;
+import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;

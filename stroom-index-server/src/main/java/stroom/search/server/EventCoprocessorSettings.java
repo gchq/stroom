@@ -16,7 +16,7 @@
 
 package stroom.search.server;
 
-import stroom.query.v2.CoprocessorSettings;
+import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.api.v2.DocRef;
 
 public class EventCoprocessorSettings implements CoprocessorSettings {

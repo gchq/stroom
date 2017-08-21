@@ -16,7 +16,7 @@
 
 package stroom.search;
 
-import stroom.query.v2.SearchResponseCreator;
+import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.search.server.SearchResultCreatorManager;

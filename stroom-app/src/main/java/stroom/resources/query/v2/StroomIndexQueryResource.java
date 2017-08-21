@@ -21,7 +21,7 @@ import com.codahale.metrics.health.HealthCheck;
 import stroom.datasource.api.v2.DataSource;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
-import stroom.query.v2.SearchResponseCreator;
+import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;

@@ -2,7 +2,7 @@ package stroom.statistics.server.sql.search;
 
 import stroom.mapreduce.v2.UnsafePairQueue;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.v2.*;
+import stroom.query.common.v2.*;
 
 import java.util.List;
 import java.util.Map;

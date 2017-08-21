@@ -26,7 +26,7 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardService;
 import stroom.node.shared.Node;
-import stroom.query.v2.ResultHandler;
+import stroom.query.common.v2.ResultHandler;
 import stroom.query.api.v2.Query;
 import stroom.security.SecurityContext;
 import stroom.task.cluster.ClusterDispatchAsync;

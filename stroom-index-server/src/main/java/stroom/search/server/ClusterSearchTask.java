@@ -18,8 +18,8 @@ package stroom.search.server;
 
 import stroom.index.shared.IndexField;
 import stroom.node.shared.Node;
-import stroom.query.v2.CoprocessorSettings;
-import stroom.query.v2.CoprocessorSettingsMap.CoprocessorKey;
+import stroom.query.common.v2.CoprocessorSettings;
+import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.api.v2.Query;
 import stroom.task.cluster.ClusterTask;
 

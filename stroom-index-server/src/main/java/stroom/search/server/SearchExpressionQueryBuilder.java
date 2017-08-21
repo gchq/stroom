@@ -36,7 +36,7 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFieldType;
 import stroom.index.shared.IndexFieldsMap;
-import stroom.query.v2.DateExpressionParser;
+import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;

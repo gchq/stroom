@@ -18,10 +18,10 @@ package stroom.search.server;
 
 import org.springframework.stereotype.Component;
 import stroom.dashboard.expression.v1.FieldIndexMap;
-import stroom.query.v2.Coprocessor;
-import stroom.query.v2.CoprocessorSettings;
-import stroom.query.v2.TableCoprocessor;
-import stroom.query.v2.TableCoprocessorSettings;
+import stroom.query.common.v2.Coprocessor;
+import stroom.query.common.v2.CoprocessorSettings;
+import stroom.query.common.v2.TableCoprocessor;
+import stroom.query.common.v2.TableCoprocessorSettings;
 import stroom.util.task.TaskMonitor;
 
 import java.util.Map;

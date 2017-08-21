@@ -19,10 +19,10 @@ package stroom.search.server;
 import net.sf.ehcache.CacheManager;
 import org.springframework.stereotype.Component;
 import stroom.cache.AbstractCacheBean;
-import stroom.query.v2.SearchResponseCreator;
+import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
-import stroom.query.v2.Store;
+import stroom.query.common.v2.Store;
 import stroom.util.spring.StroomFrequencySchedule;
 
 import javax.inject.Inject;
