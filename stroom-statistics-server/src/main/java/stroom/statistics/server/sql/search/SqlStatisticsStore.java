@@ -13,10 +13,12 @@ public class SqlStatisticsStore implements Store {
     private Map<CoprocessorSettingsMap.CoprocessorKey, Coprocessor> coprocessorMap;
     private Map<CoprocessorSettingsMap.CoprocessorKey, Payload> payloadMap;
 
-    private final List<Integer> defaultTrimSettings;
+    private final List<Integer> defaultMaxResultsSizes;
+    private final StoreSize storeSize;
 
-    public SqlStatisticsStore(final List<Integer> defaultTrimSettings) {
-        this.defaultTrimSettings = defaultTrimSettings;
+    public SqlStatisticsStore(final List<Integer> defaultMaxResultsSizes, final StoreSize storeSize) {
+        this.defaultMaxResultsSizes = defaultMaxResultsSizes;
+        this.storeSize = storeSize;
     }
 
     @Override
@@ -51,8 +53,7 @@ public class SqlStatisticsStore implements Store {
         //TODO migrate the old prop stroom.search.maxResults to stroom.search.storeSize in the DB
 
         // Trim the number of results in the store.
-        final TrimSettings trimSettings = new TrimSettings(tableSettings.getMaxResults(), defaultTrimSettings);
-        resultStoreCreator.trim(trimSettings);
+        resultStoreCreator.trim(storeSize);
 
         return resultStoreCreator.create(queue.size(), queue.size());
     }
@@ -65,6 +66,16 @@ public class SqlStatisticsStore implements Store {
     @Override
     public List<String> getHighlights() {
         return null;
+    }
+
+    @Override
+    public List<Integer> getDefaultMaxResultsSizes() {
+        return defaultMaxResultsSizes;
+    }
+
+    @Override
+    public StoreSize getStoreSize() {
+        return storeSize;
     }
 
     public void process(CoprocessorSettingsMap coprocessorSettingsMap) {

@@ -22,6 +22,7 @@ import stroom.cache.AbstractCacheBean;
 import stroom.query.v2.SearchResponseCreator;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.v2.Store;
 import stroom.util.spring.StroomFrequencySchedule;
 
 import javax.inject.Inject;
@@ -33,7 +34,8 @@ public class SearchResultCreatorManager extends AbstractCacheBean<SearchResultCr
     private final LuceneSearchStoreFactory luceneSearchStoreFactory;
 
     @Inject
-    public SearchResultCreatorManager(final CacheManager cacheManager, final LuceneSearchStoreFactory luceneSearchStoreFactory) {
+    public SearchResultCreatorManager(final CacheManager cacheManager,
+                                      final LuceneSearchStoreFactory luceneSearchStoreFactory) {
         super(cacheManager, "Search Result Creators", MAX_ACTIVE_QUERIES);
         this.luceneSearchStoreFactory = luceneSearchStoreFactory;
     }
@@ -43,7 +45,9 @@ public class SearchResultCreatorManager extends AbstractCacheBean<SearchResultCr
     }
 
     private SearchResponseCreator create(final SearchResultCreatorManager.Key key) {
-        return new SearchResponseCreator(luceneSearchStoreFactory.create(key.searchRequest));
+        Store store = luceneSearchStoreFactory.create(key.searchRequest);
+
+        return new SearchResponseCreator(store, store.getDefaultMaxResultsSizes());
     }
 
     @Override

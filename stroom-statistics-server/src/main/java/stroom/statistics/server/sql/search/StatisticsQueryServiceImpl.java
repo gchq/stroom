@@ -16,13 +16,7 @@ import stroom.query.api.v2.Result;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
-import stroom.query.v2.Coprocessor;
-import stroom.query.v2.CoprocessorSettings;
-import stroom.query.v2.CoprocessorSettingsMap;
-import stroom.query.v2.Payload;
-import stroom.query.v2.SearchResponseCreator;
-import stroom.query.v2.TableCoprocessor;
-import stroom.query.v2.TableCoprocessorSettings;
+import stroom.query.v2.*;
 import stroom.statistics.server.sql.SQLStatisticEventStore;
 import stroom.statistics.server.sql.StatisticsQueryService;
 import stroom.statistics.server.sql.datasource.StatisticStoreCache;
@@ -32,11 +26,7 @@ import stroom.statistics.shared.common.EventStoreTimeIntervalEnum;
 import stroom.util.shared.HasTerminate;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -44,6 +34,8 @@ import java.util.stream.Collectors;
 public class StatisticsQueryServiceImpl implements StatisticsQueryService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsQueryServiceImpl.class);
+
+    private static final String PROP_KEY_STORE_SIZE = "stroom.search.storeSize";
 
     private final StatisticsDataSourceProvider statisticsDataSourceProvider;
     private final StatisticStoreCache statisticStoreCache;
@@ -188,12 +180,14 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
                         Map.Entry::getKey,
                         entry -> entry.getValue().createPayload()));
 
-        SqlStatisticsStore store = new SqlStatisticsStore(getDefaultTrimSizes());
+        StoreSize storeSize = new StoreSize(getStoreSizes());
+        List<Integer> defaultMaxResultsSizes = getDefaultMaxResultsSizes();
+        SqlStatisticsStore store = new SqlStatisticsStore(defaultMaxResultsSizes, storeSize);
         store.process(coprocessorSettingsMap);
         store.coprocessorMap(coprocessorMap);
         store.payloadMap(payloadMap);
 
-        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(store);
+        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(store, defaultMaxResultsSizes);
         SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
 
         return searchResponse;
@@ -229,7 +223,7 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
                     .map(resultRequest -> new TableResult(
                             resultRequest.getComponentId(),
                             Collections.emptyList(),
-                            new OffsetRange(0,0),
+                            new OffsetRange(0, 0),
                             0,
                             null))
                     .collect(Collectors.toList());
@@ -244,21 +238,27 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
                 true);
     }
 
-    private List<Integer> getDefaultTrimSizes() {
-        try {
-            final String value = stroomPropertyService.getProperty(ClientProperties.DEFAULT_MAX_RESULTS);
-            if (value != null) {
-                final String[] parts = value.split(",");
-                final List<Integer> list = new ArrayList<>(parts.length);
-                for (int i = 0; i < parts.length; i++) {
-                    list.add(Integer.valueOf(parts[i].trim()));
-                }
-                return list;
-            }
-        } catch (final Exception e) {
-            LOGGER.warn(e.getMessage());
-        }
+    private List<Integer> getDefaultMaxResultsSizes() {
+        final String value = stroomPropertyService.getProperty(ClientProperties.DEFAULT_MAX_RESULTS);
+        return extractValues(value);
+    }
 
-        return null;
+    private List<Integer> getStoreSizes() {
+        final String value = stroomPropertyService.getProperty(PROP_KEY_STORE_SIZE);
+        return extractValues(value);
+    }
+
+    private List<Integer> extractValues(String value) {
+        if (value != null) {
+            try {
+                return Arrays.stream(value.split(","))
+                        .map(String::trim)
+                        .map(Integer::valueOf)
+                        .collect(Collectors.toList());
+            } catch (Exception e) {
+                LOGGER.warn(e.getMessage());
+            }
+        }
+        return Collections.emptyList();
     }
 }
