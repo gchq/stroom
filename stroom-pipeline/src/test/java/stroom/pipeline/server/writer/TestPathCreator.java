@@ -21,6 +21,7 @@ import org.junit.Test;
 import stroom.util.test.StroomUnitTest;
 
 public class TestPathCreator extends StroomUnitTest {
+
     @Test
     public void testReplaceFileName() {
         Assert.assertEquals("test.txt", PathCreator.replaceFileName("${fileStem}.txt", "test.tmp"));
