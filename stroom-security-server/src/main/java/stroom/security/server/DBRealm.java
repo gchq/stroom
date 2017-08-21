@@ -70,6 +70,7 @@ public class DBRealm extends AuthenticatingRealm {
         this.userAppPermissionService = userAppPermissionService;
         this.stroomPropertyService = stroomPropertyService;
         this.securityContext = securityContext;
+        createOrRefreshAdmin();
     }
 
     @Override

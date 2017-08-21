@@ -19,9 +19,11 @@ package stroom.security.server;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.web.filter.authc.AuthenticatingFilter;
+import org.apache.shiro.web.servlet.ShiroHttpServletRequest;
 import org.apache.shiro.web.util.WebUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import stroom.util.config.StroomProperties;
 
 import javax.servlet.ServletRequest;
@@ -51,10 +53,23 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
         }
 
         if (!loggedIn) {
-            String loginUrl = StroomProperties.getProperty(LOGIN_URL);
-            LOGGER.info("Redirecting to login at: '{}'", loginUrl);
-            HttpServletResponse httpResponse = WebUtils.toHttp(response);
-            httpResponse.sendRedirect(loginUrl);
+            // We need to distinguish between requests from an API client and from the GWT front-end.
+            // If a request is from the GWT front-end and fails authentication then we need to redirect to the login page.
+            // If a request is from an API client and fails authentication then we need to return HTTP 403 UNAUTHORIZED.
+            String servletPath = ((ShiroHttpServletRequest) request).getServletPath();
+            boolean isApiRequest = servletPath.contains("/api");
+
+            if(isApiRequest) {
+                LOGGER.debug("API request is unauthorised.");
+                HttpServletResponse httpResponse = WebUtils.toHttp(response);
+                httpResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
+            }
+            else {
+                String loginUrl = StroomProperties.getProperty(LOGIN_URL);
+                LOGGER.info("Redirecting to login at: '{}'", loginUrl);
+                HttpServletResponse httpResponse = WebUtils.toHttp(response);
+                httpResponse.sendRedirect(loginUrl);
+            }
         }
 
         return loggedIn;

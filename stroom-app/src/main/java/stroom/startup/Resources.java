@@ -18,7 +18,6 @@ package stroom.startup;
 
 import com.google.common.base.Preconditions;
 import io.dropwizard.jersey.setup.JerseyEnvironment;
-import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.context.ApplicationContext;
 import stroom.index.shared.IndexService;
 import stroom.resources.query.v1.StroomIndexQueryResource;
@@ -27,13 +26,11 @@ import stroom.resources.query.v1.SqlStatisticsQueryResource;
 import stroom.resources.authentication.v1.AuthenticationResource;
 import stroom.resources.authorisation.v1.AuthorisationResource;
 import stroom.search.server.SearchResultCreatorManager;
+import stroom.security.SecurityContext;
 import stroom.security.server.AuthenticationService;
-import stroom.security.server.AuthorisationService;
 import stroom.security.server.JWTService;
 import stroom.statistics.server.sql.StatisticsQueryService;
-import stroom.util.upgrade.UpgradeDispatcherServlet;
 
-import javax.servlet.ServletException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,7 +54,7 @@ public class Resources {
         registerResource(jersey, authenticationResource);
 
         authorisationResource = new AuthorisationResource();
-        registerResource(jersey, authenticationResource);
+        registerResource(jersey, authorisationResource);
 
         servletMonitor.registerApplicationContextListener(this::configureLuceneQueryResource);
         servletMonitor.registerApplicationContextListener(this::configureSqlStatisticsQueryResource);
@@ -69,34 +66,6 @@ public class Resources {
         jersey.register(Preconditions.checkNotNull(resource));
         if (resource instanceof NamedResource) {
             resources.add((NamedResource) resource);
-        }
-    }
-
-    public void register(ServletHolder upgradeDispatcherServletHolder) {
-
-        boolean apisAreNotYetConfigured = true;
-        while (apisAreNotYetConfigured) {
-            try {
-                // This checks to see if the servlet has started. It'll throw an exception if it has.
-                // I don't know of another way to check to see if it's ready.
-                // If we try and get the servlet manually it'll fail to initialise because it won't have the ServletContext;
-                // i.e. we need to let the Spring lifecycle stuff take care of this for us.
-                upgradeDispatcherServletHolder.ensureInstance();
-
-                UpgradeDispatcherServlet servlet = (UpgradeDispatcherServlet) upgradeDispatcherServletHolder.getServlet();
-                ApplicationContext applicationContext = servlet.getWebApplicationContext();
-
-                if (applicationContext != null) {
-                    configureLuceneQueryResource(applicationContext);
-                    configureSqlStatisticsQueryResource(applicationContext);
-                    configureAuthenticationResource(applicationContext);
-                    configureAuthorisationResource(applicationContext);
-                    apisAreNotYetConfigured = false;
-                }
-            } catch (ServletException e) {
-                // This could be an UnavailableException, caused by ensureInstance().
-                // We don't care, we're going to keep trying.
-            }
         }
     }
 
@@ -124,7 +93,7 @@ public class Resources {
     }
 
     private void configureAuthorisationResource(ApplicationContext applicationContext){
-        AuthorisationService authorisationService = applicationContext.getBean(AuthorisationService.class);
-        authorisationResource.setAuthorisationService(authorisationService);
+        SecurityContext securityContext = applicationContext.getBean(SecurityContext.class);
+        authorisationResource.setSecurityContext(securityContext);
     }
 }
