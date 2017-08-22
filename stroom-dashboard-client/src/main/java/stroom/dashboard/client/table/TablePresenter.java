@@ -69,7 +69,7 @@ import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
 import stroom.query.api.v2.ResultRequest.Fetch;
-import stroom.query.common.v2.ParamUtil;
+import stroom.query.shared.v2.ParamUtil;
 import stroom.security.client.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
