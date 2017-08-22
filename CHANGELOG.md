@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#348** : Fixed new menu icons.
 
+* Issue **98** : Fix premature trimming of results in the store
+
+* Issue **360** : Fix inability to sort sql stats results in the dashboard table
+
 ## [v5.1-alpha.2] - 2017-06-22
 
 * Issue **#203** : Initial release of the new data receipt policy functionality.
