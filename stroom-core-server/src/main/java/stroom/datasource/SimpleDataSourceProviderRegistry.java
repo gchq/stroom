@@ -21,7 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.server.StroomPropertyService;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 
 import java.util.Optional;
@@ -47,8 +47,8 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
             //TODO the path strings are defined in ResourcePaths but this is not accessible from here
             //if this code is kept long term then ResourcePaths needs to be mode so that is accessible to all
             urlMap = ImmutableMap.of(
-                    "Index", basePath + "/api/stroom-index/v1",
-                    "StatisticStore", basePath + "/api/sqlstatistics/v1",
+                    "Index", basePath + "/api/stroom-index/v2",
+                    "StatisticStore", basePath + "/api/sqlstatistics/v2",
                     //strooom-stats is not available as a local service as if you have stroom-stats you have zookeeper so
                     //you can run service discovery
                     "authentication", basePath + "/api/authentication/v1",

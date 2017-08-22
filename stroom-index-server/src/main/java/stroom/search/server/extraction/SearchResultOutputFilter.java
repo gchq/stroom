@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-import stroom.dashboard.expression.FieldIndexMap;
+import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;

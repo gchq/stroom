@@ -51,8 +51,8 @@ ext.versions = [
     eventLogging: 'v3.1.0',
     hadoopCommonShaded: 'v2.6.4-3',
     hadoopHdfsShaded: 'v2.6.4',
-    stroomExpression: 'v0.1.0', //same version for both stroom-query-api and stroom-query-common
-    stroomQuery: 'v1.0.2', //same version for both stroom-query-api and stroom-query-common
+    stroomExpression: 'v1.0.0', 
+    stroomQuery: 'v2.0.0-alpha.1', //same version for both stroom-query-api and stroom-query-common
     stroomStats: 'v0.4.0-alpha',
 
     //------------3rd-party------------
@@ -77,6 +77,7 @@ ext.urlLibs = [
     stroomQueryApi: "stroom-query-api-$versions.stroomQuery",
     stroomQueryApiSources: "stroom-query-api-$versions.stroomQuery-sources",
     stroomQueryCommon: "stroom-query-common-$versions.stroomQuery",
+    stroomQueryCommonSources: "stroom-query-common-$versions.stroomQuery-sources",
     stroomExpression: "stroom-expression-$versions.stroomExpression",
     stroomStatsApi: "stroom-stats-api-$versions.stroomStats",
     stroomProxyRepo: "stroom-proxy-repo-$versions.stroomProxyRepo",
@@ -356,6 +357,9 @@ urlDependencies {
 
     compile(urlLibs.stroomQueryCommon,
             "https://github.com/gchq/stroom-query/releases/download/$versions.stroomQuery/${urlLibs.stroomQueryCommon}.jar")
+
+    compile(urlLibs.stroomQueryCommonSources,
+            "https://github.com/gchq/stroom-query/releases/download/$versions.stroomQuery/${urlLibs.stroomQueryCommonSources}.jar")
 
     compile(urlLibs.stroomExpression,
             "https://github.com/gchq/stroom-expression/releases/download/$versions.stroomExpression/${urlLibs.stroomExpression}.jar")

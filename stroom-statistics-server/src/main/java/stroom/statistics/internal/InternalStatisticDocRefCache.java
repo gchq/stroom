@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

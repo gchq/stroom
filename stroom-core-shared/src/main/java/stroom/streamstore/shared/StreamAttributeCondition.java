@@ -16,8 +16,8 @@
 
 package stroom.streamstore.shared;
 
-import stroom.query.api.v1.DocRef;
-import stroom.query.api.v1.ExpressionTerm.Condition;
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 

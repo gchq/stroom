@@ -16,8 +16,8 @@
 
 package stroom.query.client;
 
-import stroom.query.api.v1.DocRef;
-import stroom.query.api.v1.ExpressionTerm.Condition;
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 
 public final class Term extends Item {
     private String field;

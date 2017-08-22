@@ -17,7 +17,7 @@
 package stroom.entity.server.event;
 
 import stroom.entity.shared.EntityAction;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 import java.io.Serializable;
 

@@ -1,10 +1,11 @@
 package stroom.statistics.internal;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import io.vavr.Tuple3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 import java.util.Collections;
 import java.util.List;
@@ -56,7 +57,9 @@ class MultiServiceInternalStatisticsReceiver implements InternalStatisticsReceiv
                                                     Collectors.toList()))));
 
             if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("Putting {} events to {} services", statisticEvents.size(), serviceToEventsMapMap.size());
+                LOGGER.trace("Putting {} events to {} services",
+                        statisticEvents.size(),
+                        serviceToEventsMapMap.size());
             }
             serviceToEventsMapMap.entrySet().forEach(entry -> {
                 //TODO as it stands if we get a failure to send with one service, we won't send to any other services
@@ -65,7 +68,8 @@ class MultiServiceInternalStatisticsReceiver implements InternalStatisticsReceiv
                 putEvents(entry.getKey(), entry.getValue());
             });
         } catch (Exception e) {
-            LOGGER.warn("Error sending internal stats to all services");
+            Throwable rootCause = Throwables.getRootCause(e);
+            LOGGER.warn("Error sending internal stats to all services [{}]", rootCause.getMessage());
         }
     }
 

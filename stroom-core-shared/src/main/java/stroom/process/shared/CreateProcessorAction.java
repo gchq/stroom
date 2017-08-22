@@ -17,7 +17,7 @@
 package stroom.process.shared;
 
 import stroom.entity.shared.Action;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamtask.shared.StreamProcessorFilter;
 

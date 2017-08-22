@@ -23,7 +23,7 @@ import stroom.index.shared.Index;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.index.shared.IndexService;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;

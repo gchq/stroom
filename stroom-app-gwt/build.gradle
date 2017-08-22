@@ -39,6 +39,8 @@ gwtSourceDirs.addAll(sourceSets.main.compileClasspath)
 // We need to add the sources of GitHub dependencies.
 gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(urlLibs.stroomQueryApiSources))).getAsPath())
 gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(urlLibs.stroomQueryApi))).getAsPath())
+gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(urlLibs.stroomQueryCommon))).getAsPath())
+gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(urlLibs.stroomQueryCommonSources))).getAsPath())
 
 //println "Dumping gwtSourceDirs contents"
 //gwtSourceDirs.each { dir -> 

@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.servicediscovery.ServiceDiscoverer;
 import stroom.util.spring.StroomBeanStore;

@@ -1,4 +1,4 @@
-package stroom.resources.query.v1;
+package stroom.resources.query.v2;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -9,15 +9,15 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientResponse;
 import org.junit.Before;
 import org.junit.Test;
-import stroom.query.api.v1.DocRef;
-import stroom.query.api.v1.ExpressionBuilder;
-import stroom.query.api.v1.ExpressionOperator;
-import stroom.query.api.v1.ExpressionTerm;
-import stroom.query.api.v1.Query;
-import stroom.query.api.v1.QueryKey;
-import stroom.query.api.v1.ResultRequest;
-import stroom.query.api.v1.SearchRequest;
-import stroom.query.api.v1.SearchResponse;
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionBuilder;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.v2.Query;
+import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.ResultRequest;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchResponse;
 import stroom.resources.RegisteredService;
 import stroom.resources.ResourcePaths;
 import stroom.resources.authorisation.v1.AuthorizationHelper;
@@ -42,7 +42,7 @@ public class TestStroomIndexQueryResource {
 
     public static final String SEARCH_TARGET = "http://localhost:8080" +
             ResourcePaths.ROOT_PATH +
-            RegisteredService.INDEX_V1.getVersionedPath() +
+            RegisteredService.INDEX_V2.getVersionedPath() +
             "/search";
 
     private String jwtToken;

@@ -19,11 +19,8 @@ package stroom.search.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.shared.Node;
-import stroom.query.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.query.Data;
-import stroom.query.Payload;
-import stroom.query.ResultHandler;
-import stroom.query.Store;
+import stroom.query.common.v2.*;
+import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.task.cluster.ClusterResultCollector;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.cluster.CollectorId;
@@ -46,6 +43,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ClusterSearchResultCollector implements Store, ClusterResultCollector<NodeResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterSearchResultCollector.class);
 
+    public static final String PROP_KEY_STORE_SIZE = "stroom.search.storeSize";
+
     private final ClusterResultCollectorCache clusterResultCollectorCache;
     private final CollectorId id;
     private final ConcurrentHashMap<Node, Set<String>> errors = new ConcurrentHashMap<>();
@@ -55,29 +54,43 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     private final Node node;
     private final Set<String> highlights;
     private final ResultHandler resultHandler;
+    private final List<Integer> defaultMaxResultsSizes;
+    private final StoreSize storeSize;
 
     private volatile boolean terminated;
 
-    private ClusterSearchResultCollector(final TaskManager taskManager, final Task<VoidResult> task, final Node node,
-                                         final Set<String> highlights, final ClusterResultCollectorCache clusterResultCollectorCache,
-                                         final ResultHandler resultHandler) {
+    private ClusterSearchResultCollector(final TaskManager taskManager,
+                                         final Task<VoidResult> task,
+                                         final Node node,
+                                         final Set<String> highlights,
+                                         final ClusterResultCollectorCache clusterResultCollectorCache,
+                                         final ResultHandler resultHandler,
+                                         final List<Integer> defaultMaxResultsSizes,
+                                         final StoreSize storeSize) {
         this.taskManager = taskManager;
         this.task = task;
         this.node = node;
         this.highlights = highlights;
         this.clusterResultCollectorCache = clusterResultCollectorCache;
         this.resultHandler = resultHandler;
+        this.defaultMaxResultsSizes = defaultMaxResultsSizes;
+        this.storeSize = storeSize;
 
         id = CollectorIdFactory.create();
 
         clusterResultCollectorCache.put(id, this);
     }
 
-    public static ClusterSearchResultCollector create(final TaskManager taskManager, final Task<VoidResult> task,
-                                                      final Node node, final Set<String> highlights,
-                                                      final ClusterResultCollectorCache clusterResultCollectorCache, final ResultHandler resultHandler) {
-        return new ClusterSearchResultCollector(taskManager, task, node, highlights, clusterResultCollectorCache,
-                resultHandler);
+    public static ClusterSearchResultCollector create(final TaskManager taskManager,
+                                                      final Task<VoidResult> task,
+                                                      final Node node,
+                                                      final Set<String> highlights,
+                                                      final ClusterResultCollectorCache clusterResultCollectorCache,
+                                                      final ResultHandler resultHandler,
+                                                      final List<Integer> defaultMaxResultsSizes,
+                                                      final StoreSize storeSize) {
+        return new ClusterSearchResultCollector(taskManager, task, node, highlights,
+                clusterResultCollectorCache, resultHandler, defaultMaxResultsSizes, storeSize);
     }
 
     public void start() {
@@ -193,6 +206,16 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
             return null;
         }
         return new ArrayList<>(highlights);
+    }
+
+    @Override
+    public List<Integer> getDefaultMaxResultsSizes() {
+        return defaultMaxResultsSizes;
+    }
+
+    @Override
+    public StoreSize getStoreSize() {
+        return storeSize;
     }
 
     @Override

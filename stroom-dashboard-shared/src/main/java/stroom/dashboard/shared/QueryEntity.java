@@ -19,7 +19,7 @@ package stroom.dashboard.shared;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.ExternalFile;
 import stroom.entity.shared.SQLNameConstants;
-import stroom.query.api.v1.Query;
+import stroom.query.api.v2.Query;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

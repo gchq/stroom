@@ -25,7 +25,7 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardService;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 import javax.inject.Inject;
 import java.util.List;

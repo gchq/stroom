@@ -27,7 +27,7 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.Folder;
 import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.util.client.SelectionType;

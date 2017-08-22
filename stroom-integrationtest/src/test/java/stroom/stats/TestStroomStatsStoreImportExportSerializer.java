@@ -24,7 +24,7 @@ import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.FolderService;
 import stroom.entity.shared.ImportState;
 import stroom.importexport.server.ImportExportSerializer;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.statistics.server.sql.datasource.StatisticsDataSourceProvider;
 import stroom.statistics.server.stroomstats.entity.FindStroomStatsStoreEntityCriteria;
 import stroom.statistics.server.stroomstats.entity.StroomStatsStoreEntityService;

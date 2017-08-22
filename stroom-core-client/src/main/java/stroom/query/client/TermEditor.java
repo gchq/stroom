@@ -30,13 +30,13 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import stroom.datasource.api.v1.DataSourceField;
-import stroom.datasource.api.v1.DataSourceField.DataSourceFieldType;
+import stroom.datasource.api.v2.DataSourceField;
+import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.item.client.ItemListBox;
-import stroom.query.api.v1.DocRef;
-import stroom.query.api.v1.ExpressionTerm.Condition;
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.customdatebox.client.MyDateBox;
 

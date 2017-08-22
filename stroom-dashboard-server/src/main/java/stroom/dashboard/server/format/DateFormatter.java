@@ -16,7 +16,7 @@
 
 package stroom.dashboard.server.format;
 
-import stroom.dashboard.expression.TypeConverter;
+import stroom.dashboard.expression.v1.TypeConverter;
 import stroom.dashboard.shared.DateTimeFormatSettings;
 import stroom.dashboard.shared.FormatSettings;
 import stroom.dashboard.shared.TimeZone;

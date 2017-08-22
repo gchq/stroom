@@ -38,7 +38,7 @@ import stroom.entity.shared.Folder;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.process.shared.LoadEntityIdSetAction;
 import stroom.process.shared.SetId;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.shared.SharedMap;

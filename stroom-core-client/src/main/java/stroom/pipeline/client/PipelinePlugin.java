@@ -29,7 +29,7 @@ import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.process.client.presenter.ProcessorPresenter;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamtask.shared.StreamProcessor;
 

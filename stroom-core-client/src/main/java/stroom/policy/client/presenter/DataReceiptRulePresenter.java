@@ -20,13 +20,13 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.datasource.api.v1.DataSourceField;
+import stroom.datasource.api.v2.DataSourceField;
 import stroom.policy.client.presenter.DataReceiptRulePresenter.DataReceiptRuleView;
 import stroom.policy.shared.DataReceiptAction;
 import stroom.policy.shared.DataReceiptRule;
-import stroom.query.api.v1.ExpressionBuilder;
-import stroom.query.api.v1.ExpressionOperator;
-import stroom.query.api.v1.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionBuilder;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
 
 import java.util.List;
 

@@ -20,7 +20,7 @@ import com.google.inject.Inject;
 import stroom.cell.dropdowntree.client.DropDownCell;
 import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 public class EntityDropDownCell extends DropDownCell<DocRef> {
     private final ExplorerDropDownTreePresenter explorerDropDownTreePresenter;

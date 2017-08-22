@@ -23,7 +23,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import stroom.item.client.ItemListBox;
-import stroom.query.api.v1.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.client.TermEditor.Resources;
 
 public class OperatorEditor extends Composite {

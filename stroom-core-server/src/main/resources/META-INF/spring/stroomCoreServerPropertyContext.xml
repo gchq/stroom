@@ -437,10 +437,17 @@
             <property name="editable" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.search.maxResults"/>
+            <property name="name" value="stroom.search.storeSize"/>
             <property name="value" value="1000000,100,10,1"/>
             <property name="description"
                       value="The maximum number of search results to keep in memory at each level."/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.dashboard.defaultMaxResults"/>
+            <property name="value" value="1000000,100,10,1"/>
+            <property name="description"
+                      value="The default maximum number of search results to return to the dashboard, unless the user requests lower values"/>
             <property name="editable" value="true"/>
         </bean>
 

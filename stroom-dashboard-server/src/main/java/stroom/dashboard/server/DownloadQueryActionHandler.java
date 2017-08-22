@@ -62,7 +62,7 @@ class DownloadQueryActionHandler extends AbstractTaskHandler<DownloadQueryAction
             if (action.getSearchRequest() == null) {
                 throw new EntityServiceException("Query is empty");
             }
-            stroom.query.api.v1.SearchRequest apiSearchRequest = searchRequestMapper.mapRequest(
+            stroom.query.api.v2.SearchRequest apiSearchRequest = searchRequestMapper.mapRequest(
                     action.getDashboardQueryKey(),
                     action.getSearchRequest());
 

@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Scope;
 import stroom.dashboard.server.logging.EntityEventLog;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.EntityServiceLoadAction;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;

@@ -7,8 +7,8 @@ import stroom.servicediscovery.ExternalService;
  * Defines the versioned services that stroom will present externally
  */
 public enum RegisteredService {
-    INDEX_V1(ExternalService.INDEX, ResourcePaths.STROOM_INDEX, 1),
-    SQL_STATISTICS_V1(ExternalService.SQL_STATISTICS, ResourcePaths.SQL_STATISTICS, 1),
+    INDEX_V2(ExternalService.INDEX, ResourcePaths.STROOM_INDEX, 2),
+    SQL_STATISTICS_V2(ExternalService.SQL_STATISTICS, ResourcePaths.SQL_STATISTICS, 2),
     AUTHENTICATION_V1(ExternalService.AUTHENTICATION, ResourcePaths.AUTHENTICATION, 1),
     AUTHORISATION_V1(ExternalService.AUTHORISATION, ResourcePaths.AUTHORISATION, 1);
 

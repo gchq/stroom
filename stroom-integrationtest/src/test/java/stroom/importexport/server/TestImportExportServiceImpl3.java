@@ -25,7 +25,7 @@ import stroom.entity.shared.ImportState;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.pipeline.shared.PipelineEntityService;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.resource.server.ResourceStore;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;

@@ -24,8 +24,8 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.entity.client.EntityItemListBox;
 import stroom.item.client.ItemListBox;
-import stroom.query.api.v1.DocRef;
-import stroom.query.api.v1.ExpressionTerm.Condition;
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.client.presenter.StreamAttributePresenter.StreamAttributeView;
 
 import java.util.List;

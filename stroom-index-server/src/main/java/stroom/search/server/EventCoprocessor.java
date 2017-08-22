@@ -16,10 +16,10 @@
 
 package stroom.search.server;
 
-import stroom.dashboard.expression.FieldIndexMap;
+import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.index.shared.IndexConstants;
-import stroom.query.Coprocessor;
-import stroom.query.Payload;
+import stroom.query.common.v2.Coprocessor;
+import stroom.query.common.v2.Payload;
 
 import java.util.concurrent.locks.ReentrantLock;
 

@@ -16,7 +16,7 @@
 
 package stroom.datasource;
 
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.servicediscovery.ExternalService;
 import stroom.servicediscovery.ServiceDiscoverer;

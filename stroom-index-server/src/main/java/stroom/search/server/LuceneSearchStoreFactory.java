@@ -26,27 +26,28 @@ import stroom.index.shared.Index;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.index.shared.IndexService;
 import stroom.node.server.NodeCache;
+import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
 import stroom.node.shared.Node;
-import stroom.query.CoprocessorSettingsMap;
-import stroom.query.SearchResultHandler;
-import stroom.query.Store;
-import stroom.query.api.v1.ExpressionOperator;
-import stroom.query.api.v1.Query;
-import stroom.query.api.v1.SearchRequest;
+import stroom.query.common.v2.CoprocessorSettingsMap;
+import stroom.query.common.v2.SearchResultHandler;
+import stroom.query.common.v2.Store;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.Query;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.common.v2.StoreSize;
 import stroom.search.server.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.security.SecurityContext;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.server.TaskManager;
 import stroom.util.config.PropertyUtil;
-import stroom.util.config.StroomProperties;
 import stroom.util.shared.UserTokenUtil;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
+
+
 
 @Component
 public class LuceneSearchStoreFactory {
@@ -57,6 +58,7 @@ public class LuceneSearchStoreFactory {
 
     private final IndexService indexService;
     private final DictionaryService dictionaryService;
+    private final StroomPropertyService stroomPropertyService;
     private final NodeCache nodeCache;
     private final TaskManager taskManager;
     private final ClusterResultCollectorCache clusterResultCollectorCache;
@@ -66,6 +68,7 @@ public class LuceneSearchStoreFactory {
     @Inject
     public LuceneSearchStoreFactory(final IndexService indexService,
                                     final DictionaryService dictionaryService,
+                                    final StroomPropertyService stroomPropertyService,
                                     final NodeCache nodeCache,
                                     final TaskManager taskManager,
                                     final ClusterResultCollectorCache clusterResultCollectorCache,
@@ -73,6 +76,7 @@ public class LuceneSearchStoreFactory {
                                     final SecurityContext securityContext) {
         this.indexService = indexService;
         this.dictionaryService = dictionaryService;
+        this.stroomPropertyService = stroomPropertyService;
         this.nodeCache = nodeCache;
         this.taskManager = taskManager;
         this.clusterResultCollectorCache = clusterResultCollectorCache;
@@ -102,15 +106,34 @@ public class LuceneSearchStoreFactory {
         // Create an asynchronous search task.
         final String userToken = UserTokenUtil.create(securityContext.getUserId(), null);
         final String searchName = "Search '" + searchRequest.getKey().toString() + "'";
-        final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(userToken, searchName, query, node,
-                SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY, coprocessorSettingsMap.getMap(), searchRequest.getDateTimeLocale(), nowEpochMilli);
+        final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(
+                userToken,
+                searchName,
+                query,
+                node,
+                SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY,
+                coprocessorSettingsMap.getMap(),
+                searchRequest.getDateTimeLocale(),
+                nowEpochMilli);
 
         // Create a handler for search results.
-        final SearchResultHandler resultHandler = new SearchResultHandler(coprocessorSettingsMap, getDefaultTrimSizes());
+        final StoreSize storeSize = new StoreSize(getStoreSizes());
+        final List<Integer> defaultMaxResultsSizes = getDefaultMaxResultsSizes();
+        final SearchResultHandler resultHandler = new SearchResultHandler(
+                coprocessorSettingsMap,
+                defaultMaxResultsSizes,
+                storeSize);
 
         // Create the search result collector.
-        final ClusterSearchResultCollector searchResultCollector = ClusterSearchResultCollector.create(taskManager,
-                asyncSearchTask, node, highlights, clusterResultCollectorCache, resultHandler);
+        final ClusterSearchResultCollector searchResultCollector = ClusterSearchResultCollector.create(
+                taskManager,
+                asyncSearchTask,
+                node,
+                highlights,
+                clusterResultCollectorCache,
+                resultHandler,
+                defaultMaxResultsSizes,
+                storeSize);
 
         // Tell the task where results will be collected.
         asyncSearchTask.setResultCollector(searchResultCollector);
@@ -121,22 +144,28 @@ public class LuceneSearchStoreFactory {
         return searchResultCollector;
     }
 
-    private List<Integer> getDefaultTrimSizes() {
-        try {
-            final String value = StroomProperties.getProperty(ClientProperties.MAX_RESULTS);
-            if (value != null) {
-                final String[] parts = value.split(",");
-                final List<Integer> list = new ArrayList<>(parts.length);
-                for (int i = 0; i < parts.length; i++) {
-                    list.add(Integer.valueOf(parts[i].trim()));
-                }
-                return list;
-            }
-        } catch (final Exception e) {
-            LOGGER.warn(e.getMessage());
-        }
+    private List<Integer> getDefaultMaxResultsSizes() {
+        final String value = stroomPropertyService.getProperty(ClientProperties.DEFAULT_MAX_RESULTS);
+        return extractValues(value);
+    }
 
-        return null;
+    private List<Integer> getStoreSizes() {
+        final String value = stroomPropertyService.getProperty(ClusterSearchResultCollector.PROP_KEY_STORE_SIZE);
+        return extractValues(value);
+    }
+
+    private List<Integer> extractValues(String value) {
+        if (value != null) {
+            try {
+                return Arrays.stream(value.split(","))
+                        .map(String::trim)
+                        .map(Integer::valueOf)
+                        .collect(Collectors.toList());
+            } catch (Exception e) {
+                LOGGER.warn(e.getMessage());
+            }
+        }
+        return Collections.emptyList();
     }
 
     /**

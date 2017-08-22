@@ -23,10 +23,10 @@ import event.logging.util.EventLoggingUtil;
 import stroom.dictionary.shared.Dictionary;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.dictionary.shared.FindDictionaryCriteria;
-import stroom.query.api.v1.ExpressionItem;
-import stroom.query.api.v1.ExpressionOperator;
-import stroom.query.api.v1.ExpressionOperator.Op;
-import stroom.query.api.v1.ExpressionTerm;
+import stroom.query.api.v2.ExpressionItem;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm;
 
 import java.util.List;
 

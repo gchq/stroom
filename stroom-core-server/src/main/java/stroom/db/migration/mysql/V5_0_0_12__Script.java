@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.server.ObjectMarshaller;
 import stroom.entity.shared.DocRefs;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

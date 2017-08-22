@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.kafka.StroomKafkaProducer;
 import stroom.node.server.MockStroomPropertyService;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.statistics.internal.InternalStatisticEvent;
 
 import java.util.Arrays;

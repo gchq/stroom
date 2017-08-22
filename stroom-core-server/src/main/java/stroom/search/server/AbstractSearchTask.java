@@ -16,7 +16,7 @@
 
 package stroom.search.server;
 
-import stroom.query.api.v1.Query;
+import stroom.query.api.v2.Query;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.util.shared.Task;
 import stroom.util.task.ServerTask;
