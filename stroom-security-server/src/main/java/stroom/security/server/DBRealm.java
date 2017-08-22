@@ -27,16 +27,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import stroom.entity.shared.EntityServiceException;
 import stroom.node.server.StroomPropertyService;
 import stroom.security.SecurityContext;
-import stroom.security.server.exception.AccountExpiredException;
-import stroom.security.server.exception.DisabledException;
-import stroom.security.server.exception.LockedException;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
-import stroom.security.shared.User.UserStatus;
 import stroom.security.shared.UserRef;
 import stroom.security.shared.UserService;
 import stroom.util.task.ServerTask;
@@ -84,42 +79,35 @@ public class DBRealm extends AuthenticatingRealm {
             throws AuthenticationException {
         if (token instanceof JWTAuthenticationToken) {
             final JWTAuthenticationToken jwtAuthenticationToken = (JWTAuthenticationToken) token;
-            return authenticateWithJWT(jwtAuthenticationToken);
+            return doGetJwtAuthenticationInfo(jwtAuthenticationToken);
         }
         throw new AuthenticationException("Token type '" + token.getClass().getSimpleName() + "' is not supported");
     }
 
-    private AuthenticationInfo authenticateWithJWT(final JWTAuthenticationToken token)
+    private AuthenticationInfo doGetJwtAuthenticationInfo(final JWTAuthenticationToken token)
             throws AuthenticationException {
         String userId = null;
         if (token != null && token.getUserId() != null) {
             userId = token.getUserId().toString();
         }
 
-        final User user = loadUserByUsername(userId);
+        User user = loadUserByUsername(userId);
 
         if (StringUtils.hasText(userId) && user == null) {
-            throw new EntityServiceException(userId + " does not exist");
+            // At this point the user has been authenticated using JWT.
+            // If the user doesn't exist in the DB then we need to create them an account here, so Stroom has
+            // some way of sensibly referencing the user and something to attach permissions to.
+            // We need to elevate the user because on one is currently logged in.
+            securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
+            user = userService.createUser(userId);
+            securityContext.popUser();
         }
 
         if (user != null) {
-            check(user);
             return new SimpleAuthenticationInfo(user, user.getPasswordHash(), getName());
         }
 
         return null;
-    }
-
-    private void check(final User user) {
-        if (UserStatus.LOCKED.equals(user.getStatus())) {
-            throw new LockedException("User account is locked");
-        } else if (UserStatus.DISABLED.equals(user.getStatus())) {
-            throw new DisabledException("User account has been deactivated");
-        } else if (UserStatus.EXPIRED.equals(user.getStatus())) {
-            throw new AccountExpiredException("User account has expired");
-        } else if (!UserStatus.ENABLED.equals(user.getStatus())) {
-            throw new DisabledException("User account is not enabled");
-        }
     }
 
     private User loadUserByUsername(final String username) throws DataAccessException {

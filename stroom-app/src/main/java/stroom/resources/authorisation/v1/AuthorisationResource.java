@@ -4,7 +4,9 @@ import com.codahale.metrics.annotation.Timed;
 import stroom.resources.ResourcePaths;
 import stroom.security.SecurityContext;
 
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -16,6 +18,16 @@ import javax.ws.rs.core.Response;
 public class AuthorisationResource {
 
     private SecurityContext securityContext;
+
+    @GET
+    @Path("/")
+    @Consumes({"application/json"})
+    @Produces({"application/json"})
+    @Timed
+    @NotNull
+    public final Response welcome() {
+        return Response.status(Response.Status.OK).entity("Welcome to the authorisation service").build();
+    }
 
     @POST
     @Path("isAuthorised")
@@ -35,7 +47,7 @@ public class AuthorisationResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Timed
-    public Response canManagerUsers(UserPermissionRequest userPermissionRequest) {
+    public Response canManageUsers(UserPermissionRequest userPermissionRequest) {
         // TODO what happens if the permission is bad? What's the result of this method call and how should we handle it?
         boolean result = securityContext.hasAppPermission(userPermissionRequest.getPermission());
         // The user here will be the one logged in by the JWT.

@@ -29,6 +29,7 @@ import stroom.util.config.StroomProperties;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.HttpMethod;
 import java.io.IOException;
 
 public class JWTAuthenticationFilter extends AuthenticatingFilter {
@@ -36,7 +37,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
 
     private JWTService jwtService;
     //TODO Use an API gateway
-    private final String LOGIN_URL = "stroom.security.loginUrl";
+    private final String LOGIN_URL_PROPERTY_NAME = "stroom.ui.login.url";
 
     public JWTAuthenticationFilter(final JWTService jwtService) {
         this.jwtService = jwtService;
@@ -44,10 +45,16 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
 
     @Override
     protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws Exception {
+        // We need to allow CORS preflight requests
+        String httpMethod = (((ShiroHttpServletRequest) request).getMethod());
+        if(httpMethod.toUpperCase().equals(HttpMethod.OPTIONS)) {
+            return true;
+        }
+
         boolean loggedIn = false;
 
         if (JWTService.getAuthHeader(request).isPresent()
-                || JWTService.getAuthParam(request).isPresent()) {
+            || JWTService.getAuthParam(request).isPresent()) {
             LOGGER.info("About to attempt login");
             loggedIn = executeLogin(request, response);
         }
@@ -65,7 +72,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
                 httpResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
             }
             else {
-                String loginUrl = StroomProperties.getProperty(LOGIN_URL);
+                String loginUrl = StroomProperties.getProperty(LOGIN_URL_PROPERTY_NAME);
                 LOGGER.info("Redirecting to login at: '{}'", loginUrl);
                 HttpServletResponse httpResponse = WebUtils.toHttp(response);
                 httpResponse.sendRedirect(loginUrl);
