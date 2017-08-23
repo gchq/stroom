@@ -99,6 +99,7 @@ dependencies {
     compile libs.spring_beans
     compile libs.spring_context
     compile libs.spring_web
+    compile libs.swagger_jersey2_jaxrs
     compile libs.vavr
     compile libs.ws_rs_api
 
