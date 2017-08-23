@@ -18,13 +18,14 @@ package stroom.resources.query.v2;
 
 import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.health.HealthCheck;
+import io.swagger.annotations.Api;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.DataSource;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.resources.ResourcePaths;
 import stroom.statistics.server.sql.StatisticsQueryService;
 import stroom.util.json.JsonUtil;
@@ -35,6 +36,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+@Api
 @Path(ResourcePaths.SQL_STATISTICS + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 public class SqlStatisticsQueryResource implements QueryResource {
