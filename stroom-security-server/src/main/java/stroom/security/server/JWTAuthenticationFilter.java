@@ -37,7 +37,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
 
     private JWTService jwtService;
     //TODO Use an API gateway
-    private final String LOGIN_URL_PROPERTY_NAME = "stroom.ui.login.url";
+    private final String LOGIN_URL_PROPERTY_NAME = "stroom.security.login.url";
 
     public JWTAuthenticationFilter(final JWTService jwtService) {
         this.jwtService = jwtService;
