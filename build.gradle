@@ -8,16 +8,16 @@ buildscript {
     dependencies {
         classpath group: 'gchq', name: 'urlDependencyPlugin', version: 'v0.1'
         classpath group: 'ca.cutterslade.gradle', name: 'gradle-dependency-analyze', version: '1.1.0'
-        classpath 'com.benjaminsproule:swagger-gradle-plugin:0.1.0'
+        classpath 'com.benjaminsproule:swagger-gradle-plugin:+'
     }
 }
 
 plugins {
     id "de.undercouch.download" version "3.2.0"
+    //id "com.benjaminsproule.swagger" version "0.1.2"
 }
 
 apply plugin: 'gchq.urldependencies'
-apply plugin: 'com.benjaminsproule.swagger'
 
 
 //if the project has a value for the passed property (i.e from the cmd line via -PpropName=xxx)
@@ -215,6 +215,7 @@ task wrapper(type: Wrapper) {
 allprojects {
     apply plugin: 'maven'
     apply plugin: 'maven-publish'
+    //apply plugin: 'com.benjaminsproule.swagger'
 
     group = 'stroom'
     //version = getPropertyOrDefault('version', 'SNAPSHOT')
@@ -283,6 +284,25 @@ subprojects {
             showStackTraces = true
         }
     }
+
+    //See https://github.com/kongchen/swagger-maven-plugin for details of the properties of apiSource
+    //See https://stackoverflow.com/questions/43104791/how-to-prevent-xml-wrapper-element-in-swagger-ui for details
+    //of using xml and json with swagger
+    //swagger {
+        //apiSource {
+            //springmvc = false
+            //locations = [ 'stroom.resources.query.v2.SqlStatisticsQueryResource' ]
+            //schemes = [ 'http' ]
+            //host = 'www.example.com:8080'
+            //basePath = '/'
+            //info {
+                //title = 'Swagger Gradle Plugin Sample'
+                //version = 'v1'
+            //}
+            //outputPath = "${project.rootDir}/generated/document.html"
+            //swaggerDirectory = "${project.rootDir}/generated/swagger-ui"
+        //}
+    //}
 }
 
 
@@ -385,50 +405,3 @@ urlDependencies {
             "https://github.com/gchq/hadoop-common-shaded/releases/download/$versions.hadoopCommonShaded/${urlLibs.hadoopCommonShaded}.jar")
 }
 
-//See https://github.com/kongchen/swagger-maven-plugin for details of the properties of apiSource
-//See https://stackoverflow.com/questions/43104791/how-to-prevent-xml-wrapper-element-in-swagger-ui for details
-//of using xml and json with swagger
-swagger {
-    apiSource {
-        springmvc = false
-        locations = [ 'stroom.resources.query.v2.SqlStatisticsQueryResource' ]
-        schemes = [ 'http' ]
-        host = 'www.example.com:8080'
-        basePath = '/'
-        info {
-            title = 'Swagger Gradle Plugin Sample'
-            version = 'v1'
-            //<!-- use markdown here because I'm using markdown for output,
-            //if you need to use html or other markup language, you need to use your target language -->
-            //description = 'This is a sample.'
-            //termsOfService = 'http://www.example.com/termsOfService'
-            //contact {
-                //email = 'email@email.com'
-                //name = 'Name'
-                //url = 'http://www.example.com'
-            //}
-            //license {
-                //url = 'http://www.apache.org/licenses/LICENSE-2.0.html'
-                //name = 'Apache 2.0'
-            //}
-        }
-        //securityDefinition {
-            //name = 'basicAuth'
-            //type = 'basic'
-        //}
-        //securityDefinition {
-            //json = '/securityDefinition.json'
-        //}
-	//
-	    //Support classpath or file absolute path here.
-	    //1) classpath e.g: "classpath:/markdown.hbs", "classpath:/templates/hello.html"
-	    //2) file e.g: "${project.rootDir}/src/main/resources/markdown.hbs", "${project.rootDir}/src/main/resources/template/hello.html"
-	//
-        //templatePath = "${project.rootDir}/src/test/resources/strapdown.html.hbs"
-        outputPath = "${project.rootDir}/generated/document.html"
-        swaggerDirectory = "${project.rootDir}/generated/swagger-ui"
-        //swaggerApiReader = 'com.wordnik.swagger.jaxrs.reader.DefaultJaxrsApiReader'
-        //modelConverters = [ 'io.swagger.validator.BeanValidator' ]
-        // attachSwaggerArtifact = true - WILL BE ADDED IN THE FUTURE
-    }
-}

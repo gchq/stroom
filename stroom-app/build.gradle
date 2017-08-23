@@ -3,6 +3,7 @@ plugins {
 }
 
 apply plugin: 'application'
+apply plugin: 'com.benjaminsproule.swagger'
 mainClassName = 'stroom.startup.App'
 
 jar {
@@ -153,3 +154,19 @@ run {
 //missing all the GWT generated files and the UI will fail to start
 processResources.dependsOn(':stroom-app-gwt:gwtCompile')
 processResources.dependsOn(':stroom-dashboard-gwt:gwtCompile')
+
+    swagger {
+        apiSource {
+            springmvc = false
+            locations = [ 'stroom.resources.query.v2.SqlStatisticsQueryResource' ]
+            schemes = [ 'http' ]
+            host = 'www.example.com:8080'
+            basePath = '/'
+            info {
+                title = 'Swagger Gradle Plugin Sample'
+                version = 'v1'
+            }
+            outputPath = "${project.rootDir}/generated/document.html"
+            swaggerDirectory = "${project.rootDir}/generated/swagger-ui"
+        }
+    }
