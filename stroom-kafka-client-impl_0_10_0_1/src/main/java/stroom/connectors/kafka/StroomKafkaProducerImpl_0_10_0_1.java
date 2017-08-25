@@ -1,4 +1,4 @@
-package stroom.kafka;
+package stroom.connectors.kafka;
 
 import com.google.common.base.Strings;
 import org.apache.kafka.clients.producer.KafkaProducer;

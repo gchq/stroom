@@ -1,4 +1,4 @@
-package stroom.kafka;
+package stroom.connectors.kafka;
 
 public enum FlushMode {
     FLUSH_ON_SEND,

@@ -92,7 +92,7 @@ import stroom.xmlschema.server.XMLSchemaServiceImpl;
         "stroom.internalstatistics",
         "stroom.io",
         "stroom.jobsystem",
-        "stroom.kafka",
+        "stroom.connectors.kafka",
         "stroom.lifecycle",
         "stroom.logging",
         "stroom.node",

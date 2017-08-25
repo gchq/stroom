@@ -1,4 +1,4 @@
-package stroom.kafka;
+package stroom.connectors.kafka;
 
 import java.util.function.Consumer;
 

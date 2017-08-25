@@ -5,10 +5,10 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
-import stroom.kafka.FlushMode;
-import stroom.kafka.StroomKafkaProducer;
-import stroom.kafka.StroomKafkaProducerImpl_0_10_0_1;
-import stroom.kafka.StroomKafkaProducerRecord;
+import stroom.connectors.kafka.FlushMode;
+import stroom.connectors.kafka.StroomKafkaProducer;
+import stroom.connectors.kafka.StroomKafkaProducerImpl_0_10_0_1;
+import stroom.connectors.kafka.StroomKafkaProducerRecord;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;

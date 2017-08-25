@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.kafka.filter;
+package stroom.connectors.kafka.filter;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.SAXException;
-import stroom.kafka.FlushMode;
-import stroom.kafka.StroomKafkaProducer;
-import stroom.kafka.StroomKafkaProducerRecord;
+import stroom.connectors.kafka.StroomKafkaProducer;
+import stroom.connectors.kafka.StroomKafkaProducerRecord;
+import stroom.connectors.kafka.FlushMode;
+import stroom.connectors.kafka.StroomKafkaProducer;
+import stroom.connectors.kafka.StroomKafkaProducerRecord;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.factory.ConfigurableElement;

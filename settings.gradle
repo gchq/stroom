@@ -58,7 +58,7 @@ include 'stroom-security-server'
 include 'stroom-index-server'
 include 'stroom-statistics-server'
 include 'stroom-dashboard-server'
-include 'stroom-kafka-client'
+include 'stroom-connectors'
 include 'stroom-kafka-client-impl_0_10_0_1'
 
 // Package it all together.

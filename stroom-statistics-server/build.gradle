@@ -24,7 +24,7 @@ dependencies {
     compile project(':stroom-statistics-shared')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
-    compile project(':stroom-kafka-client')
+    compile project(':stroom-connectors')
 
     compile urlDependencies.get(urlLibs.hadoopCommonShaded)
     compile urlDependencies.get(urlLibs.stroomExpression)

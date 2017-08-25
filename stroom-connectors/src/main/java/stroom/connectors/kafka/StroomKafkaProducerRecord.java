@@ -1,4 +1,4 @@
-package stroom.kafka;
+package stroom.connectors.kafka;
 
 /**
  * This is a shim of the ProducerRecord from all versions of the Kafka client libraries.

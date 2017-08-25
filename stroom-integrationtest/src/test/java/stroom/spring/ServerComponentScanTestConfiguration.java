@@ -55,7 +55,7 @@ import stroom.streamtask.server.StreamProcessorTaskFactory;
         "stroom.internalstatistics",
         "stroom.io",
         "stroom.jobsystem",
-        "stroom.kafka",
+        "stroom.connectors.kafka",
         "stroom.lifecycle",
         "stroom.logging",
         "stroom.node",
