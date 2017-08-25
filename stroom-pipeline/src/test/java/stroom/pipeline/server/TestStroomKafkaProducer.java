@@ -1,12 +1,14 @@
 package stroom.pipeline.server;
 
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
+import stroom.kafka.FlushMode;
 import stroom.kafka.StroomKafkaProducer;
+import stroom.kafka.StroomKafkaProducerImpl_0_10_0_1;
+import stroom.kafka.StroomKafkaProducerRecord;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -22,11 +24,16 @@ public class TestStroomKafkaProducer {
     @Ignore("You may use this to test the local instance of Kafka.")
     public void testManualSend() {
         // Given
-        StroomKafkaProducer stroomKafkaProducer = new StroomKafkaProducer("stroom.kafka:9092");
-        ProducerRecord<String, String> record = new ProducerRecord<>("statistics", "statistics", "some record data");
+        StroomKafkaProducer stroomKafkaProducer = new StroomKafkaProducerImpl_0_10_0_1("stroom.kafka:9092");
+        StroomKafkaProducerRecord<String, String> record =
+                new StroomKafkaProducerRecord.Builder<String, String>()
+                        .topic("statistics")
+                        .key("statistics")
+                        .value("some record data")
+                        .build();
 
         // When
-        stroomKafkaProducer.send(record, StroomKafkaProducer.FlushMode.FLUSH_ON_SEND, DEFAULT_CALLBACK);
+        stroomKafkaProducer.send(record, FlushMode.FLUSH_ON_SEND, DEFAULT_CALLBACK);
 
         // Then: manually check your Kafka instances 'statistics' topic for 'some record data'
     }
@@ -34,13 +41,18 @@ public class TestStroomKafkaProducer {
     @Test
     public void testBadlyConfigured() {
         // Given
-        StroomKafkaProducer stroomKafkaProducer = new StroomKafkaProducer(null);
-        ProducerRecord<String, String> record = new ProducerRecord<>("statistics", "statistics", "some record data");
+        StroomKafkaProducer stroomKafkaProducer = new StroomKafkaProducerImpl_0_10_0_1(null);
+        StroomKafkaProducerRecord<String, String> record =
+                new StroomKafkaProducerRecord.Builder<String, String>()
+                        .topic("statistics")
+                        .key("statistics")
+                        .value("some record data")
+                        .build();
 
         AtomicBoolean hasSendFailed = new AtomicBoolean(false);
 
         // When
-        stroomKafkaProducer.send(record, StroomKafkaProducer.FlushMode.FLUSH_ON_SEND, ex -> hasSendFailed.set(true));
+        stroomKafkaProducer.send(record, FlushMode.FLUSH_ON_SEND, ex -> hasSendFailed.set(true));
 
         // Then
         Assert.assertTrue(hasSendFailed.get());

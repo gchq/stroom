@@ -29,9 +29,9 @@ import java.util.function.Consumer;
  */
 @Component
 @Scope(StroomScope.SINGLETON)
-public class StroomKafkaProducer {
+public class StroomKafkaProducerImpl_0_10_0_1 implements StroomKafkaProducer {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(StroomKafkaProducer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomKafkaProducerImpl_0_10_0_1.class);
 
     private static final int TIME_BETWEEN_INIT_ATTEMPS_MS = 30_000;
     private final String bootstrapServers;
@@ -39,7 +39,7 @@ public class StroomKafkaProducer {
     private volatile Producer<String, String> producer = null;
     private volatile Instant timeOfLastFailedInitAttempt = Instant.EPOCH;
 
-    public StroomKafkaProducer(
+    public StroomKafkaProducerImpl_0_10_0_1(
             @Value("#{propertyConfigurer.getProperty('stroom.kafka.bootstrap.servers')}") final String bootstrapServers) {
         this.bootstrapServers = bootstrapServers;
         if (Strings.isNullOrEmpty(bootstrapServers)) {
@@ -47,13 +47,13 @@ public class StroomKafkaProducer {
         }
     }
 
-    public void send(final ProducerRecord<String, String> record,
+    public void send(final StroomKafkaProducerRecord<String, String> stroomRecord,
                      final FlushMode flushMode,
                      final Consumer<Exception> exceptionHandler) {
 
         //kafka may not have been up on startup so ensure we have a producer instance now
         try {
-            intiProducer();
+            initProducer();
         } catch (Exception e) {
             LOGGER.error("Error initialising kafka producer to " + bootstrapServers + ", (" + e.getMessage() + ")");
             exceptionHandler.accept(e);
@@ -62,6 +62,13 @@ public class StroomKafkaProducer {
 
         if (producer != null) {
             try {
+                final ProducerRecord<String, String> record =
+                        new ProducerRecord<>(
+                                stroomRecord.topic(),
+                                stroomRecord.partition(),
+                                stroomRecord.timestamp(),
+                                stroomRecord.key(),
+                                stroomRecord.value());
                 Future<RecordMetadata> future = producer.send(record, (recordMetadata, exception) -> {
 
                     if (exception != null) {
@@ -93,7 +100,7 @@ public class StroomKafkaProducer {
     /**
      * Lazy initialisation of the kafka producer
      */
-    private void intiProducer() {
+    private void initProducer() {
         if (producer == null && isOkToInitNow(bootstrapServers)) {
             synchronized (this) {
                 if (producer == null && isOkToInitNow(bootstrapServers)) {
@@ -140,10 +147,5 @@ public class StroomKafkaProducer {
                 LOGGER.error("Error closing kafka producer", e);
             }
         }
-    }
-
-    public enum FlushMode {
-        FLUSH_ON_SEND,
-        NO_FLUSH
     }
 }

@@ -2,11 +2,12 @@ package stroom.statistics.server.stroomstats.internal;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import stroom.kafka.FlushMode;
 import stroom.kafka.StroomKafkaProducer;
+import stroom.kafka.StroomKafkaProducerRecord;
 import stroom.node.server.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.statistics.internal.InternalStatisticEvent;
@@ -85,8 +86,13 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
                         //all have same name so have same type
                         String topic = getTopic(events.get(0).getType());
                         String message = buildMessage(docRef, events);
-                        ProducerRecord<String, String> producerRecord = new ProducerRecord<>(topic, statName, message);
-                        stroomKafkaProducer.send(producerRecord, StroomKafkaProducer.FlushMode.NO_FLUSH, exception -> {
+                        StroomKafkaProducerRecord<String, String> producerRecord =
+                                new StroomKafkaProducerRecord.Builder<String, String>()
+                                        .topic(topic)
+                                        .key(statName)
+                                        .value(message)
+                                        .build();
+                        stroomKafkaProducer.send(producerRecord, FlushMode.NO_FLUSH, exception -> {
                             throw new RuntimeException(String.format(
                                     "Error sending %s internal stats with name %s to kafka on topic %s, due to (%s)",
                                     events.size(), statName, topic, exception.getMessage()), exception);

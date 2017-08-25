@@ -7,15 +7,19 @@ dependencies {
     permitUnusedDeclared project(':stroom-statistics-api') //not clear why it thinks this is unused
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
+    compile project(':stroom-kafka-client')
 
     compile urlDependencies.get(urlLibs.hadoopCommonShaded)
     compile urlDependencies.get(urlLibs.hadoopHdfsShaded)
+
+    // Why???
+    compile libs.commons_io
+    permitUnusedDeclared libs.commons_io
 
     compile libs.spring_beans
     compile libs.spring_context
     compile libs.spring_tx
     compile libs.jersey_client
-    compile libs.kafka_clients
     compile libs.slf4j_api
     compile libs.guava
     compile libs.commons_lang
@@ -31,6 +35,7 @@ dependencies {
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-kafka-client-impl_0_10_0_1')
 
     testCompile libs.junit
     testCompile libs.mockito_core

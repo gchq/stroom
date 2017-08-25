@@ -65,6 +65,7 @@ dependencies {
     compile project(':stroom-index-shared')
     compile project(':stroom-util')
     compile project(':stroom-security-api')
+    runtime project(':stroom-kafka-client-impl_0_10_0_1')
 
     runtime project(':stroom-dashboard-server')
     runtime project(':stroom-statistics-server')

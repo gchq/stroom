@@ -26,7 +26,6 @@ dependencies {
     compile libs.ehcache_core
     compile libs.commons_pool2
     compile libs.curator_x_discovery
-    compile libs.kafka_clients
     compile libs.aspectjweaver
     compile libs.jersey_client
     compile libs.jersey_common

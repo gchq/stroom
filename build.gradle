@@ -151,7 +151,6 @@ ext.libs = [
     jsinterop_annotations: "com.google.jsinterop:jsinterop-annotations:1.0.1",
     jul_to_slf4j: "org.slf4j:jul-to-slf4j:$versions.slf4j",
     junit: "junit:junit:4.12",
-    kafka_clients: "org.apache.kafka:kafka-clients:0.10.0.1", //CDH5.10 uses kafka 10.0, Kafka <10.2 is picky about client and server versions. 
     log4j_over_slf4j: "org.slf4j:log4j-over-slf4j:$versions.slf4j",
     logback_classic: "ch.qos.logback:logback-classic:$versions.logback",
     logback_core: "ch.qos.logback:logback-core:$versions.logback",

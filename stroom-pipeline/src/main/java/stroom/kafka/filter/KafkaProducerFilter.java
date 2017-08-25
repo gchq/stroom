@@ -16,11 +16,12 @@
 
 package stroom.kafka.filter;
 
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.SAXException;
+import stroom.kafka.FlushMode;
 import stroom.kafka.StroomKafkaProducer;
+import stroom.kafka.StroomKafkaProducerRecord;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.factory.ConfigurableElement;
@@ -72,9 +73,14 @@ public class KafkaProducerFilter extends AbstractSamplingFilter {
     @Override
     public void endDocument() throws SAXException {
         super.endDocument();
-        ProducerRecord<String, String> newRecord = new ProducerRecord<>(topic, recordKey, getOutput());
+        StroomKafkaProducerRecord<String, String> newRecord =
+                new StroomKafkaProducerRecord.Builder<String, String>()
+                        .topic(topic)
+                        .key(recordKey)
+                        .value(getOutput())
+                        .build();
         try {
-            stroomKafkaProducer.send(newRecord, StroomKafkaProducer.FlushMode.FLUSH_ON_SEND, exception -> {
+            stroomKafkaProducer.send(newRecord, FlushMode.FLUSH_ON_SEND, exception -> {
                 errorReceiverProxy.log(Severity.ERROR, null, null, "Unable to send record to Kafka!", exception);
             });
         } catch (RuntimeException e) {
