@@ -19,6 +19,7 @@ package stroom.resources.query.v2;
 import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.health.HealthCheck;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.DataSource;
@@ -36,7 +37,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api
+@Api(
+        value = ResourcePaths.SQL_STATISTICS + ResourcePaths.V2,
+        description = "Stroom SQL Statistics Query API")
 @Path(ResourcePaths.SQL_STATISTICS + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 public class SqlStatisticsQueryResource implements QueryResource {
@@ -50,6 +53,9 @@ public class SqlStatisticsQueryResource implements QueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path(QueryResource.DATA_SOURCE_ENDPOINT)
     @Timed
+    @ApiOperation(
+            value = "Submit a request for a data source definition, supplying the DocRef for the data source",
+            response = DataSource.class)
     public DataSource getDataSource(final DocRef docRef) {
 
         if (LOGGER.isDebugEnabled()) {
@@ -64,6 +70,9 @@ public class SqlStatisticsQueryResource implements QueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path(QueryResource.SEARCH_ENDPOINT)
     @Timed
+    @ApiOperation(
+            value = "Submit a search request",
+            response = SearchResponse.class)
     public SearchResponse search(final SearchRequest request) {
 
         if (LOGGER.isDebugEnabled()) {

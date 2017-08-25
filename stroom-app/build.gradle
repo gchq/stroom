@@ -100,7 +100,7 @@ dependencies {
     compile libs.spring_beans
     compile libs.spring_context
     compile libs.spring_web
-    compile libs.swagger_jersey2_jaxrs
+    compile libs.swagger_annotations
     compile libs.vavr
     compile libs.ws_rs_api
 
@@ -155,18 +155,51 @@ run {
 processResources.dependsOn(':stroom-app-gwt:gwtCompile')
 processResources.dependsOn(':stroom-dashboard-gwt:gwtCompile')
 
-    swagger {
-        apiSource {
-            springmvc = false
-            locations = [ 'stroom.resources.query.v2.SqlStatisticsQueryResource' ]
-            schemes = [ 'http' ]
-            host = 'www.example.com:8080'
-            basePath = '/'
-            info {
-                title = 'Swagger Gradle Plugin Sample'
-                version = 'v1'
+//swagger {
+    //apiSource {
+        //springmvc = false
+        //locations = [ 'stroom.resources.query.v2.SqlStatisticsQueryResource' ]
+        //schemes = [ 'http' ]
+        //host = 'www.example.com:8080'
+        //basePath = '/'
+        //info {
+            //title = 'Swagger Gradle Plugin Sample'
+            //version = 'v1'
+        //}
+        //outputPath = "${project.rootDir}/generated/document.html"
+        //swaggerDirectory = "${project.rootDir}/generated/swagger-ui"
+    //}
+//}
+swagger {
+    apiSource {
+        springmvc = false //makes it search for jersey annotations
+        outputFormats = 'json,yaml'
+        locations = [ 'stroom.resources.query.v2.SqlStatisticsQueryResource' ]
+        schemes = [ 'https' ]
+        host = 'localhost:8080'
+        basePath = '/v2'
+        info {
+            title = 'stroom API'
+            version = 'v2'
+            description = 'Various APIs for interacting with stroom and its data'
+            contact {
+                name = 'GCHQ'
+                url = 'https://github.com/gchq/stroom'
             }
-            outputPath = "${project.rootDir}/generated/document.html"
-            swaggerDirectory = "${project.rootDir}/generated/swagger-ui"
+            license {
+                url = 'http://www.apache.org/licenses/LICENSE-2.0.html'
+                name = 'Apache 2.0'
+            }
         }
+        outputPath = "${project.buildDir}/generated/document.html"
+        swaggerDirectory = "${project.buildDir}"
     }
+}
+
+tasks.generateSwaggerDocumentation {
+    dependsOn classes
+}
+
+tasks.build{
+    dependsOn generateSwaggerDocumentation
+}
