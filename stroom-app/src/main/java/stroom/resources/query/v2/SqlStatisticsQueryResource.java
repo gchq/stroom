@@ -20,6 +20,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.health.HealthCheck;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.DataSource;
@@ -38,7 +39,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 @Api(
-        value = ResourcePaths.SQL_STATISTICS + ResourcePaths.V2,
+        value = "sqlstatistics query - " + ResourcePaths.V2,
         description = "Stroom SQL Statistics Query API")
 @Path(ResourcePaths.SQL_STATISTICS + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
@@ -56,7 +57,7 @@ public class SqlStatisticsQueryResource implements QueryResource {
     @ApiOperation(
             value = "Submit a request for a data source definition, supplying the DocRef for the data source",
             response = DataSource.class)
-    public DataSource getDataSource(final DocRef docRef) {
+    public DataSource getDataSource(@ApiParam("DocRef") final DocRef docRef) {
 
         if (LOGGER.isDebugEnabled()) {
             String json = JsonUtil.writeValueAsString(docRef);
@@ -73,7 +74,7 @@ public class SqlStatisticsQueryResource implements QueryResource {
     @ApiOperation(
             value = "Submit a search request",
             response = SearchResponse.class)
-    public SearchResponse search(final SearchRequest request) {
+    public SearchResponse search(@ApiParam("SearchRequest") final SearchRequest request) {
 
         if (LOGGER.isDebugEnabled()) {
             String json = JsonUtil.writeValueAsString(request);
@@ -89,7 +90,10 @@ public class SqlStatisticsQueryResource implements QueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path(QueryResource.DESTROY_ENDPOINT)
     @Timed
-    public Boolean destroy(final QueryKey queryKey) {
+    @ApiOperation(
+            value = "Destroy a running query",
+            response = Boolean.class)
+    public Boolean destroy(@ApiParam("QueryKey") final QueryKey queryKey) {
         if (LOGGER.isDebugEnabled()) {
             String json = JsonUtil.writeValueAsString(queryKey);
             LOGGER.debug("/destroy called with queryKey:\n{}", json);

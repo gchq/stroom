@@ -174,13 +174,16 @@ swagger {
     apiSource {
         springmvc = false //makes it search for jersey annotations
         outputFormats = 'json,yaml'
-        locations = [ 'stroom.resources.query.v2.SqlStatisticsQueryResource' ]
+        locations = [ 
+            'stroom.resources.query.v2.SqlStatisticsQueryResource',
+            'stroom.resources.query.v2.StroomIndexQueryResource',
+            'stroom.resources.authorisation.v1.AuthorisationResource' ]
         schemes = [ 'https' ]
         host = 'localhost:8080'
-        basePath = '/v2'
+        basePath = '/api'
         info {
             title = 'stroom API'
-            version = 'v2'
+            version = 'v1'
             description = 'Various APIs for interacting with stroom and its data'
             contact {
                 name = 'GCHQ'
