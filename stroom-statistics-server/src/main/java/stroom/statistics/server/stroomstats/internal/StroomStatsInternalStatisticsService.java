@@ -5,9 +5,7 @@ import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.connectors.kafka.FlushMode;
-import stroom.connectors.kafka.StroomKafkaProducer;
-import stroom.connectors.kafka.StroomKafkaProducerRecord;
+import stroom.connectors.kafka.*;
 import stroom.node.server.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.statistics.internal.InternalStatisticEvent;
@@ -15,6 +13,8 @@ import stroom.statistics.internal.InternalStatisticsService;
 import stroom.stats.schema.Statistics;
 import stroom.stats.schema.TagType;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -40,18 +40,19 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     private static final Class<Statistics> STATISTICS_CLASS = Statistics.class;
     private static final TimeZone TIME_ZONE_UTC = TimeZone.getTimeZone(ZoneId.from(ZoneOffset.UTC));
 
-    private final StroomKafkaProducer stroomKafkaProducer;
+    private final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService;
+    private StroomKafkaProducer stroomKafkaProducer;
     private final StroomPropertyService stroomPropertyService;
     private final String docRefType;
     private final JAXBContext jaxbContext;
     private final DatatypeFactory datatypeFactory;
 
     @Inject
-    StroomStatsInternalStatisticsService(final StroomKafkaProducer stroomKafkaProducer,
+    StroomStatsInternalStatisticsService(final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
                                          final StroomPropertyService stroomPropertyService) {
 
-        this.stroomKafkaProducer = stroomKafkaProducer;
         this.stroomPropertyService = stroomPropertyService;
+        this.stroomKafkaProducerFactoryService = stroomKafkaProducerFactoryService;
         this.docRefType = stroomPropertyService.getProperty(PROP_KEY_DOC_REF_TYPE);
 
         try {
@@ -66,6 +67,16 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
         } catch (DatatypeConfigurationException e) {
             throw new RuntimeException("Unable to create new DatatypeFactory instance", e);
         }
+    }
+
+    @PostConstruct
+    public void postConstruct() {
+        this.stroomKafkaProducer = this.stroomKafkaProducerFactoryService.getProducer(null);
+    }
+
+    @PreDestroy
+    public void preDestroy() {
+        this.stroomKafkaProducer.shutdown();
     }
 
     @Override

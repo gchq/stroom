@@ -19,11 +19,10 @@ package stroom.connectors.kafka.filter;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.SAXException;
+import stroom.connectors.kafka.*;
 import stroom.connectors.kafka.StroomKafkaProducer;
 import stroom.connectors.kafka.StroomKafkaProducerRecord;
-import stroom.connectors.kafka.FlushMode;
-import stroom.connectors.kafka.StroomKafkaProducer;
-import stroom.connectors.kafka.StroomKafkaProducerRecord;
+import stroom.node.server.StroomPropertyService;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.factory.ConfigurableElement;
@@ -34,6 +33,8 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 
 /**
@@ -57,8 +58,10 @@ import javax.inject.Inject;
                 PipelineElementType.VISABILITY_SIMPLE},
         icon = ElementIcons.KAFKA)
 public class KafkaProducerFilter extends AbstractSamplingFilter {
+
     private final ErrorReceiverProxy errorReceiverProxy;
-    private final StroomKafkaProducer stroomKafkaProducer;
+    private final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService;
+    private StroomKafkaProducer stroomKafkaProducer;
 
     private String recordKey;
     private String topic;
@@ -66,11 +69,23 @@ public class KafkaProducerFilter extends AbstractSamplingFilter {
     @Inject
     public KafkaProducerFilter(final ErrorReceiverProxy errorReceiverProxy,
                                final LocationFactoryProxy locationFactory,
-                               final StroomKafkaProducer stroomKafkaProducer) {
+                               final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
+                               final StroomPropertyService stroomPropertyService) {
         super(errorReceiverProxy, locationFactory);
         this.errorReceiverProxy = errorReceiverProxy;
-        this.stroomKafkaProducer = stroomKafkaProducer;
+        this.stroomKafkaProducerFactoryService = stroomKafkaProducerFactoryService;
     }
+
+    @PostConstruct
+    public void postConstruct() {
+        this.stroomKafkaProducer = this.stroomKafkaProducerFactoryService.getProducer(null);
+    }
+
+    @PreDestroy
+    public void preDestroy() {
+        this.stroomKafkaProducer.shutdown();
+    }
+
 
     @Override
     public void endDocument() throws SAXException {

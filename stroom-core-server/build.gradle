@@ -7,6 +7,7 @@ dependencies {
     permitUnusedDeclared project(':stroom-statistics-api') //not clear why it thinks this is unused
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
+    compile project(':stroom-connectors')
 
     compile urlDependencies.get(urlLibs.stroomProxyRepo)
     compile urlDependencies.get(urlLibs.eventLogging)

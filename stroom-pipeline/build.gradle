@@ -37,6 +37,9 @@ dependencies {
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-kafka-client-impl_0_10_0_1')
 
+    compile project(path: ':stroom-kafka-client-impl_0_10_0_1')
+    permitUnusedDeclared project(path: ':stroom-kafka-client-impl_0_10_0_1') // I really hate this plugin
+
     testCompile libs.junit
     testCompile libs.mockito_core
 
