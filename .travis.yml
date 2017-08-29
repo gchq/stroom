@@ -52,7 +52,7 @@ before_script:
   - git clone https://github.com/gchq/stroom-resources.git
   - pushd stroom-resources/dev-resources/compose
     #start all the services we need to run the integration tests in stroom
-  - docker-compose -f kafka-mysql-zk.yml up -d
+  - docker-compose -f kafka-stroomDb-stroomStatsDb-zk.yml up -d
   - popd
   - popd
   - mkdir -p ~/.stroom/
