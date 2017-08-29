@@ -29,6 +29,7 @@ import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.function.Function;
 
 @SuppressWarnings("unused")
 @Component
@@ -40,7 +41,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     private static final Class<Statistics> STATISTICS_CLASS = Statistics.class;
     private static final TimeZone TIME_ZONE_UTC = TimeZone.getTimeZone(ZoneId.from(ZoneOffset.UTC));
 
-    private final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService;
+    private final Function<String, StroomKafkaProducer> stroomKafkaProducerFactory;
     private StroomKafkaProducer stroomKafkaProducer;
     private final StroomPropertyService stroomPropertyService;
     private final String docRefType;
@@ -48,11 +49,11 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     private final DatatypeFactory datatypeFactory;
 
     @Inject
-    StroomStatsInternalStatisticsService(final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
+    StroomStatsInternalStatisticsService(final Function<String, StroomKafkaProducer> stroomKafkaProducerFactory,
                                          final StroomPropertyService stroomPropertyService) {
 
         this.stroomPropertyService = stroomPropertyService;
-        this.stroomKafkaProducerFactoryService = stroomKafkaProducerFactoryService;
+        this.stroomKafkaProducerFactory = stroomKafkaProducerFactory;
         this.docRefType = stroomPropertyService.getProperty(PROP_KEY_DOC_REF_TYPE);
 
         try {
@@ -71,7 +72,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
 
     @PostConstruct
     public void postConstruct() {
-        this.stroomKafkaProducer = this.stroomKafkaProducerFactoryService.getProducer(null);
+        this.stroomKafkaProducer = this.stroomKafkaProducerFactory.apply(null);
     }
 
     @PreDestroy

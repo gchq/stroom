@@ -43,11 +43,11 @@ public class TestStroomStatsInternalStatisticsService {
                         InternalStatisticEvent.Type.COUNT.toString().toLowerCase(),
                 "MyTopic");
 
-
         StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService = new StroomStatsInternalStatisticsService(
-                stroomKafkaProducer,
+                name -> stroomKafkaProducer,
                 mockStroomPropertyService
         );
+        stroomStatsInternalStatisticsService.postConstruct();
 
         //assemble test data
         InternalStatisticEvent event1 = InternalStatisticEvent.createPlusOneCountStat("myKey", 0, Collections.emptyMap());
@@ -64,6 +64,8 @@ public class TestStroomStatsInternalStatisticsService {
         //two different doc refs so two calls to producer
         Mockito.verify(stroomKafkaProducer, Mockito.times(2))
                 .send(Mockito.any(), Mockito.any(), Mockito.any());
+
+        stroomStatsInternalStatisticsService.preDestroy();
     }
 
     @Test(expected = RuntimeException.class)
@@ -86,9 +88,10 @@ public class TestStroomStatsInternalStatisticsService {
         }).when(stroomKafkaProducer).flush();
 
         StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService = new StroomStatsInternalStatisticsService(
-                stroomKafkaProducer,
+                name -> stroomKafkaProducer,
                 mockStroomPropertyService
         );
+        stroomStatsInternalStatisticsService.postConstruct();
 
         //assemble test data
         InternalStatisticEvent event = InternalStatisticEvent.createPlusOneCountStat("myKey", 0, Collections.emptyMap());
@@ -98,6 +101,7 @@ public class TestStroomStatsInternalStatisticsService {
         //exercise the service
         try {
             stroomStatsInternalStatisticsService.putEvents(map);
+            stroomStatsInternalStatisticsService.preDestroy();
         } catch (Exception e) {
             LOGGER.info("Caught expected exception: {} ", e.getMessage(), e);
             throw e;

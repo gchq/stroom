@@ -4,11 +4,6 @@ import com.google.common.base.Strings;
 import org.apache.kafka.clients.producer.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import stroom.util.spring.StroomScope;
-import stroom.util.spring.StroomShutdown;
 
 import java.io.IOException;
 import java.time.Instant;

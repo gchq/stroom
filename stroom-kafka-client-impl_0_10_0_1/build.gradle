@@ -1,11 +1,8 @@
 dependencies {
-    compile project(':stroom-util')
     compile project(':stroom-connectors')
 
     compile group: 'org.apache.kafka', name:'kafka-clients', version:'0.10.0.1' //CDH5.10 uses kafka 10.0, Kafka <10.2 is picky about client and server versions.
 
     compile libs.guava
     compile libs.slf4j_api
-    compile libs.spring_beans
-    compile libs.spring_context
 }

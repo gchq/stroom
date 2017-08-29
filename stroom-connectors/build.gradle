@@ -1,3 +1,2 @@
 dependencies {
-    compile project(':stroom-util')
 }

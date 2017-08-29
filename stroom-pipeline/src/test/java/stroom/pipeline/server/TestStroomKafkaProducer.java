@@ -5,10 +5,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
-import stroom.connectors.kafka.FlushMode;
-import stroom.connectors.kafka.StroomKafkaProducer;
-import stroom.connectors.kafka.StroomKafkaProducerImpl;
-import stroom.connectors.kafka.StroomKafkaProducerRecord;
+import stroom.connectors.kafka.*;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -24,7 +21,8 @@ public class TestStroomKafkaProducer {
     @Ignore("You may use this to test the local instance of Kafka.")
     public void testManualSend() {
         // Given
-        StroomKafkaProducer stroomKafkaProducer = new StroomKafkaProducerImpl("stroom.kafka:9092");
+        StroomKafkaProducerFactoryImpl stroomKafkaProducerFactory = new StroomKafkaProducerFactoryImpl();
+        StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.getProducer("0.10.0.1", "stroom.kafka:9092");
         StroomKafkaProducerRecord<String, String> record =
                 new StroomKafkaProducerRecord.Builder<String, String>()
                         .topic("statistics")
@@ -41,7 +39,8 @@ public class TestStroomKafkaProducer {
     @Test
     public void testBadlyConfigured() {
         // Given
-        StroomKafkaProducer stroomKafkaProducer = new StroomKafkaProducerImpl(null);
+        StroomKafkaProducerFactoryImpl stroomKafkaProducerFactory = new StroomKafkaProducerFactoryImpl();
+        StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.getProducer("0.10.0.1", null);
         StroomKafkaProducerRecord<String, String> record =
                 new StroomKafkaProducerRecord.Builder<String, String>()
                         .topic("statistics")
