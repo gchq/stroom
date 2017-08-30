@@ -18,6 +18,8 @@ package stroom.startup;
 
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
+import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
+import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.setup.Bootstrap;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.slf4j.Logger;
@@ -39,6 +41,11 @@ public class App extends Application<Config> {
 
     @Override
     public void initialize(Bootstrap<Config> bootstrap) {
+        // This allows us to use templating in the YAML configuration.
+        bootstrap.setConfigurationSourceProvider(new SubstitutingSourceProvider(
+            bootstrap.getConfigurationSourceProvider(),
+            new EnvironmentVariableSubstitutor(false)));
+
         bootstrap.addBundle(new AssetsBundle("/ui", "/", "stroom.jsp", "ui"));
     }
 

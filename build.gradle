@@ -102,6 +102,7 @@ ext.libs = [
     dropwizard_metrics_healthchecks: "io.dropwizard.metrics:metrics-healthchecks:$versions.dropwizard_metrics",
     dropwizard_servlets: "io.dropwizard:dropwizard-servlets:$versions.dropwizard",
     dropwizard_testing: "io.dropwizard:dropwizard-testing:$versions.dropwizard",
+    dropwizard_configuration: "io.dropwizard:dropwizard-configuration:$versions.dropwizard",
     ehcache_core: "net.sf.ehcache:ehcache-core:2.6.11",
     ehcache_spring_annotations: "com.googlecode.ehcache-spring-annotations:ehcache-spring-annotations:1.2.0",
     flyway_core: "org.flywaydb:flyway-core:4.0.3",
