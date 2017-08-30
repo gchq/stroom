@@ -91,7 +91,7 @@ public class SecurityConfiguration {
         shiroFilter.setSuccessUrl("/stroom.jsp");
         shiroFilter.getFilters().put("jwtFilter", jwtAuthenticationFilter);
         shiroFilter.getFilterChainDefinitionMap().put("/**", "jwtFilter");
-        shiroFilter.getFilterChainDefinitionMap().put("/api/authentication/getToken", "anon");
+        shiroFilter.getFilterChainDefinitionMap().put("/api/authentication/v1/getToken", "anon");
         return (AbstractShiroFilter) shiroFilter.getObject();
     }
 
