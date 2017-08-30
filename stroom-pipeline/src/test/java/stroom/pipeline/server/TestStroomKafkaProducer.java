@@ -12,17 +12,18 @@ import java.util.function.Consumer;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TestStroomKafkaProducer {
+    private static final String KAFKA_VERSION = "0.10.0.1";
 
     public static final Consumer<Exception> DEFAULT_CALLBACK = ex -> {
         throw new RuntimeException(String.format("Exception during send"), ex);
     };
 
     @Test
-    //@Ignore("You may use this to test the local instance of Kafka.")
+    @Ignore("You may use this to test the local instance of Kafka.")
     public void testManualSend() {
         // Given
         StroomKafkaProducerFactoryImpl stroomKafkaProducerFactory = new StroomKafkaProducerFactoryImpl();
-        StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.getProducer("0.10.0.1", "localhost:9092");
+        StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.getProducer(KAFKA_VERSION, "stroom.kafka:9092");
         StroomKafkaProducerRecord<String, String> record =
                 new StroomKafkaProducerRecord.Builder<String, String>()
                         .topic("statistics")
@@ -40,7 +41,7 @@ public class TestStroomKafkaProducer {
     public void testBadlyConfigured() {
         // Given
         StroomKafkaProducerFactoryImpl stroomKafkaProducerFactory = new StroomKafkaProducerFactoryImpl();
-        StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.getProducer("0.10.0.1", null);
+        StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.getProducer(KAFKA_VERSION, null);
         StroomKafkaProducerRecord<String, String> record =
                 new StroomKafkaProducerRecord.Builder<String, String>()
                         .topic("statistics")
