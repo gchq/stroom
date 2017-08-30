@@ -2,6 +2,8 @@ plugins {
   id 'com.github.johnrengelman.shadow' version '1.2.4'
 }
 
+def swaggerDir = "${projectDir}/src/main/resources/swagger"
+
 apply plugin: 'application'
 apply plugin: 'com.benjaminsproule.swagger'
 mainClassName = 'stroom.startup.App'
@@ -195,14 +197,43 @@ swagger {
             }
         }
         outputPath = "${project.buildDir}/generated/document.html"
-        swaggerDirectory = "${project.buildDir}"
+        swaggerDirectory = "${project.buildDir}/swagger"
+        //swaggerDirectory = "${projectDir}/src/main/resources/swagger"
     }
 }
 
-tasks.generateSwaggerDocumentation {
-    dependsOn classes
-}
+//tasks.generateSwaggerDocumentation {
+    //dependsOn classes
+//}
 
-tasks.build{
+tasks.jar {
     dependsOn generateSwaggerDocumentation
 }
+
+
+jar {
+    //from  "${project.buildDir}/swagger"
+    from ("${project.buildDir}/swagger/swagger.json") {
+        into ("swagger")
+    }
+    from ("${project.buildDir}/swagger/swagger.yaml") {
+        into ("swagger")
+    }
+
+    //eachFile {
+        //if (it.path.endsWith('/swagger.*')) {
+            //into 'swagger'
+        //}
+    //}
+}
+//task swaggerClean {
+    //doLast {
+        //println 'Deleting swagger files in ' + swaggerDir.toString()
+        //delete "${swaggerDir}/swagger.json"
+        //delete "${swaggerDir}/swagger.yaml"
+    //}
+//}
+
+//tasks.clean {
+    //dependsOn swaggerClean
+//}

@@ -35,6 +35,7 @@ public class App extends Application<Config> {
     @Override
     public void initialize(Bootstrap<Config> bootstrap) {
         bootstrap.addBundle(new AssetsBundle("/ui", "/", "stroom.jsp", "ui"));
+        bootstrap.addBundle(new AssetsBundle("/swagger", "/swagger", "swagger.json", "swaggerSpec"));
     }
 
     @Override
