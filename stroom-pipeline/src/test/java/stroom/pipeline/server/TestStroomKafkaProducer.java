@@ -18,11 +18,11 @@ public class TestStroomKafkaProducer {
     };
 
     @Test
-    @Ignore("You may use this to test the local instance of Kafka.")
+    //@Ignore("You may use this to test the local instance of Kafka.")
     public void testManualSend() {
         // Given
         StroomKafkaProducerFactoryImpl stroomKafkaProducerFactory = new StroomKafkaProducerFactoryImpl();
-        StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.getProducer("0.10.0.1", "stroom.kafka:9092");
+        StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.getProducer("0.10.0.1", "localhost:9092");
         StroomKafkaProducerRecord<String, String> record =
                 new StroomKafkaProducerRecord.Builder<String, String>()
                         .topic("statistics")

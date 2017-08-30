@@ -48,10 +48,8 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     private final JAXBContext jaxbContext;
     private final DatatypeFactory datatypeFactory;
 
-    @Inject
     StroomStatsInternalStatisticsService(final Function<String, StroomKafkaProducer> stroomKafkaProducerFactory,
                                          final StroomPropertyService stroomPropertyService) {
-
         this.stroomPropertyService = stroomPropertyService;
         this.stroomKafkaProducerFactory = stroomKafkaProducerFactory;
         this.docRefType = stroomPropertyService.getProperty(PROP_KEY_DOC_REF_TYPE);
@@ -68,6 +66,12 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
         } catch (DatatypeConfigurationException e) {
             throw new RuntimeException("Unable to create new DatatypeFactory instance", e);
         }
+    }
+
+    @Inject
+    StroomStatsInternalStatisticsService(final StroomKafkaProducerFactoryService stroomKafkaProducerFactory,
+                                         final StroomPropertyService stroomPropertyService) {
+        this(stroomKafkaProducerFactory::getProducer, stroomPropertyService);
     }
 
     @PostConstruct
