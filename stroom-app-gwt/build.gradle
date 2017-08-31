@@ -24,7 +24,10 @@ dependencies {
     permitUnusedDeclared libs.gwt_dev
     compile libs.gwt_user
     compile libs.gwtp_mvp_client
-    compile libs.swagger_annotations
+
+    //needed so gwt can compile the stroom-query code that contains swagger annotations
+    compile "${libs.swagger_annotations}:sources"
+    permitUnusedDeclared "${libs.swagger_annotations}:sources"
 }
 
 def gwtSourceDirs = []

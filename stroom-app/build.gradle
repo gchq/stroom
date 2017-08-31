@@ -9,6 +9,8 @@ apply plugin: 'com.benjaminsproule.swagger'
 mainClassName = 'stroom.startup.App'
 
 jar {
+    dependsOn generateSwaggerDocumentation
+
     manifest {
         attributes(
                 "Implementation-Title": "Stroom",
@@ -17,6 +19,12 @@ jar {
         )
     }
     archiveName 'stroom-app.jar'
+
+    //explicitly add in the swagger spec files as they won't be in the source set as they
+    //were generated after processResources
+    from ("${project.buildDir}/swagger") {
+        into ("ui")
+    }
 }
 
 import com.github.jengelman.gradle.plugins.shadow.transformers.ServiceFileTransformer
@@ -33,6 +41,12 @@ shadowJar {
         include 'META-INF/spring.*'
     }
     archiveName 'stroom-app-all.jar'
+
+    //explicitly add in the swagger spec files as they won't be in the source set as they
+    //were generated after processResources
+    from ("${project.buildDir}/swagger") {
+        into ("ui")
+    }
 }
 
 configurations {
@@ -96,6 +110,7 @@ dependencies {
     compile libs.jersey_server
     compile libs.jetty_server
     compile libs.jetty_servlet
+    compile libs.jetty_servlets
     compile libs.logback_classic
     compile libs.shiro_core
     compile libs.slf4j_api
@@ -157,21 +172,6 @@ run {
 processResources.dependsOn(':stroom-app-gwt:gwtCompile')
 processResources.dependsOn(':stroom-dashboard-gwt:gwtCompile')
 
-//swagger {
-    //apiSource {
-        //springmvc = false
-        //locations = [ 'stroom.resources.query.v2.SqlStatisticsQueryResource' ]
-        //schemes = [ 'http' ]
-        //host = 'www.example.com:8080'
-        //basePath = '/'
-        //info {
-            //title = 'Swagger Gradle Plugin Sample'
-            //version = 'v1'
-        //}
-        //outputPath = "${project.rootDir}/generated/document.html"
-        //swaggerDirectory = "${project.rootDir}/generated/swagger-ui"
-    //}
-//}
 swagger {
     apiSource {
         springmvc = false //makes it search for jersey annotations
@@ -180,7 +180,9 @@ swagger {
             'stroom.resources.query.v2.SqlStatisticsQueryResource',
             'stroom.resources.query.v2.StroomIndexQueryResource',
             'stroom.resources.authorisation.v1.AuthorisationResource' ]
-        schemes = [ 'https' ]
+        schemes = [ 
+            'http',
+            'https' ]
         host = 'localhost:8080'
         basePath = '/api'
         info {
@@ -198,7 +200,6 @@ swagger {
         }
         outputPath = "${project.buildDir}/generated/document.html"
         swaggerDirectory = "${project.buildDir}/swagger"
-        //swaggerDirectory = "${projectDir}/src/main/resources/swagger"
     }
 }
 
@@ -206,26 +207,28 @@ swagger {
     //dependsOn classes
 //}
 
-tasks.jar {
-    dependsOn generateSwaggerDocumentation
-}
+//tasks.jar {
+    //dependsOn generateSwaggerDocumentation
+//}
 
 
-jar {
-    //from  "${project.buildDir}/swagger"
-    from ("${project.buildDir}/swagger/swagger.json") {
-        into ("swagger")
-    }
-    from ("${project.buildDir}/swagger/swagger.yaml") {
-        into ("swagger")
-    }
-
-    //eachFile {
-        //if (it.path.endsWith('/swagger.*')) {
-            //into 'swagger'
-        //}
+//jar {
+    ////from  "${project.buildDir}/swagger"
+    //from ("${project.buildDir}/swagger/swagger.json") {
+        ////into ("swagger")
+        //into ("ui")
     //}
-}
+    //from ("${project.buildDir}/swagger/swagger.yaml") {
+        ////into ("swagger")
+        //into ("ui")
+    //}
+
+    ////eachFile {
+        ////if (it.path.endsWith('/swagger.*')) {
+            ////into 'swagger'
+        ////}
+    ////}
+//}
 //task swaggerClean {
     //doLast {
         //println 'Deleting swagger files in ' + swaggerDir.toString()
