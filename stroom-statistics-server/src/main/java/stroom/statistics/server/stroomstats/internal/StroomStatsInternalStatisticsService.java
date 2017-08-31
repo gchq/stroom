@@ -13,8 +13,6 @@ import stroom.statistics.internal.InternalStatisticsService;
 import stroom.stats.schema.Statistics;
 import stroom.stats.schema.TagType;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -41,8 +39,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     private static final Class<Statistics> STATISTICS_CLASS = Statistics.class;
     private static final TimeZone TIME_ZONE_UTC = TimeZone.getTimeZone(ZoneId.from(ZoneOffset.UTC));
 
-    private final Function<String, StroomKafkaProducer> stroomKafkaProducerFactory;
-    private StroomKafkaProducer stroomKafkaProducer;
+    private final StroomKafkaProducer stroomKafkaProducer;
     private final StroomPropertyService stroomPropertyService;
     private final String docRefType;
     private final JAXBContext jaxbContext;
@@ -51,7 +48,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     StroomStatsInternalStatisticsService(final Function<String, StroomKafkaProducer> stroomKafkaProducerFactory,
                                          final StroomPropertyService stroomPropertyService) {
         this.stroomPropertyService = stroomPropertyService;
-        this.stroomKafkaProducerFactory = stroomKafkaProducerFactory;
+        this.stroomKafkaProducer = stroomKafkaProducerFactory.apply(null);
         this.docRefType = stroomPropertyService.getProperty(PROP_KEY_DOC_REF_TYPE);
 
         try {
@@ -72,16 +69,6 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     StroomStatsInternalStatisticsService(final StroomKafkaProducerFactoryService stroomKafkaProducerFactory,
                                          final StroomPropertyService stroomPropertyService) {
         this(stroomKafkaProducerFactory::getProducer, stroomPropertyService);
-    }
-
-    @PostConstruct
-    public void postConstruct() {
-        this.stroomKafkaProducer = this.stroomKafkaProducerFactory.apply(null);
-    }
-
-    @PreDestroy
-    public void preDestroy() {
-        this.stroomKafkaProducer.shutdown();
     }
 
     @Override

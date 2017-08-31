@@ -11,6 +11,8 @@ import stroom.util.spring.StroomShutdown;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.function.Function;
 
@@ -44,10 +46,14 @@ public class StroomKafkaProducerFactoryService {
     private final ServiceLoader<StroomKafkaProducerFactory> loader;
     private final StroomPropertyService propertyService;
 
+    // Used to keep track of the instances created, a single instance per name will be created and shared.
+    private final Map<String, StroomKafkaProducer> producersByName;
+
     @Inject
     public StroomKafkaProducerFactoryService(final StroomPropertyService propertyService) {
         this.propertyService = propertyService;
         this.loader = ServiceLoader.load(StroomKafkaProducerFactory.class);
+        this.producersByName = new HashMap<>();
     }
 
     /**
@@ -57,10 +63,9 @@ public class StroomKafkaProducerFactoryService {
      * @return A {@link StroomKafkaProducer} connecting to the named Kafka server.
      */
     public synchronized StroomKafkaProducer getProducer(final String name) {
-        final String nameToUse = (null != name) ? name : DEFAULT_NAME;
-
-        String bootstrapServers = propertyService.getProperty(String.format(PROP_BOOTSTRAP_SERVERS_NAMED, nameToUse));
-        String kafkaVersion = propertyService.getProperty(String.format(PROP_KAFKA_CLIENT_VERSION_NAMED, nameToUse));
+        // Retrieve the settings for this named kafka
+        String bootstrapServers = getNamedProperty(PROP_BOOTSTRAP_SERVERS_NAMED, name);
+        String kafkaVersion = getNamedProperty(PROP_KAFKA_CLIENT_VERSION_NAMED, name);
 
         // Backwards compatible with old configs
         if (null == bootstrapServers) {
@@ -68,23 +73,50 @@ public class StroomKafkaProducerFactoryService {
             kafkaVersion = KAFKA_CLIENT_VERSION_DEFAULT;
         }
 
-        StroomKafkaProducer producer = null;
-        for (StroomKafkaProducerFactory factory : loader) {
-            producer = factory.getProducer(kafkaVersion, bootstrapServers);
-            if (producer != null) {
-                break;
+        // First try and find a previously created producer by this name
+        StroomKafkaProducer producer = producersByName.get(name);
+
+        // If a producer has not already been created for this name, it is time to create one
+        if (producer == null) {
+            for (StroomKafkaProducerFactory factory : loader) {
+                producer = factory.getProducer(kafkaVersion, bootstrapServers);
+                if (producer != null) {
+                    break;
+                }
             }
         }
 
-        if (producer == null) {
+        // Either store the producer, or throw an exception as one could not be found
+        if (producer != null) {
+            producersByName.put(name, producer);
+        } else {
             throw new RuntimeException(String.format("Could not find Stroom Kafka Producer Factory for version: %s", kafkaVersion));
         }
 
         return producer;
     }
 
+    /**
+     * Get value of a property, using the name of the producer to format the base property name.
+     *
+     * Allows specification of different bootstrap servers and kafka versions for different purposes.
+     *
+     * i.e. stroom.kafka.bootstrap.servers.stats = 0.0.0.0
+     *      stroom.kafka.bootstrap.servers.externalPartner = 1.1.1.1
+     *
+     * @param propBase The base property (will have a %s format string for the name)
+     * @param name The named kafka producer config
+     * @return The value of the property for the named instance OR the default instance if the name given is null.
+     */
+    private String getNamedProperty(final String propBase, final String name) {
+        final String nameToUse = (null != name) ? name : DEFAULT_NAME;
+        return propertyService.getProperty(String.format(propBase, nameToUse));
+    }
+
     @StroomShutdown
     public void shutdown() {
         LOGGER.info("Shutting Down Stroom Kafka Producer Factory Service");
+        producersByName.values().forEach(StroomKafkaProducer::shutdown);
+        producersByName.clear();
     }
 }

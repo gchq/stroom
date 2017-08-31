@@ -33,8 +33,6 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 
 /**
@@ -60,8 +58,7 @@ import javax.inject.Inject;
 public class KafkaProducerFilter extends AbstractSamplingFilter {
 
     private final ErrorReceiverProxy errorReceiverProxy;
-    private final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService;
-    private StroomKafkaProducer stroomKafkaProducer;
+    private final StroomKafkaProducer stroomKafkaProducer;
 
     private String recordKey;
     private String topic;
@@ -73,19 +70,8 @@ public class KafkaProducerFilter extends AbstractSamplingFilter {
                                final StroomPropertyService stroomPropertyService) {
         super(errorReceiverProxy, locationFactory);
         this.errorReceiverProxy = errorReceiverProxy;
-        this.stroomKafkaProducerFactoryService = stroomKafkaProducerFactoryService;
+        this.stroomKafkaProducer = stroomKafkaProducerFactoryService.getProducer(null);
     }
-
-    @PostConstruct
-    public void postConstruct() {
-        this.stroomKafkaProducer = this.stroomKafkaProducerFactoryService.getProducer(null);
-    }
-
-    @PreDestroy
-    public void preDestroy() {
-        this.stroomKafkaProducer.shutdown();
-    }
-
 
     @Override
     public void endDocument() throws SAXException {
