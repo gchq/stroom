@@ -52,20 +52,6 @@ gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(urlL
     //println dir
 //}
 
-//task addGwtDeps {
-    //dependsOn classes
-
-    //doLast {
-        //println "Dumping gwtSourceDirs:"
-        //configurations.compile.files.each { 
-            //if (it.name.startsWith("swagger")) {
-                //println "Adding ${it.name} to GWT classpath" 
-                //gwtSourceDirs.add(it.getPath())
-            //}
-        //}
-    //}
-//}
-
 //task gwtCompile(dependsOn: [classes, addGwtDeps], type: JavaExec) {
 task gwtCompile(dependsOn: classes, type: JavaExec) {
     def module = 'stroom.app.App'

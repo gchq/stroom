@@ -217,10 +217,8 @@ task wrapper(type: Wrapper) {
 allprojects {
     apply plugin: 'maven'
     apply plugin: 'maven-publish'
-    //apply plugin: 'com.benjaminsproule.swagger'
 
     group = 'stroom'
-    //version = getPropertyOrDefault('version', 'SNAPSHOT')
     version = versions.stroom
 }
 
@@ -287,24 +285,6 @@ subprojects {
         }
     }
 
-    //See https://github.com/kongchen/swagger-maven-plugin for details of the properties of apiSource
-    //See https://stackoverflow.com/questions/43104791/how-to-prevent-xml-wrapper-element-in-swagger-ui for details
-    //of using xml and json with swagger
-    //swagger {
-        //apiSource {
-            //springmvc = false
-            //locations = [ 'stroom.resources.query.v2.SqlStatisticsQueryResource' ]
-            //schemes = [ 'http' ]
-            //host = 'www.example.com:8080'
-            //basePath = '/'
-            //info {
-                //title = 'Swagger Gradle Plugin Sample'
-                //version = 'v1'
-            //}
-            //outputPath = "${project.rootDir}/generated/document.html"
-            //swaggerDirectory = "${project.rootDir}/generated/swagger-ui"
-        //}
-    //}
 }
 
 
