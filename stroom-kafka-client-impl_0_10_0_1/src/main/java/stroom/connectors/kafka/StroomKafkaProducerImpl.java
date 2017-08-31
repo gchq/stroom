@@ -4,6 +4,7 @@ import com.google.common.base.Strings;
 import org.apache.kafka.clients.producer.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.connectors.ConnectorProperties;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -24,15 +25,28 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomKafkaProducerImpl.class);
 
     private static final int TIME_BETWEEN_INIT_ATTEMPS_MS = 30_000;
+    private final ConnectorProperties properties;
     private final String bootstrapServers;
     //instance of a kafka producer that will be shared by all threads
     private volatile Producer<String, String> producer = null;
     private volatile Instant timeOfLastFailedInitAttempt = Instant.EPOCH;
 
-    public StroomKafkaProducerImpl(String bootstrapServers) {
-        this.bootstrapServers = bootstrapServers;
-        if (Strings.isNullOrEmpty(bootstrapServers)) {
-            LOGGER.error("Stroom is not properly configured to connect to Kafka: 'stroom.kafka.bootstrap.servers' is required.");
+    public StroomKafkaProducerImpl(final ConnectorProperties properties) {
+        this.properties = properties;
+        this.bootstrapServers = (properties != null) ? properties.getProperty(StroomKafkaProducer.BOOTSTRAP_SERVERS_CONFIG) : null;
+
+        if (this.properties != null) {
+            if (Strings.isNullOrEmpty(bootstrapServers)) {
+                final String msg = String.format(
+                        "Stroom is not properly configured to connect to Kafka: %s is required.",
+                        StroomKafkaProducer.BOOTSTRAP_SERVERS_CONFIG);
+                LOGGER.error(msg);
+            }
+        } else {
+            final String msg = String.format(
+                    "Stroom is not properly configured to connect to Kafka: properties containing at least %s are required.",
+                    StroomKafkaProducer.BOOTSTRAP_SERVERS_CONFIG);
+            LOGGER.error(msg);
         }
     }
 
@@ -44,7 +58,10 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
         try {
             initProducer();
         } catch (Exception e) {
-            LOGGER.error("Error initialising kafka producer to " + bootstrapServers + ", (" + e.getMessage() + ")");
+            final String msg = String.format("Error initialising kafka producer to %s, (%s)",
+                    this.bootstrapServers,
+                    e.getMessage());
+            LOGGER.error(msg);
             exceptionHandler.accept(e);
             return;
         }
@@ -71,12 +88,17 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
                 }
 
             } catch (Exception e) {
-                LOGGER.error("Error initialising kafka producer to " + bootstrapServers + ", (" + e.getMessage() + ")");
+                final String msg = String.format("Error initialising kafka producer to %s, (%s)",
+                        this.bootstrapServers,
+                        e.getMessage());
+                LOGGER.error(msg);
                 exceptionHandler.accept(e);
             }
         } else {
-            exceptionHandler.accept(new IOException(String.format("Kafka producer is currently not initialised, " +
-                    "it may be down or the connection details incorrect, bootstrapServers: [%s]", bootstrapServers)));
+            final String msg = String.format("Kafka producer is currently not initialised, " +
+                    "it may be down or the connection details incorrect, bootstrapServers: [%s]",
+                    this.bootstrapServers);
+            exceptionHandler.accept(new IOException(msg));
         }
     }
 
@@ -95,16 +117,20 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
                 if (producer == null && isOkToInitNow(bootstrapServers)) {
                     LOGGER.info("Initialising kafka producer for {}", bootstrapServers);
                     Properties props = new Properties();
-                    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-                    props.put(ProducerConfig.ACKS_CONFIG, "all");
-                    props.put(ProducerConfig.RETRIES_CONFIG, 0);
-                    props.put(ProducerConfig.BATCH_SIZE_CONFIG, 16384);
-                    props.put(ProducerConfig.LINGER_MS_CONFIG, 1);
-                    props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, 33554432);
 
-                    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, org.apache.kafka.common.serialization.StringSerializer.class);
+                    properties.copyProp(props, ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, null);
+                    properties.copyProp(props, ProducerConfig.ACKS_CONFIG, "all");
+
+                    properties.copyProp(props, ProducerConfig.RETRIES_CONFIG, 0);
+                    properties.copyProp(props, ProducerConfig.BATCH_SIZE_CONFIG, 16384);
+                    properties.copyProp(props, ProducerConfig.LINGER_MS_CONFIG, 1);
+                    properties.copyProp(props, ProducerConfig.BUFFER_MEMORY_CONFIG, 33554432);
+
+                    properties.copyProp(props, ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+                            org.apache.kafka.common.serialization.StringSerializer.class);
                     // TODO We will probably want to send Avro'd bytes (or something similar) at some point, so the serializer will need to change.
-                    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, org.apache.kafka.common.serialization.StringSerializer.class);
+                    properties.copyProp(props, ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+                            org.apache.kafka.common.serialization.StringSerializer.class);
 
                     try {
                         producer = new KafkaProducer<>(props);
@@ -113,6 +139,7 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
                         throw e;
                     }
                     LOGGER.info("Kafka Producer successfully created");
+                    LOGGER.info(String.format("With Properties: %s", props));
                 }
             }
         }

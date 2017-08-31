@@ -9,6 +9,11 @@ import java.util.function.Consumer;
  */
 public interface StroomKafkaProducer {
     /**
+     * This is the one config item that must be present, everything else can be default
+     */
+    String BOOTSTRAP_SERVERS_CONFIG = "bootstrap.servers";
+
+    /**
      * Given a Record, sends to the Kafka broker.
      * @param stroomRecord The record, contains the data and partition information.
      * @param flushMode Flush the producer on send

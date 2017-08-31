@@ -4,6 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import stroom.connectors.ConnectorProperties;
+import stroom.connectors.ConnectorPropertiesPrefixImpl;
 import stroom.node.server.StroomPropertyService;
 import stroom.util.config.StroomProperties;
 import stroom.util.spring.StroomScope;
@@ -13,6 +15,7 @@ import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.function.Function;
 
@@ -32,14 +35,14 @@ public class StroomKafkaProducerFactoryService {
     private static final String DEFAULT_NAME = "default";
 
     // Old configs may not have named server/version properties, so use this property name
-    private static final String PROP_BOOTSTRAP_SERVERS = "stroom.kafka.bootstrap.servers";
+    private static final String OLD_PROP_BOOTSTRAP_SERVERS = "stroom.kafka.bootstrap.servers";
 
     // Default kafka client version for old configs
     private static final String KAFKA_CLIENT_VERSION_DEFAULT = "0.10.0.1";
 
     // Can register server/version pairs for specific roles within the system
-    private static final String PROP_BOOTSTRAP_SERVERS_NAMED = "stroom.kafka.bootstrap.servers.%s";
-    private static final String PROP_KAFKA_CLIENT_VERSION_NAMED = "stroom.kafka.client.version.%s";
+    private static final String PROP_PREFIX = "stroom.connectors.kafka.%s.";
+    private static final String PROP_KAFKA_CLIENT_VERSION = "client.version";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomKafkaProducerFactoryService.class);
 
@@ -63,13 +66,15 @@ public class StroomKafkaProducerFactoryService {
      * @return A {@link StroomKafkaProducer} connecting to the named Kafka server.
      */
     public synchronized StroomKafkaProducer getProducer(final String name) {
-        // Retrieve the settings for this named kafka
-        String bootstrapServers = getNamedProperty(PROP_BOOTSTRAP_SERVERS_NAMED, name);
-        String kafkaVersion = getNamedProperty(PROP_KAFKA_CLIENT_VERSION_NAMED, name);
+        final String nameToUse = (null != name) ? name : DEFAULT_NAME;
+        final ConnectorProperties connectorProperties = new ConnectorPropertiesPrefixImpl(String.format(PROP_PREFIX, nameToUse), this.propertyService);
 
-        // Backwards compatible with old configs
-        if (null == bootstrapServers) {
-            bootstrapServers = propertyService.getProperty(PROP_BOOTSTRAP_SERVERS);
+        // Retrieve the settings for this named kafka
+        String kafkaVersion = connectorProperties.getProperty(PROP_KAFKA_CLIENT_VERSION);
+
+        // If the named properties are empty, this is an old config
+        if (null == kafkaVersion) {
+            connectorProperties.put(StroomKafkaProducer.BOOTSTRAP_SERVERS_CONFIG, propertyService.getProperty(OLD_PROP_BOOTSTRAP_SERVERS));
             kafkaVersion = KAFKA_CLIENT_VERSION_DEFAULT;
         }
 
@@ -79,7 +84,7 @@ public class StroomKafkaProducerFactoryService {
         // If a producer has not already been created for this name, it is time to create one
         if (producer == null) {
             for (StroomKafkaProducerFactory factory : loader) {
-                producer = factory.getProducer(kafkaVersion, bootstrapServers);
+                producer = factory.getProducer(kafkaVersion, connectorProperties);
                 if (producer != null) {
                     break;
                 }
@@ -94,23 +99,6 @@ public class StroomKafkaProducerFactoryService {
         }
 
         return producer;
-    }
-
-    /**
-     * Get value of a property, using the name of the producer to format the base property name.
-     *
-     * Allows specification of different bootstrap servers and kafka versions for different purposes.
-     *
-     * i.e. stroom.kafka.bootstrap.servers.stats = 0.0.0.0
-     *      stroom.kafka.bootstrap.servers.externalPartner = 1.1.1.1
-     *
-     * @param propBase The base property (will have a %s format string for the name)
-     * @param name The named kafka producer config
-     * @return The value of the property for the named instance OR the default instance if the name given is null.
-     */
-    private String getNamedProperty(final String propBase, final String name) {
-        final String nameToUse = (null != name) ? name : DEFAULT_NAME;
-        return propertyService.getProperty(String.format(propBase, nameToUse));
     }
 
     @StroomShutdown

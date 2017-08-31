@@ -5,6 +5,8 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
+import stroom.connectors.ConnectorProperties;
+import stroom.connectors.ConnectorPropertiesPrefixImpl;
 import stroom.connectors.kafka.*;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -23,7 +25,9 @@ public class TestStroomKafkaProducer {
     public void testManualSend() {
         // Given
         StroomKafkaProducerFactoryImpl stroomKafkaProducerFactory = new StroomKafkaProducerFactoryImpl();
-        StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.getProducer(KAFKA_VERSION, "stroom.kafka:9092");
+        ConnectorProperties kafkaProps = new ConnectorPropertiesPrefixImpl();
+        kafkaProps.put(StroomKafkaProducer.BOOTSTRAP_SERVERS_CONFIG, "kafka:9092");
+        StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.getProducer(KAFKA_VERSION, kafkaProps);
         StroomKafkaProducerRecord<String, String> record =
                 new StroomKafkaProducerRecord.Builder<String, String>()
                         .topic("statistics")
@@ -41,7 +45,8 @@ public class TestStroomKafkaProducer {
     public void testBadlyConfigured() {
         // Given
         StroomKafkaProducerFactoryImpl stroomKafkaProducerFactory = new StroomKafkaProducerFactoryImpl();
-        StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.getProducer(KAFKA_VERSION, null);
+        ConnectorProperties properties = new ConnectorPropertiesPrefixImpl(null, null);
+        StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.getProducer(KAFKA_VERSION, properties);
         StroomKafkaProducerRecord<String, String> record =
                 new StroomKafkaProducerRecord.Builder<String, String>()
                         .topic("statistics")
