@@ -29,17 +29,11 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 public class CloseContent extends Composite implements HasEnabled {
     private static Binder binder = GWT.create(Binder.class);
-
-    public interface Binder extends UiBinder<Widget, CloseContent> {
-    }
-
     private final PopupUiHandlers popupUiHandlers;
-
     @UiField
     Button close;
     @UiField
     SimplePanel content;
-
     public CloseContent(final PopupUiHandlers popupUiHandlers) {
         initWidget(binder.createAndBindUi(this));
         this.popupUiHandlers = popupUiHandlers;
@@ -57,5 +51,8 @@ public class CloseContent extends Composite implements HasEnabled {
     @Override
     public void setEnabled(final boolean enabled) {
         close.setEnabled(enabled);
+    }
+
+    public interface Binder extends UiBinder<Widget, CloseContent> {
     }
 }

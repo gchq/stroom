@@ -35,7 +35,7 @@ public class StoredErrorReceiver implements ErrorReceiver {
 
     @Override
     public void log(final Severity severity, final Location location, final String elementId, final String message,
-            final Throwable e) {
+                    final Throwable e) {
         // Get cause SAXParseException if there is one.
         final Throwable cause = getCause(e);
 

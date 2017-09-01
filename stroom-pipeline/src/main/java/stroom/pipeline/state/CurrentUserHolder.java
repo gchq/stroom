@@ -25,11 +25,11 @@ import stroom.util.spring.StroomScope;
 public class CurrentUserHolder implements Holder {
     private String currentUser;
 
-    public void setCurrentUser(final String currentUser) {
-        this.currentUser = currentUser;
-    }
-
     public String getCurrentUser() {
         return currentUser;
+    }
+
+    public void setCurrentUser(final String currentUser) {
+        this.currentUser = currentUser;
     }
 }

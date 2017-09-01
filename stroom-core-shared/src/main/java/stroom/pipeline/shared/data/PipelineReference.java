@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
 package stroom.pipeline.shared.data;
 
 import stroom.entity.shared.Copyable;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.util.shared.CompareBuilder;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
@@ -32,11 +32,11 @@ import javax.xml.bind.annotation.XmlType;
 /**
  * <p>
  * Java class for PipelineReference complex type.
- *
+ * <p>
  * <p>
  * The following schema fragment specifies the expected content contained within
  * this class.
- *
+ * <p>
  * <pre>
  * &lt;complexType name="PipelineReference">
  *   &lt;complexContent>
@@ -54,7 +54,7 @@ import javax.xml.bind.annotation.XmlType;
  * </pre>
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "PipelineReference", propOrder = { "element", "name", "pipeline", "feed", "streamType" })
+@XmlType(name = "PipelineReference", propOrder = {"element", "name", "pipeline", "feed", "streamType"})
 public class PipelineReference implements Comparable<PipelineReference>, SharedObject, Copyable<PipelineReference> {
     private static final long serialVersionUID = -8037614920682819123L;
     @XmlElement(name = "element", required = true)

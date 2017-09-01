@@ -22,6 +22,22 @@ import stroom.util.io.FileUtil;
 import java.io.File;
 
 public class TestState {
+    /**
+     * Record and modify the test state in a static thread local as we want to
+     * reset in static beforeClass() method.
+     */
+    private static ThreadLocal<State> stateThreadLocal = new ThreadLocal<>();
+
+    public static State getState() {
+        State state = stateThreadLocal.get();
+        if (state == null) {
+            state = new State();
+            state.create();
+            stateThreadLocal.set(state);
+        }
+        return state;
+    }
+
     public static class State {
         private File testDir;
         private int classTestCount;
@@ -93,21 +109,5 @@ public class TestState {
             destroy();
             super.finalize();
         }
-    }
-
-    /**
-     * Record and modify the test state in a static thread local as we want to
-     * reset in static beforeClass() method.
-     */
-    private static ThreadLocal<State> stateThreadLocal = new ThreadLocal<>();
-
-    public static State getState() {
-        State state = stateThreadLocal.get();
-        if (state == null) {
-            state = new State();
-            state.create();
-            stateThreadLocal.set(state);
-        }
-        return state;
     }
 }

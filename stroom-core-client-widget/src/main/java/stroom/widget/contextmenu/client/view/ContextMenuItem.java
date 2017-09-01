@@ -29,14 +29,8 @@ import com.google.gwt.user.client.ui.Label;
 
 public class ContextMenuItem extends Composite {
     private static final Binder binder = GWT.create(Binder.class);
-
-    interface Binder extends UiBinder<FlowPanel, ContextMenuItem> {
-    }
-
-    interface Style extends CssResource {
-        String selected();
-    }
-
+    private final ContextMenu contextMenu;
+    private final Command command;
     @UiField
     Label text;
 
@@ -44,9 +38,6 @@ public class ContextMenuItem extends Composite {
     Style style;
 
     private FlowPanel layout;
-    private final ContextMenu contextMenu;
-    private final Command command;
-
     public ContextMenuItem(final ContextMenu contextMenu, final String text, final Command command) {
         this.contextMenu = contextMenu;
         this.command = command;
@@ -58,30 +49,37 @@ public class ContextMenuItem extends Composite {
         setText(text);
     }
 
-    public void setText(final String t) {
-        text.setText(t);
-    }
-
     public String getText() {
         return text.getText();
+    }
+
+    public void setText(final String t) {
+        text.setText(t);
     }
 
     @Override
     public void onBrowserEvent(Event event) {
         switch (DOM.eventGetType(event)) {
-        case Event.ONMOUSEOVER:
-            layout.addStyleName(style.selected());
-            break;
-        case Event.ONMOUSEOUT:
-            layout.removeStyleName(style.selected());
-            break;
-        case Event.ONMOUSEDOWN:
-            command.execute();
-            contextMenu.hide();
-            layout.removeStyleName(style.selected());
-            break;
+            case Event.ONMOUSEOVER:
+                layout.addStyleName(style.selected());
+                break;
+            case Event.ONMOUSEOUT:
+                layout.removeStyleName(style.selected());
+                break;
+            case Event.ONMOUSEDOWN:
+                command.execute();
+                contextMenu.hide();
+                layout.removeStyleName(style.selected());
+                break;
         }
 
         super.onBrowserEvent(event);
+    }
+
+    interface Binder extends UiBinder<FlowPanel, ContextMenuItem> {
+    }
+
+    interface Style extends CssResource {
+        String selected();
     }
 }

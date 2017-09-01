@@ -31,7 +31,7 @@ public class TreeRowHandler<R> {
     private final Column<R, Expander> expanderColumn;
 
     public TreeRowHandler(final TreeAction<R> action, final DataGridView<R> dataGridView,
-            final Column<R, Expander> expanderColumn) {
+                          final Column<R, Expander> expanderColumn) {
         this.action = action;
         this.dataGridView = dataGridView;
         this.expanderColumn = expanderColumn;

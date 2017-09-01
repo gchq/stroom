@@ -28,13 +28,9 @@ import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.pipeline.structure.client.presenter.NewElementPresenter.NewElementView;
 
 public class NewElementViewImpl extends ViewImpl implements NewElementView {
-    public interface Binder extends UiBinder<Widget, NewElementViewImpl> {
-    }
-
+    private final Widget widget;
     @UiField
     TextBox id;
-
-    private final Widget widget;
 
     @Inject
     public NewElementViewImpl(final Binder binder) {
@@ -59,5 +55,8 @@ public class NewElementViewImpl extends ViewImpl implements NewElementView {
     @Override
     public HasText getId() {
         return id;
+    }
+
+    public interface Binder extends UiBinder<Widget, NewElementViewImpl> {
     }
 }

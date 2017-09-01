@@ -24,32 +24,13 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import stroom.pipeline.shared.data.PipelineElement;
+import stroom.svg.client.SvgIcon;
 
 public class PipelineElementBox extends Box<PipelineElement> {
-    public interface Style extends CssResource {
-        String DEFAULT = "PipelineElementBox.css";
-
-        String background();
-
-        String backgroundSelected();
-
-        String hotspot();
-
-        String image();
-
-        String label();
-    }
-
-    public interface Resources extends ClientBundle {
-        @Source(Style.DEFAULT)
-        Style style();
-    }
-
     private static Resources resources;
-
     private final PipelineElement pipelineElement;
 
-    public PipelineElementBox(final PipelineElement pipelineElement, final Image image) {
+    public PipelineElementBox(final PipelineElement pipelineElement, final SvgIcon icon) {
         this.pipelineElement = pipelineElement;
 
         if (resources == null) {
@@ -64,7 +45,8 @@ public class PipelineElementBox extends Box<PipelineElement> {
         label.addStyleName(resources.style().label());
         background.add(label);
 
-        if (image != null) {
+        if (icon != null) {
+            final Image image = new Image(icon.getUrl());
             image.addStyleName(resources.style().image());
             background.add(image);
             label.getElement().getStyle().setPaddingLeft(25, Unit.PX);
@@ -94,5 +76,24 @@ public class PipelineElementBox extends Box<PipelineElement> {
     @Override
     public PipelineElement getItem() {
         return pipelineElement;
+    }
+
+    public interface Style extends CssResource {
+        String DEFAULT = "PipelineElementBox.css";
+
+        String background();
+
+        String backgroundSelected();
+
+        String hotspot();
+
+        String image();
+
+        String label();
+    }
+
+    public interface Resources extends ClientBundle {
+        @Source(Style.DEFAULT)
+        Style style();
     }
 }

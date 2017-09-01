@@ -27,11 +27,11 @@ import javax.xml.bind.annotation.XmlType;
 /**
  * <p>
  * Java class for Element complex type.
- *
+ * <p>
  * <p>
  * The following schema fragment specifies the expected content contained within
  * this class.
- *
+ * <p>
  * <pre>
  * &lt;complexType name="Element">
  *   &lt;complexContent>
@@ -46,7 +46,7 @@ import javax.xml.bind.annotation.XmlType;
  * </pre>
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "Element", propOrder = { "id", "type" })
+@XmlType(name = "Element", propOrder = {"id", "type"})
 public class PipelineElement implements Comparable<PipelineElement>, SharedObject {
     private static final long serialVersionUID = -8891708244423055172L;
 
@@ -59,6 +59,14 @@ public class PipelineElement implements Comparable<PipelineElement>, SharedObjec
     private String id;
     @XmlElement(required = true)
     private String type;
+
+    public PipelineElement() {
+    }
+
+    public PipelineElement(final String id, final String type) {
+        this.id = id;
+        this.type = type;
+    }
 
     public String getId() {
         return id;

@@ -26,11 +26,10 @@ import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.event.ReloadEntityEvent;
 import stroom.security.client.event.ResetPasswordEvent;
 import stroom.security.client.event.ResetPasswordEvent.ResetPasswordHandler;
 import stroom.security.shared.ResetPasswordAction;
-import stroom.security.shared.User;
+import stroom.security.shared.UserRef;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -41,7 +40,7 @@ public class ResetPasswordPresenter
         extends MyPresenter<ResetPasswordPresenter.ResetPasswordView, ResetPasswordPresenter.ResetPasswordProxy>
         implements ResetPasswordHandler, PopupUiHandlers {
     private final ClientDispatchAsync dispatcher;
-    private User user;
+    private UserRef userRef;
 
     @Inject
     public ResetPasswordPresenter(final EventBus eventBus, final ResetPasswordView view, final ResetPasswordProxy proxy,
@@ -54,7 +53,7 @@ public class ResetPasswordPresenter
     @ProxyEvent
     @Override
     public void onResetPassword(final ResetPasswordEvent event) {
-        user = event.getUser();
+        userRef = event.getUserRef();
         read();
         forceReveal();
     }
@@ -80,7 +79,7 @@ public class ResetPasswordPresenter
     }
 
     private void read() {
-        getView().setUserName(user.getName());
+        getView().setUserName(userRef.getName());
         getView().setPassword("");
         getView().setConfirmPassword("");
     }
@@ -98,12 +97,9 @@ public class ResetPasswordPresenter
                         null);
 
             } else {
-                dispatcher.exec(new ResetPasswordAction(user, password)).onSuccess(result -> {
+                dispatcher.exec(new ResetPasswordAction(userRef, password)).onSuccess(result -> {
                     AlertEvent.fireInfo(ResetPasswordPresenter.this, "The password has been changed.",
-                            () -> {
-                                HidePopupEvent.fire(ResetPasswordPresenter.this, ResetPasswordPresenter.this);
-                                ReloadEntityEvent.fire(ResetPasswordPresenter.this, result);
-                            });
+                            () -> HidePopupEvent.fire(ResetPasswordPresenter.this, ResetPasswordPresenter.this));
                 });
             }
         }

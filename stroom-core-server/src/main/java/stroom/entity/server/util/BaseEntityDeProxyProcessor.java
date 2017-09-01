@@ -44,20 +44,18 @@ import java.util.Set;
 /**
  * Class to DE-PROXY a class and it's children and avoid cyclic relationships
  * (we have not yet implemented this).
- *
+ * <p>
  * We rely here on some conventions in the domain objects.
- *
+ * <p>
  * If we find any non simple POJO types we do the following: - PersistentSet
  * converts to a POJO version - HibernateProxy we convert to our own PROXY with
  * just the id set (as these is a lazy loaded class)
  */
 public class BaseEntityDeProxyProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(BaseEntityDeProxyProcessor.class);
-
-    private final HashMap<BaseEntity, BaseEntity> objectsDone = new HashMap<>();
-
-    private final boolean incoming;
     private static final String PASSWORD_MASK = "********************";
+    private final HashMap<BaseEntity, BaseEntity> objectsDone = new HashMap<>();
+    private final boolean incoming;
 
     public BaseEntityDeProxyProcessor(final boolean incoming) {
         this.incoming = incoming;
@@ -192,7 +190,7 @@ public class BaseEntityDeProxyProcessor {
         return target;
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private Object replaceCollectionType(final Object source)
             throws IntrospectionException, InvocationTargetException, InstantiationException, IllegalAccessException {
         Object target = null;

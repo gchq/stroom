@@ -33,21 +33,17 @@ public final class StartElement extends BaseEvent {
 
     private final String uri;
     private final String localName;
+    private final Attributes atts;
     private String qName;
     private String prefix;
-    private final Attributes atts;
 
     /**
      * Stores a start element SAX event.
      *
-     * @param uri
-     *            The element's Namespace URI, or the empty string.
-     * @param localName
-     *            The element's local name, or the empty string.
-     * @param qName
-     *            The element's qualified (prefixed) name, or the empty string.
-     * @param atts
-     *            The element's attributes.
+     * @param uri       The element's Namespace URI, or the empty string.
+     * @param localName The element's local name, or the empty string.
+     * @param qName     The element's qualified (prefixed) name, or the empty string.
+     * @param atts      The element's attributes.
      */
     public StartElement(final String uri, final String localName, final String qName, final Attributes atts) {
         this.uri = uri;
@@ -69,10 +65,8 @@ public final class StartElement extends BaseEvent {
     /**
      * Helper to build a simple start element.
      *
-     * @param uri
-     *            of the element
-     * @param name
-     *            of the element
+     * @param uri  of the element
+     * @param name of the element
      * @return built object
      */
     public static StartElement createSimple(final String uri, final String name) {
@@ -110,10 +104,8 @@ public final class StartElement extends BaseEvent {
     /**
      * Fires a stored SAX event at the supplied content handler.
      *
-     * @param handler
-     *            The content handler to fire the SAX event at.
-     * @throws SAXException
-     *             Necessary to maintain the SAX event contract.
+     * @param handler The content handler to fire the SAX event at.
+     * @throws SAXException Necessary to maintain the SAX event contract.
      * @see Event#fire(org.xml.sax.ContentHandler)
      */
     @Override
@@ -134,8 +126,7 @@ public final class StartElement extends BaseEvent {
     }
 
     /**
-     * @param prefix
-     *            the prefix to set.
+     * @param prefix the prefix to set.
      */
     public void setPrefix(final String prefix) {
         if ((this.prefix != null && !this.prefix.equals(prefix)) || (prefix != null && !prefix.equals(this.prefix))) {
@@ -171,7 +162,6 @@ public final class StartElement extends BaseEvent {
      * Returns a string representation of this stores SAX event.
      *
      * @return A string representation of this stored SAX event.
-     *
      * @see java.lang.Object#toString()
      */
     @Override

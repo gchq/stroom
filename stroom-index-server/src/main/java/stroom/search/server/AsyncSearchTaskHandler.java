@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,11 +17,7 @@
 package stroom.search.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.entity.shared.BaseCriteria.OrderByDirection;
-import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.Index;
-import stroom.index.shared.IndexService;
-import stroom.index.shared.IndexShard;
+import stroom.entity.shared.Sort.Direction;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
@@ -30,8 +26,8 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardService;
 import stroom.node.shared.Node;
-import stroom.query.ResultHandler;
-import stroom.query.api.v1.Query;
+import stroom.query.common.v2.ResultHandler;
+import stroom.query.api.v2.Query;
 import stroom.security.SecurityContext;
 import stroom.task.cluster.ClusterDispatchAsync;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
@@ -121,9 +117,8 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     // Only non deleted indexes.
                     findIndexShardCriteria.getIndexShardStatusSet().addAll(IndexShard.NON_DELETED_INDEX_SHARD_STATUS);
                     // Order by partition name and key.
-                    findIndexShardCriteria.addOrderBy(FindIndexShardCriteria.ORDER_BY_PARTITION,
-                            OrderByDirection.DESCENDING);
-                    findIndexShardCriteria.addOrderBy(FindIndexShardCriteria.ORDER_BY_ID, OrderByDirection.DESCENDING);
+                    findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_PARTITION, Direction.DESCENDING, false);
+                    findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_ID, Direction.DESCENDING, false);
                     findIndexShardCriteria.getFetchSet().add(Node.ENTITY_TYPE);
                     final List<IndexShard> indexShards = indexShardService.find(findIndexShardCriteria);
 

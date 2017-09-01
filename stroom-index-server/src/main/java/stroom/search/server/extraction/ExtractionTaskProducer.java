@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,10 +16,10 @@
 
 package stroom.search.server.extraction;
 
-import stroom.dashboard.expression.FieldIndexMap;
+import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
-import stroom.query.Coprocessor;
-import stroom.query.api.v1.DocRef;
+import stroom.query.common.v2.Coprocessor;
+import stroom.query.api.v2.DocRef;
 import stroom.search.server.ClusterSearchTask;
 import stroom.search.server.Event;
 import stroom.search.server.extraction.ExtractionTask.ResultReceiver;

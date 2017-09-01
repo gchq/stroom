@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,20 +30,20 @@ public final class AnalyzerFactory {
     public static Analyzer create(final AnalyzerType analyzerType,
                                   final boolean caseSensitive) {
         switch (analyzerType) {
-        case KEYWORD:
-            return new KeywordAnalyzer(caseSensitive);
-        case ALPHA:
-            return new AlphaAnalyzer(caseSensitive);
-        case ALPHA_NUMERIC:
-            return new AlphaNumericAnalyzer(caseSensitive);
-        case NUMERIC:
-            return new NumericAnalyzer();
-        case WHITESPACE:
-            return new WhitespaceAnalyzer();
-        case STOP:
-            return new StopAnalyzer();
-        case STANDARD:
-            return new StandardAnalyzer();
+            case KEYWORD:
+                return new KeywordAnalyzer(caseSensitive);
+            case ALPHA:
+                return new AlphaAnalyzer(caseSensitive);
+            case ALPHA_NUMERIC:
+                return new AlphaNumericAnalyzer(caseSensitive);
+            case NUMERIC:
+                return new NumericAnalyzer();
+            case WHITESPACE:
+                return new WhitespaceAnalyzer();
+            case STOP:
+                return new StopAnalyzer();
+            case STANDARD:
+                return new StandardAnalyzer();
         }
 
         return new KeywordAnalyzer(true);

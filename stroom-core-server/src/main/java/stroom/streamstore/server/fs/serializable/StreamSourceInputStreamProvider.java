@@ -21,7 +21,7 @@ import java.io.IOException;
 
 /**
  * Wrapper for a nested input stream.
- *
+ * <p>
  * You must call getNextEntry and closeEntry like the ZIP API.
  */
 public interface StreamSourceInputStreamProvider extends Closeable {

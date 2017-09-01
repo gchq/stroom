@@ -18,13 +18,13 @@ package stroom.streamstore.server.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.feed.MetaMap;
 import stroom.io.SeekableOutputStream;
 import stroom.streamstore.server.StreamException;
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
-import stroom.util.zip.HeaderMap;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -41,32 +41,19 @@ import java.util.stream.Collectors;
  */
 public final class FileSystemStreamTarget implements StreamTarget {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamTarget.class);
-
+    private final Set<StreamVolume> metaDataVolume;
+    private final StreamType streamType;
+    private final List<FileSystemStreamTarget> childrenAccessed = new ArrayList<>();
     private Stream stream;
     private boolean closed = false;
     private boolean append = false;
-    private final Set<StreamVolume> metaDataVolume;
-
-    private final StreamType streamType;
-    private HeaderMap attributeMap = null;
-
+    private MetaMap attributeMap = null;
     private OutputStream outputStream;
     private Set<File> files;
-
     private FileSystemStreamTarget parent;
 
-    private final List<FileSystemStreamTarget> childrenAccessed = new ArrayList<FileSystemStreamTarget>();
-
-    /**
-     * Creates a new file system stream target.
-     */
-    public static FileSystemStreamTarget create(final Stream stream, final Set<StreamVolume> metaDataVolume,
-            final StreamType streamType, final boolean append) {
-        return new FileSystemStreamTarget(stream, metaDataVolume, streamType, append);
-    }
-
     private FileSystemStreamTarget(final Stream requestMetaData, final Set<StreamVolume> metaDataVolume,
-            final StreamType streamType, final boolean append) {
+                                   final StreamType streamType, final boolean append) {
         this.stream = requestMetaData;
         this.metaDataVolume = metaDataVolume;
         this.streamType = streamType;
@@ -76,7 +63,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
     }
 
     private FileSystemStreamTarget(final FileSystemStreamTarget aParent, final StreamType aStreamType,
-            final Set<File> aFiles) {
+                                   final Set<File> aFiles) {
         this.stream = aParent.stream;
         this.metaDataVolume = aParent.metaDataVolume;
         this.parent = aParent;
@@ -86,6 +73,14 @@ public final class FileSystemStreamTarget implements StreamTarget {
         this.files = aFiles;
 
         validate();
+    }
+
+    /**
+     * Creates a new file system stream target.
+     */
+    public static FileSystemStreamTarget create(final Stream stream, final Set<StreamVolume> metaDataVolume,
+                                                final StreamType streamType, final boolean append) {
+        return new FileSystemStreamTarget(stream, metaDataVolume, streamType, append);
     }
 
     private void validate() {
@@ -243,12 +238,12 @@ public final class FileSystemStreamTarget implements StreamTarget {
     }
 
     @Override
-    public HeaderMap getAttributeMap() {
+    public MetaMap getAttributeMap() {
         if (parent != null) {
             return parent.getAttributeMap();
         }
         if (attributeMap == null) {
-            attributeMap = new HeaderMap();
+            attributeMap = new MetaMap();
             if (isAppend()) {
                 final File manifestFile = FileSystemStreamTypeUtil
                         .createChildStreamFile(getFiles(false).iterator().next(), StreamType.MANIFEST);

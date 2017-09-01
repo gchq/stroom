@@ -21,10 +21,6 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
 public class ImportConfigEvent extends GwtEvent<ImportConfigEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onImport(ImportConfigEvent event);
-    }
-
     private static Type<Handler> TYPE;
 
     private ImportConfigEvent() {
@@ -37,7 +33,7 @@ public class ImportConfigEvent extends GwtEvent<ImportConfigEvent.Handler> {
 
     public static Type<Handler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<Handler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }
@@ -50,5 +46,9 @@ public class ImportConfigEvent extends GwtEvent<ImportConfigEvent.Handler> {
     @Override
     protected void dispatch(final Handler handler) {
         handler.onImport(this);
+    }
+
+    public interface Handler extends EventHandler {
+        void onImport(ImportConfigEvent event);
     }
 }

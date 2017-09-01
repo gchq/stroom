@@ -38,7 +38,7 @@ import javax.validation.constraints.Size;
  * Some path on the network where we can store stuff.
  */
 @Entity
-@Table(name = "VOL", uniqueConstraints = @UniqueConstraint(columnNames = { "FK_ND_ID", "PATH" }) )
+@Table(name = "VOL", uniqueConstraints = @UniqueConstraint(columnNames = {"FK_ND_ID", "PATH"}))
 public class Volume extends AuditedEntity {
     public static final String TABLE_NAME = SQLNameConstants.VOLUME;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
@@ -72,17 +72,13 @@ public class Volume extends AuditedEntity {
     /**
      * Utility to create a volume.
      *
-     * @param node
-     *            to use
-     * @param path
-     *            to use
-     * @param volumeType
-     *            to use
-     *
+     * @param node       to use
+     * @param path       to use
+     * @param volumeType to use
      * @return volume
      */
     public static Volume create(final Node node, final String path, final VolumeType volumeType,
-            final VolumeState volumeState) {
+                                final VolumeState volumeState) {
         final Volume volume = new Volume();
         volume.setNode(node);
         volume.setPath(path);
@@ -250,7 +246,7 @@ public class Volume extends AuditedEntity {
     public enum VolumeType implements HasDisplayValue, HasPrimitiveValue {
         PUBLIC("Public", 0), PRIVATE("Private", 1);
 
-        public static final PrimitiveValueConverter<VolumeType> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<VolumeType>(
+        public static final PrimitiveValueConverter<VolumeType> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
                 VolumeType.values());
         private final String displayValue;
         private final byte primitiveValue;
@@ -277,7 +273,7 @@ public class Volume extends AuditedEntity {
         // accessible for reading.
         CLOSED("Closed", 3); // Data has been removed and the volume is closed.
 
-        public static final PrimitiveValueConverter<VolumeUseStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<VolumeUseStatus>(
+        public static final PrimitiveValueConverter<VolumeUseStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
                 VolumeUseStatus.values());
 
         private final String displayValue;

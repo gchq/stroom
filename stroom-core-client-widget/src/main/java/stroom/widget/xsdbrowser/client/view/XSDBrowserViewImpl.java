@@ -28,10 +28,8 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.widget.xsdbrowser.client.presenter.XSDBrowserPresenter.XSDBrowserView;
 import stroom.widget.xsdbrowser.client.presenter.XSDBrowserUiHandlers;
 
-public class XSDBrowserViewImpl extends ViewWithUiHandlers<XSDBrowserUiHandlers>implements XSDBrowserView {
-    public interface Binder extends UiBinder<Widget, XSDBrowserViewImpl> {
-    }
-
+public class XSDBrowserViewImpl extends ViewWithUiHandlers<XSDBrowserUiHandlers> implements XSDBrowserView {
+    private final Widget widget;
     @UiField
     Label homeLink;
     @UiField
@@ -44,8 +42,6 @@ public class XSDBrowserViewImpl extends ViewWithUiHandlers<XSDBrowserUiHandlers>
     XSDConstraintDisplay constraints;
     @UiField
     XSDDisplay diagram;
-
-    private final Widget widget;
 
     @Inject
     public XSDBrowserViewImpl(final Binder binder) {
@@ -94,5 +90,8 @@ public class XSDBrowserViewImpl extends ViewWithUiHandlers<XSDBrowserUiHandlers>
         if (getUiHandlers() != null) {
             getUiHandlers().forward();
         }
+    }
+
+    public interface Binder extends UiBinder<Widget, XSDBrowserViewImpl> {
     }
 }

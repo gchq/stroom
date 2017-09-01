@@ -58,13 +58,10 @@ public class LifecycleServiceImpl implements ContextAwareService {
     private final StroomEntityManager entityManager;
     private final ScheduledTaskExecutor scheduledTaskExecutor;
     private final SecurityContext securityContext;
-
-    // The scheduled executor that executes executable beans.
-    private ScheduledExecutorService scheduledExecutorService;
-
     private final AtomicInteger startingBeanCount = new AtomicInteger();
     private final AtomicInteger stoppingBeanCount = new AtomicInteger();
-
+    // The scheduled executor that executes executable beans.
+    private ScheduledExecutorService scheduledExecutorService;
     private boolean startingUp = false;
     private boolean running = false;
     private boolean enabled;

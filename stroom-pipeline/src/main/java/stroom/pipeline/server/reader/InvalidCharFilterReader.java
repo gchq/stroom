@@ -79,8 +79,7 @@ public class InvalidCharFilterReader extends FilterReader {
     /**
      * Test whether the given character is a high surrogate
      *
-     * @param ch
-     *            The character to test.
+     * @param ch The character to test.
      * @return true if the character is the first character in a surrogate pair
      */
     private boolean isHighSurrogate(final int ch) {

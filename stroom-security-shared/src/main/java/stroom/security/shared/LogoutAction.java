@@ -23,6 +23,7 @@ public class LogoutAction extends Action<VoidResult> {
     private static final long serialVersionUID = -6740095230475597845L;
 
     public LogoutAction() {
+        // Default constructor necessary for GWT serialisation.
     }
 
     @Override

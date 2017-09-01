@@ -40,7 +40,7 @@ public class TestMonitorImpl {
         final MonitorImpl child2 = new MonitorImpl(root);
         child2.info("child2");
 
-        final List<Monitor> list = new ArrayList<Monitor>();
+        final List<Monitor> list = new ArrayList<>();
         list.add(root);
         list.add(child1);
         list.add(child1child1);

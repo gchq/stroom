@@ -19,10 +19,10 @@ package stroom.pipeline.server.task;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.AbstractCoreIntegrationTest;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.ImportState.ImportMode;
+import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
@@ -35,6 +35,7 @@ import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.SharedStepData;
 import stroom.pipeline.shared.StepType;
 import stroom.pipeline.shared.SteppingResult;
+import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
@@ -53,15 +54,15 @@ import stroom.streamtask.shared.StreamProcessorService;
 import stroom.streamtask.shared.StreamTask;
 import stroom.task.server.TaskManager;
 import stroom.task.server.TaskMonitorImpl;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.ComparisonHelper;
+import stroom.test.ContentImportService;
 import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Indicators;
 import stroom.util.task.ServerTask;
-import stroom.util.zip.HeaderMap;
 import stroom.util.zip.StroomHeaderArguments;
-import stroom.util.zip.StroomStreamProcessor;
 
 import javax.annotation.Resource;
 import java.io.BufferedInputStream;
@@ -108,6 +109,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private StreamTypeService streamTypeService;
     @Resource
     private ImportExportSerializer importExportSerializer;
+    @Resource
+    private ContentImportService contentImportService;
 
     protected void testTranslationTask(final boolean translate, final boolean compareOutput) {
         final List<Exception> exceptions = new ArrayList<>();
@@ -120,6 +123,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         FileUtil.mkdirs(outputDir);
 
         importExportSerializer.read(configDir.toPath(), null, ImportMode.IGNORE_CONFIRMATION);
+
+        contentImportService.importXmlSchemas();
 
         // Process reference data.
         processData(inputDir, outputDir, true, compareOutput, exceptions);
@@ -289,13 +294,13 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     private void loadZipData(final File file, final Feed feed) throws IOException {
-        final HeaderMap headerMap = new HeaderMap();
-        headerMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
+        final MetaMap metaMap = new MetaMap();
+        metaMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
 
         final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
                 .buildSingleHandlerList(streamStore, feedService, null, feed, feed.getStreamType());
 
-        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(headerMap, handlerList, new byte[1000],
+        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlerList, new byte[1000],
                 "DefaultDataFeedRequest-");
 
         stroomStreamProcessor.process(new FileInputStream(file), "test");
@@ -463,7 +468,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                         SharedStepData newStepData = newResponse.getStepData();
                         if (newStepData == null) {
                             newStepData = new SharedStepData(stepResponse.getStepData().getSourceHighlights(),
-                                    new HashMap<String, SharedElementData>());
+                                    new HashMap<>());
                         }
                         newStepData.getElementMap().put(elementId, newElementData);
                         newResponse = new SteppingResult(stepResponse.getStepFilterMap(),

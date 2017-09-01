@@ -40,22 +40,28 @@ import static stroom.widget.htree.client.treelayout.internal.util.Contract.check
  * @author Udo Borkowski (ub@abego.org)
  */
 public class DefaultConfiguration<TreeNode> implements Configuration<TreeNode> {
+    private final double gapBetweenLevels;
+    private final double gapBetweenNodes;
+    private final Location location;
+
+    // -----------------------------------------------------------------------
+    // gapBetweenLevels
+    private AlignmentInLevel alignmentInLevel;
+
     /**
      * Specifies the constants to be used for this Configuration.
      *
      * @param gapBetweenLevels
      * @param gapBetweenNodes
-     * @param location
-     *            [default:
-     *            {@link stroom.widget.htree.client.treelayout.Configuration.Location#Top
-     *            Top}]
-     * @param alignmentInLevel
-     *            [default:
-     *            {@link stroom.widget.htree.client.treelayout.Configuration.AlignmentInLevel#Center
-     *            Center}]
+     * @param location         [default:
+     *                         {@link stroom.widget.htree.client.treelayout.Configuration.Location#Top
+     *                         Top}]
+     * @param alignmentInLevel [default:
+     *                         {@link stroom.widget.htree.client.treelayout.Configuration.AlignmentInLevel#Center
+     *                         Center}]
      */
     public DefaultConfiguration(double gapBetweenLevels, double gapBetweenNodes, Location location,
-            AlignmentInLevel alignmentInLevel) {
+                                AlignmentInLevel alignmentInLevel) {
         checkArg(gapBetweenLevels >= 0, "gapBetweenLevels must be >= 0");
         checkArg(gapBetweenNodes >= 0, "gapBetweenNodes must be >= 0");
 
@@ -64,6 +70,9 @@ public class DefaultConfiguration<TreeNode> implements Configuration<TreeNode> {
         this.location = location;
         this.alignmentInLevel = alignmentInLevel;
     }
+
+    // -----------------------------------------------------------------------
+    // gapBetweenNodes
 
     /**
      * Convenience constructor, using a default for the alignmentInLevel.
@@ -87,19 +96,12 @@ public class DefaultConfiguration<TreeNode> implements Configuration<TreeNode> {
     }
 
     // -----------------------------------------------------------------------
-    // gapBetweenLevels
-
-    private final double gapBetweenLevels;
+    // location
 
     @Override
     public double getGapBetweenLevels(int nextLevel) {
         return gapBetweenLevels;
     }
-
-    // -----------------------------------------------------------------------
-    // gapBetweenNodes
-
-    private final double gapBetweenNodes;
 
     @Override
     public double getGapBetweenNodes(TreeNode node1, TreeNode node2) {
@@ -107,19 +109,12 @@ public class DefaultConfiguration<TreeNode> implements Configuration<TreeNode> {
     }
 
     // -----------------------------------------------------------------------
-    // location
-
-    private final Location location;
+    // alignmentInLevel
 
     @Override
     public Location getRootLocation() {
         return location;
     }
-
-    // -----------------------------------------------------------------------
-    // alignmentInLevel
-
-    private AlignmentInLevel alignmentInLevel;
 
     @Override
     public AlignmentInLevel getAlignmentInLevel() {

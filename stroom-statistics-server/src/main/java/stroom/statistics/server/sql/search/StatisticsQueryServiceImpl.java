@@ -1,21 +1,22 @@
 package stroom.statistics.server.sql.search;
 
 import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.dashboard.expression.FieldIndexMap;
-import stroom.datasource.api.v1.DataSource;
-import stroom.query.Coprocessor;
-import stroom.query.CoprocessorSettings;
-import stroom.query.CoprocessorSettingsMap;
-import stroom.query.Payload;
-import stroom.query.SearchResponseCreator;
-import stroom.query.TableCoprocessor;
-import stroom.query.TableCoprocessorSettings;
-import stroom.query.api.v1.DocRef;
-import stroom.query.api.v1.Param;
-import stroom.query.api.v1.QueryKey;
-import stroom.query.api.v1.SearchRequest;
-import stroom.query.api.v1.SearchResponse;
+import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.datasource.api.v2.DataSource;
+import stroom.node.server.StroomPropertyService;
+import stroom.node.shared.ClientProperties;
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.OffsetRange;
+import stroom.query.api.v2.Param;
+import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.Result;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchResponse;
+import stroom.query.api.v2.TableResult;
+import stroom.query.common.v2.*;
 import stroom.statistics.server.sql.SQLStatisticEventStore;
 import stroom.statistics.server.sql.StatisticsQueryService;
 import stroom.statistics.server.sql.datasource.StatisticStoreCache;
@@ -25,39 +26,56 @@ import stroom.statistics.shared.common.EventStoreTimeIntervalEnum;
 import stroom.util.shared.HasTerminate;
 
 import javax.inject.Inject;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
 public class StatisticsQueryServiceImpl implements StatisticsQueryService {
 
-    private static final Map<String, Function<StatisticDataPoint, String>> fieldMapperMap = new HashMap<>();
+    private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsQueryServiceImpl.class);
 
-    static {
-        fieldMapperMap.put(StatisticStoreEntity.FIELD_NAME_DATE_TIME, dataPoint -> Long.toString(dataPoint.getTimeMs()));
-        fieldMapperMap.put(StatisticStoreEntity.FIELD_NAME_PRECISION, StatisticsQueryServiceImpl::getPrecision);
-        fieldMapperMap.put(StatisticStoreEntity.FIELD_NAME_PRECISION_MS, dataPoint -> Long.toString(dataPoint.getPrecisionMs()));
-        fieldMapperMap.put(StatisticStoreEntity.FIELD_NAME_COUNT, dataPoint -> Long.toString(dataPoint.getCount()));
-        fieldMapperMap.put(StatisticStoreEntity.FIELD_NAME_VALUE, dataPoint -> Double.toString(dataPoint.getValue()));
-        fieldMapperMap.put(StatisticStoreEntity.FIELD_NAME_MIN_VALUE, dataPoint -> Double.toString(dataPoint.getMinValue()));
-        fieldMapperMap.put(StatisticStoreEntity.FIELD_NAME_MAX_VALUE, dataPoint -> Double.toString(dataPoint.getMaxValue()));
-    }
+    private static final String PROP_KEY_STORE_SIZE = "stroom.search.storeSize";
 
     private final StatisticsDataSourceProvider statisticsDataSourceProvider;
     private final StatisticStoreCache statisticStoreCache;
     private final SQLStatisticEventStore sqlStatisticEventStore;
+    private final StroomPropertyService stroomPropertyService;
 
     @Inject
     public StatisticsQueryServiceImpl(final StatisticsDataSourceProvider statisticsDataSourceProvider,
                                       final StatisticStoreCache statisticStoreCache,
-                                      final SQLStatisticEventStore sqlStatisticEventStore) {
+                                      final SQLStatisticEventStore sqlStatisticEventStore,
+                                      final StroomPropertyService stroomPropertyService) {
         this.statisticsDataSourceProvider = statisticsDataSourceProvider;
         this.statisticStoreCache = statisticStoreCache;
         this.sqlStatisticEventStore = sqlStatisticEventStore;
+        this.stroomPropertyService = stroomPropertyService;
+    }
+
+    public static Coprocessor createCoprocessor(final CoprocessorSettings settings,
+                                                final FieldIndexMap fieldIndexMap,
+                                                final Map<String, String> paramMap,
+                                                final HasTerminate taskMonitor) {
+        if (settings instanceof TableCoprocessorSettings) {
+            final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) settings;
+            final TableCoprocessor tableCoprocessor = new TableCoprocessor(tableCoprocessorSettings,
+                    fieldIndexMap, taskMonitor, paramMap);
+            return tableCoprocessor;
+        }
+        return null;
+    }
+
+    private static String getPrecision(StatisticDataPoint statisticDataPoint) {
+
+        final EventStoreTimeIntervalEnum interval = EventStoreTimeIntervalEnum.fromColumnInterval(
+                statisticDataPoint.getPrecisionMs());
+        if (interval != null) {
+            return interval.longName();
+        } else {
+            // could be a precision that doesn't match one of our interval sizes
+            return "-";
+        }
     }
 
     @Override
@@ -70,10 +88,13 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
 
         DocRef docRef = Preconditions.checkNotNull(
                 Preconditions.checkNotNull(Preconditions.checkNotNull(searchRequest).getQuery()).getDataSource());
+        Preconditions.checkNotNull(searchRequest.getResultRequests(), "searchRequest must have at least one resultRequest");
+        Preconditions.checkArgument(!searchRequest.getResultRequests().isEmpty(), "searchRequest must have at least one resultRequest");
 
         StatisticStoreEntity statisticStoreEntity = statisticStoreCache.getStatisticsDataSource(docRef);
         if (statisticStoreEntity == null) {
             return buildEmptyResponse(
+                    searchRequest,
                     "Statistic configuration could not be found for uuid " + docRef.getUuid());
         }
 
@@ -82,7 +103,7 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
                 statisticStoreEntity);
 
         if (statisticDataSet.isEmpty()) {
-            return buildEmptyResponse(Collections.emptyList());
+            return buildEmptyResponse(searchRequest, Collections.emptyList());
         } else {
             return buildResponse(searchRequest, statisticStoreEntity, statisticDataSet);
         }
@@ -90,7 +111,9 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
 
     @Override
     public Boolean destroy(final QueryKey queryKey) {
-        throw new UnsupportedOperationException("Destroy is not currently support for SQL Statistics queries");
+        LOGGER.trace("destroy called for queryKey {}", queryKey);
+        //No concept of destroying a search for sql statistics so just return true
+        return Boolean.TRUE;
     }
 
     private SearchResponse buildResponse(final SearchRequest searchRequest,
@@ -157,12 +180,14 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
                         Map.Entry::getKey,
                         entry -> entry.getValue().createPayload()));
 
-        SqlStatisticsStore store = new SqlStatisticsStore();
+        StoreSize storeSize = new StoreSize(getStoreSizes());
+        List<Integer> defaultMaxResultsSizes = getDefaultMaxResultsSizes();
+        SqlStatisticsStore store = new SqlStatisticsStore(defaultMaxResultsSizes, storeSize);
         store.process(coprocessorSettingsMap);
         store.coprocessorMap(coprocessorMap);
         store.payloadMap(payloadMap);
 
-        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(store);
+        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(store, defaultMaxResultsSizes);
         SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
 
         return searchResponse;
@@ -179,47 +204,61 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
                 int posInDataArray = fieldIndexMap.get(fieldName);
                 //if the fieldIndexMap returns -1 the field has not been requested
                 if (posInDataArray != -1) {
-                    dataArray[posInDataArray] = statisticDataPoint.getTagValue(fieldName);
+                    dataArray[posInDataArray] = statisticDataPoint.getFieldValue(fieldName);
                 }
             });
             return dataArray;
         };
     }
 
-    public static Coprocessor createCoprocessor(final CoprocessorSettings settings,
-                                                final FieldIndexMap fieldIndexMap,
-                                                final Map<String, String> paramMap,
-                                                final HasTerminate taskMonitor) {
-        if (settings instanceof TableCoprocessorSettings) {
-            final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) settings;
-            final TableCoprocessor tableCoprocessor = new TableCoprocessor(tableCoprocessorSettings,
-                    fieldIndexMap, taskMonitor, paramMap);
-            return tableCoprocessor;
+    private SearchResponse buildEmptyResponse(final SearchRequest searchRequest, final String errorMessage) {
+        return buildEmptyResponse(searchRequest, Collections.singletonList(errorMessage));
+    }
+
+    private SearchResponse buildEmptyResponse(final SearchRequest searchRequest, final List<String> errorMessages) {
+
+        List<Result> results;
+        if (searchRequest.getResultRequests() != null) {
+            results = searchRequest.getResultRequests().stream()
+                    .map(resultRequest -> new TableResult(
+                            resultRequest.getComponentId(),
+                            Collections.emptyList(),
+                            new OffsetRange(0, 0),
+                            0,
+                            null))
+                    .collect(Collectors.toList());
+        } else {
+            results = Collections.emptyList();
         }
-        return null;
-    }
 
-    private SearchResponse buildEmptyResponse(final String errorMessage) {
-        return buildEmptyResponse(Collections.singletonList(errorMessage));
-    }
-
-    private SearchResponse buildEmptyResponse(final List<String> errorMessages) {
         return new SearchResponse(
                 Collections.emptyList(),
-                Collections.emptyList(),
+                results,
                 errorMessages,
                 true);
     }
 
-    private static String getPrecision(StatisticDataPoint statisticDataPoint) {
+    private List<Integer> getDefaultMaxResultsSizes() {
+        final String value = stroomPropertyService.getProperty(ClientProperties.DEFAULT_MAX_RESULTS);
+        return extractValues(value);
+    }
 
-        final EventStoreTimeIntervalEnum interval = EventStoreTimeIntervalEnum.fromColumnInterval(
-                statisticDataPoint.getPrecisionMs());
-        if (interval != null) {
-            return interval.longName();
-        } else {
-            // could be a precision that doesn't match one of our interval sizes
-            return "-";
+    private List<Integer> getStoreSizes() {
+        final String value = stroomPropertyService.getProperty(PROP_KEY_STORE_SIZE);
+        return extractValues(value);
+    }
+
+    private List<Integer> extractValues(String value) {
+        if (value != null) {
+            try {
+                return Arrays.stream(value.split(","))
+                        .map(String::trim)
+                        .map(Integer::valueOf)
+                        .collect(Collectors.toList());
+            } catch (Exception e) {
+                LOGGER.warn(e.getMessage());
+            }
         }
+        return Collections.emptyList();
     }
 }

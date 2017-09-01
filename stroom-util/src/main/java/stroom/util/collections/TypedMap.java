@@ -24,12 +24,12 @@ import java.util.Set;
 public class TypedMap<K, V> {
     private final Map<K, V> map;
 
-    public static <K, V> TypedMap<K, V> fromMap(final Map<K, V> map) {
-        return new TypedMap<>(map);
-    }
-
     private TypedMap(final Map<K, V> map) {
         this.map = map;
+    }
+
+    public static <K, V> TypedMap<K, V> fromMap(final Map<K, V> map) {
+        return new TypedMap<>(map);
     }
 
     public int size() {

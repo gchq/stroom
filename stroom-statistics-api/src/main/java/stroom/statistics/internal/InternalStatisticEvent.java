@@ -12,23 +12,6 @@ public class InternalStatisticEvent {
     private final Map<String, String> tags;
     private final Object value;
 
-    public enum Type {
-        COUNT,
-        VALUE
-    }
-
-    public static InternalStatisticEvent createPlusOneCountStat(final String key, final long timeMs, final Map<String, String> tags){
-        return new InternalStatisticEvent(key, Type.COUNT, timeMs, tags, 1L);
-    }
-
-    public static InternalStatisticEvent createPlusNCountStat(final String key, final long timeMs, final Map<String, String> tags, final long count){
-        return new InternalStatisticEvent(key, Type.COUNT, timeMs, tags, count);
-    }
-
-    public static InternalStatisticEvent createValueStat(final String key, final long timeMs, final Map<String, String> tags, final double value){
-        return new InternalStatisticEvent(key, Type.VALUE, timeMs, tags, value);
-    }
-
     private InternalStatisticEvent(final String key, final Type type, final long timeMs, final Map<String, String> tags, final Object value) {
         Preconditions.checkArgument(timeMs >= 0);
         this.key = Preconditions.checkNotNull(key);
@@ -36,6 +19,18 @@ public class InternalStatisticEvent {
         this.timeMs = timeMs;
         this.tags = tags == null ? Collections.emptyMap() : tags;
         this.value = Preconditions.checkNotNull(value);
+    }
+
+    public static InternalStatisticEvent createPlusOneCountStat(final String key, final long timeMs, final Map<String, String> tags) {
+        return new InternalStatisticEvent(key, Type.COUNT, timeMs, tags, 1L);
+    }
+
+    public static InternalStatisticEvent createPlusNCountStat(final String key, final long timeMs, final Map<String, String> tags, final long count) {
+        return new InternalStatisticEvent(key, Type.COUNT, timeMs, tags, count);
+    }
+
+    public static InternalStatisticEvent createValueStat(final String key, final long timeMs, final Map<String, String> tags, final double value) {
+        return new InternalStatisticEvent(key, Type.VALUE, timeMs, tags, value);
     }
 
     public String getKey() {
@@ -60,14 +55,14 @@ public class InternalStatisticEvent {
 
     public Long getValueAsLong() {
         if (type.equals(Type.VALUE)) {
-            throw  new UnsupportedOperationException("getValueAsDouble is not supported for a VALUE statistic");
+            throw new UnsupportedOperationException("getValueAsDouble is not supported for a VALUE statistic");
         }
         return (Long) value;
     }
 
     public Double getValueAsDouble() {
         if (type.equals(Type.COUNT)) {
-            throw  new UnsupportedOperationException("getValueAsDouble is not supported for a COUNT statistic");
+            throw new UnsupportedOperationException("getValueAsDouble is not supported for a COUNT statistic");
         }
         return (Double) value;
     }
@@ -102,5 +97,10 @@ public class InternalStatisticEvent {
                 ", tags=" + tags +
                 ", value=" + value +
                 '}';
+    }
+
+    public enum Type {
+        COUNT,
+        VALUE
     }
 }

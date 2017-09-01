@@ -30,7 +30,7 @@ import stroom.util.spring.StroomSpringProfiles;
 
 /**
  * Mock object.
- *
+ * <p>
  * In memory simple process manager that also uses the mock stream store.
  */
 @Profile(StroomSpringProfiles.TEST)
@@ -40,7 +40,7 @@ public class MockStreamProcessorFilterService
         implements StreamProcessorFilterService {
     @Override
     public void addFindStreamCriteria(final StreamProcessor streamProcessor, final int priority,
-            final FindStreamCriteria findStreamCriteria) {
+                                      final FindStreamCriteria findStreamCriteria) {
         final StreamProcessorFilter filter = new StreamProcessorFilter();
         filter.setStreamProcessorFilterTracker(new StreamProcessorFilterTracker());
         filter.setPriority(priority);
@@ -52,7 +52,7 @@ public class MockStreamProcessorFilterService
 
     @Override
     public StreamProcessorFilter createNewFilter(final PipelineEntity pipelineEntity,
-            final FindStreamCriteria findStreamCriteria, final boolean enabled, final int priority) {
+                                                 final FindStreamCriteria findStreamCriteria, final boolean enabled, final int priority) {
         return null;
     }
 

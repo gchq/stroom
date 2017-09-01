@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "Properties", propOrder = { "add", "remove" })
+@XmlType(name = "Properties", propOrder = {"add", "remove"})
 public class PipelineProperties implements SharedObject {
     private static final long serialVersionUID = -7892582092797084330L;
 

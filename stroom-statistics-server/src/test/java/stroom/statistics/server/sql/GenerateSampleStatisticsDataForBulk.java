@@ -44,7 +44,7 @@ public class GenerateSampleStatisticsDataForBulk {
 
     private static final List<String> STATES = Arrays.asList("IN", "OUT");
 
-    private static final String[] users = new String[] { "user1", "user2", "user3", "user4", "user5", };
+    private static final String[] users = new String[]{"user1", "user2", "user3", "user4", "user5",};
 
     public static void main(final String[] args) throws Exception {
         System.out.println("Writing value data...");

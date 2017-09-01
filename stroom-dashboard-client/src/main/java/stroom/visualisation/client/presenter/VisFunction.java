@@ -26,6 +26,7 @@ public class VisFunction {
     private Set<StatusHandler> statusHandlers;
     private LoadStatus status = LoadStatus.NOT_LOADED;
     private String statusMessage;
+
     public VisFunction(final int id) {
         this.id = id;
     }
@@ -71,7 +72,7 @@ public class VisFunction {
 
     public void addStatusHandler(final StatusHandler handler) {
         if (statusHandlers == null) {
-            statusHandlers = new HashSet<StatusHandler>();
+            statusHandlers = new HashSet<>();
         }
         statusHandlers.add(handler);
         handler.onChange(this);

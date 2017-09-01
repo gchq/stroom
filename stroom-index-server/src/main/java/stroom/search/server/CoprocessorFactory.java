@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,11 +17,11 @@
 package stroom.search.server;
 
 import org.springframework.stereotype.Component;
-import stroom.dashboard.expression.FieldIndexMap;
-import stroom.query.Coprocessor;
-import stroom.query.CoprocessorSettings;
-import stroom.query.TableCoprocessor;
-import stroom.query.TableCoprocessorSettings;
+import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.query.common.v2.Coprocessor;
+import stroom.query.common.v2.CoprocessorSettings;
+import stroom.query.common.v2.TableCoprocessor;
+import stroom.query.common.v2.TableCoprocessorSettings;
 import stroom.util.task.TaskMonitor;
 
 import java.util.Map;

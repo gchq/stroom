@@ -16,9 +16,9 @@
 
 package stroom.remote;
 
-import com.caucho.hessian.client.StroomHessianURLConnectionFactory;
 import com.caucho.hessian.client.HessianConnectionFactory;
 import com.caucho.hessian.client.HessianProxyFactory;
+import com.caucho.hessian.client.StroomHessianURLConnectionFactory;
 
 public class StroomHessianProxyFactory extends HessianProxyFactory {
     private boolean ignoreSSLHostnameVerifier = true;

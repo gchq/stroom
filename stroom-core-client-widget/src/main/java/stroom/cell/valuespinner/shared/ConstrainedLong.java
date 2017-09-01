@@ -28,7 +28,7 @@ public class ConstrainedLong extends EditableLong implements Editable, HasSpinne
     }
 
     public ConstrainedLong(final int step, final int maxStep, final long value, final long min, final long max,
-            final boolean editable) {
+                           final boolean editable) {
         super(value);
         this.step = step;
         this.maxStep = maxStep;

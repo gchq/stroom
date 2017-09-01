@@ -25,11 +25,11 @@ import stroom.util.spring.StroomScope;
 public class PipelineContext {
     private boolean stepping;
 
-    public void setStepping(final boolean stepping) {
-        this.stepping = stepping;
-    }
-
     public boolean isStepping() {
         return stepping;
+    }
+
+    public void setStepping(final boolean stepping) {
+        this.stepping = stepping;
     }
 }

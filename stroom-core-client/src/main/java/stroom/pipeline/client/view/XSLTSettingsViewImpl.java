@@ -26,11 +26,7 @@ import stroom.pipeline.client.presenter.XSLTSettingsPresenter.XSLTSettingsView;
 import stroom.util.shared.HasReadOnly;
 
 public class XSLTSettingsViewImpl extends ViewImpl implements XSLTSettingsView, HasReadOnly {
-    public interface Binder extends UiBinder<Widget, XSLTSettingsViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     TextArea description;
 
@@ -57,5 +53,8 @@ public class XSLTSettingsViewImpl extends ViewImpl implements XSLTSettingsView, 
     @Override
     public void setReadOnly(final boolean readOnly) {
         description.setEnabled(!readOnly);
+    }
+
+    public interface Binder extends UiBinder<Widget, XSLTSettingsViewImpl> {
     }
 }

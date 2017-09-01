@@ -57,8 +57,11 @@ public class TaskCache extends AbstractCacheBean<String, Queue<Task<?>>> {
         evictExpiredElements();
     }
 
-    @Override
-    public Queue<Task<?>> create(final String job) {
+    public Queue<Task<?>> getOrCreate(final String key) {
+        return computeIfAbsent(key, this::create);
+    }
+
+    private Queue<Task<?>> create(final String job) {
         final Queue<Task<?>> queue = new ConcurrentLinkedQueue<>();
         taskMap.put(job, queue);
         return queue;

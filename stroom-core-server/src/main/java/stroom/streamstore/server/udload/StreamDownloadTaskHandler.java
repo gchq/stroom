@@ -20,6 +20,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseResultList;
+import stroom.proxy.repo.StroomFileNameUtil;
+import stroom.proxy.repo.StroomZipEntry;
+import stroom.proxy.repo.StroomZipFileType;
+import stroom.proxy.repo.StroomZipOutputStream;
+import stroom.proxy.repo.StroomZipOutputStreamImpl;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.fs.serializable.NestedInputStream;
@@ -37,10 +42,6 @@ import stroom.util.spring.StroomScope;
 import stroom.util.task.MonitorImpl;
 import stroom.util.task.TaskMonitor;
 import stroom.util.thread.ThreadLocalBuffer;
-import stroom.util.zip.StroomFileNameUtil;
-import stroom.util.zip.StroomZipEntry;
-import stroom.util.zip.StroomZipFileType;
-import stroom.util.zip.StroomZipOutputStream;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -87,7 +88,7 @@ public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloa
 
         StroomZipOutputStream stroomZipOutputStream = null;
         try {
-            stroomZipOutputStream = new StroomZipOutputStream(data.toFile(), zipProgressMonitor, false);
+            stroomZipOutputStream = new StroomZipOutputStreamImpl(data, zipProgressMonitor, false);
 
             long id = 0;
             long fileCount = 0;
@@ -127,7 +128,7 @@ public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloa
                         stroomZipOutputStream.close();
                         fileCount++;
                         data = Paths.get(fileBasePath + "_" + fileCount + ".zip");
-                        stroomZipOutputStream = new StroomZipOutputStream(data.toFile(), zipProgressMonitor, false);
+                        stroomZipOutputStream = new StroomZipOutputStreamImpl(data, zipProgressMonitor, false);
                     }
                 }
 
@@ -191,7 +192,7 @@ public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloa
 
                     streamProgressMonitor.info("Stream Input {}/{}", entryProgress, entryTotal);
 
-                    String basePartName = StroomFileNameUtil.getFilePathForId(id);
+                    String basePartName = StroomFileNameUtil.getIdPath(id);
 
                     if (part != -1) {
                         part++;

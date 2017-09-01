@@ -27,7 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MessageSupport implements FrameListener {
-    private static final Map<Integer, Callback<String, Exception>> callbacks = new HashMap<Integer, Callback<String, Exception>>();
+    private static final Map<Integer, Callback<String, Exception>> callbacks = new HashMap<>();
     private static int frameIdCounter;
     private static int callbackId;
     private final Element frame;

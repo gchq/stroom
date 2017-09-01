@@ -33,14 +33,14 @@ import java.util.zip.ZipInputStream;
 
 /**
  * A TestRule to compile folders into zips of the same name.
- *
+ * <p>
  * Also provides helpful methods for getting streams for the zipz.
- *
+ * <p>
  * Deletes the zips afterwards.
- *
+ * <p>
  * E.g. the following will create a zip file called ZIP_FOLDER.zip in files,
  * containing everything in files/ZIP_FOLDER:
- * 
+ * <p>
  * <pre>
  * &#64;ClassRule
  * public static ZipResource bomBlank = new ZipResource("files/ZIP_FOLDER");

@@ -59,8 +59,8 @@ public abstract class EntityMarshaller<E extends BaseEntity, O> implements Marsh
             final String data = XMLMarshallerUtil.marshal(jaxbContext, clone);
             setData(entity, data);
         } catch (final Exception e) {
-            LOGGER.debug("Problem marshaling {} {}", new Object[] {entity.getClass(), entity.getId()}, e);
-            LOGGER.warn("Problem marshaling {} {} - {} (enable debug for full trace)", new Object[]{ entity.getClass(),
+            LOGGER.debug("Problem marshaling {} {}", new Object[]{entity.getClass(), entity.getId()}, e);
+            LOGGER.warn("Problem marshaling {} {} - {} (enable debug for full trace)", new Object[]{entity.getClass(),
                     entity.getId(), String.valueOf(e)});
         }
         return entity;

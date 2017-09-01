@@ -38,7 +38,7 @@ public class ClientPropertiesServiceImpl implements ClientPropertiesService {
         addProperty(props, ClientProperties.NODE_NAME);
         addProperty(props, ClientProperties.MAINTENANCE_MESSAGE);
         props.put(ClientProperties.UP_DATE, upDate);
-        addProperty(props, ClientProperties.MAX_RESULTS);
+        addProperty(props, ClientProperties.DEFAULT_MAX_RESULTS);
         addProperty(props, ClientProperties.PROCESS_TIME_LIMIT);
         addProperty(props, ClientProperties.PROCESS_RECORD_LIMIT);
         addProperty(props, ClientProperties.STATISTIC_ENGINES);

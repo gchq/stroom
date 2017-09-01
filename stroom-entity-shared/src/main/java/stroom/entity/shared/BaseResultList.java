@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * List that knows how big the whole set is.
  */
-public class BaseResultList<T extends SharedObject> extends SharedList<T>implements ResultList<T> {
+public class BaseResultList<T extends SharedObject> extends SharedList<T> implements ResultList<T> {
     private static final long serialVersionUID = 6482769757822956315L;
 
     private PageResponse pageResponse;
@@ -35,8 +35,7 @@ public class BaseResultList<T extends SharedObject> extends SharedList<T>impleme
     }
 
     /**
-     * @param more
-     *            more to follow
+     * @param more more to follow
      */
     public BaseResultList(final List<T> list, final Long offset, final Long completeSize, final boolean more) {
         super(list);
@@ -58,7 +57,7 @@ public class BaseResultList<T extends SharedObject> extends SharedList<T>impleme
      * Used for filter queries (maybe bounded).
      */
     public static <T extends SharedObject> BaseResultList<T> createCriterialBasedList(final List<T> realList,
-            final BaseCriteria baseCriteria) {
+                                                                                      final BaseCriteria baseCriteria) {
         return createCriterialBasedList(realList, baseCriteria, null);
     }
 
@@ -66,7 +65,7 @@ public class BaseResultList<T extends SharedObject> extends SharedList<T>impleme
      * Used for filter queries (maybe bounded).
      */
     public static <T extends SharedObject> BaseResultList<T> createCriterialBasedList(final List<T> realList,
-            final BaseCriteria baseCriteria, final Long totalSize) {
+                                                                                      final BaseCriteria baseCriteria, final Long totalSize) {
         final boolean limited = baseCriteria.getPageRequest() != null
                 && baseCriteria.getPageRequest().getLength() != null;
         boolean moreToFollow = false;

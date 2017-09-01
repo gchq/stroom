@@ -16,11 +16,11 @@
 
 package stroom.search;
 
-import stroom.AbstractCoreIntegrationTest;
-import stroom.query.SearchResponseCreator;
-import stroom.query.api.v1.SearchRequest;
-import stroom.query.api.v1.SearchResponse;
+import stroom.query.common.v2.SearchResponseCreator;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchResponse;
 import stroom.search.server.SearchResultCreatorManager;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.thread.ThreadUtil;
 
 import javax.annotation.Resource;
@@ -29,8 +29,8 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
     @Resource
     private SearchResultCreatorManager searchResultCreatorManager;
 
-    protected SearchResponse search(SearchRequest searchRequest){
-        final SearchResponseCreator searchResponseCreator = searchResultCreatorManager.get(new SearchResultCreatorManager.Key(searchRequest));
+    protected SearchResponse search(SearchRequest searchRequest) {
+        final SearchResponseCreator searchResponseCreator = searchResultCreatorManager.getOrCreate(new SearchResultCreatorManager.Key(searchRequest));
 
         SearchResponse response = searchResponseCreator.create(searchRequest);
         try {

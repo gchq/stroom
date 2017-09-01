@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,17 +20,16 @@ import com.codahale.metrics.health.HealthCheckRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
-import stroom.logging.LogLevelInspector;
+import stroom.dashboard.server.logging.LogLevelInspector;
 import stroom.resources.HasHealthCheck;
-import stroom.servicediscovery.ServiceDiscoveryManager;
+import stroom.servicediscovery.ServiceDiscoverer;
 import stroom.servicediscovery.ServiceDiscoveryRegistrar;
 
 import java.util.function.Consumer;
 
 public class HealthChecks {
-    private static final Logger LOGGER = LoggerFactory.getLogger(HealthChecks.class);
-
     public static final String HEALTH_CHECK_SUFFIX = "HealthCheck";
+    private static final Logger LOGGER = LoggerFactory.getLogger(HealthChecks.class);
 
     private HealthChecks() {
     }
@@ -57,7 +56,7 @@ public class HealthChecks {
 
         return (applicationContext) -> {
             registerServiceDiscoveryRegistrar(applicationContext, healthCheckRegistry);
-            registerServiceDiscoveryManager(applicationContext, healthCheckRegistry);
+            registerServiceDiscoverer(applicationContext, healthCheckRegistry);
         };
     }
 
@@ -71,14 +70,14 @@ public class HealthChecks {
         healthCheckRegistry.register(name, serviceDiscoveryRegistrar.getHealthCheck());
     }
 
-    private static void registerServiceDiscoveryManager(final ApplicationContext applicationContext,
-                                                        final HealthCheckRegistry healthCheckRegistry) {
+    private static void registerServiceDiscoverer(final ApplicationContext applicationContext,
+                                                  final HealthCheckRegistry healthCheckRegistry) {
 
-        ServiceDiscoveryManager serviceDiscoveryManager = applicationContext.getBean(ServiceDiscoveryManager.class);
-        String name = serviceDiscoveryManager.getClass().getName() + HEALTH_CHECK_SUFFIX;
+        ServiceDiscoverer serviceDiscoverer = applicationContext.getBean(ServiceDiscoverer.class);
+        String name = serviceDiscoverer.getClass().getName() + HEALTH_CHECK_SUFFIX;
         LOGGER.debug("Registering heath check {}", name);
 
-        healthCheckRegistry.register(name, serviceDiscoveryManager.getHealthCheck());
+        healthCheckRegistry.register(name, ((HasHealthCheck) serviceDiscoverer).getHealthCheck());
     }
 
     private static void registerLogLevels(final HealthCheckRegistry healthCheckRegistry) {

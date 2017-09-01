@@ -125,7 +125,7 @@ public class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceD
                     pipelineHolder.setPipeline(pipelineEntity);
 
                     // Create the parser.
-                    final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+                    final PipelineData pipelineData = pipelineDataCache.getOrCreate(pipelineEntity);
                     final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
                     populateMaps(pipeline, stream, streamSource, feed, stream.getStreamType(), mapStoreBuilder);
@@ -151,7 +151,7 @@ public class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceD
     }
 
     private void populateMaps(final Pipeline pipeline, final Stream stream, final StreamSource streamSource,
-            final Feed feed, final StreamType streamType, final MapStoreBuilder mapStoreBuilder) {
+                              final Feed feed, final StreamType streamType, final MapStoreBuilder mapStoreBuilder) {
         try {
             // Get the stream providers.
             streamHolder.setStream(stream);

@@ -17,7 +17,6 @@
 package stroom.util;
 
 import stroom.util.io.StreamUtil;
-import stroom.util.zip.HeaderMap;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,6 +28,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Map;
 import java.util.StringTokenizer;
 
 public class MigrationTool {
@@ -37,8 +37,7 @@ public class MigrationTool {
 
     public static void main(final String[] args)
             throws SQLException, InstantiationException, IllegalAccessException, ClassNotFoundException, IOException {
-        final HeaderMap map = new HeaderMap();
-        map.loadArgs(args);
+        final Map<String, String> map = ArgsUtil.parse(args);
 
         final String url = map.get("jdbcDriverUrl");
         String clazz = map.get("jdbcDriverClassName");

@@ -20,14 +20,10 @@ import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.HasIsConstrained;
-import stroom.entity.shared.OrderBy;
-import stroom.entity.shared.SQLNameConstants;
 import stroom.node.shared.Node;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
 
 /**
  * <p>
@@ -35,43 +31,20 @@ import stroom.util.shared.HashCodeBuilder;
  * </p>
  */
 public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsConstrained {
-    private static final long serialVersionUID = 5031936548305751911L;
-
     public static final int SUMMARY_POS_PIPELINE = 0;
     public static final int SUMMARY_POS_FEED = 1;
     public static final int SUMMARY_POS_PRIORITY = 2;
     public static final int SUMMARY_POS_STATUS = 3;
-
-    public static final String TABLE_PREFIX_STREAM_TASK = "ST.";
-    public static final String TABLE_PREFIX_FEED = "F.";
-    public static final String TABLE_PREFIX_STREAM = "S.";
-    public static final String TABLE_PREFIX_PIPELINE = "P.";
-
-    public static final OrderBy ORDER_BY_STREAM_CREATE_DATE = new OrderBy("Created", "createMs",
-            TABLE_PREFIX_STREAM + Stream.CREATE_MS);
-
-    public static final OrderBy ORDER_BY_CREATE_TIME = new OrderBy("Created", "createMs",
-            TABLE_PREFIX_STREAM_TASK + StreamTask.CREATE_MS);
-
-    public static final OrderBy ORDER_BY_START_TIME = new OrderBy("Start Time", "startTimeMs",
-            TABLE_PREFIX_STREAM_TASK + StreamTask.START_TIME_MS);
-
-    public static final OrderBy ORDER_BY_END_TIME_DATE = new OrderBy("End Time", "endTimeMs",
-            TABLE_PREFIX_STREAM_TASK + StreamTask.END_TIME_MS);
-
-    public static final OrderBy ORDER_BY_FEED_NAME = new OrderBy("Feed", "stream.feed.name", "F_NAME");
-
-    public static final OrderBy ORDER_BY_PRIORITY = new OrderBy("Priority", "streamProcessorFilter.priority", "PRIORITY_1");
-
-    public static final OrderBy ORDER_BY_PIPELINE_NAME = new OrderBy("Pipeline", "streamProcessorFilter.streamProcessor.pipeline.name",
-            "P_NAME");
-
-    public static final OrderBy ORDER_BY_STATUS = new OrderBy("Status", "pstatus", "STAT_ID1");
-
-    public static final OrderBy ORDER_BY_COUNT = new OrderBy("Count", "NA", SQLNameConstants.COUNT);
-
-    public static final OrderBy ORDER_BY_NODE = new OrderBy("Node", "node.name", null);
-
+    public static final String FIELD_CREATE_TIME = "Created";
+    public static final String FIELD_START_TIME = "Start Time";
+    public static final String FIELD_END_TIME_DATE = "End Time";
+    public static final String FIELD_FEED_NAME = "Feed";
+    public static final String FIELD_PRIORITY = "Priority";
+    public static final String FIELD_PIPELINE_NAME = "Pipeline";
+    public static final String FIELD_STATUS = "Status";
+    public static final String FIELD_COUNT = "Count";
+    public static final String FIELD_NODE = "Node";
+    private static final long serialVersionUID = 5031936548305751911L;
     /**
      * Look for stream tasks with a certain status.
      */
@@ -223,37 +196,36 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
     }
 
     @Override
-    public int hashCode() {
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.appendSuper(super.hashCode());
-        builder.append(getOrderBy());
-        builder.append(streamTaskStatusSet);
-        builder.append(nodeIdSet);
-        builder.append(streamTaskIdSet);
-        builder.append(streamProcessorFilterIdSet);
-        builder.append(findStreamCriteria);
-        builder.append(createMs);
-        return builder.toHashCode();
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (!(o instanceof FindStreamTaskCriteria)) return false;
+        if (!super.equals(o)) return false;
+
+        final FindStreamTaskCriteria that = (FindStreamTaskCriteria) o;
+
+        if (streamTaskStatusSet != null ? !streamTaskStatusSet.equals(that.streamTaskStatusSet) : that.streamTaskStatusSet != null)
+            return false;
+        if (nodeIdSet != null ? !nodeIdSet.equals(that.nodeIdSet) : that.nodeIdSet != null) return false;
+        if (streamTaskIdSet != null ? !streamTaskIdSet.equals(that.streamTaskIdSet) : that.streamTaskIdSet != null)
+            return false;
+        if (streamProcessorFilterIdSet != null ? !streamProcessorFilterIdSet.equals(that.streamProcessorFilterIdSet) : that.streamProcessorFilterIdSet != null)
+            return false;
+        if (pipelineIdSet != null ? !pipelineIdSet.equals(that.pipelineIdSet) : that.pipelineIdSet != null)
+            return false;
+        if (createMs != null ? !createMs.equals(that.createMs) : that.createMs != null) return false;
+        return findStreamCriteria != null ? findStreamCriteria.equals(that.findStreamCriteria) : that.findStreamCriteria == null;
     }
 
     @Override
-    public boolean equals(final Object obj) {
-        if (obj == null || !(obj instanceof FindStreamTaskCriteria)) {
-            return false;
-        }
-
-        final FindStreamTaskCriteria other = (FindStreamTaskCriteria) obj;
-
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.appendSuper(super.equals(obj));
-        builder.append(this.getOrderBy(), other.getOrderBy());
-        builder.append(this.obtainFindStreamCriteria(), other.obtainFindStreamCriteria());
-        builder.append(this.obtainNodeIdSet(), other.obtainNodeIdSet());
-        builder.append(this.obtainStreamTaskIdSet(), other.obtainStreamTaskIdSet());
-        builder.append(this.obtainStreamProcessorFilterIdSet(), other.obtainStreamProcessorFilterIdSet());
-        builder.append(this.obtainFindStreamCriteria(), other.obtainFindStreamCriteria());
-        builder.append(this.createMs, other.createMs);
-
-        return builder.isEquals();
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + (streamTaskStatusSet != null ? streamTaskStatusSet.hashCode() : 0);
+        result = 31 * result + (nodeIdSet != null ? nodeIdSet.hashCode() : 0);
+        result = 31 * result + (streamTaskIdSet != null ? streamTaskIdSet.hashCode() : 0);
+        result = 31 * result + (streamProcessorFilterIdSet != null ? streamProcessorFilterIdSet.hashCode() : 0);
+        result = 31 * result + (pipelineIdSet != null ? pipelineIdSet.hashCode() : 0);
+        result = 31 * result + (createMs != null ? createMs.hashCode() : 0);
+        result = 31 * result + (findStreamCriteria != null ? findStreamCriteria.hashCode() : 0);
+        return result;
     }
 }

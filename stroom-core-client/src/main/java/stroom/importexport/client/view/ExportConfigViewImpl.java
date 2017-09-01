@@ -26,13 +26,9 @@ import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.importexport.client.presenter.ExportConfigPresenter.ExportConfigView;
 
 public class ExportConfigViewImpl extends ViewImpl implements ExportConfigView {
-    public interface Binder extends UiBinder<Widget, ExportConfigViewImpl> {
-    }
-
+    private final Widget widget;
     @UiField
     SimplePanel tree;
-
-    private final Widget widget;
 
     @Inject
     public ExportConfigViewImpl(final Binder binder) {
@@ -49,5 +45,8 @@ public class ExportConfigViewImpl extends ViewImpl implements ExportConfigView {
         view.asWidget().setWidth("100%");
         view.asWidget().setHeight("100%");
         tree.setWidget(view.asWidget());
+    }
+
+    public interface Binder extends UiBinder<Widget, ExportConfigViewImpl> {
     }
 }

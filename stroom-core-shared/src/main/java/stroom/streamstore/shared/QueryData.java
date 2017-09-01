@@ -16,8 +16,8 @@
 
 package stroom.streamstore.shared;
 
-import stroom.query.api.v1.DocRef;
-import stroom.query.api.v1.ExpressionOperator;
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionOperator;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;

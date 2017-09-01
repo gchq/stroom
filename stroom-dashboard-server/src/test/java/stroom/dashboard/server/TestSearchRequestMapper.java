@@ -25,8 +25,8 @@ import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableResultRequest;
-import stroom.query.api.v1.Query;
-import stroom.query.api.v1.ResultRequest;
+import stroom.query.api.v2.Query;
+import stroom.query.api.v2.ResultRequest;
 import stroom.visualisation.shared.VisualisationService;
 
 import java.util.List;
@@ -44,25 +44,7 @@ public class TestSearchRequestMapper {
     @InjectMocks
     private SearchRequestMapper searchRequestMapper;
 
-    @Test
-    public void testSearchRequestMapper() {
-        // Given
-        stroom.dashboard.shared.SearchRequest dashboardSearchRequest = SearchRequestTestData.dashboardSearchRequest();
-
-        // When
-        stroom.query.api.v1.SearchRequest mappedApiSearchRequest = searchRequestMapper.mapRequest(new DashboardQueryKey(), dashboardSearchRequest);
-
-        // Then
-        verify_Search_to_Query_mapping(
-                dashboardSearchRequest.getSearch(),
-                mappedApiSearchRequest.getQuery());
-        verify_ComponentResultRequest_to_ResultRequest_mappings(
-                dashboardSearchRequest.getComponentResultRequests(),
-                mappedApiSearchRequest.getResultRequests());
-        //TODO many more properties to check
-    }
-
-    private static void verify_Search_to_Query_mapping(Search search, Query query){
+    private static void verify_Search_to_Query_mapping(Search search, Query query) {
         assertThat(search.getDataSourceRef(), equalTo(query.getDataSource()));
         assertThat(search.getExpression(), equalTo(query.getExpression()));
         assertThat(search.getParamMap().size(), equalTo(query.getParams().size()));
@@ -71,17 +53,35 @@ public class TestSearchRequestMapper {
 
     private static void verify_ComponentResultRequest_to_ResultRequest_mappings(
             Map<String, ComponentResultRequest> componentResultRequestMap,
-            List<ResultRequest> resultRequests){
+            List<ResultRequest> resultRequests) {
 
         assertThat(componentResultRequestMap.size(), equalTo(resultRequests.size()));
         assertThat("componentSettingsMapKey", equalTo(resultRequests.get(0).getComponentId()));
-        assertThat(componentResultRequestMap.get("componentSettingsMapKey").wantsData(), equalTo(resultRequests.get(0).getFetchData()));
+        assertThat(componentResultRequestMap.get("componentSettingsMapKey").getFetch(), equalTo(resultRequests.get(0).getFetch()));
 
-        TableResultRequest tableResultRequest = ((TableResultRequest)componentResultRequestMap.get("componentSettingsMapKey"));
+        TableResultRequest tableResultRequest = ((TableResultRequest) componentResultRequestMap.get("componentSettingsMapKey"));
         ResultRequest resultRequest = resultRequests.get(0);
         assertThat(tableResultRequest.getRequestedRange().getOffset().toString(), equalTo(resultRequest.getRequestedRange().getOffset().toString()));
         assertThat(tableResultRequest.getRequestedRange().getLength().toString(), equalTo(resultRequest.getRequestedRange().getLength().toString()));
         assertThat(tableResultRequest.getOpenGroups(), equalTo(resultRequest.getOpenGroups())); // No test data for this at the moment
+        //TODO many more properties to check
+    }
+
+    @Test
+    public void testSearchRequestMapper() {
+        // Given
+        stroom.dashboard.shared.SearchRequest dashboardSearchRequest = SearchRequestTestData.dashboardSearchRequest();
+
+        // When
+        stroom.query.api.v2.SearchRequest mappedApiSearchRequest = searchRequestMapper.mapRequest(new DashboardQueryKey(), dashboardSearchRequest);
+
+        // Then
+        verify_Search_to_Query_mapping(
+                dashboardSearchRequest.getSearch(),
+                mappedApiSearchRequest.getQuery());
+        verify_ComponentResultRequest_to_ResultRequest_mappings(
+                dashboardSearchRequest.getComponentResultRequests(),
+                mappedApiSearchRequest.getResultRequests());
         //TODO many more properties to check
     }
 

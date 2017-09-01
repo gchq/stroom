@@ -32,8 +32,8 @@ public class SplitFactory extends ExpressionFactory {
     }
 
     public SplitFactory(final NodeFactory parent, final String id, final int minMatch, final int maxMatch,
-            final Set<Integer> onlyMatch, final String delimiter, final String escape, final String containerStart,
-            final String containerEnd) {
+                        final Set<Integer> onlyMatch, final String delimiter, final String escape, final String containerStart,
+                        final String containerEnd) {
         super(parent, id, minMatch, maxMatch, onlyMatch, -1);
         if (delimiter != null) {
             this.delimiter = delimiter.toCharArray();

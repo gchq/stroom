@@ -45,7 +45,7 @@ import javax.annotation.Resource;
 @Component
 @Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(type = "ReferenceDataFilter", category = Category.FILTER, roles = {
-        PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS }, icon = ElementIcons.REFERENCE_DATA)
+        PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS}, icon = ElementIcons.REFERENCE_DATA)
 public class ReferenceDataFilter extends AbstractXMLFilter {
     private static final String REFERENCE_ELEMENT = "reference";
     private static final String MAP_ELEMENT = "map";
@@ -75,19 +75,13 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
      * sets a flag so that the function can be performed when the corresponding
      * end element is reached.
      *
-     * @param uri
-     *            The element's Namespace URI, or the empty string.
-     * @param localName
-     *            The element's local name, or the empty string.
-     * @param qName
-     *            The element's qualified (prefixed) name, or the empty string.
-     * @param atts
-     *            The element's attributes.
-     * @exception org.xml.sax.SAXException
-     *                The client may throw an exception during processing.
-     *
+     * @param uri       The element's Namespace URI, or the empty string.
+     * @param localName The element's local name, or the empty string.
+     * @param qName     The element's qualified (prefixed) name, or the empty string.
+     * @param atts      The element's attributes.
+     * @throws org.xml.sax.SAXException The client may throw an exception during processing.
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#startElement(java.lang.String,
-     *      java.lang.String, java.lang.String, org.xml.sax.Attributes)
+     * java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
@@ -109,17 +103,12 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
      * to apply from the corresponding start element and content to apply it to
      * from the characters event.
      *
-     * @param uri
-     *            The element's Namespace URI, or the empty string.
-     * @param localName
-     *            The element's local name, or the empty string.
-     * @param qName
-     *            The element's qualified (prefixed) name, or the empty string.
-     * @exception org.xml.sax.SAXException
-     *                The client may throw an exception during processing.
-     *
+     * @param uri       The element's Namespace URI, or the empty string.
+     * @param localName The element's local name, or the empty string.
+     * @param qName     The element's qualified (prefixed) name, or the empty string.
+     * @throws org.xml.sax.SAXException The client may throw an exception during processing.
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#endElement(java.lang.String,
-     *      java.lang.String, java.lang.String)
+     * java.lang.String, java.lang.String)
      */
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
@@ -184,7 +173,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                                 mapStoreHolder.getMapStoreBuilder().setEvents(map, rangeFrom.toString(), eventList,
                                         overrideExistingValues);
                             } else {
-                                mapStoreHolder.getMapStoreBuilder().setEvents(map, new Range<Long>(rangeFrom, rangeTo),
+                                mapStoreHolder.getMapStoreBuilder().setEvents(map, new Range<>(rangeFrom, rangeTo),
                                         eventList, overrideExistingValues);
                             }
                         }
@@ -213,17 +202,12 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
      * character content so that it can be operated on in the function end
      * element.
      *
-     * @param ch
-     *            An array of characters.
-     * @param start
-     *            The starting position in the array.
-     * @param length
-     *            The number of characters to use from the array.
-     * @exception org.xml.sax.SAXException
-     *                The client may throw an exception during processing.
-     *
+     * @param ch     An array of characters.
+     * @param start  The starting position in the array.
+     * @param length The number of characters to use from the array.
+     * @throws org.xml.sax.SAXException The client may throw an exception during processing.
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#characters(char[],
-     *      int, int)
+     * int, int)
      */
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {

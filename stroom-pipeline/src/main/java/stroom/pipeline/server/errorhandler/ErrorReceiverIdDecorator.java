@@ -30,7 +30,7 @@ public class ErrorReceiverIdDecorator implements ErrorReceiver {
 
     @Override
     public void log(final Severity severity, final Location location, final String elementId, final String message,
-            final Throwable e) {
+                    final Throwable e) {
         final String msg = MessageUtil.getMessage(message, e);
         errorReceiver.log(severity, location, id, elementId + " - " + msg, e);
     }

@@ -45,6 +45,7 @@ public final class UserEditViewImpl extends ViewWithUiHandlers<UserEditUiHandler
     ResizeSimplePanel userGroups;
     @UiField
     ResizeSimplePanel appPermissions;
+
     @Inject
     public UserEditViewImpl(final EventBus eventBus, final Binder binder) {
         widget = binder.createAndBindUi(this);

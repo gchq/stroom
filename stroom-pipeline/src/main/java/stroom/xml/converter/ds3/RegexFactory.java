@@ -29,7 +29,7 @@ public class RegexFactory extends ExpressionFactory {
     }
 
     public RegexFactory(final NodeFactory parent, final String id, final int minMatch, final int maxMatch,
-            final Set<Integer> onlyMatch, final int advance, final String pattern, final int flags) {
+                        final Set<Integer> onlyMatch, final int advance, final String pattern, final int flags) {
         super(parent, id, minMatch, maxMatch, onlyMatch, advance);
         if (pattern != null) {
             this.pattern = Pattern.compile(pattern, flags);

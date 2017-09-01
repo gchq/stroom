@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,13 +21,11 @@ import org.apache.lucene.document.Field;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.cache.CacheManagerAutoCloseable;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
@@ -86,15 +84,8 @@ public class TestIndexShardPoolImpl2 extends StroomUnitTest {
             }
         };
 
-        try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
-            final IndexShardWriterCacheImpl indexShardPoolImpl = new IndexShardWriterCacheImpl(cacheManager, null, null,
-                    mockIndexShardService, new NodeCache(defaultNode), null) {
-                @Override
-                protected void destroy(final IndexShardKey key, final IndexShardWriter value) {
-                    checkedLimit.decrement();
-                    super.destroy(key, value);
-                }
-            };
+        try {
+            final Indexer indexer = new MockIndexer();
 
             final Index index = new Index();
             index.setId(1);
@@ -105,20 +96,13 @@ public class TestIndexShardPoolImpl2 extends StroomUnitTest {
             final SimpleExecutor simpleExecutor = new SimpleExecutor(10);
 
             for (int i = 0; i < 1000; i++) {
-                simpleExecutor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        for (int i = 0; i < 100; i++) {
-                            // Get a writer from the pool.
-                            final IndexShardWriter writer = indexShardPoolImpl.get(indexShardKey);
-
-                            // Do some work.
-                            final Field field = FieldFactory.create(indexField, "test");
-                            final Document document = new Document();
-                            document.add(field);
-
-                            writer.addDocument(document);
-                        }
+                simpleExecutor.execute(() -> {
+                    for (int i1 = 0; i1 < 100; i1++) {
+                        // Do some work.
+                        final Field field = FieldFactory.create(indexField, "test");
+                        final Document document = new Document();
+                        document.add(field);
+                        indexer.addDocument(indexShardKey, document);
                     }
                 });
             }

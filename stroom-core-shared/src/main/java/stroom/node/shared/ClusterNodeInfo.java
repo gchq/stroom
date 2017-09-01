@@ -31,14 +31,14 @@ public class ClusterNodeInfo implements SharedObject {
     private String upDate;
     private String nodeName;
     private String clusterURL;
-    private List<ClusterNodeInfoItem> itemList = new ArrayList<ClusterNodeInfoItem>();
+    private List<ClusterNodeInfoItem> itemList = new ArrayList<>();
 
     public ClusterNodeInfo() {
         // Default constructor necessary for GWT serialisation.
     }
 
     public ClusterNodeInfo(final String discoverTime, final String buildDate, final String buildVersion,
-            final String upDate, final String nodeName, final String clusterURL) {
+                           final String upDate, final String nodeName, final String clusterURL) {
         this.discoverTime = discoverTime;
         this.buildDate = buildDate;
         this.buildVersion = buildVersion;

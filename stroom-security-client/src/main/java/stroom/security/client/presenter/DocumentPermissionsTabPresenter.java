@@ -25,8 +25,8 @@ import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserPermission;
 import stroom.security.shared.UserRef;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -45,8 +45,8 @@ public class DocumentPermissionsTabPresenter
     private final DocumentUserListPresenter userListPresenter;
     private final PermissionsListPresenter permissionsListPresenter;
     private final Provider<AdvancedUserListPresenter> selectUserPresenterProvider;
-    private final GlyphButtonView addButton;
-    private final GlyphButtonView removeButton;
+    private final ButtonView addButton;
+    private final ButtonView removeButton;
 
     private DocumentPermissions documentPermissions;
     private boolean group;
@@ -61,8 +61,8 @@ public class DocumentPermissionsTabPresenter
         this.permissionsListPresenter = permissionsListPresenter;
         this.selectUserPresenterProvider = selectUserPresenterProvider;
 
-        addButton = userListPresenter.addButton(GlyphIcons.ADD);
-        removeButton = userListPresenter.addButton(GlyphIcons.REMOVE);
+        addButton = userListPresenter.addButton(SvgPresets.ADD);
+        removeButton = userListPresenter.addButton(SvgPresets.REMOVE);
 
         getView().setUserView(userListPresenter.getView());
         getView().setPermissionsView(permissionsListPresenter.getView());
@@ -120,7 +120,7 @@ public class DocumentPermissionsTabPresenter
                     final UserRef selected = selectUserPresenter.getSelectionModel().getSelected();
                     if (selected != null) {
                         if (documentPermissions.getUserPermissions().get(selected) == null) {
-                            documentPermissions.getUserPermissions().put(selected, new HashSet<String>());
+                            documentPermissions.getUserPermissions().put(selected, new HashSet<>());
                             userListPresenter.getSelectionModel().setSelected(selected);
                             refreshUserList();
                         }
@@ -165,7 +165,7 @@ public class DocumentPermissionsTabPresenter
             getView().setUsersLabelText("Users:");
         }
 
-        final List<String> permissions = new ArrayList<String>();
+        final List<String> permissions = new ArrayList<>();
         for (final String permission : documentPermissions.getAllPermissions()) {
             if (!permission.startsWith("Create")) {
                 permissions.add(permission);

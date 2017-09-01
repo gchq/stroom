@@ -27,9 +27,8 @@ public interface EntityService<E extends Entity> {
      * Save the entity.
      *
      * @return The persisted entity.
-     * @throws RuntimeException
-     *             If a DB error occurred during deletion such as an optimistic
-     *             lock exception or entity constraint.
+     * @throws RuntimeException If a DB error occurred during deletion such as an optimistic
+     *                          lock exception or entity constraint.
      */
     E save(E entity) throws RuntimeException;
 
@@ -37,9 +36,8 @@ public interface EntityService<E extends Entity> {
      * Delete an entity.
      *
      * @return True if the entity was deleted successfully.
-     * @throws RuntimeException
-     *             If a DB error occurred during deletion such as an optimistic
-     *             lock exception or entity constraint.
+     * @throws RuntimeException If a DB error occurred during deletion such as an optimistic
+     *                          lock exception or entity constraint.
      */
     Boolean delete(E entity) throws RuntimeException;
 

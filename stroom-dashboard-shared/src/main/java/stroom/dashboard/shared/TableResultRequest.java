@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,7 +37,7 @@ public class TableResultRequest extends ComponentResultRequest {
     private TableComponentSettings tableSettings;
 
     @XmlElement
-    private OffsetRange<Integer> requestedRange = new OffsetRange<Integer>(0, 100);
+    private OffsetRange<Integer> requestedRange = new OffsetRange<>(0, 100);
 
     @XmlElement
     private Set<String> openGroups;
@@ -47,7 +47,7 @@ public class TableResultRequest extends ComponentResultRequest {
     }
 
     public TableResultRequest(final int offset, final int length) {
-        requestedRange = new OffsetRange<Integer>(offset, length);
+        requestedRange = new OffsetRange<>(offset, length);
     }
 
     public TableComponentSettings getTableSettings() {
@@ -72,7 +72,7 @@ public class TableResultRequest extends ComponentResultRequest {
 
     public void setGroupOpen(final String group, final boolean open) {
         if (openGroups == null) {
-            openGroups = new HashSet<String>();
+            openGroups = new HashSet<>();
         }
 
         if (open) {
@@ -83,7 +83,7 @@ public class TableResultRequest extends ComponentResultRequest {
     }
 
     public void setRange(final int offset, final int length) {
-        requestedRange = new OffsetRange<Integer>(offset, length);
+        requestedRange = new OffsetRange<>(offset, length);
     }
 
     public boolean isGroupOpen(final String group) {

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,10 +17,10 @@
 package stroom.entity.server;
 
 import org.springframework.context.annotation.Scope;
+import stroom.dashboard.server.logging.EntityEventLog;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.EntityServiceLoadAction;
-import stroom.logging.EntityEventLog;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;

@@ -34,15 +34,12 @@ import java.util.Map;
 
 public class XSDModel implements HasDataSelectionHandlers<XSDNode> {
     private final HandlerManager handlerManager = new HandlerManager(this);
-
+    List<XSDNode> history = new ArrayList<>();
+    int historyPos = -1;
     private Document doc;
     private Map<String, XSDNode> globalTypeMap;
     private Map<String, XSDNode> globalElementMap;
     private Map<String, XSDNode> globalGroupMap;
-
-    List<XSDNode> history = new ArrayList<>();
-    int historyPos = -1;
-
     private XSDNode currentItem;
     private XSDNode selectedItem;
     private DOMParseException parseException;
@@ -152,7 +149,7 @@ public class XSDModel implements HasDataSelectionHandlers<XSDNode> {
         if (doubleSelect) {
             if (selectedItem != null
                     && (selectedItem.getType() == XSDType.SCHEMA || selectedItem.getType() == XSDType.ELEMENT
-                            || selectedItem.getType() == XSDType.COMPLEX_TYPE)
+                    || selectedItem.getType() == XSDType.COMPLEX_TYPE)
                     && (this.currentItem == null || !this.currentItem.equals(selectedItem))) {
                 if (addToHistory) {
                     // Add this node to the history.

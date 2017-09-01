@@ -22,7 +22,6 @@ import stroom.util.shared.HashCodeBuilder;
 public class FolderIdSet extends EntityIdSet<Folder> {
     private static final long serialVersionUID = -470516763097779743L;
     private boolean deep = true;
-    private boolean global = false;
 
     public FolderIdSet() {
     }
@@ -39,24 +38,14 @@ public class FolderIdSet extends EntityIdSet<Folder> {
         this.deep = deep;
     }
 
-    public boolean isGlobal() {
-        return global;
-    }
-
-    public void setGlobal(final boolean global) {
-        this.global = global;
-    }
-
     public void setRootOnly(final Folder folder) {
         clear();
         add(folder);
         setDeep(false);
-        setGlobal(false);
     }
 
     public void copyFrom(final FolderIdSet other) {
         this.deep = other.deep;
-        this.global = other.global;
         super.copyFrom(other);
     }
 
@@ -74,7 +63,6 @@ public class FolderIdSet extends EntityIdSet<Folder> {
         final EqualsBuilder builder = new EqualsBuilder();
         builder.appendSuper(super.equals(obj));
         builder.append(this.deep, idSet.deep);
-        builder.append(this.global, idSet.global);
         return builder.isEquals();
     }
 
@@ -83,7 +71,6 @@ public class FolderIdSet extends EntityIdSet<Folder> {
         final HashCodeBuilder builder = new HashCodeBuilder();
         builder.appendSuper(super.hashCode());
         builder.append(deep);
-        builder.append(global);
         return builder.toHashCode();
     }
 }

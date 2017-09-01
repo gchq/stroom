@@ -32,13 +32,8 @@ public class StreamTaskPresenter extends MyPresenterWidget<StreamTaskPresenter.S
         implements HasRead<BaseEntity> {
     public static final String STREAM_TASK_LIST = "STREAM_TASK_LIST";
     public static final String STREAM_TASK_SUMMARY = "STREAM_TASK_SUMMARY";
-
-    public interface StreamTaskView extends View {
-    }
-
     private final StreamTaskSummaryPresenter streamTaskSummaryPresenter;
     private final StreamTaskListPresenter streamTaskListPresenter;
-
     @Inject
     public StreamTaskPresenter(final EventBus eventBus, final StreamTaskView view,
                                final StreamTaskSummaryPresenter streamTaskSummaryPresenter,
@@ -91,5 +86,8 @@ public class StreamTaskPresenter extends MyPresenterWidget<StreamTaskPresenter.S
     public void read(final BaseEntity entity) {
         streamTaskSummaryPresenter.read(entity);
         streamTaskListPresenter.read(entity);
+    }
+
+    public interface StreamTaskView extends View {
     }
 }

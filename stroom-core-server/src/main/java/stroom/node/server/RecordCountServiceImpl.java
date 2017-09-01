@@ -25,10 +25,10 @@ import java.util.Set;
 
 @Component
 public class RecordCountServiceImpl implements RecordCountService {
-    private long recordsRead;
-    private long recordsWritten;
     private final Set<RecordCounter> recordReadCounters = new HashSet<>();
     private final Set<RecordCounter> recordWriteCounters = new HashSet<>();
+    private long recordsRead;
+    private long recordsWritten;
 
     @Override
     public synchronized void addRecordReadCounter(final RecordCounter counter) {

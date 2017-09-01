@@ -41,11 +41,11 @@ public class Expander implements SharedObject {
         return expanded;
     }
 
-    public boolean isLeaf() {
-        return leaf;
-    }
-
     public void setExpanded(final boolean expanded) {
         this.expanded = expanded;
+    }
+
+    public boolean isLeaf() {
+        return leaf;
     }
 }

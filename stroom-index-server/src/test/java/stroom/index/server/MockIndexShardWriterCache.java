@@ -18,75 +18,53 @@ package stroom.index.server;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShardKey;
+import stroom.cache.AbstractCacheBean.Destroyable;
 import stroom.util.spring.StroomSpringProfiles;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Profile(StroomSpringProfiles.TEST)
 @Component("indexShardWriterCache")
 public class MockIndexShardWriterCache implements IndexShardWriterCache {
-    private final Map<IndexShardKey, IndexShardWriter> writers = new HashMap<>();
+    private final int maxDocumentCount;
+    private final Map<Long, IndexShardWriter> writers = new ConcurrentHashMap<>();
 
-    @Override
-    public Long findFlush(final FindIndexShardCriteria criteria) {
-        return null;
+    MockIndexShardWriterCache() {
+        this(Integer.MAX_VALUE);
+    }
+
+    MockIndexShardWriterCache(final int maxDocumentCount) {
+        this.maxDocumentCount = maxDocumentCount;
     }
 
     @Override
-    public Long findClose(final FindIndexShardCriteria criteria) {
-        return null;
+    public IndexShardWriter getOrCreate(final Long key) {
+        return writers.computeIfAbsent(key, k -> new MockIndexShardWriter(maxDocumentCount));
     }
 
     @Override
-    public Long findDelete(final FindIndexShardCriteria criteria) {
-        return null;
+    public IndexShardWriter getQuiet(final Long key) {
+        return writers.get(key);
+    }
+
+    @Override
+    public void remove(final Long key) {
+        writers.remove(key);
     }
 
     @Override
     public void clear() {
+        writers.values().forEach(Destroyable::destroy);
         writers.clear();
     }
 
     @Override
-    public IndexShardWriter get(final IndexShardKey k) {
-        IndexShardWriter writer = writers.get(k);
-        if (writer == null) {
-            writer = new MockIndexShardWriter();
-            writers.put(k, writer);
-        }
-
-        return writer;
-    }
-
-    @Override
-    public void remove(final IndexShardKey key) {
-        final IndexShardWriter writer = writers.remove(key);
-        if (writer != null) {
-            writer.destroy();
-        }
-    }
-
-    public Map<IndexShardKey, IndexShardWriter> getWriters() {
-        return writers;
-    }
-
-    @Override
-    public IndexShardWriter getWriter(final IndexShard indexShard) {
-        return null;
-    }
-
-    @Override
     public void flushAll() {
-        for (final IndexShardWriter writer : writers.values()) {
-            writer.flush();
-        }
+        writers.values().forEach(IndexShardWriter::flush);
     }
 
-    @Override
-    public void shutdown() {
+    Map<Long, IndexShardWriter> getWriters() {
+        return writers;
     }
 }

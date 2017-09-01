@@ -17,22 +17,16 @@
 package stroom.index.server;
 
 import stroom.cache.CacheBean;
-import stroom.entity.shared.FindCloseService;
-import stroom.entity.shared.FindDeleteService;
-import stroom.entity.shared.FindFlushService;
-import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShardKey;
 
 /**
- * API into our index shard cache.
+ * API into our index shard writer cache.
  */
-public interface IndexShardWriterCache
-        extends CacheBean<IndexShardKey, IndexShardWriter>, FindDeleteService<FindIndexShardCriteria>,
-        FindCloseService<FindIndexShardCriteria>, FindFlushService<FindIndexShardCriteria> {
-    IndexShardWriter getWriter(final IndexShard indexShard);
+public interface IndexShardWriterCache extends CacheBean<Long, IndexShardWriter> {
+    IndexShardWriter getOrCreate(Long indexShardId);
 
-    void shutdown();
+    IndexShardWriter getQuiet(Long indexShardId);
+
+    void remove(Long indexShardId);
 
     void flushAll();
 }

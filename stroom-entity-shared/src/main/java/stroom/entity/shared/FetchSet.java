@@ -38,13 +38,13 @@ public class FetchSet implements SharedObject {
 
     public FetchSet(final FetchDirective... directives) {
         if (directives != null && directives.length > 0) {
-            fetchDirectives = new HashSet<FetchDirective>(Arrays.asList(directives));
+            fetchDirectives = new HashSet<>(Arrays.asList(directives));
         }
     }
 
     public void add(final FetchDirective fetchDirective) {
         if (fetchDirectives == null) {
-            fetchDirectives = new HashSet<FetchDirective>();
+            fetchDirectives = new HashSet<>();
         }
         fetchDirectives.add(fetchDirective);
     }

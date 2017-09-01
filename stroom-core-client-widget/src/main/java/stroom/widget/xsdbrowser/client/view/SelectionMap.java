@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class SelectionMap {
-    private final Map<XSDNode, Set<SelectableItem>> selectionMap = new HashMap<XSDNode, Set<SelectableItem>>();
+    private final Map<XSDNode, Set<SelectableItem>> selectionMap = new HashMap<>();
     private XSDNode selectedItem;
 
     public void addSelectionItem(final XSDNode node, final SelectableItem selectable) {

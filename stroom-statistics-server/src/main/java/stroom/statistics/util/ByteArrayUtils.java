@@ -31,8 +31,7 @@ public class ByteArrayUtils {
     /**
      * Returns a string representation of a byte array
      *
-     * @param arr
-     *            The byte array
+     * @param arr The byte array
      * @return A space delimited series of byte values
      */
     public static String byteArrayToString(final byte[] arr) {
@@ -48,8 +47,7 @@ public class ByteArrayUtils {
      * Converts a byte array into a hex representation with a space between each
      * byte e.g 00 00 01 00 05 59 B3
      *
-     * @param arr
-     *            The byte array to convert
+     * @param arr The byte array to convert
      * @return The byte array as a string of hex values separated by a spaces
      */
     public static String byteArrayToHex(final byte[] arr) {
@@ -68,8 +66,8 @@ public class ByteArrayUtils {
     /**
      * @param arr
      * @return The array represented in hex, decimal and 'hbase' forms. The
-     *         hbase form is mix of ascii and deciaml, so an ascii char if the
-     *         byte value exists in the ascii table
+     * hbase form is mix of ascii and deciaml, so an ascii char if the
+     * byte value exists in the ascii table
      */
     public static String byteArrayToAllForms(final byte[] arr) {
         return ByteArrayUtils.byteArrayToHex(arr) + " (hex) | " + ByteArrayUtils.byteArrayToString(arr) + " (dec) | "

@@ -17,8 +17,8 @@
 package stroom.entity.server;
 
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.util.SQLBuilder;
-import stroom.entity.server.util.SQLUtil;
+import stroom.entity.server.util.FieldMap;
+import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
@@ -38,17 +38,17 @@ public class FindServiceHelper<E extends Entity, C extends BaseCriteria> {
     }
 
     @Transactional(readOnly = true)
-    public BaseResultList<E> find(final C criteria) throws RuntimeException {
-        return doBasicFind(criteria);
+    public BaseResultList<E> find(final C criteria, final FieldMap sqlFieldMap) throws RuntimeException {
+        return doBasicFind(criteria, sqlFieldMap);
     }
 
-    protected BaseResultList<E> doBasicFind(final C criteria) throws RuntimeException {
-        return doBasicFind(criteria, "e");
+    protected BaseResultList<E> doBasicFind(final C criteria, final FieldMap sqlFieldMap) throws RuntimeException {
+        return doBasicFind(criteria, sqlFieldMap, "e");
     }
 
     @SuppressWarnings("unchecked")
-    protected BaseResultList<E> doBasicFind(final C criteria, final String alias) throws RuntimeException {
-        final SQLBuilder sql = new SQLBuilder();
+    protected BaseResultList<E> doBasicFind(final C criteria, final FieldMap sqlFieldMap, final String alias) throws RuntimeException {
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT ");
         sql.append(alias);
         sql.append(" FROM ");
@@ -63,11 +63,10 @@ public class FindServiceHelper<E extends Entity, C extends BaseCriteria> {
         queryAppender.appendBasicCriteria(sql, alias, criteria);
 
         // Append order by criteria.
-        SQLUtil.appendOrderBy(sql, true, criteria, alias);
+        sql.appendOrderBy(sqlFieldMap.getHqlFieldMap(), criteria, alias);
 
         List<E> results = entityManager.executeQueryResultList(sql, criteria);
         results = queryAppender.postLoad(criteria, results);
-        results.forEach(queryAppender::postLoad);
 
         return BaseResultList.createCriterialBasedList(results, criteria);
     }

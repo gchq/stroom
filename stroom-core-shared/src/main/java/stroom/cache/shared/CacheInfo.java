@@ -48,10 +48,10 @@ public class CacheInfo implements SharedObject {
     }
 
     public CacheInfo(final String cacheName, final long cacheHits, final long onDiskHits, final long offHeapHits,
-            final long inMemoryHits, final long misses, final long onDiskMisses, final long offHeapMisses,
-            final long inMemoryMisses, final long size, final float averageGetTime, final long evictionCount,
-            final long memoryStoreSize, final long offHeapStoreSize, final long diskStoreSize,
-            final long searchesPerSecond, final long averageSearchTime, final long writerQueueLength) {
+                     final long inMemoryHits, final long misses, final long onDiskMisses, final long offHeapMisses,
+                     final long inMemoryMisses, final long size, final float averageGetTime, final long evictionCount,
+                     final long memoryStoreSize, final long offHeapStoreSize, final long diskStoreSize,
+                     final long searchesPerSecond, final long averageSearchTime, final long writerQueueLength) {
         this.cacheName = cacheName;
         this.cacheHits = cacheHits;
         this.onDiskHits = onDiskHits;
@@ -97,7 +97,7 @@ public class CacheInfo implements SharedObject {
      * Number of times a requested item was found in the Disk Store.
      *
      * @return the number of times a requested item was found on Disk, or 0 if
-     *         there is no disk storage configured.
+     * there is no disk storage configured.
      */
     public long getOnDiskHits() {
         return onDiskHits;
@@ -105,7 +105,7 @@ public class CacheInfo implements SharedObject {
 
     /**
      * @return the number of times a requested element was not found in the
-     *         cache
+     * cache
      */
     public long getCacheMisses() {
         return misses;
@@ -130,7 +130,7 @@ public class CacheInfo implements SharedObject {
      * Number of times a requested item was not found in the Disk Store.
      *
      * @return the number of times a requested item was not found on Disk, or 0
-     *         if there is no disk storage configured.
+     * if there is no disk storage configured.
      */
     public long getOnDiskMisses() {
         return onDiskMisses;
@@ -174,7 +174,7 @@ public class CacheInfo implements SharedObject {
      * 50,000 elements take 36ms.
      *
      * @return the number of elements in the ehcache, with a varying degree of
-     *         accuracy, depending on accuracy setting.
+     * accuracy, depending on accuracy setting.
      */
     public long getObjectCount() {
         return size;
@@ -206,8 +206,8 @@ public class CacheInfo implements SharedObject {
      * accuracy setting.
      *
      * @return one of {@link #STATISTICS_ACCURACY_BEST_EFFORT},
-     *         {@link #STATISTICS_ACCURACY_GUARANTEED},
-     *         {@link #STATISTICS_ACCURACY_NONE}
+     * {@link #STATISTICS_ACCURACY_GUARANTEED},
+     * {@link #STATISTICS_ACCURACY_NONE}
      */
     public int getStatisticsAccuracy() {
         return statisticsAccuracy;
@@ -218,7 +218,7 @@ public class CacheInfo implements SharedObject {
      * accuracy setting.
      *
      * @return a human readable description of the accuracy setting. One of
-     *         "None", "Best Effort" or "Guaranteed".
+     * "None", "Best Effort" or "Guaranteed".
      */
     public String getStatisticsAccuracyDescription() {
         if (statisticsAccuracy == 0) {
@@ -232,7 +232,7 @@ public class CacheInfo implements SharedObject {
 
     /**
      * @return the name of the Ehcache, or null if a reference is no longer held
-     *         to the cache, as, it would be after deserialization.
+     * to the cache, as, it would be after deserialization.
      */
     public String getName() {
         return cacheName;
@@ -295,7 +295,7 @@ public class CacheInfo implements SharedObject {
      * local buckets
      *
      * @return Elements waiting to be processed by the write behind writer. -1
-     *         if no write-behind
+     * if no write-behind
      */
     public long getWriterQueueSize() {
         return writerQueueLength;

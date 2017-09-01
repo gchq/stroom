@@ -30,7 +30,7 @@ public class PageStreamSource {
     private Integer length;
 
     public PageStreamSource(final SegmentInputStream segmentInputStream, final PageRequest pageRequest,
-            final Integer length) {
+                            final Integer length) {
         this.segmentInputStream = segmentInputStream;
         this.pageRequest = pageRequest;
         this.length = length;

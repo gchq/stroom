@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.SQLNameConstants;
@@ -40,7 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class ClusterLockServiceImpl implements ClusterLockService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockServiceImpl.class);
-
+    private final ConcurrentHashMap<String, ClusterLockKey> lockMap = new ConcurrentHashMap<>();
     @Resource
     private StroomEntityManager entityManager;
     @Resource
@@ -52,8 +52,6 @@ public class ClusterLockServiceImpl implements ClusterLockService {
     @Resource
     private NodeCache nodeCache;
 
-    private final ConcurrentHashMap<String, ClusterLockKey> lockMap = new ConcurrentHashMap<>();
-
     @Override
     @Transactional(propagation = Propagation.MANDATORY)
     public void lock(final String lockName) {
@@ -64,7 +62,7 @@ public class ClusterLockServiceImpl implements ClusterLockService {
         // This happens outside this transaction
         clusterLockServiceTransactionHelper.checkLockCreated(lockName);
 
-        final SQLBuilder sql = new SQLBuilder();
+        final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT * FROM ");
         sql.append(ClusterLock.TABLE_NAME);
         sql.append(" WHERE ");
@@ -131,7 +129,6 @@ public class ClusterLockServiceImpl implements ClusterLockService {
         LOGGER.debug("releaseLock({}) - <<< {}", lockName, success);
     }
 
-    @Override
     @StroomFrequencySchedule("1m")
     public void keepAlive() {
         LOGGER.debug("keepAlive() - >>>");

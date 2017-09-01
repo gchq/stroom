@@ -28,7 +28,7 @@ import stroom.util.spring.StroomSpringProfiles;
 public class MockScheduleService implements ScheduleService {
     @Override
     public ScheduledTimes getScheduledTimes(final JobType jobType, final Long scheduleReferenceTime,
-            final Long lastExecutedTime, final String expression) throws RuntimeException {
+                                            final Long lastExecutedTime, final String expression) throws RuntimeException {
         return null;
     }
 }

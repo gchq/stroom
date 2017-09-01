@@ -132,7 +132,7 @@ public class ElementRegistry {
     }
 
     private PipelinePropertyType createPropertyType(final PipelineElementType elementType, final Method method,
-            final String description, final String defaultValue) {
+                                                    final String description, final String defaultValue) {
         // Convert the setter to a camel case property name.
         final String propertyName = makePropertyName(method.getName());
         final Class<?> paramType = method.getParameterTypes()[0];

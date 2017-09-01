@@ -28,11 +28,7 @@ import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.pipeline.structure.client.presenter.NewPipelineReferencePresenter.NewPipelineReferenceView;
 
 public class NewPipelineReferenceViewImpl extends ViewImpl implements NewPipelineReferenceView {
-    public interface Binder extends UiBinder<Widget, NewPipelineReferenceViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     Label element;
     @UiField
@@ -41,7 +37,6 @@ public class NewPipelineReferenceViewImpl extends ViewImpl implements NewPipelin
     SimplePanel feed;
     @UiField
     SimplePanel streamType;
-
     @Inject
     public NewPipelineReferenceViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -75,5 +70,8 @@ public class NewPipelineReferenceViewImpl extends ViewImpl implements NewPipelin
     public void setStreamTypeWidget(final Widget w) {
         w.getElement().getStyle().setWidth(100, Unit.PCT);
         this.streamType.setWidget(w);
+    }
+
+    public interface Binder extends UiBinder<Widget, NewPipelineReferenceViewImpl> {
     }
 }

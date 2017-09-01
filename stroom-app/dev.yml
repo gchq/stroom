@@ -7,11 +7,16 @@ server:
   adminConnectors:
     - type: http
       port: 8081
+  #The following two lines stop the logging of requests to the web server as this gets quite noisy with
+  #lots of background rpc calls going on
+  requestLog:
+    appenders: []
 
 logging:
   level: ERROR
   loggers:
     stroom: INFO
+    stroom.resources.query.v1.SqlStatisticsQueryResource: DEBUG
     io.dropwizard: INFO
     org.ehcache: INFO
     org.eclipse.jetty: INFO

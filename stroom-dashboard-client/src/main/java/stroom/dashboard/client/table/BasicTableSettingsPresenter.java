@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,7 +26,7 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.EqualsBuilder;
 
@@ -165,7 +165,7 @@ public class BasicTableSettingsPresenter
         }
 
         final String[] parts = string.split(",");
-        final List<Integer> list = new ArrayList<Integer>();
+        final List<Integer> list = new ArrayList<>();
         for (final String part : parts) {
             try {
                 list.add(Integer.parseInt(part.trim()));

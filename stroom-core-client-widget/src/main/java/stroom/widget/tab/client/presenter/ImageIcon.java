@@ -18,9 +18,14 @@ package stroom.widget.tab.client.presenter;
 
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Image;
+import stroom.svg.client.Icon;
 
 public class ImageIcon implements Icon {
     private final Image image;
+
+    private ImageIcon(final Image image) {
+        this.image = image;
+    }
 
     public static ImageIcon create(final Image image) {
         if (image == null) {
@@ -41,10 +46,6 @@ public class ImageIcon implements Icon {
             return null;
         }
         return new ImageIcon(new Image(url));
-    }
-
-    private ImageIcon(final Image image) {
-        this.image = image;
     }
 
     public Image getImage() {

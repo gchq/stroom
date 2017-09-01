@@ -27,11 +27,7 @@ import stroom.widget.tickbox.client.view.TickBox;
 import stroom.xmlschema.client.presenter.XMLSchemaSettingsPresenter.XMLSchemaSettingsView;
 
 public class XMLSchemaSettingsViewImpl extends ViewImpl implements XMLSchemaSettingsView {
-    public interface Binder extends UiBinder<Widget, XMLSchemaSettingsViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     TextArea description;
     @UiField
@@ -42,7 +38,6 @@ public class XMLSchemaSettingsViewImpl extends ViewImpl implements XMLSchemaSett
     TextBox schemaGroup;
     @UiField
     TickBox deprecated;
-
     @Inject
     public XMLSchemaSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -76,5 +71,8 @@ public class XMLSchemaSettingsViewImpl extends ViewImpl implements XMLSchemaSett
     @Override
     public TickBox getDeprecated() {
         return deprecated;
+    }
+
+    public interface Binder extends UiBinder<Widget, XMLSchemaSettingsViewImpl> {
     }
 }

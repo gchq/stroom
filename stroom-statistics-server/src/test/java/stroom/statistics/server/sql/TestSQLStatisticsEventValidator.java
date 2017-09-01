@@ -36,7 +36,7 @@ public class TestSQLStatisticsEventValidator {
 
     @Test
     public void testValidateEvent_badTag() throws Exception {
-        final List<StatisticTag> tags = new ArrayList<StatisticTag>();
+        final List<StatisticTag> tags = new ArrayList<>();
         tags.add(new StatisticTag("x" + SQLStatisticConstants.NAME_SEPARATOR + "x", "someValue1"));
         tags.add(new StatisticTag("yy", "someValue2"));
 
@@ -49,7 +49,7 @@ public class TestSQLStatisticsEventValidator {
 
     @Test
     public void testValidateEvent_badValue() throws Exception {
-        final List<StatisticTag> tags = new ArrayList<StatisticTag>();
+        final List<StatisticTag> tags = new ArrayList<>();
         tags.add(new StatisticTag("xx", "someValue1"));
         tags.add(new StatisticTag("yy", "some" + SQLStatisticConstants.NAME_SEPARATOR + "Value2"));
 
@@ -62,7 +62,7 @@ public class TestSQLStatisticsEventValidator {
 
     @Test
     public void testValidateEvent_badTagsAndValues() throws Exception {
-        final List<StatisticTag> tags = new ArrayList<StatisticTag>();
+        final List<StatisticTag> tags = new ArrayList<>();
         tags.add(new StatisticTag("x" + SQLStatisticConstants.NAME_SEPARATOR + "x",
                 "some" + SQLStatisticConstants.NAME_SEPARATOR + "Value1"));
         tags.add(new StatisticTag("y" + SQLStatisticConstants.NAME_SEPARATOR + "y",

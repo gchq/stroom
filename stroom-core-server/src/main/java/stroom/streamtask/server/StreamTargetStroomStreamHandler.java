@@ -18,9 +18,16 @@ package stroom.streamtask.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.internalstatistics.MetaDataStatistic;
+import stroom.proxy.repo.MetaMapFactory;
+import stroom.proxy.repo.StroomHeaderStreamHandler;
+import stroom.proxy.repo.StroomStreamHandler;
+import stroom.proxy.repo.StroomZipEntry;
+import stroom.proxy.repo.StroomZipFileType;
+import stroom.proxy.repo.StroomZipNameSet;
 import stroom.streamstore.server.StreamFactory;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
@@ -28,13 +35,7 @@ import stroom.streamstore.server.fs.serializable.NestedStreamTarget;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.CloseableUtil;
-import stroom.util.zip.HeaderMap;
 import stroom.util.zip.StroomHeaderArguments;
-import stroom.util.zip.StroomHeaderStreamHandler;
-import stroom.util.zip.StroomStreamHandler;
-import stroom.util.zip.StroomZipEntry;
-import stroom.util.zip.StroomZipFileType;
-import stroom.util.zip.StroomZipNameSet;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
@@ -50,13 +51,13 @@ import java.util.Set;
 /**
  * Type of {@link StroomStreamHandler} that store the entries in the stream store.
  * There are some special rules about how this works.
- *
+ * <p>
  * This is fine if all the meta data indicates they belong to the same feed
  * 001.meta, 002.meta, 001.dat, 002.dat
- *
+ * <p>
  * This is also fine if 001.meta indicates 001 belongs to feed X and 002.meta
  * indicates 001 belongs to feed Y 001.meta, 002.meta, 001.dat, 002.dat
- *
+ * <p>
  * However if the global header map indicates feed Z and the files are send in
  * the following order 001.dat, 002.dat, 001.meta, 002.meta this is invalid ....
  * I.E. as soon as we add non header stream for a feed if the header turns out
@@ -70,24 +71,19 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     private final MetaDataStatistic metaDataStatistics;
     private final HashSet<Stream> streamSet;
     private final StroomZipNameSet stroomZipNameSet;
+    private final Map<String, Feed> feedMap = new HashMap<>();
+    private final Map<Feed, NestedStreamTarget> feedNestedStreamTarget = new HashMap<>();
+    private final Map<Feed, StreamTarget> feedStreamTarget = new HashMap<>();
+    private final ByteArrayOutputStream currentHeaderByteArrayOutputStream = new ByteArrayOutputStream();
     private boolean oneByOne;
-
     private StroomZipFileType currentFileType = null;
     private StroomZipEntry currentStroomZipEntry = null;
     private StroomZipEntry lastDatStroomZipEntry = null;
     private StroomZipEntry lastCtxStroomZipEntry = null;
-
-    private final Map<String, Feed> feedMap = new HashMap<>();
-
-    private final Map<Feed, NestedStreamTarget> feedNestedStreamTarget = new HashMap<>();
-    private final Map<Feed, StreamTarget> feedStreamTarget = new HashMap<>();
     private Feed currentFeed;
     private StreamType currentStreamType;
-
-    private HeaderMap globalHeaderMap;
-    private HeaderMap currentHeaderMap;
-
-    private final ByteArrayOutputStream currentHeaderByteArrayOutputStream = new ByteArrayOutputStream();
+    private MetaMap globalMetaMap;
+    private MetaMap currentMetaMap;
 
     public StreamTargetStroomStreamHandler(final StreamStore streamStore, final FeedService feedService,
                                            final MetaDataStatistic metaDataStatistics, final Feed feed, final StreamType streamType) {
@@ -113,8 +109,8 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     }
 
     @Override
-    public void handleHeader(final HeaderMap headerMap) throws IOException {
-        globalHeaderMap = headerMap;
+    public void handleHeader(final MetaMap metaMap) throws IOException {
+        globalMetaMap = metaMap;
     }
 
     @Override
@@ -149,20 +145,20 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
         }
 
         if (StroomZipFileType.Meta.equals(currentFileType)) {
-            currentHeaderMap = null;
-            if (globalHeaderMap != null) {
-                currentHeaderMap = globalHeaderMap.cloneAllowable();
+            currentMetaMap = null;
+            if (globalMetaMap != null) {
+                currentMetaMap = MetaMapFactory.cloneAllowable(globalMetaMap);
             } else {
-                currentHeaderMap = new HeaderMap();
+                currentMetaMap = new MetaMap();
             }
-            currentHeaderMap.read(currentHeaderByteArrayOutputStream.toByteArray());
+            currentMetaMap.read(currentHeaderByteArrayOutputStream.toByteArray());
 
             if (metaDataStatistics != null) {
-                metaDataStatistics.recordStatistics(currentHeaderMap);
+                metaDataStatistics.recordStatistics(currentMetaMap);
             }
 
             // Are we switching feed?
-            final String feed = currentHeaderMap.get(StroomHeaderArguments.FEED);
+            final String feed = currentMetaMap.get(StroomHeaderArguments.FEED);
             if (feed != null) {
                 if (currentFeed == null || !currentFeed.getName().equals(feed)) {
                     // Yes ... load the new feed
@@ -265,11 +261,11 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
         return Collections.unmodifiableSet(streamSet);
     }
 
-    private HeaderMap getCurrentHeaderMap() {
-        if (currentHeaderMap != null) {
-            return currentHeaderMap;
+    private MetaMap getCurrentMetaMap() {
+        if (currentMetaMap != null) {
+            return currentMetaMap;
         }
-        return globalHeaderMap;
+        return globalMetaMap;
     }
 
     public NestedStreamTarget getCurrentNestedStreamTarget() throws IOException {
@@ -281,7 +277,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
             }
 
             // Get the effective time if one has been provided.
-            final Long effectiveMs = StreamFactory.getReferenceEffectiveTime(getCurrentHeaderMap(), true);
+            final Long effectiveMs = StreamFactory.getReferenceEffectiveTime(getCurrentMetaMap(), true);
 
             // Make sure the stream type is not null.
             if (currentStreamType == null) {

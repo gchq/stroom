@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -39,6 +39,166 @@ import stroom.widget.util.client.MySingleSelectionModel;
 import java.util.List;
 
 public class CellTableViewImpl<R> extends ViewImpl implements CellTableView<R> {
+    /**
+     * The main DataGrid.
+     */
+    @UiField(provided = true)
+    CellTable<R> cellTable;
+    private Widget widget;
+
+    public CellTableViewImpl() {
+        this(false);
+    }
+
+    public CellTableViewImpl(final boolean supportsSelection) {
+        this(supportsSelection, (Resources) GWT.create(BasicResources.class));
+    }
+
+    public CellTableViewImpl(final boolean supportsSelection, final Resources resources) {
+        cellTable = new CellTable<>(DataGridViewImpl.DEFAULT_LIST_PAGE_SIZE, resources);
+        cellTable.setWidth("100%");
+
+        cellTable.setLoadingIndicator(null);
+
+        setSupportsSelection(supportsSelection);
+        setWidget(cellTable);
+    }
+
+    CellTable<R> getCellTable() {
+        return cellTable;
+    }
+
+    void setWidget(final Widget widget) {
+        this.widget = widget;
+    }
+
+    @Override
+    public void setSupportsSelection(final boolean supportsSelection) {
+        if (supportsSelection) {
+            cellTable.setSelectionModel(new MySingleSelectionModel<>());
+            cellTable.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
+            cellTable.getRowContainer().getStyle().setCursor(Cursor.POINTER);
+        } else {
+            cellTable.setSelectionModel(null);
+            cellTable.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
+            cellTable.getRowContainer().getStyle().setCursor(Cursor.DEFAULT);
+        }
+    }
+
+    @Override
+    public Widget asWidget() {
+        return widget;
+    }
+
+    @Override
+    public void addColumn(final Column<R, ?> column) {
+        cellTable.addColumn(column);
+    }
+
+    @Override
+    public void addColumn(final Column<R, ?> column, final int width) {
+        addColumn(column);
+        cellTable.setColumnWidth(column, width, Unit.PX);
+    }
+
+    @Override
+    public HandlerRegistration addRangeChangeHandler(final Handler handler) {
+        return cellTable.addRangeChangeHandler(handler);
+    }
+
+    @Override
+    public HandlerRegistration addRowCountChangeHandler(
+            final com.google.gwt.view.client.RowCountChangeEvent.Handler handler) {
+        return cellTable.addRowCountChangeHandler(handler);
+    }
+
+    @Override
+    public int getRowCount() {
+        return cellTable.getRowCount();
+    }
+
+    @Override
+    public void setRowCount(final int count) {
+        cellTable.setRowCount(count);
+    }
+
+    @Override
+    public Range getVisibleRange() {
+        return cellTable.getVisibleRange();
+    }
+
+    @Override
+    public void setVisibleRange(final Range range) {
+        cellTable.setVisibleRange(range);
+    }
+
+    @Override
+    public boolean isRowCountExact() {
+        return cellTable.isRowCountExact();
+    }
+
+    @Override
+    public void setRowCount(final int count, final boolean isExact) {
+        cellTable.setRowCount(count, isExact);
+    }
+
+    @Override
+    public void setVisibleRange(final int start, final int length) {
+        cellTable.setVisibleRange(start, length);
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> event) {
+        cellTable.fireEvent(event);
+    }
+
+    @Override
+    public HandlerRegistration addCellPreviewHandler(
+            final com.google.gwt.view.client.CellPreviewEvent.Handler<R> handler) {
+        return cellTable.addCellPreviewHandler(handler);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public SelectionModel<R> getSelectionModel() {
+        return (SelectionModel<R>) cellTable.getSelectionModel();
+    }
+
+    @Override
+    public void setSelectionModel(final SelectionModel<? super R> selectionModel) {
+        cellTable.setSelectionModel(selectionModel);
+    }
+
+    @Override
+    public R getVisibleItem(final int indexOnPage) {
+        return cellTable.getVisibleItem(indexOnPage);
+    }
+
+    @Override
+    public int getVisibleItemCount() {
+        return cellTable.getVisibleItemCount();
+    }
+
+    @Override
+    public Iterable<R> getVisibleItems() {
+        return cellTable.getVisibleItems();
+    }
+
+    @Override
+    public void setRowData(final int start, final List<? extends R> values) {
+        cellTable.setRowData(start, values);
+    }
+
+    @Override
+    public void setVisibleRangeAndClearData(final Range range, final boolean forceRangeChangeEvent) {
+        cellTable.setVisibleRangeAndClearData(range, forceRangeChangeEvent);
+    }
+
+    @Override
+    public void setSkipRowHoverCheck(final boolean skipRowHoverCheck) {
+        cellTable.setSkipRowHoverCheck(skipRowHoverCheck);
+    }
+
     @ImportedWithPrefix("gwt-CellTable")
     public interface BasicStyle extends Style {
         String DEFAULT_CSS = "stroom/data/table/client/BasicCellTable.css";
@@ -87,166 +247,5 @@ public class CellTableViewImpl<R> extends ViewImpl implements CellTableView<R> {
         @Override
         @Source("MenuCellTable.css")
         Style cellTableStyle();
-    }
-
-    /**
-     * The main DataGrid.
-     */
-    @UiField(provided = true)
-    CellTable<R> cellTable;
-
-    private Widget widget;
-
-    public CellTableViewImpl() {
-        this(false);
-    }
-
-    public CellTableViewImpl(final boolean supportsSelection) {
-        this(supportsSelection, (Resources) GWT.create(BasicResources.class));
-    }
-
-    public CellTableViewImpl(final boolean supportsSelection, final Resources resources) {
-        cellTable = new CellTable<R>(DataGridViewImpl.DEFAULT_LIST_PAGE_SIZE, resources);
-        cellTable.setWidth("100%");
-
-        cellTable.setLoadingIndicator(null);
-
-        setSupportsSelection(supportsSelection);
-        setWidget(cellTable);
-    }
-
-    CellTable<R> getCellTable() {
-        return cellTable;
-    }
-
-    void setWidget(final Widget widget) {
-        this.widget = widget;
-    }
-
-    @Override
-    public void setSupportsSelection(final boolean supportsSelection) {
-        if (supportsSelection) {
-            cellTable.setSelectionModel(new MySingleSelectionModel<R>());
-            cellTable.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
-            cellTable.getRowContainer().getStyle().setCursor(Cursor.POINTER);
-        } else {
-            cellTable.setSelectionModel(null);
-            cellTable.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
-            cellTable.getRowContainer().getStyle().setCursor(Cursor.DEFAULT);
-        }
-    }
-
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
-    public void addColumn(final Column<R, ?> column) {
-        cellTable.addColumn(column);
-    }
-
-    @Override
-    public void addColumn(final Column<R, ?> column, final int width) {
-        addColumn(column);
-        cellTable.setColumnWidth(column, width, Unit.PX);
-    }
-
-    @Override
-    public HandlerRegistration addRangeChangeHandler(final Handler handler) {
-        return cellTable.addRangeChangeHandler(handler);
-    }
-
-    @Override
-    public HandlerRegistration addRowCountChangeHandler(
-            final com.google.gwt.view.client.RowCountChangeEvent.Handler handler) {
-        return cellTable.addRowCountChangeHandler(handler);
-    }
-
-    @Override
-    public int getRowCount() {
-        return cellTable.getRowCount();
-    }
-
-    @Override
-    public Range getVisibleRange() {
-        return cellTable.getVisibleRange();
-    }
-
-    @Override
-    public boolean isRowCountExact() {
-        return cellTable.isRowCountExact();
-    }
-
-    @Override
-    public void setRowCount(final int count) {
-        cellTable.setRowCount(count);
-    }
-
-    @Override
-    public void setRowCount(final int count, final boolean isExact) {
-        cellTable.setRowCount(count, isExact);
-    }
-
-    @Override
-    public void setVisibleRange(final int start, final int length) {
-        cellTable.setVisibleRange(start, length);
-    }
-
-    @Override
-    public void setVisibleRange(final Range range) {
-        cellTable.setVisibleRange(range);
-    }
-
-    @Override
-    public void fireEvent(final GwtEvent<?> event) {
-        cellTable.fireEvent(event);
-    }
-
-    @Override
-    public HandlerRegistration addCellPreviewHandler(
-            final com.google.gwt.view.client.CellPreviewEvent.Handler<R> handler) {
-        return cellTable.addCellPreviewHandler(handler);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public SelectionModel<R> getSelectionModel() {
-        return (SelectionModel<R>) cellTable.getSelectionModel();
-    }
-
-    @Override
-    public R getVisibleItem(final int indexOnPage) {
-        return cellTable.getVisibleItem(indexOnPage);
-    }
-
-    @Override
-    public int getVisibleItemCount() {
-        return cellTable.getVisibleItemCount();
-    }
-
-    @Override
-    public Iterable<R> getVisibleItems() {
-        return cellTable.getVisibleItems();
-    }
-
-    @Override
-    public void setRowData(final int start, final List<? extends R> values) {
-        cellTable.setRowData(start, values);
-    }
-
-    @Override
-    public void setSelectionModel(final SelectionModel<? super R> selectionModel) {
-        cellTable.setSelectionModel(selectionModel);
-    }
-
-    @Override
-    public void setVisibleRangeAndClearData(final Range range, final boolean forceRangeChangeEvent) {
-        cellTable.setVisibleRangeAndClearData(range, forceRangeChangeEvent);
-    }
-
-    @Override
-    public void setSkipRowHoverCheck(final boolean skipRowHoverCheck) {
-        cellTable.setSkipRowHoverCheck(skipRowHoverCheck);
     }
 }

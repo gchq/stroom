@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,7 +28,7 @@ import stroom.entity.shared.FindService;
 import stroom.entity.shared.HasLoadById;
 import stroom.entity.shared.HasLoadByName;
 import stroom.entity.shared.HasLoadByUuid;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -107,7 +107,7 @@ public class GenericEntityServiceImpl implements GenericEntityService {
     @SuppressWarnings("unchecked")
     @Override
     public <E extends Entity> E loadByName(final String entityType, final DocRef folder, final String name,
-                                                   final Set<String> fetchSet) {
+                                           final Set<String> fetchSet) {
         final EntityService<E> entityService = getEntityService(entityType);
         if (entityService instanceof HasLoadByName) {
             return ((HasLoadByName<E>) entityService).loadByName(name, fetchSet);
@@ -130,7 +130,7 @@ public class GenericEntityServiceImpl implements GenericEntityService {
     @SuppressWarnings("unchecked")
     @Override
     public <E extends Entity> E loadByName(final String entityType, final String name,
-                                                   final Set<String> fetchSet) {
+                                           final Set<String> fetchSet) {
         final EntityService<E> entityService = getEntityService(entityType);
         if (!(entityService instanceof HasLoadByName)) {
             throw new EntityServiceException("Entity service is not an instance of HasLoadByName: " + entityType,
@@ -144,7 +144,7 @@ public class GenericEntityServiceImpl implements GenericEntityService {
     @SuppressWarnings("unchecked")
     @Override
     public <E extends Entity, C extends BaseCriteria> BaseResultList<E> find(final String entityType,
-                                                                                     final C criteria) {
+                                                                             final C criteria) {
         final EntityService<E> entityService = getEntityService(entityType);
         final FindService<E, C> findService = (FindService<E, C>) entityService;
         return findService.find(criteria);

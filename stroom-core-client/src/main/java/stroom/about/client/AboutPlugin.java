@@ -16,8 +16,6 @@
 
 package stroom.about.client;
 
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -25,19 +23,17 @@ import stroom.about.client.presenter.AboutPresenter;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 import stroom.widget.menu.client.presenter.Separator;
-import stroom.widget.tab.client.presenter.ImageIcon;
 
 public class AboutPlugin extends Plugin {
-    private final AboutResources resources;
     private final Provider<AboutPresenter> provider;
+
     @Inject
-    public AboutPlugin(final EventBus eventBus, final AboutResources resources,
-                       final Provider<AboutPresenter> provider) {
+    public AboutPlugin(final EventBus eventBus, final Provider<AboutPresenter> provider) {
         super(eventBus);
-        this.resources = resources;
         this.provider = provider;
     }
 
@@ -54,10 +50,6 @@ public class AboutPlugin extends Plugin {
                 new KeyedParentMenuItem(5, "Help", event.getMenuItems(), MenuKeys.HELP_MENU));
         event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU, new Separator(2));
         event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU,
-                new IconMenuItem(3, ImageIcon.create(resources.about()), null, "About", null, true, () -> provider.get().forceReveal()));
-    }
-
-    public interface AboutResources extends ClientBundle {
-        ImageResource about();
+                new IconMenuItem(3, SvgPresets.ABOUT, null, "About", null, true, () -> provider.get().forceReveal()));
     }
 }

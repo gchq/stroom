@@ -23,8 +23,7 @@ import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventBus;
 import stroom.entity.server.event.EntityEventHandler;
 import stroom.entity.shared.EntityAction;
-import stroom.query.api.v1.DocRef;
-import stroom.security.shared.User;
+import stroom.query.api.v2.DocRef;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
 
@@ -50,8 +49,11 @@ public class UserAppPermissionsCache extends AbstractCacheBean<UserRef, UserAppP
         setMaxLiveTime(30, TimeUnit.MINUTES);
     }
 
-    @Override
-    protected UserAppPermissions create(final UserRef user) {
+    UserAppPermissions getOrCreate(final UserRef key) {
+        return computeIfAbsent(key, this::create);
+    }
+
+    private UserAppPermissions create(final UserRef user) {
         return userAppPermissionService.getPermissionsForUser(user);
     }
 

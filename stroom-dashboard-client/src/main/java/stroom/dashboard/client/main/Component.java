@@ -48,8 +48,7 @@ public interface Component extends TabData, Layer, HasRead<ComponentConfig>, Has
     /**
      * Set the associated tab layout for this component.
      *
-     * @param tabLayout
-     *            The tab layout to associate with this component.
+     * @param tabLayout The tab layout to associate with this component.
      */
     void setTabLayout(TabLayout tabLayout);
 

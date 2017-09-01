@@ -34,8 +34,8 @@ public class ScriptSettingsPresenter
 
     @Inject
     public ScriptSettingsPresenter(final EventBus eventBus, final ScriptSettingsView view,
-            final ScriptDependencyListPresenter scriptDependencyListPresenter,
-            final ClientSecurityContext securityContext) {
+                                   final ScriptDependencyListPresenter scriptDependencyListPresenter,
+                                   final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
         this.scriptDependencyListPresenter = scriptDependencyListPresenter;
 

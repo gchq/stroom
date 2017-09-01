@@ -24,23 +24,20 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ButtonBase;
 
 public class FabButton extends ButtonBase {
+    private final Element face;
     /**
      * If <code>true</code>, this widget is capturing with the mouse held down.
      */
     private boolean isCapturing;
-
     /**
      * If <code>true</code>, this widget has focus with the space bar down.
      */
     private boolean isFocusing;
-
     /**
      * Used to decide whether to allow clicks to propagate up to the superclass
      * or container elements.
      */
     private boolean allowClick;
-
-    private final Element face;
 
     public FabButton() {
         super(Document.get().createDivElement());
@@ -65,7 +62,7 @@ public class FabButton extends ButtonBase {
     }
 
     public void setIcon(final String icon) {
-        face.setInnerHTML("<i class=\"" + icon + "\"></i>");
+        face.setInnerHTML("<img src=\"" + icon + "\"/>");
     }
 
     @Override
@@ -79,69 +76,69 @@ public class FabButton extends ButtonBase {
 
         final int type = DOM.eventGetType(event);
         switch (type) {
-        case Event.ONCLICK:
-            // If clicks are currently disallowed, keep it from bubbling or
-            // being passed to the superclass.
-            if (!allowClick) {
-                event.stopPropagation();
-                return;
-            }
-            break;
-        case Event.ONMOUSEDOWN:
-            if (event.getButton() == Event.BUTTON_LEFT) {
-                setFocus(true);
-                onClickStart();
-                DOM.setCapture(getElement());
-                isCapturing = true;
-                // Prevent dragging (on some browsers);
-                event.preventDefault();
-            }
-            break;
-        case Event.ONMOUSEUP:
-            if (isCapturing) {
-                isCapturing = false;
-                DOM.releaseCapture(getElement());
-                if (event.getButton() == Event.BUTTON_LEFT) {
-                    onClick();
+            case Event.ONCLICK:
+                // If clicks are currently disallowed, keep it from bubbling or
+                // being passed to the superclass.
+                if (!allowClick) {
+                    event.stopPropagation();
+                    return;
                 }
-            }
-            break;
-        case Event.ONMOUSEMOVE:
-            if (isCapturing) {
-                // Prevent dragging (on other browsers);
-                event.preventDefault();
-            }
-            break;
-        case Event.ONMOUSEOUT:
-            final Element to = DOM.eventGetToElement(event);
-            if (getElement().isOrHasChild(DOM.eventGetTarget(event))
-                    && (to == null || !getElement().isOrHasChild(to))) {
+                break;
+            case Event.ONMOUSEDOWN:
+                if (event.getButton() == Event.BUTTON_LEFT) {
+                    setFocus(true);
+                    onClickStart();
+                    DOM.setCapture(getElement());
+                    isCapturing = true;
+                    // Prevent dragging (on some browsers);
+                    event.preventDefault();
+                }
+                break;
+            case Event.ONMOUSEUP:
                 if (isCapturing) {
+                    isCapturing = false;
+                    DOM.releaseCapture(getElement());
+                    if (event.getButton() == Event.BUTTON_LEFT) {
+                        onClick();
+                    }
+                }
+                break;
+            case Event.ONMOUSEMOVE:
+                if (isCapturing) {
+                    // Prevent dragging (on other browsers);
+                    event.preventDefault();
+                }
+                break;
+            case Event.ONMOUSEOUT:
+                final Element to = DOM.eventGetToElement(event);
+                if (getElement().isOrHasChild(DOM.eventGetTarget(event))
+                        && (to == null || !getElement().isOrHasChild(to))) {
+                    if (isCapturing) {
+                        onClickCancel();
+                    }
+                    setHovering(false);
+                }
+                break;
+            case Event.ONMOUSEOVER:
+                if (getElement().isOrHasChild(DOM.eventGetTarget(event))) {
+                    setHovering(true);
+                    if (isCapturing) {
+                        onClickStart();
+                    }
+                }
+                break;
+            case Event.ONBLUR:
+                if (isFocusing) {
+                    isFocusing = false;
                     onClickCancel();
                 }
-                setHovering(false);
-            }
-            break;
-        case Event.ONMOUSEOVER:
-            if (getElement().isOrHasChild(DOM.eventGetTarget(event))) {
-                setHovering(true);
+                break;
+            case Event.ONLOSECAPTURE:
                 if (isCapturing) {
-                    onClickStart();
+                    isCapturing = false;
+                    onClickCancel();
                 }
-            }
-            break;
-        case Event.ONBLUR:
-            if (isFocusing) {
-                isFocusing = false;
-                onClickCancel();
-            }
-            break;
-        case Event.ONLOSECAPTURE:
-            if (isCapturing) {
-                isCapturing = false;
-                onClickCancel();
-            }
-            break;
+                break;
         }
 
         super.onBrowserEvent(event);
@@ -151,24 +148,24 @@ public class FabButton extends ButtonBase {
         if ((event.getTypeInt() & Event.KEYEVENTS) != 0) {
             final char keyCode = (char) event.getKeyCode();
             switch (type) {
-            case Event.ONKEYDOWN:
-                if (keyCode == ' ') {
-                    isFocusing = true;
-                    onClickStart();
-                }
-                break;
-            case Event.ONKEYUP:
-                if (isFocusing && keyCode == ' ') {
-                    isFocusing = false;
-                    onClick();
-                }
-                break;
-            case Event.ONKEYPRESS:
-                if (keyCode == '\n' || keyCode == '\r') {
-                    onClickStart();
-                    onClick();
-                }
-                break;
+                case Event.ONKEYDOWN:
+                    if (keyCode == ' ') {
+                        isFocusing = true;
+                        onClickStart();
+                    }
+                    break;
+                case Event.ONKEYUP:
+                    if (isFocusing && keyCode == ' ') {
+                        isFocusing = false;
+                        onClick();
+                    }
+                    break;
+                case Event.ONKEYPRESS:
+                    if (keyCode == '\n' || keyCode == '\r') {
+                        onClickStart();
+                        onClick();
+                    }
+                    break;
             }
         }
     }

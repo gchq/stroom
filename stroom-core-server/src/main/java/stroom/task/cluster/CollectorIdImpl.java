@@ -31,8 +31,7 @@ public class CollectorIdImpl implements CollectorId {
      * Do not use this constructor directly, instead please use
      * CollectorIdFactory.
      *
-     * @param id
-     *            The id of this collector.
+     * @param id The id of this collector.
      */
     public CollectorIdImpl(final String id) {
         this.id = id;

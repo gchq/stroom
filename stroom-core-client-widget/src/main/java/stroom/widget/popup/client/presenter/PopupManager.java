@@ -43,7 +43,7 @@ public class PopupManager {
         final PresenterWidget<?> presenterWidget = event.getPresenterWidget();
 
         if (popupMap == null) {
-            popupMap = new HashMap<PresenterWidget<?>, PopupSupport>();
+            popupMap = new HashMap<>();
         }
 
         // Toggle popup visibility if we are asked to show twice.

@@ -26,15 +26,6 @@ public class Property {
     private final boolean externalFile;
     private final ExtensionProvider extensionProvider;
 
-    public static final class NameComparator implements Comparator<Property>, Serializable {
-        private static final long serialVersionUID = -7544586669631049101L;
-
-        @Override
-        public int compare(final Property o1, final Property o2) {
-            return o1.name.compareTo(o2.name);
-        }
-    }
-
     public Property(final String name, final boolean externalFile, final ExtensionProvider extensionProvider) {
         this.name = name;
         this.externalFile = externalFile;
@@ -56,5 +47,14 @@ public class Property {
     @Override
     public String toString() {
         return name;
+    }
+
+    public static final class NameComparator implements Comparator<Property>, Serializable {
+        private static final long serialVersionUID = -7544586669631049101L;
+
+        @Override
+        public int compare(final Property o1, final Property o2) {
+            return o1.name.compareTo(o2.name);
+        }
     }
 }

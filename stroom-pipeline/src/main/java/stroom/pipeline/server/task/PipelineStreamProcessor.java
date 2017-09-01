@@ -22,10 +22,9 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
-import stroom.statistics.internal.InternalStatisticEvent;
-import stroom.statistics.internal.InternalStatisticsFacadeFactory;
 import stroom.io.StreamCloser;
 import stroom.node.server.NodeCache;
 import stroom.pipeline.destination.Destination;
@@ -54,6 +53,8 @@ import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.state.SearchIdHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
+import stroom.statistics.internal.InternalStatisticEvent;
+import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
@@ -77,9 +78,9 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
-import stroom.util.zip.HeaderMap;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -98,52 +99,75 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     private static final Pattern XML_DECL_PATTERN = Pattern.compile("<\\?\\s*xml[^>]*>", Pattern.CASE_INSENSITIVE);
     private static final String INTERNAL_STAT_KEY_PIPELINE_STREAM_PROCESSOR = "pipelineStreamProcessor";
 
-    @Resource
-    private PipelineFactory pipelineFactory;
-    @Resource
-    private StreamStore streamStore;
-    @Resource(name = "cachedFeedService")
-    private FeedService feedService;
-    @Resource(name = "cachedPipelineEntityService")
-    private PipelineEntityService pipelineEntityService;
-    @Resource
-    private TaskMonitor taskMonitor;
-    @Resource
-    private PipelineHolder pipelineHolder;
-    @Resource
-    private FeedHolder feedHolder;
-    @Resource
-    private StreamHolder streamHolder;
-    @Resource
-    private SearchIdHolder searchIdHolder;
-    @Resource
-    private LocationFactoryProxy locationFactory;
-    @Resource
-    private StreamProcessorHolder streamProcessorHolder;
-    @Resource
-    private ErrorReceiverProxy errorReceiverProxy;
-    @Resource
-    private ErrorWriterProxy errorWriterProxy;
-    @Resource
-    private MetaData metaData;
-    @Resource
-    private RecordCount recordCount;
-    @Resource
-    private StreamCloser streamCloser;
-    @Resource
-    private RecordErrorReceiver recordErrorReceiver;
-    @Resource
-    private NodeCache nodeCache;
-    @Resource
-    private PipelineDataCache pipelineDataCache;
-    @Resource
-    private InternalStatisticsFacadeFactory internalStatisticsFacadeFactory;
+    private final PipelineFactory pipelineFactory;
+    private final StreamStore streamStore;
+    private final FeedService feedService;
+    private final PipelineEntityService pipelineEntityService;
+    private final TaskMonitor taskMonitor;
+    private final PipelineHolder pipelineHolder;
+    private final FeedHolder feedHolder;
+    private final StreamHolder streamHolder;
+    private final SearchIdHolder searchIdHolder;
+    private final LocationFactoryProxy locationFactory;
+    private final StreamProcessorHolder streamProcessorHolder;
+    private final ErrorReceiverProxy errorReceiverProxy;
+    private final ErrorWriterProxy errorWriterProxy;
+    private final MetaData metaData;
+    private final RecordCount recordCount;
+    private final StreamCloser streamCloser;
+    private final RecordErrorReceiver recordErrorReceiver;
+    private final NodeCache nodeCache;
+    private final PipelineDataCache pipelineDataCache;
+    private final InternalStatisticsReceiver internalStatisticsReceiver;
 
     private StreamProcessor streamProcessor;
     private StreamProcessorFilter streamProcessorFilter;
     private StreamTask streamTask;
     private StreamSource streamSource;
     private ProcessInfoOutputStreamProvider processInfoOutputStreamProvider;
+
+    @Inject
+    public PipelineStreamProcessor(final PipelineFactory pipelineFactory,
+                                   final StreamStore streamStore,
+                                   @Named("cachedFeedService") final FeedService feedService,
+                                   @Named("cachedPipelineEntityService") final PipelineEntityService pipelineEntityService,
+                                   final TaskMonitor taskMonitor,
+                                   final PipelineHolder pipelineHolder,
+                                   final FeedHolder feedHolder,
+                                   final StreamHolder streamHolder,
+                                   final SearchIdHolder searchIdHolder,
+                                   final LocationFactoryProxy locationFactory,
+                                   final StreamProcessorHolder streamProcessorHolder,
+                                   final ErrorReceiverProxy errorReceiverProxy,
+                                   final ErrorWriterProxy errorWriterProxy,
+                                   final MetaData metaData,
+                                   final RecordCount recordCount,
+                                   final StreamCloser streamCloser,
+                                   final RecordErrorReceiver recordErrorReceiver,
+                                   final NodeCache nodeCache,
+                                   final PipelineDataCache pipelineDataCache,
+                                   final InternalStatisticsReceiver internalStatisticsReceiver) {
+        this.pipelineFactory = pipelineFactory;
+        this.streamStore = streamStore;
+        this.feedService = feedService;
+        this.pipelineEntityService = pipelineEntityService;
+        this.taskMonitor = taskMonitor;
+        this.pipelineHolder = pipelineHolder;
+        this.feedHolder = feedHolder;
+        this.streamHolder = streamHolder;
+        this.searchIdHolder = searchIdHolder;
+        this.locationFactory = locationFactory;
+        this.streamProcessorHolder = streamProcessorHolder;
+        this.errorReceiverProxy = errorReceiverProxy;
+        this.errorWriterProxy = errorWriterProxy;
+        this.metaData = metaData;
+        this.recordCount = recordCount;
+        this.streamCloser = streamCloser;
+        this.recordErrorReceiver = recordErrorReceiver;
+        this.nodeCache = nodeCache;
+        this.pipelineDataCache = pipelineDataCache;
+        this.internalStatisticsReceiver = internalStatisticsReceiver;
+    }
 
     @Override
     public void exec(final StreamProcessor streamProcessor, final StreamProcessorFilter streamProcessorFilter,
@@ -189,7 +213,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             pipelineHolder.setPipeline(pipelineEntity);
 
             // Create the parser.
-            final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+            final PipelineData pipelineData = pipelineDataCache.getOrCreate(pipelineEntity);
             final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
             // Create some processing info.
@@ -325,12 +349,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                             "Pipeline", pipelineEntity.getName(),
                             "Node", nodeCache.getDefaultNode().getName()));
 
-            internalStatisticsFacadeFactory.create()
-                    .putEvent(event, throwable ->
-                        outputError(
-                                new RuntimeException("Error recording internal statistic with key " +
-                                        INTERNAL_STAT_KEY_PIPELINE_STREAM_PROCESSOR, throwable),
-                                Severity.WARNING));
+            internalStatisticsReceiver.putEvent(event);
 
         } catch (final Exception ex) {
             LOGGER.error("recordStats", ex);
@@ -512,6 +531,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     private void outputError(final Exception ex) {
         outputError(ex, Severity.FATAL_ERROR);
     }
+
     /**
      * Used to handle any errors that may occur during translation.
      */
@@ -601,8 +621,8 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                         // Only do something if an output stream was used.
                         if (processInfoStreamTarget != null) {
                             // Write meta data.
-                            final HeaderMap headerMap = metaData.getHeaderMap();
-                            processInfoStreamTarget.getAttributeMap().putAll(headerMap);
+                            final MetaMap metaMap = metaData.getMetaMap();
+                            processInfoStreamTarget.getAttributeMap().putAll(metaMap);
                             // We let the streamCloser close the stream target
                             // with the stream store as it may want to delete it
                         }

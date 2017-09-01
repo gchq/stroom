@@ -42,15 +42,15 @@ import stroom.node.shared.FetchNodeInfoAction;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeInfoResult;
 import stroom.streamstore.client.presenter.ActionDataProvider;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.svg.client.Icon;
+import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.widget.tab.client.presenter.Icon;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
 public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<NodeInfoResult>> implements Refreshable {
@@ -60,24 +60,24 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
     private final ActionDataProvider<NodeInfoResult> dataProvider;
     private final SaveQueue<Node> saveQueue;
 
-    private final GlyphButtonView editButton;
+    private final ButtonView editButton;
     private final Provider<NodeEditPresenter> nodeEditPresenterProvider;
 
     @Inject
     public NodeMonitoringPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
                                    final TooltipPresenter tooltipPresenter,
                                    final Provider<NodeEditPresenter> nodeEditPresenterProvider) {
-        super(eventBus, new DataGridViewImpl<NodeInfoResult>(true));
+        super(eventBus, new DataGridViewImpl<>(true));
         this.dispatcher = dispatcher;
         this.tooltipPresenter = tooltipPresenter;
         this.nodeEditPresenterProvider = nodeEditPresenterProvider;
         initTableColumns();
-        dataProvider = new ActionDataProvider<NodeInfoResult>(dispatcher, action);
+        dataProvider = new ActionDataProvider<>(dispatcher, action);
         dataProvider.addDataDisplay(getView().getDataDisplay());
 
-        saveQueue = new SaveQueue<Node>(dispatcher);
+        saveQueue = new SaveQueue<>(dispatcher);
 
-        editButton = getView().addButton(GlyphIcons.EDIT);
+        editButton = getView().addButton(SvgPresets.EDIT);
         editButton.setTitle("Edit Node");
     }
 
@@ -258,7 +258,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
 
         getView().addColumn(enabledColumn, "Enabled", 60);
 
-        getView().addEndColumn(new EndColumn<NodeInfoResult>());
+        getView().addEndColumn(new EndColumn<>());
     }
 
     private void onEdit(final NodeInfoResult nodeInfo) {
@@ -302,7 +302,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
 
     @Override
     public Icon getIcon() {
-        return GlyphIcons.NODES;
+        return SvgPresets.NODES;
     }
 
     @Override

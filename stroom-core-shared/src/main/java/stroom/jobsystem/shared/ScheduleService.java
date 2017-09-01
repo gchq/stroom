@@ -24,12 +24,10 @@ public interface ScheduleService {
      * time. The scheduled time object holds the reference time, last scheduled
      * time and next scheduled time.
      *
-     * @param expression
-     *            The cron expression to use.
+     * @param expression The cron expression to use.
      * @return The scheduled times based on the supplied cron expression.
-     * @throws RuntimeException
-     *             Could be thrown.
+     * @throws RuntimeException Could be thrown.
      */
     ScheduledTimes getScheduledTimes(final JobType jobType, final Long scheduleReferenceTime,
-            final Long lastExecutedTime, final String expression) throws RuntimeException;
+                                     final Long lastExecutedTime, final String expression) throws RuntimeException;
 }

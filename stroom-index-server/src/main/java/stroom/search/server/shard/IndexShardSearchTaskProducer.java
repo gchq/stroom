@@ -38,7 +38,7 @@ public class IndexShardSearchTaskProducer extends AbstractTaskProducer {
     private final IndexShardSearcherCache indexShardSearcherCache;
     private final ErrorReceiver errorReceiver;
 
-    private final Queue<IndexShardSearchTask> taskQueue = new ConcurrentLinkedQueue<IndexShardSearchTask>();
+    private final Queue<IndexShardSearchTask> taskQueue = new ConcurrentLinkedQueue<>();
     private final int tasksCreated;
     private final AtomicInteger tasksRequested = new AtomicInteger();
     private final AtomicInteger tasksCompleted = new AtomicInteger();
@@ -90,7 +90,7 @@ public class IndexShardSearchTaskProducer extends AbstractTaskProducer {
         if (!clusterSearchTask.isTerminated()) {
             // First try and get a task that will make use of an open shard.
             for (final IndexShardSearchTask t : taskQueue) {
-                if (indexShardSearcherCache.get(t.getIndexShardId()) != null) {
+                if (indexShardSearcherCache.isCached(t.getIndexShardId())) {
                     if (taskQueue.remove(t)) {
                         task = t;
                         break;

@@ -31,7 +31,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.dashboard.client.table.ExpressionPresenter.ExpressionView;
 import stroom.widget.button.client.ImageButton;
 
-public class ExpressionViewImpl extends ViewWithUiHandlers<ExpressionUiHandlers>implements ExpressionView {
+public class ExpressionViewImpl extends ViewWithUiHandlers<ExpressionUiHandlers> implements ExpressionView {
     private static Resources resources;
     private final Widget widget;
     @UiField

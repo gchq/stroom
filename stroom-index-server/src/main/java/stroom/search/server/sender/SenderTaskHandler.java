@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,9 +19,9 @@ package stroom.search.server.sender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
-import stroom.query.Coprocessor;
-import stroom.query.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.query.Payload;
+import stroom.query.common.v2.Coprocessor;
+import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
+import stroom.query.common.v2.Payload;
 import stroom.search.server.NodeResult;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;

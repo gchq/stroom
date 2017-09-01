@@ -32,25 +32,11 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 public class SchedulePresenter extends MyPresenterWidget<SchedulePresenter.ScheduleView> {
-    public interface ScheduleView extends View {
-        HasText getScheduledType();
-
-        HasText getScheduledString();
-
-        HasText getLastExecutedTime();
-
-        HasText getNextScheduledTime();
-
-        HasClickHandlers getCalculateButton();
-    }
-
     private final ClientDispatchAsync clientDispatchAsync;
-
     private JobType jobType = JobType.UNKNOWN;
     private Long scheduleReferenceTime = 0L;
     private Long lastExecutedTime = 0L;
     private String scheduleString = "";
-
     @Inject
     public SchedulePresenter(final EventBus eventBus, final ScheduleView view,
                              final ClientDispatchAsync clientDispatchAsync) {
@@ -117,5 +103,17 @@ public class SchedulePresenter extends MyPresenterWidget<SchedulePresenter.Sched
         } else {
             HidePopupEvent.fire(SchedulePresenter.this, SchedulePresenter.this, autoClose, ok);
         }
+    }
+
+    public interface ScheduleView extends View {
+        HasText getScheduledType();
+
+        HasText getScheduledString();
+
+        HasText getLastExecutedTime();
+
+        HasText getNextScheduledTime();
+
+        HasClickHandlers getCalculateButton();
     }
 }

@@ -50,6 +50,7 @@ public class BasicTableSettingsViewImpl extends ViewImpl implements BasicTableSe
     TextBox maxResults;
     @UiField
     TickBox showDetail;
+
     @Inject
     public BasicTableSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);

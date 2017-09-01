@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-
 import stroom.status.remote.GetStatusRequest;
 import stroom.status.remote.GetStatusResponse;
 import stroom.status.remote.GetStatusResponse.StatusEntry;
@@ -32,7 +31,7 @@ public class RunStatusService {
     public static void main(String[] args) {
         try {
             ApplicationContext appContext = new ClassPathXmlApplicationContext(
-                    new String[] { "classpath:META-INF/spring/stroomRemoteClientContext.xml" });
+                    new String[]{"classpath:META-INF/spring/stroomRemoteClientContext.xml"});
 
             RemoteStatusService statusService = appContext.getBean(RemoteStatusService.class);
 

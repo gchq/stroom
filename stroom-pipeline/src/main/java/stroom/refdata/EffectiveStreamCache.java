@@ -34,15 +34,13 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 public class EffectiveStreamCache extends AbstractCacheBean<EffectiveStreamKey, TreeSet<EffectiveStream>> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(EffectiveStreamCache.class);
-
     // = 86 400 000
     public static final long ONE_DAY = 1000 * 60 * 60 * 24;
     // round up one day to 100000000
     public static final long APPROX_DAY = 100000000;
     // actually 11.5 days but this is fine for the purposes of reference data.
     public static final long APPROX_TEN_DAYS = 1000000000;
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(EffectiveStreamCache.class);
     private static final int MAX_CACHE_ENTRIES = 1000000;
 
     private final StreamStore streamStore;
@@ -50,7 +48,7 @@ public class EffectiveStreamCache extends AbstractCacheBean<EffectiveStreamKey, 
 
     @Inject
     public EffectiveStreamCache(final CacheManager cacheManager, final StreamStore streamStore,
-            final EffectiveStreamInternPool internPool) {
+                                final EffectiveStreamInternPool internPool) {
         super(cacheManager, "Reference Data - Effective Stream Cache", MAX_CACHE_ENTRIES);
         this.streamStore = streamStore;
         this.internPool = internPool;
@@ -58,8 +56,7 @@ public class EffectiveStreamCache extends AbstractCacheBean<EffectiveStreamKey, 
         setMaxLiveTime(10, TimeUnit.MINUTES);
     }
 
-    @Override
-    public TreeSet<EffectiveStream> get(final EffectiveStreamKey effectiveStreamKey) {
+    public TreeSet<EffectiveStream> getOrCreate(final EffectiveStreamKey effectiveStreamKey) {
         if (effectiveStreamKey.getFeed() == null) {
             throw new ProcessException("No feed has been specified for reference data lookup");
         }
@@ -67,11 +64,10 @@ public class EffectiveStreamCache extends AbstractCacheBean<EffectiveStreamKey, 
             throw new ProcessException("No stream type has been specified for reference data lookup");
         }
 
-        return super.get(effectiveStreamKey);
+        return computeIfAbsent(effectiveStreamKey, this::create);
     }
 
-    @Override
-    protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
+    TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
         TreeSet<EffectiveStream> effectiveStreamSet = null;
 
         try {

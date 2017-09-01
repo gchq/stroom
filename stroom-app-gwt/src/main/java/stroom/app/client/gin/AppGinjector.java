@@ -55,6 +55,7 @@ import stroom.monitoring.client.gin.MonitoringGinjector;
 import stroom.monitoring.client.gin.MonitoringModule;
 import stroom.pipeline.client.gin.PipelineGinjector;
 import stroom.pipeline.client.gin.PipelineModule;
+import stroom.policy.client.gin.PolicyModule;
 import stroom.query.client.QueryModule;
 import stroom.script.client.gin.ScriptGinjector;
 import stroom.script.client.gin.ScriptModule;
@@ -98,6 +99,7 @@ import stroom.xmlschema.client.gin.XMLSchemaModule;
         SecurityModule.class,
         StatisticsModule.class,
         StreamStoreModule.class,
+        PolicyModule.class,
         StroomStatsStoreModule.class,
         TaskModule.class,
         VisModule.class,
@@ -129,8 +131,7 @@ public interface AppGinjector extends
         VisGinjector,
         VisualisationGinjector,
         WelcomeGinjector,
-        XMLSchemaGinjector
-{
+        XMLSchemaGinjector {
     // Default implementation of standard resources
     EventBus getEventBus();
 

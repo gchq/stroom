@@ -17,7 +17,6 @@
 package stroom.statistics.client.common.gin;
 
 import com.google.gwt.inject.client.AsyncProvider;
-
 import stroom.statistics.client.common.StatisticsPlugin;
 import stroom.statistics.client.common.presenter.StatisticsDataSourcePresenter;
 import stroom.statistics.client.common.presenter.StatisticsDataSourceSettingsPresenter;

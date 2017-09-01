@@ -18,7 +18,6 @@ package stroom.feed.remoteclient;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-
 import stroom.feed.remote.GetFeedStatusRequest;
 import stroom.feed.remote.RemoteFeedService;
 

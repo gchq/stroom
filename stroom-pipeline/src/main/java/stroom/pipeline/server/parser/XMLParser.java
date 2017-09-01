@@ -39,16 +39,16 @@ import java.io.IOException;
 
 @Component
 @Scope(value = StroomScope.TASK)
-@ConfigurableElement(type = "XMLParser", category = Category.PARSER, roles = { PipelineElementType.ROLE_PARSER,
+@ConfigurableElement(type = "XMLParser", category = Category.PARSER, roles = {PipelineElementType.ROLE_PARSER,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
-        PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR }, icon = ElementIcons.XML)
+        PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR}, icon = ElementIcons.XML)
 public class XMLParser extends AbstractParser {
     private static final SAXParserFactory PARSER_FACTORY;
 
-	static {
-		PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
-		PARSER_FACTORY.setNamespaceAware(true);
-	}
+    static {
+        PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
+        PARSER_FACTORY.setNamespaceAware(true);
+    }
 
     @Inject
     public XMLParser(final ErrorReceiverProxy errorReceiverProxy, final LocationFactoryProxy locationFactory) {

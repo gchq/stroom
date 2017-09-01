@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,7 +26,6 @@ import stroom.entity.shared.HasIsConstrained;
 import stroom.entity.shared.IdRange;
 import stroom.entity.shared.IncludeExcludeEntityIdSet;
 import stroom.entity.shared.Matcher;
-import stroom.entity.shared.OrderBy;
 import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
@@ -47,7 +46,7 @@ import java.util.List;
 @XmlRootElement
 public class FindStreamCriteria extends BaseCriteria
         implements HasFolderIdSet, Copyable<FindStreamCriteria>, HasIsConstrained, Matcher<Stream> {
-    public static final OrderBy ORDER_BY_CREATE_MS = new OrderBy("Create", "createMs", Stream.CREATE_MS);
+    public static final String FIELD_CREATE_MS = "Create";
     private static final long serialVersionUID = -4777723504698304778L;
     /**
      * Keep up to date as it's used to cache SQL queries.
@@ -246,7 +245,7 @@ public class FindStreamCriteria extends BaseCriteria
 
     public IncludeExcludeEntityIdSet<Feed> getFeeds() {
         if (feedIdSet != null) {
-            feeds = new IncludeExcludeEntityIdSet<Feed>();
+            feeds = new IncludeExcludeEntityIdSet<>();
             feeds.setInclude(feedIdSet);
             this.feedIdSet = null;
         }
@@ -260,13 +259,13 @@ public class FindStreamCriteria extends BaseCriteria
 
     public IncludeExcludeEntityIdSet<Feed> obtainFeeds() {
         if (feedIdSet != null) {
-            feeds = new IncludeExcludeEntityIdSet<Feed>();
+            feeds = new IncludeExcludeEntityIdSet<>();
             feeds.setInclude(feedIdSet);
             this.feedIdSet = null;
         }
 
         if (feeds == null) {
-            feeds = new IncludeExcludeEntityIdSet<Feed>();
+            feeds = new IncludeExcludeEntityIdSet<>();
         }
         return feeds;
     }

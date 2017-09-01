@@ -28,7 +28,7 @@ import java.io.OutputStream;
 /**
  * Output stream that writes a lock file with the data and then renames to the
  * final file once closed.
- *
+ * <p>
  * If lazy is set on it also does not create the file until some data is written
  * (thus the file does not exist if no data was written).
  */

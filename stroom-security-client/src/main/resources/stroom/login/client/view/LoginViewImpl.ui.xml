@@ -1,7 +1,6 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:panel="urn:import:stroom.widget.panel.client.view">
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <ui:style>
         .max {
         position: absolute;
@@ -45,6 +44,15 @@
         padding-left: 2px;
         }
 
+        .roundEdged {
+        width: 100%;
+        height: 100%;
+        border: 1px solid #404e60;
+        border-radius: 5px;
+        padding: 5px;
+        background: white;
+        }
+
         .userName {
         font-weight: 500;
         padding-bottom: 5px;
@@ -78,8 +86,7 @@
                 <g:DockLayoutPanel unit="PX" width="100%" height="100%">
                     <g:center>
                         <g:SimplePanel styleName="{style.paddingLeft}">
-                            <panel:RoundEdgedPanel width="100%"
-                                                   height="100%">
+                            <g:FlowPanel styleName="{style.roundEdged}">
                                 <g:SimplePanel ui:field="html"/>
                                 <g:FlowPanel styleName="{style.buildInfo}">
                                     <g:Label ui:field="buildVersion"/>
@@ -87,53 +94,51 @@
                                     <g:Label ui:field="upDate"/>
                                     <g:Label ui:field="nodeName"/>
                                 </g:FlowPanel>
-                            </panel:RoundEdgedPanel>
+                            </g:FlowPanel>
                         </g:SimplePanel>
                     </g:center>
                     <g:east size="215">
                         <g:SimplePanel styleName="{style.paddingRight}">
-                            <panel:RoundEdgedPanel width="100%"
-                                                   height="100%">
-                                <g:FlowPanel>
-                                    <g:Grid styleName="stroom-control-grid">
-                                        <g:row>
-                                            <g:cell>
-                                                <div style="font-weight:500;padding-bottom:5px;">Login</div>
-                                            </g:cell>
-                                        </g:row>
-                                        <g:row>
-                                            <g:customCell>
-                                                <g:FlowPanel>
-                                                    <g:Label text="User Name:"/>
-                                                    <g:TextBox ui:field="userName"/>
-                                                </g:FlowPanel>
-                                            </g:customCell>
-                                        </g:row>
-                                        <g:row>
-                                            <g:customCell>
-                                                <g:FlowPanel>
-                                                    <g:Label text="Password:"/>
-                                                    <g:PasswordTextBox ui:field="password"/>
-                                                </g:FlowPanel>
-                                            </g:customCell>
-                                        </g:row>
-                                        <g:row>
-                                            <g:customCell>
-                                                <g:Button ui:field="login" text="Login"/>
-                                            </g:customCell>
-                                        </g:row>
-                                        <g:row>
-                                            <g:customCell>
-                                                <g:HTMLPanel styleName="{style.reset}">
-                                                    <g:Anchor text="Reset your password"
-                                                              ui:field="reset"/>
-                                                </g:HTMLPanel>
-                                            </g:customCell>
-                                        </g:row>
-                                    </g:Grid>
-                                </g:FlowPanel>
+                            <g:FlowPanel styleName="{style.roundEdged}">
+                                <g:Grid styleName="stroom-control-grid">
+                                    <g:row>
+                                        <g:cell>
+                                            <div style="font-weight:500;padding-bottom:5px;">Login</div>
+                                        </g:cell>
+                                    </g:row>
+                                    <g:row>
+                                        <g:customCell>
+                                            <g:FlowPanel>
+                                                <g:Label text="User Name:"/>
+                                                <g:TextBox ui:field="userName"/>
+                                            </g:FlowPanel>
+                                        </g:customCell>
+                                    </g:row>
+                                    <g:row>
+                                        <g:customCell>
+                                            <g:FlowPanel>
+                                                <g:Label text="Password:"/>
+                                                <g:PasswordTextBox ui:field="password"/>
+                                            </g:FlowPanel>
+                                        </g:customCell>
+                                    </g:row>
+                                    <g:row>
+                                        <g:customCell>
+                                            <g:Button ui:field="login" text="Login"/>
+                                        </g:customCell>
+                                    </g:row>
+                                    <g:row>
+                                        <g:customCell>
+                                            <g:HTMLPanel styleName="{style.reset}">
+                                                <g:Anchor text="Reset your password"
+                                                          ui:field="reset"/>
+                                            </g:HTMLPanel>
+                                        </g:customCell>
+                                    </g:row>
+                                </g:Grid>
+
                                 <g:Label ui:field="error" styleName="gwt-Label {style.error}"/>
-                            </panel:RoundEdgedPanel>
+                            </g:FlowPanel>
                         </g:SimplePanel>
                     </g:east>
                 </g:DockLayoutPanel>

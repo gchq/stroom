@@ -42,8 +42,7 @@ public abstract class NestedInputStream extends InputStream {
     public abstract boolean getNextEntry() throws IOException;
 
     /**
-     * @param skipCount
-     *            entries to skip over
+     * @param skipCount entries to skip over
      * @return true if we have another entry to read
      */
     public abstract boolean getNextEntry(long skipCount) throws IOException;

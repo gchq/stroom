@@ -71,7 +71,7 @@ public class FetchProcessorAction extends Action<ResultList<SharedObject>>
     public void setRowExpanded(final SharedObject row, final boolean open) {
         if (open) {
             if (expandedRows == null) {
-                expandedRows = new HashSet<SharedObject>();
+                expandedRows = new HashSet<>();
             }
             expandedRows.add(row);
         } else {

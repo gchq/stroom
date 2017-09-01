@@ -26,18 +26,13 @@ import stroom.streamstore.client.presenter.StreamPresenter.StreamView;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 public class StreamViewImpl extends ViewImpl implements StreamView {
-    public interface Binder extends UiBinder<Widget, StreamViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     ResizeSimplePanel streamList;
     @UiField
     ResizeSimplePanel streamRelationList;
     @UiField
     ResizeSimplePanel data;
-
     @Inject
     public StreamViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -57,5 +52,8 @@ public class StreamViewImpl extends ViewImpl implements StreamView {
         } else if (StreamPresenter.DATA.equals(slot)) {
             data.setWidget(content);
         }
+    }
+
+    public interface Binder extends UiBinder<Widget, StreamViewImpl> {
     }
 }

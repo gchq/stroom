@@ -16,18 +16,31 @@
 
 package stroom.util;
 
+import stroom.feed.MetaMap;
 import stroom.streamstore.server.fs.BlockGZIPInputFile;
 import stroom.streamstore.server.fs.UncompressedInputStream;
 import stroom.streamstore.server.fs.serializable.RANestedInputStream;
-import stroom.util.zip.HeaderMap;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
 public class FileMetaGrep extends AbstractCommandLineTool {
+    Map<String, String> matchMap;
     private String[] repoPathParts = null;
-    HeaderMap matchMap;
     private String feedId;
+
+    public FileMetaGrep(String[] args) throws Exception {
+        matchMap = ArgsUtil.parse(args);
+        matchMap.remove("repoPath");
+        matchMap.remove("feedId");
+
+        doMain(args);
+    }
+
+    public static void main(String[] args) throws Exception {
+        new FileMetaGrep(args);
+    }
 
     public void setRepoPath(String repoPath) {
         this.repoPathParts = repoPath.split("/");
@@ -35,15 +48,6 @@ public class FileMetaGrep extends AbstractCommandLineTool {
 
     public void setFeedId(String feedId) {
         this.feedId = feedId;
-    }
-
-    public FileMetaGrep(String[] args) throws Exception {
-        matchMap = new HeaderMap();
-        matchMap.loadArgs(args);
-        matchMap.remove("repoPath");
-        matchMap.remove("feedId");
-
-        doMain(args);
     }
 
     @Override
@@ -95,18 +99,18 @@ public class FileMetaGrep extends AbstractCommandLineTool {
                 while (nestedInputStream.getNextEntry()) {
                     segment++;
 
-                    HeaderMap headerMap = new HeaderMap();
-                    headerMap.read(nestedInputStream, false);
+                    MetaMap metaMap = new MetaMap();
+                    metaMap.read(nestedInputStream, false);
                     nestedInputStream.closeEntry();
 
                     boolean match = true;
 
                     for (String matchKey : matchMap.keySet()) {
-                        if (!headerMap.containsKey(matchKey)) {
+                        if (!metaMap.containsKey(matchKey)) {
                             // No Good
                             match = false;
                         } else {
-                            if (!headerMap.get(matchKey).startsWith(matchMap.get(matchKey))) {
+                            if (!metaMap.get(matchKey).startsWith(matchMap.get(matchKey))) {
                                 // No Good
                                 match = false;
                             }
@@ -116,7 +120,7 @@ public class FileMetaGrep extends AbstractCommandLineTool {
                     if (match) {
                         // Found Match
                         System.out.println("Found Match in " + path + " at segment " + segment);
-                        System.out.write(headerMap.toByteArray());
+                        System.out.write(metaMap.toByteArray());
                         System.out.println();
                     }
 
@@ -143,10 +147,6 @@ public class FileMetaGrep extends AbstractCommandLineTool {
         }
 
         return true;
-    }
-
-    public static void main(String[] args) throws Exception {
-        new FileMetaGrep(args);
     }
 
 }

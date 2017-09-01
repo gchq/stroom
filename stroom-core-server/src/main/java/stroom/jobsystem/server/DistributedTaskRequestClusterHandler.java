@@ -62,7 +62,7 @@ public class DistributedTaskRequestClusterHandler
         }
 
         // Return the requested number of tasks from the cache.
-        final Map<JobNode, List<DistributedTask<?>>> tasksToReturn = new HashMap<JobNode, List<DistributedTask<?>>>();
+        final Map<JobNode, List<DistributedTask<?>>> tasksToReturn = new HashMap<>();
         int totalTasks = 0;
 
         try {

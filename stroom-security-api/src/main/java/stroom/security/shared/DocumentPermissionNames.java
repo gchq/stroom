@@ -71,8 +71,8 @@ public final class DocumentPermissionNames {
     public static final String[] DOCUMENT_PERMISSIONS = new String[]{USE, READ, UPDATE, DELETE, OWNER, IMPORT,
             EXPORT};
 
-    private static final Map<String, String> LOWER_PERMISSIONS = new HashMap<String, String>();
-    private static final Map<String, String> HIGHER_PERMISSIONS = new HashMap<String, String>();
+    private static final Map<String, String> LOWER_PERMISSIONS = new HashMap<>();
+    private static final Map<String, String> HIGHER_PERMISSIONS = new HashMap<>();
 
     static {
         LOWER_PERMISSIONS.put(OWNER, DELETE);

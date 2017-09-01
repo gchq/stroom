@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-import stroom.dashboard.expression.FieldIndexMap;
+import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
@@ -32,7 +32,7 @@ import stroom.util.spring.StroomScope;
 @Component
 @Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(type = "SearchResultOutputFilter", category = Category.FILTER, roles = {
-        PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS }, icon = ElementIcons.SEARCH)
+        PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS}, icon = ElementIcons.SEARCH)
 public class SearchResultOutputFilter extends AbstractXMLFilter {
     private static final String RECORD = "record";
     private static final String DATA = "data";

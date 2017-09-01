@@ -51,7 +51,7 @@ public class DefaultClusterResultCollector<R extends SharedObject> implements Cl
     private volatile boolean terminated;
 
     public DefaultClusterResultCollector(final ClusterTask<R> request, final Node sourceNode,
-            final Set<Node> targetNodes) {
+                                         final Set<Node> targetNodes) {
         id = CollectorIdFactory.create();
         this.request = request;
         this.sourceNode = sourceNode;

@@ -17,7 +17,6 @@
 package stroom.util;
 
 import org.apache.commons.lang.StringUtils;
-import stroom.util.zip.HeaderMap;
 
 import java.beans.BeanInfo;
 import java.beans.Introspector;
@@ -26,22 +25,21 @@ import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Base class for command line tools that handles setting a load of args on the
  * program as name value pairs.
  */
 public abstract class AbstractCommandLineTool {
-    private static class Example extends AbstractCommandLineTool {
-        @Override
-        public void run() {
-            throw new RuntimeException();
-        }
-    }
-
-    private HeaderMap map;
+    private Map<String, String> map;
     private List<String> validArguments;
     private int maxPropLength = 0;
+
+    public static void main(final String[] args) throws Exception {
+        final Example example = new Example();
+        example.doMain(args);
+    }
 
     public abstract void run();
 
@@ -53,10 +51,8 @@ public abstract class AbstractCommandLineTool {
     }
 
     public void init(final String[] args) throws Exception {
-        map = new HeaderMap();
-        validArguments = new ArrayList<String>();
-
-        map.loadArgs(args);
+        map = ArgsUtil.parse(args);
+        validArguments = new ArrayList<>();
 
         final BeanInfo beanInfo = Introspector.getBeanInfo(this.getClass());
 
@@ -140,9 +136,11 @@ public abstract class AbstractCommandLineTool {
         }
     }
 
-    public static void main(final String[] args) throws Exception {
-        final Example example = new Example();
-        example.doMain(args);
+    private static class Example extends AbstractCommandLineTool {
+        @Override
+        public void run() {
+            throw new RuntimeException();
+        }
     }
 
 }

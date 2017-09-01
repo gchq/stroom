@@ -27,6 +27,13 @@ import stroom.util.test.StroomUnitTest;
 public class TestAbstractCommandLineTool extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAbstractCommandLineTool.class);
 
+    @Test
+    public void testSimple() throws Exception {
+        final TestProgram testProgram = new TestProgram();
+        testProgram.doMain(new String[]{"prop1=11"});
+        testProgram.traceArguments(System.out);
+    }
+
     public static class TestProgram extends AbstractCommandLineTool {
         int prop1;
         int prop2;
@@ -43,12 +50,5 @@ public class TestAbstractCommandLineTool extends StroomUnitTest {
         public void run() {
             LOGGER.info("run() - {} {}", prop1, prop2);
         }
-    }
-
-    @Test
-    public void testSimple() throws Exception {
-        final TestProgram testProgram = new TestProgram();
-        testProgram.doMain(new String[] { "prop1=11" });
-        testProgram.traceArguments(System.out);
     }
 }

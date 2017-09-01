@@ -25,8 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.SystemEntityServiceImpl;
-import stroom.entity.server.util.SQLBuilder;
-import stroom.entity.server.util.SQLUtil;
+import stroom.entity.server.util.FieldMap;
+import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.PermissionException;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -38,6 +38,7 @@ import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeService;
 import stroom.security.Insecure;
+import stroom.security.Secured;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.spring.StroomSpringProfiles;
@@ -46,8 +47,8 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.Set;
 
+@Component
 @Profile(StroomSpringProfiles.PROD)
-@Component("indexShardService")
 @Insecure
 @Transactional
 public class IndexShardServiceImpl
@@ -70,7 +71,7 @@ public class IndexShardServiceImpl
     public IndexShard createIndexShard(final IndexShardKey indexShardKey, final Node ownerNode) {
         final Index index = indexShardKey.getIndex();
         if (index.getVolumes() == null || index.getVolumes().size() == 0) {
-            LOGGER.error(VOLUME_ERROR);
+            LOGGER.debug(VOLUME_ERROR);
             throw new IndexException(VOLUME_ERROR);
         }
 
@@ -117,10 +118,12 @@ public class IndexShardServiceImpl
         CriteriaLoggingUtil.appendEntityIdSet(items, "volumeIdSet", criteria.getVolumeIdSet());
         CriteriaLoggingUtil.appendEntityIdSet(items, "indexIdSet", criteria.getIndexShardSet());
         CriteriaLoggingUtil.appendCriteriaSet(items, "indexShardStatusSet", criteria.getIndexShardStatusSet());
+        CriteriaLoggingUtil.appendStringTerm(items, "partition", criteria.getPartition().getString());
 
         super.appendCriteria(items, criteria);
     }
 
+    @Secured(IndexShard.MANAGE_INDEX_SHARDS_PERMISSION)
     @Override
     public Boolean delete(final IndexShard entity) throws RuntimeException {
         final Index index = entity.getIndex();
@@ -136,13 +139,19 @@ public class IndexShardServiceImpl
         return new IndexShardQueryAppender(entityManager);
     }
 
+    @Override
+    protected FieldMap createFieldMap() {
+        return super.createFieldMap()
+                .add(FindIndexShardCriteria.FIELD_PARTITION, IndexShard.PARTITION, "partition");
+    }
+
     private static class IndexShardQueryAppender extends QueryAppender<IndexShard, FindIndexShardCriteria> {
         public IndexShardQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
         }
 
         @Override
-        protected void appendBasicJoin(final SQLBuilder sql, final String alias, final Set<String> fetchSet) {
+        protected void appendBasicJoin(final HqlBuilder sql, final String alias, final Set<String> fetchSet) {
             super.appendBasicJoin(sql, alias, fetchSet);
             if (fetchSet != null) {
                 if (fetchSet.contains(Node.ENTITY_TYPE)) {
@@ -155,16 +164,16 @@ public class IndexShardServiceImpl
         }
 
         @Override
-        protected void appendBasicCriteria(final SQLBuilder sql, final String alias,
+        protected void appendBasicCriteria(final HqlBuilder sql, final String alias,
                                            final FindIndexShardCriteria criteria) {
             super.appendBasicCriteria(sql, alias, criteria);
 
-            SQLUtil.appendSetQuery(sql, true, alias + ".index", criteria.getIndexIdSet());
-            SQLUtil.appendSetQuery(sql, true, alias + ".node", criteria.getNodeIdSet());
-            SQLUtil.appendSetQuery(sql, true, alias + ".volume", criteria.getVolumeIdSet());
-            SQLUtil.appendSetQuery(sql, true, alias + ".pstatus", criteria.getIndexShardStatusSet(), true);
-            SQLUtil.appendRangeQuery(sql, alias + ".documentCount", criteria.getDocumentCountRange());
-
+            sql.appendEntityIdSetQuery(alias + ".index", criteria.getIndexIdSet());
+            sql.appendEntityIdSetQuery(alias + ".node", criteria.getNodeIdSet());
+            sql.appendEntityIdSetQuery(alias + ".volume", criteria.getVolumeIdSet());
+            sql.appendPrimitiveValueSetQuery(alias + ".pstatus", criteria.getIndexShardStatusSet());
+            sql.appendRangeQuery(alias + ".documentCount", criteria.getDocumentCountRange());
+            sql.appendValueQuery(alias + ".partition", criteria.getPartition());
         }
     }
 }

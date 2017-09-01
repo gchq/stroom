@@ -44,20 +44,14 @@ import stroom.pipeline.shared.XSLT;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.stepping.client.event.ShowSteppingFilterSettingsEvent;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.util.shared.Indicators;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
 
 public class ElementPresenter extends MyPresenterWidget<ElementView> implements HasDirtyHandlers {
-    public interface ElementView extends View {
-        void setCodeView(View view);
-
-        void setInputView(View view);
-
-        void setOutputView(View view);
-    }
-
+    private final ClientDispatchAsync dispatcher;
+    private final Provider<EditorPresenter> editorProvider;
     private String elementId;
     private PipelineElementType elementType;
     private DocRef entityRef;
@@ -65,18 +59,11 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
     private boolean refreshRequired = true;
     private boolean loaded;
     private boolean dirtyCode;
-
-    private final ClientDispatchAsync dispatcher;
-
     private Entity entity;
     private Indicators codeIndicators;
-
-    private final Provider<EditorPresenter> editorProvider;
-
     private EditorPresenter codePresenter;
     private EditorPresenter inputPresenter;
     private EditorPresenter outputPresenter;
-
     @Inject
     public ElementPresenter(final EventBus eventBus, final ElementView view,
                             final Provider<EditorPresenter> editorProvider, final ClientDispatchAsync dispatcher) {
@@ -100,7 +87,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
                         if (TextConverter.ENTITY_TYPE.equals(entityRef.getType())) {
                             final FindTextConverterCriteria criteria = new FindTextConverterCriteria();
                             criteria.setName(new StringCriteria(entityRef.getName()));
-                            criteria.setOrderBy(FindXSLTCriteria.ORDER_BY_ID);
+                            criteria.setSort(FindXSLTCriteria.FIELD_ID);
                             final EntityServiceFindAction<FindTextConverterCriteria, TextConverter> findAction = new EntityServiceFindAction<>(criteria);
                             async = true;
                             dispatcher.exec(findAction)
@@ -117,7 +104,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
                         } else if (XSLT.ENTITY_TYPE.equals(entityRef.getType())) {
                             final FindXSLTCriteria criteria = new FindXSLTCriteria();
                             criteria.setName(new StringCriteria(entityRef.getName()));
-                            criteria.setOrderBy(FindXSLTCriteria.ORDER_BY_ID);
+                            criteria.setSort(FindXSLTCriteria.FIELD_ID);
                             final EntityServiceFindAction<FindXSLTCriteria, XSLT> findAction = new EntityServiceFindAction<>(criteria);
                             async = true;
                             dispatcher.exec(findAction)
@@ -354,5 +341,13 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
         editorPresenter.getIndicatorsOption().setOn(true);
         editorPresenter.getLineNumbersOption().setAvailable(true);
         editorPresenter.getLineNumbersOption().setOn(false);
+    }
+
+    public interface ElementView extends View {
+        void setCodeView(View view);
+
+        void setInputView(View view);
+
+        void setOutputView(View view);
     }
 }

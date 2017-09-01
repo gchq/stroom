@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,11 +36,12 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.List;
 
-public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatView>implements FormatUihandlers {
+public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatView> implements FormatUihandlers {
     private final TimeZones timeZones;
     private Type type;
     private TablePresenter tablePresenter;
     private Field field;
+
     @Inject
     public FormatPresenter(final EventBus eventBus, final FormatView view, final TimeZones timeZones) {
         super(eventBus, view);

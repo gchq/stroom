@@ -37,20 +37,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class UpgradeDispatcherSingleton {
     private static final Logger LOGGER = LoggerFactory.getLogger(UpgradeDispatcherSingleton.class);
-
-    private Thread upgradeThread;
-    private UpgradeDispatcherServlet servlet;
+    private static UpgradeDispatcherSingleton instance = new UpgradeDispatcherSingleton();
     private final AtomicBoolean contextStarted = new AtomicBoolean(false);
     private final AtomicBoolean dispatcherStarted = new AtomicBoolean(false);
+    private Thread upgradeThread;
+    private UpgradeDispatcherServlet servlet;
     private boolean stop;
-
-    private static UpgradeDispatcherSingleton instance = new UpgradeDispatcherSingleton();
+    private ServletConfig servletConfig = null;
 
     public static UpgradeDispatcherSingleton instance() {
         return instance;
     }
-
-    private ServletConfig servletConfig = null;
 //    private static final String UPGRADE_CLASS = "upgrade-class";
 
     /**
@@ -68,10 +65,10 @@ public class UpgradeDispatcherSingleton {
 //        if (upgradeHandler != null) {
 //            UpgradeRequestUtil.service(request, response, upgradeHandler);
 //        } else {
-            UpgradeRequestUtil.writeHtmlHead(response.getWriter());
-            response.getWriter().println("<h1>Starting Stroom</h1><p>Context Initialising...</p>");
-            UpgradeRequestUtil.writeHtmlFooter(response.getWriter());
-            response.getWriter().close();
+        UpgradeRequestUtil.writeHtmlHead(response.getWriter());
+        response.getWriter().println("<h1>Starting Stroom</h1><p>Context Initialising...</p>");
+        UpgradeRequestUtil.writeHtmlFooter(response.getWriter());
+        response.getWriter().close();
 //        }
     }
 

@@ -29,17 +29,11 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 public class ResizableCloseContent extends ResizeComposite implements HasEnabled {
     private static Binder binder = GWT.create(Binder.class);
-
-    public interface Binder extends UiBinder<Widget, ResizableCloseContent> {
-    }
-
     private final PopupUiHandlers popupUiHandlers;
-
     @UiField
     Button close;
     @UiField
     ResizeLayoutPanel content;
-
     public ResizableCloseContent(final PopupUiHandlers popupUiHandlers) {
         initWidget(binder.createAndBindUi(this));
         this.popupUiHandlers = popupUiHandlers;
@@ -57,5 +51,8 @@ public class ResizableCloseContent extends ResizeComposite implements HasEnabled
     @Override
     public void setEnabled(final boolean enabled) {
         close.setEnabled(enabled);
+    }
+
+    public interface Binder extends UiBinder<Widget, ResizableCloseContent> {
     }
 }

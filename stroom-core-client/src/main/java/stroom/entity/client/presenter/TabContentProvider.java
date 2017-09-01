@@ -27,9 +27,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class TabContentProvider<E> implements HasRead<E>, HasWrite<E> {
-    private final Map<TabData, Provider<?>> tabProviders = new HashMap<TabData, Provider<?>>();
-    private final Map<TabData, PresenterWidget<?>> presenterCache = new HashMap<TabData, PresenterWidget<?>>();
+public class TabContentProvider<E> implements HasRead<E>, HasWrite<E>, HasPermissionCheck {
+    private final Map<TabData, Provider<?>> tabProviders = new HashMap<>();
+    private final Map<TabData, PresenterWidget<?>> presenterCache = new HashMap<>();
 
     private Set<PresenterWidget<?>> usedPresenters;
     private Set<TabData> dirtyTabs;
@@ -37,6 +37,7 @@ public class TabContentProvider<E> implements HasRead<E>, HasWrite<E> {
     private DirtyHandler dirtyHandler;
     private PresenterWidget<?> currentPresenter;
     private E entity;
+    private boolean readOnly;
 
     public <T extends PresenterWidget<?>> void add(final TabData tab, final Provider<T> provider) {
         tabProviders.put(tab, provider);
@@ -57,7 +58,7 @@ public class TabContentProvider<E> implements HasRead<E>, HasWrite<E> {
                     hasDirtyHandlers.addDirtyHandler(event -> {
                         if (event.isDirty()) {
                             if (dirtyTabs == null) {
-                                dirtyTabs = new HashSet<TabData>();
+                                dirtyTabs = new HashSet<>();
                             }
 
                             dirtyTabs.add(tab);
@@ -71,6 +72,7 @@ public class TabContentProvider<E> implements HasRead<E>, HasWrite<E> {
         // Read entity if not read since entity set.
         if (usedPresenters == null || !usedPresenters.contains(currentPresenter)) {
             read(currentPresenter, entity);
+            onPermissionsCheck(currentPresenter, readOnly);
         }
 
         return currentPresenter;
@@ -105,6 +107,16 @@ public class TabContentProvider<E> implements HasRead<E>, HasWrite<E> {
         }
     }
 
+    @Override
+    public void onPermissionsCheck(final boolean readOnly) {
+        this.readOnly = readOnly;
+        if (usedPresenters != null) {
+            for (final PresenterWidget<?> presenter : usedPresenters) {
+                onPermissionsCheck(presenter, readOnly);
+            }
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private void read(final PresenterWidget<?> presenter, final E entity) {
         if (presenter != null && presenter instanceof HasRead<?>) {
@@ -112,7 +124,7 @@ public class TabContentProvider<E> implements HasRead<E>, HasWrite<E> {
             hasRead.read(entity);
 
             if (usedPresenters == null) {
-                usedPresenters = new HashSet<PresenterWidget<?>>();
+                usedPresenters = new HashSet<>();
             }
             usedPresenters.add(presenter);
         }
@@ -123,6 +135,13 @@ public class TabContentProvider<E> implements HasRead<E>, HasWrite<E> {
         if (entity != null && presenter != null && presenter instanceof HasWrite<?>) {
             final HasWrite<E> hasWrite = (HasWrite<E>) presenter;
             hasWrite.write(entity);
+        }
+    }
+
+    private void onPermissionsCheck(final PresenterWidget<?> presenter, final boolean readOnly) {
+        if (presenter != null && presenter instanceof HasPermissionCheck) {
+            final HasPermissionCheck hasPermissionsCheck = (HasPermissionCheck) presenter;
+            hasPermissionsCheck.onPermissionsCheck(readOnly);
         }
     }
 

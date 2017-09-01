@@ -26,9 +26,10 @@ import com.gwtplatform.mvp.client.View;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
-import stroom.datasource.api.v1.DataSourceField;
+import stroom.datasource.api.v2.DataSourceField;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.query.api.v1.ExpressionOperator;
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
@@ -71,8 +72,8 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         return selectionModel.addSelectionChangeHandler(handler);
     }
 
-    public void setFields(final List<DataSourceField> fields) {
-        getView().setFields(fields);
+    public void init(final ClientDispatchAsync dispatcher, final DocRef dataSource, final List<DataSourceField> fields) {
+        getView().init(dispatcher, dataSource, fields);
     }
 
     public void read(final ExpressionOperator root) {
@@ -225,7 +226,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
 
         void setSelectionModel(MySingleSelectionModel<Item> selectionModel);
 
-        void setFields(List<DataSourceField> fields);
+        void init(ClientDispatchAsync dispatcher, DocRef dataSource, List<DataSourceField> fields);
 
         void endEditing();
 

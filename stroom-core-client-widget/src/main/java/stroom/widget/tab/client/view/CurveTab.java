@@ -25,16 +25,162 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
-import stroom.widget.button.client.GlyphIcon;
-import stroom.widget.tab.client.presenter.Icon;
+import stroom.svg.client.Icon;
+import stroom.svg.client.SvgIcon;
 import stroom.widget.tab.client.presenter.ImageIcon;
 
 public class CurveTab extends AbstractTab {
+    private static Resources resources;
+    private final Element element;
+    private final Element background;
+    private final Element leftBackground;
+    private final Element midBackground;
+    private final Element rightBackground;
+    //    private final Element icon;
+    private final Element label;
+    private final Element close;
+    private final boolean allowClose;
+    public CurveTab(final Icon icon, final String text, final boolean allowClose) {
+        this.allowClose = allowClose;
+
+        if (resources == null) {
+            resources = GWT.create(Resources.class);
+            resources.style().ensureInjected();
+        }
+
+        element = DOM.createDiv();
+        element.setClassName(resources.style().curveTab());
+
+        background = DOM.createDiv();
+        background.setClassName(resources.style().background());
+        element.appendChild(background);
+
+        leftBackground = DOM.createDiv();
+        leftBackground.setClassName(resources.style().leftBackground());
+        background.appendChild(leftBackground);
+
+        midBackground = DOM.createDiv();
+        midBackground.setClassName(resources.style().midBackground());
+        background.appendChild(midBackground);
+
+        rightBackground = DOM.createDiv();
+        rightBackground.setClassName(resources.style().rightBackground());
+        background.appendChild(rightBackground);
+
+        if (icon != null) {
+            if (icon instanceof ImageIcon) {
+                final ImageIcon imageIcon = (ImageIcon) icon;
+                final Image image = imageIcon.getImage();
+                if (image != null) {
+                    image.getElement().addClassName(resources.style().icon());
+                    element.appendChild(image.getElement());
+                }
+//            } else if (icon instanceof SvgIcon) {
+//                final SvgIcon glyphIcon = (SvgIcon) icon;
+//                final SafeHtml safeHtml = SafeHtmlUtils.fromTrustedString("<div class=\""
+//                        + resources.style().icon()
+//                        + "\"><div class=\""
+//                        + resources.style().face()
+//                        + "\" style=\"color:"
+//                        + glyphIcon.getColourSet()
+//                        + "\"><i class=\""
+//                        + glyphIcon.getGlyph()
+//                        + "\"></i></div></div>");
+//                final HTML html = new HTML(safeHtml);
+//                final Element elem = html.getElement();
+//                element.appendChild(elem);
+            } else if (icon instanceof SvgIcon) {
+                final SvgIcon svgIcon = (SvgIcon) icon;
+
+                final Image image = new Image(svgIcon.getUrl());
+                image.addStyleName(resources.style().icon());
+
+
+//                final SafeHtml safeHtml = SafeHtmlUtils.fromTrustedString("<div class=\""
+//                        + resources.style().icon()
+//                        + "\"></div>");
+//                final HTML html = new HTML(safeHtml);
+//
+//                if (svgIcon.getUrl() != null) {
+//                    ResourceCache.get(svgIcon.getUrl(), data -> {
+//                        html.setHTML("<div class=\"" +
+//                                resources.style().icon() +
+//                                "\">" +
+//                                data +
+//                                "</div>");
+//                        final Element svg = getElement().getElementsByTagName("svg").getItem(0).cast();
+//                        svg.setAttribute("width", "18");
+//                        svg.setAttribute("height", "18");
+//                    });
+//                }
+
+                final Element elem = image.getElement();
+                element.appendChild(elem);
+            }
+        }
+
+        label = DOM.createDiv();
+        label.setClassName(resources.style().text());
+        label.setInnerText(text);
+        element.appendChild(label);
+
+        close = DOM.createDiv();
+        close.setClassName(resources.style().close());
+        element.appendChild(close);
+
+        setElement(element);
+
+        if (!allowClose) {
+            close.getStyle().setDisplay(Display.NONE);
+            label.getStyle().setPaddingRight(20, Unit.PX);
+        }
+    }
+
+    @Override
+    public void setSelected(final boolean selected) {
+        if (selected) {
+            element.addClassName(resources.style().selected());
+        } else {
+            element.removeClassName(resources.style().selected());
+        }
+    }
+
+    @Override
+    public void setCloseActive(final boolean active) {
+        if (allowClose) {
+            if (active) {
+                close.addClassName(resources.style().closeActive());
+            } else {
+                close.removeClassName(resources.style().closeActive());
+            }
+        }
+    }
+
+    public String getText() {
+        return label.getInnerText();
+    }
+
+    @Override
+    public void setText(final String text) {
+        label.setInnerText(text);
+    }
+
+    @Override
+    protected void setHover(final boolean hover) {
+        if (hover) {
+            element.addClassName(resources.style().hover());
+        } else {
+            element.removeClassName(resources.style().hover());
+        }
+    }
+
+    @Override
+    protected Element getCloseElement() {
+        return close;
+    }
+
     public interface Style extends CssResource {
         String curveTab();
 
@@ -84,129 +230,5 @@ public class CurveTab extends AbstractTab {
 
         @Source("CurveTab.css")
         Style style();
-    }
-
-    private static Resources resources;
-
-    private final Element element;
-    private final Element background;
-    private final Element leftBackground;
-    private final Element midBackground;
-    private final Element rightBackground;
-    //    private final Element icon;
-    private final Element label;
-    private final Element close;
-    private final boolean allowClose;
-
-    public CurveTab(final Icon icon, final String text, final boolean allowClose) {
-        this.allowClose = allowClose;
-
-        if (resources == null) {
-            resources = GWT.create(Resources.class);
-            resources.style().ensureInjected();
-        }
-
-        element = DOM.createDiv();
-        element.setClassName(resources.style().curveTab());
-
-        background = DOM.createDiv();
-        background.setClassName(resources.style().background());
-        element.appendChild(background);
-
-        leftBackground = DOM.createDiv();
-        leftBackground.setClassName(resources.style().leftBackground());
-        background.appendChild(leftBackground);
-
-        midBackground = DOM.createDiv();
-        midBackground.setClassName(resources.style().midBackground());
-        background.appendChild(midBackground);
-
-        rightBackground = DOM.createDiv();
-        rightBackground.setClassName(resources.style().rightBackground());
-        background.appendChild(rightBackground);
-
-        if (icon != null) {
-            if (icon instanceof ImageIcon) {
-                final ImageIcon imageIcon = (ImageIcon) icon;
-                final Image image = imageIcon.getImage();
-                if (image != null) {
-                    image.getElement().addClassName(resources.style().icon());
-                    element.appendChild(image.getElement());
-                }
-            } else if (icon instanceof GlyphIcon) {
-                final GlyphIcon glyphIcon = (GlyphIcon) icon;
-                final SafeHtml safeHtml = SafeHtmlUtils.fromTrustedString("<div class=\""
-                        + resources.style().icon()
-                        + "\"><div class=\""
-                        + resources.style().face()
-                        + "\" style=\"color:"
-                        + glyphIcon.getColourSet()
-                        + "\"><i class=\""
-                        + glyphIcon.getGlyph()
-                        + "\"></i></div></div>");
-                final HTML html = new HTML(safeHtml);
-                final Element elem = html.getElement();
-                element.appendChild(elem);
-            }
-        }
-
-        label = DOM.createDiv();
-        label.setClassName(resources.style().text());
-        label.setInnerText(text);
-        element.appendChild(label);
-
-        close = DOM.createDiv();
-        close.setClassName(resources.style().close());
-        element.appendChild(close);
-
-        setElement(element);
-
-        if (!allowClose) {
-            close.getStyle().setDisplay(Display.NONE);
-            label.getStyle().setPaddingRight(20, Unit.PX);
-        }
-    }
-
-    @Override
-    public void setSelected(final boolean selected) {
-        if (selected) {
-            element.addClassName(resources.style().selected());
-        } else {
-            element.removeClassName(resources.style().selected());
-        }
-    }
-
-    @Override
-    public void setCloseActive(final boolean active) {
-        if (allowClose) {
-            if (active) {
-                close.addClassName(resources.style().closeActive());
-            } else {
-                close.removeClassName(resources.style().closeActive());
-            }
-        }
-    }
-
-    @Override
-    public void setText(final String text) {
-        label.setInnerText(text);
-    }
-
-    public String getText() {
-        return label.getInnerText();
-    }
-
-    @Override
-    protected void setHover(final boolean hover) {
-        if (hover) {
-            element.addClassName(resources.style().hover());
-        } else {
-            element.removeClassName(resources.style().hover());
-        }
-    }
-
-    @Override
-    protected Element getCloseElement() {
-        return close;
     }
 }

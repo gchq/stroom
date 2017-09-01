@@ -16,7 +16,8 @@
 
 package stroom.entity.server.util;
 
-import stroom.util.zip.HeaderMap;
+
+import stroom.util.ArgsUtil;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.File;
@@ -24,6 +25,7 @@ import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -48,8 +50,7 @@ public final class DataFeedClient {
     }
 
     public static void main(final String[] args) throws Exception {
-        HeaderMap argsMap = new HeaderMap();
-        argsMap.loadArgs(args);
+        Map<String, String> argsMap = ArgsUtil.parse(args);
 
         String urlS = argsMap.get(ARG_URL);
         String inputFileS = argsMap.get(ARG_INPUTFILE);
@@ -120,5 +121,4 @@ public final class DataFeedClient {
         }
 
     }
-
 }

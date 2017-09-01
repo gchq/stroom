@@ -16,7 +16,6 @@
 
 package stroom.dashboard.client.query;
 
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.CellList;
@@ -28,22 +27,23 @@ import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.cell.list.client.CustomCellList;
 import stroom.dashboard.client.query.QueryFavouritesPresenter.QueryFavouritesView;
 import stroom.dashboard.shared.QueryEntity;
+import stroom.svg.client.SvgPreset;
 import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcon;
-import stroom.widget.button.client.ImageButtonView;
+import stroom.widget.button.client.ButtonView;
 
 public class QueryFavouritesViewImpl extends ViewImpl implements QueryFavouritesView {
     private final Widget widget;
+
     @UiField(provided = true)
     CustomCellList<QueryEntity> cellList;
     @UiField
     SimplePanel bottom;
     @UiField
     ButtonPanel buttonPanel;
+
     @Inject
     public QueryFavouritesViewImpl(final Binder binder) {
-        cellList = new CustomCellList<QueryEntity>(new QueryCell());
+        cellList = new CustomCellList<>(new QueryCell());
         widget = binder.createAndBindUi(this);
     }
 
@@ -63,13 +63,7 @@ public class QueryFavouritesViewImpl extends ViewImpl implements QueryFavourites
     }
 
     @Override
-    public ImageButtonView addButton(final String title, final ImageResource enabledImage,
-            final ImageResource disabledImage, final boolean enabled) {
-        return buttonPanel.add(title, enabledImage, disabledImage, enabled);
-    }
-
-    @Override
-    public GlyphButtonView addButton(final GlyphIcon preset) {
+    public ButtonView addButton(final SvgPreset preset) {
         return buttonPanel.add(preset);
     }
 

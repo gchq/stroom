@@ -1,27 +1,31 @@
 package stroom.servicediscovery;
 
 import com.codahale.metrics.health.HealthCheck;
+import io.vavr.Tuple2;
 import org.apache.curator.x.discovery.ServiceDiscovery;
 import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.curator.x.discovery.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.ExternalService;
-import stroom.ServiceDiscoverer;
+import stroom.resources.HasHealthCheck;
 import stroom.util.spring.StroomShutdown;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 @Component
 @Singleton
-public class ServiceDiscovererImpl implements ServiceDiscoverer {
+public class ServiceDiscovererImpl implements ServiceDiscoverer, HasHealthCheck {
 
     private final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscovererImpl.class);
 
@@ -34,6 +38,7 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
     private Map<ExternalService, ServiceProvider<String>> serviceProviders = new HashMap<>();
 
     @SuppressWarnings("unused")
+    @Inject
     public ServiceDiscovererImpl(final ServiceDiscoveryManager serviceDiscoveryManager) {
 
         //create the service providers once service discovery has started up
@@ -60,15 +65,18 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
     private void initProviders(final ServiceDiscovery<String> serviceDiscovery) {
 
         //Attempt to create ServiceProviders for each of the ExternalServices
-        Arrays.stream(ExternalService.values()).forEach(externalService -> {
-            ServiceProvider<String> serviceProvider = createProvider(serviceDiscovery, externalService);
-            LOGGER.debug("Adding service provider {}", externalService.getVersionedServiceName());
-            serviceProviders.put(externalService, serviceProvider);
-        });
-
+        Arrays.stream(ExternalService.values())
+                .filter(externalService -> externalService.getType().equals(ExternalService.Type.CLIENT) ||
+                        externalService.getType().equals(ExternalService.Type.CLIENT_AND_SERVER))
+                .forEach(externalService -> {
+                    ServiceProvider<String> serviceProvider = createProvider(serviceDiscovery, externalService);
+                    LOGGER.debug("Adding service provider {}", externalService.getVersionedServiceName());
+                    serviceProviders.put(externalService, serviceProvider);
+                });
     }
 
-    private ServiceProvider<String> createProvider(final ServiceDiscovery<String> serviceDiscovery, final ExternalService externalService) {
+    private ServiceProvider<String> createProvider(final ServiceDiscovery<String> serviceDiscovery,
+                                                   final ExternalService externalService) {
         ServiceProvider<String> provider = serviceDiscovery.serviceProviderBuilder()
                 .serviceName(externalService.getVersionedServiceName())
                 .providerStrategy(externalService.getProviderStrategy())
@@ -99,19 +107,43 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
             return HealthCheck.Result.unhealthy("No service providers found");
         } else {
             try {
-                String providers = serviceProviders.entrySet().stream()
-                        .map(entry -> {
+                Map<String, List<String>> serviceInstanceMap = serviceProviders.entrySet().stream()
+                        .flatMap(entry -> {
                             try {
-                                return entry.getKey().getVersionedServiceName() + " - " + entry.getValue().getAllInstances().size();
+                                return entry.getValue().getAllInstances().stream();
                             } catch (Exception e) {
                                 throw new RuntimeException(String.format("Error querying instances for service %s",
                                         entry.getKey().getVersionedServiceName()), e);
                             }
                         })
-                        .collect(Collectors.joining(","));
-                return HealthCheck.Result.healthy("Running. Services providers: " + providers);
+                        .map(serviceInstance -> new Tuple2<>(serviceInstance.getName(), serviceInstance.buildUriSpec()))
+                        .collect(Collectors.groupingBy(
+                                Tuple2::_1,
+                                TreeMap::new,
+                                Collectors.mapping(Tuple2::_2, Collectors.toList())));
+
+                //ensure the instances are sorted in a sensible way
+                serviceInstanceMap.values().forEach(Collections::sort);
+
+                long deadServiceCount = serviceInstanceMap.entrySet().stream()
+                        .filter(entry -> entry.getValue().isEmpty())
+                        .count();
+
+                HealthCheck.ResultBuilder builder = HealthCheck.Result.builder();
+
+                if (deadServiceCount > 0) {
+                    builder.unhealthy()
+                            .withMessage("%s service(s) have no registered instances");
+                } else {
+                    builder.healthy()
+                            .withMessage("All external services available");
+                }
+                return builder.withDetail("discovered-service-instances", serviceInstanceMap)
+                        .build();
+
             } catch (Exception e) {
-                return HealthCheck.Result.unhealthy("Error getting service provider details, error: " + e.getCause().getMessage());
+                return HealthCheck.Result.unhealthy("Error getting service provider details, error: " +
+                        e.getCause().getMessage());
             }
         }
     }

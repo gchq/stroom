@@ -27,15 +27,14 @@ import java.io.Serializable;
  * summed, e.g. the number of bytes written however VALUE events cannot, e.g.
  * cpu%.
  */
-public enum StatisticType implements HasDisplayValue,HasPrimitiveValue,Serializable {
+public enum StatisticType implements HasDisplayValue, HasPrimitiveValue, Serializable {
     COUNT("Count", 1),
     VALUE("Value", 2);
 
+    public static final PrimitiveValueConverter<StatisticType> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
+            StatisticType.values());
     private final String displayValue;
     private final byte primitiveValue;
-
-    public static final PrimitiveValueConverter<StatisticType> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<StatisticType>(
-            StatisticType.values());
 
     StatisticType(final String displayValue, final int primitiveValue) {
         this.displayValue = displayValue;

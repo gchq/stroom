@@ -25,7 +25,7 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.presenter.NodeMonitoringPresenter;
 import stroom.node.shared.Node;
 import stroom.security.client.ClientSecurityContext;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 public class NodeMonitoringPlugin extends MonitoringPlugin<NodeMonitoringPresenter> {
@@ -39,7 +39,7 @@ public class NodeMonitoringPlugin extends MonitoringPlugin<NodeMonitoringPresent
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(Node.MANAGE_NODES_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
-                    new IconMenuItem(10, GlyphIcons.NODES, GlyphIcons.NODES, "Nodes", null, true, () -> open()));
+                    new IconMenuItem(10, SvgPresets.NODES, SvgPresets.NODES, "Nodes", null, true, () -> open()));
         }
     }
 }

@@ -26,7 +26,7 @@ import java.util.List;
 public class TestRollUpBitMaskUtil {
     @Test
     public void testFromSortedTagList() {
-        final List<StatisticTag> tagList = new ArrayList<StatisticTag>();
+        final List<StatisticTag> tagList = new ArrayList<>();
         tagList.add(new StatisticTag("Tag0", "someValue"));
         tagList.add(new StatisticTag("Tag1", RollUpBitMask.ROLL_UP_TAG_VALUE));
         tagList.add(new StatisticTag("Tag2", "someValue"));
@@ -39,7 +39,7 @@ public class TestRollUpBitMaskUtil {
 
     @Test
     public void testFromSortedTagListEmptyList() {
-        final List<StatisticTag> tagList = new ArrayList<StatisticTag>();
+        final List<StatisticTag> tagList = new ArrayList<>();
 
         final RollUpBitMask rowKeyBitMap = RollUpBitMaskUtil.fromSortedTagList(tagList);
 

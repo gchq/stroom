@@ -18,8 +18,6 @@ package stroom.streamtask.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestScenarioCreator;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
@@ -33,6 +31,8 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterService;
 import stroom.streamtask.shared.StreamProcessorService;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestScenarioCreator;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -87,10 +87,10 @@ public class TestStreamProcessorFilterService extends AbstractCoreIntegrationTes
         streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 10, new FindStreamCriteria());
         Assert.assertEquals(2, streamProcessorFilterService.find(findStreamProcessorFilterCriteria).size());
 
-        findStreamProcessorFilterCriteria.setPriorityRange(new Range<Integer>(10, null));
+        findStreamProcessorFilterCriteria.setPriorityRange(new Range<>(10, null));
         Assert.assertEquals(1, streamProcessorFilterService.find(findStreamProcessorFilterCriteria).size());
 
-        findStreamProcessorFilterCriteria.setPriorityRange(new Range<Integer>(1, null));
+        findStreamProcessorFilterCriteria.setPriorityRange(new Range<>(1, null));
         Assert.assertEquals(2, streamProcessorFilterService.find(findStreamProcessorFilterCriteria).size());
     }
 
@@ -115,22 +115,22 @@ public class TestStreamProcessorFilterService extends AbstractCoreIntegrationTes
         final BaseResultList<StreamProcessorFilter> filters = streamProcessorFilterService
                 .find(findStreamProcessorFilterCriteria);
         StreamProcessorFilter filter = filters.getFirst();
-        String xml = buildXML(new long[] { feed1.getId(), feed2.getId() }, null);
+        String xml = buildXML(new long[]{feed1.getId(), feed2.getId()}, null);
         Assert.assertEquals(xml, filter.getData());
 
         filter.getFindStreamCriteria().obtainFeeds().obtainInclude().remove(feed1);
         filter = streamProcessorFilterService.save(filter);
-        xml = buildXML(new long[] { feed2.getId() }, null);
+        xml = buildXML(new long[]{feed2.getId()}, null);
         Assert.assertEquals(xml, filter.getData());
 
         filter.getFindStreamCriteria().obtainFeeds().obtainExclude().add(feed1);
         filter = streamProcessorFilterService.save(filter);
-        xml = buildXML(new long[] { feed2.getId() }, new long[] { feed1.getId() });
+        xml = buildXML(new long[]{feed2.getId()}, new long[]{feed1.getId()});
         Assert.assertEquals(xml, filter.getData());
 
         filter.getFindStreamCriteria().obtainFeeds().obtainInclude().add(feed1);
         filter = streamProcessorFilterService.save(filter);
-        xml = buildXML(new long[] { feed1.getId(), feed2.getId() }, new long[] { feed1.getId() });
+        xml = buildXML(new long[]{feed1.getId(), feed2.getId()}, new long[]{feed1.getId()});
         Assert.assertEquals(xml, filter.getData());
     }
 

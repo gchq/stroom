@@ -22,8 +22,8 @@ import stroom.util.task.HasMonitor;
 
 public class TaskThread<R> {
     private final Task<?> task;
-    private volatile Thread thread;
     private final long submitTimeMs = System.currentTimeMillis();
+    private volatile Thread thread;
 
     public TaskThread(final Task<?> task) {
         this.task = task;

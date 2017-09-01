@@ -29,7 +29,7 @@ import javax.persistence.UniqueConstraint;
  * This class controls the cluster wide properties of a job.
  */
 @Entity
-@Table(name = "JB", uniqueConstraints = @UniqueConstraint(columnNames = { SQLNameConstants.NAME }) )
+@Table(name = "JB", uniqueConstraints = @UniqueConstraint(columnNames = {SQLNameConstants.NAME}))
 public class Job extends NamedEntity {
     public static final String ENTITY_TYPE = "Job";
     public static final String MANAGE_JOBS_PERMISSION = "Manage Jobs";

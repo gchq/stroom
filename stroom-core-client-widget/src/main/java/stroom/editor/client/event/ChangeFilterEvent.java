@@ -21,19 +21,15 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
 public class ChangeFilterEvent extends GwtEvent<ChangeFilterEvent.ChangeFilterHandler> {
-    public interface ChangeFilterHandler extends EventHandler {
-        void onShowFilter(ChangeFilterEvent event);
-    }
-
     public static final GwtEvent.Type<ChangeFilterHandler> TYPE = new GwtEvent.Type<>();
+
+    protected ChangeFilterEvent() {
+    }
 
     public static <I> void fire(final HasHandlers source) {
         if (TYPE != null) {
             source.fireEvent(new ChangeFilterEvent());
         }
-    }
-
-    protected ChangeFilterEvent() {
     }
 
     @Override
@@ -44,5 +40,9 @@ public class ChangeFilterEvent extends GwtEvent<ChangeFilterEvent.ChangeFilterHa
     @Override
     protected void dispatch(ChangeFilterHandler handler) {
         handler.onShowFilter(this);
+    }
+
+    public interface ChangeFilterHandler extends EventHandler {
+        void onShowFilter(ChangeFilterEvent event);
     }
 }

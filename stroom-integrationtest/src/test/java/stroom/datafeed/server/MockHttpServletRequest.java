@@ -99,7 +99,7 @@ public class MockHttpServletRequest implements HttpServletRequest {
     @SuppressWarnings("rawtypes")
     @Override
     public Enumeration getHeaderNames() {
-        final Vector<String> keys = new Vector<String>();
+        final Vector<String> keys = new Vector<>();
         keys.addAll(headers.keySet());
         return keys.elements();
     }

@@ -41,11 +41,11 @@ import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.importexport.client.event.ImportConfigConfirmEvent;
 import stroom.importexport.shared.ImportConfigAction;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Message;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.Severity;
-import stroom.widget.button.client.GlyphIcon;
-import stroom.widget.button.client.GlyphIcons;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -62,18 +62,9 @@ import java.util.List;
 public class ImportConfigConfirmPresenter extends
         MyPresenter<ImportConfigConfirmPresenter.ImportConfigConfirmView, ImportConfigConfirmPresenter.ImportConfirmProxy>
         implements ImportConfigConfirmEvent.Handler, PopupUiHandlers {
-    public interface ImportConfigConfirmView extends View {
-        void setDataGridView(View view);
-    }
-
-    @ProxyCodeSplit
-    public interface ImportConfirmProxy extends Proxy<ImportConfigConfirmPresenter> {
-    }
-
     private final TooltipPresenter tooltipPresenter;
     private final DataGridView<ImportState> dataGridView;
     private final ClientDispatchAsync dispatcher;
-
     private ResourceKey resourceKey;
     private List<ImportState> confirmList;
 
@@ -86,7 +77,7 @@ public class ImportConfigConfirmPresenter extends
         this.tooltipPresenter = tooltipPresenter;
         this.dispatcher = dispatcher;
 
-        this.dataGridView = new DataGridViewImpl<ImportState>(false,
+        this.dataGridView = new DataGridViewImpl<>(false,
                 DataGridViewImpl.MASSIVE_LIST_PAGE_SIZE);
         view.setDataGridView(dataGridView);
 
@@ -160,7 +151,7 @@ public class ImportConfigConfirmPresenter extends
         addTypeColumn();
         addSourcePathColumn();
         addDestPathColumn();
-        dataGridView.addEndColumn(new EndColumn<ImportState>());
+        dataGridView.addEndColumn(new EndColumn<>());
     }
 
     private void addSelectedColumn() {
@@ -235,18 +226,18 @@ public class ImportConfigConfirmPresenter extends
         // Info column.
         final InfoColumn<ImportState> infoColumn = new InfoColumn<ImportState>() {
             @Override
-            public GlyphIcon getValue(final ImportState object) {
+            public SvgPreset getValue(final ImportState object) {
                 if (object.getMessageList().size() > 0 || object.getUpdatedFieldList().size() > 0) {
                     final Severity severity = object.getSeverity();
                     switch (severity) {
                         case INFO:
-                            return GlyphIcons.INFO;
+                            return SvgPresets.INFO;
                         case WARNING:
-                            return GlyphIcons.ALERT;
+                            return SvgPresets.ALERT;
                         case ERROR:
-                            return GlyphIcons.ERROR;
+                            return SvgPresets.ERROR;
                         default:
-                            return GlyphIcons.ERROR;
+                            return SvgPresets.ERROR;
                     }
                 }
                 return null;
@@ -363,5 +354,13 @@ public class ImportConfigConfirmPresenter extends
 
         // ClearScriptCacheEvent.fire(this);
         // ClearFunctionCacheEvent.fire(this);
+    }
+
+    public interface ImportConfigConfirmView extends View {
+        void setDataGridView(View view);
+    }
+
+    @ProxyCodeSplit
+    public interface ImportConfirmProxy extends Proxy<ImportConfigConfirmPresenter> {
     }
 }

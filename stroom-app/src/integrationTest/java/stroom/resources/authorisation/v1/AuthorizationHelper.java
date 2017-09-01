@@ -27,7 +27,7 @@ public class AuthorizationHelper {
         return "Basic " + encoding;
     }
 
-    public static String fetchJwtToken(){
+    public static String fetchJwtToken() {
         Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
         Response response = client
                 .target(GET_TOKEN_TARGET)

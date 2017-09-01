@@ -16,8 +16,8 @@
 
 package stroom.dashboard.shared;
 
-import stroom.query.api.v1.DocRef;
-import stroom.query.api.v1.ExpressionOperator;
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionOperator;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -28,7 +28,7 @@ import java.util.Collections;
 import java.util.Map;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "search", propOrder = {"dataSourceRef", "expression", "componentSettingsMap", "paramMap", "incremental"})
+@XmlType(name = "search", propOrder = {"dataSourceRef", "expression", "componentSettingsMap", "paramMap", "incremental", "storeHistory"})
 public class Search implements Serializable {
     private static final long serialVersionUID = 9055582579670841979L;
 
@@ -45,28 +45,36 @@ public class Search implements Serializable {
     private Map<String, String> paramMap;
 
     @XmlElement
-    private Boolean incremental;
+    private boolean incremental;
+
+    @XmlElement
+    private boolean storeHistory;
 
     public Search() {
         // Default constructor necessary for GWT serialisation.
     }
 
     public Search(final DocRef dataSourceRef, final ExpressionOperator expression) {
-        this(dataSourceRef, expression, null, Collections.emptyMap(), true);
+        this(dataSourceRef, expression, null, Collections.emptyMap(), true, false);
     }
 
     public Search(final DocRef dataSourceRef, final ExpressionOperator expression,
                   final Map<String, ComponentSettings> componentSettingsMap) {
-        this(dataSourceRef, expression, componentSettingsMap, Collections.emptyMap(), true);
+        this(dataSourceRef, expression, componentSettingsMap, Collections.emptyMap(), true, false);
     }
 
-    public Search(final DocRef dataSourceRef, final ExpressionOperator expression,
-                  final Map<String, ComponentSettings> componentSettingsMap, final Map<String, String> paramMap, final Boolean incremental) {
+    public Search(final DocRef dataSourceRef,
+                  final ExpressionOperator expression,
+                  final Map<String, ComponentSettings> componentSettingsMap,
+                  final Map<String, String> paramMap,
+                  final boolean incremental,
+                  final boolean storeHistory) {
         this.dataSourceRef = dataSourceRef;
         this.expression = expression;
         this.componentSettingsMap = componentSettingsMap;
         this.paramMap = paramMap;
         this.incremental = incremental;
+        this.storeHistory = storeHistory;
     }
 
     public DocRef getDataSourceRef() {
@@ -85,8 +93,12 @@ public class Search implements Serializable {
         return paramMap;
     }
 
-    public Boolean getIncremental() {
+    public boolean isIncremental() {
         return incremental;
+    }
+
+    public boolean isStoreHistory() {
+        return storeHistory;
     }
 
     @Override
@@ -96,13 +108,14 @@ public class Search implements Serializable {
 
         final Search search = (Search) o;
 
+        if (incremental != search.incremental) return false;
+        if (storeHistory != search.storeHistory) return false;
         if (dataSourceRef != null ? !dataSourceRef.equals(search.dataSourceRef) : search.dataSourceRef != null)
             return false;
         if (expression != null ? !expression.equals(search.expression) : search.expression != null) return false;
         if (componentSettingsMap != null ? !componentSettingsMap.equals(search.componentSettingsMap) : search.componentSettingsMap != null)
             return false;
-        if (paramMap != null ? !paramMap.equals(search.paramMap) : search.paramMap != null) return false;
-        return incremental != null ? incremental.equals(search.incremental) : search.incremental == null;
+        return paramMap != null ? paramMap.equals(search.paramMap) : search.paramMap == null;
     }
 
     @Override
@@ -111,7 +124,8 @@ public class Search implements Serializable {
         result = 31 * result + (expression != null ? expression.hashCode() : 0);
         result = 31 * result + (componentSettingsMap != null ? componentSettingsMap.hashCode() : 0);
         result = 31 * result + (paramMap != null ? paramMap.hashCode() : 0);
-        result = 31 * result + (incremental != null ? incremental.hashCode() : 0);
+        result = 31 * result + (incremental ? 1 : 0);
+        result = 31 * result + (storeHistory ? 1 : 0);
         return result;
     }
 }

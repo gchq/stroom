@@ -18,7 +18,6 @@ package stroom.feed.remote;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
-
 import stroom.remote.RemoteRequest;
 
 public class GetFeedStatusRequest extends RemoteRequest {

@@ -23,9 +23,7 @@ import stroom.security.Secured;
 import stroom.security.SecurityContext;
 import stroom.security.shared.FetchUserRefAction;
 import stroom.security.shared.FindUserCriteria;
-import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
-import stroom.security.shared.UserService;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;
@@ -37,7 +35,7 @@ import java.util.stream.Collectors;
 
 @TaskHandlerBean(task = FetchUserRefAction.class)
 @Scope(StroomScope.TASK)
-@Secured(User.MANAGE_USERS_PERMISSION)
+@Secured(FindUserCriteria.MANAGE_USERS_PERMISSION)
 public class FetchUserRefHandler
         extends AbstractTaskHandler<FetchUserRefAction, ResultList<UserRef>> {
     private final UserService userService;
@@ -52,7 +50,7 @@ public class FetchUserRefHandler
     @Override
     public ResultList<UserRef> exec(final FetchUserRefAction action) {
         final FindUserCriteria findUserCriteria = action.getCriteria();
-        findUserCriteria.setOrderBy(FindUserCriteria.ORDER_BY_NAME);
+        findUserCriteria.setSort(FindUserCriteria.FIELD_NAME);
         if (findUserCriteria.getRelatedUser() != null) {
             UserRef userRef = findUserCriteria.getRelatedUser();
             List<UserRef> list;
@@ -71,7 +69,7 @@ public class FetchUserRefHandler
 
         final BaseResultList<User> users = userService.find(findUserCriteria);
         final List<UserRef> userRefs = new ArrayList<>();
-        users.stream().forEachOrdered(user -> userRefs.add(UserRef.create(user)));
+        users.stream().forEachOrdered(user -> userRefs.add(UserRefFactory.create(user)));
         return new BaseResultList<>(userRefs, users.getPageResponse().getOffset(), users.getPageResponse().getTotal(), users.getPageResponse().isMore());
     }
 }

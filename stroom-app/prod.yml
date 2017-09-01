@@ -9,7 +9,7 @@ server:
       port: 8081
 
 logging:
-  level: ERROR
+  level: ${STROOM_LOGGING_LEVEL:- ERROR}
   loggers:
     stroom: INFO
     io.dropwizard: INFO

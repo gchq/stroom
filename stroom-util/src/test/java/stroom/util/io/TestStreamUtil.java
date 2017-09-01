@@ -28,6 +28,28 @@ import java.io.InputStream;
 public class TestStreamUtil {
     private static final int SIZE = 25;
 
+    @Test
+    public void testFullRead() throws IOException {
+        byte[] buffer = new byte[10];
+
+        InputStream testStream = new TestInputStream();
+        Assert.assertEquals(10, StreamUtil.eagerRead(testStream, buffer));
+        Assert.assertEquals(10, StreamUtil.eagerRead(testStream, buffer));
+        Assert.assertEquals(5, StreamUtil.eagerRead(testStream, buffer));
+        Assert.assertEquals(-1, StreamUtil.eagerRead(testStream, buffer));
+        Assert.assertEquals(-1, StreamUtil.eagerRead(testStream, buffer));
+    }
+
+    @Test
+    public void testException() {
+        try {
+            throw new RuntimeException();
+        } catch (RuntimeException ex) {
+            String callStack = StreamUtil.exceptionCallStack(ex);
+            Assert.assertTrue(callStack, callStack.contains("testException"));
+        }
+    }
+
     private static class TestInputStream extends InputStream {
         int read = 0;
 
@@ -48,28 +70,6 @@ public class TestStreamUtil {
         @Override
         public int read(byte[] b, int off, int len) throws IOException {
             return super.read(b, off, 1);
-        }
-    }
-
-    @Test
-    public void testFullRead() throws IOException {
-        byte[] buffer = new byte[10];
-
-        InputStream testStream = new TestInputStream();
-        Assert.assertEquals(10, StreamUtil.eagerRead(testStream, buffer));
-        Assert.assertEquals(10, StreamUtil.eagerRead(testStream, buffer));
-        Assert.assertEquals(5, StreamUtil.eagerRead(testStream, buffer));
-        Assert.assertEquals(-1, StreamUtil.eagerRead(testStream, buffer));
-        Assert.assertEquals(-1, StreamUtil.eagerRead(testStream, buffer));
-    }
-
-    @Test
-    public void testException() {
-        try {
-            throw new RuntimeException();
-        } catch (RuntimeException ex) {
-            String callStack = StreamUtil.exceptionCallStack(ex);
-            Assert.assertTrue(callStack, callStack.contains("testException"));
         }
     }
 }

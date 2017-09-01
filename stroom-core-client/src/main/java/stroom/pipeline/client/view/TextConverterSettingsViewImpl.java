@@ -28,16 +28,11 @@ import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.util.shared.HasReadOnly;
 
 public class TextConverterSettingsViewImpl extends ViewImpl implements TextConverterSettingsView, HasReadOnly {
-    public interface Binder extends UiBinder<Widget, TextConverterSettingsViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     TextArea description;
     @UiField
     ItemListBox<TextConverterType> converterType;
-
     @Inject
     public TextConverterSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -67,5 +62,8 @@ public class TextConverterSettingsViewImpl extends ViewImpl implements TextConve
     public void setReadOnly(final boolean readOnly) {
         converterType.setEnabled(!readOnly);
         description.setEnabled(!readOnly);
+    }
+
+    public interface Binder extends UiBinder<Widget, TextConverterSettingsViewImpl> {
     }
 }

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,31 +16,34 @@
 
 package stroom.dashboard.server.download;
 
+import stroom.dashboard.server.SampleGenerator;
 import stroom.dashboard.shared.Field;
+import stroom.query.api.v2.Row;
 
 import java.io.IOException;
 import java.util.List;
 
 public class SearchResultWriter {
-//    private final ResultStore resultStore;
-//    private final List<Field> fields;
-//    private final SampleGenerator sampleGenerator;
-//    public SearchResultWriter(final ResultStore resultStore, final List<Field> fields,
-//            final SampleGenerator sampleGenerator) {
-//        this.resultStore = resultStore;
-//        this.fields = fields;
-//        this.sampleGenerator = sampleGenerator;
-//    }
+    private final List<Field> fields;
+    private final List<Row> rows;
+    private final SampleGenerator sampleGenerator;
+
+    public SearchResultWriter(final List<stroom.dashboard.shared.Field> fields, final List<Row> rows,
+                              final SampleGenerator sampleGenerator) {
+        this.fields = fields;
+        this.rows = rows;
+        this.sampleGenerator = sampleGenerator;
+    }
 
     public void write(final Target target) throws IOException {
         // Start writing.
         target.start();
 
-//        // Write heading.
-//        writeHeadings(fields, target);
+        // Write heading.
+        writeHeadings(fields, target);
 
-//        // Write content.
-//        writeContent(resultStore, fields, sampleGenerator, target);
+        // Write content.
+        writeContent(rows, fields, sampleGenerator, target);
 
         // End writing.
         target.end();
@@ -57,43 +60,24 @@ public class SearchResultWriter {
         target.endLine();
     }
 
-
-    // TODO : RESTOR
-//    private void writeContent(final ResultStore resultStore, final List<Field> fields,
-//            final SampleGenerator sampleGenerator, final Target target) throws IOException {
-//        final Items<Item> items = resultStore.getChildMap().get(null);
-//        if (items != null) {
-//            for (final Item item : items) {
-//                if (sampleGenerator.includeResult()) {
-//                    target.startLine();
-//                    for (int i = 0; i < fields.size(); i++) {
-//                        final Field field = fields.get(i);
-//                        if (field.isVisible()) {
-//                            Object val = null;
-//
-//                            if (item.getValues().length > i) {
-//                                final Object o = item.getValues()[i];
-//                                val = o;
-//
-//                                if (o != null) {
-//                                    // Convert all values into fully resolved
-//                                    // objects evaluating functions where
-//                                    // necessary.
-//                                    if (o instanceof Generator) {
-//                                        final Generator generator = (Generator) o;
-//                                        val = generator.eval();
-//                                    }
-//                                }
-//                            }
-//
-//                            target.writeValue(field, val);
-//                        }
-//                    }
-//                    target.endLine();
-//                }
-//            }
-//        }
-//    }
+    private void writeContent(final List<Row> rows, final List<Field> fields,
+                              final SampleGenerator sampleGenerator, final Target target) throws IOException {
+        for (final Row row : rows) {
+            if (row.getDepth() == 0) {
+                if (sampleGenerator.includeResult()) {
+                    target.startLine();
+                    for (int i = 0; i < fields.size(); i++) {
+                        final Field field = fields.get(i);
+                        if (field.isVisible()) {
+                            final String val = row.getValues().get(i);
+                            target.writeValue(field, val);
+                        }
+                    }
+                    target.endLine();
+                }
+            }
+        }
+    }
 
     public interface Target {
         void start() throws IOException;

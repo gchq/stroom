@@ -20,17 +20,22 @@ import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import stroom.dictionary.shared.DictionaryService;
 import stroom.entity.server.SupportsCriteriaLogging;
-import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.PermissionException;
+import stroom.entity.shared.Sort.Direction;
+import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.node.shared.Volume;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
+import stroom.policy.server.DataRetentionService;
+import stroom.policy.shared.DataRetentionPolicy;
+import stroom.policy.shared.DataRetentionRule;
 import stroom.security.SecurityContext;
 import stroom.streamstore.server.fs.FileSystemStreamTypeUtil;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
@@ -46,14 +51,15 @@ import stroom.streamstore.shared.StreamTypeService;
 import stroom.streamstore.shared.StreamVolume;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorService;
-import stroom.util.zip.HeaderMap;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -69,6 +75,8 @@ public class StreamAttributeMapServiceImpl
     private final StreamTypeService streamTypeService;
     private final StreamProcessorService streamProcessorService;
     private final StreamStore streamStore;
+    private final Provider<DataRetentionService> dataRetentionServiceProvider;
+    private final DictionaryService dictionaryService;
     private final StroomEntityManager entityManager;
     private final StreamAttributeKeyService streamAttributeKeyService;
     private final StreamMaintenanceService streamMaintenanceService;
@@ -80,6 +88,8 @@ public class StreamAttributeMapServiceImpl
                                   @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
                                   @Named("cachedStreamProcessorService") final StreamProcessorService streamProcessorService,
                                   final StreamStore streamStore,
+                                  final Provider<DataRetentionService> dataRetentionServiceProvider,
+                                  final DictionaryService dictionaryService,
                                   final StroomEntityManager entityManager,
                                   final StreamAttributeKeyService streamAttributeKeyService,
                                   final StreamMaintenanceService streamMaintenanceService,
@@ -89,6 +99,8 @@ public class StreamAttributeMapServiceImpl
         this.streamTypeService = streamTypeService;
         this.streamProcessorService = streamProcessorService;
         this.streamStore = streamStore;
+        this.dataRetentionServiceProvider = dataRetentionServiceProvider;
+        this.dictionaryService = dictionaryService;
         this.entityManager = entityManager;
         this.streamAttributeKeyService = streamAttributeKeyService;
         this.streamMaintenanceService = streamMaintenanceService;
@@ -107,7 +119,7 @@ public class StreamAttributeMapServiceImpl
 
             final FindStreamCriteria streamCriteria = new FindStreamCriteria();
             streamCriteria.copyFrom(criteria.getFindStreamCriteria());
-            streamCriteria.setOrderBy(FindStreamCriteria.ORDER_BY_CREATE_MS, OrderByDirection.DESCENDING);
+            streamCriteria.setSort(FindStreamCriteria.FIELD_CREATE_MS, Direction.DESCENDING, false);
 
             final boolean includeRelations = streamCriteria.getFetchSet().contains(Stream.ENTITY_TYPE);
             streamCriteria.setFetchSet(new HashSet<>());
@@ -119,11 +131,23 @@ public class StreamAttributeMapServiceImpl
             final BaseResultList<Stream> streamList = streamStore.find(streamCriteria);
 
             if (streamList.size() > 0) {
-                // Query the database for the attribute values
-                if (criteria.isUseCache()) {
-                    loadAttributeMapFromDatabase(criteria, streamMDList, streamList);
-                } else {
-                    loadAttributeMapFromFileSystem(criteria, streamMDList, streamList);
+                // Create a data retention rule decorator for adding data retention information to returned stream attribute maps.
+                List<DataRetentionRule> rules = Collections.emptyList();
+
+                final DataRetentionService dataRetentionService = dataRetentionServiceProvider.get();
+                if (dataRetentionService != null) {
+                    final DataRetentionPolicy dataRetentionPolicy = dataRetentionService.load();
+                    if (dataRetentionPolicy != null && dataRetentionPolicy.getRules() != null) {
+                        rules = dataRetentionPolicy.getRules();
+                    }
+                    final StreamAttributeMapRetentionRuleDecorator ruleDecorator = new StreamAttributeMapRetentionRuleDecorator(dictionaryService, rules);
+
+                    // Query the database for the attribute values
+                    if (criteria.isUseCache()) {
+                        loadAttributeMapFromDatabase(criteria, streamMDList, streamList, ruleDecorator);
+                    } else {
+                        loadAttributeMapFromFileSystem(criteria, streamMDList, streamList, ruleDecorator);
+                    }
                 }
             }
 
@@ -140,7 +164,7 @@ public class StreamAttributeMapServiceImpl
      * Load attributes from database
      */
     private void loadAttributeMapFromDatabase(final FindStreamAttributeMapCriteria criteria,
-                                              final List<StreamAttributeMap> streamMDList, final BaseResultList<Stream> streamList) {
+                                              final List<StreamAttributeMap> streamMDList, final BaseResultList<Stream> streamList, final StreamAttributeMapRetentionRuleDecorator ruleDecorator) {
         final Map<Long, StreamAttributeMap> streamMap = new HashMap<>();
 
         // Get a list of valid stream ids.
@@ -177,7 +201,7 @@ public class StreamAttributeMapServiceImpl
             keyMap.put(key.getId(), key);
         }
 
-        final SQLBuilder sql = new SQLBuilder();
+        final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT ");
         sql.append(StreamAttributeValue.STREAM_ID);
         sql.append(", ");
@@ -211,6 +235,9 @@ public class StreamAttributeMapServiceImpl
                 streamMap.get(streamId).addAttribute(streamAttributeKey, value);
             }
         }
+
+        // Add additional data retention information.
+        streamMap.values().parallelStream().forEach(ruleDecorator::addMatchingRetentionRuleInfo);
     }
 
     private void resolveRelations(final FindStreamAttributeMapCriteria criteria, final Stream stream) throws PermissionException {
@@ -256,7 +283,7 @@ public class StreamAttributeMapServiceImpl
     }
 
     private void loadAttributeMapFromFileSystem(final FindStreamAttributeMapCriteria criteria,
-                                                final List<StreamAttributeMap> streamMDList, final BaseResultList<Stream> streamList) {
+                                                final List<StreamAttributeMap> streamMDList, final BaseResultList<Stream> streamList, final StreamAttributeMapRetentionRuleDecorator ruleDecorator) {
         final List<StreamAttributeKey> allKeys = streamAttributeKeyService.findAll();
         final Map<String, StreamAttributeKey> keyMap = new HashMap<>();
         for (final StreamAttributeKey key : allKeys) {
@@ -293,16 +320,16 @@ public class StreamAttributeMapServiceImpl
             final File manifest = FileSystemStreamTypeUtil.createChildStreamFile(streamVolume, StreamType.MANIFEST);
 
             if (manifest.isFile()) {
-                final HeaderMap headerMap = new HeaderMap();
+                final MetaMap metaMap = new MetaMap();
                 try {
-                    headerMap.read(new FileInputStream(manifest), true);
+                    metaMap.read(new FileInputStream(manifest), true);
                 } catch (final IOException ioException) {
                     LOGGER.error("loadAttributeMapFromFileSystem() {}", manifest, ioException);
                 }
 
-                for (final String name : headerMap.keySet()) {
+                for (final String name : metaMap.keySet()) {
                     final StreamAttributeKey key = keyMap.get(name);
-                    final String value = headerMap.get(name);
+                    final String value = metaMap.get(name);
                     if (key == null) {
                         streamAttributeMap.addAttribute(name, value);
                     } else {
@@ -325,6 +352,9 @@ public class StreamAttributeMapServiceImpl
                     LOGGER.error("loadAttributeMapFromFileSystem() ", e);
                 }
             }
+
+            // Add additional data retention information.
+            ruleDecorator.addMatchingRetentionRuleInfo(streamAttributeMap);
         }
     }
 

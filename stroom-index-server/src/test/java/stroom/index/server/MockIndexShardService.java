@@ -24,7 +24,6 @@ import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexShardService;
-import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
@@ -32,7 +31,6 @@ import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.spring.StroomSpringProfiles;
 
-import javax.annotation.Resource;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -40,14 +38,11 @@ import java.nio.file.Path;
 @Component("indexShardService")
 public class MockIndexShardService extends MockEntityService<IndexShard, FindIndexShardCriteria>
         implements IndexShardService {
-    @Resource
-    private NodeCache nodeCache;
-
     @Override
     public IndexShard createIndexShard(final IndexShardKey indexShardKey, final Node ownerNode) {
         final IndexShard indexShard = new IndexShard();
         indexShard.setVolume(
-                Volume.create(nodeCache.getDefaultNode(), FileUtil.getTempDir().getAbsolutePath(), VolumeType.PUBLIC));
+                Volume.create(ownerNode, FileUtil.getTempDir().getAbsolutePath(), VolumeType.PUBLIC));
         indexShard.setIndex(indexShardKey.getIndex());
         indexShard.setPartition(indexShardKey.getPartition());
         indexShard.setPartitionFromTime(indexShardKey.getPartitionFromTime());
@@ -62,7 +57,7 @@ public class MockIndexShardService extends MockEntityService<IndexShard, FindInd
 
     @Override
     public BaseResultList<IndexShard> find(final FindIndexShardCriteria criteria) throws RuntimeException {
-        final BaseResultList<IndexShard> results = new BaseResultList<IndexShard>();
+        final BaseResultList<IndexShard> results = new BaseResultList<>();
         for (final IndexShard indexShard : map.values()) {
             boolean include = true;
 

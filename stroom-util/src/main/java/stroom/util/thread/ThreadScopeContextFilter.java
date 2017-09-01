@@ -39,7 +39,7 @@ public class ThreadScopeContextFilter implements Filter {
         try {
             ThreadScopeContextHolder.createContext();
             filterChain.doFilter(request, response);
-        } catch(Exception e){
+        } catch (Exception e) {
             LOGGER.error("Filter threw an exception:", e.getMessage(), e);
         } finally {
             ThreadScopeContextHolder.destroyContext();

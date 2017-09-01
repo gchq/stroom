@@ -26,7 +26,7 @@ import java.io.RandomAccessFile;
 
 /**
  * A stream that interfaces with a random access file.
- *
+ * <p>
  * if lazy it is assumed that a missing file means a blank stream.
  */
 public class UncompressedInputStream extends InputStream implements SeekableInputStream {
@@ -68,8 +68,7 @@ public class UncompressedInputStream extends InputStream implements SeekableInpu
     }
 
     /**
-     * @param b
-     *            to fill
+     * @param b to fill
      */
     @Override
     public int read(final byte[] b) throws IOException {
@@ -86,12 +85,9 @@ public class UncompressedInputStream extends InputStream implements SeekableInpu
     }
 
     /**
-     * @param b
-     *            to fill
-     * @param off
-     *            offset
-     * @param len
-     *            length
+     * @param b   to fill
+     * @param off offset
+     * @param len length
      */
     @Override
     public int read(final byte[] b, final int off, final int len) throws IOException {
@@ -158,8 +154,7 @@ public class UncompressedInputStream extends InputStream implements SeekableInpu
     }
 
     /**
-     * @param n
-     *            bytes to skip
+     * @param n bytes to skip
      * @return how many we skipped
      */
     @Override

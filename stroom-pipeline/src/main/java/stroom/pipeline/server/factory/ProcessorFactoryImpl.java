@@ -45,6 +45,26 @@ import java.util.concurrent.TimeUnit;
 @Scope(StroomScope.TASK)
 class ProcessorFactoryImpl implements ProcessorFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorFactoryImpl.class);
+    private final TaskManager taskManager;
+    private final ErrorReceiverProxy errorReceiverProxy;
+    @Inject
+    public ProcessorFactoryImpl(final TaskManager taskManager, final ErrorReceiverProxy errorReceiverProxy) {
+        this.taskManager = taskManager;
+        this.errorReceiverProxy = errorReceiverProxy;
+    }
+
+    @Override
+    public Processor create(final List<Processor> processors) {
+        if (processors == null || processors.size() == 0) {
+            return null;
+        }
+
+        if (processors.size() == 1) {
+            return processors.get(0);
+        }
+
+        return new MultiWayProcessor(processors, taskManager, errorReceiverProxy);
+    }
 
     static class MultiWayProcessor implements Processor {
         private final List<Processor> processors;
@@ -92,7 +112,7 @@ class ProcessorFactoryImpl implements ProcessorFactory {
                     }
                 };
 
-                final GenericServerTask task = GenericServerTask.create(parentTask,  "Process",
+                final GenericServerTask task = GenericServerTask.create(parentTask, "Process",
                         null);
                 task.setRunnable(processor::process);
                 taskManager.execAsync(task, taskCallback);
@@ -129,27 +149,5 @@ class ProcessorFactoryImpl implements ProcessorFactory {
                 LOGGER.error(MarkerFactory.getMarker("FATAL"), "Unable to output error!", t);
             }
         }
-    }
-
-    private final TaskManager taskManager;
-    private final ErrorReceiverProxy errorReceiverProxy;
-
-    @Inject
-    public ProcessorFactoryImpl(final TaskManager taskManager, final ErrorReceiverProxy errorReceiverProxy) {
-        this.taskManager = taskManager;
-        this.errorReceiverProxy = errorReceiverProxy;
-    }
-
-    @Override
-    public Processor create(final List<Processor> processors) {
-        if (processors == null || processors.size() == 0) {
-            return null;
-        }
-
-        if (processors.size() == 1) {
-            return processors.get(0);
-        }
-
-        return new MultiWayProcessor(processors, taskManager, errorReceiverProxy);
     }
 }

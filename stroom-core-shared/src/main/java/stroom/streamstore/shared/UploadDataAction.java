@@ -17,7 +17,7 @@
 package stroom.streamstore.shared;
 
 import stroom.entity.shared.Action;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.util.shared.ResourceKey;
 
 public class UploadDataAction extends Action<ResourceKey> {
@@ -33,7 +33,7 @@ public class UploadDataAction extends Action<ResourceKey> {
     }
 
     public UploadDataAction(final ResourceKey resourceKey, final DocRef feed, final DocRef streamType,
-            final Long effectiveMs, final String metaData, final String fileName) {
+                            final Long effectiveMs, final String metaData, final String fileName) {
         this.key = resourceKey;
         this.feed = feed;
         this.streamType = streamType;

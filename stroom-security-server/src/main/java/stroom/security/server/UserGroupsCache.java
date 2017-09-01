@@ -23,10 +23,8 @@ import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventBus;
 import stroom.entity.server.event.EntityEventHandler;
 import stroom.entity.shared.EntityAction;
-import stroom.query.api.v1.DocRef;
-import stroom.security.shared.User;
+import stroom.query.api.v2.DocRef;
 import stroom.security.shared.UserRef;
-import stroom.security.shared.UserService;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -51,8 +49,11 @@ public class UserGroupsCache extends AbstractCacheBean<UserRef, List<UserRef>> i
         setMaxLiveTime(30, TimeUnit.MINUTES);
     }
 
-    @Override
-    protected List<UserRef> create(final UserRef user) {
+    List<UserRef> getOrCreate(final UserRef key) {
+        return computeIfAbsent(key, this::create);
+    }
+
+    private List<UserRef> create(final UserRef user) {
         return userService.findGroupsForUser(user);
     }
 

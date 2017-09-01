@@ -74,10 +74,10 @@ public class ManageGlobalPropertyListPresenter
                 return row.getDescription();
             }
         }, "Description", 300);
-        getView().addEndColumn(new EndColumn<GlobalProperty>());
+        getView().addEndColumn(new EndColumn<>());
 
         criteria = new FindGlobalPropertyCriteria();
-        dataProvider = new EntityServiceFindActionDataProvider<FindGlobalPropertyCriteria, GlobalProperty>(dispatcher,
+        dataProvider = new EntityServiceFindActionDataProvider<>(dispatcher,
                 getView());
         dataProvider.setCriteria(criteria);
     }

@@ -44,15 +44,10 @@ import java.util.List;
 
 public class ContentTabPanePresenter extends CurveTabLayoutPresenter<ContentTabPanePresenter.ContentTabPaneProxy>
         implements OpenContentTabHandler, CloseContentTabHandler, SelectContentTabHandler, RefreshContentTabHandler {
-    @ProxyCodeSplit
-    public interface ContentTabPaneProxy extends Proxy<ContentTabPanePresenter> {
-    }
-
+    private final List<TabData> historyList = new ArrayList<>();
     private int currentHistoryId;
     private int currentIndex;
-    private final List<TabData> historyList = new ArrayList<>();
     private boolean ignoreHistory;
-
     @Inject
     public ContentTabPanePresenter(final EventBus eventBus, final CurveTabLayoutView view,
                                    final ContentTabPaneProxy proxy) {
@@ -183,5 +178,9 @@ public class ContentTabPanePresenter extends CurveTabLayoutPresenter<ContentTabP
     @Override
     protected void fireSelectedTabChange(final TabData tabData) {
         ContentTabSelectionChangeEvent.fire(this, tabData);
+    }
+
+    @ProxyCodeSplit
+    public interface ContentTabPaneProxy extends Proxy<ContentTabPanePresenter> {
     }
 }

@@ -22,12 +22,7 @@ import com.google.gwt.event.shared.HasHandlers;
 import stroom.widget.tab.client.presenter.TabData;
 
 public class RequestCloseTabEvent extends GwtEvent<RequestCloseTabEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onCloseTab(RequestCloseTabEvent event);
-    }
-
     private static Type<Handler> TYPE;
-
     private final TabData tabData;
 
     private RequestCloseTabEvent(final TabData tabData) {
@@ -57,5 +52,9 @@ public class RequestCloseTabEvent extends GwtEvent<RequestCloseTabEvent.Handler>
     @Override
     protected void dispatch(final Handler handler) {
         handler.onCloseTab(this);
+    }
+
+    public interface Handler extends EventHandler {
+        void onCloseTab(RequestCloseTabEvent event);
     }
 }

@@ -1,7 +1,7 @@
 package stroom.resources.authorisation.v1;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 public class AuthorisationRequest {
     @JsonProperty
@@ -9,9 +9,10 @@ public class AuthorisationRequest {
     @JsonProperty
     private String permissions;
 
-    public AuthorisationRequest() {}
+    public AuthorisationRequest() {
+    }
 
-    public AuthorisationRequest(DocRef docRef, String permissions){
+    public AuthorisationRequest(DocRef docRef, String permissions) {
         this.docRef = docRef;
         this.permissions = permissions;
     }

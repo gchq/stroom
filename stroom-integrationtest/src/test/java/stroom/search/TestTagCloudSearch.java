@@ -20,29 +20,28 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.CommonIndexingTest;
 import stroom.entity.shared.DocRefUtil;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.query.api.v1.DocRef;
-import stroom.query.api.v1.ExpressionBuilder;
-import stroom.query.api.v1.ExpressionTerm.Condition;
-import stroom.query.api.v1.Field;
-import stroom.query.api.v1.FieldBuilder;
-import stroom.query.api.v1.Format;
-import stroom.query.api.v1.OffsetRange;
-import stroom.query.api.v1.Query;
-import stroom.query.api.v1.QueryKey;
-import stroom.query.api.v1.ResultRequest;
-import stroom.query.api.v1.ResultRequest.ResultStyle;
-import stroom.query.api.v1.Row;
-import stroom.query.api.v1.SearchRequest;
-import stroom.query.api.v1.SearchResponse;
-import stroom.query.api.v1.TableResult;
-import stroom.query.api.v1.TableSettings;
-import stroom.util.shared.ParamUtil;
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionBuilder;
+import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.v2.Field;
+import stroom.query.api.v2.FieldBuilder;
+import stroom.query.api.v2.Format;
+import stroom.query.api.v2.OffsetRange;
+import stroom.query.api.v2.Query;
+import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.ResultRequest;
+import stroom.query.api.v2.ResultRequest.Fetch;
+import stroom.query.api.v2.Row;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchResponse;
+import stroom.query.api.v2.TableResult;
+import stroom.query.api.v2.TableSettings;
+import stroom.query.shared.v2.ParamUtil;
 
 import javax.annotation.Resource;
 import java.time.ZoneOffset;
@@ -97,7 +96,7 @@ public class TestTagCloudSearch extends AbstractSearchTest {
         final ExpressionBuilder expression = buildExpression("user5", "2000-01-01T00:00:00.000Z", "2016-01-02T00:00:00.000Z");
         final Query query = new Query(dataSourceRef, expression.build());
 
-        final ResultRequest tableResultRequest = new ResultRequest(componentId, Collections.singletonList(tableSettings), null, null, ResultRequest.ResultStyle.TABLE, true);
+        final ResultRequest tableResultRequest = new ResultRequest(componentId, Collections.singletonList(tableSettings), null, null, ResultRequest.ResultStyle.TABLE, Fetch.CHANGES);
 
         final List<ResultRequest> resultRequests = Collections.singletonList(tableResultRequest);
 

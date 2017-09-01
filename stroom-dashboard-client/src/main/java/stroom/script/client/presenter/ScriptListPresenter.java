@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,7 +25,7 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.util.client.BorderUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -34,7 +34,7 @@ import java.util.List;
 public class ScriptListPresenter extends MyPresenterWidget<DataGridView<DocRef>> {
     @Inject
     public ScriptListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
-        super(eventBus, new DataGridViewImpl<DocRef>(true, true));
+        super(eventBus, new DataGridViewImpl<>(true, true));
 
         // Add a border to the list.
         BorderUtil.addBorder(getWidget().getElement());
@@ -54,7 +54,7 @@ public class ScriptListPresenter extends MyPresenterWidget<DataGridView<DocRef>>
             }
         };
         getView().addResizableColumn(nameColumn, "Name", 250);
-        getView().addEndColumn(new EndColumn<DocRef>());
+        getView().addEndColumn(new EndColumn<>());
     }
 
     public void setData(final List<DocRef> scripts) {

@@ -27,17 +27,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class KeyedTaskQueue implements TaskQueue {
-    public interface KeyProvider {
-        Object getKey(Task<?> task);
-    }
-
-    public static class UserKeyProvider implements KeyProvider {
-        @Override
-        public Object getKey(final Task<?> task) {
-            return task.getUserToken();
-        }
-    }
-
     public static final int DEFAULT_CAPACITY = 1000;
     /**
      * Main lock guarding all access
@@ -47,18 +36,20 @@ public class KeyedTaskQueue implements TaskQueue {
     private final Prioritiser prioritiser;
     private final List<Object> keyList = new ArrayList<>();
     private final Map<Object, List<Task<?>>> map = new HashMap<>();
-    /** Condition for waiting takes */
+    /**
+     * Condition for waiting takes
+     */
     private final Condition notEmpty = lock.newCondition();
-    /** Condition for waiting puts */
+    /**
+     * Condition for waiting puts
+     */
     private final Condition notFull = lock.newCondition();
     private volatile int keyIndex;
     private volatile int capacity;
     private volatile int size;
-
     public KeyedTaskQueue() {
         this(new UserKeyProvider(), new BasicPrioritiser(), DEFAULT_CAPACITY);
     }
-
     public KeyedTaskQueue(final KeyProvider keyProvider, final Prioritiser prioritiser, final int capacity) {
         this.keyProvider = keyProvider;
         this.prioritiser = prioritiser;
@@ -180,5 +171,16 @@ public class KeyedTaskQueue implements TaskQueue {
 
     public void setCapacity(final int capacity) {
         this.capacity = capacity;
+    }
+
+    public interface KeyProvider {
+        Object getKey(Task<?> task);
+    }
+
+    public static class UserKeyProvider implements KeyProvider {
+        @Override
+        public Object getKey(final Task<?> task) {
+            return task.getUserToken();
+        }
     }
 }

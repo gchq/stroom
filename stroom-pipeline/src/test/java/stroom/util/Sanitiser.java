@@ -41,10 +41,14 @@ import java.io.InputStreamReader;
 public class Sanitiser {
     private static final SAXParserFactory PARSER_FACTORY;
 
-	static {
-		PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
-		PARSER_FACTORY.setNamespaceAware(true);
-	}
+    static {
+        PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
+        PARSER_FACTORY.setNamespaceAware(true);
+    }
+
+    public Sanitiser(final File in, final File out) {
+        process(in, out);
+    }
 
     public static void main(final String[] args) throws Exception {
         if (args.length != 2) {
@@ -52,10 +56,6 @@ public class Sanitiser {
         }
 
         new Sanitiser(new File(args[0]), new File(args[1]));
-    }
-
-    public Sanitiser(final File in, final File out) {
-        process(in, out);
     }
 
     private void process(final File in, final File out) {

@@ -36,7 +36,7 @@ public class BracketConnectorRenderer<T> implements ConnectorRenderer<T> {
 
     @Override
     public void render(final TreeLayout<T> treeLayout, final double x1, final double y1, final double x2,
-            final double y2, final boolean firstChild, final boolean lastChild) {
+                       final double y2, final boolean firstChild, final boolean lastChild) {
         final double midX = x1 + ((x2 - x1) / 2);
         final double minX = midX - RADIUS;
         final double maxX = midX + RADIUS;
@@ -52,7 +52,7 @@ public class BracketConnectorRenderer<T> implements ConnectorRenderer<T> {
     }
 
     private void drawTop(final Context2d ctx, final double midX, final double minX, final double maxX, final double y1,
-            final double y2) {
+                         final double y2) {
         final double maxY = y1 - RADIUS;
         final double minY = y2 + RADIUS;
 
@@ -69,7 +69,7 @@ public class BracketConnectorRenderer<T> implements ConnectorRenderer<T> {
     }
 
     private void drawBottom(final Context2d ctx, final double midX, final double minX, final double maxX,
-            final double y1, final double y2) {
+                            final double y1, final double y2) {
         final double minY = y1 + RADIUS;
         final double maxY = y2 - RADIUS;
 

@@ -23,10 +23,6 @@ import com.gwtplatform.mvp.client.View;
 import java.util.List;
 
 public interface PopupView extends View, HasUiHandlers<PopupUiHandlers> {
-    enum PopupType {
-        POPUP, DIALOG, CLOSE_DIALOG, OK_CANCEL_DIALOG
-    }
-
     void setCaption(String caption);
 
     void setModal(boolean modal);
@@ -42,4 +38,8 @@ public interface PopupView extends View, HasUiHandlers<PopupUiHandlers> {
     void show(PopupType popupType, int x1, int x2, int y1, int y2);
 
     void hide(boolean autoClose);
+
+    enum PopupType {
+        POPUP, DIALOG, CLOSE_DIALOG, OK_CANCEL_DIALOG
+    }
 }

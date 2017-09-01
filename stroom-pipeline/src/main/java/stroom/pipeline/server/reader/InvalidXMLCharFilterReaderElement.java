@@ -34,7 +34,7 @@ import java.io.Reader;
 @Component
 @Scope("prototype")
 @ConfigurableElement(type = "InvalidXMLCharFilterReader", category = Category.READER, roles = {
-        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.ROLE_READER }, icon = ElementIcons.STREAM)
+        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.ROLE_READER}, icon = ElementIcons.STREAM)
 public class InvalidXMLCharFilterReaderElement extends AbstractReaderElement {
     private final ErrorReceiver errorReceiver;
 
@@ -60,7 +60,7 @@ public class InvalidXMLCharFilterReaderElement extends AbstractReaderElement {
     }
 
     @PipelineProperty(description = "XML version, e.g. 1.0 or 1.1", defaultValue = "1.1")
-    public void setXMLVersion(final String xmlMode) {
+    public void setXmlVersion(final String xmlMode) {
         if ("1.0".equals(xmlMode)) {
             mode = XMLmode.XML_1_0;
         }

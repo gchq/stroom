@@ -36,14 +36,7 @@ import java.util.List;
 public class StroomStatsStoreFieldEditPresenter
         extends MyPresenterWidget<StroomStatsStoreFieldEditPresenter.StroomStatsStoreFieldEditView> {
 
-    public interface StroomStatsStoreFieldEditView extends View {
-        String getFieldName();
-
-        void setFieldName(final String fieldName);
-    }
-
     private String fieldNamePattern;
-
     private List<StatisticField> otherFields;
 
     @Inject
@@ -108,5 +101,11 @@ public class StroomStatsStoreFieldEditPresenter
 
     public void setFieldNamePattern(final String fieldNamePattern) {
         this.fieldNamePattern = fieldNamePattern;
+    }
+
+    public interface StroomStatsStoreFieldEditView extends View {
+        String getFieldName();
+
+        void setFieldName(final String fieldName);
     }
 }

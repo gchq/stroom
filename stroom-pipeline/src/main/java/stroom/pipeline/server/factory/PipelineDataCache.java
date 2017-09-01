@@ -22,5 +22,5 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineData;
 
 public interface PipelineDataCache extends CacheBean<VersionedEntityDecorator<PipelineEntity>, PipelineData> {
-    PipelineData get(PipelineEntity pipelineEntity);
+    PipelineData getOrCreate(PipelineEntity pipelineEntity);
 }

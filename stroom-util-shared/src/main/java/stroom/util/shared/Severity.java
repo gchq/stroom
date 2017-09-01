@@ -16,11 +16,11 @@
 
 package stroom.util.shared;
 
-public enum Severity implements HasDisplayValue,SharedObject {
+public enum Severity implements HasDisplayValue, SharedObject {
     INFO(1, "INFO", "Information"), WARNING(2, "WARN", "Warnings"), ERROR(3, "ERROR", "Errors"), FATAL_ERROR(4, "FATAL",
             "Fatal Errors");
 
-    public static final Severity[] SEVERITIES = { FATAL_ERROR, ERROR, WARNING, INFO };
+    public static final Severity[] SEVERITIES = {FATAL_ERROR, ERROR, WARNING, INFO};
 
     private int id;
     private String displayValue;
@@ -30,6 +30,23 @@ public enum Severity implements HasDisplayValue,SharedObject {
         this.id = id;
         this.displayValue = displayValue;
         this.summaryValue = summaryValue;
+    }
+
+    public static Severity getSeverity(final String displayValue) {
+        if (displayValue != null) {
+            final String val = displayValue.trim();
+            if (INFO.getDisplayValue().equalsIgnoreCase(val)) {
+                return INFO;
+            } else if (WARNING.getDisplayValue().equalsIgnoreCase(val)) {
+                return WARNING;
+            } else if (ERROR.getDisplayValue().equalsIgnoreCase(val)) {
+                return ERROR;
+            } else if (FATAL_ERROR.getDisplayValue().equalsIgnoreCase(val)) {
+                return FATAL_ERROR;
+            }
+        }
+
+        return null;
     }
 
     public boolean greaterThan(final Severity o) {
@@ -60,22 +77,5 @@ public enum Severity implements HasDisplayValue,SharedObject {
     @Override
     public String toString() {
         return displayValue;
-    }
-
-    public static Severity getSeverity(final String displayValue) {
-        if (displayValue != null) {
-            final String val = displayValue.trim();
-            if (INFO.getDisplayValue().equalsIgnoreCase(val)) {
-                return INFO;
-            } else if (WARNING.getDisplayValue().equalsIgnoreCase(val)) {
-                return WARNING;
-            } else if (ERROR.getDisplayValue().equalsIgnoreCase(val)) {
-                return ERROR;
-            } else if (FATAL_ERROR.getDisplayValue().equalsIgnoreCase(val)) {
-                return FATAL_ERROR;
-            }
-        }
-
-        return null;
     }
 }

@@ -24,7 +24,7 @@ import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 public class VisSettingsPresenter extends SettingsPresenter {
     @Inject
     public VisSettingsPresenter(final EventBus eventBus, final LinkTabsLayoutView view,
-            final BasicVisSettingsPresenter basicSettingsPresenter) {
+                                final BasicVisSettingsPresenter basicSettingsPresenter) {
         super(eventBus, view);
 
         basicSettingsPresenter.setSettingsPresenter(this);

@@ -21,7 +21,6 @@ import net.sf.ehcache.CacheException;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
-import net.sf.ehcache.Statistics;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.constructs.blocking.SelfPopulatingCache;
 import net.sf.ehcache.event.CacheEventListenerAdapter;
@@ -29,28 +28,191 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.shared.CacheInfo;
 
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 public abstract class AbstractCacheBean<K, V> implements CacheBean<K, V> {
+    private final Ehcache ehcache;
+    private final Ehcache selfPopulatingCache;
+
+    public AbstractCacheBean(final CacheManager cacheManager, final String name, final int maxCacheEntries) {
+        this(cacheManager, new CacheConfiguration(name, maxCacheEntries));
+    }
+
+    @SuppressWarnings("unchecked")
+    public AbstractCacheBean(final CacheManager cacheManager, final CacheConfiguration cacheConfiguration) {
+        ehcache = new Cache(cacheConfiguration);
+        selfPopulatingCache = new SelfPopulatingCache(ehcache, key -> {
+            try {
+                final Mapping mapping = (Mapping) key;
+                return mapping.mappingFunction.apply(mapping.key);
+            } catch (final Throwable t) {
+                return t;
+            }
+        });
+        ehcache.getCacheEventNotificationService().registerListener(new CacheListener(this));
+        cacheManager.addCache(ehcache);
+    }
+
+    protected long getMaxCacheEntries() {
+        return selfPopulatingCache.getCacheConfiguration().getMaxEntriesLocalHeap();
+    }
+
+    protected void setMaxCacheEntries(final long maxCacheEntries) {
+        selfPopulatingCache.getCacheConfiguration().setMaxEntriesLocalHeap(maxCacheEntries);
+    }
+
+    public V computeIfAbsent(final K key, final Function<? super K, ? extends V> mappingFunction) {
+        return getValue(selfPopulatingCache.get(new Mapping<K, V>(key, mappingFunction)));
+    }
+
+    protected V computeIfAbsentQuiet(final K key, final Function<? super K, ? extends V> mappingFunction) {
+        return getValue(selfPopulatingCache.getQuiet(new Mapping<K, V>(key, mappingFunction)));
+    }
+
+    protected V getQuiet(final K key) {
+        return getValue(ehcache.getQuiet(new Mapping<K, V>(key, null)));
+    }
+
+    @SuppressWarnings("unchecked")
+    protected List<K> getKeys() {
+        final List list = selfPopulatingCache.getKeys();
+        final List<K> keys = new ArrayList<>(list.size());
+        for (final Object item : list) {
+            keys.add((K) ((Mapping) item).key);
+        }
+        return keys;
+    }
+
+    @SuppressWarnings("unchecked")
+    private V getValue(final Element element) {
+        try {
+            if (element == null) {
+                return null;
+            }
+
+            final Object object = element.getObjectValue();
+            if (object instanceof RuntimeException) {
+                throw (RuntimeException) object;
+            }
+            if (object instanceof Throwable) {
+                final Throwable throwable = (Throwable) object;
+                throw new RuntimeException(throwable.getMessage(), throwable);
+            }
+
+            return (V) object;
+
+        } catch (final CacheException e) {
+            final Throwable cause = e.getCause();
+            if (cause != null && cause instanceof RuntimeException) {
+                throw (RuntimeException) cause;
+            }
+
+            throw e;
+        }
+    }
+
+    public void remove(final K key) {
+        selfPopulatingCache.remove(new Mapping<K, V>(key, null));
+    }
+
+    public void setMaxIdleTime(final long maxIdleTime, final TimeUnit unit) {
+        setMaxIdleTime(TimeUnit.SECONDS.convert(maxIdleTime, unit));
+    }
+
+    public void setMaxLiveTime(final long maxLiveTime, final TimeUnit unit) {
+        setMaxLiveTime(TimeUnit.SECONDS.convert(maxLiveTime, unit));
+    }
+
+    public void setMaxIdleTime(final long maxIdleTime) {
+        selfPopulatingCache.getCacheConfiguration().setTimeToIdleSeconds(maxIdleTime);
+    }
+
+    public void setMaxLiveTime(final long maxLiveTime) {
+        selfPopulatingCache.getCacheConfiguration().setTimeToLiveSeconds(maxLiveTime);
+    }
+
+    public void evictExpiredElements() {
+        selfPopulatingCache.evictExpiredElements();
+    }
+
+    @Override
+    public void clear() {
+        CacheUtil.clear(ehcache);
+    }
+
+    public CacheInfo getInfo() {
+        return CacheUtil.getInfo(ehcache);
+    }
+
+    protected int size() {
+        return selfPopulatingCache.getSize();
+    }
+
+    @SuppressWarnings("unchecked")
+    private void destroy(final Element element) {
+        if (element != null) {
+            destroy((K) ((Mapping) element.getObjectKey()).key, (V) element.getObjectValue());
+        }
+    }
+
+    protected void destroy(final K key, final V value) {
+        if (value != null && value instanceof Destroyable) {
+            final Destroyable destroyable = (Destroyable) value;
+            destroyable.destroy();
+        }
+    }
+
     public interface Destroyable {
         void destroy();
     }
 
+    private static class Mapping<K, V> implements Serializable {
+        private final K key;
+        private final Function<? super K, ? extends V> mappingFunction;
+
+        Mapping(final K key, final Function<? super K, ? extends V> mappingFunction) {
+            this.key = key;
+            this.mappingFunction = mappingFunction;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            final Mapping innerKey = (Mapping) o;
+
+            return key.equals(innerKey.key);
+        }
+
+        @Override
+        public int hashCode() {
+            return key.hashCode();
+        }
+    }
+
     private static class CacheListener extends CacheEventListenerAdapter {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CacheListener.class);
+        private static final Logger LOGGER = LoggerFactory.getLogger(CacheListener.class);
 
         private final AbstractCacheBean<?, ?> parent;
 
-        public CacheListener(final AbstractCacheBean<?, ?> parent) {
+        CacheListener(final AbstractCacheBean<?, ?> parent) {
             this.parent = parent;
         }
 
         @Override
         public void notifyRemoveAll(final Ehcache cache) {
-            // Hopefully clear will not be called.
-            LOGGER.trace("notifyRemoveAll()");
-            parent.destroyAll(cache);
+            // parent.destroyAll(cache);
+            try {
+                throw new IllegalStateException("notifyRemoveAll() is not expected");
+            } catch (final Exception e) {
+                // Hopefully clear will not be called.
+                LOGGER.error(e.getMessage(), e);
+            }
         }
 
         @Override
@@ -85,135 +247,6 @@ public abstract class AbstractCacheBean<K, V> implements CacheBean<K, V> {
         public void dispose() {
             LOGGER.trace("dispose()");
             // Do nothing.
-        }
-    }
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractCacheBean.class);
-
-    private final Ehcache cache;
-
-    public AbstractCacheBean(final CacheManager cacheManager, final String name, final int maxCacheEntries) {
-        this(cacheManager, new CacheConfiguration(name, maxCacheEntries));
-    }
-
-    public AbstractCacheBean(final CacheManager cacheManager, final CacheConfiguration cacheConfiguration) {
-        Ehcache cache = new Cache(cacheConfiguration);
-        cache = new SelfPopulatingCache(cache, key -> create((K) key));
-        cache.getCacheEventNotificationService().registerListener(new CacheListener(this));
-
-        this.cache = cache;
-        cacheManager.addCache(cache);
-    }
-
-    protected abstract V create(K key);
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public V get(final K k) {
-        try {
-            final Element element = cache.get(k);
-            if (element == null) {
-                return null;
-            }
-            return (V) element.getObjectValue();
-        } catch (final CacheException e) {
-            final Throwable cause = e.getCause();
-            if (cause != null && cause instanceof RuntimeException) {
-                throw (RuntimeException) cause;
-            }
-
-            throw e;
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    protected V getQuiet(final K k) {
-        final Element element = cache.getQuiet(k);
-        if (element == null) {
-            return null;
-        }
-        return (V) element.getObjectValue();
-    }
-
-    @Override
-    public void remove(final K k) {
-        cache.remove(k);
-    }
-
-    public void setMaxIdleTime(final long maxIdleTime, final TimeUnit unit) {
-        setMaxIdleTime(TimeUnit.SECONDS.convert(maxIdleTime, unit));
-    }
-
-    public void setMaxLiveTime(final long maxLiveTime, final TimeUnit unit) {
-        setMaxLiveTime(TimeUnit.SECONDS.convert(maxLiveTime, unit));
-    }
-
-    public void setMaxIdleTime(final long maxIdleTime) {
-        cache.getCacheConfiguration().setTimeToIdleSeconds(maxIdleTime);
-    }
-
-    public void setMaxLiveTime(final long maxLiveTime) {
-        cache.getCacheConfiguration().setTimeToLiveSeconds(maxLiveTime);
-    }
-
-    public void evictExpiredElements() {
-        cache.evictExpiredElements();
-    }
-
-    @Override
-    public void clear() {
-        cache.removeAll();
-    }
-
-    public CacheInfo getInfo() {
-        final Statistics stats = cache.getStatistics();
-
-        final CacheInfo info = new CacheInfo(stats.getAssociatedCacheName(), stats.getCacheHits(),
-                stats.getOnDiskHits(), stats.getOffHeapHits(), stats.getInMemoryHits(), stats.getCacheMisses(),
-                stats.getOnDiskMisses(), stats.getOffHeapMisses(), stats.getInMemoryMisses(), stats.getObjectCount(),
-                stats.getAverageGetTime(), stats.getEvictionCount(), stats.getMemoryStoreObjectCount(),
-                stats.getOffHeapStoreObjectCount(), stats.getDiskStoreObjectCount(), stats.getSearchesPerSecond(),
-                stats.getAverageSearchTime(), stats.getWriterQueueSize());
-        return info;
-    }
-
-    protected Ehcache getCache() {
-        return cache;
-    }
-
-    @SuppressWarnings("rawtypes")
-    private void destroyAll(final Ehcache cache) {
-        try {
-            final List keys = cache.getKeys();
-            for (final Object key : keys) {
-                try {
-                    // Try and get the element quietly as we don't want this
-                    // call
-                    // top extend the life of sessions that should be dying.
-                    final Element element = cache.getQuiet(key);
-                    destroy(element);
-                } catch (final Throwable t) {
-                    LOGGER.error(t.getMessage(), t);
-                }
-            }
-        } catch (final Throwable t) {
-            LOGGER.error(t.getMessage(), t);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private void destroy(final Element element) {
-        if (element != null) {
-            destroy((K) element.getObjectKey(), (V) element.getObjectValue());
-        }
-    }
-
-    protected void destroy(final K key, final V value) {
-        if (value != null && value instanceof Destroyable) {
-            final Destroyable destroyable = (Destroyable) value;
-            if (destroyable != null) {
-                destroyable.destroy();
-            }
         }
     }
 }

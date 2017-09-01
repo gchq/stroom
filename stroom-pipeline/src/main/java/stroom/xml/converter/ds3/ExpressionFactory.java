@@ -25,7 +25,7 @@ public abstract class ExpressionFactory extends NodeFactory {
     private final int advance;
 
     public ExpressionFactory(final NodeFactory parent, final String id, final int minMatch, final int maxMatch,
-            final Set<Integer> onlyMatch, final int advance) {
+                             final Set<Integer> onlyMatch, final int advance) {
         super(parent, id);
         this.minMatch = minMatch;
         this.maxMatch = maxMatch;

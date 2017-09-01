@@ -36,6 +36,6 @@ public class TestBitmap extends StroomUnitTest {
             bit++;
         }
 
-        Assert.assertTrue(Arrays.equals(Bitmap.getBits(0x1001), new int[] { 0, 12 }));
+        Assert.assertTrue(Arrays.equals(Bitmap.getBits(0x1001), new int[]{0, 12}));
     }
 }

@@ -28,11 +28,11 @@ public class BOMRemovalInputStream extends WrappedInputStream {
     private static final String UTF_32LE = "UTF-32LE";
     private static final String UTF_32BE = "UTF-32BE";
 
-    private static final byte[] UTF_8_BOM = { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF };
-    private static final byte[] UTF_16LE_BOM = { (byte) 0xFF, (byte) 0xFE };
-    private static final byte[] UTF_16BE_BOM = { (byte) 0xFE, (byte) 0xFF };
-    private static final byte[] UTF_32LE_BOM = { (byte) 0xFF, (byte) 0xFE, (byte) 0x0, (byte) 0x0 };
-    private static final byte[] UTF_32BE_BOM = { (byte) 0x0, (byte) 0x0, (byte) 0xFE, (byte) 0xFF };
+    private static final byte[] UTF_8_BOM = {(byte) 0xEF, (byte) 0xBB, (byte) 0xBF};
+    private static final byte[] UTF_16LE_BOM = {(byte) 0xFF, (byte) 0xFE};
+    private static final byte[] UTF_16BE_BOM = {(byte) 0xFE, (byte) 0xFF};
+    private static final byte[] UTF_32LE_BOM = {(byte) 0xFF, (byte) 0xFE, (byte) 0x0, (byte) 0x0};
+    private static final byte[] UTF_32BE_BOM = {(byte) 0x0, (byte) 0x0, (byte) 0xFE, (byte) 0xFF};
 
     private final byte[] bom;
     private int pos = 0;

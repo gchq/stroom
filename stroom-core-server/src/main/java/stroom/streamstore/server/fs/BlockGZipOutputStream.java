@@ -35,12 +35,13 @@ public class BlockGZipOutputStream extends OutputStream implements SeekableOutpu
     private final BlockByteArrayOutputStream mainBuffer;
     // Our index buffer we append on at the end.
     private final BlockByteArrayOutputStream indexBuffer;
-
+    // Use to help track non-closed streams
+    private final StreamCloser streamCloser = new StreamCloser();
+    private final SeekableOutputStream mainStream;
     // The stream - we hold a buffer onto it as well
     private BufferedOutputStream currentStreamBuffer;
     private GZIPOutputStream currentStreamGzip;
     private long currentRawBlockStartPos = 0;
-
     // The block size we are using
     private int blockSize;
     // The current 'logical' uncompressed data item we have written
@@ -49,12 +50,7 @@ public class BlockGZipOutputStream extends OutputStream implements SeekableOutpu
     private long blockCount = 0;
     // ((blockCount+1) * blockSize)
     private long currentBlockEndPos = 0;
-
-    // Use to help track non-closed streams
-    private final StreamCloser streamCloser = new StreamCloser();
     private boolean closed;
-
-    private final SeekableOutputStream mainStream;
 
     public BlockGZipOutputStream(final SeekableOutputStream mainStream) throws IOException {
         this(mainStream, BlockGZIPConstants.DEFAULT_BLOCK_SIZE);

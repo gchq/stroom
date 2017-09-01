@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,7 +20,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.dashboard.client.vis.ClearScriptCacheEvent;
 import stroom.dashboard.client.vis.HandlerRegistry;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.security.client.event.LogoutEvent;
 
 import javax.inject.Singleton;
@@ -32,7 +32,7 @@ public class ScriptCache {
     private final EventBus eventBus;
     private final HandlerRegistry handlerRegistry = new HandlerRegistry();
 
-    private final Set<DocRef> loadedScripts = new HashSet<DocRef>();
+    private final Set<DocRef> loadedScripts = new HashSet<>();
 
     @Inject
     public ScriptCache(final EventBus eventBus) {

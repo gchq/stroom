@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,7 +32,7 @@ import stroom.entity.shared.PermissionInheritance;
 import stroom.importexport.server.Config;
 import stroom.importexport.server.EntityPathResolver;
 import stroom.importexport.server.ImportExportHelper;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
@@ -166,6 +166,11 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
 
     @Override
     public E loadById(final long id, final Set<String> fetchSet) throws RuntimeException {
+        return map.get(id);
+    }
+
+    @Override
+    public E loadByIdInsecure(final long id, final Set<String> fetchSet) throws RuntimeException {
         return map.get(id);
     }
 

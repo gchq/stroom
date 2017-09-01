@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import stroom.entity.server.util.XMLUtil;
+import stroom.headless.spring.HeadlessConfiguration;
 import stroom.importexport.server.ImportExportService;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Volume;
@@ -28,26 +29,27 @@ import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.VolumeService;
 import stroom.pipeline.server.filter.SafeXMLFilter;
 import stroom.pipeline.spring.PipelineConfiguration;
+import stroom.proxy.repo.StroomZipFile;
+import stroom.proxy.repo.StroomZipFileType;
+import stroom.proxy.repo.StroomZipNameSet;
+import stroom.proxy.repo.StroomZipRepository;
 import stroom.spring.PersistenceConfiguration;
 import stroom.spring.ScopeConfiguration;
-import stroom.spring.ServerComponentScanConfiguration;
 import stroom.spring.ServerConfiguration;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskManager;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.config.StroomProperties;
+import stroom.util.config.StroomProperties.Source;
 import stroom.util.io.FileUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomSpringProfiles;
+import stroom.util.task.ExternalShutdownController;
 import stroom.util.task.TaskScopeRunnable;
 import stroom.util.thread.ThreadScopeRunnable;
-import stroom.util.zip.StroomZipFile;
-import stroom.util.zip.StroomZipFileType;
-import stroom.util.zip.StroomZipNameSet;
-import stroom.util.zip.StroomZipRepository;
 
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
@@ -58,6 +60,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.file.Path;
+import java.util.stream.Stream;
 
 /**
  * Command line tool to process some files from a proxy stroom.
@@ -76,6 +80,10 @@ public class Headless extends AbstractCommandLineTool {
     private File outputFile;
     private File configFile;
     private File tmpDir;
+
+    public static void main(final String[] args) throws Exception {
+        new Headless().doMain(args);
+    }
 
     public void setInput(final String input) {
         this.input = input;
@@ -141,17 +149,39 @@ public class Headless extends AbstractCommandLineTool {
 
     @Override
     public void run() {
-        new TaskScopeRunnable(GenericServerTask.create("Headless Stroom", null)) {
-            @Override
-            protected void exec() {
-                new ThreadScopeRunnable() {
-                    @Override
-                    protected void exec() {
-                        process();
-                    }
-                }.run();
-            }
-        }.run();
+        try {
+            StroomProperties.setOverrideProperty("stroom.jpaHbm2DdlAuto", "update", Source.TEST);
+
+            StroomProperties.setOverrideProperty("stroom.jdbcDriverClassName", "org.hsqldb.jdbcDriver", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.jpaDialect", "org.hibernate.dialect.HSQLDialect", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.jdbcDriverUrl", "jdbc:hsqldb:file:${stroom.temp}/stroom/HSQLDB.DAT;shutdown=true", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.jdbcDriverUsername", "sa", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.jdbcDriverPassword", "", Source.TEST);
+
+            StroomProperties.setOverrideProperty("stroom.statistics.sql.jdbcDriverClassName", "org.hsqldb.jdbcDriver", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.statistics.sql.jpaDialect", "org.hibernate.dialect.HSQLDialect", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.statistics.sql.jdbcDriverUrl", "jdbc:hsqldb:file:${stroom.temp}/statistics/HSQLDB.DAT;shutdown=true", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.statistics.sql.jdbcDriverUsername", "sa", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.statistics.sql.jdbcDriverPassword", "", Source.TEST);
+
+            StroomProperties.setOverrideProperty("stroom.lifecycle.enabled", "false", Source.TEST);
+
+            new TaskScopeRunnable(GenericServerTask.create("Headless Stroom", null)) {
+                @Override
+                protected void exec() {
+                    new ThreadScopeRunnable() {
+                        @Override
+                        protected void exec() {
+                            process();
+                        }
+                    }.run();
+                }
+            }.run();
+        } finally {
+            StroomProperties.removeOverrides();
+
+            ExternalShutdownController.shutdown();
+        }
     }
 
     private void process() {
@@ -213,28 +243,33 @@ public class Headless extends AbstractCommandLineTool {
 
             // Loop over all of the data files in the repository.
             final StroomZipRepository repo = new StroomZipRepository(inputDir.getAbsolutePath());
-            for (final File zipFile : repo.getZipFiles()) {
-                LOGGER.info("Processing: " + zipFile.getAbsolutePath());
+            try (final Stream<Path> stream = repo.walkZipFiles()) {
+                stream.forEach(p -> {
+                    try {
+                        LOGGER.info("Processing: " + p.toAbsolutePath().toString());
 
-                final StroomZipFile stroomZipFile = new StroomZipFile(zipFile);
-                final StroomZipNameSet nameSet = stroomZipFile.getStroomZipNameSet();
+                        final StroomZipFile stroomZipFile = new StroomZipFile(p);
+                        final StroomZipNameSet nameSet = stroomZipFile.getStroomZipNameSet();
 
-                // Process each base file in a consistent order
-                for (final String baseName : nameSet.getBaseNameList()) {
-                    final InputStream dataStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Data);
-                    final InputStream metaStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Meta);
-                    final InputStream contextStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Context);
+                        // Process each base file in a consistent order
+                        for (final String baseName : nameSet.getBaseNameList()) {
+                            final InputStream dataStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Data);
+                            final InputStream metaStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Meta);
+                            final InputStream contextStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Context);
 
-                    final HeadlessTranslationTask task = new HeadlessTranslationTask(
-                            IgnoreCloseInputStream.wrap(dataStream), IgnoreCloseInputStream.wrap(metaStream),
-                            IgnoreCloseInputStream.wrap(contextStream), headlessFilter);
-                    taskManager.exec(task);
-                }
+                            final HeadlessTranslationTask task = new HeadlessTranslationTask(
+                                    IgnoreCloseInputStream.wrap(dataStream), IgnoreCloseInputStream.wrap(metaStream),
+                                    IgnoreCloseInputStream.wrap(contextStream), headlessFilter);
+                            taskManager.exec(task);
+                        }
 
-                // Close the zip file.
-                stroomZipFile.close();
+                        // Close the zip file.
+                        stroomZipFile.close();
+                    } catch (final Exception e) {
+                        LOGGER.error(e.getMessage(), e);
+                    }
+                });
             }
-
         } catch (final Exception e) {
             LOGGER.error("Unable to process repository!", e);
         }
@@ -260,14 +295,10 @@ public class Headless extends AbstractCommandLineTool {
     }
 
     private ApplicationContext buildAppContext() {
-        System.setProperty("spring.profiles.active", StroomSpringProfiles.PROD);
+        System.setProperty("spring.profiles.active", StroomSpringProfiles.PROD + ", Headless");
         final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-                ScopeConfiguration.class, PersistenceConfiguration.class, ServerComponentScanConfiguration.class,
-                ServerConfiguration.class, PipelineConfiguration.class);
+                ScopeConfiguration.class, PersistenceConfiguration.class,
+                ServerConfiguration.class, PipelineConfiguration.class, HeadlessConfiguration.class);
         return context;
-    }
-
-    public static void main(final String[] args) throws Exception {
-        new Headless().doMain(args);
     }
 }

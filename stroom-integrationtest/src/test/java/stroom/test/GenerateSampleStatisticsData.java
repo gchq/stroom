@@ -41,7 +41,7 @@ public class GenerateSampleStatisticsData {
 
     private static final List<String> STATES = Arrays.asList("IN", "OUT");
 
-    private static final String[] users = new String[] { USER1, USER2 };
+    private static final String[] users = new String[]{USER1, USER2};
 
     public static void main(final String[] args) throws Exception {
         System.out.println("Writing value data...");
@@ -92,7 +92,7 @@ public class GenerateSampleStatisticsData {
     }
 
     private static void buildEvents(final StringBuilder stringBuilder, final long initialEventTime,
-            final StatisticType statisticType) {
+                                    final StatisticType statisticType) {
         long eventTime = initialEventTime;
 
         stringBuilder.append("<data>\n");

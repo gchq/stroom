@@ -18,7 +18,6 @@ package stroom.pipeline.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractProcessIntegrationTest;
 import stroom.entity.shared.DocRefUtil;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
@@ -36,6 +35,7 @@ import stroom.pipeline.shared.XSLTService;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.RecordCount;
+import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.ComparisonHelper;
 import stroom.test.PipelineTestUtil;
 import stroom.test.StroomProcessTestFileUtil;
@@ -181,7 +181,7 @@ public class TestXMLTransformer extends AbstractProcessIntegrationTest {
         errorReceiver.setErrorReceiver(loggingErrorReceiver);
 
         // Create the parser.
-        final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+        final PipelineData pipelineData = pipelineDataCache.getOrCreate(pipelineEntity);
         final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
         // Get the input stream.

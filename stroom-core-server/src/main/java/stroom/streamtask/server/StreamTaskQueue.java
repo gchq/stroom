@@ -22,7 +22,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class StreamTaskQueue {
-    private final LinkedBlockingDeque<StreamTask> queue = new LinkedBlockingDeque<StreamTask>();
+    private final LinkedBlockingDeque<StreamTask> queue = new LinkedBlockingDeque<>();
     private final AtomicBoolean filling = new AtomicBoolean();
 
     public StreamTask poll() {
@@ -41,11 +41,11 @@ public class StreamTaskQueue {
         return this.filling.compareAndSet(expect, update);
     }
 
-    public void setFilling(final boolean update) {
-        this.filling.set(update);
-    }
-
     public boolean isFilling() {
         return filling.get();
+    }
+
+    public void setFilling(final boolean update) {
+        this.filling.set(update);
     }
 }

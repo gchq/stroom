@@ -18,6 +18,4 @@ package stroom.entity.shared;
 
 public interface FolderService extends DocumentEntityService<Folder>, FindService<Folder, FindFolderCriteria> {
     String ROOT = "System";
-
-    EntityIdSet<Folder> buildNestedFolderList(FolderIdSet queryFolderIdSet);
 }

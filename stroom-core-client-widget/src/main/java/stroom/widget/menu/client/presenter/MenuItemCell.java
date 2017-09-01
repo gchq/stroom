@@ -31,171 +31,17 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.UriUtils;
 import com.google.gwt.user.client.ui.Image;
 import stroom.data.table.client.CellTableViewImpl.MenuResources;
-import stroom.widget.button.client.GlyphIcon;
-import stroom.widget.tab.client.presenter.Icon;
+import stroom.svg.client.Icon;
+import stroom.svg.client.SvgIcon;
 import stroom.widget.tab.client.presenter.ImageIcon;
 
 public class MenuItemCell extends AbstractCell<Item> {
-    private final MenuPresenter menuPresenter;
-
-    @ImportedWithPrefix("stroom-menu")
-    public interface Style extends CssResource {
-        String DEFAULT_CSS = "MenuItem.css";
-
-        String separator();
-
-        String outer();
-
-        String highlight();
-
-        String icon();
-
-        String face();
-
-        String disabled();
-
-        String text();
-
-        String shortcut();
-    }
-
-    public interface Resources extends ClientBundle {
-        @Source(Style.DEFAULT_CSS)
-        Style style();
-    }
-
-    public interface Appearance<I extends Item> {
-        void render(MenuItemCell cell, Context context, I value, SafeHtmlBuilder sb);
-    }
-
-    public static class SeparatorAppearance implements Appearance<Separator> {
-        public interface Template extends SafeHtmlTemplates {
-            @Template("<div class=\"{0}\"></div>")
-            SafeHtml separator(String className);
-        }
-
-        private static final Template TEMPLATE = GWT.create(Template.class);
-        private static final Resources RESOURCES = GWT.create(Resources.class);
-
-        public SeparatorAppearance() {
-            // Make sure the CSS is injected.
-            RESOURCES.style().ensureInjected();
-        }
-
-        @Override
-        public void render(final MenuItemCell cell, final Context context, final Separator value,
-                           final SafeHtmlBuilder sb) {
-            sb.append(TEMPLATE.separator(RESOURCES.style().separator()));
-        }
-    }
-
-    public static class MenuItemAppearance implements Appearance<MenuItem> {
-        @Override
-        public void render(final MenuItemCell cell, final Context context, final MenuItem value,
-                           final SafeHtmlBuilder sb) {
-            if (value.getText() != null) {
-                sb.append(SafeHtmlUtils.fromTrustedString(value.getText()));
-            }
-        }
-    }
-
-    public static class IconMenuItemAppearance implements Appearance<IconMenuItem> {
-        public interface Template extends SafeHtmlTemplates {
-            @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
-            SafeHtml outer(String className, SafeStyles styles, SafeHtml inner);
-
-            @Template("<div class=\"{0}\">{1}</div>")
-            SafeHtml inner(String className, SafeHtml icon);
-
-
-
-            @Template("<div class=\"{0}\" title=\"Filter\"><div class=\"{1}\" style=\"{2}\"><i class=\"{3}\"></i></div></div>")
-            SafeHtml icon(String iconClassName, String faceClassName, SafeStyles colour, String icon);
-
-            @Template("<div class=\"{0}\">{1}</div>")
-            SafeHtml text(String className, SafeHtml text);
-        }
-
-        private static final Template TEMPLATE = GWT.create(Template.class);
-        private static final SafeStyles NORMAL = SafeStylesUtils.fromTrustedString("cursor:pointer;");
-        private static final SafeStyles DISABLED = SafeStylesUtils.fromTrustedString("cursor:default;color:grey;");
-        private static final Resources RESOURCES = GWT.create(Resources.class);
-
-        private final MenuPresenter menuPresenter;
-
-        public IconMenuItemAppearance(final MenuPresenter menuPresenter) {
-            this.menuPresenter = menuPresenter;
-
-            // Make sure the CSS is injected.
-            RESOURCES.style().ensureInjected();
-        }
-
-        @Override
-        public void render(final MenuItemCell cell, final Context context, final IconMenuItem value,
-                           final SafeHtmlBuilder sb) {
-            if (value.getText() != null) {
-                SafeStyles styles = NORMAL;
-
-                if (!value.isEnabled()) {
-                    styles = DISABLED;
-                }
-
-                final SafeHtmlBuilder inner = new SafeHtmlBuilder();
-                final Icon enabledIcon = value.getEnabledIcon();
-                final Icon disabledIcon = value.getDisabledIcon();
-
-                if (value.isEnabled()) {
-                    if (enabledIcon != null && enabledIcon instanceof ImageIcon) {
-                        final ImageIcon imageIcon = (ImageIcon) enabledIcon;
-                        final Image image = imageIcon.getImage();
-                        if (image != null) {
-                            inner.append(TEMPLATE.inner(RESOURCES.style().icon(),
-                                    SafeHtmlUtils.fromTrustedString(image.getElement().getString())));
-                        }
-                    } else if (enabledIcon != null && enabledIcon instanceof GlyphIcon) {
-                        final GlyphIcon glyphIcon = (GlyphIcon) enabledIcon;
-                        inner.append(TEMPLATE.icon(RESOURCES.style().icon(), RESOURCES.style().face(),
-                                SafeStylesUtils.forTrustedColor(glyphIcon.getColourSet().getEnabled()), glyphIcon.getGlyph()));
-                    } else {
-                        inner.append(TEMPLATE.inner(RESOURCES.style().icon(), SafeHtmlUtils.EMPTY_SAFE_HTML));
-                    }
-                } else {
-                    if (disabledIcon != null && disabledIcon instanceof ImageIcon) {
-                        final ImageIcon imageIcon = (ImageIcon) disabledIcon;
-                        final Image image = imageIcon.getImage();
-                        if (image != null) {
-                            inner.append(TEMPLATE.inner(RESOURCES.style().icon(),
-                                    SafeHtmlUtils.fromTrustedString(image.getElement().getString())));
-                        }
-                    } else if (enabledIcon != null && enabledIcon instanceof GlyphIcon) {
-                        final GlyphIcon glyphIcon = (GlyphIcon) enabledIcon;
-                        inner.append(TEMPLATE.icon(RESOURCES.style().icon(), RESOURCES.style().face() + " " + RESOURCES.style().disabled(),
-                                SafeStylesUtils.forTrustedColor(glyphIcon.getColourSet().getEnabled()), glyphIcon.getGlyph()));
-                    } else {
-                        inner.append(TEMPLATE.inner(RESOURCES.style().icon(), SafeHtmlUtils.EMPTY_SAFE_HTML));
-                    }
-                }
-
-                inner.append(
-                        TEMPLATE.inner(RESOURCES.style().text(), SafeHtmlUtils.fromTrustedString(value.getText())));
-
-                if (value.getShortcut() != null) {
-                    inner.append(TEMPLATE.inner(RESOURCES.style().shortcut(),
-                            SafeHtmlUtils.fromTrustedString(value.getShortcut())));
-                }
-
-                if (menuPresenter.isHighlighted(value)) {
-                    sb.append(TEMPLATE.outer(RESOURCES.style().highlight(), styles, inner.toSafeHtml()));
-                } else {
-                    sb.append(TEMPLATE.outer(RESOURCES.style().outer(), styles, inner.toSafeHtml()));
-                }
-            }
-        }
-    }
-
     private static final MenuResources MENU_RESOURCES = GWT.create(MenuResources.class);
+    private final MenuPresenter menuPresenter;
 
     public MenuItemCell(final MenuPresenter menuPresenter) {
         super(BrowserEvents.CLICK, BrowserEvents.MOUSEOVER, BrowserEvents.MOUSEOUT);
@@ -272,6 +118,155 @@ public class MenuItemCell extends AbstractCell<Item> {
             } else if (value instanceof Separator) {
                 new SeparatorAppearance().render(this, context, (Separator) value, sb);
             }
+        }
+    }
+
+    @ImportedWithPrefix("stroom-menu")
+    public interface Style extends CssResource {
+        String DEFAULT_CSS = "MenuItem.css";
+
+        String separator();
+
+        String outer();
+
+        String highlight();
+
+        String icon();
+
+//        String face();
+
+        String disabled();
+
+        String text();
+
+        String shortcut();
+    }
+
+    public interface Resources extends ClientBundle {
+        @Source(Style.DEFAULT_CSS)
+        Style style();
+    }
+
+    public interface Appearance<I extends Item> {
+        void render(MenuItemCell cell, Context context, I value, SafeHtmlBuilder sb);
+    }
+
+    public static class SeparatorAppearance implements Appearance<Separator> {
+        private static final Template TEMPLATE = GWT.create(Template.class);
+        private static final Resources RESOURCES = GWT.create(Resources.class);
+        public SeparatorAppearance() {
+            // Make sure the CSS is injected.
+            RESOURCES.style().ensureInjected();
+        }
+
+        @Override
+        public void render(final MenuItemCell cell, final Context context, final Separator value,
+                           final SafeHtmlBuilder sb) {
+            sb.append(TEMPLATE.separator(RESOURCES.style().separator()));
+        }
+
+        public interface Template extends SafeHtmlTemplates {
+            @Template("<div class=\"{0}\"></div>")
+            SafeHtml separator(String className);
+        }
+    }
+
+    public static class MenuItemAppearance implements Appearance<MenuItem> {
+        @Override
+        public void render(final MenuItemCell cell, final Context context, final MenuItem value,
+                           final SafeHtmlBuilder sb) {
+            if (value.getText() != null) {
+                sb.append(SafeHtmlUtils.fromTrustedString(value.getText()));
+            }
+        }
+    }
+
+    public static class IconMenuItemAppearance implements Appearance<IconMenuItem> {
+        private static final Template TEMPLATE = GWT.create(Template.class);
+        private static final SafeStyles NORMAL = SafeStylesUtils.fromTrustedString("cursor:pointer;");
+        private static final SafeStyles DISABLED = SafeStylesUtils.fromTrustedString("cursor:default;color:grey;");
+        private static final Resources RESOURCES = GWT.create(Resources.class);
+        private final MenuPresenter menuPresenter;
+
+        public IconMenuItemAppearance(final MenuPresenter menuPresenter) {
+            this.menuPresenter = menuPresenter;
+
+            // Make sure the CSS is injected.
+            RESOURCES.style().ensureInjected();
+        }
+
+        @Override
+        public void render(final MenuItemCell cell, final Context context, final IconMenuItem value,
+                           final SafeHtmlBuilder sb) {
+            if (value.getText() != null) {
+                SafeStyles styles = NORMAL;
+
+                if (!value.isEnabled()) {
+                    styles = DISABLED;
+                }
+
+                final SafeHtmlBuilder inner = new SafeHtmlBuilder();
+                final Icon enabledIcon = value.getEnabledIcon();
+                final Icon disabledIcon = value.getDisabledIcon();
+
+                if (value.isEnabled()) {
+                    if (enabledIcon != null && enabledIcon instanceof ImageIcon) {
+                        final ImageIcon imageIcon = (ImageIcon) enabledIcon;
+                        final Image image = imageIcon.getImage();
+                        if (image != null) {
+                            inner.append(TEMPLATE.inner(RESOURCES.style().icon(),
+                                    SafeHtmlUtils.fromTrustedString(image.getElement().getString())));
+                        }
+                    } else if (enabledIcon != null && enabledIcon instanceof SvgIcon) {
+                        final SvgIcon glyphIcon = (SvgIcon) enabledIcon;
+                        inner.append(TEMPLATE.icon(RESOURCES.style().icon(), UriUtils.fromString(glyphIcon.getUrl())));
+                    } else {
+                        inner.append(TEMPLATE.inner(RESOURCES.style().icon(), SafeHtmlUtils.EMPTY_SAFE_HTML));
+                    }
+                } else {
+                    if (disabledIcon != null && disabledIcon instanceof ImageIcon) {
+                        final ImageIcon imageIcon = (ImageIcon) disabledIcon;
+                        final Image image = imageIcon.getImage();
+                        if (image != null) {
+                            inner.append(TEMPLATE.inner(RESOURCES.style().icon(),
+                                    SafeHtmlUtils.fromTrustedString(image.getElement().getString())));
+                        }
+                    } else if (enabledIcon != null && enabledIcon instanceof SvgIcon) {
+                        final SvgIcon glyphIcon = (SvgIcon) enabledIcon;
+                        inner.append(TEMPLATE.icon(RESOURCES.style().icon() + " " + RESOURCES.style().disabled(), UriUtils.fromString(glyphIcon.getUrl())));
+                    } else {
+                        inner.append(TEMPLATE.inner(RESOURCES.style().icon(), SafeHtmlUtils.EMPTY_SAFE_HTML));
+                    }
+                }
+
+                inner.append(
+                        TEMPLATE.inner(RESOURCES.style().text(), SafeHtmlUtils.fromTrustedString(value.getText())));
+
+                if (value.getShortcut() != null) {
+                    inner.append(TEMPLATE.inner(RESOURCES.style().shortcut(),
+                            SafeHtmlUtils.fromTrustedString(value.getShortcut())));
+                }
+
+                if (menuPresenter.isHighlighted(value)) {
+                    sb.append(TEMPLATE.outer(RESOURCES.style().highlight(), styles, inner.toSafeHtml()));
+                } else {
+                    sb.append(TEMPLATE.outer(RESOURCES.style().outer(), styles, inner.toSafeHtml()));
+                }
+            }
+        }
+
+        public interface Template extends SafeHtmlTemplates {
+            @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
+            SafeHtml outer(String className, SafeStyles styles, SafeHtml inner);
+
+            @Template("<div class=\"{0}\">{1}</div>")
+            SafeHtml inner(String className, SafeHtml icon);
+
+            @Template("<img class=\"{0}\" src=\"{1}\">")
+            SafeHtml icon(String className, SafeUri url);
+
+            @Template("<div class=\"{0}\">{1}</div>")
+            SafeHtml text(String className, SafeHtml text);
         }
     }
 }

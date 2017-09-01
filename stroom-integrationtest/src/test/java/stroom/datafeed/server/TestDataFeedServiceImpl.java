@@ -22,7 +22,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import stroom.StroomIntegrationTest;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
 import stroom.feed.shared.FeedService;
@@ -31,6 +30,7 @@ import stroom.spring.ProcessTestServerComponentScanConfiguration;
 import stroom.spring.ScopeConfiguration;
 import stroom.spring.ServerConfiguration;
 import stroom.streamstore.server.MockStreamStore;
+import stroom.test.StroomIntegrationTest;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.spring.StroomSpringProfiles;
@@ -48,10 +48,10 @@ import java.util.zip.ZipOutputStream;
  * The combination of mock and prod classes means this test needs its own
  * context.
  */
-@ActiveProfiles(value = { StroomSpringProfiles.TEST, StroomSpringProfiles.IT })
-@ContextConfiguration(classes = { ScopeConfiguration.class, PersistenceConfiguration.class,
+@ActiveProfiles(value = {StroomSpringProfiles.TEST, StroomSpringProfiles.IT})
+@ContextConfiguration(classes = {ScopeConfiguration.class, PersistenceConfiguration.class,
         ProcessTestServerComponentScanConfiguration.class, ServerConfiguration.class,
-        TestDataFeedServiceImplConfiguration.class })
+        TestDataFeedServiceImplConfiguration.class})
 @Ignore("TODO 2015-11-18: These tests have interdependencies: they pass individually but fail when run together. Ignoring so the test may be fixed later.")
 public class TestDataFeedServiceImpl extends StroomIntegrationTest {
     @Resource

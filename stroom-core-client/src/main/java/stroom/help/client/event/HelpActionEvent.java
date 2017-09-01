@@ -23,7 +23,7 @@ public class HelpActionEvent extends GwtEvent<HelpActionHandler> {
 
     public static Type<HelpActionHandler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<HelpActionHandler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }

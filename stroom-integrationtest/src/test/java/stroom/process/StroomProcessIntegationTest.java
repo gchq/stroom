@@ -20,7 +20,7 @@ import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import stroom.StroomIntegrationTest;
+import stroom.test.StroomIntegrationTest;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.test.IntegrationTest;
 import stroom.util.test.StroomSpringJUnit4ClassRunner;
@@ -28,10 +28,10 @@ import stroom.util.test.StroomSpringJUnit4ClassRunner;
 @RunWith(StroomSpringJUnit4ClassRunner.class)
 @Category(IntegrationTest.class)
 @ActiveProfiles(StroomSpringProfiles.TEST)
-@ContextConfiguration(locations = { "classpath:META-INF/spring/stroomCoreServerContext.xml",
+@ContextConfiguration(locations = {"classpath:META-INF/spring/stroomCoreServerContext.xml",
         "classpath:META-INF/spring/stroomCoreServerLocalTestingContext.xml",
         "classpath:META-INF/spring/stroomCoreServerMockClusterContext.xml",
         "classpath:META-INF/spring/stroomProcessContext.xml",
-        "classpath:META-INF/spring/stroomProcessComponentTestContext.xml" })
+        "classpath:META-INF/spring/stroomProcessComponentTestContext.xml"})
 public abstract class StroomProcessIntegationTest extends StroomIntegrationTest {
 }

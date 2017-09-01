@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,9 +19,10 @@ package stroom.search.server;
 import net.sf.ehcache.CacheManager;
 import org.springframework.stereotype.Component;
 import stroom.cache.AbstractCacheBean;
-import stroom.query.SearchResponseCreator;
-import stroom.query.api.v1.QueryKey;
-import stroom.query.api.v1.SearchRequest;
+import stroom.query.common.v2.SearchResponseCreator;
+import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.common.v2.Store;
 import stroom.util.spring.StroomFrequencySchedule;
 
 import javax.inject.Inject;
@@ -33,14 +34,20 @@ public class SearchResultCreatorManager extends AbstractCacheBean<SearchResultCr
     private final LuceneSearchStoreFactory luceneSearchStoreFactory;
 
     @Inject
-    public SearchResultCreatorManager(final CacheManager cacheManager, final LuceneSearchStoreFactory luceneSearchStoreFactory) {
+    public SearchResultCreatorManager(final CacheManager cacheManager,
+                                      final LuceneSearchStoreFactory luceneSearchStoreFactory) {
         super(cacheManager, "Search Result Creators", MAX_ACTIVE_QUERIES);
         this.luceneSearchStoreFactory = luceneSearchStoreFactory;
     }
 
-    @Override
-    protected SearchResponseCreator create(final SearchResultCreatorManager.Key key) {
-        return new SearchResponseCreator(luceneSearchStoreFactory.create(key.searchRequest));
+    public SearchResponseCreator getOrCreate(final SearchResultCreatorManager.Key key) {
+        return computeIfAbsent(key, this::create);
+    }
+
+    private SearchResponseCreator create(final SearchResultCreatorManager.Key key) {
+        Store store = luceneSearchStoreFactory.create(key.searchRequest);
+
+        return new SearchResponseCreator(store, store.getDefaultMaxResultsSizes());
     }
 
     @Override

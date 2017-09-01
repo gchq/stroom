@@ -22,12 +22,7 @@ import com.google.gwt.event.shared.HasHandlers;
 import stroom.node.shared.ClientProperties;
 
 public class PropertyChangeEvent extends GwtEvent<PropertyChangeEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onChange(PropertyChangeEvent event);
-    }
-
     private static Type<Handler> TYPE;
-
     private final ClientProperties clientProperties;
 
     private PropertyChangeEvent(final ClientProperties clientProperties) {
@@ -61,5 +56,9 @@ public class PropertyChangeEvent extends GwtEvent<PropertyChangeEvent.Handler> {
 
     public ClientProperties getProperties() {
         return clientProperties;
+    }
+
+    public interface Handler extends EventHandler {
+        void onChange(PropertyChangeEvent event);
     }
 }

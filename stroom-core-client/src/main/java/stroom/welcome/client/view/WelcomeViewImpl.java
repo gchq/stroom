@@ -27,11 +27,7 @@ import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.welcome.client.presenter.WelcomePresenter.WelcomeView;
 
 public class WelcomeViewImpl extends ViewImpl implements WelcomeView {
-    public interface Binder extends UiBinder<Widget, WelcomeViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     SimplePanel html;
     @UiField
@@ -46,7 +42,6 @@ public class WelcomeViewImpl extends ViewImpl implements WelcomeView {
     Label upDate;
     @UiField
     Label nodeName;
-
     @Inject
     public WelcomeViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -90,5 +85,8 @@ public class WelcomeViewImpl extends ViewImpl implements WelcomeView {
     @Override
     public HasText getRoleName() {
         return roleName;
+    }
+
+    public interface Binder extends UiBinder<Widget, WelcomeViewImpl> {
     }
 }

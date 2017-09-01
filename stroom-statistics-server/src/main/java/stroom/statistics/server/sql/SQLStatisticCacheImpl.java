@@ -40,16 +40,13 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
      * flushing.
      */
     private static final int DEFAULT_MAX_SIZE = 1000000;
-
-    @Resource
-    private TaskManager taskManager;
-
-    private volatile SQLStatisticAggregateMap map = new SQLStatisticAggregateMap();
     private final ReentrantLock mapLock = new ReentrantLock();
     // private final ReentrantLock flushLock = new ReentrantLock();
     private final LinkedBlockingDeque<SQLStatisticAggregateMap> flushQueue = new LinkedBlockingDeque<>(1);
-
     private final int maxSize;
+    @Resource
+    private TaskManager taskManager;
+    private volatile SQLStatisticAggregateMap map = new SQLStatisticAggregateMap();
 
     public SQLStatisticCacheImpl() {
         this(DEFAULT_MAX_SIZE);

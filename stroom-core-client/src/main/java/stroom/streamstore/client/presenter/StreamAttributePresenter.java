@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,8 +23,8 @@ import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.EntityReferenceFindAction;
-import stroom.query.api.v1.DocRef;
-import stroom.query.api.v1.ExpressionTerm.Condition;
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.StreamAttributeCondition;
 
@@ -38,11 +38,8 @@ public class StreamAttributePresenter extends MyPresenterWidget<StreamAttributeP
         super(eventBus, view);
 
         final FindStreamAttributeKeyCriteria criteria = new FindStreamAttributeKeyCriteria();
-        criteria.setOrderBy(FindStreamAttributeKeyCriteria.ORDER_BY_NAME);
-        dispatcher.exec(new EntityReferenceFindAction<>(criteria)).onSuccess(result -> {
-            final List<DocRef> list = new ArrayList<>(result.getValues());
-            view.setKeys(list);
-        });
+        criteria.setSort(FindStreamAttributeKeyCriteria.FIELD_NAME);
+        dispatcher.exec(new EntityReferenceFindAction<>(criteria)).onSuccess(result -> view.setKeys(new ArrayList<>(result)));
     }
 
     public void read(final StreamAttributeCondition condition) {

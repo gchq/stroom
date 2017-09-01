@@ -32,7 +32,7 @@ public class ClassificationWrappedStreamPresenter extends ClassificationWrapperP
 
     @Inject
     public ClassificationWrappedStreamPresenter(final EventBus eventBus, final ClassificationWrapperView view,
-            final StreamPresenter streamPresenter) {
+                                                final StreamPresenter streamPresenter) {
         super(eventBus, view);
         this.streamPresenter = streamPresenter;
         streamPresenter.setClassificationUiHandlers(this);

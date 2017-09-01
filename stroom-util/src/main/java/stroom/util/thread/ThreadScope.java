@@ -24,7 +24,7 @@ import org.springframework.beans.factory.config.Scope;
 public class ThreadScope implements Scope {
     private static final Logger LOGGER = LoggerFactory.getLogger(ThreadScope.class);
 
-    @SuppressWarnings({ "rawtypes" })
+    @SuppressWarnings({"rawtypes"})
     @Override
     public Object get(final String name, final ObjectFactory factory) {
         Object result = null;

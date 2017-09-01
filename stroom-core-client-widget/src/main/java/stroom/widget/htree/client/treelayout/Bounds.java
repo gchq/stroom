@@ -50,7 +50,7 @@ public class Bounds {
      * <code>Shape</code> in <code>double</code> precision.
      *
      * @return the smallest X coordinate of the framing rectangle of the
-     *         <code>Shape</code>.
+     * <code>Shape</code>.
      * @since 1.2
      */
     public double getMinX() {
@@ -62,7 +62,7 @@ public class Bounds {
      * <code>Shape</code> in <code>double</code> precision.
      *
      * @return the smallest Y coordinate of the framing rectangle of the
-     *         <code>Shape</code>.
+     * <code>Shape</code>.
      * @since 1.2
      */
     public double getMinY() {
@@ -74,7 +74,7 @@ public class Bounds {
      * <code>Shape</code> in <code>double</code> precision.
      *
      * @return the largest X coordinate of the framing rectangle of the
-     *         <code>Shape</code>.
+     * <code>Shape</code>.
      * @since 1.2
      */
     public double getMaxX() {
@@ -86,7 +86,7 @@ public class Bounds {
      * <code>Shape</code> in <code>double</code> precision.
      *
      * @return the largest Y coordinate of the framing rectangle of the
-     *         <code>Shape</code>.
+     * <code>Shape</code>.
      * @since 1.2
      */
     public double getMaxY() {
@@ -98,7 +98,7 @@ public class Bounds {
      * <code>Shape</code> in <code>double</code> precision.
      *
      * @return the X coordinate of the center of the framing rectangle of the
-     *         <code>Shape</code>.
+     * <code>Shape</code>.
      * @since 1.2
      */
     public double getCenterX() {
@@ -110,7 +110,7 @@ public class Bounds {
      * <code>Shape</code> in <code>double</code> precision.
      *
      * @return the Y coordinate of the center of the framing rectangle of the
-     *         <code>Shape</code>.
+     * <code>Shape</code>.
      * @since 1.2
      */
     public double getCenterY() {

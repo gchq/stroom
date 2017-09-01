@@ -18,7 +18,6 @@ package stroom.security.server;
 
 import stroom.entity.shared.BaseEntityBig;
 import stroom.entity.shared.SQLNameConstants;
-import stroom.security.shared.User;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

@@ -3,6 +3,7 @@ package stroom.resources.authorisation.v1;
 import com.codahale.metrics.annotation.Timed;
 import stroom.resources.ResourcePaths;
 import stroom.security.SecurityContext;
+import stroom.security.server.AuthorisationService;
 
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -36,9 +37,9 @@ public class AuthorisationResource {
     @Timed
     public Response isAuthorisedForStatistic(AuthorisationRequest authorisationRequest) {
         boolean result = securityContext.hasDocumentPermission(
-                authorisationRequest.getDocRef().getType(),
-                authorisationRequest.getDocRef().getUuid(),
-                authorisationRequest.getPermissions());
+            authorisationRequest.getDocRef().getType(),
+            authorisationRequest.getDocRef().getUuid(),
+            authorisationRequest.getPermissions());
         return result ? Response.ok().build() : Response.status(Response.Status.UNAUTHORIZED).build();
     }
 

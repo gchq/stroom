@@ -44,12 +44,12 @@ public class ImportConfigAction extends Action<ResourceKey> {
         this.key = key;
     }
 
-    public void setConfirmList(final List<ImportState> confirmList) {
-        this.confirmList = confirmList;
-    }
-
     public List<ImportState> getConfirmList() {
         return confirmList;
+    }
+
+    public void setConfirmList(final List<ImportState> confirmList) {
+        this.confirmList = confirmList;
     }
 
     @Override

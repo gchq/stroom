@@ -20,8 +20,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestScenarioCreator;
 import stroom.feed.shared.Feed;
 import stroom.jobsystem.server.MockTask;
 import stroom.node.shared.FindNodeCriteria;
@@ -35,6 +33,8 @@ import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.task.server.TaskManager;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 

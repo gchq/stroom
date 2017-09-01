@@ -16,10 +16,12 @@
 
 package stroom.statistics.server.sql.search;
 
-import stroom.query.api.v1.ExpressionItem;
-import stroom.query.api.v1.ExpressionOperator;
-import stroom.query.api.v1.ExpressionTerm;
-import stroom.query.api.v1.ExpressionTerm.Condition;
+import stroom.query.api.v2.ExpressionItem;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.statistics.server.sql.search.FilterTermsTree.OperatorNode;
+import stroom.statistics.server.sql.search.FilterTermsTree.TermNode;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -93,26 +95,26 @@ public class FilterTermsTreeBuilder {
             // any further down the stack as we can only filter on distinct UIDs
 
             if (oldNode.getCondition().equals(Condition.EQUALS)) {
-                newNode = new FilterTermsTree.TermNode(oldNode.getField(), oldNode.getValue());
+                newNode = new TermNode(oldNode.getField(), oldNode.getValue());
             } else if (oldNode.getCondition().equals(Condition.IN)) {
                 if (oldNode.getValue() == null) {
-                    newNode = new FilterTermsTree.TermNode(oldNode.getField(), null);
+                    newNode = new TermNode(oldNode.getField(), null);
                 } else {
                     final String[] values = oldNode.getValue().split(Condition.IN_CONDITION_DELIMITER);
 
                     if (values.length == 1) {
                         // only one value so just convert it like it is EQUALS
-                        newNode = new FilterTermsTree.TermNode(oldNode.getField(), oldNode.getValue());
+                        newNode = new TermNode(oldNode.getField(), oldNode.getValue());
                     } else {
                         // multiple values in the IN list so convert it into a
                         // set of EQUALS terms under and OR node
-                        final List<PrintableNode> orTermNodes = new ArrayList<PrintableNode>();
+                        final List<PrintableNode> orTermNodes = new ArrayList<>();
 
                         for (final String value : values) {
                             orTermNodes.add(convertTermNode(
                                     new ExpressionTerm(oldNode.getField(), Condition.EQUALS, value), fieldBlackList));
                         }
-                        newNode = new FilterTermsTree.OperatorNode(FilterOperationMode.OR, orTermNodes);
+                        newNode = new OperatorNode(FilterOperationMode.OR, orTermNodes);
                     }
                 }
             } else {
@@ -159,7 +161,7 @@ public class FilterTermsTreeBuilder {
                 // to the tree instead
                 newNode = children.get(0);
             } else {
-                newNode = new FilterTermsTree.OperatorNode(operationMode, children);
+                newNode = new OperatorNode(operationMode, children);
             }
 
             return newNode;

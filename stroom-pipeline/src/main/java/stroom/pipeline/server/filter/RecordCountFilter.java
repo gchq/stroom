@@ -41,8 +41,8 @@ import javax.annotation.Resource;
  */
 @Component
 @Scope(StroomScope.PROTOTYPE)
-@ConfigurableElement(type = "RecordCountFilter", category = Category.FILTER, roles = { PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_HAS_TARGETS }, icon = ElementIcons.RECORD_COUNT)
+@ConfigurableElement(type = "RecordCountFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
+        PipelineElementType.ROLE_HAS_TARGETS}, icon = ElementIcons.RECORD_COUNT)
 public class RecordCountFilter extends AbstractXMLFilter implements RecordCounter {
     private static final Logger LOGGER = LoggerFactory.getLogger(RecordCountFilter.class);
 
@@ -60,8 +60,7 @@ public class RecordCountFilter extends AbstractXMLFilter implements RecordCounte
     private RecordCountService recordCountService;
 
     /**
-     * @throws SAXException
-     *             Not thrown.
+     * @throws SAXException Not thrown.
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#startProcessing()
      */
     @Override
@@ -81,8 +80,7 @@ public class RecordCountFilter extends AbstractXMLFilter implements RecordCounte
     }
 
     /**
-     * @throws SAXException
-     *             Not thrown.
+     * @throws SAXException Not thrown.
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#endProcessing()
      */
     @Override
@@ -104,8 +102,7 @@ public class RecordCountFilter extends AbstractXMLFilter implements RecordCounte
      * This method tells filters that a stream is about to be parsed so that
      * they can complete any setup necessary.
      *
-     * @throws SAXException
-     *             Could be thrown by an implementing class.
+     * @throws SAXException Could be thrown by an implementing class.
      */
     @Override
     public void startStream() {
@@ -120,8 +117,7 @@ public class RecordCountFilter extends AbstractXMLFilter implements RecordCounte
      * This method tells filters that a stream has finished parsing so cleanup
      * can be performed.
      *
-     * @throws SAXException
-     *             Could be thrown by an implementing class.
+     * @throws SAXException Could be thrown by an implementing class.
      */
     @Override
     public void endStream() {
@@ -141,22 +137,17 @@ public class RecordCountFilter extends AbstractXMLFilter implements RecordCounte
     /**
      * Fired on start element.
      *
-     * @param uri
-     *            the Namespace URI, or the empty string if the element has no
-     *            Namespace URI or if Namespace processing is not being
-     *            performed
-     * @param localName
-     *            the local name (without prefix), or the empty string if
-     *            Namespace processing is not being performed
-     * @param qName
-     *            the qualified name (with prefix), or the empty string if
-     *            qualified names are not available
-     * @param atts
-     *            the attributes attached to the element. If there are no
-     *            attributes, it shall be an empty Attributes object. The value
-     *            of this object after startElement returns is undefined
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param uri       the Namespace URI, or the empty string if the element has no
+     *                  Namespace URI or if Namespace processing is not being
+     *                  performed
+     * @param localName the local name (without prefix), or the empty string if
+     *                  Namespace processing is not being performed
+     * @param qName     the qualified name (with prefix), or the empty string if
+     *                  qualified names are not available
+     * @param atts      the attributes attached to the element. If there are no
+     *                  attributes, it shall be an empty Attributes object. The value
+     *                  of this object after startElement returns is undefined
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #endElement
      * @see org.xml.sax.Attributes
      * @see org.xml.sax.helpers.AttributesImpl
@@ -187,18 +178,14 @@ public class RecordCountFilter extends AbstractXMLFilter implements RecordCounte
     /**
      * Fired on an end element.
      *
-     * @param uri
-     *            the Namespace URI, or the empty string if the element has no
-     *            Namespace URI or if Namespace processing is not being
-     *            performed
-     * @param localName
-     *            the local name (without prefix), or the empty string if
-     *            Namespace processing is not being performed
-     * @param qName
-     *            the qualified XML name (with prefix), or the empty string if
-     *            qualified names are not available
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param uri       the Namespace URI, or the empty string if the element has no
+     *                  Namespace URI or if Namespace processing is not being
+     *                  performed
+     * @param localName the local name (without prefix), or the empty string if
+     *                  Namespace processing is not being performed
+     * @param qName     the qualified XML name (with prefix), or the empty string if
+     *                  qualified names are not available
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      */
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
@@ -211,8 +198,7 @@ public class RecordCountFilter extends AbstractXMLFilter implements RecordCounte
     }
 
     /**
-     * @param countRead
-     *            Sets whether we are counting records read or records written.
+     * @param countRead Sets whether we are counting records read or records written.
      */
     @PipelineProperty(description = "Is this filter counting records read or records written?", defaultValue = "true")
     public void setCountRead(final boolean countRead) {

@@ -22,12 +22,7 @@ import com.google.gwt.event.shared.HasHandlers;
 import stroom.entity.shared.Entity;
 
 public class ReloadEntityEvent extends GwtEvent<ReloadEntityEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onReload(ReloadEntityEvent event);
-    }
-
     private static Type<Handler> TYPE;
-
     private final Entity entity;
 
     private ReloadEntityEvent(final Entity entity) {
@@ -40,7 +35,7 @@ public class ReloadEntityEvent extends GwtEvent<ReloadEntityEvent.Handler> {
 
     public static Type<Handler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<Handler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }
@@ -57,5 +52,9 @@ public class ReloadEntityEvent extends GwtEvent<ReloadEntityEvent.Handler> {
 
     public Entity getEntity() {
         return entity;
+    }
+
+    public interface Handler extends EventHandler {
+        void onReload(ReloadEntityEvent event);
     }
 }

@@ -41,7 +41,7 @@ import java.util.List;
 import java.util.Set;
 
 @Component
-@Scope(StroomScope.THREAD)
+@Scope(StroomScope.PROTOTYPE)
 class ExplorerServiceImpl implements ExplorerService {
     private final SecurityContext securityContext;
     private final ExplorerTreeModel explorerTreeModel;

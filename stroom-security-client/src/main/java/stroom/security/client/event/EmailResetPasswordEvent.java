@@ -30,7 +30,7 @@ public class EmailResetPasswordEvent extends GwtEvent<EmailResetPasswordEvent.Em
 
     public static Type<EmailResetPasswordHandler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<EmailResetPasswordHandler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }

@@ -37,34 +37,12 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
  * The {@link Spinner} provide two arrows for in- and decreasing values.
  */
 public class Spinner implements HasHandlers {
-    /**
-     * Default resources for spinning arrows.
-     */
-    public interface SpinnerResources extends ClientBundle {
-        ImageResource arrowDown();
-
-        ImageResource arrowDownDisabled();
-
-        ImageResource arrowDownHover();
-
-        ImageResource arrowDownPressed();
-
-        ImageResource arrowUp();
-
-        ImageResource arrowUpDisabled();
-
-        ImageResource arrowUpHover();
-
-        ImageResource arrowUpPressed();
-    }
-
     private static final int INITIAL_SPEED = 7;
     private static SpinnerResources images = GWT.create(SpinnerResources.class);
-
     private final Image decrementArrow = new Image();
     private final Image incrementArrow = new Image();
-
     private final EventBus eventBus = new SimpleEventBus();
+    private final boolean constrained = true;
     private int step = 1;
     private int minStep = 1;
     private int maxStep = 99;
@@ -73,9 +51,6 @@ public class Spinner implements HasHandlers {
     private long min = 0;
     private long max = 100;
     private boolean increment;
-    private final boolean constrained = true;
-    private boolean enabled = true;
-
     private final Timer timer = new Timer() {
         private int counter = 0;
         private int speed = 7;
@@ -104,7 +79,7 @@ public class Spinner implements HasHandlers {
             }
         }
     };
-
+    private boolean enabled = true;
     private final MouseDownHandler mouseDownHandler = new MouseDownHandler() {
         @Override
         public void onMouseDown(final MouseDownEvent event) {
@@ -123,7 +98,6 @@ public class Spinner implements HasHandlers {
             }
         }
     };
-
     private final MouseOverHandler mouseOverHandler = event -> {
         if (enabled) {
             final Image sender = (Image) event.getSource();
@@ -134,13 +108,11 @@ public class Spinner implements HasHandlers {
             }
         }
     };
-
     private final MouseOutHandler mouseOutHandler = event -> {
         if (enabled) {
             cancelTimer((Widget) event.getSource());
         }
     };
-
     private final MouseUpHandler mouseUpHandler = event -> {
         if (enabled) {
             cancelTimer((Widget) event.getSource());
@@ -189,10 +161,25 @@ public class Spinner implements HasHandlers {
     }
 
     /**
+     * @param max the maximum value. Will not have any effect if constrained is
+     *            set to false
+     */
+    public void setMax(final long max) {
+        this.max = max;
+    }
+
+    /**
      * @return the maximum spinner step
      */
     public int getMaxStep() {
         return maxStep;
+    }
+
+    /**
+     * @param maxStep the maximum step for this spinner
+     */
+    public void setMaxStep(final int maxStep) {
+        this.maxStep = maxStep;
     }
 
     /**
@@ -203,10 +190,25 @@ public class Spinner implements HasHandlers {
     }
 
     /**
+     * @param min the minimum value. Will not have any effect if constrained is
+     *            set to false
+     */
+    public void setMin(final long min) {
+        this.min = min;
+    }
+
+    /**
      * @return the minimum spinner step
      */
     public int getMinStep() {
         return minStep;
+    }
+
+    /**
+     * @param minStep the minimum step for this spinner
+     */
+    public void setMinStep(final int minStep) {
+        this.minStep = minStep;
     }
 
     /**
@@ -233,8 +235,7 @@ public class Spinner implements HasHandlers {
     /**
      * Sets whether this widget is enabled.
      *
-     * @param enabled
-     *            true to enable the widget, false to disable it
+     * @param enabled true to enable the widget, false to disable it
      */
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
@@ -251,53 +252,16 @@ public class Spinner implements HasHandlers {
     }
 
     /**
-     * @param initialSpeed
-     *            the initial speed of the spinner. Higher values mean lower
-     *            speed, default value is 7
+     * @param initialSpeed the initial speed of the spinner. Higher values mean lower
+     *                     speed, default value is 7
      */
     public void setInitialSpeed(final int initialSpeed) {
         this.initialSpeed = initialSpeed;
     }
 
     /**
-     * @param max
-     *            the maximum value. Will not have any effect if constrained is
-     *            set to false
-     */
-    public void setMax(final long max) {
-        this.max = max;
-    }
-
-    /**
-     * @param maxStep
-     *            the maximum step for this spinner
-     */
-    public void setMaxStep(final int maxStep) {
-        this.maxStep = maxStep;
-    }
-
-    /**
-     * @param min
-     *            the minimum value. Will not have any effect if constrained is
-     *            set to false
-     */
-    public void setMin(final long min) {
-        this.min = min;
-    }
-
-    /**
-     * @param minStep
-     *            the minimum step for this spinner
-     */
-    public void setMinStep(final int minStep) {
-        this.minStep = minStep;
-    }
-
-    /**
-     * @param value
-     *            sets the current value of this spinner
-     * @param fireEvent
-     *            fires value changed event if set to true
+     * @param value     sets the current value of this spinner
+     * @param fireEvent fires value changed event if set to true
      */
     public void setValue(final long value, final boolean fireEvent) {
         this.value = value;
@@ -343,5 +307,26 @@ public class Spinner implements HasHandlers {
     @Override
     public void fireEvent(final GwtEvent<?> event) {
         eventBus.fireEvent(event);
+    }
+
+    /**
+     * Default resources for spinning arrows.
+     */
+    public interface SpinnerResources extends ClientBundle {
+        ImageResource arrowDown();
+
+        ImageResource arrowDownDisabled();
+
+        ImageResource arrowDownHover();
+
+        ImageResource arrowDownPressed();
+
+        ImageResource arrowUp();
+
+        ImageResource arrowUpDisabled();
+
+        ImageResource arrowUpHover();
+
+        ImageResource arrowUpPressed();
     }
 }

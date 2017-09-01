@@ -35,7 +35,7 @@ public class PipelineImpl implements Pipeline {
     private boolean externallyStartedStream;
 
     public PipelineImpl(final ProcessorFactory processorFactory, final Map<String, Element> elementInstances,
-            final TakesInput rootElement, final boolean stepping) {
+                        final TakesInput rootElement, final boolean stepping) {
         this.processorFactory = processorFactory;
         this.elementInstances = elementInstances;
         this.rootElement = rootElement;

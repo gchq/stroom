@@ -22,7 +22,7 @@ import stroom.util.task.ServerTask;
 /**
  * Mock Class.
  */
-public class MockTask extends ServerTask<VoidResult>implements DistributedTask<VoidResult> {
+public class MockTask extends ServerTask<VoidResult> implements DistributedTask<VoidResult> {
     private static final long serialVersionUID = 8842861773930805737L;
 
     private final String taskName;

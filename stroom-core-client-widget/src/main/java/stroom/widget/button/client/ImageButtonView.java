@@ -25,13 +25,13 @@ public interface ImageButtonView extends HasClickHandlers, HasMouseDownHandlers 
 
     void setDisabledImage(ImageResource disabledImage);
 
-    void setEnabled(boolean enabled);
-
     boolean isEnabled();
 
-    void setVisible(boolean visible);
+    void setEnabled(boolean enabled);
 
     boolean isVisible();
+
+    void setVisible(boolean visible);
 
     void setTitle(String title);
 }

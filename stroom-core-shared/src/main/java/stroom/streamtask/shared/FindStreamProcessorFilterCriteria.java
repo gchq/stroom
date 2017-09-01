@@ -54,6 +54,10 @@ public class FindStreamProcessorFilterCriteria extends BaseCriteria {
         return priorityRange;
     }
 
+    public void setPriorityRange(Range<Integer> priorityRange) {
+        this.priorityRange = priorityRange;
+    }
+
     public Range<Integer> obtainPriorityRange() {
         if (priorityRange == null) {
             priorityRange = new Range<>();
@@ -61,12 +65,12 @@ public class FindStreamProcessorFilterCriteria extends BaseCriteria {
         return priorityRange;
     }
 
-    public void setPriorityRange(Range<Integer> priorityRange) {
-        this.priorityRange = priorityRange;
-    }
-
     public Period getLastPollPeriod() {
         return lastPollPeriod;
+    }
+
+    public void setLastPollPeriod(Period lastPollPeriod) {
+        this.lastPollPeriod = lastPollPeriod;
     }
 
     public Period obtainLastPollPeriod() {
@@ -76,12 +80,12 @@ public class FindStreamProcessorFilterCriteria extends BaseCriteria {
         return lastPollPeriod;
     }
 
-    public void setLastPollPeriod(Period lastPollPeriod) {
-        this.lastPollPeriod = lastPollPeriod;
-    }
-
     public EntityIdSet<PipelineEntity> getPipelineIdSet() {
         return pipelineIdSet;
+    }
+
+    public void setPipelineIdSet(EntityIdSet<PipelineEntity> pipelineIdSet) {
+        this.pipelineIdSet = pipelineIdSet;
     }
 
     public EntityIdSet<PipelineEntity> obtainPipelineIdSet() {
@@ -91,12 +95,12 @@ public class FindStreamProcessorFilterCriteria extends BaseCriteria {
         return pipelineIdSet;
     }
 
-    public void setPipelineIdSet(EntityIdSet<PipelineEntity> pipelineIdSet) {
-        this.pipelineIdSet = pipelineIdSet;
-    }
-
     public EntityIdSet<StreamProcessor> getStreamProcessorIdSet() {
         return streamProcessorIdSet;
+    }
+
+    public void setStreamProcessorIdSet(EntityIdSet<StreamProcessor> streamProcessorIdSet) {
+        this.streamProcessorIdSet = streamProcessorIdSet;
     }
 
     public EntityIdSet<StreamProcessor> obtainStreamProcessorIdSet() {
@@ -106,12 +110,12 @@ public class FindStreamProcessorFilterCriteria extends BaseCriteria {
         return streamProcessorIdSet;
     }
 
-    public void setStreamProcessorIdSet(EntityIdSet<StreamProcessor> streamProcessorIdSet) {
-        this.streamProcessorIdSet = streamProcessorIdSet;
-    }
-
     public FolderIdSet getFolderIdSet() {
         return folderIdSet;
+    }
+
+    public void setFolderIdSet(FolderIdSet folderIdSet) {
+        this.folderIdSet = folderIdSet;
     }
 
     public FolderIdSet obtainFolderIdSet() {
@@ -119,10 +123,6 @@ public class FindStreamProcessorFilterCriteria extends BaseCriteria {
             folderIdSet = new FolderIdSet();
         }
         return folderIdSet;
-    }
-
-    public void setFolderIdSet(FolderIdSet folderIdSet) {
-        this.folderIdSet = folderIdSet;
     }
 
     public Boolean getStreamProcessorEnabled() {

@@ -34,7 +34,7 @@ import stroom.widget.layout.client.view.ResizeSimplePanel;
 import stroom.widget.valuespinner.client.SpinnerEvent;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
-public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHandlers>implements IndexSettingsView {
+public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHandlers> implements IndexSettingsView {
     private final Widget widget;
     @UiField
     TextArea description;
@@ -50,6 +50,7 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
     ItemListBox<SupportedRetentionAge> retentionAge;
     @UiField
     ResizeSimplePanel volumes;
+
     @Inject
     public IndexSettingsViewImpl(final Binder binder) {
         partitionBy = new ItemListBox<>("No partition");

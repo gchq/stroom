@@ -42,8 +42,8 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.shared.data.SourcePipeline;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -60,49 +60,40 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
         implements HasDirtyHandlers {
 //    private final MySingleSelectionModel<PipelineReference> selectionModel;
 
-    private enum State {
-        INHERITED, ADDED, REMOVED
-    }
-
     private static final SafeHtml ADDED = SafeHtmlUtils.fromSafeConstant("<div style=\"font-weight:500\">");
     private static final SafeHtml REMOVED = SafeHtmlUtils
             .fromSafeConstant("<div style=\"font-weight:500;text-decoration:line-through\">");
     private static final SafeHtml INHERITED = SafeHtmlUtils.fromSafeConstant("<div style=\"color:black\">");
     private static final SafeHtml END = SafeHtmlUtils.fromSafeConstant("</div>");
-
-    private final GlyphButtonView addButton;
-    private final GlyphButtonView editButton;
-    private final GlyphButtonView removeButton;
-
+    private final ButtonView addButton;
+    private final ButtonView editButton;
+    private final ButtonView removeButton;
+    private final Map<PipelineReference, State> referenceStateMap = new HashMap<>();
+    private final List<PipelineReference> references = new ArrayList<>();
+    private final Provider<NewPipelineReferencePresenter> newPipelineReferencePresenter;
     private Map<PipelineElementType, Map<String, PipelinePropertyType>> allPropertyTypes;
     private PipelineEntity pipeline;
     private PipelineModel pipelineModel;
-
     private PipelineElement currentElement;
-    private final Map<PipelineReference, State> referenceStateMap = new HashMap<PipelineReference, State>();
-    private final List<PipelineReference> references = new ArrayList<PipelineReference>();
-
-    private final Provider<NewPipelineReferencePresenter> newPipelineReferencePresenter;
     private PipelinePropertyType propertyType;
-
     @Inject
     public PipelineReferenceListPresenter(final EventBus eventBus,
                                           final Provider<NewPipelineReferencePresenter> newPipelineReferencePresenter) {
-        super(eventBus, new DataGridViewImpl<PipelineReference>(true));
+        super(eventBus, new DataGridViewImpl<>(true));
         this.newPipelineReferencePresenter = newPipelineReferencePresenter;
 
 //        selectionModel = new MySingleSelectionModel<PipelineReference>();
 //        getView().setSelectionModel(selectionModel);
 
-        addButton = getView().addButton(GlyphIcons.NEW_ITEM);
+        addButton = getView().addButton(SvgPresets.NEW_ITEM);
         addButton.setTitle("New Reference");
         addButton.setEnabled(false);
 
-        editButton = getView().addButton(GlyphIcons.EDIT);
+        editButton = getView().addButton(SvgPresets.EDIT);
         editButton.setTitle("Edit Reference");
         editButton.setEnabled(false);
 
-        removeButton = getView().addButton(GlyphIcons.REMOVE);
+        removeButton = getView().addButton(SvgPresets.REMOVE);
         removeButton.setTitle("Remove Refefence");
         removeButton.setEnabled(false);
 
@@ -197,7 +188,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
     }
 
     private void addEndColumn() {
-        getView().addEndColumn(new EndColumn<PipelineReference>());
+        getView().addEndColumn(new EndColumn<>());
     }
 
     private SafeHtml getSafeHtmlWithState(final PipelineReference pipelineReference, final String string) {
@@ -420,5 +411,9 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
     @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
+    }
+
+    private enum State {
+        INHERITED, ADDED, REMOVED
     }
 }

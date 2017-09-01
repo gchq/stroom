@@ -18,7 +18,6 @@ package stroom.security.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
@@ -26,6 +25,7 @@ import stroom.entity.shared.FindFolderCriteria;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
 import stroom.entity.shared.PermissionInheritance;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.test.FileSystemTestUtil;
 
 import javax.annotation.Resource;

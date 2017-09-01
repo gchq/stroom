@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,7 +27,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.EntityServiceFindReferenceAction;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
 public class EntityReferenceListPresenter extends MyPresenterWidget<DataGridView<DocRef>>
@@ -37,7 +37,7 @@ public class EntityReferenceListPresenter extends MyPresenterWidget<DataGridView
     @Inject
     public EntityReferenceListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
                                         final TooltipPresenter tooltipPresenter) {
-        super(eventBus, new DataGridViewImpl<DocRef>(false));
+        super(eventBus, new DataGridViewImpl<>(false));
 
         this.dispatcher = dispatcher;
         getView().addResizableColumn(new Column<DocRef, String>(new TextCell()) {
@@ -52,7 +52,7 @@ public class EntityReferenceListPresenter extends MyPresenterWidget<DataGridView
                 return ref.getName();
             }
         }, "Name", 1000);
-        getView().addEndColumn(new EndColumn<DocRef>());
+        getView().addEndColumn(new EndColumn<>());
 
     }
 

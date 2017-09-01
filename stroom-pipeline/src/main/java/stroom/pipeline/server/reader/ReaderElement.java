@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,7 +25,7 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 
 @Component
 @Scope("prototype")
-@ConfigurableElement(type = "Reader", category = Category.READER, roles = { PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.ROLE_READER }, icon = ElementIcons.STREAM)
+@ConfigurableElement(type = "Reader", category = Category.READER, roles = {PipelineElementType.ROLE_TARGET,
+        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.ROLE_READER}, icon = ElementIcons.STREAM)
 public class ReaderElement extends AbstractReaderElement {
 }

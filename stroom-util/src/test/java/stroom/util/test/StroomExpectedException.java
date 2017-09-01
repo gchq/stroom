@@ -27,5 +27,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface StroomExpectedException {
-    Class<? extends Throwable>[]exception() default {};
+    Class<? extends Throwable>[] exception() default {};
 }

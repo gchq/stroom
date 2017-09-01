@@ -29,6 +29,7 @@ import stroom.pipeline.server.parser.DSParser;
 import stroom.pipeline.server.parser.JSONParser;
 import stroom.pipeline.server.parser.XMLFragmentParser;
 import stroom.pipeline.server.parser.XMLParser;
+import stroom.pipeline.server.source.SourceElement;
 import stroom.pipeline.server.writer.FileAppender;
 import stroom.pipeline.server.writer.JSONWriter;
 import stroom.pipeline.server.writer.StreamAppender;
@@ -46,6 +47,7 @@ public class MockPipelineElementRegistryFactory implements ElementRegistryFactor
 
     public MockPipelineElementRegistryFactory() {
         final List<Class<?>> elementClasses = new ArrayList<>();
+        elementClasses.add(SourceElement.class);
         elementClasses.add(CombinedParser.class);
         elementClasses.add(DSParser.class);
         elementClasses.add(JSONParser.class);

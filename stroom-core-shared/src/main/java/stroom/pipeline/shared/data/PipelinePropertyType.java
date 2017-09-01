@@ -41,8 +41,8 @@ public class PipelinePropertyType implements Comparable<PipelinePropertyType>, H
     }
 
     public PipelinePropertyType(final PipelineElementType elementType, final String name, final String type,
-            final String description, final String defaultValue, final boolean pipelineReference,
-            final boolean dataEntity) {
+                                final String description, final String defaultValue, final boolean pipelineReference,
+                                final boolean dataEntity) {
         this.elementType = elementType;
         this.name = name;
         this.type = type;

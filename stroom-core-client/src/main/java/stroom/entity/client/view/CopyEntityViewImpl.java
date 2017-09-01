@@ -32,7 +32,7 @@ import stroom.entity.shared.PermissionInheritance;
 import stroom.item.client.ItemListBox;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
-public class CopyEntityViewImpl extends ViewWithUiHandlers<PopupUiHandlers>implements CopyEntityView {
+public class CopyEntityViewImpl extends ViewWithUiHandlers<PopupUiHandlers> implements CopyEntityView {
     private final Widget widget;
     @UiField
     SimplePanel foldersOuter;

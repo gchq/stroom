@@ -33,8 +33,8 @@ public class DictionaryPlugin extends EntityPlugin<Dictionary> {
 
     @Inject
     public DictionaryPlugin(final EventBus eventBus, final Provider<DictionaryPresenter> editorProvider,
-            final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
-            final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager) {
+                            final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
+                            final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager) {
         super(eventBus, dispatcher, securityContext, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
     }

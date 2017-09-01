@@ -47,6 +47,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
     private final LinkTabBar tabBar;
     private final LayerContainer layerContainer;
     private final HandlerRegistrations handlerRegistrations = new HandlerRegistrations();
+
     private TabVisibility tabVisibility = TabVisibility.SHOW_ALL;
     private boolean tabsVisible = true;
 
@@ -80,13 +81,13 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
 
         settings = new Button();
         settings.setStyleName("fa-button");
-        settings.setHTML("<i class=\"face fa fa-cog settingsButton\"></i>");
+        settings.setHTML("<img src=\"images/settings-grey.svg\" class=\"face settingsButton\" />");
         settings.setTitle("Settings");
         buttons.add(settings);
 
         close = new Button();
         close.setStyleName("fa-button");
-        close.setHTML("<i class=\"face fa fa-times closeButton\"></i>");
+        close.setHTML("<img src=\"images/close-grey.svg\" class=\"face closeButton\" />");
         close.setTitle("Close");
         buttons.add(close);
 
@@ -101,7 +102,13 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
     }
 
     public void bind() {
-        handlerRegistrations.add(tabBar.addSelectionHandler(event -> selectTab(event.getSelectedItem())));
+        handlerRegistrations.add(tabBar.addSelectionHandler(event -> {
+            final TabData selected = event.getSelectedItem();
+            selectTab(selected);
+            final int index = tabBar.getTabs().indexOf(selected);
+            getTabLayoutData().setSelected(index);
+            changeHandler.onDirty();
+        }));
 
         handlerRegistrations.add(settings.addDomHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {

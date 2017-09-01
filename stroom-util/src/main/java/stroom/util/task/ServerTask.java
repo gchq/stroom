@@ -25,10 +25,8 @@ import stroom.util.shared.ThreadPool;
 import stroom.util.shared.UserTokenUtil;
 
 public abstract class ServerTask<R> implements Task<R>, HasMonitor {
-    private static final ThreadPool THREAD_POOL = new SimpleThreadPool(2);
-
     public static final String INTERNAL_PROCESSING_USER_TOKEN = UserTokenUtil.createInternal();
-
+    private static final ThreadPool THREAD_POOL = new SimpleThreadPool(2);
     private final TaskId id;
     private final String userToken;
     private final MonitorImpl monitor;
@@ -76,6 +74,10 @@ public abstract class ServerTask<R> implements Task<R>, HasMonitor {
         return taskName;
     }
 
+    protected void setTaskName(final String newTaskName) {
+        this.taskName = newTaskName;
+    }
+
     private String generateTaskName() {
         final String name = getClass().getSimpleName();
         ModelStringUtil.toDisplayValue(name);
@@ -95,10 +97,6 @@ public abstract class ServerTask<R> implements Task<R>, HasMonitor {
 
         final Task<?> task = (Task<?>) obj;
         return id.equals(task.getId());
-    }
-
-    protected void setTaskName(final String newTaskName) {
-        this.taskName = newTaskName;
     }
 
     @Override

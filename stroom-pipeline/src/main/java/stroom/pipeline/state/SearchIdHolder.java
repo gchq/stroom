@@ -25,11 +25,11 @@ import stroom.util.spring.StroomScope;
 public class SearchIdHolder implements Holder {
     private String searchId;
 
-    public void setSearchId(final String searchId) {
-        this.searchId = searchId;
-    }
-
     public String getSearchId() {
         return searchId;
+    }
+
+    public void setSearchId(final String searchId) {
+        this.searchId = searchId;
     }
 }

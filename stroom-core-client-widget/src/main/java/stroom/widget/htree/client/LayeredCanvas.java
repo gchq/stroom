@@ -27,22 +27,22 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class LayeredCanvas extends FlowPanel {
-    private Map<String, Canvas> layerMap = new HashMap<String, Canvas>();
+    private Map<String, Canvas> layerMap = new HashMap<>();
     private int width = 100;
     private int height = 100;
-
-    public static LayeredCanvas createIfSupported() {
-        if (Canvas.isSupported()) {
-            return new LayeredCanvas();
-        }
-        return null;
-    }
 
     private LayeredCanvas() {
         final Style style = getElement().getStyle();
         style.setPosition(Position.RELATIVE);
         style.setWidth(width, Unit.PX);
         style.setHeight(height, Unit.PX);
+    }
+
+    public static LayeredCanvas createIfSupported() {
+        if (Canvas.isSupported()) {
+            return new LayeredCanvas();
+        }
+        return null;
     }
 
     private Canvas createLayer(final String name) {

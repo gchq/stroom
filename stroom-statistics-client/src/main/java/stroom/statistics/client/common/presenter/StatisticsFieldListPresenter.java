@@ -32,11 +32,11 @@ import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
-import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticsDataSourceData;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.statistics.shared.common.StatisticField;
+import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 import java.util.ArrayList;
@@ -45,9 +45,9 @@ import java.util.List;
 public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView<StatisticField>>
         implements HasRead<StatisticStoreEntity>, HasWrite<StatisticStoreEntity>, HasDirtyHandlers {
     private final StatisticsFieldEditPresenter statisticsFieldEditPresenter;
-    private final GlyphButtonView newButton;
-    private final GlyphButtonView editButton;
-    private final GlyphButtonView removeButton;
+    private final ButtonView newButton;
+    private final ButtonView editButton;
+    private final ButtonView removeButton;
     private StatisticsDataSourceData statisticsDataSourceData;
 
     private StatisticsCustomMaskListPresenter customMaskListPresenter;
@@ -56,14 +56,14 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
     @Inject
     public StatisticsFieldListPresenter(final EventBus eventBus,
                                         final StatisticsFieldEditPresenter statisticsFieldEditPresenter, final ClientDispatchAsync dispatcher) {
-        super(eventBus, new DataGridViewImpl<StatisticField>(true, true));
+        super(eventBus, new DataGridViewImpl<>(true, true));
         this.statisticsFieldEditPresenter = statisticsFieldEditPresenter;
 
-        newButton = getView().addButton(GlyphIcons.NEW_ITEM);
+        newButton = getView().addButton(SvgPresets.NEW_ITEM);
         newButton.setTitle("New Field");
-        editButton = getView().addButton(GlyphIcons.EDIT);
+        editButton = getView().addButton(SvgPresets.EDIT);
         editButton.setTitle("Edit Field");
-        removeButton = getView().addButton(GlyphIcons.REMOVE);
+        removeButton = getView().addButton(SvgPresets.REMOVE);
         removeButton.setTitle("Remove Field");
 
         addColumns();
@@ -113,7 +113,7 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
 
     private void addColumns() {
         addNameColumn();
-        getView().addEndColumn(new EndColumn<StatisticField>());
+        getView().addEndColumn(new EndColumn<>());
     }
 
     private void addNameColumn() {
@@ -162,7 +162,7 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
             // make a copy of the list of stat fields and remove the one we are
             // editing so we can check the new value
             // is not already in the list
-            final List<StatisticField> otherFields = new ArrayList<StatisticField>(
+            final List<StatisticField> otherFields = new ArrayList<>(
                     statisticsDataSourceData.getStatisticFields());
             otherFields.remove(statisticField);
 
@@ -213,10 +213,10 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
 
     public void refresh() {
         if (statisticsDataSourceData == null) {
-            statisticsDataSourceData = new StatisticsDataSourceData(new ArrayList<StatisticField>());
+            statisticsDataSourceData = new StatisticsDataSourceData(new ArrayList<>());
         }
 
-        getView().setRowData(0, new ArrayList<StatisticField>(statisticsDataSourceData.getStatisticFields()));
+        getView().setRowData(0, new ArrayList<>(statisticsDataSourceData.getStatisticFields()));
         getView().setRowCount(statisticsDataSourceData.getStatisticFields().size(), true);
     }
 

@@ -31,11 +31,7 @@ import stroom.pipeline.stepping.client.presenter.SteppingPresenter.SteppingView;
 import stroom.widget.tab.client.presenter.LayerContainer;
 
 public class SteppingViewImpl extends ViewImpl implements SteppingView, RequiresResize, ProvidesResize {
-    public interface Binder extends UiBinder<Widget, SteppingViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     MySplitLayoutPanel bottomLayout;
     @UiField
@@ -46,7 +42,6 @@ public class SteppingViewImpl extends ViewImpl implements SteppingView, Requires
     ScrollPanel treeContainer;
     @UiField
     LayerContainer layerContainer;
-
     @Inject
     public SteppingViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -85,5 +80,8 @@ public class SteppingViewImpl extends ViewImpl implements SteppingView, Requires
     @Override
     public LayerContainer getLayerContainer() {
         return layerContainer;
+    }
+
+    public interface Binder extends UiBinder<Widget, SteppingViewImpl> {
     }
 }

@@ -20,10 +20,8 @@ import java.io.Serializable;
 import java.util.Comparator;
 
 public class StatisticTag implements Serializable, Comparable<StatisticTag> {
-    private static final long serialVersionUID = 1647083366837339057L;
-
     public static final String NULL_VALUE_STRING = "<<<<NULL_VALUE>>>>";
-
+    private static final long serialVersionUID = 1647083366837339057L;
     private final String tag;
     private final String value;
 

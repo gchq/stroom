@@ -28,38 +28,33 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.SteppingFilterSettingsView;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterUiHandlers;
+import stroom.svg.client.SvgPresets;
 import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
-import stroom.widget.button.client.GlyphButton;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.SvgButton;
 
 public class SteppingFilterViewImpl extends ViewWithUiHandlers<SteppingFilterUiHandlers>
         implements SteppingFilterSettingsView {
-    public interface Binder extends UiBinder<Widget, SteppingFilterViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     ListBox skipToErrors;
     @UiField
     ListBox skipToOutput;
     @UiField(provided = true)
-    GlyphButton addXPath;
+    SvgButton addXPath;
     @UiField(provided = true)
-    GlyphButton editXPath;
+    SvgButton editXPath;
     @UiField(provided = true)
-    GlyphButton removeXPath;
+    SvgButton removeXPath;
     @UiField
     SimplePanel xPathList;
-
     @Inject
     public SteppingFilterViewImpl(final Binder binder) {
-        addXPath = GlyphButton.create(GlyphIcons.ADD);
+        addXPath = SvgButton.create(SvgPresets.ADD);
         addXPath.setTitle("Add XPath");
-        editXPath = GlyphButton.create(GlyphIcons.EDIT);
+        editXPath = SvgButton.create(SvgPresets.EDIT);
         editXPath.setTitle("Edit XPath");
-        removeXPath = GlyphButton.create(GlyphIcons.REMOVE);
+        removeXPath = SvgButton.create(SvgPresets.REMOVE);
         removeXPath.setTitle("Delete XPath");
 
         widget = binder.createAndBindUi(this);
@@ -81,6 +76,16 @@ public class SteppingFilterViewImpl extends ViewWithUiHandlers<SteppingFilterUiH
     }
 
     @Override
+    public Severity getSkipToErrors() {
+        final int index = skipToErrors.getSelectedIndex();
+        if (index <= 0) {
+            return null;
+        }
+
+        return Severity.getSeverity(skipToErrors.getItemText(index));
+    }
+
+    @Override
     public void setSkipToErrors(Severity value) {
         if (value == null) {
             skipToErrors.setSelectedIndex(0);
@@ -96,13 +101,15 @@ public class SteppingFilterViewImpl extends ViewWithUiHandlers<SteppingFilterUiH
     }
 
     @Override
-    public Severity getSkipToErrors() {
-        final int index = skipToErrors.getSelectedIndex();
+    public OutputState getSkipToOutput() {
+        final int index = skipToOutput.getSelectedIndex();
         if (index <= 0) {
             return null;
         }
-
-        return Severity.getSeverity(skipToErrors.getItemText(index));
+        if (index == 1) {
+            return OutputState.NOT_EMPTY;
+        }
+        return OutputState.EMPTY;
     }
 
     @Override
@@ -114,18 +121,6 @@ public class SteppingFilterViewImpl extends ViewWithUiHandlers<SteppingFilterUiH
         } else if (OutputState.EMPTY.equals(value)) {
             skipToOutput.setSelectedIndex(2);
         }
-    }
-
-    @Override
-    public OutputState getSkipToOutput() {
-        final int index = skipToOutput.getSelectedIndex();
-        if (index <= 0) {
-            return null;
-        }
-        if (index == 1) {
-            return OutputState.NOT_EMPTY;
-        }
-        return OutputState.EMPTY;
     }
 
     @UiHandler("addXPath")
@@ -164,5 +159,8 @@ public class SteppingFilterViewImpl extends ViewWithUiHandlers<SteppingFilterUiH
         if (SteppingFilterPresenter.LIST.equals(slot)) {
             xPathList.setWidget(content);
         }
+    }
+
+    public interface Binder extends UiBinder<Widget, SteppingFilterViewImpl> {
     }
 }

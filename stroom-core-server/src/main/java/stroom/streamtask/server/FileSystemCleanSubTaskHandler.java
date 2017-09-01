@@ -44,25 +44,6 @@ public class FileSystemCleanSubTaskHandler extends AbstractTaskHandler<FileSyste
     @Resource
     private TaskMonitor taskMonitor;
 
-    private static class FileSystemCleanProgressCallback extends TaskCallbackAdaptor<VoidResult> {
-        private final FileSystemCleanProgress taskProgress;
-
-        public FileSystemCleanProgressCallback(final FileSystemCleanProgress taskProgress) {
-            this.taskProgress = taskProgress;
-        }
-
-        @Override
-        public void onSuccess(final VoidResult result) {
-            taskProgress.addScanComplete();
-        }
-
-        @Override
-        public void onFailure(final Throwable t) {
-            taskProgress.addScanComplete();
-        }
-
-    }
-
     @Override
     public VoidResult exec(final FileSystemCleanSubTask task) {
         taskMonitor.info("Cleaning: {} - {}", task.getVolume().getPath(), task.getPath());
@@ -106,5 +87,24 @@ public class FileSystemCleanSubTaskHandler extends AbstractTaskHandler<FileSyste
         }
 
         return VoidResult.INSTANCE;
+    }
+
+    private static class FileSystemCleanProgressCallback extends TaskCallbackAdaptor<VoidResult> {
+        private final FileSystemCleanProgress taskProgress;
+
+        public FileSystemCleanProgressCallback(final FileSystemCleanProgress taskProgress) {
+            this.taskProgress = taskProgress;
+        }
+
+        @Override
+        public void onSuccess(final VoidResult result) {
+            taskProgress.addScanComplete();
+        }
+
+        @Override
+        public void onFailure(final Throwable t) {
+            taskProgress.addScanComplete();
+        }
+
     }
 }

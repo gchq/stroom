@@ -21,12 +21,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
 public class SpinnerEvent extends GwtEvent<SpinnerEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onChange(SpinnerEvent event);
-    }
-
     private static Type<Handler> TYPE;
-
     private final long value;
 
     private SpinnerEvent(final long value) {
@@ -56,5 +51,9 @@ public class SpinnerEvent extends GwtEvent<SpinnerEvent.Handler> {
 
     public long getValue() {
         return value;
+    }
+
+    public interface Handler extends EventHandler {
+        void onChange(SpinnerEvent event);
     }
 }

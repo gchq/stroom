@@ -28,9 +28,6 @@ import stroom.xml.converter.AbstractParser;
 import java.io.IOException;
 
 public class JSONParser extends AbstractParser {
-    private static final String XML_TYPE_STRING = "string";
-    private static final String EMPTY_STRING = "";
-
     public static final String XML_ELEMENT_MAP = "map";
     public static final String XML_ELEMENT_ARRAY = "array";
     public static final String XML_ELEMENT_STRING = "string";
@@ -38,16 +35,15 @@ public class JSONParser extends AbstractParser {
     public static final String XML_ELEMENT_BOOLEAN = "boolean";
     public static final String XML_ELEMENT_NULL = "null";
     public static final String XML_ATTRIBUTE_KEY = "key";
-
+    private static final String XML_TYPE_STRING = "string";
+    private static final String EMPTY_STRING = "";
     private static final String NAMESPACE = "http://www.w3.org/2013/XSL/json";
 
     private static final Attributes EMPTY_ATTS = new AttributesImpl();
-    private Attributes atts;
-    private final boolean addRoot;
-
-    private ReaderLocator reader;
-
     private static JsonFactory jsonFactory;
+    private final boolean addRoot;
+    private Attributes atts;
+    private ReaderLocator reader;
 
     public JSONParser(final boolean addRoot) {
         this.addRoot = addRoot;
@@ -74,36 +70,36 @@ public class JSONParser extends AbstractParser {
 
         while (jp.nextToken() != null) {
             switch (jp.getCurrentTokenId()) {
-            case JsonTokenId.ID_START_OBJECT:
-                startElement(XML_ELEMENT_MAP, jp.getCurrentName());
-                break;
-            case JsonTokenId.ID_END_OBJECT:
-                endElement(XML_ELEMENT_MAP);
-                break;
-            case JsonTokenId.ID_START_ARRAY:
-                startElement(XML_ELEMENT_ARRAY, jp.getCurrentName());
-                break;
-            case JsonTokenId.ID_END_ARRAY:
-                endElement(XML_ELEMENT_ARRAY);
-                break;
-            case JsonTokenId.ID_STRING:
-                dataElement(XML_ELEMENT_STRING, jp.getCurrentName(), jp.getValueAsString());
-                break;
-            case JsonTokenId.ID_NUMBER_INT:
-                dataElement(XML_ELEMENT_NUMBER, jp.getCurrentName(), jp.getValueAsString());
-                break;
-            case JsonTokenId.ID_NUMBER_FLOAT:
-                dataElement(XML_ELEMENT_NUMBER, jp.getCurrentName(), jp.getValueAsString());
-                break;
-            case JsonTokenId.ID_FALSE:
-                dataElement(XML_ELEMENT_BOOLEAN, jp.getCurrentName(), jp.getValueAsString());
-                break;
-            case JsonTokenId.ID_TRUE:
-                dataElement(XML_ELEMENT_BOOLEAN, jp.getCurrentName(), jp.getValueAsString());
-                break;
-            case JsonTokenId.ID_NULL:
-                dataElement(XML_ELEMENT_NULL, jp.getCurrentName(), jp.getValueAsString());
-                break;
+                case JsonTokenId.ID_START_OBJECT:
+                    startElement(XML_ELEMENT_MAP, jp.getCurrentName());
+                    break;
+                case JsonTokenId.ID_END_OBJECT:
+                    endElement(XML_ELEMENT_MAP);
+                    break;
+                case JsonTokenId.ID_START_ARRAY:
+                    startElement(XML_ELEMENT_ARRAY, jp.getCurrentName());
+                    break;
+                case JsonTokenId.ID_END_ARRAY:
+                    endElement(XML_ELEMENT_ARRAY);
+                    break;
+                case JsonTokenId.ID_STRING:
+                    dataElement(XML_ELEMENT_STRING, jp.getCurrentName(), jp.getValueAsString());
+                    break;
+                case JsonTokenId.ID_NUMBER_INT:
+                    dataElement(XML_ELEMENT_NUMBER, jp.getCurrentName(), jp.getValueAsString());
+                    break;
+                case JsonTokenId.ID_NUMBER_FLOAT:
+                    dataElement(XML_ELEMENT_NUMBER, jp.getCurrentName(), jp.getValueAsString());
+                    break;
+                case JsonTokenId.ID_FALSE:
+                    dataElement(XML_ELEMENT_BOOLEAN, jp.getCurrentName(), jp.getValueAsString());
+                    break;
+                case JsonTokenId.ID_TRUE:
+                    dataElement(XML_ELEMENT_BOOLEAN, jp.getCurrentName(), jp.getValueAsString());
+                    break;
+                case JsonTokenId.ID_NULL:
+                    dataElement(XML_ELEMENT_NULL, jp.getCurrentName(), jp.getValueAsString());
+                    break;
             }
         }
 

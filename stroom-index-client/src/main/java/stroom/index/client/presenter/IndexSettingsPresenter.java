@@ -26,7 +26,6 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.core.client.event.DirtyKeyDownHander;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
@@ -39,14 +38,14 @@ import stroom.pipeline.shared.SupportedRetentionAge;
 
 public class IndexSettingsPresenter extends MyPresenterWidget<IndexSettingsPresenter.IndexSettingsView>
         implements HasRead<Index>, HasWrite<Index>, HasDirtyHandlers, IndexSettingsUiHandlers {
+
     private final IndexVolumeListPresenter indexVolumeListPresenter;
-    private final ClientDispatchAsync dispatcher;
+
     @Inject
     public IndexSettingsPresenter(final EventBus eventBus, final IndexSettingsView view,
-            final IndexVolumeListPresenter indexVolumeListPresenter, final ClientDispatchAsync dispatcher) {
+                                  final IndexVolumeListPresenter indexVolumeListPresenter) {
         super(eventBus, view);
         this.indexVolumeListPresenter = indexVolumeListPresenter;
-        this.dispatcher = dispatcher;
 
         view.setUiHandlers(this);
         view.getRetentionAge().addItems(SupportedRetentionAge.values());

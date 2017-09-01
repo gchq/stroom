@@ -31,69 +31,69 @@ import com.google.gwt.user.client.Event;
 /**
  * CustomButton is a base button class with built in support for a set number of
  * button faces.
- *
+ * <p>
  * Each face has its own style modifier. For example, the state for down and
  * hovering is assigned the CSS modifier <i>down-hovering</i>. So, if the
  * button's overall style name is <i>gwt-PushButton</i> then when showing the
  * <code>down-hovering</code> face, the button's style is
  * <i> gwt-PushButton-down-hovering</i>. The overall style name can be used to
  * change the style of the button irrespective of the current face.
- *
+ * <p>
  * <p>
  * Each button face can be assigned is own image, text, or html contents. If no
  * content is defined for a face, then the face will use the contents of another
  * face. For example, if <code>down-hovering</code> does not have defined
  * contents, it will use the contents defined by the <code>down</code> face.
  * </p>
- *
+ * <p>
  * <p>
  * The supported faces are defined below:
  * </p>
  * <p>
  * <table border="4">
  * <tr>
- *
+ * <p>
  * <td><b>CSS style name</b></td>
  * <td><b>Getter method</b></td>
  * <td><b>description of face</b></td>
  * <td><b>defaults to contents of face</b></td>
  * </tr>
- *
+ * <p>
  * <tr>
  * <td>up</td>
  * <td>{@link #getUpFace()}</td>
  * <td>face shown when button is up</td>
  * <td>none</td>
  * </tr>
- *
+ * <p>
  * <tr>
  * <td>down</td>
  * <td>{@link #getDownFace()}</td>
  * <td>face shown when button is down</td>
  * <td>up</td>
  * </tr>
- *
+ * <p>
  * <tr>
  * <td>up-hovering</td>
  * <td>{@link #getUpHoveringFace()}</td>
  * <td>face shown when button is up and hovering</td>
  * <td>up</td>
  * </tr>
- *
+ * <p>
  * <tr>
  * <td>up-disabled</td>
  * <td>{@link #getUpDisabledFace()}</td>
  * <td>face shown when button is up and disabled</td>
  * <td>up</td>
  * </tr>
- *
+ * <p>
  * <tr>
  * <td>down-hovering</td>
  * <td>{@link #getDownHoveringFace()}</td>
  * <td>face shown when button is down and hovering</td>
  * <td>down</td>
  * </tr>
- *
+ * <p>
  * <tr>
  * <td>down-disabled</td>
  * <td>{@link #getDownDisabledFace()}</td>
@@ -102,9 +102,9 @@ import com.google.gwt.user.client.Event;
  * </tr>
  * </table>
  * </p>
- *
+ * <p>
  * <h3>Use in UiBinder Templates</h3>
- *
+ * <p>
  * When working with CustomButton subclasses in
  * {@link com.google.gwt.uibinder.client.UiBinder UiBinder} templates, you can
  * set text and assign ImageResources for their various faces via child
@@ -118,10 +118,10 @@ import com.google.gwt.user.client.Event;
  * <dt>&lt;g:upDisabledFace>
  * <dt>&lt;g:downDisabledFace>
  * </dl>
- *
+ * <p>
  * Each face element can take an optional <code>image</code> attribute and an
  * html body. For example:
- *
+ * <p>
  * <pre>
  * &lt;ui:image field='downButton'/> &lt;!-- define an {@link com.google.gwt.resources.client.ImageResource ImageResource} -->
  *
@@ -139,240 +139,83 @@ import com.google.gwt.user.client.Event;
  * </pre>
  */
 public abstract class MyCustomButton extends ButtonBase {
-    /**
-     * Represents a button's face. Each face is associated with its own style
-     * modifier and, optionally, its own contents html, text, or image.
-     */
-    public abstract class Face implements HasHTML, HasSafeHtml {
-        private static final String STYLENAME_HTML_FACE = "html-face";
-        private final Face delegateTo;
-        private Element face;
-
-        /**
-         * Constructor for <code>Face</code>. Creates a new face that delegates
-         * to the supplied face.
-         *
-         * @param delegateTo
-         *            default content provider
-         */
-        private Face(final Face delegateTo) {
-            this.delegateTo = delegateTo;
-        }
-
-        /**
-         * Gets the face's contents as html.
-         *
-         * @return face's contents as html
-         */
-        @Override
-        public String getHTML() {
-            return getFace().getInnerHTML();
-        }
-
-        /**
-         * Gets the face's contents as text.
-         *
-         * @return face's contents as text
-         */
-        @Override
-        public String getText() {
-            return getFace().getInnerText();
-        }
-
-        /**
-         * Set the face's contents as html.
-         *
-         * @param html
-         *            html to set as face's contents html
-         */
-        @Override
-        public void setHTML(final SafeHtml html) {
-            setHTML(html.asString());
-        }
-
-        /**
-         * Set the face's contents as html.
-         *
-         * @param html
-         *            html to set as face's contents html
-         */
-        @Override
-        public void setHTML(final String html) {
-            face = DOM.createDiv();
-            UIObject.setStyleName(face, STYLENAME_HTML_FACE, true);
-            face.setInnerHTML(html);
-            updateButtonFace();
-        }
-
-        /**
-         * Set the face's contents as an image.
-         *
-         * @param image
-         *            image to set as face contents
-         */
-        public final void setImage(final Image image) {
-            face = image.getElement();
-            updateButtonFace();
-        }
-
-        /**
-         * Sets the face's contents as text.
-         *
-         * @param text
-         *            text to set as face's contents
-         */
-        @Override
-        public final void setText(final String text) {
-            face = DOM.createDiv();
-            UIObject.setStyleName(face, STYLENAME_HTML_FACE, true);
-            face.setInnerText(text);
-            updateButtonFace();
-        }
-
-        @Override
-        public final String toString() {
-            return this.getName();
-        }
-
-        /**
-         * Gets the ID associated with this face. This will be a bitwise and of
-         * all of the attributes that comprise this face.
-         */
-        abstract int getFaceID();
-
-        /**
-         * Get the name of the face. This property is also used as a modifier on
-         * the <code>CustomButton</code> style.
-         * <p/>
-         * For instance, if the <code>CustomButton</code> style is
-         * "gwt-PushButton" and the face name is "up", then the CSS class name
-         * will be "gwt-PushButton-up".
-         *
-         * @return the face's name
-         */
-        abstract String getName();
-
-        /**
-         * Gets the contents associated with this face.
-         */
-        private Element getFace() {
-            if (face == null) {
-                if (delegateTo == null) {
-                    // provide a default face as none was supplied.
-                    face = DOM.createDiv();
-                    return face;
-                } else {
-                    return delegateTo.getFace();
-                }
-            } else {
-                return face;
-            }
-        }
-
-        private void updateButtonFace() {
-            if (curFace != null && curFace.getFace() == this.getFace()) {
-                setCurrentFaceElement(face);
-            }
-        }
-    }
-
     private static final String STYLENAME_DEFAULT = "gwt-CustomButton";
-
     /**
      * Pressed Attribute bit.
      */
     private static final int DOWN_ATTRIBUTE = 1;
-
     /**
      * Hovering Attribute bit.
      */
     private static final int HOVERING_ATTRIBUTE = 2;
-
     /**
      * Disabled Attribute bit.
      */
     private static final int DISABLED_ATTRIBUTE = 4;
-
     /**
      * ID for up face.
      */
     private static final int UP = 0;
-
     /**
      * ID for down face.
      */
     private static final int DOWN = DOWN_ATTRIBUTE;
-
     /**
      * ID for upHovering face.
      */
     private static final int UP_HOVERING = HOVERING_ATTRIBUTE;
-
     /**
      * ID for downHovering face.
      */
     private static final int DOWN_HOVERING = DOWN_ATTRIBUTE | HOVERING_ATTRIBUTE;
-
     /**
      * ID for upDisabled face.
      */
     private static final int UP_DISABLED = DISABLED_ATTRIBUTE;
-
     /**
      * ID for downDisabled face.
      */
     private static final int DOWN_DISABLED = DOWN | DISABLED_ATTRIBUTE;
-
     /**
      * The button's current face element.
      */
     private Element curFaceElement;
-
     /**
      * The button's current face.
      */
     private Face curFace;
-
     /**
      * Face for up.
      */
     private Face up;
-
     /**
      * Face for down.
      */
     private Face down;
-
     /**
      * Face for downHover.
      */
     private Face downHovering;
-
     /**
      * Face for upHover.
      */
     private Face upHovering;
-
     /**
      * Face for upDisabled.
      */
     private Face upDisabled;
-
     /**
      * Face for downDisabled.
      */
     private Face downDisabled;
-
     /**
      * If <code>true</code>, this widget is capturing with the mouse held down.
      */
     private boolean isCapturing;
-
     /**
      * If <code>true</code>, this widget has focus with the space bar down.
      */
     private boolean isFocusing;
-
     /**
      * Used to decide whether to allow clicks to propagate up to the superclass
      * or container elements.
@@ -382,8 +225,7 @@ public abstract class MyCustomButton extends ButtonBase {
     /**
      * Constructor for <code>CustomButton</code>.
      *
-     * @param upImage
-     *            image for the default (up) face of the button
+     * @param upImage image for the default (up) face of the button
      */
     public MyCustomButton(final Image upImage) {
         this();
@@ -393,10 +235,8 @@ public abstract class MyCustomButton extends ButtonBase {
     /**
      * Constructor for <code>CustomButton</code>.
      *
-     * @param upImage
-     *            image for the default (up) face of the button
-     * @param handler
-     *            the click handler
+     * @param upImage image for the default (up) face of the button
+     * @param handler the click handler
      */
     public MyCustomButton(final Image upImage, final ClickHandler handler) {
         this(upImage);
@@ -406,10 +246,8 @@ public abstract class MyCustomButton extends ButtonBase {
     /**
      * Constructor for <code>CustomButton</code>.
      *
-     * @param upImage
-     *            image for the default (up) face of the button
-     * @param downImage
-     *            image for the down face of the button
+     * @param upImage   image for the default (up) face of the button
+     * @param downImage image for the down face of the button
      */
     public MyCustomButton(final Image upImage, final Image downImage) {
         this(upImage);
@@ -419,12 +257,9 @@ public abstract class MyCustomButton extends ButtonBase {
     /**
      * Constructor for <code>CustomButton</code>.
      *
-     * @param upImage
-     *            image for the default (up) face of the button
-     * @param downImage
-     *            image for the down face of the button
-     * @param handler
-     *            clickListener
+     * @param upImage   image for the default (up) face of the button
+     * @param downImage image for the down face of the button
+     * @param handler   clickListener
      */
     public MyCustomButton(final Image upImage, final Image downImage, final ClickHandler handler) {
         this(upImage, handler);
@@ -434,8 +269,7 @@ public abstract class MyCustomButton extends ButtonBase {
     /**
      * Constructor for <code>CustomButton</code>.
      *
-     * @param upText
-     *            the text for the default (up) face of the button
+     * @param upText the text for the default (up) face of the button
      */
     public MyCustomButton(final String upText) {
         this();
@@ -445,10 +279,8 @@ public abstract class MyCustomButton extends ButtonBase {
     /**
      * Constructor for <code>CustomButton</code>.
      *
-     * @param upText
-     *            the text for the default (up) face of the button
-     * @param handler
-     *            the click handler
+     * @param upText  the text for the default (up) face of the button
+     * @param handler the click handler
      */
     public MyCustomButton(final String upText, final ClickHandler handler) {
         this(upText);
@@ -458,10 +290,8 @@ public abstract class MyCustomButton extends ButtonBase {
     /**
      * Constructor for <code>CustomButton</code>.
      *
-     * @param upText
-     *            the text for the default (up) face of the button
-     * @param downText
-     *            the text for the down face of the button
+     * @param upText   the text for the default (up) face of the button
+     * @param downText the text for the down face of the button
      */
     public MyCustomButton(final String upText, final String downText) {
         this(upText);
@@ -471,12 +301,9 @@ public abstract class MyCustomButton extends ButtonBase {
     /**
      * Constructor for <code>CustomButton</code>.
      *
-     * @param upText
-     *            the text for the default (up) face of the button
-     * @param downText
-     *            the text for the down face of the button
-     * @param handler
-     *            the click handler
+     * @param upText   the text for the default (up) face of the button
+     * @param downText the text for the down face of the button
+     * @param handler  the click handler
      */
     public MyCustomButton(final String upText, final String downText, final ClickHandler handler) {
         this(upText, downText);
@@ -512,6 +339,15 @@ public abstract class MyCustomButton extends ButtonBase {
     }
 
     /**
+     * Sets the downDisabled face of the button.
+     *
+     * @param downDisabled downDisabled face
+     */
+    private void setDownDisabledFace(final Face downDisabled) {
+        this.downDisabled = downDisabled;
+    }
+
+    /**
      * Gets the down face of the button.
      *
      * @return the down face
@@ -521,6 +357,15 @@ public abstract class MyCustomButton extends ButtonBase {
             setDownFace(createFace(getUpFace(), "down", DOWN));
         }
         return down;
+    }
+
+    /**
+     * Sets the down face of the button.
+     *
+     * @param down the down face
+     */
+    private void setDownFace(final Face down) {
+        this.down = down;
     }
 
     /**
@@ -536,6 +381,15 @@ public abstract class MyCustomButton extends ButtonBase {
     }
 
     /**
+     * Sets the downHovering face of the button.
+     *
+     * @param downHovering hoverDown face
+     */
+    private void setDownHoveringFace(final Face downHovering) {
+        this.downHovering = downHovering;
+    }
+
+    /**
      * Gets the current face's html.
      *
      * @return current face's html
@@ -545,9 +399,24 @@ public abstract class MyCustomButton extends ButtonBase {
         return getCurrentFace().getHTML();
     }
 
+    /**
+     * Sets the current face's html.
+     *
+     * @param html html to set
+     */
+    @Override
+    public void setHTML(final String html) {
+        getCurrentFace().setHTML(html);
+    }
+
     @Override
     public int getTabIndex() {
         return FocusPanel.impl.getTabIndex(getElement());
+    }
+
+    @Override
+    public void setTabIndex(final int index) {
+        FocusPanel.impl.setTabIndex(getElement(), index);
     }
 
     /**
@@ -558,6 +427,16 @@ public abstract class MyCustomButton extends ButtonBase {
     @Override
     public String getText() {
         return getCurrentFace().getText();
+    }
+
+    /**
+     * Sets the current face's text.
+     *
+     * @param text text to set
+     */
+    @Override
+    public void setText(final String text) {
+        getCurrentFace().setText(text);
     }
 
     /**
@@ -573,12 +452,30 @@ public abstract class MyCustomButton extends ButtonBase {
     }
 
     /**
+     * Sets the upDisabled face of the button.
+     *
+     * @param upDisabled upDisabled face
+     */
+    private void setUpDisabledFace(final Face upDisabled) {
+        this.upDisabled = upDisabled;
+    }
+
+    /**
      * Gets the up face of the button.
      *
      * @return the up face
      */
     public final Face getUpFace() {
         return up;
+    }
+
+    /**
+     * Sets the up face of the button.
+     *
+     * @param up up face
+     */
+    private void setUpFace(final Face up) {
+        this.up = up;
     }
 
     /**
@@ -593,6 +490,15 @@ public abstract class MyCustomButton extends ButtonBase {
         return upHovering;
     }
 
+    /**
+     * Sets the upHovering face of the button.
+     *
+     * @param upHovering upHovering face
+     */
+    private void setUpHoveringFace(final Face upHovering) {
+        this.upHovering = upHovering;
+    }
+
     @Override
     public void onBrowserEvent(final Event event) {
         // Should not act on button if disabled.
@@ -604,70 +510,70 @@ public abstract class MyCustomButton extends ButtonBase {
 
         final int type = DOM.eventGetType(event);
         switch (type) {
-        case Event.ONCLICK:
-            // If clicks are currently disallowed, keep it from bubbling or
-            // being
-            // passed to the superclass.
-            if (!allowClick) {
-                event.stopPropagation();
-                return;
-            }
-            break;
-        case Event.ONMOUSEDOWN:
-            if (event.getButton() == Event.BUTTON_LEFT) {
-                setFocus(true);
-                onClickStart();
-                DOM.setCapture(getElement());
-                isCapturing = true;
-                // Prevent dragging (on some browsers);
-                event.preventDefault();
-            }
-            break;
-        case Event.ONMOUSEUP:
-            if (isCapturing) {
-                isCapturing = false;
-                DOM.releaseCapture(getElement());
-                if (isHovering() && event.getButton() == Event.BUTTON_LEFT) {
-                    onClick();
+            case Event.ONCLICK:
+                // If clicks are currently disallowed, keep it from bubbling or
+                // being
+                // passed to the superclass.
+                if (!allowClick) {
+                    event.stopPropagation();
+                    return;
                 }
-            }
-            break;
-        case Event.ONMOUSEMOVE:
-            if (isCapturing) {
-                // Prevent dragging (on other browsers);
-                event.preventDefault();
-            }
-            break;
-        case Event.ONMOUSEOUT:
-            final Element to = DOM.eventGetToElement(event);
-            if (getElement().isOrHasChild(DOM.eventGetTarget(event))
-                    && (to == null || !getElement().isOrHasChild(to))) {
+                break;
+            case Event.ONMOUSEDOWN:
+                if (event.getButton() == Event.BUTTON_LEFT) {
+                    setFocus(true);
+                    onClickStart();
+                    DOM.setCapture(getElement());
+                    isCapturing = true;
+                    // Prevent dragging (on some browsers);
+                    event.preventDefault();
+                }
+                break;
+            case Event.ONMOUSEUP:
                 if (isCapturing) {
+                    isCapturing = false;
+                    DOM.releaseCapture(getElement());
+                    if (isHovering() && event.getButton() == Event.BUTTON_LEFT) {
+                        onClick();
+                    }
+                }
+                break;
+            case Event.ONMOUSEMOVE:
+                if (isCapturing) {
+                    // Prevent dragging (on other browsers);
+                    event.preventDefault();
+                }
+                break;
+            case Event.ONMOUSEOUT:
+                final Element to = DOM.eventGetToElement(event);
+                if (getElement().isOrHasChild(DOM.eventGetTarget(event))
+                        && (to == null || !getElement().isOrHasChild(to))) {
+                    if (isCapturing) {
+                        onClickCancel();
+                    }
+                    setHovering(false);
+                }
+                break;
+            case Event.ONMOUSEOVER:
+                if (getElement().isOrHasChild(DOM.eventGetTarget(event))) {
+                    setHovering(true);
+                    if (isCapturing) {
+                        onClickStart();
+                    }
+                }
+                break;
+            case Event.ONBLUR:
+                if (isFocusing) {
+                    isFocusing = false;
                     onClickCancel();
                 }
-                setHovering(false);
-            }
-            break;
-        case Event.ONMOUSEOVER:
-            if (getElement().isOrHasChild(DOM.eventGetTarget(event))) {
-                setHovering(true);
+                break;
+            case Event.ONLOSECAPTURE:
                 if (isCapturing) {
-                    onClickStart();
+                    isCapturing = false;
+                    onClickCancel();
                 }
-            }
-            break;
-        case Event.ONBLUR:
-            if (isFocusing) {
-                isFocusing = false;
-                onClickCancel();
-            }
-            break;
-        case Event.ONLOSECAPTURE:
-            if (isCapturing) {
-                isCapturing = false;
-                onClickCancel();
-            }
-            break;
+                break;
         }
 
         super.onBrowserEvent(event);
@@ -677,24 +583,24 @@ public abstract class MyCustomButton extends ButtonBase {
         if ((event.getTypeInt() & Event.KEYEVENTS) != 0) {
             final char keyCode = (char) event.getKeyCode();
             switch (type) {
-            case Event.ONKEYDOWN:
-                if (keyCode == ' ') {
-                    isFocusing = true;
-                    onClickStart();
-                }
-                break;
-            case Event.ONKEYUP:
-                if (isFocusing && keyCode == ' ') {
-                    isFocusing = false;
-                    onClick();
-                }
-                break;
-            case Event.ONKEYPRESS:
-                if (keyCode == '\n' || keyCode == '\r') {
-                    onClickStart();
-                    onClick();
-                }
-                break;
+                case Event.ONKEYDOWN:
+                    if (keyCode == ' ') {
+                        isFocusing = true;
+                        onClickStart();
+                    }
+                    break;
+                case Event.ONKEYUP:
+                    if (isFocusing && keyCode == ' ') {
+                        isFocusing = false;
+                        onClick();
+                    }
+                    break;
+                case Event.ONKEYPRESS:
+                    if (keyCode == '\n' || keyCode == '\r') {
+                        onClickStart();
+                        onClick();
+                    }
+                    break;
             }
         }
     }
@@ -707,9 +613,8 @@ public abstract class MyCustomButton extends ButtonBase {
     /**
      * Sets whether this button is enabled.
      *
-     * @param enabled
-     *            <code>true</code> to enable the button, <code>false</code> to
-     *            disable it
+     * @param enabled <code>true</code> to enable the button, <code>false</code> to
+     *                disable it
      */
     @Override
     public final void setEnabled(final boolean enabled) {
@@ -740,39 +645,24 @@ public abstract class MyCustomButton extends ButtonBase {
     }
 
     /**
-     * Sets the current face's html.
-     *
-     * @param html
-     *            html to set
-     */
-    @Override
-    public void setHTML(final String html) {
-        getCurrentFace().setHTML(html);
-    }
-
-    @Override
-    public void setTabIndex(final int index) {
-        FocusPanel.impl.setTabIndex(getElement(), index);
-    }
-
-    /**
-     * Sets the current face's text.
-     *
-     * @param text
-     *            text to set
-     */
-    @Override
-    public void setText(final String text) {
-        getCurrentFace().setText(text);
-    }
-
-    /**
      * Is this button down?
      *
      * @return <code>true</code> if the button is down
      */
     protected boolean isDown() {
         return (DOWN_ATTRIBUTE & getCurrentFace().getFaceID()) > 0;
+    }
+
+    /**
+     * Sets whether this button is down.
+     *
+     * @param down <code>true</code> to press the button, <code>false</code>
+     *             otherwise
+     */
+    protected void setDown(final boolean down) {
+        if (down != isDown()) {
+            toggleDown();
+        }
     }
 
     /**
@@ -834,19 +724,6 @@ public abstract class MyCustomButton extends ButtonBase {
     }
 
     /**
-     * Sets whether this button is down.
-     *
-     * @param down
-     *            <code>true</code> to press the button, <code>false</code>
-     *            otherwise
-     */
-    protected void setDown(final boolean down) {
-        if (down != isDown()) {
-            toggleDown();
-        }
-    }
-
-    /**
      * Common setup between constructors.
      */
     void finishSetup() {
@@ -876,12 +753,33 @@ public abstract class MyCustomButton extends ButtonBase {
     }
 
     /**
+     * Sets the current face based on the faceID.
+     *
+     * @param faceID sets the new face of the button
+     */
+    private void setCurrentFace(final int faceID) {
+        final Face newFace = getFaceFromID(faceID);
+        setCurrentFace(newFace);
+    }
+
+    /**
      * Is the mouse hovering over this button?
      *
      * @return <code>true</code> if the mouse is hovering
      */
     final boolean isHovering() {
         return (HOVERING_ATTRIBUTE & getCurrentFace().getFaceID()) > 0;
+    }
+
+    /**
+     * Sets whether this button is hovering.
+     *
+     * @param hovering is this button hovering?
+     */
+    final void setHovering(final boolean hovering) {
+        if (hovering != isHovering()) {
+            toggleHover();
+        }
     }
 
     void setCurrentFace(final Face newFace) {
@@ -897,18 +795,6 @@ public abstract class MyCustomButton extends ButtonBase {
             if (isEnabled()) {
                 setAriaPressed(newFace);
             }
-        }
-    }
-
-    /**
-     * Sets whether this button is hovering.
-     *
-     * @param hovering
-     *            is this button hovering?
-     */
-    final void setHovering(final boolean hovering) {
-        if (hovering != isHovering()) {
-            toggleHover();
         }
     }
 
@@ -949,37 +835,26 @@ public abstract class MyCustomButton extends ButtonBase {
 
     private Face getFaceFromID(final int id) {
         switch (id) {
-        case DOWN:
-            return getDownFace();
-        case UP:
-            return getUpFace();
-        case DOWN_HOVERING:
-            return getDownHoveringFace();
-        case UP_HOVERING:
-            return getUpHoveringFace();
-        case UP_DISABLED:
-            return getUpDisabledFace();
-        case DOWN_DISABLED:
-            return getDownDisabledFace();
-        default:
-            throw new IllegalStateException(id + " is not a known face id.");
+            case DOWN:
+                return getDownFace();
+            case UP:
+                return getUpFace();
+            case DOWN_HOVERING:
+                return getDownHoveringFace();
+            case UP_HOVERING:
+                return getUpHoveringFace();
+            case UP_DISABLED:
+                return getUpDisabledFace();
+            case DOWN_DISABLED:
+                return getDownDisabledFace();
+            default:
+                throw new IllegalStateException(id + " is not a known face id.");
         }
     }
 
     private void setAriaPressed(final Face newFace) {
         final boolean pressed = (newFace.getFaceID() & DOWN_ATTRIBUTE) == 1;
         Roles.getButtonRole().setAriaPressedState(getElement(), PressedValue.of(pressed));
-    }
-
-    /**
-     * Sets the current face based on the faceID.
-     *
-     * @param faceID
-     *            sets the new face of the button
-     */
-    private void setCurrentFace(final int faceID) {
-        final Face newFace = getFaceFromID(faceID);
-        setCurrentFace(newFace);
     }
 
     private void setCurrentFaceElement(final Element newFaceElement) {
@@ -990,66 +865,6 @@ public abstract class MyCustomButton extends ButtonBase {
             curFaceElement = newFaceElement;
             DOM.appendChild(getElement(), curFaceElement);
         }
-    }
-
-    /**
-     * Sets the downDisabled face of the button.
-     *
-     * @param downDisabled
-     *            downDisabled face
-     */
-    private void setDownDisabledFace(final Face downDisabled) {
-        this.downDisabled = downDisabled;
-    }
-
-    /**
-     * Sets the down face of the button.
-     *
-     * @param down
-     *            the down face
-     */
-    private void setDownFace(final Face down) {
-        this.down = down;
-    }
-
-    /**
-     * Sets the downHovering face of the button.
-     *
-     * @param downHovering
-     *            hoverDown face
-     */
-    private void setDownHoveringFace(final Face downHovering) {
-        this.downHovering = downHovering;
-    }
-
-    /**
-     * Sets the upDisabled face of the button.
-     *
-     * @param upDisabled
-     *            upDisabled face
-     */
-    private void setUpDisabledFace(final Face upDisabled) {
-        this.upDisabled = upDisabled;
-    }
-
-    /**
-     * Sets the up face of the button.
-     *
-     * @param up
-     *            up face
-     */
-    private void setUpFace(final Face up) {
-        this.up = up;
-    }
-
-    /**
-     * Sets the upHovering face of the button.
-     *
-     * @param upHovering
-     *            upHovering face
-     */
-    private void setUpHoveringFace(final Face upHovering) {
-        this.upHovering = upHovering;
     }
 
     /**
@@ -1076,5 +891,137 @@ public abstract class MyCustomButton extends ButtonBase {
         // Remove disabled.
         newFaceID &= ~DISABLED_ATTRIBUTE;
         setCurrentFace(newFaceID);
+    }
+
+    /**
+     * Represents a button's face. Each face is associated with its own style
+     * modifier and, optionally, its own contents html, text, or image.
+     */
+    public abstract class Face implements HasHTML, HasSafeHtml {
+        private static final String STYLENAME_HTML_FACE = "html-face";
+        private final Face delegateTo;
+        private Element face;
+
+        /**
+         * Constructor for <code>Face</code>. Creates a new face that delegates
+         * to the supplied face.
+         *
+         * @param delegateTo default content provider
+         */
+        private Face(final Face delegateTo) {
+            this.delegateTo = delegateTo;
+        }
+
+        /**
+         * Gets the face's contents as html.
+         *
+         * @return face's contents as html
+         */
+        @Override
+        public String getHTML() {
+            return getFace().getInnerHTML();
+        }
+
+        /**
+         * Set the face's contents as html.
+         *
+         * @param html html to set as face's contents html
+         */
+        @Override
+        public void setHTML(final String html) {
+            face = DOM.createDiv();
+            UIObject.setStyleName(face, STYLENAME_HTML_FACE, true);
+            face.setInnerHTML(html);
+            updateButtonFace();
+        }
+
+        /**
+         * Gets the face's contents as text.
+         *
+         * @return face's contents as text
+         */
+        @Override
+        public String getText() {
+            return getFace().getInnerText();
+        }
+
+        /**
+         * Sets the face's contents as text.
+         *
+         * @param text text to set as face's contents
+         */
+        @Override
+        public final void setText(final String text) {
+            face = DOM.createDiv();
+            UIObject.setStyleName(face, STYLENAME_HTML_FACE, true);
+            face.setInnerText(text);
+            updateButtonFace();
+        }
+
+        /**
+         * Set the face's contents as html.
+         *
+         * @param html html to set as face's contents html
+         */
+        @Override
+        public void setHTML(final SafeHtml html) {
+            setHTML(html.asString());
+        }
+
+        /**
+         * Set the face's contents as an image.
+         *
+         * @param image image to set as face contents
+         */
+        public final void setImage(final Image image) {
+            face = image.getElement();
+            updateButtonFace();
+        }
+
+        @Override
+        public final String toString() {
+            return this.getName();
+        }
+
+        /**
+         * Gets the ID associated with this face. This will be a bitwise and of
+         * all of the attributes that comprise this face.
+         */
+        abstract int getFaceID();
+
+        /**
+         * Get the name of the face. This property is also used as a modifier on
+         * the <code>CustomButton</code> style.
+         * <p/>
+         * For instance, if the <code>CustomButton</code> style is
+         * "gwt-PushButton" and the face name is "up", then the CSS class name
+         * will be "gwt-PushButton-up".
+         *
+         * @return the face's name
+         */
+        abstract String getName();
+
+        /**
+         * Gets the contents associated with this face.
+         */
+        private Element getFace() {
+            if (face == null) {
+                if (delegateTo == null) {
+                    // provide a default face as none was supplied.
+                    face = DOM.createDiv();
+                    return face;
+                } else {
+                    return delegateTo.getFace();
+                }
+            } else {
+                return face;
+            }
+        }
+
+        private void updateButtonFace() {
+            if (curFace != null && curFace.getFace() == this.getFace()) {
+                setCurrentFaceElement(face);
+            }
+        }
     }
 }

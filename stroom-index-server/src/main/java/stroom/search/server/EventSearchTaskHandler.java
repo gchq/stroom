@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,12 +16,17 @@
 
 package stroom.search.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import stroom.node.server.NodeCache;
+import stroom.node.server.StroomPropertyService;
+import stroom.node.shared.ClientProperties;
 import stroom.node.shared.Node;
-import stroom.query.CoprocessorSettings;
-import stroom.query.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.query.api.v1.Query;
+import stroom.query.common.v2.CoprocessorSettings;
+import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
+import stroom.query.api.v2.Query;
+import stroom.query.common.v2.StoreSize;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
@@ -30,21 +35,28 @@ import stroom.util.spring.StroomScope;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @TaskHandlerBean(task = EventSearchTask.class)
 @Scope(StroomScope.PROTOTYPE)
 class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventRefs> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(EventSearchTaskHandler.class);
+
     private final NodeCache nodeCache;
     private final TaskManager taskManager;
     private final ClusterResultCollectorCache clusterResultCollectorCache;
+    private final StroomPropertyService stroomPropertyService;
 
     @Inject
-    EventSearchTaskHandler(final ClusterResultCollectorCache clusterResultCollectorCache, final TaskManager taskManager, final NodeCache nodeCache) {
+    EventSearchTaskHandler(final ClusterResultCollectorCache clusterResultCollectorCache,
+                           final TaskManager taskManager,
+                           final NodeCache nodeCache,
+                           final StroomPropertyService stroomPropertyService) {
         this.clusterResultCollectorCache = clusterResultCollectorCache;
         this.taskManager = taskManager;
         this.nodeCache = nodeCache;
+        this.stroomPropertyService = stroomPropertyService;
     }
 
     @Override
@@ -71,9 +83,18 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
                 query, node, task.getResultSendFrequency(), coprocessorMap, null, nowEpochMilli);
 
         // Create a collector to store search results.
+        final StoreSize storeSize = new StoreSize(getStoreSizes());
+        final List<Integer> defaultMaxResultsSizes = getDefaultMaxResultsSizes();
         final EventSearchResultHandler resultHandler = new EventSearchResultHandler();
-        final ClusterSearchResultCollector searchResultCollector = ClusterSearchResultCollector.create(taskManager,
-                asyncSearchTask, nodeCache.getDefaultNode(), null, clusterResultCollectorCache, resultHandler);
+        final ClusterSearchResultCollector searchResultCollector = ClusterSearchResultCollector.create(
+                taskManager,
+                asyncSearchTask,
+                nodeCache.getDefaultNode(),
+                null,
+                clusterResultCollectorCache,
+                resultHandler,
+                defaultMaxResultsSizes,
+                storeSize);
 
         // Tell the task where results will be collected.
         asyncSearchTask.setResultCollector(searchResultCollector);
@@ -96,5 +117,29 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
         }
 
         return eventRefs;
+    }
+
+    private List<Integer> getDefaultMaxResultsSizes() {
+        final String value = stroomPropertyService.getProperty(ClientProperties.DEFAULT_MAX_RESULTS);
+        return extractValues(value);
+    }
+
+    private List<Integer> getStoreSizes() {
+        final String value = stroomPropertyService.getProperty(ClusterSearchResultCollector.PROP_KEY_STORE_SIZE);
+        return extractValues(value);
+    }
+
+    private List<Integer> extractValues(String value) {
+        if (value != null) {
+            try {
+                return Arrays.stream(value.split(","))
+                        .map(String::trim)
+                        .map(Integer::valueOf)
+                        .collect(Collectors.toList());
+            } catch (Exception e) {
+                LOGGER.warn(e.getMessage());
+            }
+        }
+        return Collections.emptyList();
     }
 }

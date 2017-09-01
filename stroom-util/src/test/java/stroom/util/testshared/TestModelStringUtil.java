@@ -175,7 +175,7 @@ public class TestModelStringUtil {
 
     @Test
     public void testSortPath() {
-        final ArrayList<String> t1 = new ArrayList<String>();
+        final ArrayList<String> t1 = new ArrayList<>();
         t1.add("a");
         t1.add("zz");
         t1.add("z");
@@ -185,7 +185,7 @@ public class TestModelStringUtil {
 
         Collections.sort(t1, ModelStringUtil.pathComparator());
 
-        final ArrayList<String> t2 = new ArrayList<String>();
+        final ArrayList<String> t2 = new ArrayList<>();
         t2.add("a");
         t2.add("z");
         t2.add("z/a");

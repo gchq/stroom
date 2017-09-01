@@ -42,7 +42,7 @@ public class FindStroomStatsStoreEntityCriteria extends FindDocumentEntityCriter
     }
 
     public static FindStroomStatsStoreEntityCriteria instanceByName(final String name) {
-        return new FindStroomStatsStoreEntityCriteria(name,  null);
+        return new FindStroomStatsStoreEntityCriteria(name, null);
     }
 
     public static FindStroomStatsStoreEntityCriteria instanceByNameAndStatType(final String name,

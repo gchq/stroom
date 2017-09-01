@@ -21,10 +21,6 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
 public class CurrentUserChangedEvent extends GwtEvent<CurrentUserChangedEvent.CurrentUserChangedHandler> {
-    public interface CurrentUserChangedHandler extends EventHandler {
-        void onCurrentUserChanged(CurrentUserChangedEvent event);
-    }
-
     public static GwtEvent.Type<CurrentUserChangedHandler> TYPE;
 
     public static <I> void fire(final HasHandlers source) {
@@ -33,7 +29,7 @@ public class CurrentUserChangedEvent extends GwtEvent<CurrentUserChangedEvent.Cu
 
     public static GwtEvent.Type<CurrentUserChangedHandler> getType() {
         if (TYPE == null) {
-            TYPE = new GwtEvent.Type<CurrentUserChangedHandler>();
+            TYPE = new GwtEvent.Type<>();
         }
         return TYPE;
     }
@@ -46,5 +42,9 @@ public class CurrentUserChangedEvent extends GwtEvent<CurrentUserChangedEvent.Cu
     @Override
     protected void dispatch(final CurrentUserChangedHandler handler) {
         handler.onCurrentUserChanged(this);
+    }
+
+    public interface CurrentUserChangedHandler extends EventHandler {
+        void onCurrentUserChanged(CurrentUserChangedEvent event);
     }
 }

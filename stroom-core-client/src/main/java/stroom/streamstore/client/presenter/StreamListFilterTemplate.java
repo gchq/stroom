@@ -25,10 +25,10 @@ import java.util.List;
 public enum StreamListFilterTemplate implements HasDisplayValue {
     RAW_LAST_HOUR("Raw last hour", 1), RAW_LAST_DAY("Raw last day", 24), RAW_LAST_WEEK("Raw last week",
             168), PROCESSED_LAST_HOUR("Processed last hour", 1), PROCESSED_LAST_DAY("Processed last day",
-                    24), PROCESSED_LAST_WEEK("Processed last week", 168), ERRORS_LAST_HOUR("Errors last hour",
-                            1), ERRORS_LAST_DAY("Errors last day", 24), ERRORS_LAST_WEEK("Errors last week",
-                                    168), ALL_LAST_HOUR("All last hour", 1), ALL_LAST_DAY("All last day",
-                                            24), ALL_LAST_WEEK("All last week", 168);
+            24), PROCESSED_LAST_WEEK("Processed last week", 168), ERRORS_LAST_HOUR("Errors last hour",
+            1), ERRORS_LAST_DAY("Errors last day", 24), ERRORS_LAST_WEEK("Errors last week",
+            168), ALL_LAST_HOUR("All last hour", 1), ALL_LAST_DAY("All last day",
+            24), ALL_LAST_WEEK("All last week", 168);
 
     private final String displayValue;
     private final int hourPeriod;
@@ -45,18 +45,18 @@ public enum StreamListFilterTemplate implements HasDisplayValue {
 
     public List<StreamType> getStreamType(final StreamTypeUiManager streamTypeUiManager) {
         switch (this) {
-        case RAW_LAST_HOUR:
-        case RAW_LAST_DAY:
-        case RAW_LAST_WEEK:
-            return streamTypeUiManager.getRawStreamTypeList();
-        case PROCESSED_LAST_HOUR:
-        case PROCESSED_LAST_DAY:
-        case PROCESSED_LAST_WEEK:
-            return streamTypeUiManager.getProcessedStreamTypeList();
-        case ERRORS_LAST_HOUR:
-        case ERRORS_LAST_DAY:
-        case ERRORS_LAST_WEEK:
-            return Arrays.asList(StreamType.ERROR);
+            case RAW_LAST_HOUR:
+            case RAW_LAST_DAY:
+            case RAW_LAST_WEEK:
+                return streamTypeUiManager.getRawStreamTypeList();
+            case PROCESSED_LAST_HOUR:
+            case PROCESSED_LAST_DAY:
+            case PROCESSED_LAST_WEEK:
+                return streamTypeUiManager.getProcessedStreamTypeList();
+            case ERRORS_LAST_HOUR:
+            case ERRORS_LAST_DAY:
+            case ERRORS_LAST_WEEK:
+                return Arrays.asList(StreamType.ERROR);
         }
         return null;
     }

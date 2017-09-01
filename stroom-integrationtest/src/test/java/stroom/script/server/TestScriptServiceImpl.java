@@ -18,10 +18,10 @@ package stroom.script.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
 import stroom.entity.shared.Res;
 import stroom.script.shared.Script;
 import stroom.script.shared.ScriptService;
+import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.annotation.Resource;
 import java.util.Collections;

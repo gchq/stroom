@@ -38,8 +38,8 @@ import java.util.Map;
 @Scope(StroomScope.TASK)
 public class StreamCloser implements Closeable {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamCloser.class);
-    private final List<Closeable> list = new ArrayList<Closeable>();
-    private final Map<Closeable, IOException> map = new HashMap<Closeable, IOException>();
+    private final List<Closeable> list = new ArrayList<>();
+    private final Map<Closeable, IOException> map = new HashMap<>();
 
     @Resource
     private StreamStore streamStore;

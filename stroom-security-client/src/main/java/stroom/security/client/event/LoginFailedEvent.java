@@ -30,7 +30,7 @@ public class LoginFailedEvent extends GwtEvent<LoginFailedEvent.LoginFailedHandl
 
     public static Type<LoginFailedHandler> getType() {
         if (TYPE == null) {
-            TYPE = new GwtEvent.Type<LoginFailedHandler>();
+            TYPE = new GwtEvent.Type<>();
         }
         return TYPE;
     }

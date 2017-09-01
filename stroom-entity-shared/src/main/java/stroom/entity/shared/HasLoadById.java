@@ -20,11 +20,12 @@ import java.util.Set;
 
 public interface HasLoadById<E extends Entity> {
     /**
-     * @param id
-     *            The id of the entity in the database
+     * @param id The id of the entity in the database
      * @return The entity, or null if it could not be found
      */
     E loadById(long id) throws RuntimeException;
 
     E loadById(long id, Set<String> fetchSet) throws RuntimeException;
+
+    E loadByIdInsecure(long id, Set<String> fetchSet) throws RuntimeException;
 }

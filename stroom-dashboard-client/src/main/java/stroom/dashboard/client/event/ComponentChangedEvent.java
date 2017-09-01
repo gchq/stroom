@@ -28,8 +28,9 @@ public class ComponentChangedEvent extends GwtEvent<ComponentChangedEvent.Handle
     private final String streamId;
     private final String eventId;
     private final Set<String> highlights;
+
     public ComponentChangedEvent(final String componentId, final String streamId, final String eventId,
-            final Set<String> highlights) {
+                                 final Set<String> highlights) {
         this.componentId = componentId;
         this.streamId = streamId;
         this.eventId = eventId;
@@ -37,7 +38,7 @@ public class ComponentChangedEvent extends GwtEvent<ComponentChangedEvent.Handle
     }
 
     public static void fire(final HasHandlers handlers, final String componentId, final String streamId,
-            final String eventId, final Set<String> highlights) {
+                            final String eventId, final Set<String> highlights) {
         handlers.fireEvent(new ComponentChangedEvent(componentId, streamId, eventId, highlights));
     }
 

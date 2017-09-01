@@ -25,15 +25,14 @@ public class SQLSafe {
 
     /**
      * Escapes unsafe characters for use in strings in SQL statements.
-     *
+     * <p>
      * replace \ with \\
-     *
+     * <p>
      * replace " with \"
-     *
+     * <p>
      * replace ' with \'
      *
-     * @param value
-     *            The string to clean
+     * @param value The string to clean
      * @return The cleaned string
      */
     public static String escapeChars(final String value) {

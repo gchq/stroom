@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
-import stroom.entity.server.util.SQLUtil;
+import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.security.SecurityContext;
@@ -66,12 +66,11 @@ public class StatisticStoreEntityServiceImpl
         }
 
         @Override
-        protected void appendBasicCriteria(final stroom.entity.server.util.SQLBuilder sql, final String alias,
-                                           final FindStatisticsEntityCriteria criteria) {
+        protected void appendBasicCriteria(final HqlBuilder sql, final String alias, final FindStatisticsEntityCriteria criteria) {
             super.appendBasicCriteria(sql, alias, criteria);
 
             if (criteria.getStatisticType() != null) {
-                SQLUtil.appendValueQuery(sql, alias + ".pStatisticType", criteria.getStatisticType().getPrimitiveValue());
+                sql.appendValueQuery(alias + ".pStatisticType", criteria.getStatisticType().getPrimitiveValue());
             }
         }
     }

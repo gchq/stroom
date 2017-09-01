@@ -28,11 +28,11 @@ public class SharedList<E extends SharedObject> implements List<E>, SharedObject
     private List<E> list;
 
     public SharedList() {
-        this.list = new ArrayList<E>();
+        this.list = new ArrayList<>();
     }
 
     public SharedList(final int initialCapacity) {
-        this.list = new ArrayList<E>(initialCapacity);
+        this.list = new ArrayList<>(initialCapacity);
     }
 
     public SharedList(final List<E> list) {
@@ -40,11 +40,11 @@ public class SharedList<E extends SharedObject> implements List<E>, SharedObject
     }
 
     public SharedList(final Collection<? extends E> c) {
-        list = new ArrayList<E>(c);
+        list = new ArrayList<>(c);
     }
 
     public static SharedList<SharedString> convert(final List<String> list) {
-        final SharedList<SharedString> newList = new SharedList<SharedString>(list.size());
+        final SharedList<SharedString> newList = new SharedList<>(list.size());
         for (final String string : list) {
             newList.add(SharedString.wrap(string));
         }

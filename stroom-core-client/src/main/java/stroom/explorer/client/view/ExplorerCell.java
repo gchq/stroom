@@ -48,10 +48,10 @@ public class ExplorerCell extends AbstractCell<ExplorerData> {
                         expanderPadding += 13;
                         break;
                     case OPEN:
-                        expanderIcon = getImageHtml(resources.open());
+                        expanderIcon = template.icon(resources.style().expanderIcon(), UriUtils.fromTrustedString(ImageUtil.getImageURL() + "tree-open.svg"));
                         break;
                     case CLOSED:
-                        expanderIcon = getImageHtml(resources.closed());
+                        expanderIcon = template.icon(resources.style().expanderIcon(), UriUtils.fromTrustedString(ImageUtil.getImageURL() + "tree-closed.svg"));
                         break;
                 }
             }
@@ -111,18 +111,14 @@ public class ExplorerCell extends AbstractCell<ExplorerData> {
 
         String expander();
 
+        String expanderIcon();
+
         String icon();
 
         String text();
     }
 
     interface Resources extends ClientBundle {
-        ImageResource open();
-
-        ImageResource closed();
-
-        ImageResource leaf();
-
         @Source(Style.DEFAULT_CSS)
         Style style();
     }
@@ -134,7 +130,7 @@ public class ExplorerCell extends AbstractCell<ExplorerData> {
         @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
         SafeHtml expander(String iconClass, SafeStyles styles, SafeHtml icon);
 
-        @Template("<div class=\"{0}\"><img src=\"{1}\" /></div>")
+        @Template("<img class=\"{0}\" src=\"{1}\" />")
         SafeHtml icon(String iconClass, SafeUri iconUrl);
 
         @Template("<div class=\"{0}\">{1}</div>")

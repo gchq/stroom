@@ -18,11 +18,11 @@ package stroom.security.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
 import stroom.importexport.server.EntityPathResolver;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.test.FileSystemTestUtil;
 
 import javax.annotation.Resource;

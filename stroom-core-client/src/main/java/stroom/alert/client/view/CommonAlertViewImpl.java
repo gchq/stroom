@@ -48,33 +48,6 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
     private final HTML message = new HTML();
     private final Hyperlink showHideDetail = new Hyperlink();
     private final RichTextArea detail = new RichTextArea();
-
-    @ImportedWithPrefix("stroom-alert")
-    public interface Style extends CssResource {
-        String DEFAULT_CSS = "alert.css";
-
-        String table();
-
-        String message();
-
-        String showHide();
-
-        String detail();
-    }
-
-    public interface Resources extends ClientBundle {
-        ImageResource info();
-
-        ImageResource warn();
-
-        ImageResource error();
-
-        ImageResource question();
-
-        @Source(Style.DEFAULT_CSS)
-        Style style();
-    }
-
     private final Resources resources;
     private boolean detailVisible = false;
 
@@ -182,5 +155,31 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
             showHideDetail.setText("Show Detail");
             setDetailVisible(false);
         }
+    }
+
+    @ImportedWithPrefix("stroom-alert")
+    public interface Style extends CssResource {
+        String DEFAULT_CSS = "alert.css";
+
+        String table();
+
+        String message();
+
+        String showHide();
+
+        String detail();
+    }
+
+    public interface Resources extends ClientBundle {
+        ImageResource info();
+
+        ImageResource warn();
+
+        ImageResource error();
+
+        ImageResource question();
+
+        @Source(Style.DEFAULT_CSS)
+        Style style();
     }
 }

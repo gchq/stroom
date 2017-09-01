@@ -35,6 +35,14 @@ public class ParallelOutputStream extends OutputStream implements SeekableOutput
     private List<OutputStream> outputStreamList;
     private int outputStreamListSize = 0;
 
+    /**
+     * Write to this set.
+     */
+    public ParallelOutputStream(final Set<OutputStream> outputStreamSet) {
+        this.outputStreamList = new ArrayList<>(outputStreamSet);
+        this.outputStreamListSize = outputStreamList.size();
+    }
+
     private static Set<OutputStream> createOutputStreamsForFiles(final Set<File> outFileSet)
             throws FileNotFoundException {
         Set<OutputStream> rtn = new HashSet<>();
@@ -42,14 +50,6 @@ public class ParallelOutputStream extends OutputStream implements SeekableOutput
             rtn.add(new FileOutputStream(file));
         }
         return rtn;
-    }
-
-    /**
-     * Write to this set.
-     */
-    public ParallelOutputStream(final Set<OutputStream> outputStreamSet) {
-        this.outputStreamList = new ArrayList<>(outputStreamSet);
-        this.outputStreamListSize = outputStreamList.size();
     }
 
     public static ParallelOutputStream create(final Set<File> outFileSet) throws FileNotFoundException {

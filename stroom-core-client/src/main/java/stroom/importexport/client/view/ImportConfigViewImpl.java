@@ -26,16 +26,11 @@ import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.importexport.client.presenter.ImportConfigPresenter.ImportConfigView;
 
 public class ImportConfigViewImpl extends ViewImpl implements ImportConfigView {
-    public interface Binder extends UiBinder<Widget, ImportConfigViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     FormPanel form;
     @UiField
     FileUpload fileUpload;
-
     @Inject
     public ImportConfigViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -49,5 +44,8 @@ public class ImportConfigViewImpl extends ViewImpl implements ImportConfigView {
     @Override
     public FormPanel getForm() {
         return form;
+    }
+
+    public interface Binder extends UiBinder<Widget, ImportConfigViewImpl> {
     }
 }

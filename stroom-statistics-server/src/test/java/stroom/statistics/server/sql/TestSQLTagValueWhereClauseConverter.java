@@ -32,24 +32,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 
 public class TestSQLTagValueWhereClauseConverter extends StroomUnitTest {
-    private static class Result {
-        private final String whereClause;
-        private final List<String> bindVariables;
-
-        public Result(final String whereClause, final List<String> bindVariables) {
-            this.whereClause = whereClause;
-            this.bindVariables = bindVariables;
-        }
-
-        public String getWhereClause() {
-            return whereClause;
-        }
-
-        public List<String> getBindVariables() {
-            return bindVariables;
-        }
-    }
-
     @Rule
     public TestName testName = new TestName();
 
@@ -150,5 +132,23 @@ public class TestSQLTagValueWhereClauseConverter extends StroomUnitTest {
             }
         }
         return count;
+    }
+
+    private static class Result {
+        private final String whereClause;
+        private final List<String> bindVariables;
+
+        public Result(final String whereClause, final List<String> bindVariables) {
+            this.whereClause = whereClause;
+            this.bindVariables = bindVariables;
+        }
+
+        public String getWhereClause() {
+            return whereClause;
+        }
+
+        public List<String> getBindVariables() {
+            return bindVariables;
+        }
     }
 }

@@ -23,5 +23,5 @@ import java.util.Set;
 
 public interface ClusterDispatchAsync {
     <R extends SharedObject> void execAsync(ClusterTask<R> task, ClusterResultCollector<R> collector, Node sourceNode,
-            Set<Node> targetNodes);
+                                            Set<Node> targetNodes);
 }

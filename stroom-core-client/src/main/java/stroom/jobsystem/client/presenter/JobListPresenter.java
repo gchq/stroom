@@ -37,8 +37,8 @@ import stroom.entity.shared.EntityRow;
 import stroom.entity.shared.ResultList;
 import stroom.jobsystem.shared.FindJobCriteria;
 import stroom.jobsystem.shared.Job;
-import stroom.widget.button.client.GlyphIcon;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -46,24 +46,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
-    private EntityServiceFindActionDataProvider<FindJobCriteria, Job> dataProvider;
-
     private final SaveQueue<Job> jobSaver;
+    private EntityServiceFindActionDataProvider<FindJobCriteria, Job> dataProvider;
 
     @Inject
     public JobListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
                             final TooltipPresenter tooltipPresenter) {
-        super(eventBus, new DataGridViewImpl<Job>(true));
+        super(eventBus, new DataGridViewImpl<>(true));
 
-        jobSaver = new SaveQueue<Job>(dispatcher);
+        jobSaver = new SaveQueue<>(dispatcher);
 
         getView().addColumn(new InfoHelpLinkColumn<Job>() {
             @Override
-            public GlyphIcon getValue(final Job row) {
+            public SvgPreset getValue(final Job row) {
                 if (!row.isPersistent()) {
                     return null;
                 }
-                return GlyphIcons.HELP;
+                return SvgPresets.HELP;
             }
 
             @Override
@@ -95,7 +94,7 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
         };
         enabledColumn.setFieldUpdater((index, row, value) -> {
             final boolean newValue = value.toBoolean();
-            jobSaver.save(new EntitySaveTask<Job>(new EntityRow<Job>(row)) {
+            jobSaver.save(new EntitySaveTask<Job>(new EntityRow<>(row)) {
                 @Override
                 protected void setValue(final Job entity) {
                     entity.setEnabled(newValue);
@@ -114,13 +113,13 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
             }
         }, "Description", 800);
 
-        getView().addEndColumn(new EndColumn<Job>());
+        getView().addEndColumn(new EndColumn<>());
 
         this.dataProvider = new EntityServiceFindActionDataProvider<FindJobCriteria, Job>(dispatcher, getView()) {
             // Add in extra blank item
             @Override
             protected ResultList<Job> processData(final ResultList<Job> data) {
-                final List<Job> rtnList = new ArrayList<Job>();
+                final List<Job> rtnList = new ArrayList<>();
 
                 boolean done = false;
                 for (int i = 0; i < data.size(); i++) {
@@ -131,14 +130,14 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
                     }
                 }
 
-                return new BaseResultList<Job>(rtnList, 0L, (long) rtnList.size(), false);
+                return new BaseResultList<>(rtnList, 0L, (long) rtnList.size(), false);
 
             }
         };
         final FindJobCriteria findJobCriteria = new FindJobCriteria();
-        findJobCriteria.setOrderBy(FindJobCriteria.ORDER_BY_ADVANCED_AND_NAME);
+        findJobCriteria.setSort(FindJobCriteria.FIELD_ADVANCED);
+        findJobCriteria.addSort(FindJobCriteria.FIELD_NAME);
         this.dataProvider.setCriteria(findJobCriteria);
-
     }
 
     public MultiSelectionModel<Job> getSelectionModel() {

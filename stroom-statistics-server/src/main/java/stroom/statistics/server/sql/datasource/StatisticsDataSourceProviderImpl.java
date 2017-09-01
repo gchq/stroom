@@ -17,12 +17,12 @@
 package stroom.statistics.server.sql.datasource;
 
 import org.springframework.stereotype.Component;
-import stroom.datasource.api.v1.DataSource;
-import stroom.datasource.api.v1.DataSourceField;
-import stroom.datasource.api.v1.DataSourceField.DataSourceFieldType;
-import stroom.query.api.v1.DocRef;
-import stroom.query.api.v1.ExpressionTerm;
-import stroom.query.api.v1.ExpressionTerm.Condition;
+import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.DataSourceField;
+import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.statistics.server.sql.Statistics;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
@@ -88,16 +88,13 @@ public class StatisticsDataSourceProviderImpl implements StatisticsDataSourcePro
 
         if (entity.getStatisticType().equals(StatisticType.VALUE)) {
             addField(StatisticStoreEntity.FIELD_NAME_VALUE, DataSourceFieldType.NUMERIC_FIELD, false, null, fields);
-            addField(StatisticStoreEntity.FIELD_NAME_MIN_VALUE, DataSourceFieldType.NUMERIC_FIELD, false, null, fields);
-            addField(StatisticStoreEntity.FIELD_NAME_MAX_VALUE, DataSourceFieldType.NUMERIC_FIELD, false, null, fields);
         }
 
-        addField(StatisticStoreEntity.FIELD_NAME_PRECISION, DataSourceFieldType.NUMERIC_FIELD, false, null, fields);
         addField(StatisticStoreEntity.FIELD_NAME_PRECISION_MS, DataSourceFieldType.NUMERIC_FIELD, false, null, fields);
 
         // Filter fields.
         if (entity.getStatisticDataSourceDataObject() != null) {
-                fields = statistics.getSupportedFields(fields);
+            fields = statistics.getSupportedFields(fields);
         }
 
         return fields;

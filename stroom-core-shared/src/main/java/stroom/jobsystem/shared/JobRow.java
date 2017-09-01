@@ -20,7 +20,7 @@ import stroom.entity.shared.EntityRow;
 import stroom.util.shared.Expander;
 import stroom.util.shared.TreeRow;
 
-public class JobRow extends EntityRow<Job>implements TreeRow {
+public class JobRow extends EntityRow<Job> implements TreeRow {
     private static final long serialVersionUID = -2511849708703770119L;
 
     private Expander expander;

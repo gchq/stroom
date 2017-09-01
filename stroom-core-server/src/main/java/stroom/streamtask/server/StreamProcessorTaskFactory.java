@@ -50,7 +50,7 @@ public class StreamProcessorTaskFactory implements DistributedTaskFactory<Stream
     private List<StreamProcessorTask> wrap(final List<StreamTask> in) {
         List<StreamProcessorTask> out = Collections.emptyList();
         if (in != null && in.size() > 0) {
-            out = new ArrayList<StreamProcessorTask>(in.size());
+            out = new ArrayList<>(in.size());
             for (final StreamTask task : in) {
                 out.add(new StreamProcessorTask(task));
             }
@@ -64,7 +64,7 @@ public class StreamProcessorTaskFactory implements DistributedTaskFactory<Stream
     private List<StreamTask> unwrap(final List<StreamProcessorTask> in) {
         List<StreamTask> out = Collections.emptyList();
         if (in != null && in.size() > 0) {
-            out = new ArrayList<StreamTask>(in.size());
+            out = new ArrayList<>(in.size());
             for (final StreamProcessorTask task : in) {
                 out.add(task.getStreamTask());
             }

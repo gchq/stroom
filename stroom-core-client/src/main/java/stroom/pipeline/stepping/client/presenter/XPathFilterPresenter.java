@@ -28,26 +28,7 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 public class XPathFilterPresenter extends MyPresenterWidget<XPathFilterPresenter.XPathFilterView> {
-    public interface XPathFilterView extends View {
-        String getXPath();
-
-        void setXPath(String xPath);
-
-        MatchType getMatchType();
-
-        void setMatchType(MatchType matchType);
-
-        String getValue();
-
-        void setValue(String value);
-
-        Boolean isIgnoreCase();
-
-        void setIgnoreCase(Boolean ignoreCase);
-    }
-
     final PopupSize popupSize = new PopupSize(400, 150, 400, 150, 1000, 150, true);
-
     private XPathFilter xPathFilter;
 
     @Inject
@@ -93,5 +74,23 @@ public class XPathFilterPresenter extends MyPresenterWidget<XPathFilterPresenter
         this.xPathFilter = xPathFilter;
         read(xPathFilter);
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit XPath Filter", popupUiHandlers);
+    }
+
+    public interface XPathFilterView extends View {
+        String getXPath();
+
+        void setXPath(String xPath);
+
+        MatchType getMatchType();
+
+        void setMatchType(MatchType matchType);
+
+        String getValue();
+
+        void setValue(String value);
+
+        Boolean isIgnoreCase();
+
+        void setIgnoreCase(Boolean ignoreCase);
     }
 }

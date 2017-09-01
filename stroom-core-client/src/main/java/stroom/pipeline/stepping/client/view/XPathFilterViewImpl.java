@@ -29,9 +29,6 @@ import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter.XPathFilte
 import stroom.widget.tickbox.client.view.TickBox;
 
 public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
-    public interface Binder extends UiBinder<Widget, XPathFilterViewImpl> {
-    }
-
     private final Widget widget;
     @UiField
     Grid grid;
@@ -43,7 +40,6 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
     TextBox value;
     @UiField
     TickBox ignoreCase;
-
     @Inject
     public XPathFilterViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -103,5 +99,8 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
         final boolean visible = matchType != null && (matchType == MatchType.CONTAINS || matchType == MatchType.EQUALS);
         grid.getRowFormatter().setVisible(2, visible);
         grid.getRowFormatter().setVisible(3, visible);
+    }
+
+    public interface Binder extends UiBinder<Widget, XPathFilterViewImpl> {
     }
 }

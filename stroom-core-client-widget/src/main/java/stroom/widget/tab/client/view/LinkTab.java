@@ -23,32 +23,11 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.DOM;
 
 public class LinkTab extends AbstractTab {
-    public interface Style extends CssResource {
-        String linkTab();
-
-        String selected();
-
-        String background();
-
-        String label();
-
-        String hotspot();
-
-        String hotspotVisible();
-    }
-
-    public interface Resources extends ClientBundle {
-        @Source("LinkTab.css")
-        Style style();
-    }
-
     private static Resources resources;
-
     private final Element element;
     private final Element background;
     private final Element label;
     private final Element hotspot;
-
     public LinkTab(final String text) {
         if (resources == null) {
             resources = GWT.create(Resources.class);
@@ -96,13 +75,32 @@ public class LinkTab extends AbstractTab {
         }
     }
 
+    public String getText() {
+        return label.getInnerText();
+    }
+
     @Override
     public void setText(final String text) {
         background.setInnerText(text);
         label.setInnerText(text);
     }
 
-    public String getText() {
-        return label.getInnerText();
+    public interface Style extends CssResource {
+        String linkTab();
+
+        String selected();
+
+        String background();
+
+        String label();
+
+        String hotspot();
+
+        String hotspotVisible();
+    }
+
+    public interface Resources extends ClientBundle {
+        @Source("LinkTab.css")
+        Style style();
     }
 }

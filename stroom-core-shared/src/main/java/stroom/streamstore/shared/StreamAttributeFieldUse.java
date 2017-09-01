@@ -20,17 +20,16 @@ import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
 import stroom.util.shared.HasDisplayValue;
 
-public enum StreamAttributeFieldUse implements HasDisplayValue,HasPrimitiveValue {
+public enum StreamAttributeFieldUse implements HasDisplayValue, HasPrimitiveValue {
     FIELD("Text", 1, false), NUMERIC_FIELD("Number", 2, true), DATE_FIELD("Date", 3, false), ID("Id", 4,
             true), COUNT_IN_DURATION_FIELD("Count in Duration", 5, true), SIZE_FIELD("Size", 6,
-                    true), DURATION_FIELD("Duration", 7, true);
+            true), DURATION_FIELD("Duration", 7, true);
 
+    public static final PrimitiveValueConverter<StreamAttributeFieldUse> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
+            StreamAttributeFieldUse.values());
     private final String displayValue;
     private final byte primitiveValue;
     private final boolean numeric;
-
-    public static final PrimitiveValueConverter<StreamAttributeFieldUse> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<StreamAttributeFieldUse>(
-            StreamAttributeFieldUse.values());
 
     StreamAttributeFieldUse(final String displayValue, final int primitiveValue, final boolean numeric) {
         this.displayValue = displayValue;

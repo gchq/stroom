@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,12 +37,12 @@ import java.util.Set;
 public abstract class MenuPresenter extends MyPresenterWidget<CellTableView<Item>> {
     private static final MenuResources MENU_RESOURCES = GWT.create(MenuResources.class);
 
-    private final Map<Item, Element> hoverItems = new HashMap<Item, Element>();
+    private final Map<Item, Element> hoverItems = new HashMap<>();
     private Set<Item> highlightItems;
 
     @Inject
     public MenuPresenter(final EventBus eventBus) {
-        super(eventBus, new ScrollableCellTableViewImpl<Item>(false, MENU_RESOURCES));
+        super(eventBus, new ScrollableCellTableViewImpl<>(false, MENU_RESOURCES));
         final Column<Item, Item> iconColumn = new Column<Item, Item>(new MenuItemCell(this)) {
             @Override
             public Item getValue(final Item item) {

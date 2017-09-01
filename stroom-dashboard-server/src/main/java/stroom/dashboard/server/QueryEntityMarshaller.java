@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,7 +19,7 @@ package stroom.dashboard.server;
 import org.springframework.stereotype.Component;
 import stroom.dashboard.shared.QueryEntity;
 import stroom.entity.server.EntityMarshaller;
-import stroom.query.api.v1.Query;
+import stroom.query.api.v2.Query;
 
 @Component
 public class QueryEntityMarshaller extends EntityMarshaller<QueryEntity, Query> {

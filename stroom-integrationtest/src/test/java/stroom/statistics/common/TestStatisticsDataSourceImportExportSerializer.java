@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,8 +18,7 @@ package stroom.statistics.common;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.datasource.api.v1.DataSource;
+import stroom.datasource.api.v2.DataSource;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
@@ -27,16 +26,17 @@ import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
 import stroom.entity.shared.ImportState.ImportMode;
 import stroom.importexport.server.ImportExportSerializer;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.statistics.server.sql.datasource.FindStatisticsEntityCriteria;
 import stroom.statistics.server.sql.datasource.StatisticStoreEntityService;
 import stroom.statistics.server.sql.datasource.StatisticsDataSourceProvider;
-import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.shared.StatisticsDataSourceData;
+import stroom.statistics.shared.common.StatisticField;
 import stroom.streamstore.server.fs.FileSystemUtil;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.test.FileSystemTestUtil;
 
 import javax.annotation.Resource;
@@ -54,7 +54,7 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
 
     private DocRefs buildFindFolderCriteria() {
         final DocRefs docRefs = new DocRefs();
-        docRefs.add(new DocRef(Folder.ENTITY_TYPE,"0", "System"));
+        docRefs.add(new DocRef(Folder.ENTITY_TYPE, "0", "System"));
         return docRefs;
     }
 

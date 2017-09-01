@@ -35,8 +35,8 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasRead;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
-import stroom.widget.button.client.GlyphIcon;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -56,7 +56,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
     @Inject
     public CacheNodeListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
                                   final TooltipPresenter tooltipPresenter) {
-        super(eventBus, new DataGridViewImpl<CacheNodeRow>(false));
+        super(eventBus, new DataGridViewImpl<>(false));
         this.dispatcher = dispatcher;
         this.tooltipPresenter = tooltipPresenter;
 
@@ -105,15 +105,15 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
         clearColumn.setFieldUpdater((index, row, value) -> dispatcher.exec(new CacheClearAction(row.getCacheInfo().getName(), row.getNode())));
         getView().addColumn(clearColumn, "</br>", 50);
 
-        getView().addEndColumn(new EndColumn<CacheNodeRow>());
+        getView().addEndColumn(new EndColumn<>());
     }
 
     private void addInfoColumn() {
         // Info column.
         final InfoColumn<CacheNodeRow> infoColumn = new InfoColumn<CacheNodeRow>() {
             @Override
-            public GlyphIcon getValue(final CacheNodeRow object) {
-                return GlyphIcons.INFO;
+            public SvgPreset getValue(final CacheNodeRow object) {
+                return SvgPresets.INFO;
             }
 
             @Override
@@ -125,7 +125,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
                         popupPosition, null);
             }
         };
-        getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.GLYPH_COL);
+        getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
     }
 
     private String getInfoHtml(final CacheNodeRow row) {
@@ -175,7 +175,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
             action.setCacheName(entity.getCacheName());
 
             if (dataProvider == null) {
-                dataProvider = new ActionDataProvider<CacheNodeRow>(dispatcher, action);
+                dataProvider = new ActionDataProvider<>(dispatcher, action);
                 dataProvider.addDataDisplay(getView().getDataDisplay());
             }
 

@@ -27,11 +27,7 @@ import stroom.widget.tab.client.presenter.LayerContainer;
 import stroom.widget.tab.client.presenter.TabBar;
 
 public class LinkTabPanelViewImpl extends ViewImpl implements LinkTabPanelView {
-    public interface Binder extends UiBinder<Widget, LinkTabPanelViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     FlowPanel left;
     @UiField
@@ -40,7 +36,6 @@ public class LinkTabPanelViewImpl extends ViewImpl implements LinkTabPanelView {
     TabBar tabBar;
     @UiField
     LayerContainer layerContainer;
-
     @Inject
     public LinkTabPanelViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -69,5 +64,8 @@ public class LinkTabPanelViewImpl extends ViewImpl implements LinkTabPanelView {
     @Override
     public LayerContainer getLayerContainer() {
         return layerContainer;
+    }
+
+    public interface Binder extends UiBinder<Widget, LinkTabPanelViewImpl> {
     }
 }

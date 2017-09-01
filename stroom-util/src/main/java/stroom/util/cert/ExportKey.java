@@ -25,13 +25,13 @@ import java.util.HashMap;
 
 /**
  * Utility to export a private key and certificate from a key store.
- *
- * E.g. java stroom.util.cert.ExportKey
+ * <p>
+ * E.g. java stroom.util.ExportKey
  * keystore=/home/user01/keys/server.keystore keypass=changeit alias=smrs
  */
 public class ExportKey {
     public static void main(String[] args) throws Exception {
-        HashMap<String, String> argsMap = new HashMap<String, String>();
+        HashMap<String, String> argsMap = new HashMap<>();
         for (int i = 0; i < args.length; i++) {
             String[] split = args[i].split("=");
             if (split.length > 1) {

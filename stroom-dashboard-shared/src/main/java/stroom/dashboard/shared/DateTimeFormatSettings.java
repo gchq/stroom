@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,7 +26,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "dateTimeFormatSettings", propOrder = { "pattern", "timeZone" })
+@XmlType(name = "dateTimeFormatSettings", propOrder = {"pattern", "timeZone"})
 public class DateTimeFormatSettings implements FormatSettings {
     public static final String DEFAULT_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
     private static final long serialVersionUID = 9145624653060319801L;

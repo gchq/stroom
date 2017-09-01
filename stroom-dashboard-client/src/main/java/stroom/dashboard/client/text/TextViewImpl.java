@@ -29,7 +29,7 @@ import stroom.streamstore.client.view.ClassificationLabel;
 import stroom.widget.button.client.FabButton;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
-public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers>implements TextView {
+public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements TextView {
     private final Widget widget;
     @UiField
     ResizeSimplePanel content;

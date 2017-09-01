@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.kafka.StroomKafkaProducer;
 import stroom.node.server.MockStroomPropertyService;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.statistics.internal.InternalStatisticEvent;
 
 import java.util.Arrays;
@@ -25,18 +25,14 @@ import java.util.function.Consumer;
 @RunWith(MockitoJUnitRunner.class)
 public class TestStroomStatsInternalStatisticsService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestStroomStatsInternalStatisticsService.class);
-
     public static final String DOC_REF_TYPE_1 = "myDocRefType1";
     public static final String DOC_REF_TYPE_2 = "myDocRefType2";
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestStroomStatsInternalStatisticsService.class);
     private final MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
-
-    @Mock
-    private StroomKafkaProducer stroomKafkaProducer;
-
     @Captor
     ArgumentCaptor<Consumer<Exception>> exceptionHandlerCaptor;
+    @Mock
+    private StroomKafkaProducer stroomKafkaProducer;
 
     @Test
     public void putEvents_multipleEvents() {

@@ -43,7 +43,7 @@ public class TestBadTextXMLFilterReader {
             + "<emptyEntity/>" + "</TopLevelEntity >");
 
     private Reader getReader(final char[] data) {
-        return new BadTextXMLFilterReader(new CharArrayReader(data), new String[] { "Leaf" });
+        return new BadTextXMLFilterReader(new CharArrayReader(data), new String[]{"Leaf"});
     }
 
     private void checkByChar(final String in, final String correct) throws IOException {
@@ -61,7 +61,7 @@ public class TestBadTextXMLFilterReader {
 
     private void checkByArray(final String in, final String correct) throws IOException {
         final char[] correctChars = correct.toCharArray();
-        final int[] chunkSizes = { 1, 2, 3, 5, 7, 11, 13, 16 };
+        final int[] chunkSizes = {1, 2, 3, 5, 7, 11, 13, 16};
         for (final int chunkSize : chunkSizes) {
             final Reader filtered = getReader(in.toCharArray());
             final char[] res = new char[chunkSize];

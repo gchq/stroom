@@ -73,19 +73,13 @@ public class ResultLocator extends AbstractXMLFilter implements Locator {
      * start element in a document it looks for a schema declaration to use to
      * validate the rest of the document.
      *
-     * @param uri
-     *            The element's namespace URI, or the empty string.
-     * @param localName
-     *            The element's local name, or the empty string.
-     * @param qName
-     *            The element's qualified (prefixed) name, or the empty string.
-     * @param atts
-     *            The element's attributes.
-     * @exception org.xml.sax.SAXException
-     *                The client may throw an exception during processing.
-     *
+     * @param uri       The element's namespace URI, or the empty string.
+     * @param localName The element's local name, or the empty string.
+     * @param qName     The element's qualified (prefixed) name, or the empty string.
+     * @param atts      The element's attributes.
+     * @throws org.xml.sax.SAXException The client may throw an exception during processing.
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#startElement(java.lang.String,
-     *      java.lang.String, java.lang.String, org.xml.sax.Attributes)
+     * java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
@@ -101,30 +95,26 @@ public class ResultLocator extends AbstractXMLFilter implements Locator {
 
     /**
      * Receive notification of the end of an element.
-     *
+     * <p>
      * <p>
      * The SAX parser will invoke this method at the end of every element in the
      * XML document; there will be a corresponding {@link #startElement
      * startElement} event for every endElement event (even when the element is
      * empty).
      * </p>
-     *
+     * <p>
      * <p>
      * For information on the names, see startElement.
      * </p>
      *
-     * @param uri
-     *            the Namespace URI, or the empty string if the element has no
-     *            Namespace URI or if Namespace processing is not being
-     *            performed
-     * @param localName
-     *            the local name (without prefix), or the empty string if
-     *            Namespace processing is not being performed
-     * @param qName
-     *            the qualified XML name (with prefix), or the empty string if
-     *            qualified names are not available
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param uri       the Namespace URI, or the empty string if the element has no
+     *                  Namespace URI or if Namespace processing is not being
+     *                  performed
+     * @param localName the local name (without prefix), or the empty string if
+     *                  Namespace processing is not being performed
+     * @param qName     the qualified XML name (with prefix), or the empty string if
+     *                  qualified names are not available
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      */
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
@@ -142,17 +132,12 @@ public class ResultLocator extends AbstractXMLFilter implements Locator {
     /**
      * Sends characters to the current validator handler.
      *
-     * @param ch
-     *            Characters.
-     * @param start
-     *            Start of char buffer.
-     * @param length
-     *            Number of chars to send.
-     * @throws SAXException
-     *             Not thrown.
-     *
+     * @param ch     Characters.
+     * @param start  Start of char buffer.
+     * @param length Number of chars to send.
+     * @throws SAXException Not thrown.
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#characters(char[],
-     *      int, int)
+     * int, int)
      */
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
@@ -166,7 +151,6 @@ public class ResultLocator extends AbstractXMLFilter implements Locator {
      * is pretty printed..
      *
      * @return The assumed pretty printed column number.
-     *
      * @see org.xml.sax.Locator#getColumnNumber()
      */
     @Override
@@ -179,7 +163,6 @@ public class ResultLocator extends AbstractXMLFilter implements Locator {
      * is pretty printed.
      *
      * @return The assumed pretty printed line number.
-     *
      * @see org.xml.sax.Locator#getLineNumber()
      */
     @Override
@@ -191,7 +174,6 @@ public class ResultLocator extends AbstractXMLFilter implements Locator {
      * Not implemented.
      *
      * @return null.
-     *
      * @see org.xml.sax.Locator#getPublicId()
      */
     @Override
@@ -203,7 +185,6 @@ public class ResultLocator extends AbstractXMLFilter implements Locator {
      * Not implemented.
      *
      * @return null.
-     *
      * @see org.xml.sax.Locator#getSystemId()
      */
     @Override

@@ -36,125 +36,7 @@ import stroom.cell.valuespinner.shared.HasSpinnerConstraints;
 
 public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerCell.ViewData>
         implements HasSpinnerConstraints {
-    interface Resources extends ClientBundle {
-        ImageResource arrowDown();
-
-        ImageResource arrowDownHover();
-
-        ImageResource arrowDownPressed();
-
-        ImageResource arrowUp();
-
-        ImageResource arrowUpHover();
-
-        ImageResource arrowUpPressed();
-    }
-
-    interface Template extends SafeHtmlTemplates {
-        @Template("<div class=\"valueSpinner\"><input class=\"gwt-TextBox\" type=\"text\" value=\"{0}\" tabindex=\"-1\"></input><div class=\"arrows\">{1}{2}</div></div>")
-        SafeHtml input(String value, SafeHtml imgUp, SafeHtml imgDown);
-    }
-
-    /**
-     * The {@code ViewData} for this cell.
-     */
-    public static class ViewData {
-        /**
-         * The last value that was updated.
-         */
-        private String lastValue;
-
-        /**
-         * The current value.
-         */
-        private String curValue;
-
-        /**
-         * Construct a ViewData instance containing a given value.
-         *
-         * @param value
-         *            a String value
-         */
-        public ViewData(final String value) {
-            this.lastValue = value;
-            this.curValue = value;
-        }
-
-        /**
-         * Return true if the last and current values of this ViewData object
-         * are equal to those of the other object.
-         */
-        @Override
-        public boolean equals(final Object other) {
-            if (!(other instanceof ViewData)) {
-                return false;
-            }
-            final ViewData vd = (ViewData) other;
-            return equalsOrNull(lastValue, vd.lastValue) && equalsOrNull(curValue, vd.curValue);
-        }
-
-        /**
-         * Return the current value of the input element.
-         *
-         * @return the current value String
-         * @see #setCurrentValue(String)
-         */
-        public String getCurrentValue() {
-            return curValue;
-        }
-
-        /**
-         * Return the last value sent to the {@link ValueUpdater}.
-         *
-         * @return the last value String
-         * @see #setLastValue(String)
-         */
-        public String getLastValue() {
-            return lastValue;
-        }
-
-        /**
-         * Return a hash code based on the last and current values.
-         */
-        @Override
-        public int hashCode() {
-            return (lastValue + "_*!@HASH_SEPARATOR@!*_" + curValue).hashCode();
-        }
-
-        /**
-         * Set the current value.
-         *
-         * @param curValue
-         *            the current value
-         * @see #getCurrentValue()
-         */
-        protected void setCurrentValue(final String curValue) {
-            this.curValue = curValue;
-        }
-
-        /**
-         * Set the last value.
-         *
-         * @param lastValue
-         *            the last value
-         * @see #getLastValue()
-         */
-        protected void setLastValue(final String lastValue) {
-            this.lastValue = lastValue;
-        }
-
-        private boolean equalsOrNull(final Object a, final Object b) {
-            return (a != null) ? a.equals(b) : ((b == null));
-        }
-    }
-
-    private long min = 0;
-    private long max = 100;
-    private int step = 1;
-    private int maxStep = 99;
-
     private static volatile Template template;
-
     private static volatile AbstractImagePrototype arrowDown;
     private static volatile AbstractImagePrototype arrowDownHover;
     private static volatile AbstractImagePrototype arrowDownPressed;
@@ -163,14 +45,15 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
     private static volatile AbstractImagePrototype arrowUpPressed;
     private static volatile SafeHtml arrowUpHtml;
     private static volatile SafeHtml arrowDownHtml;
-
     private static volatile Spinner spinner;
-
+    private long min = 0;
+    private long max = 100;
+    private int step = 1;
+    private int maxStep = 99;
     /**
      * The currently focused value key. Only one key can be focused at any time.
      */
     private Object focusedKey;
-
     public ValueSpinnerCell() {
         this(0, 100, 1, 99);
     }
@@ -211,7 +94,7 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
 
     @Override
     public void onBrowserEvent(final Context context, final Element parent, final Number value, final NativeEvent event,
-            final ValueUpdater<Number> valueUpdater) {
+                               final ValueUpdater<Number> valueUpdater) {
         super.onBrowserEvent(context, parent, value, event, valueUpdater);
 
         // Get the target element.
@@ -345,7 +228,7 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
     }
 
     private void stopSpinning(final Context context, final Element parent, final Number value,
-            final ValueUpdater<Number> valueUpdater) {
+                              final ValueUpdater<Number> valueUpdater) {
         if (spinner != null && spinner.isSpinning()) {
             spinner.stop();
 
@@ -358,7 +241,7 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
 
     @Override
     protected void onEnterKeyDown(final Context context, final Element parent, final Number value,
-            final NativeEvent event, final ValueUpdater<Number> valueUpdater) {
+                                  final NativeEvent event, final ValueUpdater<Number> valueUpdater) {
         final Element input = getInputElement(parent);
         if (input != null) {
             final Element target = event.getEventTarget().cast();
@@ -427,7 +310,7 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
     }
 
     private void finishEditing(final Element parent, final Number value, final Object key,
-            final ValueUpdater<Number> valueUpdater) {
+                               final ValueUpdater<Number> valueUpdater) {
         // Get the input element.
         final InputElement input = getInputElement(parent);
         if (input != null) {
@@ -526,5 +409,114 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
     @Override
     public int getMaxStep() {
         return maxStep;
+    }
+
+    interface Resources extends ClientBundle {
+        ImageResource arrowDown();
+
+        ImageResource arrowDownHover();
+
+        ImageResource arrowDownPressed();
+
+        ImageResource arrowUp();
+
+        ImageResource arrowUpHover();
+
+        ImageResource arrowUpPressed();
+    }
+
+    interface Template extends SafeHtmlTemplates {
+        @Template("<div class=\"valueSpinner\"><input class=\"gwt-TextBox\" type=\"text\" value=\"{0}\" tabindex=\"-1\"></input><div class=\"arrows\">{1}{2}</div></div>")
+        SafeHtml input(String value, SafeHtml imgUp, SafeHtml imgDown);
+    }
+
+    /**
+     * The {@code ViewData} for this cell.
+     */
+    public static class ViewData {
+        /**
+         * The last value that was updated.
+         */
+        private String lastValue;
+
+        /**
+         * The current value.
+         */
+        private String curValue;
+
+        /**
+         * Construct a ViewData instance containing a given value.
+         *
+         * @param value a String value
+         */
+        public ViewData(final String value) {
+            this.lastValue = value;
+            this.curValue = value;
+        }
+
+        /**
+         * Return true if the last and current values of this ViewData object
+         * are equal to those of the other object.
+         */
+        @Override
+        public boolean equals(final Object other) {
+            if (!(other instanceof ViewData)) {
+                return false;
+            }
+            final ViewData vd = (ViewData) other;
+            return equalsOrNull(lastValue, vd.lastValue) && equalsOrNull(curValue, vd.curValue);
+        }
+
+        /**
+         * Return the current value of the input element.
+         *
+         * @return the current value String
+         * @see #setCurrentValue(String)
+         */
+        public String getCurrentValue() {
+            return curValue;
+        }
+
+        /**
+         * Set the current value.
+         *
+         * @param curValue the current value
+         * @see #getCurrentValue()
+         */
+        protected void setCurrentValue(final String curValue) {
+            this.curValue = curValue;
+        }
+
+        /**
+         * Return the last value sent to the {@link ValueUpdater}.
+         *
+         * @return the last value String
+         * @see #setLastValue(String)
+         */
+        public String getLastValue() {
+            return lastValue;
+        }
+
+        /**
+         * Set the last value.
+         *
+         * @param lastValue the last value
+         * @see #getLastValue()
+         */
+        protected void setLastValue(final String lastValue) {
+            this.lastValue = lastValue;
+        }
+
+        /**
+         * Return a hash code based on the last and current values.
+         */
+        @Override
+        public int hashCode() {
+            return (lastValue + "_*!@HASH_SEPARATOR@!*_" + curValue).hashCode();
+        }
+
+        private boolean equalsOrNull(final Object a, final Object b) {
+            return (a != null) ? a.equals(b) : ((b == null));
+        }
     }
 }

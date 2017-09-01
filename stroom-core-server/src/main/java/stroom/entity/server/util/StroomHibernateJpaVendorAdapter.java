@@ -35,7 +35,13 @@ import java.util.ArrayDeque;
 public class StroomHibernateJpaVendorAdapter extends HibernateJpaVendorAdapter {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomHibernateJpaVendorAdapter.class);
 
-    static ThreadLocal<ArrayDeque<StackTraceElement[]>> threadTransactionStack = new ThreadLocal<ArrayDeque<StackTraceElement[]>>();
+    static ThreadLocal<ArrayDeque<StackTraceElement[]>> threadTransactionStack = new ThreadLocal<>();
+    private HibernateJpaDialect jpaDialect = new StroomHibernateJpaDialect();
+
+    @Override
+    public HibernateJpaDialect getJpaDialect() {
+        return jpaDialect;
+    }
 
     public static class StroomHibernateJpaDialect extends HibernateJpaDialect {
         private static final long serialVersionUID = 1L;
@@ -82,12 +88,5 @@ public class StroomHibernateJpaVendorAdapter extends HibernateJpaVendorAdapter {
             threadTransactionStack.get().pop();
             super.cleanupTransaction(transactionData);
         }
-    }
-
-    private HibernateJpaDialect jpaDialect = new StroomHibernateJpaDialect();
-
-    @Override
-    public HibernateJpaDialect getJpaDialect() {
-        return jpaDialect;
     }
 }

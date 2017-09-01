@@ -33,8 +33,8 @@ public class TextConverterPlugin extends EntityPlugin<TextConverter> {
 
     @Inject
     public TextConverterPlugin(final EventBus eventBus, final Provider<TextConverterPresenter> editorProvider,
-            final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
-            final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager) {
+                               final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
+                               final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager) {
         super(eventBus, dispatcher, securityContext, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
     }

@@ -19,8 +19,6 @@ package stroom.pipeline.server.task;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-import stroom.AbstractProcessIntegrationTest;
-import stroom.CommonTestScenarioCreator;
 import stroom.feed.shared.Feed;
 import stroom.node.server.NodeCache;
 import stroom.pipeline.server.errorhandler.ProcessException;
@@ -38,6 +36,8 @@ import stroom.streamtask.server.StreamTaskCreator;
 import stroom.streamtask.shared.StreamTask;
 import stroom.task.server.TaskManager;
 import stroom.task.server.TaskMonitorImpl;
+import stroom.test.AbstractProcessIntegrationTest;
+import stroom.test.CommonTestScenarioCreator;
 import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
@@ -94,8 +94,7 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
      * Tests that valid streams are all processed and put into the processed and
      * raw stores and that no streams end up in the error store.
      *
-     * @throws Exception
-     *             Could be thrown.
+     * @throws Exception Could be thrown.
      */
     @Test
     public void testTranslationTaskFactory() throws Exception {
@@ -131,7 +130,7 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
      * @return The next task or null if there are currently no more tasks.
      */
     private List<StreamProcessorTaskExecutor> processAll() {
-        final List<StreamProcessorTaskExecutor> results = new ArrayList<StreamProcessorTaskExecutor>();
+        final List<StreamProcessorTaskExecutor> results = new ArrayList<>();
         List<StreamTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getDefaultNode(), 100);
         while (streamTasks.size() > 0) {
             for (final StreamTask streamTask : streamTasks) {
@@ -185,8 +184,7 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
      * Tests that invalid streams are processed but errors are recorded against
      * them.
      *
-     * @throws Exception
-     *             Could be thrown.
+     * @throws Exception Could be thrown.
      */
     @Test
     public void testInvalidData() throws Exception {
@@ -220,8 +218,7 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
      * Tests that invalid streams are processed but errors are recorded against
      * them.
      *
-     * @throws Exception
-     *             Could be thrown.
+     * @throws Exception Could be thrown.
      */
     @Test
     public void testEmptyData() throws Exception {
@@ -253,8 +250,7 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     /**
      * Tests that invalid xslt causes all tasks to fail.
      *
-     * @throws Exception
-     *             Could be thrown.
+     * @throws Exception Could be thrown.
      */
     @Test
     public void testInvalidXSLT() throws Exception {
@@ -326,8 +322,7 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     /**
      * Creates a data store duplicating the file found in data.
      *
-     * @param data
-     *            The path of the data to replicate.
+     * @param data The path of the data to replicate.
      */
     private void createStore(final File data, final File reference, final File xslt) {
         try {
@@ -345,7 +340,7 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
                         FORMAT_DEFINITION, XSLT_HOST_NAME_TO_IP, reference);
             }
 
-            final Set<Feed> referenceFeeds = new HashSet<Feed>();
+            final Set<Feed> referenceFeeds = new HashSet<>();
             referenceFeeds.add(hostNameToIP);
 
             for (int i = 0; i < NO_OF_EVENT_FILES; i++) {

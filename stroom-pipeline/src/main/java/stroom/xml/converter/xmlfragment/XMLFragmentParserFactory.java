@@ -33,10 +33,6 @@ public class XMLFragmentParserFactory implements ParserFactory {
 
     private final String xml;
 
-    public static XMLFragmentParserFactory create(final InputStream inputStream, final ErrorHandler errorHandler) {
-        return new XMLFragmentParserFactory(inputStream, errorHandler);
-    }
-
     private XMLFragmentParserFactory(final InputStream inputStream, final ErrorHandler errorHandler) {
         xml = StreamUtil.streamToString(inputStream);
 
@@ -47,6 +43,10 @@ public class XMLFragmentParserFactory implements ParserFactory {
                 LOGGER.error(e.getMessage(), e);
             }
         }
+    }
+
+    public static XMLFragmentParserFactory create(final InputStream inputStream, final ErrorHandler errorHandler) {
+        return new XMLFragmentParserFactory(inputStream, errorHandler);
     }
 
     @Override

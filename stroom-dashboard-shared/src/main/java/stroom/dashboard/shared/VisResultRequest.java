@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,14 +22,14 @@ public class VisResultRequest extends ComponentResultRequest {
     private static final long serialVersionUID = 8683770109061652092L;
 
     private VisComponentSettings visDashboardSettings;
-    private OffsetRange<Integer> requestedRange = new OffsetRange<Integer>(0, 100);
+    private OffsetRange<Integer> requestedRange = new OffsetRange<>(0, 100);
 
     public VisResultRequest() {
         // Default constructor necessary for GWT serialisation.
     }
 
     public VisResultRequest(final int offset, final int length) {
-        requestedRange = new OffsetRange<Integer>(offset, length);
+        requestedRange = new OffsetRange<>(offset, length);
     }
 
     public VisComponentSettings getVisDashboardSettings() {
@@ -45,7 +45,7 @@ public class VisResultRequest extends ComponentResultRequest {
     }
 
     public void setRange(final int offset, final int length) {
-        requestedRange = new OffsetRange<Integer>(offset, length);
+        requestedRange = new OffsetRange<>(offset, length);
     }
 
     @Override

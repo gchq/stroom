@@ -38,13 +38,12 @@ import java.util.Optional;
 
 public class TestHDFSFileAppender extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestHDFSFileAppender.class);
-
-    private Configuration conf;
-    private UserGroupInformation userGroupInformation;
-    private FileSystem hdfs;
     private static final String ROOT_TEST_PATH = FileUtil.getTempDir() + "/junitTests/TestHDFSFileAppender";
     private static final String FS_DEFAULT_FS = "file:///";
     private static final String RUN_AS_USER = "hdfs";
+    private Configuration conf;
+    private UserGroupInformation userGroupInformation;
+    private FileSystem hdfs;
 
     @Before
     public void setup() throws IOException {

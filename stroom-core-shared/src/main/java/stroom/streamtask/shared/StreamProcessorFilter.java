@@ -34,20 +34,14 @@ import java.util.Comparator;
 
 @Entity(name = "STRM_PROC_FILT")
 public class StreamProcessorFilter extends AuditedEntity {
-    private static final long serialVersionUID = -2478788451478923825L;
-
     public static final String TABLE_NAME = SQLNameConstants.STREAM + SEP + SQLNameConstants.PROCESSOR + SEP
             + SQLNameConstants.FILTER;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-
     public static final String DATA = SQLNameConstants.DATA;
     public static final String PRIORITY = SQLNameConstants.PRIORITY;
     public static final String ENABLED = SQLNameConstants.ENABLED;
-
     public static final String TASK_TYPE = SQLNameConstants.TASK + SQLNameConstants.TYPE_SUFFIX;
-
     public static final String ENTITY_TYPE = "StreamProcessorFilter";
-
     public static final Comparator<StreamProcessorFilter> HIGHEST_PRIORITY_FIRST_COMPARATOR = new Comparator<StreamProcessorFilter>() {
         @Override
         public int compare(final StreamProcessorFilter o1, final StreamProcessorFilter o2) {
@@ -70,7 +64,7 @@ public class StreamProcessorFilter extends AuditedEntity {
             return Integer.compare(o2.getPriority(), o1.getPriority());
         }
     };
-
+    private static final long serialVersionUID = -2478788451478923825L;
     private String data;
     private StreamProcessor streamProcessor;
     private StreamProcessorFilterTracker streamProcessorFilterTracker;

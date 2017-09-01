@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,6 +29,7 @@ public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEv
     private final Long childStreamId;
     private final StreamType childStreamType;
     private final SharedDocRef pipelineRef;
+
     private BeginPipelineSteppingEvent(final Long streamId, final Long eventId, final Long childStreamId,
                                        final StreamType childStreamType, final SharedDocRef pipelineRef) {
         this.streamId = streamId;
@@ -45,7 +46,7 @@ public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEv
 
     public static Type<Handler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<Handler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }

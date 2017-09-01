@@ -34,9 +34,9 @@ import javax.xml.XMLConstants;
  */
 @Component
 @Scope(StroomScope.PROTOTYPE)
-@ConfigurableElement(type = "SchemaFilter", category = Category.FILTER, roles = { PipelineElementType.ROLE_TARGET,
+@ConfigurableElement(type = "SchemaFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_STEPPING,
-        PipelineElementType.ROLE_VALIDATOR }, icon = ElementIcons.XSD)
+        PipelineElementType.ROLE_VALIDATOR}, icon = ElementIcons.XSD)
 public class SchemaFilterSplit extends AbstractXMLFilter {
     private final SchemaFilter schemaFilter;
     private final FindXMLSchemaCriteria schemaConstraint = new FindXMLSchemaCriteria();

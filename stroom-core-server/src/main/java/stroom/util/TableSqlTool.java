@@ -47,10 +47,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class TableSqlTool {
-    public enum TableSqlToolStyle {
-        RENAME_OLD, DROP_OLD, DROP, REPAIR, INSERT, DELETE
-    }
-
     public static final List<String> TABLE_CREATE_ORDER = Collections.unmodifiableList(Arrays.asList(Folder.TABLE_NAME,
             Rack.TABLE_NAME, Node.TABLE_NAME, StreamType.TABLE_NAME, ClusterLock.TABLE_NAME, PipelineEntity.TABLE_NAME,
             XSLT.TABLE_NAME, TextConverter.TABLE_NAME, Feed.TABLE_NAME, Volume.TABLE_NAME, VolumeState.TABLE_NAME,
@@ -112,5 +108,9 @@ public class TableSqlTool {
             }
         }
 
+    }
+
+    public enum TableSqlToolStyle {
+        RENAME_OLD, DROP_OLD, DROP, REPAIR, INSERT, DELETE
     }
 }

@@ -1,8 +1,6 @@
 package stroom.servicediscovery;
 
-import com.codahale.metrics.health.HealthCheck;
 import com.google.common.base.Preconditions;
-import io.vavr.Tuple2;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -13,31 +11,31 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;
-import stroom.resources.HasHealthCheck;
 import stroom.util.spring.StroomShutdown;
 
 import javax.inject.Singleton;
 import java.io.Closeable;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 @Component
 @Singleton
-public class ServiceDiscoveryManager implements HasHealthCheck {
+public class ServiceDiscoveryManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryManager.class);
 
-    public static final String PROP_KEY_ZOOKEEPER_QUORUM = "stroom.serviceDiscovery.zookeeperUrl";
-    public static final String PROP_KEY_CURATOR_BASE_SLEEP_TIME_MS = "stroom.serviceDiscovery.curator.baseSleepTimeMs";
-    public static final String PROP_KEY_CURATOR_MAX_SLEEP_TIME_MS = "stroom.serviceDiscovery.curator.maxSleepTimeMs";
-    public static final String PROP_KEY_CURATOR_MAX_RETRIES = "stroom.serviceDiscovery.curator.maxRetries";
-    public static final String PROP_KEY_ZOOKEEPER_BASE_PATH = "stroom.serviceDiscovery.zookeeperBasePath";
+    public static final String PROP_KEY_PREFIX = "stroom.serviceDiscovery.";
+    public static final String PROP_KEY_ZOOKEEPER_QUORUM = PROP_KEY_PREFIX + "zookeeperUrl";
+    public static final String PROP_KEY_CURATOR_BASE_SLEEP_TIME_MS = PROP_KEY_PREFIX + "curator.baseSleepTimeMs";
+    public static final String PROP_KEY_CURATOR_MAX_SLEEP_TIME_MS = PROP_KEY_PREFIX + "curator.maxSleepTimeMs";
+    public static final String PROP_KEY_CURATOR_MAX_RETRIES = PROP_KEY_PREFIX + "curator.maxRetries";
+    public static final String PROP_KEY_ZOOKEEPER_BASE_PATH = PROP_KEY_PREFIX + "zookeeperBasePath";
+    public static final String PROP_KEY_SERVICE_DISCOVERY_ENABLED = PROP_KEY_PREFIX + "enabled";
 
     private final StroomPropertyService stroomPropertyService;
     private final String zookeeperUrl;
@@ -46,8 +44,7 @@ public class ServiceDiscoveryManager implements HasHealthCheck {
     private final AtomicReference<ServiceDiscovery<String>> serviceDiscoveryRef = new AtomicReference<>();
     private final List<Consumer<ServiceDiscovery<String>>> curatorStartupListeners = new ArrayList<>();
 
-    private volatile HealthCheck.Result health;
-    private final List<Closeable> closeables = new ArrayList<>();
+    private final Deque<Closeable> closeables = new LinkedList<>();
 
     @SuppressWarnings("unused")
     public ServiceDiscoveryManager(final StroomPropertyService stroomPropertyService) {
@@ -55,28 +52,34 @@ public class ServiceDiscoveryManager implements HasHealthCheck {
         this.stroomPropertyService = stroomPropertyService;
         this.zookeeperUrl = stroomPropertyService.getProperty(PROP_KEY_ZOOKEEPER_QUORUM);
 
-        health = HealthCheck.Result.unhealthy("Initialising Curator Connection...");
 
-        //try and start the connection with ZK in another thread to prevent connection problems from stopping the bean
-        //creation and application startup, then start ServiceDiscovery and notify any listeners
-        CompletableFuture.runAsync(this::startCurator)
-                .thenRun(this::startServiceDiscovery)
-                .thenRun(this::notifyListeners)
-                .exceptionally(throwable -> {
-                    LOGGER.error("Error initialising service discovery", throwable);
-                    health = HealthCheck.Result.unhealthy("Failed to initialise service discovery due to error: " + throwable.getMessage());
-                    return null;
-                });
-    }
+        boolean isServiceDiscoveryEnabled = stroomPropertyService.getBooleanProperty(
+                PROP_KEY_SERVICE_DISCOVERY_ENABLED,
+                false);
 
-    public Optional<ServiceDiscovery<String>> getServiceDiscovery() {
-       return Optional.ofNullable(serviceDiscoveryRef.get());
+        if (isServiceDiscoveryEnabled) {
+            //try and start the connection with ZK in another thread to prevent connection problems from stopping the bean
+            //creation and application startup, then start ServiceDiscovery and notify any listeners
+            CompletableFuture.runAsync(this::startCurator)
+                    .thenRun(this::startServiceDiscovery)
+                    .thenRun(this::notifyListeners)
+                    .exceptionally(throwable -> {
+                        LOGGER.error("Error initialising service discovery", throwable);
+                        return null;
+                    });
+        } else {
+            LOGGER.info("Service discovery is disabled, won't attempt to connect to Zookeeper");
+        }
     }
 
     public void registerStartupListener(final Consumer<ServiceDiscovery<String>> listener) {
-        curatorStartupListeners.add(Preconditions.checkNotNull(listener));
+        if (serviceDiscoveryRef.get() != null) {
+            //already started so call the listener now
+            listener.accept(serviceDiscoveryRef.get());
+        } else {
+            curatorStartupListeners.add(Preconditions.checkNotNull(listener));
+        }
     }
-
 
     private void startCurator() {
         int baseSleepTimeMs = stroomPropertyService.getIntProperty(PROP_KEY_CURATOR_BASE_SLEEP_TIME_MS, 5_000);
@@ -88,13 +91,18 @@ public class ServiceDiscoveryManager implements HasHealthCheck {
         CuratorFramework curatorFramework = CuratorFrameworkFactory.newClient(zookeeperUrl, retryPolicy);
         LOGGER.info("Starting Curator client using Zookeeper at '{}'", zookeeperUrl);
         curatorFramework.start();
-        closeables.add(curatorFramework);
+        try {
+            curatorFramework.blockUntilConnected();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Thread interrupted waiting for connection to zookeeper");
+        }
+        closeables.push(curatorFramework);
 
         boolean wasSet = curatorFrameworkRef.compareAndSet(null, curatorFramework);
         if (!wasSet) {
             LOGGER.error("Attempt to set curatorFrameworkRef when already set");
         } else {
-            health = HealthCheck.Result.unhealthy("Curator client started, initialising service discovery...");
             LOGGER.info("Started Curator client using Zookeeper at '{}'", zookeeperUrl);
         }
     }
@@ -110,7 +118,9 @@ public class ServiceDiscoveryManager implements HasHealthCheck {
 
         try {
             serviceDiscovery.start();
-            closeables.add(serviceDiscovery);
+            //push to the top of the queue to ensure this gets closed before the curator framework else it
+            //won't work as it has no client
+            closeables.push(serviceDiscovery);
             boolean wasSet = serviceDiscoveryRef.compareAndSet(null, serviceDiscovery);
             if (!wasSet) {
                 LOGGER.error("Attempt to set serviceDiscoveryRef when already set");
@@ -145,36 +155,6 @@ public class ServiceDiscoveryManager implements HasHealthCheck {
                 }
             }
         });
-    }
-
-    public HealthCheck.Result getHealth() {
-        ServiceDiscovery<String> serviceDiscovery = serviceDiscoveryRef.get();
-        if (serviceDiscovery != null) {
-            try {
-                List<String> services = new ArrayList<>(serviceDiscovery.queryForNames());
-
-                Map<String, List<String>> serviceInstanceMap = Preconditions.checkNotNull(services).stream()
-                        .flatMap(serviceName -> {
-                            try {
-                                return serviceDiscovery.queryForInstances(serviceName).stream();
-                            } catch (Exception e) {
-                                throw new RuntimeException("Error getting service instances for " + serviceName);
-                            }
-                        })
-                        .map(serviceInstance -> new Tuple2<>(serviceInstance.getName(), serviceInstance.buildUriSpec()))
-                        .collect(Collectors.groupingBy(Tuple2::_1, Collectors.mapping(Tuple2::_2, Collectors.toList())));
-
-                return HealthCheck.Result.builder()
-                        .healthy()
-                        .withMessage("Service discovery running")
-                        .withDetail("service-instances", serviceInstanceMap)
-                        .build();
-
-            } catch (Exception e) {
-                return HealthCheck.Result.unhealthy("Error while querying available services, %s", e.getMessage());
-            }
-        }
-        return HealthCheck.Result.unhealthy("ServiceDiscovery is null");
     }
 
 }

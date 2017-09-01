@@ -36,19 +36,6 @@ import java.util.List;
  * Util (general purpose) methods dealing with {@link Iterable}.
  */
 public class IterableUtil {
-    private static class ReverseIterable<T> implements Iterable<T> {
-        private List<T> list;
-
-        public ReverseIterable(List<T> list) {
-            this.list = list;
-        }
-
-        @Override
-        public Iterator<T> iterator() {
-            return IteratorUtil.createReverseIterator(list);
-        }
-    }
-
     /**
      * Returns an {@link Iterable} with an iterator iterating the given list
      * from the end to the start.
@@ -66,6 +53,19 @@ public class IterableUtil {
             return list;
         }
 
-        return new ReverseIterable<T>(list);
+        return new ReverseIterable<>(list);
+    }
+
+    private static class ReverseIterable<T> implements Iterable<T> {
+        private List<T> list;
+
+        public ReverseIterable(List<T> list) {
+            this.list = list;
+        }
+
+        @Override
+        public Iterator<T> iterator() {
+            return IteratorUtil.createReverseIterator(list);
+        }
     }
 }

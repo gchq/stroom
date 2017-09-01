@@ -27,11 +27,11 @@ import stroom.entity.server.QueryAppender;
 import stroom.entity.server.SystemEntityServiceImpl;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventHandler;
-import stroom.entity.server.util.SQLBuilder;
-import stroom.entity.server.util.SQLUtil;
+import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityAction;
+import stroom.entity.shared.Sort.Direction;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;
@@ -45,8 +45,7 @@ import stroom.node.shared.VolumeState;
 import stroom.security.Insecure;
 import stroom.security.Secured;
 import stroom.statistics.internal.InternalStatisticEvent;
-import stroom.statistics.internal.InternalStatisticsFacade;
-import stroom.statistics.internal.InternalStatisticsFacadeFactory;
+import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.config.StroomProperties;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomFrequencySchedule;
@@ -86,6 +85,13 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
      */
     public static final String PROP_RESILIENT_REPLICATION_COUNT = "stroom.streamstore.resilientReplicationCount";
     /**
+     * Whether a default volume should be created on application start, but only if other volumes don't already exist
+     */
+    static final String PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP = "stroom.volumes.createDefaultOnStart";
+    static final Path DEFAULT_VOLUMES_SUBDIR = Paths.get("volumes");
+    static final Path DEFAULT_INDEX_VOLUME_SUBDIR = Paths.get("defaultIndexVolume");
+    static final Path DEFAULT_STREAM_VOLUME_SUBDIR = Paths.get("defaultStreamVolume");
+    /**
      * Should we try to write to local volumes if possible?
      */
     private static final String PROP_PREFER_LOCAL_VOLUMES = "stroom.streamstore.preferLocalVolumes";
@@ -93,18 +99,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
      * How should we select volumes to use?
      */
     private static final String PROP_VOLUME_SELECTOR = "stroom.streamstore.volumeSelector";
-
     private static final String INTERNAL_STAT_KEY_VOLUMES = "volumes";
-
-    /**
-     * Whether a default volume should be created on application start, but only if other volumes don't already exist
-     */
-    static final String PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP = "stroom.volumes.createDefaultOnStart";
-
-    static final Path DEFAULT_VOLUMES_SUBDIR = Paths.get("volumes");
-    static final Path DEFAULT_INDEX_VOLUME_SUBDIR = Paths.get("defaultIndexVolume");
-    static final Path DEFAULT_STREAM_VOLUME_SUBDIR = Paths.get("defaultStreamVolume");
-
     private static final Logger LOGGER = LoggerFactory.getLogger(VolumeServiceImpl.class);
 
     private static final Map<String, VolumeSelector> volumeSelectorMap;
@@ -129,19 +124,19 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     private final NodeCache nodeCache;
     private final StroomPropertyService stroomPropertyService;
     private final StroomBeanStore stroomBeanStore;
-    private final InternalStatisticsFacadeFactory internalStatisticsFacadeFactory;
+    private final InternalStatisticsReceiver internalStatisticsReceiver;
     private final AtomicReference<List<Volume>> currentVolumeState = new AtomicReference<>();
 
     @Inject
     VolumeServiceImpl(final StroomEntityManager stroomEntityManager, final NodeCache nodeCache,
                       final StroomPropertyService stroomPropertyService, final StroomBeanStore stroomBeanStore,
-                      final InternalStatisticsFacadeFactory internalStatisticsFacadeFactory) {
+                      final InternalStatisticsReceiver internalStatisticsReceiver) {
         super(stroomEntityManager);
         this.stroomEntityManager = stroomEntityManager;
         this.nodeCache = nodeCache;
         this.stroomPropertyService = stroomPropertyService;
         this.stroomBeanStore = stroomBeanStore;
-        this.internalStatisticsFacadeFactory = internalStatisticsFacadeFactory;
+        this.internalStatisticsReceiver = internalStatisticsReceiver;
     }
 
     private static void registerVolumeSelector(final VolumeSelector volumeSelector) {
@@ -334,7 +329,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         final List<Volume> newState = new ArrayList<>();
 
         final FindVolumeCriteria findVolumeCriteria = new FindVolumeCriteria();
-        findVolumeCriteria.addOrderBy(FindVolumeCriteria.ORDER_BY_ID);
+        findVolumeCriteria.addSort(FindVolumeCriteria.FIELD_ID, Direction.ASCENDING, false);
         final List<Volume> volumeList = find(findVolumeCriteria);
         for (final Volume volume : volumeList) {
             if (volume.getNode().equals(node)) {
@@ -356,19 +351,19 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
             final VolumeState volumeState = volume.getVolumeState();
 
             final long now = System.currentTimeMillis();
-            InternalStatisticsFacade.BatchBuilder batchBuilder = internalStatisticsFacadeFactory.create().batchBuilder();
-            addStatisticEvent(batchBuilder, now, volume, "Limit", volume.getBytesLimit());
-            addStatisticEvent(batchBuilder, now, volume, "Used", volumeState.getBytesUsed());
-            addStatisticEvent(batchBuilder, now, volume, "Free", volumeState.getBytesFree());
-            addStatisticEvent(batchBuilder, now, volume, "Total", volumeState.getBytesTotal());
-            batchBuilder.putBatch();
+            final List<InternalStatisticEvent> events = new ArrayList<>();
+            addStatisticEvent(events, now, volume, "Limit", volume.getBytesLimit());
+            addStatisticEvent(events, now, volume, "Used", volumeState.getBytesUsed());
+            addStatisticEvent(events, now, volume, "Free", volumeState.getBytesFree());
+            addStatisticEvent(events, now, volume, "Total", volumeState.getBytesTotal());
+            internalStatisticsReceiver.putEvents(events);
         } catch (final Throwable t) {
             LOGGER.warn(t.getMessage());
             LOGGER.debug(t.getMessage(), t);
         }
     }
 
-    private void addStatisticEvent(final InternalStatisticsFacade.BatchBuilder batchBuilder,
+    private void addStatisticEvent(final List<InternalStatisticEvent> events,
                                    final long timeMs,
                                    final Volume volume,
                                    final String type,
@@ -383,7 +378,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
 
             InternalStatisticEvent event = InternalStatisticEvent.createValueStat(
                     INTERNAL_STAT_KEY_VOLUMES, timeMs, tags, bytes.doubleValue());
-            batchBuilder.addEvent(event);
+            events.add(event);
         }
     }
 
@@ -496,25 +491,6 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         return new VolumeQueryAppender(entityManager);
     }
 
-    private enum LocalVolumeUse {
-        REQUIRED, PREFERRED
-    }
-
-    private static class VolumeQueryAppender extends QueryAppender<Volume, FindVolumeCriteria> {
-        VolumeQueryAppender(final StroomEntityManager entityManager) {
-            super(entityManager);
-        }
-
-        @Override
-        public void appendBasicCriteria(SQLBuilder sql, String alias, FindVolumeCriteria criteria) {
-            super.appendBasicCriteria(sql, alias, criteria);
-            SQLUtil.appendSetQuery(sql, true, alias + ".node", criteria.getNodeIdSet());
-            SQLUtil.appendSetQuery(sql, true, alias + ".pindexStatus", criteria.getIndexStatusSet(), false);
-            SQLUtil.appendSetQuery(sql, true, alias + ".pstreamStatus", criteria.getStreamStatusSet(), false);
-            SQLUtil.appendSetQuery(sql, true, alias + ".pvolumeType", criteria.getVolumeTypeSet(), false);
-        }
-    }
-
     @StroomStartup(priority = -1100)
     public void startup() {
 
@@ -610,7 +586,6 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
                 .flatMap(userHome -> Optional.of(Paths.get(userHome, StroomProperties.USER_CONF_DIR)));
     }
 
-
     private Optional<Path> getApplicationJarDir() {
         try {
             String codeSourceLocation = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
@@ -622,6 +597,25 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         } catch (Exception e) {
             LOGGER.warn("Unable to determine application jar directory due to: {}", e.getMessage());
             return Optional.empty();
+        }
+    }
+
+    private enum LocalVolumeUse {
+        REQUIRED, PREFERRED
+    }
+
+    private static class VolumeQueryAppender extends QueryAppender<Volume, FindVolumeCriteria> {
+        VolumeQueryAppender(final StroomEntityManager entityManager) {
+            super(entityManager);
+        }
+
+        @Override
+        public void appendBasicCriteria(HqlBuilder sql, String alias, FindVolumeCriteria criteria) {
+            super.appendBasicCriteria(sql, alias, criteria);
+            sql.appendEntityIdSetQuery(alias + ".node", criteria.getNodeIdSet());
+            sql.appendPrimitiveValueSetQuery(alias + ".pindexStatus", criteria.getIndexStatusSet());
+            sql.appendPrimitiveValueSetQuery(alias + ".pstreamStatus", criteria.getStreamStatusSet());
+            sql.appendPrimitiveValueSetQuery(alias + ".pvolumeType", criteria.getVolumeTypeSet());
         }
     }
 

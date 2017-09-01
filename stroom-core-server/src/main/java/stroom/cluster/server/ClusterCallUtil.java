@@ -21,13 +21,13 @@ import stroom.util.shared.ModelStringUtil;
 
 public abstract class ClusterCallUtil {
     public static String logString(final String prefix, final Node sourceNode, final Node targetNode,
-            final String beanName, final String methodName, final Long ms) {
+                                   final String beanName, final String methodName, final Long ms) {
         return prefix + " " + sourceNode.getName() + "->" + targetNode.getName() + " - " + beanName + "." + methodName
                 + " took " + ModelStringUtil.formatDurationString(ms);
     }
 
     public static String logString(final String prefix, final Node sourceNode, final Node targetNode,
-            final String beanName, final String methodName) {
+                                   final String beanName, final String methodName) {
         return prefix + " " + sourceNode.getName() + "->" + targetNode.getName() + " - " + beanName + "." + methodName;
     }
 }

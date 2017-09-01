@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Simple map that minimising locking
  */
 public abstract class SimpleConcurrentMap<K, V> {
-    private final Map<K, V> map = new ConcurrentHashMap<K, V>();
+    private final Map<K, V> map = new ConcurrentHashMap<>();
 
     public V get(final K key) {
         V rtn = map.get(key);

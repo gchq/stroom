@@ -24,6 +24,31 @@ public class ProcessException extends RuntimeException {
 
     private String message;
 
+    /**
+     * Wraps Exception constructor.
+     *
+     * @param message the detail message. The detail message is saved for later
+     *                retrieval by the {@link #getMessage()} method.
+     */
+    public ProcessException(final String message) {
+        this(message, null);
+    }
+
+    /**
+     * Wraps Exception constructor.
+     *
+     * @param message the detail message (which is saved for later retrieval by the
+     *                {@link #getMessage()} method).
+     * @param cause   the cause (which is saved for later retrieval by the
+     *                {@link #getCause()} method). (A <tt>null</tt> value is
+     *                permitted, and indicates that the cause is nonexistent or
+     *                unknown.)
+     */
+    public ProcessException(final String message, final Throwable cause) {
+        super(message, cause);
+        this.message = MessageUtil.getMessage(message, cause);
+    }
+
     public static final ProcessException wrap(final Throwable throwable) {
         if (throwable instanceof ProcessException) {
             return (ProcessException) throwable;
@@ -36,34 +61,6 @@ public class ProcessException extends RuntimeException {
             return (ProcessException) throwable;
         }
         return new ProcessException(msg, throwable);
-    }
-
-    /**
-     * Wraps Exception constructor.
-     *
-     * @param message
-     *            the detail message. The detail message is saved for later
-     *            retrieval by the {@link #getMessage()} method.
-     */
-    public ProcessException(final String message) {
-        this(message, null);
-    }
-
-    /**
-     * Wraps Exception constructor.
-     *
-     * @param message
-     *            the detail message (which is saved for later retrieval by the
-     *            {@link #getMessage()} method).
-     * @param cause
-     *            the cause (which is saved for later retrieval by the
-     *            {@link #getCause()} method). (A <tt>null</tt> value is
-     *            permitted, and indicates that the cause is nonexistent or
-     *            unknown.)
-     */
-    public ProcessException(final String message, final Throwable cause) {
-        super(message, cause);
-        this.message = MessageUtil.getMessage(message, cause);
     }
 
     @Override

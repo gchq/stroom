@@ -32,7 +32,7 @@ public class ExplorerTreeFilterBuilder {
         if (types == null) {
             includedTypes = null;
         } else {
-            includedTypes = new HashSet<String>(types);
+            includedTypes = new HashSet<>(types);
         }
     }
 

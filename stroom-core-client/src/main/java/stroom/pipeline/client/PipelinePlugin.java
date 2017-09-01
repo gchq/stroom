@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,7 +29,7 @@ import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.process.client.presenter.ProcessorPresenter;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamtask.shared.StreamProcessor;
 
@@ -38,8 +38,8 @@ public class PipelinePlugin extends EntityPlugin<PipelineEntity> {
 
     @Inject
     public PipelinePlugin(final EventBus eventBus, final Provider<PipelinePresenter> editorProvider,
-            final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
-            final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager) {
+                          final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
+                          final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager) {
         super(eventBus, dispatcher, securityContext, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
     }

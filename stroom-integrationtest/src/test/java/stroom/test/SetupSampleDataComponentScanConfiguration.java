@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,20 +27,17 @@ import stroom.cluster.server.ClusterNodeManagerImpl;
 import stroom.cluster.server.MockClusterNodeManager;
 import stroom.dashboard.server.MockQueryService;
 import stroom.dashboard.server.MockVisualisationService;
-import stroom.datafeed.server.MockHeaderMapFactory;
 import stroom.datafeed.server.MockHttpServletRequest;
 import stroom.datafeed.server.MockHttpServletResponse;
+import stroom.datafeed.server.MockMetaMapFactory;
 import stroom.dictionary.MockDictionaryService;
 import stroom.entity.server.MockDocumentEntityService;
 import stroom.entity.server.MockEntityService;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.feed.server.MockFeedService;
-import stroom.importexport.server.MockImportExportSerializer;
-import stroom.importexport.server.MockImportExportService;
 import stroom.index.server.MockIndexService;
 import stroom.index.server.MockIndexShardService;
 import stroom.index.server.MockIndexShardWriter;
-import stroom.index.server.MockIndexShardWriterCache;
 import stroom.jobsystem.server.MockClusterLockService;
 import stroom.jobsystem.server.MockJobManager;
 import stroom.jobsystem.server.MockJobNodeService;
@@ -82,7 +79,47 @@ import stroom.xmlschema.server.MockXMLSchemaService;
  * component scan as configurations should be specified explicitly.
  */
 @Configuration
-@ComponentScan(basePackages = {"stroom"}, excludeFilters = {
+@ComponentScan(basePackages = {
+        "stroom.cache",
+        "stroom.cluster",
+        "stroom.datafeed",
+        "stroom.datasource",
+        "stroom.db",
+        "stroom.dictionary",
+        "stroom.dispatch",
+        "stroom.entity",
+        "stroom.explorer",
+        "stroom.feed",
+        "stroom.folder",
+        "stroom.importexport",
+        "stroom.internalstatistics",
+        "stroom.io",
+        "stroom.jobsystem",
+        "stroom.kafka",
+        "stroom.lifecycle",
+        "stroom.logging",
+        "stroom.node",
+        "stroom.pipeline",
+        "stroom.policy",
+        "stroom.pool",
+        "stroom.process",
+        "stroom.proxy",
+        "stroom.query",
+        "stroom.resource",
+        "stroom.servicediscovery",
+        "stroom.servlet",
+        "stroom.spring",
+        "stroom.streamstore",
+        "stroom.streamtask",
+        "stroom.task",
+        "stroom.test",
+        "stroom.upgrade",
+        "stroom.util",
+        "stroom.volume",
+        "stroom.xmlschema"
+}, excludeFilters = {
+        // Exclude other configurations that might be found accidentally during
+        // a component scan as configurations should be specified explicitly.
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),
 
         // We need test volumes.
@@ -97,13 +134,10 @@ import stroom.xmlschema.server.MockXMLSchemaService;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockEntityService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockFeedService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockGlobalPropertyService.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockHeaderMapFactory.class),
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockMetaMapFactory.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockHttpServletRequest.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockHttpServletResponse.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockImportExportSerializer.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockImportExportService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockIndexService.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockIndexShardWriterCache.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockIndexShardService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockIndexShardWriter.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockJobManager.class),

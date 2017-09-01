@@ -41,7 +41,7 @@ public class StroomBeanLifeCycle {
 
     /**
      * @return things that need running at start up of null if they have all
-     *         started
+     * started
      */
     public StroomBeanMethodExecutable getStartExecutable() {
         init();
@@ -66,7 +66,7 @@ public class StroomBeanLifeCycle {
 
     /**
      * @return things that need running at start up of null if they have all
-     *         started
+     * started
      */
     public StroomBeanMethodExecutable getStopExecutable() {
         init();
@@ -97,7 +97,7 @@ public class StroomBeanLifeCycle {
             return;
         }
 
-        startPendingBeans = new ArrayList<StroomBeanMethod>(stroomBeanStore.getStroomBeanMethod(StroomStartup.class));
+        startPendingBeans = new ArrayList<>(stroomBeanStore.getStroomBeanMethod(StroomStartup.class));
         Collections.sort(startPendingBeans, new Comparator<StroomBeanMethod>() {
             @Override
             public int compare(final StroomBeanMethod o1, final StroomBeanMethod o2) {
@@ -120,7 +120,7 @@ public class StroomBeanLifeCycle {
             }
         });
 
-        stopPendingBeans = new ArrayList<StroomBeanMethod>(stroomBeanStore.getStroomBeanMethod(StroomShutdown.class));
+        stopPendingBeans = new ArrayList<>(stroomBeanStore.getStroomBeanMethod(StroomShutdown.class));
         Collections.sort(stopPendingBeans, new Comparator<StroomBeanMethod>() {
             @Override
             public int compare(final StroomBeanMethod o1, final StroomBeanMethod o2) {

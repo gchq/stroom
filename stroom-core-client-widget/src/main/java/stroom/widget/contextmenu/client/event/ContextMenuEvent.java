@@ -20,15 +20,9 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class ContextMenuEvent extends GwtEvent<ContextMenuEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onContextMenu(ContextMenuEvent event);
-    }
-
     private static Type<Handler> TYPE;
-
     private final int x;
     private final int y;
-
     protected ContextMenuEvent(final int x, final int y) {
         this.x = x;
         this.y = y;
@@ -63,5 +57,9 @@ public class ContextMenuEvent extends GwtEvent<ContextMenuEvent.Handler> {
 
     public int getY() {
         return y;
+    }
+
+    public interface Handler extends EventHandler {
+        void onContextMenu(ContextMenuEvent event);
     }
 }

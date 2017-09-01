@@ -22,12 +22,7 @@ import com.google.gwt.event.shared.HasHandlers;
 import stroom.widget.tab.client.presenter.TabData;
 
 public class SelectContentTabEvent extends GwtEvent<SelectContentTabEvent.SelectContentTabHandler> {
-    public interface SelectContentTabHandler extends EventHandler {
-        void onSelect(SelectContentTabEvent event);
-    }
-
     private static Type<SelectContentTabHandler> TYPE;
-
     private final TabData tabData;
 
     private SelectContentTabEvent(final TabData tabData) {
@@ -57,5 +52,9 @@ public class SelectContentTabEvent extends GwtEvent<SelectContentTabEvent.Select
 
     public TabData getTabData() {
         return tabData;
+    }
+
+    public interface SelectContentTabHandler extends EventHandler {
+        void onSelect(SelectContentTabEvent event);
     }
 }

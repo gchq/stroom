@@ -16,15 +16,16 @@
 
 package stroom.internalstatistics;
 
+import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
+import stroom.feed.MetaMap;
 import stroom.statistics.internal.InternalStatisticEvent;
-import stroom.statistics.internal.InternalStatisticsFacadeFactory;
+import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.date.DateUtil;
-import stroom.util.zip.HeaderMap;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,18 +36,25 @@ import java.util.Map;
 public class MetaDataStatisticImpl implements MetaDataStatistic {
     private static final Logger LOGGER = LoggerFactory.getLogger(MetaDataStatisticImpl.class);
 
-    private List<MetaDataStatisticTemplate> templates;
-    private InternalStatisticsFacadeFactory internalStatisticsFacadeFactory;
+    private final InternalStatisticsReceiver internalStatisticsReceiver;
 
-    @Resource
-    public void setInternalStatisticsFacadeFactory(final InternalStatisticsFacadeFactory internalStatisticsFacadeFactory) {
-        this.internalStatisticsFacadeFactory = internalStatisticsFacadeFactory;
+    private List<MetaDataStatisticTemplate> templates;
+
+    @Inject
+    public MetaDataStatisticImpl(final InternalStatisticsReceiver internalStatisticsReceiver) {
+        this.internalStatisticsReceiver = internalStatisticsReceiver;
     }
 
     /**
      * @return build the STAT or return null for not valid
      */
-    private InternalStatisticEvent buildStatisticEvent(final MetaDataStatisticTemplate template, final HeaderMap metaData) {
+    private InternalStatisticEvent buildStatisticEvent(final MetaDataStatisticTemplate template,
+                                                       final MetaMap metaData) {
+        Preconditions.checkNotNull(template);
+        Preconditions.checkNotNull(template.getTimeMsAttribute());
+        Preconditions.checkNotNull(template.getKey());
+        Preconditions.checkNotNull(metaData);
+
         Long timeMs = null;
         final String timeValue = metaData.get(template.getTimeMsAttribute());
         if (StringUtils.hasText(timeValue)) {
@@ -56,6 +64,9 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
                 // Quit!
                 return null;
             }
+        } else {
+            LOGGER.error("HeaderMap [{}] has no time attribute, unable to create stat", metaData);
+            return null;
         }
 
         final Map<String, String> statisticTags = new HashMap<>();
@@ -90,17 +101,17 @@ public class MetaDataStatisticImpl implements MetaDataStatistic {
     }
 
     @Override
-    public void recordStatistics(final HeaderMap metaData) {
+    public void recordStatistics(final MetaMap metaData) {
         for (final MetaDataStatisticTemplate template : templates) {
             try {
                 final InternalStatisticEvent statisticEvent = buildStatisticEvent(template, metaData);
                 if (statisticEvent != null) {
-                    internalStatisticsFacadeFactory.create().putEvent(statisticEvent);
+                    internalStatisticsReceiver.putEvent(statisticEvent);
                 } else {
-                    LOGGER.trace("recordStatistics() - abort {}", metaData);
+                    LOGGER.trace("recordStatistics() - abort {} {}", metaData, template);
                 }
             } catch (final Exception ex) {
-                LOGGER.error("recordStatistics() - abort {}", metaData, ex);
+                LOGGER.error("recordStatistics() - abort {} {}", metaData, template, ex);
             }
         }
     }

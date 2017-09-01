@@ -21,17 +21,17 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.Window;
-import stroom.widget.button.client.GlyphIcon;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 
-public abstract class InfoHelpLinkColumn<T> extends Column<T, GlyphIcon> {
+public abstract class InfoHelpLinkColumn<T> extends Column<T, SvgPreset> {
     public InfoHelpLinkColumn() {
-        super(new FACell());
+        super(new SvgCell());
     }
 
     @Override
-    public GlyphIcon getValue(T object) {
-        return GlyphIcons.HELP;
+    public SvgPreset getValue(T object) {
+        return SvgPresets.HELP;
     }
 
     protected abstract String getHelpLink(final T row);

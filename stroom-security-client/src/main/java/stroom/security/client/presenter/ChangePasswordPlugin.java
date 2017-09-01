@@ -16,7 +16,6 @@
 
 package stroom.security.client.presenter;
 
-import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.MenuKeys;
@@ -24,7 +23,7 @@ import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.CurrentUser;
 import stroom.security.client.event.ChangePasswordEvent;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 
@@ -42,12 +41,8 @@ public class ChangePasswordPlugin extends Plugin {
         if (currentUser != null) {
             event.getMenuItems().addMenuItem(MenuKeys.MAIN_MENU,
                     new KeyedParentMenuItem(4, "User", event.getMenuItems(), MenuKeys.USER_MENU));
-            event.getMenuItems().addMenuItem(MenuKeys.USER_MENU, new IconMenuItem(1, GlyphIcons.PASSWORD, GlyphIcons.PASSWORD, "Change Password", null, true, new Command() {
-                @Override
-                public void execute() {
-                    ChangePasswordEvent.fire(ChangePasswordPlugin.this, currentUser.getUser(), false);
-                }
-            }));
+            event.getMenuItems().addMenuItem(MenuKeys.USER_MENU, new IconMenuItem(1, SvgPresets.PASSWORD, SvgPresets.PASSWORD, "Change Password", null, true, () ->
+                    ChangePasswordEvent.fire(ChangePasswordPlugin.this, currentUser.getUserRef(), false)));
         }
     }
 }

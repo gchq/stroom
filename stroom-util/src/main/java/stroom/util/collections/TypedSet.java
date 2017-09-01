@@ -23,12 +23,12 @@ import java.util.Set;
 public class TypedSet<E> {
     private final Set<E> set;
 
-    public static <E> TypedSet<E> fromSet(final Set<E> set) {
-        return new TypedSet<>(set);
-    }
-
     private TypedSet(final Set<E> set) {
         this.set = set;
+    }
+
+    public static <E> TypedSet<E> fromSet(final Set<E> set) {
+        return new TypedSet<>(set);
     }
 
     public int size() {

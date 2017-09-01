@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,35 +20,36 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.AbstractCoreIntegrationTest;
+import stroom.dashboard.server.QueryHistoryCleanExecutor;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardService;
 import stroom.dashboard.shared.FindQueryCriteria;
 import stroom.dashboard.shared.QueryEntity;
 import stroom.dashboard.shared.QueryService;
 import stroom.entity.server.util.BaseEntityDeProxyProcessor;
-import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.FolderService;
+import stroom.entity.shared.Sort.Direction;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
-import stroom.query.api.v1.DocRef;
-import stroom.query.api.v1.ExpressionBuilder;
-import stroom.query.api.v1.ExpressionOperator;
-import stroom.query.api.v1.ExpressionOperator.Op;
-import stroom.query.api.v1.ExpressionTerm.Condition;
-import stroom.query.api.v1.Query;
-import stroom.security.shared.User;
-import stroom.security.shared.UserService;
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionBuilder;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.v2.Query;
+import stroom.security.server.UserService;
+import stroom.security.shared.UserRef;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.thread.ThreadUtil;
 
 import javax.annotation.Resource;
 import java.util.Arrays;
 
 public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
+    private static final String QUERY_COMPONENT = "Test Component";
     private static Logger LOGGER = LoggerFactory.getLogger(TestQueryServiceImpl.class);
-
     @Resource
     private DashboardService dashboardService;
     @Resource
@@ -59,9 +60,10 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
     private UserService userService;
     @Resource
     private FolderService folderService;
-
+    @Resource
+    private QueryHistoryCleanExecutor queryHistoryCleanExecutor;
     private Dashboard dashboard;
-    private User user;
+    private UserRef userRef;
     private QueryEntity testQuery;
     private QueryEntity refQuery;
 
@@ -70,7 +72,7 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         // need an explicit teardown and setup of the DB before each test method
         clean();
 
-        user = userService.createUser("testuser");
+        userRef = userService.createUser("testuser");
 
         final DocRef testFolder = DocRefUtil.create(folderService.create(null, "Test Folder"));
 
@@ -80,7 +82,8 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         final DocRef dataSourceRef = DocRefUtil.create(index);
 
         refQuery = queryService.create(null, "Ref query");
-        refQuery.setDashboard(dashboard);
+        refQuery.setDashboardId(dashboard.getId());
+        refQuery.setQueryId(QUERY_COMPONENT);
         refQuery.setQuery(new Query(dataSourceRef, new ExpressionOperator(null, Op.AND, Arrays.asList())));
         queryService.save(refQuery);
 
@@ -94,7 +97,8 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         LOGGER.info(root.toString());
 
         testQuery = queryService.create(null, "Test query");
-        testQuery.setDashboard(dashboard);
+        testQuery.setDashboardId(dashboard.getId());
+        testQuery.setQueryId(QUERY_COMPONENT);
         testQuery.setQuery(new Query(dataSourceRef, root.build()));
         testQuery = queryService.save(testQuery);
 
@@ -104,8 +108,9 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
     @Test
     public void testQueryRetrieval() {
         final FindQueryCriteria criteria = new FindQueryCriteria();
-        criteria.obtainDashboardIdSet().add(dashboard.getId());
-        criteria.setOrderBy(FindQueryCriteria.ORDER_BY_TIME, OrderByDirection.DESCENDING);
+        criteria.setDashboardId(dashboard.getId());
+        criteria.setQueryId(QUERY_COMPONENT);
+        criteria.setSort(FindQueryCriteria.FIELD_TIME, Direction.DESCENDING, false);
 
         final BaseResultList<QueryEntity> list = queryService.find(criteria);
 
@@ -138,6 +143,36 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         String expected = sb.toString();
         expected = expected.replaceAll("\\s*", "");
         Assert.assertTrue(actual.contains(expected));
+    }
+
+    @Test
+    public void testOldHistoryDeletion() {
+        final FindQueryCriteria criteria = new FindQueryCriteria();
+        criteria.setDashboardId(dashboard.getId());
+        criteria.setQueryId(QUERY_COMPONENT);
+        criteria.setSort(FindQueryCriteria.FIELD_TIME, Direction.DESCENDING, false);
+
+        BaseResultList<QueryEntity> list = queryService.find(criteria);
+        Assert.assertEquals(2, list.size());
+
+        QueryEntity query = list.get(0);
+
+        // Now insert the same query over 100 times.
+        for (int i = 0; i < 120; i++) {
+            final QueryEntity newQuery = queryService.create(null, "History");
+            newQuery.setDashboardId(query.getDashboardId());
+            newQuery.setQueryId(query.getQueryId());
+            newQuery.setFavourite(false);
+            newQuery.setQuery(query.getQuery());
+            newQuery.setData(query.getData());
+            queryService.save(newQuery);
+        }
+
+        // Clean the history.
+        queryHistoryCleanExecutor.clean(null, false);
+
+        list = queryService.find(criteria);
+        Assert.assertEquals(100, list.size());
     }
 
     @Test

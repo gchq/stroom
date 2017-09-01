@@ -23,9 +23,8 @@ import stroom.util.date.DateUtil;
 import java.util.Properties;
 
 public class BuildInfoUtil {
-    private static final Logger LOGGER = LoggerFactory.getLogger(BuildInfoUtil.class);
-
     public static final String upDate = DateUtil.createNormalDateTimeString();
+    private static final Logger LOGGER = LoggerFactory.getLogger(BuildInfoUtil.class);
     private static final String buildVersion;
     private static final String buildDate;
 

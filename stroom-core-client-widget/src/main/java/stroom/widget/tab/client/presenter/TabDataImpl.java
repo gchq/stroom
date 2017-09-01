@@ -16,6 +16,8 @@
 
 package stroom.widget.tab.client.presenter;
 
+import stroom.svg.client.Icon;
+
 public class TabDataImpl implements TabData {
     private final String text;
     private final boolean closeable;

@@ -16,14 +16,11 @@
 
 package stroom.util.cert;
 
-import stroom.util.io.StreamUtil;
-
 import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.KeyFactory;
 import java.security.KeyStore;
 import java.security.PrivateKey;
@@ -37,33 +34,33 @@ import java.util.HashMap;
  * <p>
  * Class used to import keys from openssl into a Java key store.
  * </p>
- *
+ * <p>
  * E.g.
- *
+ * <p>
  * <code>
  * # Server
  * export SERVER=example
- *
+ * <p>
  * # Gen Private Key
  * openssl genrsa -des3 -out $SERVER.key 1024
- *
+ * <p>
  * # Gen CSR
  * openssl req -new -key $SERVER.key -out $SERVER.csr
- *
+ * <p>
  * # Copy CSR then Create Cert (cat then paste contents from CA)
  * cat $SERVER.csr
  * vi $SERVER.crt
- *
+ * <p>
  * # Create DER format Keys
  * openssl pkcs8 -topk8 -nocrypt -in $SERVER.key -inform PEM -out $SERVER.key.der -outform DER
  * openssl x509 -in $SERVER.crt -inform PEM -out $SERVER.crt.der -outform DER
- *
+ * <p>
  * # Now Import the Key using this tool
  * java ImportKey keystore=$SERVER.jks keypass=$SERVER alias=$SERVER keyfile=$SERVER.key.der certfile=$SERVER.crt.der
- *
+ * <p>
  * # Also inport the CA if required
  * keytool -import -alias CA -file root_ca.crt -keystore $SERVER.jks -storepass $SERVER
- *
+ * <p>
  * # List contents at end
  * keytool -list -keystore $SERVER.jks -storepass $SERVER
  * </code>
@@ -73,18 +70,9 @@ public final class ImportKey {
         // Utility class
     }
 
-    private static InputStream fullStream(final String fname) throws IOException {
-        final FileInputStream fis = new FileInputStream(fname);
-        final DataInputStream dis = new DataInputStream(fis);
-        final byte[] bytes = new byte[dis.available()];
-        dis.readFully(bytes);
-        final ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-        return bais;
-    }
-
     @SuppressWarnings("unchecked")
     public static void main(final String[] args) {
-        final HashMap<String, String> argsMap = new HashMap<String, String>();
+        final HashMap<String, String> argsMap = new HashMap<>();
         for (int i = 0; i < args.length; i++) {
             final String[] split = args[i].split("=");
             if (split.length > 1) {
@@ -111,26 +99,21 @@ public final class ImportKey {
                 ks.load(inputStream, keyPass.toCharArray());
             }
 
-            final InputStream f1 = fullStream(keyfile);
-            final byte[] key = new byte[f1.available()];
+            final byte[] key = Files.readAllBytes(Paths.get(keyfile));
             final KeyFactory kf = KeyFactory.getInstance("RSA");
-            StreamUtil.eagerRead(f1, key);
-            f1.close();
 
             final PKCS8EncodedKeySpec keysp = new PKCS8EncodedKeySpec(key);
             final PrivateKey ff = kf.generatePrivate(keysp);
 
             final CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            InputStream certStream = fullStream(certfile);
+            final byte[] bytes = Files.readAllBytes(Paths.get(certfile));
 
-            final Collection<Certificate> c = (Collection<Certificate>) cf.generateCertificates(certStream);
+            final Collection<Certificate> c = (Collection<Certificate>) cf.generateCertificates(new ByteArrayInputStream(bytes));
             Certificate[] certs = new Certificate[c.size()];
 
             if (c.size() == 1) {
-                certStream = fullStream(certfile);
                 System.out.println("One certificate, no chain");
-                final Certificate cert = cf.generateCertificate(certStream);
-
+                final Certificate cert = cf.generateCertificate(new ByteArrayInputStream(bytes));
                 certs[0] = cert;
             } else {
                 System.out.println("Certificate chain length: " + c.size());

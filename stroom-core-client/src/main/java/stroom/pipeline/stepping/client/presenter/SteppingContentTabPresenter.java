@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,13 +27,14 @@ import stroom.core.client.ContentManager.CloseHandler;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.streamstore.client.presenter.ClassificationUiHandlers;
 import stroom.streamstore.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.widget.tab.client.presenter.Icon;
-import stroom.widget.tab.client.presenter.ImageIcon;
+import stroom.svg.client.Icon;
+import stroom.svg.client.SvgIcon;
+import stroom.util.client.ImageUtil;
 
 public class SteppingContentTabPresenter extends ContentTabPresenter<ClassificationWrapperView>
         implements HasDirtyHandlers, CloseHandler, ClassificationUiHandlers {
@@ -116,7 +117,7 @@ public class SteppingContentTabPresenter extends ContentTabPresenter<Classificat
 
     @Override
     public Icon getIcon() {
-        return ImageIcon.create(TAB_IMAGE_URL + "stepping.png");
+        return new SvgIcon(ImageUtil.getImageURL() + "stepping.svg", 18, 18);
     }
 
     @Override

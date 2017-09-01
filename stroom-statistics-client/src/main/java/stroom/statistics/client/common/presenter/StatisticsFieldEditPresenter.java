@@ -23,8 +23,8 @@ import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
-import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.common.StatisticField;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -35,14 +35,7 @@ import java.util.List;
 
 public class StatisticsFieldEditPresenter
         extends MyPresenterWidget<StatisticsFieldEditPresenter.StatisticsFieldEditView> {
-    public interface StatisticsFieldEditView extends View {
-        String getFieldName();
-
-        void setFieldName(final String fieldName);
-    }
-
     private String fieldNamePattern;
-
     private List<StatisticField> otherFields;
 
     @Inject
@@ -106,5 +99,11 @@ public class StatisticsFieldEditPresenter
 
     public void setFieldNamePattern(final String fieldNamePattern) {
         this.fieldNamePattern = fieldNamePattern;
+    }
+
+    public interface StatisticsFieldEditView extends View {
+        String getFieldName();
+
+        void setFieldName(final String fieldName);
     }
 }

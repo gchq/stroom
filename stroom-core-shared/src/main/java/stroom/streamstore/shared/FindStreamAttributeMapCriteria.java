@@ -64,13 +64,13 @@ public class FindStreamAttributeMapCriteria extends FindNamedEntityCriteria
     }
 
     @Override
-    public final void setPageRequest(final PageRequest pageRequest) {
-        findStreamCriteria.setPageRequest(pageRequest);
+    public final PageRequest getPageRequest() {
+        return findStreamCriteria.getPageRequest();
     }
 
     @Override
-    public final PageRequest getPageRequest() {
-        return findStreamCriteria.getPageRequest();
+    public final void setPageRequest(final PageRequest pageRequest) {
+        findStreamCriteria.setPageRequest(pageRequest);
     }
 
     @Override

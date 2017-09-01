@@ -24,7 +24,7 @@ import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.StreamHolder;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.Stream;
@@ -67,16 +67,13 @@ public class ReferenceData {
      * Given a date and a map name get some reference data value.
      * </p>
      *
-     * @param time
-     *            The event time (or the time the reference data is valid for)
-     * @param mapName
-     *            The map name
-     * @param key
-     *            The key of the reference data
+     * @param time    The event time (or the time the reference data is valid for)
+     * @param mapName The map name
+     * @param key     The key of the reference data
      * @return the value of ref data
      */
     public EventList getValue(final List<PipelineReference> pipelineReferences, final ErrorReceiver errorReceiver,
-            final long time, final String mapName, final String key) {
+                              final long time, final String mapName, final String key) {
         // Do we have a nested token?
         final int splitPos = mapName.indexOf(NEST_SEPERATOR);
         if (splitPos != -1) {
@@ -98,7 +95,7 @@ public class ReferenceData {
     }
 
     private EventList doGetValue(final List<PipelineReference> pipelineReferences, final ErrorReceiver errorReceiver,
-            final long time, final String mapName, final String keyName) {
+                                 final long time, final String mapName, final String keyName) {
         for (final PipelineReference pipelineReference : pipelineReferences) {
             EventList eventList = null;
 
@@ -124,7 +121,7 @@ public class ReferenceData {
      * stream context and is therefore not effective time sensitive.
      */
     private EventList getNestedStreamEventList(final PipelineReference pipelineReference,
-            final ErrorReceiver errorReceiver, final String mapName, final String keyName) {
+                                               final ErrorReceiver errorReceiver, final String mapName, final String keyName) {
         EventList events = null;
 
         try {
@@ -190,7 +187,7 @@ public class ReferenceData {
      * to effective time.
      */
     private EventList getExternalEventList(final PipelineReference pipelineReference, final ErrorReceiver errorReceiver,
-            final long time, final String mapName, final String keyName) {
+                                           final long time, final String mapName, final String keyName) {
         // First round down the time to the nearest 10 days approx (actually
         // more like 11.5, one billion milliseconds).
         final long baseTime = effectiveStreamCache.getBaseTime(time);
@@ -205,7 +202,7 @@ public class ReferenceData {
         final EffectiveStreamKey effectiveStreamKey = new EffectiveStreamKey(pipelineReference.getFeed(),
                 pipelineReference.getStreamType(), baseTime);
         // Try and fetch a tree set of effective streams for this key.
-        final TreeSet<EffectiveStream> streamSet = effectiveStreamCache.get(effectiveStreamKey);
+        final TreeSet<EffectiveStream> streamSet = effectiveStreamCache.getOrCreate(effectiveStreamKey);
 
         if (streamSet != null && streamSet.size() > 0) {
             // Try and find the stream before the requested time that is less
@@ -237,7 +234,7 @@ public class ReferenceData {
         // If we didn't get a local cache then look in the pool.
         if (mapStore == null) {
             // Get the map store cache associated with this effective feed.
-            mapStore = mapStoreCache.get(mapStoreCacheKey);
+            mapStore = mapStoreCache.getOrCreate(mapStoreCacheKey);
             // Cache this item locally for use later on.
             localMapStoreCache.put(mapStoreCacheKey, mapStore);
         }

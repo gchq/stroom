@@ -49,31 +49,31 @@ import stroom.entity.client.event.ShowSaveAsEntityDialogEvent;
 import stroom.entity.client.presenter.EntityEditPresenter;
 import stroom.explorer.shared.DocumentType;
 import stroom.security.client.ClientSecurityContext;
+import stroom.svg.client.Icon;
+import stroom.svg.client.SvgIcon;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 import stroom.util.client.ImageUtil;
 import stroom.util.client.RandomId;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcon;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.widget.tab.client.presenter.Icon;
-import stroom.widget.tab.client.presenter.ImageIcon;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.DashboardView, Dashboard>
         implements FlexLayoutChangeHandler, EntityTabData, DashboardUiHandlers {
-    private final GlyphButtonView saveButton;
-    private final GlyphButtonView saveAsButton;
+    private final ButtonView saveButton;
+    private final ButtonView saveAsButton;
     private final DashboardLayoutPresenter layoutPresenter;
     private final Provider<ComponentAddPresenter> addPresenterProvider;
     private final Components components;
-    private final GlyphButtonView addButton;
+    private final ButtonView addButton;
     private ButtonPanel leftButtons;
     private ButtonPanel rightButtons;
     private String lastLabel;
@@ -91,8 +91,8 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
         this.addPresenterProvider = addPresenterProvider;
         this.components = components;
 
-        saveButton = addButtonLeft(GlyphIcons.SAVE);
-        saveAsButton = addButtonLeft(GlyphIcons.SAVE_AS);
+        saveButton = addButtonLeft(SvgPresets.SAVE);
+        saveAsButton = addButtonLeft(SvgPresets.SAVE_AS);
         saveButton.setEnabled(false);
         saveAsButton.setEnabled(false);
 
@@ -111,14 +111,14 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
         layoutPresenter.setComponents(components);
         view.setContent(layoutPresenter.getView());
 
-        addButton = addButtonLeft(GlyphIcons.ADD);
+        addButton = addButtonLeft(SvgPresets.ADD);
         addButton.setTitle("Add Component");
         addButton.setEnabled(false);
 
         view.setUiHandlers(this);
     }
 
-    private GlyphButtonView addButtonLeft(final GlyphIcon preset) {
+    private ButtonView addButtonLeft(final SvgPreset preset) {
         if (leftButtons == null) {
             leftButtons = new ButtonPanel();
             leftButtons.getElement().getStyle().setPaddingLeft(1, Style.Unit.PX);
@@ -175,11 +175,9 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
 
             final DashboardConfig dashboardData = dashboard.getDashboardData();
             if (dashboardData != null) {
-                if (currentParams == null) {
-                    currentParams = "";
-                    if (dashboardData.getParameters() != null && dashboardData.getParameters().trim().length() > 0) {
-                        currentParams = dashboardData.getParameters().trim();
-                    }
+                currentParams = "";
+                if (dashboardData.getParameters() != null && dashboardData.getParameters().trim().length() > 0) {
+                    currentParams = dashboardData.getParameters().trim();
                 }
                 getView().setParams(currentParams);
 
@@ -296,10 +294,10 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
     }
 
     @Override
-    protected void onPermissionsCheck(final boolean readOnly) {
+    public void onPermissionsCheck(final boolean readOnly) {
         super.onPermissionsCheck(readOnly);
 
-        saveButton.setEnabled(!readOnly);
+        saveButton.setEnabled(isDirty() && !readOnly);
         saveAsButton.setEnabled(true);
 
         addButton.setEnabled(!readOnly);
@@ -374,7 +372,7 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
 
     @Override
     public Icon getIcon() {
-        return ImageIcon.create(ImageUtil.getImageURL() + DocumentType.DOC_IMAGE_URL + getType() + ".png");
+        return new SvgIcon(ImageUtil.getImageURL() + DocumentType.DOC_IMAGE_URL + getType() + ".svg", 18, 18);
     }
 
     @Override
@@ -384,8 +382,9 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
             if (lastLabel == null || !lastLabel.equals(getLabel())) {
                 lastLabel = getLabel();
                 RefreshContentTabEvent.fire(this, this);
-                saveButton.setEnabled(dirty);
             }
+
+            saveButton.setEnabled(dirty);
         }
     }
 

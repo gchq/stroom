@@ -34,11 +34,7 @@ import stroom.util.shared.HasReadOnly;
 import stroom.widget.tickbox.client.view.TickBox;
 
 public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, HasReadOnly {
-    public interface Binder extends UiBinder<Widget, FeedSettingsViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     TextArea description;
     @UiField
@@ -55,7 +51,6 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
     ItemListBox<SupportedRetentionAge> retentionAge;
     @UiField
     TickBox reference;
-
     @Inject
     public FeedSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -107,6 +102,11 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
     }
 
     @Override
+    public boolean isReadOnly() {
+        return !description.isEnabled();
+    }
+
+    @Override
     public void setReadOnly(final boolean readOnly) {
         description.setEnabled(!readOnly);
         classification.setEnabled(!readOnly);
@@ -117,9 +117,7 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
         reference.setEnabled(!readOnly);
     }
 
-    @Override
-    public boolean isReadOnly() {
-        return !description.isEnabled();
+    public interface Binder extends UiBinder<Widget, FeedSettingsViewImpl> {
     }
 
 }

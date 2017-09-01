@@ -16,60 +16,47 @@
 
 package stroom.statistics.client.common.view;
 
-import java.util.List;
-
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.item.client.ItemListBox;
-import stroom.item.client.StringListBox;
 import stroom.statistics.client.common.presenter.StatisticsDataSourceSettingsPresenter.StatisticsDataSourceSettingsView;
 import stroom.statistics.client.common.presenter.StatisticsDataSourceSettingsUiHandlers;
+import stroom.statistics.shared.StatisticType;
 import stroom.statistics.shared.common.EventStoreTimeIntervalEnum;
 import stroom.statistics.shared.common.StatisticRollUpType;
-import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.statistics.shared.StatisticType;
 import stroom.widget.tickbox.client.view.TickBox;
 
 public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<StatisticsDataSourceSettingsUiHandlers>
         implements StatisticsDataSourceSettingsView {
-    public interface Binder extends UiBinder<Widget, StatisticsDataSourceSettingsViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     TextArea description;
-
     @UiField(provided = true)
     ItemListBox<StatisticType> statisticType;
-
     @UiField(provided = true)
     ItemListBox<EventStoreTimeIntervalEnum> precision;
-
     @UiField(provided = true)
     ItemListBox<StatisticRollUpType> rollUpType;
-
     @UiField(provided = true)
     TickBox enabled;
 
     @Inject
     public StatisticsDataSourceSettingsViewImpl(final Binder binder) {
-        statisticType = new ItemListBox<StatisticType>();
+        statisticType = new ItemListBox<>();
         statisticType.addItem(StatisticType.COUNT);
         statisticType.addItem(StatisticType.VALUE);
 
-        rollUpType = new ItemListBox<StatisticRollUpType>();
+        rollUpType = new ItemListBox<>();
         rollUpType.addItem(StatisticRollUpType.NONE);
         rollUpType.addItem(StatisticRollUpType.ALL);
         rollUpType.addItem(StatisticRollUpType.CUSTOM);
 
-        precision = new ItemListBox<EventStoreTimeIntervalEnum>();
+        precision = new ItemListBox<>();
         precision.addItem(EventStoreTimeIntervalEnum.SECOND);
         precision.addItem(EventStoreTimeIntervalEnum.MINUTE);
         precision.addItem(EventStoreTimeIntervalEnum.HOUR);
@@ -137,7 +124,6 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
         this.statisticType.setSelectedItem(statisticType);
     }
 
-
     @Override
     public EventStoreTimeIntervalEnum getPrecision() {
         return precision.getSelectedItem();
@@ -156,5 +142,8 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
     @Override
     public void setRollUpType(final StatisticRollUpType statisticRollUpType) {
         rollUpType.setSelectedItem(statisticRollUpType);
+    }
+
+    public interface Binder extends UiBinder<Widget, StatisticsDataSourceSettingsViewImpl> {
     }
 }

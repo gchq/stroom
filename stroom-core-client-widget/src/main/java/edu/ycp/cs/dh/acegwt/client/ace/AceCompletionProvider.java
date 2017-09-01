@@ -23,23 +23,23 @@ package edu.ycp.cs.dh.acegwt.client.ace;
 
 /**
  * A provider of custom code-completion proposals.
- * 
+ * <p>
  * <strong>Warning</strong>: this is an experimental feature of AceGWT.
  * It is possible that the API will change in an incompatible way
  * in future releases.
  */
 public interface AceCompletionProvider {
-	/**
-	 * Call to get code completion proposals, which are delivered
-	 * to a callback. Note that it is fine for this method to
-	 * invoke the callback at a later time (for example, on completion
-	 * of RPC.) 
-	 * 
-	 * @param editor   the {@link AceEditor}
-	 * @param pos      the cursor position
-	 * @param prefix   the word prefix
-	 * @param callback the {@link AceCompletionCallback} to which the
-	 *                 proposals should be delivered
-	 */
-	public void getProposals(AceEditor editor, AceEditorCursorPosition pos, String prefix, AceCompletionCallback callback);
+    /**
+     * Call to get code completion proposals, which are delivered
+     * to a callback. Note that it is fine for this method to
+     * invoke the callback at a later time (for example, on completion
+     * of RPC.)
+     *
+     * @param editor   the {@link AceEditor}
+     * @param pos      the cursor position
+     * @param prefix   the word prefix
+     * @param callback the {@link AceCompletionCallback} to which the
+     *                 proposals should be delivered
+     */
+    public void getProposals(AceEditor editor, AceEditorCursorPosition pos, String prefix, AceCompletionCallback callback);
 }

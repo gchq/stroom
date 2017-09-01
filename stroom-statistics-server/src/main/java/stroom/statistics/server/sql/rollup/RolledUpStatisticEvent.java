@@ -16,10 +16,10 @@
 
 package stroom.statistics.server.sql.rollup;
 
-import stroom.statistics.server.sql.StatisticTag;
-import stroom.statistics.shared.StatisticType;
 import stroom.statistics.server.sql.StatisticEvent;
+import stroom.statistics.server.sql.StatisticTag;
 import stroom.statistics.server.sql.TimeAgnosticStatisticEvent;
+import stroom.statistics.shared.StatisticType;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -45,7 +45,7 @@ public class RolledUpStatisticEvent implements Iterable<TimeAgnosticStatisticEve
      */
     public RolledUpStatisticEvent(StatisticEvent originalStatisticEvent) {
         this.originalStatisticEvent = originalStatisticEvent;
-        this.tagListPermutations = new ArrayList<List<StatisticTag>>();
+        this.tagListPermutations = new ArrayList<>();
         this.tagListPermutations.add(originalStatisticEvent.getTagList());
     }
 

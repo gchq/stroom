@@ -32,10 +32,30 @@ public class Version implements Serializable, Comparable<Version> {
         // Default constructor necessary for GWT serialisation.
     }
 
+    public Version(final Integer major) {
+        this(major, null, null);
+    }
+
+    public Version(final Integer major, final Integer minor) {
+        this(major, minor, null);
+    }
+
     public Version(final Integer major, final Integer minor, final Integer patch) {
         this.major = major;
         this.minor = minor;
         this.patch = patch;
+    }
+
+    public static Version of(final Integer major) {
+        return new Version(major, null, null);
+    }
+
+    public static Version of(final Integer major, final Integer minor) {
+        return new Version(major, minor, null);
+    }
+
+    public static Version of(final Integer major, final Integer minor, final Integer patch) {
+        return new Version(major, minor, patch);
     }
 
     public Integer getMajor() {
@@ -64,7 +84,13 @@ public class Version implements Serializable, Comparable<Version> {
 
     @Override
     public String toString() {
-        return major + "." + minor + "." + patch;
+        if (minor == null && patch == null) {
+            return major.toString();
+        } else if (patch == null) {
+            return major + "." + minor;
+        } else {
+            return major + "." + minor + "." + patch;
+        }
     }
 
     @Override

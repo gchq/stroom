@@ -31,7 +31,7 @@ public class JobNodeInfo implements SharedObject {
     }
 
     public JobNodeInfo(final Integer currentTaskCount, final Long scheduleReferenceTime, final Long lastExecutedTime,
-            final Integer currentCache) {
+                       final Integer currentCache) {
         this.currentTaskCount = currentTaskCount;
         this.scheduleReferenceTime = scheduleReferenceTime;
         this.lastExecutedTime = lastExecutedTime;

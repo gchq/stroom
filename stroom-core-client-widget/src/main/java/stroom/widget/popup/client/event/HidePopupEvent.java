@@ -22,16 +22,10 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
 public class HidePopupEvent extends GwtEvent<HidePopupEvent.Handler> {
-    public interface Handler extends EventHandler {
-        void onHide(HidePopupEvent event);
-    }
-
     private static Type<Handler> TYPE;
-
     private final PresenterWidget<?> presenterWidget;
     private final boolean autoClose;
     private final boolean ok;
-
     private HidePopupEvent(final PresenterWidget<?> presenterWidget, final boolean autoClose, final boolean ok) {
         this.presenterWidget = presenterWidget;
         this.autoClose = autoClose;
@@ -43,7 +37,7 @@ public class HidePopupEvent extends GwtEvent<HidePopupEvent.Handler> {
     }
 
     public static void fire(final HasHandlers handlers, final PresenterWidget<?> presenterWidget,
-            final boolean autoClose, final boolean ok) {
+                            final boolean autoClose, final boolean ok) {
         handlers.fireEvent(new HidePopupEvent(presenterWidget, autoClose, ok));
     }
 
@@ -74,5 +68,9 @@ public class HidePopupEvent extends GwtEvent<HidePopupEvent.Handler> {
 
     public boolean isOk() {
         return ok;
+    }
+
+    public interface Handler extends EventHandler {
+        void onHide(HidePopupEvent event);
     }
 }

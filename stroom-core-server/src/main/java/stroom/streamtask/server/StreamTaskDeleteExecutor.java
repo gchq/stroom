@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.shared.Period;
 import stroom.jobsystem.server.ClusterLockService;
 import stroom.jobsystem.server.JobTrackedSchedule;
@@ -59,9 +59,9 @@ public class StreamTaskDeleteExecutor extends AbstractBatchDeleteExecutor {
 
     @Inject
     public StreamTaskDeleteExecutor(final BatchIdTransactionHelper batchIdTransactionHelper,
-            final ClusterLockService clusterLockService, final StroomPropertyService propertyService,
-            final TaskMonitor taskMonitor, final StreamTaskCreatorImpl streamTaskCreator,
-            final StreamProcessorFilterService streamProcessorFilterService) {
+                                    final ClusterLockService clusterLockService, final StroomPropertyService propertyService,
+                                    final TaskMonitor taskMonitor, final StreamTaskCreatorImpl streamTaskCreator,
+                                    final StreamProcessorFilterService streamProcessorFilterService) {
         super(batchIdTransactionHelper, clusterLockService, propertyService, taskMonitor, TASK_NAME, LOCK_NAME,
                 STREAM_TASKS_DELETE_AGE_PROPERTY, STREAM_TASKS_DELETE_BATCH_SIZE_PROPERTY,
                 DEFAULT_STREAM_TASK_DELETE_BATCH_SIZE, TEMP_STRM_TASK_ID_TABLE);
@@ -105,8 +105,8 @@ public class StreamTaskDeleteExecutor extends AbstractBatchDeleteExecutor {
     }
 
     @Override
-    protected String getTempIdSelectSql(final long age, final int batchSize) {
-        final SQLBuilder sql = new SQLBuilder();
+    protected SqlBuilder getTempIdSelectSql(final long age, final int batchSize) {
+        final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT ");
         sql.append(StreamTask.ID);
         sql.append(" FROM ");
@@ -122,13 +122,13 @@ public class StreamTaskDeleteExecutor extends AbstractBatchDeleteExecutor {
         sql.append(" IS NULL OR ");
         sql.append(StreamTask.CREATE_MS);
         sql.append(" < ");
-        sql.append(age);
+        sql.arg(age);
         sql.append(")");
         sql.append(" ORDER BY ");
         sql.append(StreamTask.ID);
         sql.append(" LIMIT ");
-        sql.append(batchSize);
-        return sql.toString();
+        sql.arg(batchSize);
+        return sql;
     }
 
     private void deleteOldFilters(final long age) {

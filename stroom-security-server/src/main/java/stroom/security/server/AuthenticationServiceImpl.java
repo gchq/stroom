@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,16 +25,16 @@ import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import stroom.dashboard.server.logging.AuthenticationEventLog;
+import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
-import stroom.logging.AuthenticationEventLog;
 import stroom.node.server.StroomPropertyService;
 import stroom.security.Insecure;
 import stroom.security.Secured;
 import stroom.security.SecurityContext;
-import stroom.security.shared.User;
-import stroom.security.shared.User.UserStatus;
+import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserRef;
-import stroom.security.shared.UserService;
+import stroom.security.shared.UserStatus;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.UserTokenUtil;
@@ -47,10 +47,10 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
 @Component
-@Secured(User.MANAGE_USERS_PERMISSION)
+@Secured(FindUserCriteria.MANAGE_USERS_PERMISSION)
 public class AuthenticationServiceImpl implements AuthenticationService {
-    public static final String USER_SESSION_KEY = AuthenticationServiceImpl.class.getName() + "_US";
-    public static final String USER_ID_SESSION_KEY = AuthenticationServiceImpl.class.getName() + "_UID";
+    private static final String USER_SESSION_KEY = AuthenticationServiceImpl.class.getName() + "_US";
+    private static final String USER_ID_SESSION_KEY = AuthenticationServiceImpl.class.getName() + "_UID";
     private static final int DEFAULT_DAYS_TO_PASSWORD_EXPIRY = 90;
     private static final String PREVENT_LOGIN_PROPERTY = "stroom.maintenance.preventLogin";
 
@@ -75,12 +75,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         this.securityContext = securityContext;
     }
 
-    //TODO This needs to move somewhere else. JWT Authenticator?
-    private void checkLoginAllowed(final User user) {
-        if (user != null) {
+    private void checkLoginAllowed(final UserRef userRef) {
+        if (userRef != null) {
             final boolean preventLogin = StroomProperties.getBooleanProperty(PREVENT_LOGIN_PROPERTY, false);
             if (preventLogin) {
-                securityContext.pushUser(UserTokenUtil.create(user.getName(), null));
+                securityContext.pushUser(UserTokenUtil.create(userRef.getName(), null));
                 try {
                     if (!securityContext.isAdmin()) {
                         throw new AuthenticationException("You are not allowed to login at this time");
@@ -92,15 +91,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
     }
 
-    /**
-     * @param userName
-     * @param password
-     * @return
-     */
     @Override
     @Insecure
-    public User login(final String userName, final String password) {
-        User user = null;
+    public UserRef login(final String userName, final String password) {
+        UserRef userRef = null;
 
         if (userName == null || userName.length() == 0) {
             loginFailure(userName, new AuthenticationException("No user name"));
@@ -109,29 +103,31 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             final HttpServletRequest request = httpServletRequestHolder.get();
 
             try {
-                // Create the authentication token from the user name and password
-                final UsernamePasswordToken token = request == null ?
-                        new UsernamePasswordToken(userName, password,true) :
-                        new UsernamePasswordToken(userName, password,true, request.getRemoteHost());
+                // Create the authentication token from the user name and
+                // password
+                final UsernamePasswordToken token = new UsernamePasswordToken(userName, password, true,
+                        request.getRemoteHost());
 
                 // Attempt authentication
-                final Subject currentUser = SecurityUtils.getSubject();
-                currentUser.login(token);
+                final Subject subject = SecurityUtils.getSubject();
+                subject.login(token);
 
-                user = (User) currentUser.getPrincipal();
+                userRef = (UserRef) subject.getPrincipal();
             } catch (final RuntimeException e) {
                 loginFailure(userName, e);
             }
 
             // Ensure regular users are allowed to login at this time.
-            checkLoginAllowed(user);
+            checkLoginAllowed(userRef);
 
             try {
                 // Pass back the user info
-                user = handleLogin(request, user, userName);
+                userRef = handleLogin(request, userRef, userName);
 
                 // Audit the successful logon
-                eventLog.logon(user.getName());
+                if (userRef != null) {
+                    eventLog.logon(userRef.getName());
+                }
 
             } catch (final RuntimeException e) {
                 loginFailure(userName, e);
@@ -139,7 +135,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
 
         // Pass back the user info
-        return user;
+        return userRef;
     }
 
     private void loginFailure(final String userName, final RuntimeException e) {
@@ -147,7 +143,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         eventLog.logon(userName, false, e.getMessage(), AuthenticateOutcomeReason.INCORRECT_USERNAME_OR_PASSWORD);
 
         if (userName != null && userName.length() > 0) {
-            final UserRef userRef = userService.getUserRefByName(userName);
+            final UserRef userRef = userService.getUserByName(userName);
             if (userRef != null) {
                 // Increment the number of login failures.
                 final User user = userService.loadByUuid(userRef.getUuid());
@@ -156,7 +152,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                     user.setTotalLoginFailures(user.getTotalLoginFailures() + 1);
 
                     if (user.getCurrentLoginFailures() > 3) {
-                        LOGGER.error("login() - Locking account {}", user.getName());
+                        LOGGER.error("login() - Locking account {} due to {} failures", user.getName(), user.getCurrentLoginFailures());
                         user.updateStatus(UserStatus.LOCKED);
                     }
 
@@ -180,7 +176,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Insecure
     public String logout() {
         final HttpServletRequest request = httpServletRequestHolder.get();
-        final User user = getCurrentUser();
+        final UserRef user = getCurrentUser();
 
         if (user != null) {
             // Create an event for logout
@@ -199,13 +195,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public User changePassword(final User user, final String oldPassword, final String newPassword) {
-        if (user == null) {
+    @Insecure
+    public UserRef changePassword(final UserRef userRef, final String oldPassword, final String newPassword) {
+        if (userRef == null) {
             return null;
         }
 
-        // Make sure only a user with manage users permission can change a password or that the user is changing their own.
-        if (!securityContext.hasAppPermission(User.MANAGE_USERS_PERMISSION) && !user.equals(getCurrentUser())) {
+        // Load the user for the supplied ref.
+        final User user = userService.loadByUuid(userRef.getUuid());
+
+        if (user == null) {
             return null;
         }
 
@@ -230,27 +229,40 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         user.setPasswordHash(newHash);
 
         // Set the expiry.
-        user.setPasswordExpiryMs(getExpiryDate().toInstant().toEpochMilli());
+        user.setPasswordExpiryMs(getNextPasswordExpiryMs());
 
         // Write event log data for password change.
         eventLog.changePassword(user.getName());
 
         // Save the system user.
-        return userService.save(user);
+        return UserRefFactory.create(userService.save(user));
     }
 
     @Override
-    public User resetPassword(final User user, final String password) {
-        // Add event log data for reset password.
-        eventLog.resetPassword(user.getName(), false);
-        return doResetPassword(user, password);
-    }
+    public UserRef resetPassword(final UserRef userRef, final String password) {
+        if (userRef == null) {
+            return null;
+        }
 
-    private User doResetPassword(final User user, final String newPassword) {
+        // Add event log data for reset password.
+        eventLog.resetPassword(userRef.getName(), false);
+
+        // Make sure only a user with manage users permission can reset a password or that the user is resetting their own.
+        if (!securityContext.hasAppPermission(FindUserCriteria.MANAGE_USERS_PERMISSION) && !userRef.equals(getCurrentUser())) {
+            return null;
+        }
+
+        // Load the user for the supplied ref.
+        final User user = userService.loadByUuid(userRef.getUuid());
+
         if (user == null) {
             return null;
         }
 
+        return UserRefFactory.create(updatePassword(user, password));
+    }
+
+    private User updatePassword(final User user, final String newPassword) {
         // Hash the new password.
         final String newHash = passwordEncoder.encode(newPassword);
 
@@ -269,68 +281,31 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public User getCurrentUser() {
+    public UserRef getCurrentUser() {
         if (sessionExists()) {
             final HttpServletRequest request = httpServletRequestHolder.get();
-
-            return (User) request.getSession().getAttribute(USER_SESSION_KEY);
+            return (UserRef) request.getSession().getAttribute(USER_SESSION_KEY);
         }
 
         return null;
-    }
-
-    @Override
-    public String getCurrentUserId() throws RuntimeException {
-        if (sessionExists()) {
-            final HttpServletRequest request = httpServletRequestHolder.get();
-            return (String) request.getSession().getAttribute(USER_ID_SESSION_KEY);
-        }
-
-        return null;
-    }
-
-    @Override
-    @Insecure
-    public void refreshCurrentUser() throws RuntimeException {
-        if (sessionExists()) {
-            final HttpServletRequest request = httpServletRequestHolder.get();
-
-            User user = getCurrentUser();
-            if (user != null) {
-                user = userService.loadByUuid(user.getUuid());
-            }
-
-            request.getSession().setAttribute(USER_SESSION_KEY, user);
-        }
     }
 
     private boolean sessionExists() {
         return httpServletRequestHolder.getSessionId() != null;
     }
 
-    private ZonedDateTime getExpiryDate() {
+    private Long getNextPasswordExpiryMs() {
         // Get the current number of milliseconds.
-        final ZonedDateTime expiryDate = ZonedDateTime.now(ZoneOffset.UTC);
+        ZonedDateTime expiryDate = ZonedDateTime.now(ZoneOffset.UTC);
         // Days to expiry will be 90 days.
-        return expiryDate.plusDays(getDaysToPasswordExpiry());
+        expiryDate = expiryDate.plusDays(getDaysToPasswordExpiry());
+
+        return expiryDate.toInstant().toEpochMilli();
     }
 
     @Override
     public boolean canEmailPasswordReset() {
         return mailSenderProvider.get().canEmailPasswordReset();
-    }
-
-    @Override
-    public User emailPasswordReset(User user) {
-        // Make sure only a user with manage users permission can change a password or that the user is changing their own.
-        if (!securityContext.hasAppPermission(User.MANAGE_USERS_PERMISSION) && !user.equals(getCurrentUser())) {
-            return null;
-        }
-
-        final String password = PasswordGenerator.generatePassword();
-        user = doResetPassword(user, password);
-        mailSenderProvider.get().emailPasswordReset(user, password);
-        return user;
     }
 
     private int getDaysToPasswordExpiry() {
@@ -339,11 +314,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public Boolean emailPasswordReset(final String userName) throws RuntimeException {
-        final UserRef userRef = userService.getUserRefByName(userName);
+        final UserRef userRef = userService.getUserByName(userName);
         if (userRef != null) {
             final User user = userService.loadByUuid(userRef.getUuid());
             if (user != null) {
-                emailPasswordReset(user);
+                final String password = PasswordGenerator.generatePassword();
+                final User updatedUser = updatePassword(user, password);
+                mailSenderProvider.get().emailPasswordReset(UserRefFactory.create(updatedUser), password);
             }
         }
         return Boolean.TRUE;
@@ -355,28 +332,31 @@ public class AuthenticationServiceImpl implements AuthenticationService {
      */
     @Override
     @Insecure
-    public User autoLogin() throws RuntimeException {
+    public UserRef autoLogin() throws RuntimeException {
         User user = userService.loadByUuid(securityContext.getUserUuid());
-        return user;
+        return UserRefFactory.create(user);
     }
 
-    private User handleLogin(final HttpServletRequest request, final User user, final String userId) {
-        if (user != null) {
-            User reloadUser = userService.loadByUuid(user.getUuid());
-            reloadUser.updateValidLogin();
-            reloadUser = userService.save(reloadUser);
-
-            // Audit the successful login
-            eventLog.logon(userId);
-
-            if(request != null) {
-                final HttpSession session = request.getSession(true);
-                session.setAttribute(USER_SESSION_KEY, reloadUser);
-                session.setAttribute(USER_ID_SESSION_KEY, userId);
-            }
-
-            return reloadUser;
+    private UserRef handleLogin(final HttpServletRequest request, final UserRef userRef, final String userId) {
+        if (userRef == null) {
+            return null;
         }
-        return user;
+
+        User user = userService.loadByUuid(userRef.getUuid());
+        user.updateValidLogin();
+        user = userService.save(user);
+
+        final UserRef newRef = UserRefFactory.create(user);
+
+        // Audit the successful login
+        eventLog.logon(userId);
+
+        if(request != null) {
+            final HttpSession session = request.getSession(true);
+            session.setAttribute(USER_SESSION_KEY, user);
+            session.setAttribute(USER_ID_SESSION_KEY, userId);
+        }
+
+        return newRef;
     }
 }

@@ -18,11 +18,11 @@ package stroom.search.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
 import stroom.dictionary.shared.Dictionary;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.dictionary.shared.FindDictionaryCriteria;
 import stroom.entity.shared.BaseResultList;
+import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.annotation.Resource;
 

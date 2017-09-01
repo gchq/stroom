@@ -31,6 +31,19 @@ public class PoolInfo implements SharedObject {
     private Long timeToLiveMs;
     private String maxObjectsPerKey;
 
+    public static PoolInfo fromString(final String string) {
+        final String[] arr = string.split(DELIM);
+        final PoolInfo cacheInfo = new PoolInfo();
+        cacheInfo.name = arr[0];
+        cacheInfo.lastAccessTime = Long.parseLong(arr[1]);
+        cacheInfo.inUse = Integer.parseInt(arr[2]);
+        cacheInfo.inPool = Integer.parseInt(arr[3]);
+        cacheInfo.timeToIdleMs = Long.parseLong(arr[7]);
+        cacheInfo.timeToLiveMs = Long.parseLong(arr[8]);
+        cacheInfo.maxObjectsPerKey = arr[9];
+        return cacheInfo;
+    }
+
     public String getName() {
         return name;
     }
@@ -104,18 +117,5 @@ public class PoolInfo implements SharedObject {
         sb.append(DELIM);
         sb.append(maxObjectsPerKey);
         return sb.toString();
-    }
-
-    public static PoolInfo fromString(final String string) {
-        final String[] arr = string.split(DELIM);
-        final PoolInfo cacheInfo = new PoolInfo();
-        cacheInfo.name = arr[0];
-        cacheInfo.lastAccessTime = Long.parseLong(arr[1]);
-        cacheInfo.inUse = Integer.parseInt(arr[2]);
-        cacheInfo.inPool = Integer.parseInt(arr[3]);
-        cacheInfo.timeToIdleMs = Long.parseLong(arr[7]);
-        cacheInfo.timeToLiveMs = Long.parseLong(arr[8]);
-        cacheInfo.maxObjectsPerKey = arr[9];
-        return cacheInfo;
     }
 }

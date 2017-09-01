@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,7 +34,7 @@ import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.structure.client.presenter.PropertyListPresenter.Source;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
 import stroom.streamstore.shared.StreamType.Purpose;

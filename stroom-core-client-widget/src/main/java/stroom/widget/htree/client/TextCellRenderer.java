@@ -29,24 +29,20 @@ import stroom.widget.htree.client.treelayout.NodeExtentProvider;
 public final class TextCellRenderer<T extends HasText> implements CellRenderer<T>, NodeExtentProvider<T> {
     private static final int DEFAULT_TEXT_SIZE = 10;
     private static final int DEFAULT_TEXT_PADDING = 5;
-
+    private static final Colors NORMAL = Colors.createDefault();
+    private static final Colors OVER = Colors.createDefaultMouseOver();
+    private static final Colors SELECTED = Colors.createDefaultSelection();
     private final int textSize = DEFAULT_TEXT_SIZE;
     private final int textPadding = DEFAULT_TEXT_PADDING;
     private final String font = textSize + "px Arial";
-
     private final String textColor = "black";
-
     private final Context2d shadowContext;
     private final Context2d backgroundContext;
     private final Context2d textContext;
     private final ShadowBox shadowBox;
 
-    private static final Colors NORMAL = Colors.createDefault();
-    private static final Colors OVER = Colors.createDefaultMouseOver();
-    private static final Colors SELECTED = Colors.createDefaultSelection();
-
     public TextCellRenderer(final Context2d shadowContext, final Context2d backgroundContext,
-            final Context2d textContext) {
+                            final Context2d textContext) {
         this.shadowContext = shadowContext;
         this.backgroundContext = backgroundContext;
         this.textContext = textContext;

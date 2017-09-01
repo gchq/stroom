@@ -94,8 +94,7 @@ public class Range<T extends Number> implements Serializable, HasIsConstrained {
     }
 
     /**
-     * @param other
-     *            value to return if from is null
+     * @param other value to return if from is null
      * @return The from value or if that is null, the supplied other value
      */
     public T getFromOrElse(final T other) {
@@ -111,8 +110,7 @@ public class Range<T extends Number> implements Serializable, HasIsConstrained {
     }
 
     /**
-     * @param other
-     *            value to return if to is null
+     * @param other value to return if to is null
      * @return The to value or if that is null, the supplied other value
      */
     public T getToOrElse(final T other) {
@@ -140,7 +138,7 @@ public class Range<T extends Number> implements Serializable, HasIsConstrained {
         return getTo().longValue() - getFrom().longValue();
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public Range<T> union(final Range other) {
         return new Range(this.from.longValue() < other.from.longValue() ? this.from : other.from,
                 this.to.longValue() > other.to.longValue() ? this.to : other.to);

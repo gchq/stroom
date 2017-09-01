@@ -36,38 +36,15 @@ import static com.google.gwt.dom.client.BrowserEvents.CLICK;
 import static com.google.gwt.dom.client.BrowserEvents.KEYDOWN;
 
 public abstract class DropDownCell<E> extends AbstractEditableCell<E, E> {
-    @ImportedWithPrefix("dropDownTreeCell")
-    public interface Styles extends CssResource {
-        String dropDownTree();
-
-        String label();
-
-        String button();
-    }
-
-    public interface Resources extends ClientBundle {
-        ImageResource popup();
-
-        @Source("dropdowntree.css")
-        Styles styles();
-    }
-
-    public interface Template extends SafeHtmlTemplates {
-        @Template("<div class=\"{0}\"><div class=\"{1}\" title=\"{3}\">{3}</div><div class=\"{2}\">{4}</div></div>")
-        SafeHtml input(String outerStyle, String labelStyle, String buttonStyle, String value, SafeHtml icon);
-    }
-
     private static volatile Resources resources;
     private static volatile Template template;
     private static volatile SafeHtml button;
-
     private Object lastKey;
     private Element lastParent;
     private int lastIndex;
     private int lastColumn;
     private E lastValue;
     private ValueUpdater<E> valueUpdater;
-
     public DropDownCell() {
         super(CLICK, KEYDOWN);
 
@@ -136,7 +113,7 @@ public abstract class DropDownCell<E> extends AbstractEditableCell<E, E> {
 
     @Override
     public void onBrowserEvent(final Context context, final Element parent, final E value, final NativeEvent event,
-            final ValueUpdater<E> valueUpdater) {
+                               final ValueUpdater<E> valueUpdater) {
         super.onBrowserEvent(context, parent, value, event, valueUpdater);
         if (CLICK.equals(event.getType())) {
             onEnterKeyDown(context, parent, value, event, valueUpdater);
@@ -171,7 +148,7 @@ public abstract class DropDownCell<E> extends AbstractEditableCell<E, E> {
 
     @Override
     protected void onEnterKeyDown(final Context context, final Element parent, final E value, final NativeEvent event,
-            final ValueUpdater<E> valueUpdater) {
+                                  final ValueUpdater<E> valueUpdater) {
         this.lastKey = context.getKey();
         this.lastParent = parent;
         this.lastValue = value;
@@ -188,4 +165,25 @@ public abstract class DropDownCell<E> extends AbstractEditableCell<E, E> {
     protected abstract String getUnselectedText();
 
     protected abstract void showPopup(E value);
+
+    @ImportedWithPrefix("dropDownTreeCell")
+    public interface Styles extends CssResource {
+        String dropDownTree();
+
+        String label();
+
+        String button();
+    }
+
+    public interface Resources extends ClientBundle {
+        ImageResource popup();
+
+        @Source("dropdowntree.css")
+        Styles styles();
+    }
+
+    public interface Template extends SafeHtmlTemplates {
+        @Template("<div class=\"{0}\"><div class=\"{1}\" title=\"{3}\">{3}</div><div class=\"{2}\">{4}</div></div>")
+        SafeHtml input(String outerStyle, String labelStyle, String buttonStyle, String value, SafeHtml icon);
+    }
 }

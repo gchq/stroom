@@ -31,11 +31,9 @@ import java.util.List;
 @Component
 public class ClusterResultCollectorCache implements Clearable, InitializingBean {
     private static final int MAX_CACHE_ENTRIES = 1000000;
-
+    private final Cache cache;
     @Resource
     private CacheManager cacheManager;
-
-    private final Cache cache;
     private volatile boolean shutdown;
 
     public ClusterResultCollectorCache() {

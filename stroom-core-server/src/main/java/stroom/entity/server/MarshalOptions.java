@@ -17,7 +17,7 @@
 package stroom.entity.server;
 
 public interface MarshalOptions {
-    void setDisabled(boolean disabled);
-
     boolean isDisabled();
+
+    void setDisabled(boolean disabled);
 }

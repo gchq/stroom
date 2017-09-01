@@ -84,7 +84,7 @@ public class Script extends DocumentEntity implements Copyable<Script> {
         this.resource = resource;
     }
 
-    @Column(name = DEPENDENCIES)
+    @Column(name = DEPENDENCIES, length = Integer.MAX_VALUE)
     @Lob
     public String getDependenciesXML() {
         return dependenciesXML;

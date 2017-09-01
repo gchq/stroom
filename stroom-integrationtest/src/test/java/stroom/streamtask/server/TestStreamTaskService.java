@@ -18,8 +18,6 @@ package stroom.streamtask.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestScenarioCreator;
 import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
 import stroom.node.shared.Node;
@@ -34,6 +32,8 @@ import stroom.streamtask.shared.StreamTask;
 import stroom.streamtask.shared.StreamTaskService;
 import stroom.streamtask.shared.TaskStatus;
 import stroom.task.server.TaskMonitorImpl;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestScenarioCreator;
 
 import javax.annotation.Resource;
 import java.time.Instant;
@@ -102,7 +102,7 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
         final FindStreamTaskCriteria criteria = new FindStreamTaskCriteria();
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
         criteria.obtainNodeIdSet().add(1L);
-        criteria.setOrderBy(FindStreamTaskCriteria.ORDER_BY_CREATE_TIME);
+        criteria.setSort(FindStreamTaskCriteria.FIELD_CREATE_TIME);
         criteria.obtainStreamTaskIdSet().add(1L);
         criteria.obtainFindStreamCriteria().obtainFeeds().obtainInclude().add(1L);
         criteria.obtainFindStreamCriteria().obtainStreamIdSet().add(1L);
@@ -134,7 +134,7 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
         final FindStreamTaskCriteria criteria = new FindStreamTaskCriteria();
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
         criteria.obtainNodeIdSet().add(1L);
-        criteria.setOrderBy(FindStreamTaskCriteria.ORDER_BY_CREATE_TIME);
+        criteria.setSort(FindStreamTaskCriteria.FIELD_CREATE_TIME);
         criteria.obtainStreamTaskIdSet().add(1L);
         criteria.obtainFindStreamCriteria().obtainFeeds().obtainInclude().add(1L);
         criteria.obtainFindStreamCriteria().obtainStreamIdSet().add(1L);

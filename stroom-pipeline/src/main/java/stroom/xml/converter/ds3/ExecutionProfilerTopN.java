@@ -23,7 +23,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class ExecutionProfilerTopN {
-    List<ExecutionProfiler> topN = new ArrayList<ExecutionProfiler>();
+    List<ExecutionProfiler> topN = new ArrayList<>();
 
     public ExecutionProfilerTopN(Root root, int n) {
         buildExecutionProfilerList(topN, root);

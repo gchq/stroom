@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,7 +20,7 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.PresenterWidget;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 public class RenameEntityEvent extends GwtEvent<RenameEntityEvent.Handler> {
     private static Type<Handler> TYPE;
@@ -29,7 +29,7 @@ public class RenameEntityEvent extends GwtEvent<RenameEntityEvent.Handler> {
     private final String entityName;
 
     private RenameEntityEvent(final PresenterWidget<?> dialog, final DocRef document,
-            final String entityName) {
+                              final String entityName) {
         this.dialog = dialog;
         this.document = document;
         this.entityName = entityName;
@@ -42,7 +42,7 @@ public class RenameEntityEvent extends GwtEvent<RenameEntityEvent.Handler> {
 
     public static Type<Handler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<Handler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }

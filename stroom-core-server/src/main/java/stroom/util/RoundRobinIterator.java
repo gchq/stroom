@@ -44,14 +44,12 @@ public abstract class RoundRobinIterator<T> implements Iterator<T> {
     public abstract int getCursor();
 
     /**
-     * @param newValue
-     *            where we are at
+     * @param newValue where we are at
      */
     public abstract void setCursor(int newValue);
 
     /**
      * @return More elements?
-     *
      * @see java.util.Iterator#hasNext()
      */
     @Override
@@ -67,7 +65,6 @@ public abstract class RoundRobinIterator<T> implements Iterator<T> {
 
     /**
      * @return next item.
-     *
      * @see java.util.Iterator#next()
      */
     @Override

@@ -23,7 +23,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StringCriteria implements Serializable, HasIsConstrained, Clearable {
+public class StringCriteria implements Serializable, HasIsConstrained, Clearable, Copyable<StringCriteria> {
     private static final long serialVersionUID = 4737939969786534908L;
     private String string;
     private String stringUpper;
@@ -44,7 +44,7 @@ public class StringCriteria implements Serializable, HasIsConstrained, Clearable
     }
 
     public static List<StringCriteria> convertStringList(List<String> strings) {
-        List<StringCriteria> criteriaList = new ArrayList<StringCriteria>();
+        List<StringCriteria> criteriaList = new ArrayList<>();
 
         if (strings != null) {
             for (String string : strings) {
@@ -120,12 +120,12 @@ public class StringCriteria implements Serializable, HasIsConstrained, Clearable
         }
         if (matchStyle != null) {
             switch (matchStyle) {
-            case WildEnd:
-                return rtnString.replace('*', '%') + "%";
-            case WildStandAndEnd:
-                return "%" + rtnString.replace('*', '%') + "%";
-            default:
-                return rtnString;
+                case WildEnd:
+                    return rtnString.replace('*', '%') + "%";
+                case WildStandAndEnd:
+                    return "%" + rtnString.replace('*', '%') + "%";
+                default:
+                    return rtnString;
             }
         } else {
             return rtnString;
@@ -146,6 +146,15 @@ public class StringCriteria implements Serializable, HasIsConstrained, Clearable
 
     public void setMatchNull(final Boolean matchNull) {
         this.matchNull = matchNull;
+    }
+
+    @Override
+    public void copyFrom(final StringCriteria other) {
+        this.string = other.string;
+        this.stringUpper = other.stringUpper;
+        this.matchStyle = other.matchStyle;
+        this.caseInsensitive = other.caseInsensitive;
+        this.matchNull = other.matchNull;
     }
 
     @Override

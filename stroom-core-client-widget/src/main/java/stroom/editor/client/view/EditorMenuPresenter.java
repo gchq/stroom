@@ -34,9 +34,9 @@ import java.util.List;
  * A context menu for the XML editor.
  */
 public class EditorMenuPresenter {
+    private final MenuListPresenter menuListPresenter;
     private boolean showFormatOption = true;
     private EditorPresenter xmlEditorPresenter;
-    private final MenuListPresenter menuListPresenter;
 
     @Inject
     public EditorMenuPresenter(final MenuListPresenter menuListPresenter) {

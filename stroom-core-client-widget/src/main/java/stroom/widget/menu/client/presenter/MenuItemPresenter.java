@@ -27,23 +27,10 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 public class MenuItemPresenter extends MyPresenterWidget<MenuItemPresenter.MenuItemView> {
-    public interface MenuItemView extends View, HasMouseOverHandlers, HasMouseOutHandlers, HasClickHandlers {
-        void setHTML(String html);
-
-        void setEnabledImage(ImageResource resource);
-
-        void setDisabledImage(ImageResource resource);
-
-        void setShortcut(String shortcut);
-
-        void setEnabled(boolean enabled);
-    }
-
     private String html;
     private boolean enabled;
-
     public MenuItemPresenter(final EventBus eventBus, final MenuItemView view, final ImageResource enabledImage,
-            final ImageResource disabledImage, final String html, final String shortcut, final boolean enabled) {
+                             final ImageResource disabledImage, final String html, final String shortcut, final boolean enabled) {
         super(eventBus, view);
         this.html = html;
         this.enabled = enabled;
@@ -55,13 +42,13 @@ public class MenuItemPresenter extends MyPresenterWidget<MenuItemPresenter.MenuI
         view.setEnabled(enabled);
     }
 
+    public boolean isEnabled() {
+        return enabled;
+    }
+
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
         getView().setEnabled(enabled);
-    }
-
-    public boolean isEnabled() {
-        return enabled;
     }
 
     @Override
@@ -76,5 +63,17 @@ public class MenuItemPresenter extends MyPresenterWidget<MenuItemPresenter.MenuI
     public void setHTML(final String html) {
         this.html = html;
         getView().setHTML(html);
+    }
+
+    public interface MenuItemView extends View, HasMouseOverHandlers, HasMouseOutHandlers, HasClickHandlers {
+        void setHTML(String html);
+
+        void setEnabledImage(ImageResource resource);
+
+        void setDisabledImage(ImageResource resource);
+
+        void setShortcut(String shortcut);
+
+        void setEnabled(boolean enabled);
     }
 }

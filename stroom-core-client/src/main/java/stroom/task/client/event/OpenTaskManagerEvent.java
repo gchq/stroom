@@ -32,7 +32,7 @@ public class OpenTaskManagerEvent extends GwtEvent<OpenTaskManagerHandler> {
 
     public static Type<OpenTaskManagerHandler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<OpenTaskManagerHandler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }

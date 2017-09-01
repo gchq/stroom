@@ -37,18 +37,15 @@ import java.util.List;
 @Component
 public class StreamAttributeValueServiceTransactionHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeValueServiceTransactionHelper.class);
-
-    @Resource
-    private DataSource dataSource;
-
-    @Resource
-    private StroomDatabaseInfo stroomDatabaseInfo;
-
     private static final String INSERT_SQL = "INSERT INTO " + StreamAttributeValue.TABLE_NAME + " ("
             + StreamAttributeValue.VERSION + ", " + StreamAttributeValue.CREATE_MS + ", "
             + StreamAttributeValue.VALUE_STRING + ", " + StreamAttributeValue.VALUE_NUMBER + ", "
             + StreamAttributeValue.STREAM_ID + ", " + StreamAttributeValue.STREAM_ATTRIBUTE_KEY_ID
             + ") VALUES (?, ?, ?, ?, ?, ?)";
+    @Resource
+    private DataSource dataSource;
+    @Resource
+    private StroomDatabaseInfo stroomDatabaseInfo;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void saveBatch(final List<StreamAttributeValue> list) {

@@ -17,7 +17,7 @@
 package stroom.util.shared;
 
 public interface HasReadOnly {
-    void setReadOnly(boolean readOnly);
-
     boolean isReadOnly();
+
+    void setReadOnly(boolean readOnly);
 }

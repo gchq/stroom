@@ -42,6 +42,7 @@ import java.util.Set;
 @Component
 @Scope(value = StroomScope.TASK)
 public class SteppingController {
+    private final Set<ElementMonitor> monitors = new HashSet<>();
     @Resource
     private StreamHolder streamHolder;
     @Resource
@@ -50,13 +51,10 @@ public class SteppingController {
     private SteppingResponseCache steppingResponseCache;
     @Resource
     private ErrorReceiverProxy errorReceiverProxy;
-
     private String streamInfo;
     private SteppingTask request;
     private StepLocation stepLocation;
     private StepLocation foundLocation;
-
-    private final Set<ElementMonitor> monitors = new HashSet<>();
     private RecordDetector recordDetector;
 
     private Location currentStartLocation;
@@ -72,12 +70,12 @@ public class SteppingController {
         return monitors;
     }
 
-    public void setRecordDetector(final RecordDetector recordDetector) {
-        this.recordDetector = recordDetector;
-    }
-
     public RecordDetector getRecordDetector() {
         return recordDetector;
+    }
+
+    public void setRecordDetector(final RecordDetector recordDetector) {
+        this.recordDetector = recordDetector;
     }
 
     public SteppingTask getRequest() {

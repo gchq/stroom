@@ -20,9 +20,8 @@ import com.google.gwt.user.client.Timer;
 
 public class DoubleClickTest {
     private final int DOUBLE_CLICK_PERIOD = 500;
-
-    private Object object;
     private final Timer doubleClickTimer;
+    private Object object;
 
     public DoubleClickTest() {
         doubleClickTimer = new Timer() {

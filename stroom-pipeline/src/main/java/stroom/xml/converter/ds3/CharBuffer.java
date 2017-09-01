@@ -35,8 +35,7 @@ public class CharBuffer implements Buffer {
     /**
      * Create a buffer with a specified initial size.
      *
-     * @param initialSize
-     *            The initial size of the buffer.
+     * @param initialSize The initial size of the buffer.
      */
     public CharBuffer(final int initialSize) {
         if (initialSize <= 0) {

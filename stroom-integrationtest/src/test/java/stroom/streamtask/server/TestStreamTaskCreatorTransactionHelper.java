@@ -18,13 +18,13 @@ package stroom.streamtask.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestControl;
-import stroom.CommonTestScenarioCreator;
 import stroom.feed.shared.Feed;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamTask;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestControl;
+import stroom.test.CommonTestScenarioCreator;
 
 import javax.annotation.Resource;
 

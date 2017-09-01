@@ -18,8 +18,8 @@ package stroom.node.server;
 
 import com.google.common.collect.ImmutableMap;
 import org.springframework.stereotype.Component;
-import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.node.shared.RecordCountService;
+import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;

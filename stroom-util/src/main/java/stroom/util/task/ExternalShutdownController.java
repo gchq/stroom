@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ExternalShutdownController {
-    private static final Map<Object, TerminateHandler> terminateHandlers = new ConcurrentHashMap<Object, TerminateHandler>();
+    private static final Map<Object, TerminateHandler> terminateHandlers = new ConcurrentHashMap<>();
 
     public static void addTerminateHandler(final Object key, final TerminateHandler terminateHandler) {
         terminateHandlers.put(key, terminateHandler);

@@ -22,12 +22,6 @@ import com.google.gwt.view.client.SelectionModel;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
 public abstract class TreePanel<E> extends Composite {
-    public interface RefreshCallback {
-        void onRefresh();
-    }
-
-    public abstract void setTree(DefaultTreeForTreeLayout<E> tree);
-
     public abstract Box<E> getBox(E item);
 
     public abstract Box<E> getTargetBox(Event event, boolean usePosition);
@@ -39,4 +33,10 @@ public abstract class TreePanel<E> extends Composite {
     public abstract void refresh(final RefreshCallback callback);
 
     public abstract DefaultTreeForTreeLayout<E> getTree();
+
+    public abstract void setTree(DefaultTreeForTreeLayout<E> tree);
+
+    public interface RefreshCallback {
+        void onRefresh();
+    }
 }

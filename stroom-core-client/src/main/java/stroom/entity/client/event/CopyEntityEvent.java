@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,7 +21,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.PresenterWidget;
 import stroom.entity.shared.PermissionInheritance;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 public class CopyEntityEvent extends GwtEvent<CopyEntityEvent.Handler> {
     private static Type<Handler> TYPE;
@@ -47,7 +47,7 @@ public class CopyEntityEvent extends GwtEvent<CopyEntityEvent.Handler> {
 
     public static Type<Handler> getType() {
         if (TYPE == null) {
-            TYPE = new Type<Handler>();
+            TYPE = new Type<>();
         }
         return TYPE;
     }

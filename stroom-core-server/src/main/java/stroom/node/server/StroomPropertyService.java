@@ -21,6 +21,10 @@ package stroom.node.server;
  * lookups to StroomProperties.
  */
 public interface StroomPropertyService {
+    /**
+     * @param name The property name or key
+     * @return The property value which could be null or an empty string
+     */
     String getProperty(String name);
 
     int getIntProperty(String propertyName, int defaultValue);

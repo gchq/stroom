@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,15 +24,13 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.ManageNewEntityPresenter;
-import stroom.entity.shared.EntityServiceDeleteAction;
-import stroom.entity.shared.EntityServiceLoadAction;
-import stroom.entity.shared.EntityServiceSaveAction;
-import stroom.query.api.v1.DocRef;
 import stroom.security.client.ClientSecurityContext;
+import stroom.security.shared.CreateUserAction;
+import stroom.security.shared.DeleteUserAction;
 import stroom.security.shared.FindUserCriteria;
-import stroom.security.shared.User;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.security.shared.UserRef;
+import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
@@ -46,9 +44,9 @@ public class UsersAndGroupsTabPresenter extends
     private final Provider<GroupEditPresenter> groupEditPresenterProvider;
     private final ManageNewEntityPresenter newPresenter;
     private final ClientDispatchAsync dispatcher;
-    private final GlyphButtonView newButton;
-    private final GlyphButtonView openButton;
-    private final GlyphButtonView deleteButton;
+    private final ButtonView newButton;
+    private final ButtonView openButton;
+    private final ButtonView deleteButton;
     private final FindUserCriteria criteria = new FindUserCriteria();
 
     @Inject
@@ -65,11 +63,11 @@ public class UsersAndGroupsTabPresenter extends
 
         setInSlot(LIST, listPresenter);
 
-        newButton = listPresenter.addButton(GlyphIcons.NEW_ITEM);
-        openButton = listPresenter.addButton(GlyphIcons.OPEN);
-        deleteButton = listPresenter.addButton(GlyphIcons.DELETE);
+        newButton = listPresenter.addButton(SvgPresets.NEW_ITEM);
+        openButton = listPresenter.addButton(SvgPresets.OPEN);
+        deleteButton = listPresenter.addButton(SvgPresets.DELETE);
 
-        final boolean updatePerm = securityContext.hasAppPermission(User.MANAGE_USERS_PERMISSION);
+        final boolean updatePerm = securityContext.hasAppPermission(FindUserCriteria.MANAGE_USERS_PERMISSION);
 
         if (!updatePerm) {
             deleteButton.setVisible(false);
@@ -118,31 +116,29 @@ public class UsersAndGroupsTabPresenter extends
     }
 
     private void onOpen() {
-        final DocRef e = listPresenter.getSelectionModel().getSelected();
+        final UserRef e = listPresenter.getSelectionModel().getSelected();
         onEdit(e);
     }
 
     @SuppressWarnings("unchecked")
-    public void onEdit(final DocRef userRef) {
+    public void onEdit(final UserRef userRef) {
         if (userRef != null) {
-            dispatcher.exec(new EntityServiceLoadAction<User>(userRef, null)).onSuccess(loadedUser -> edit(loadedUser));
+            edit(userRef);
         }
     }
 
     private void onDelete() {
-        final DocRef userRef = listPresenter.getSelectionModel().getSelected();
+        final UserRef userRef = listPresenter.getSelectionModel().getSelected();
         if (userRef != null) {
-            dispatcher.exec(new EntityServiceLoadAction<User>(userRef, null)).onSuccess(loadedUser -> {
-                ConfirmEvent.fire(UsersAndGroupsTabPresenter.this, "Are you sure you want to delete the selected " + getTypeName() + "?",
-                        ok -> {
-                            if (ok) {
-                                dispatcher.exec(new EntityServiceDeleteAction<User>(loadedUser)).onSuccess(result -> {
-                                    listPresenter.refresh();
-                                    listPresenter.getSelectionModel().clear();
-                                });
-                            }
-                        });
-            });
+            ConfirmEvent.fire(UsersAndGroupsTabPresenter.this, "Are you sure you want to delete the selected " + getTypeName() + "?",
+                    ok -> {
+                        if (ok) {
+                            dispatcher.exec(new DeleteUserAction(userRef)).onSuccess(result -> {
+                                listPresenter.refresh();
+                                listPresenter.getSelectionModel().clear();
+                            });
+                        }
+                    });
         }
     }
 
@@ -151,10 +147,7 @@ public class UsersAndGroupsTabPresenter extends
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
-                    final User user = new User();
-                    user.setName(newPresenter.getName());
-                    user.setGroup(criteria.getGroup());
-                    dispatcher.exec(new EntityServiceSaveAction<User>(user)).onSuccess(result -> {
+                    dispatcher.exec(new CreateUserAction(newPresenter.getName(), criteria.getGroup())).onSuccess(result -> {
                         newPresenter.hide();
                         edit(result);
                     });
@@ -172,7 +165,7 @@ public class UsersAndGroupsTabPresenter extends
         newPresenter.show(hidePopupUiHandlers);
     }
 
-    private void edit(final User user) {
+    private void edit(final UserRef userRef) {
         final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
             @Override
             public void onHide(final boolean autoClose, final boolean ok) {
@@ -180,15 +173,15 @@ public class UsersAndGroupsTabPresenter extends
             }
         };
 
-        if (user.isGroup()) {
+        if (userRef.isGroup()) {
             if (groupEditPresenterProvider != null) {
                 final GroupEditPresenter groupEditPresenter = groupEditPresenterProvider.get();
-                groupEditPresenter.show(user, popupUiHandlers);
+                groupEditPresenter.show(userRef, popupUiHandlers);
             }
         } else {
             if (userEditPresenterProvider != null) {
                 final UserEditPresenter userEditPresenter = userEditPresenterProvider.get();
-                userEditPresenter.show(user, popupUiHandlers);
+                userEditPresenter.show(userRef, popupUiHandlers);
             }
         }
     }

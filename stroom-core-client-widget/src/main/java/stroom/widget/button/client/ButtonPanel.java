@@ -20,19 +20,10 @@ import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.FlowPanel;
+import stroom.svg.client.SvgPreset;
 
 public class ButtonPanel extends FlowPanel {
-    public interface Style extends CssResource {
-        String layout();
-    }
-
-    public interface Resources extends ClientBundle {
-        @Source("ButtonPanel.css")
-        Style style();
-    }
-
     private static volatile Resources resources;
     private boolean vertical;
 
@@ -48,45 +39,50 @@ public class ButtonPanel extends FlowPanel {
         setStyleName(resources.style().layout());
     }
 
-    public ImageButtonView add(final String title, final ImageResource enabledImage, final ImageResource disabledImage,
-            final boolean enabled) {
-        final ImageButton button = createButton(title, enabledImage, disabledImage, enabled);
+    public ButtonView add(final SvgPreset preset) {
+        final SvgButton button = createButton(preset);
         add(button);
         return button;
     }
 
-    public GlyphButtonView add(final GlyphIcon preset) {
-        final GlyphButton button = createButton(preset);
-        add(button);
-        return button;
-    }
-
-    private ImageButton createButton(final String title, final ImageResource enabledImage,
-            final ImageResource disabledImage, final boolean enabled) {
-        final ImageButton button = new ImageButton();
-        button.setTitle(title);
-        button.setEnabledImage(enabledImage);
-        button.setDisabledImage(disabledImage);
-        button.setEnabled(enabled);
+    private SvgButton createButton(final SvgPreset preset) {
+        final SvgButton button = SvgButton.create(preset);
         if (vertical) {
             button.getElement().getStyle().setDisplay(Display.BLOCK);
         }
         return button;
     }
 
-    private GlyphButton createButton(final GlyphIcon preset) {
-        final GlyphButton button = new GlyphButton();
-        button.setIcon(preset.getGlyph());
-        button.setColour(preset.getColourSet());
-        button.setTitle(preset.getTitle());
-        button.setEnabled(preset.isEnabled());
-        if (vertical) {
-            button.getElement().getStyle().setDisplay(Display.BLOCK);
-        }
-        return button;
-    }
+//    public ImageButtonView add(final String title, final ImageResource enabledImage, final ImageResource disabledImage,
+//            final boolean enabled) {
+//        final ImageButton button = createButton(title, enabledImage, disabledImage, enabled);
+//        add(button);
+//        return button;
+//    }
 
     public void setVertical(final boolean vertical) {
         this.vertical = vertical;
+    }
+
+//    private ImageButton createButton(final String title, final ImageResource enabledImage,
+//            final ImageResource disabledImage, final boolean enabled) {
+//        final ImageButton button = new ImageButton();
+//        button.setTitle(title);
+//        button.setEnabledImage(enabledImage);
+//        button.setDisabledImage(disabledImage);
+//        button.setEnabled(enabled);
+//        if (vertical) {
+//            button.getElement().getStyle().setDisplay(Display.BLOCK);
+//        }
+//        return button;
+//    }
+
+    public interface Style extends CssResource {
+        String layout();
+    }
+
+    public interface Resources extends ClientBundle {
+        @Source("ButtonPanel.css")
+        Style style();
     }
 }

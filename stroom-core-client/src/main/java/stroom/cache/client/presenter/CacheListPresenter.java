@@ -40,7 +40,7 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<CacheRow>
     @Inject
     public CacheListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
                               final TooltipPresenter tooltipPresenter) {
-        super(eventBus, new DataGridViewImpl<CacheRow>(true));
+        super(eventBus, new DataGridViewImpl<>(true));
 
         // Name
         getView().addResizableColumn(new Column<CacheRow, String>(new TextCell()) {
@@ -60,9 +60,9 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<CacheRow>
         clearColumn.setFieldUpdater((index, row, value) -> dispatcher.exec(new CacheClearAction(row.getCacheName(), null)));
         getView().addColumn(clearColumn, "</br>", 50);
 
-        getView().addEndColumn(new EndColumn<CacheRow>());
+        getView().addEndColumn(new EndColumn<>());
 
-        dataProvider = new ActionDataProvider<CacheRow>(dispatcher, action);
+        dataProvider = new ActionDataProvider<>(dispatcher, action);
         dataProvider.addDataDisplay(getView().getDataDisplay());
     }
 

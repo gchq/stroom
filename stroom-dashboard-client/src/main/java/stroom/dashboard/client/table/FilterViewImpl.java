@@ -30,6 +30,7 @@ public class FilterViewImpl extends ViewImpl implements FilterView {
     TextArea includes;
     @UiField
     TextArea excludes;
+
     @Inject
     public FilterViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);

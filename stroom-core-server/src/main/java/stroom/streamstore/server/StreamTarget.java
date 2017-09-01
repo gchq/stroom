@@ -16,9 +16,9 @@
 
 package stroom.streamstore.server;
 
+import stroom.feed.MetaMap;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.zip.HeaderMap;
 
 import java.io.Closeable;
 import java.io.OutputStream;
@@ -32,7 +32,7 @@ import java.io.OutputStream;
 public interface StreamTarget extends Closeable {
     /**
      * @return a type associated with the stream. Used to differentiate between
-     *         child streams ("ctx", "idx", etc).
+     * child streams ("ctx", "idx", etc).
      */
     StreamType getType();
 
@@ -44,7 +44,7 @@ public interface StreamTarget extends Closeable {
     /**
      * Any attributes regarding the stream
      */
-    HeaderMap getAttributeMap();
+    MetaMap getAttributeMap();
 
     /**
      * @return the real IO output stream
@@ -54,8 +54,7 @@ public interface StreamTarget extends Closeable {
     /**
      * Add a child stream for this main stream.
      *
-     * @param type
-     *            name of the child.
+     * @param type name of the child.
      * @return target to write to.
      */
     StreamTarget addChildStream(StreamType type);

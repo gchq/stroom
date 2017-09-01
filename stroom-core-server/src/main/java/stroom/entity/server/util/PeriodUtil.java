@@ -46,8 +46,7 @@ public final class PeriodUtil {
     /**
      * Create a year period.
      *
-     * @param year
-     *            e.g. 2001
+     * @param year e.g. 2001
      */
     public static Period createYearPeriod(final Integer year) {
         final ZonedDateTime dateTime = LocalDate.of(year, 1, 1).atStartOfDay(UTC);
@@ -59,8 +58,7 @@ public final class PeriodUtil {
     /**
      * Create a month period.
      *
-     * @param year
-     *            e.g. 2001
+     * @param year e.g. 2001
      */
     public static Period createYearMonthPeriod(final Integer year, final Integer month) {
         final ZonedDateTime dateTime = LocalDate.of(year, month, 1).atStartOfDay(UTC);
@@ -72,12 +70,9 @@ public final class PeriodUtil {
     /**
      * Create a day period.
      *
-     * @param year
-     *            e.g. 2001
-     * @param month
-     *            e.g. 01=jan
-     * @param day
-     *            e.g. 31
+     * @param year  e.g. 2001
+     * @param month e.g. 01=jan
+     * @param day   e.g. 31
      */
     public static Period createYearMonthDayPeriod(final Integer year, final Integer month, final Integer day) {
         final ZonedDateTime dateTime = LocalDate.of(year, month, day).atStartOfDay(UTC);
@@ -89,12 +84,9 @@ public final class PeriodUtil {
     /**
      * Create a date in the same way.
      *
-     * @param year
-     *            e.g. 2001
-     * @param month
-     *            e.g. 01
-     * @param day
-     *            e.g. 31
+     * @param year  e.g. 2001
+     * @param month e.g. 01
+     * @param day   e.g. 31
      */
     public static long createDate(final Integer year, final Integer month, final Integer day) {
         final ZonedDateTime dateTime = LocalDate.of(year, month, day).atStartOfDay(UTC);

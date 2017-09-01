@@ -34,15 +34,11 @@ import java.util.Set;
 
 public class ExplorerTabPanePresenter extends CurveTabLayoutPresenter<ExplorerTabPanePresenter.ExplorerTabPaneProxy>
         implements OpenExplorerTabEvent.Handler, CloseExplorerTabEvent.Handler {
-    @ProxyCodeSplit
-    public interface ExplorerTabPaneProxy extends Proxy<ExplorerTabPanePresenter> {
-    }
-
-    private final Set<TabData> openItems = new HashSet<TabData>();
+    private final Set<TabData> openItems = new HashSet<>();
 
     @Inject
     public ExplorerTabPanePresenter(final EventBus eventBus, final CurveTabLayoutView view,
-            final ExplorerTabPaneProxy proxy) {
+                                    final ExplorerTabPaneProxy proxy) {
         super(eventBus, view, proxy);
     }
 
@@ -82,5 +78,9 @@ public class ExplorerTabPanePresenter extends CurveTabLayoutPresenter<ExplorerTa
     @Override
     protected void fireSelectedTabChange(final TabData tabData) {
         // Do nothing as nobody cares which explorer tab pane tab is selected.
+    }
+
+    @ProxyCodeSplit
+    public interface ExplorerTabPaneProxy extends Proxy<ExplorerTabPanePresenter> {
     }
 }

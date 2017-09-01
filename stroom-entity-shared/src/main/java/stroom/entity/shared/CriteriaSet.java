@@ -29,7 +29,7 @@ import java.util.Set;
 /**
  * Utility class to match on sets of id's With concepts like match anything,
  * null, nothing and specific id's.
- *
+ * <p>
  * By default when created it has no criteria i.e. match anything. As soon as
  * you update it it will be restrictive until you setMatchAll
  */
@@ -47,7 +47,7 @@ public class CriteriaSet<T>
     private Set<T> set;
 
     public CriteriaSet() {
-        this(new HashSet<T>());
+        this(new HashSet<>());
     }
 
     public CriteriaSet(final Set<T> set) {
@@ -176,8 +176,7 @@ public class CriteriaSet<T>
             return false;
         }
 
-        @SuppressWarnings("unchecked")
-        final CriteriaSet<T> criteriaSet = (CriteriaSet<T>) obj;
+        @SuppressWarnings("unchecked") final CriteriaSet<T> criteriaSet = (CriteriaSet<T>) obj;
 
         final EqualsBuilder builder = new EqualsBuilder();
         builder.append(this.matchNull, criteriaSet.matchNull);

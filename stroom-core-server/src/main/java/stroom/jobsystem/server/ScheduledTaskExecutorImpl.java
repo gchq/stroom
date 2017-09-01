@@ -42,54 +42,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
-    private static class JobNodeTrackedExecutable extends StroomBeanMethodExecutable {
-    private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeTrackedExecutable.class);
-
-        private final JobNodeTracker jobNodeTracker;
-
-        public JobNodeTrackedExecutable(final StroomBeanMethod stroomBeanMethod, final StroomBeanStore stroomBeanStore,
-                                        final String message, final AtomicBoolean running, final JobNodeTracker jobNodeTracker) {
-            super(stroomBeanMethod, stroomBeanStore, message, running);
-            this.jobNodeTracker = jobNodeTracker;
-        }
-
-        @Override
-        public void exec(final Task<?> task) {
-            try {
-                jobNodeTracker.incrementTaskCount();
-                try {
-                    jobNodeTracker.setLastExecutedTime(System.currentTimeMillis());
-                    try {
-                        super.exec(task);
-                    } finally {
-                        jobNodeTracker.setLastExecutedTime(System.currentTimeMillis());
-                    }
-                } finally {
-                    jobNodeTracker.decrementTaskCount();
-                }
-            } catch (final Throwable t) {
-                LOGGER.error(t.getMessage(), t);
-            }
-        }
-
-        @Override
-        public String toString() {
-            return jobNodeTracker.getJobNode().getJob().getName();
-        }
-    }
-
     private static final Logger LOGGER = LoggerFactory.getLogger(ScheduledTaskExecutorImpl.class);
-
+    private final ConcurrentHashMap<StroomBeanMethod, AtomicBoolean> runningMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<StroomBeanMethod, Scheduler> schedulerMap = new ConcurrentHashMap<>();
     @Resource
     private StroomBeanStore stroomBeanStore;
     @Resource
     private JobNodeTrackerCache jobNodeTrackerCache;
     @Resource
     private TaskManager taskManager;
-
     private volatile Set<StroomBeanMethod> scheduledMethods;
-    private final ConcurrentHashMap<StroomBeanMethod, AtomicBoolean> runningMap = new ConcurrentHashMap<StroomBeanMethod, AtomicBoolean>();
-    private final ConcurrentHashMap<StroomBeanMethod, Scheduler> schedulerMap = new ConcurrentHashMap<StroomBeanMethod, Scheduler>();
 
     @Override
     public void execute() {
@@ -169,7 +131,7 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
                 }
 
                 if (enabled && scheduler != null && scheduler.execute()) {
-                    LOGGER.trace("Returning runnable for method: {} - {} - {}", new Object[] {stroomBeanMethod, enabled, scheduler});
+                    LOGGER.trace("Returning runnable for method: {} - {} - {}", new Object[]{stroomBeanMethod, enabled, scheduler});
                     if (jobNodeTracker != null) {
                         executable = new JobNodeTrackedExecutable(stroomBeanMethod, stroomBeanStore, "Executing", running,
                                 jobNodeTracker);
@@ -228,5 +190,41 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
             running = runningMap.get(stroomBeanMethod);
         }
         return running;
+    }
+
+    private static class JobNodeTrackedExecutable extends StroomBeanMethodExecutable {
+        private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeTrackedExecutable.class);
+
+        private final JobNodeTracker jobNodeTracker;
+
+        public JobNodeTrackedExecutable(final StroomBeanMethod stroomBeanMethod, final StroomBeanStore stroomBeanStore,
+                                        final String message, final AtomicBoolean running, final JobNodeTracker jobNodeTracker) {
+            super(stroomBeanMethod, stroomBeanStore, message, running);
+            this.jobNodeTracker = jobNodeTracker;
+        }
+
+        @Override
+        public void exec(final Task<?> task) {
+            try {
+                jobNodeTracker.incrementTaskCount();
+                try {
+                    jobNodeTracker.setLastExecutedTime(System.currentTimeMillis());
+                    try {
+                        super.exec(task);
+                    } finally {
+                        jobNodeTracker.setLastExecutedTime(System.currentTimeMillis());
+                    }
+                } finally {
+                    jobNodeTracker.decrementTaskCount();
+                }
+            } catch (final Throwable t) {
+                LOGGER.error(t.getMessage(), t);
+            }
+        }
+
+        @Override
+        public String toString() {
+            return jobNodeTracker.getJobNode().getJob().getName();
+        }
     }
 }

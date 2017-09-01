@@ -22,10 +22,9 @@ import stroom.data.grid.client.OrderByColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.EntityServiceFindAction;
-import stroom.entity.shared.OrderBy;
 import stroom.entity.shared.ResultList;
+import stroom.entity.shared.Sort.Direction;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.util.shared.SharedObject;
 
@@ -52,7 +51,7 @@ public class EntityServiceFindActionDataProvider<C extends BaseCriteria, E exten
 
     public void setCriteria(final C criteria) {
         if (findAction == null) {
-            findAction = new EntityServiceFindAction<C, E>(criteria);
+            findAction = new EntityServiceFindAction<>(criteria);
         } else {
             findAction.setCriteria(criteria);
         }
@@ -100,12 +99,12 @@ public class EntityServiceFindActionDataProvider<C extends BaseCriteria, E exten
     @Override
     public void onColumnSort(final ColumnSortEvent event) {
         if (event.getColumn() instanceof OrderByColumn<?, ?>) {
-            final OrderBy orderBy = ((OrderByColumn<?, ?>) event.getColumn()).getOrderBy();
+            final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
             if (findAction != null) {
                 if (event.isSortAscending()) {
-                    findAction.getCriteria().setOrderBy(orderBy, OrderByDirection.ASCENDING);
+                    findAction.getCriteria().setSort(orderByColumn.getField(), Direction.ASCENDING, orderByColumn.isIgnoreCase());
                 } else {
-                    findAction.getCriteria().setOrderBy(orderBy, OrderByDirection.DESCENDING);
+                    findAction.getCriteria().setSort(orderByColumn.getField(), Direction.DESCENDING, orderByColumn.isIgnoreCase());
                 }
                 refresh();
             }

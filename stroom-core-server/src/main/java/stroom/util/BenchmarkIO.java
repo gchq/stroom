@@ -43,23 +43,18 @@ import java.util.zip.GZIPOutputStream;
 
 public class BenchmarkIO {
     private static final int MB = 1000000;
-
-    private enum StreamType {
-        PLAIN, GZIP, BGZIP, BGZIP_SEG, BGZIP_SEG_COMPRESS, RAW_SEG_TEXT, RAW_SEG_XML
-    }
-
     private static HashMap<StreamType, Integer> writeSpeed = new HashMap<>();
     private static HashMap<StreamType, Integer> readSpeed = new HashMap<>();
-
-    public static void main(final String[] args) throws Exception {
-        new BenchmarkIO().run(args);
-    }
 
     static {
         for (final StreamType streamType : StreamType.values()) {
             writeSpeed.put(streamType, 0);
             readSpeed.put(streamType, 0);
         }
+    }
+
+    public static void main(final String[] args) throws Exception {
+        new BenchmarkIO().run(args);
     }
 
     private void run(final String[] args) throws Exception {
@@ -140,26 +135,26 @@ public class BenchmarkIO {
         // Write the data.
         OutputStream os = null;
         switch (streamType) {
-        case PLAIN:
-            os = new BufferedOutputStream(new FileOutputStream(file1), FileSystemUtil.STREAM_BUFFER_SIZE);
-            break;
-        case GZIP:
-            os = new BufferedOutputStream(
-                    new GZIPOutputStream(
-                            new BufferedOutputStream(new FileOutputStream(file1), FileSystemUtil.STREAM_BUFFER_SIZE)),
-                    FileSystemUtil.STREAM_BUFFER_SIZE);
-            break;
-        case BGZIP:
-            os = new BlockGZIPOutputFile(file1);
-            break;
-        case BGZIP_SEG:
-            os = new RASegmentOutputStream(new BlockGZIPOutputFile(file1), new LockingFileOutputStream(file2, false));
-            break;
-        case BGZIP_SEG_COMPRESS:
-            os = new RASegmentOutputStream(new BlockGZIPOutputFile(file1), new BlockGZIPOutputFile(file2));
-            break;
-        default:
-            throw new IllegalArgumentException("Unexpected stream type: " + streamType);
+            case PLAIN:
+                os = new BufferedOutputStream(new FileOutputStream(file1), FileSystemUtil.STREAM_BUFFER_SIZE);
+                break;
+            case GZIP:
+                os = new BufferedOutputStream(
+                        new GZIPOutputStream(
+                                new BufferedOutputStream(new FileOutputStream(file1), FileSystemUtil.STREAM_BUFFER_SIZE)),
+                        FileSystemUtil.STREAM_BUFFER_SIZE);
+                break;
+            case BGZIP:
+                os = new BlockGZIPOutputFile(file1);
+                break;
+            case BGZIP_SEG:
+                os = new RASegmentOutputStream(new BlockGZIPOutputFile(file1), new LockingFileOutputStream(file2, false));
+                break;
+            case BGZIP_SEG_COMPRESS:
+                os = new RASegmentOutputStream(new BlockGZIPOutputFile(file1), new BlockGZIPOutputFile(file2));
+                break;
+            default:
+                throw new IllegalArgumentException("Unexpected stream type: " + streamType);
         }
 
         long startTime = System.currentTimeMillis();
@@ -213,28 +208,28 @@ public class BenchmarkIO {
         // Read the data.
         InputStream is = null;
         switch (streamType) {
-        case PLAIN:
-            is = new FileInputStream(file1);
-            break;
-        case GZIP:
-            is = new GZIPInputStream(
-                    new BufferedInputStream(new FileInputStream(file1), FileSystemUtil.STREAM_BUFFER_SIZE));
-            break;
-        case BGZIP:
-            is = new BlockGZIPInputFile(file1);
-            break;
-        case BGZIP_SEG:
-            is = new RASegmentInputStream(new BlockGZIPInputFile(file1), new UncompressedInputStream(file2, false));
-            break;
-        case BGZIP_SEG_COMPRESS:
-            is = new RASegmentInputStream(new BlockGZIPInputFile(file1), new BlockGZIPInputFile(file2));
-            break;
-        case RAW_SEG_TEXT:
-            is = new RASegmentInputStream(new BlockGZIPInputFile(file1), new UncompressedInputStream(file2, false));
-            break;
-        case RAW_SEG_XML:
-            is = new RASegmentInputStream(new BlockGZIPInputFile(file1), new UncompressedInputStream(file2, false));
-            break;
+            case PLAIN:
+                is = new FileInputStream(file1);
+                break;
+            case GZIP:
+                is = new GZIPInputStream(
+                        new BufferedInputStream(new FileInputStream(file1), FileSystemUtil.STREAM_BUFFER_SIZE));
+                break;
+            case BGZIP:
+                is = new BlockGZIPInputFile(file1);
+                break;
+            case BGZIP_SEG:
+                is = new RASegmentInputStream(new BlockGZIPInputFile(file1), new UncompressedInputStream(file2, false));
+                break;
+            case BGZIP_SEG_COMPRESS:
+                is = new RASegmentInputStream(new BlockGZIPInputFile(file1), new BlockGZIPInputFile(file2));
+                break;
+            case RAW_SEG_TEXT:
+                is = new RASegmentInputStream(new BlockGZIPInputFile(file1), new UncompressedInputStream(file2, false));
+                break;
+            case RAW_SEG_XML:
+                is = new RASegmentInputStream(new BlockGZIPInputFile(file1), new UncompressedInputStream(file2, false));
+                break;
         }
         is = new BufferedInputStream(is, FileSystemUtil.STREAM_BUFFER_SIZE);
 
@@ -292,5 +287,9 @@ public class BenchmarkIO {
         sb.append("</records>");
 
         return sb.toString().getBytes(StreamUtil.DEFAULT_CHARSET);
+    }
+
+    private enum StreamType {
+        PLAIN, GZIP, BGZIP, BGZIP_SEG, BGZIP_SEG_COMPRESS, RAW_SEG_TEXT, RAW_SEG_XML
     }
 }

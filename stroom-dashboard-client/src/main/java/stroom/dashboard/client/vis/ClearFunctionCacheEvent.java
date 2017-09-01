@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,7 +19,7 @@ package stroom.dashboard.client.vis;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 public class ClearFunctionCacheEvent extends GwtEvent<ClearFunctionCacheEvent.Handler> {
     private static Type<Handler> TYPE;
@@ -31,7 +31,7 @@ public class ClearFunctionCacheEvent extends GwtEvent<ClearFunctionCacheEvent.Ha
 
     public static Type<Handler> getType() {
         if (TYPE == null) {
-            TYPE = new GwtEvent.Type<Handler>();
+            TYPE = new GwtEvent.Type<>();
         }
         return TYPE;
     }

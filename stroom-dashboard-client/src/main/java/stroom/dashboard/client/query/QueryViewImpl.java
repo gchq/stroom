@@ -17,7 +17,6 @@
 package stroom.dashboard.client.query;
 
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -29,11 +28,10 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.dashboard.client.main.SearchModel.Mode;
 import stroom.dashboard.client.query.QueryPresenter.QueryView;
+import stroom.svg.client.SvgPreset;
 import stroom.widget.button.client.ButtonPanel;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.FabButton;
-import stroom.widget.button.client.GlyphButtonView;
-import stroom.widget.button.client.GlyphIcon;
-import stroom.widget.button.client.ImageButtonView;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 public class QueryViewImpl extends ViewWithUiHandlers<QueryUiHandlers>
@@ -65,13 +63,7 @@ public class QueryViewImpl extends ViewWithUiHandlers<QueryUiHandlers>
     }
 
     @Override
-    public ImageButtonView addButton(final String title, final ImageResource enabledImage,
-            final ImageResource disabledImage, final boolean enabled) {
-        return buttonPanel.add(title, enabledImage, disabledImage, enabled);
-    }
-
-    @Override
-    public GlyphButtonView addButton(final GlyphIcon preset) {
+    public ButtonView addButton(final SvgPreset preset) {
         return buttonPanel.add(preset);
     }
 
@@ -97,18 +89,18 @@ public class QueryViewImpl extends ViewWithUiHandlers<QueryUiHandlers>
     @Override
     public void setMode(final Mode mode) {
         switch (mode) {
-        case ACTIVE:
-            start.pauseMode();
-            stop.setEnabled(true);
-            break;
-        case INACTIVE:
-            start.searchMode();
-            stop.setEnabled(false);
-            break;
-        case PAUSED:
-            start.resumeMode();
-            stop.setEnabled(true);
-            break;
+            case ACTIVE:
+                start.pauseMode();
+                stop.setEnabled(true);
+                break;
+            case INACTIVE:
+                start.searchMode();
+                stop.setEnabled(false);
+                break;
+            case PAUSED:
+                start.resumeMode();
+                stop.setEnabled(true);
+                break;
         }
     }
 

@@ -23,12 +23,7 @@ import stroom.widget.tab.client.presenter.TabData;
 
 public class ContentTabSelectionChangeEvent
         extends GwtEvent<ContentTabSelectionChangeEvent.ContentTabSelectionChangeHandler> {
-    public interface ContentTabSelectionChangeHandler extends EventHandler {
-        void onTabSelectionChange(ContentTabSelectionChangeEvent event);
-    }
-
     private static Type<ContentTabSelectionChangeHandler> TYPE;
-
     private final TabData tabData;
 
     private ContentTabSelectionChangeEvent(final TabData tabData) {
@@ -58,5 +53,9 @@ public class ContentTabSelectionChangeEvent
 
     public TabData getTabData() {
         return tabData;
+    }
+
+    public interface ContentTabSelectionChangeHandler extends EventHandler {
+        void onTabSelectionChange(ContentTabSelectionChangeEvent event);
     }
 }

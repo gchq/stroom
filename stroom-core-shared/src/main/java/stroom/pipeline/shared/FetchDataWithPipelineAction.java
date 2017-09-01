@@ -16,7 +16,7 @@
 
 package stroom.pipeline.shared;
 
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 public class FetchDataWithPipelineAction extends FetchDataAction {
     private static final long serialVersionUID = -1773544031158236156L;
@@ -27,7 +27,7 @@ public class FetchDataWithPipelineAction extends FetchDataAction {
     }
 
     public FetchDataWithPipelineAction(final Long streamId, final Long segmentId, final DocRef pipeline,
-            final boolean showAsHtml) {
+                                       final boolean showAsHtml) {
         super(streamId, segmentId, showAsHtml);
         this.pipeline = pipeline;
     }

@@ -39,6 +39,7 @@ public class VisualisationSettingsViewImpl extends ViewImpl implements Visualisa
     SimplePanel script;
     @UiField
     ResizeSimplePanel settings;
+
     @Inject
     public VisualisationSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);

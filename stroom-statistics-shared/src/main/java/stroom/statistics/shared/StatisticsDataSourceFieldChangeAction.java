@@ -29,7 +29,7 @@ public class StatisticsDataSourceFieldChangeAction extends Action<StatisticsData
     }
 
     public StatisticsDataSourceFieldChangeAction(final StatisticsDataSourceData oldStatisticsDataSourceData,
-            final StatisticsDataSourceData newStatisticsDataSourceData) {
+                                                 final StatisticsDataSourceData newStatisticsDataSourceData) {
         this.oldStatisticsDataSourceData = oldStatisticsDataSourceData;
         this.newStatisticsDataSourceData = newStatisticsDataSourceData;
     }

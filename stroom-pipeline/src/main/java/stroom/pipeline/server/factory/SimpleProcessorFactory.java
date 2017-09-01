@@ -33,6 +33,28 @@ import java.util.concurrent.TimeUnit;
 
 public class SimpleProcessorFactory implements ProcessorFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleProcessorFactory.class);
+    private final ErrorReceiver errorReceiver;
+
+    public SimpleProcessorFactory() {
+        this(new FatalErrorReceiver());
+    }
+
+    public SimpleProcessorFactory(final ErrorReceiver errorReceiver) {
+        this.errorReceiver = errorReceiver;
+    }
+
+    @Override
+    public Processor create(final List<Processor> processors) {
+        if (processors == null || processors.size() == 0) {
+            return null;
+        }
+
+        if (processors.size() == 1) {
+            return processors.get(0);
+        }
+
+        return new MultiWayProcessor(processors, errorReceiver);
+    }
 
     private static class MultiWayProcessor implements Processor {
         private final List<Processor> processors;
@@ -129,28 +151,5 @@ public class SimpleProcessorFactory implements ProcessorFactory {
                 LOGGER.error(MarkerFactory.getMarker("FATAL"), t.getMessage(), t);
             }
         }
-    }
-
-    private final ErrorReceiver errorReceiver;
-
-    public SimpleProcessorFactory() {
-        this(new FatalErrorReceiver());
-    }
-
-    public SimpleProcessorFactory(final ErrorReceiver errorReceiver) {
-        this.errorReceiver = errorReceiver;
-    }
-
-    @Override
-    public Processor create(final List<Processor> processors) {
-        if (processors == null || processors.size() == 0) {
-            return null;
-        }
-
-        if (processors.size() == 1) {
-            return processors.get(0);
-        }
-
-        return new MultiWayProcessor(processors, errorReceiver);
     }
 }

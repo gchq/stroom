@@ -24,10 +24,10 @@ import com.google.gwt.user.client.ui.Widget;
 public class SpinnerSmall extends Composite {
     private static Binder uiBinder = GWT.create(Binder.class);
 
-    interface Binder extends UiBinder<Widget, SpinnerSmall> {
-    }
-
     public SpinnerSmall() {
         initWidget(uiBinder.createAndBindUi(this));
+    }
+
+    interface Binder extends UiBinder<Widget, SpinnerSmall> {
     }
 }

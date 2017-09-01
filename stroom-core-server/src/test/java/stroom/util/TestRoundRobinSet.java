@@ -38,26 +38,12 @@ public class TestRoundRobinSet extends StroomUnitTest {
     private static final int N3 = 3;
     private static final int N4 = 4;
 
-    static class RoundRobinSetTestObject implements SharedObject {
-        private static final long serialVersionUID = -7648759863152854689L;
-        int i;
-
-        public RoundRobinSetTestObject(final int i) {
-            this.i = i;
-        }
-
-        @Override
-        public String toString() {
-            return String.valueOf(i);
-        }
-    }
-
     /**
      * Tests that the round robin list works correctly.
      */
     @Test
     public void test() {
-        final RoundRobinSet<RoundRobinSetTestObject> rrList = new RoundRobinSet<RoundRobinSetTestObject>();
+        final RoundRobinSet<RoundRobinSetTestObject> rrList = new RoundRobinSet<>();
         rrList.add(new RoundRobinSetTestObject(1));
         rrList.add(new RoundRobinSetTestObject(2));
         rrList.add(new RoundRobinSetTestObject(N3));
@@ -72,7 +58,7 @@ public class TestRoundRobinSet extends StroomUnitTest {
 
     @Test
     public void testSync() throws InterruptedException {
-        final RoundRobinSet<RoundRobinSetTestObject> rrList = new RoundRobinSet<RoundRobinSetTestObject>();
+        final RoundRobinSet<RoundRobinSetTestObject> rrList = new RoundRobinSet<>();
         rrList.add(new RoundRobinSetTestObject(1));
         rrList.add(new RoundRobinSetTestObject(2));
         rrList.add(new RoundRobinSetTestObject(N3));
@@ -113,5 +99,19 @@ public class TestRoundRobinSet extends StroomUnitTest {
             }
         }
         return sb.toString();
+    }
+
+    static class RoundRobinSetTestObject implements SharedObject {
+        private static final long serialVersionUID = -7648759863152854689L;
+        int i;
+
+        public RoundRobinSetTestObject(final int i) {
+            this.i = i;
+        }
+
+        @Override
+        public String toString() {
+            return String.valueOf(i);
+        }
     }
 }

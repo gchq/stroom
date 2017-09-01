@@ -29,7 +29,7 @@ public class MockitoEntityServiceUtil {
     }
 
     public static <E extends Entity, C extends BaseCriteria, T extends FindService<E, C>> void applySingleFind(final T findService,
-            final E result) {
+                                                                                                               final E result) {
         final List<E> lst = new ArrayList<>();
         lst.add(result);
         Mockito.when(findService.find(Matchers.any())).thenReturn(new BaseResultList<>(lst, 0L, 1L, false));

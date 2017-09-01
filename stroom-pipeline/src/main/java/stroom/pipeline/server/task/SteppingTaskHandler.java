@@ -333,18 +333,18 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
                         // process
                         // the next stream.
                         switch (stepType) {
-                        case FIRST:
-                            currentStreamIndex++;
-                            break;
-                        case FORWARD:
-                            currentStreamIndex++;
-                            break;
-                        case BACKWARD:
-                            currentStreamIndex--;
-                            break;
-                        case LAST:
-                            currentStreamIndex--;
-                            break;
+                            case FIRST:
+                                currentStreamIndex++;
+                                break;
+                            case FORWARD:
+                                currentStreamIndex++;
+                                break;
+                            case BACKWARD:
+                                currentStreamIndex--;
+                                break;
+                            case LAST:
+                                currentStreamIndex--;
+                                break;
                         }
 
                         final Long nextStream = getStreamId(request);
@@ -404,14 +404,14 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
 
             // Find streams.
             final List<Stream> allStreamList = streamStore.find(criteria);
-            allStreamIdList = new ArrayList<Long>(allStreamList.size());
+            allStreamIdList = new ArrayList<>(allStreamList.size());
             for (final Stream stream : allStreamList) {
                 allStreamIdList.add(stream.getId());
             }
 
             if (criteria.getStreamIdSet() == null || Boolean.TRUE.equals(criteria.getStreamIdSet().getMatchAll())) {
                 // If we are including all tasks then don't filter the list.
-                filteredList = new ArrayList<Long>(allStreamList.size());
+                filteredList = new ArrayList<>(allStreamList.size());
                 for (final Stream stream : allStreamList) {
                     filteredList.add(stream.getId());
                 }
@@ -446,7 +446,7 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
     }
 
     private void processStream(final SteppingController controller, final Feed feed, final StreamType streamType,
-            final StreamSource source) {
+                               final StreamSource source) {
         // If the feed changes then destroy the last pipeline.
         if (lastFeed != null && !lastFeed.equals(feed)) {
             // destroy the last pipeline.
@@ -486,7 +486,7 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
     }
 
     private void process(final SteppingController controller, final Feed feed, final StreamType streamType,
-            final StreamSource streamSource) {
+                         final StreamSource streamSource) {
         try {
             final Stream stream = streamSource.getStream();
             final SteppingTask request = controller.getRequest();
@@ -603,7 +603,7 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
             pipelineHolder.setPipeline(pipelineEntity);
             pipelineContext.setStepping(true);
 
-            final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+            final PipelineData pipelineData = pipelineDataCache.getOrCreate(pipelineEntity);
             pipeline = pipelineFactory.create(pipelineData, controller);
 
             // Don't return a pipeline if we cannot step with it.

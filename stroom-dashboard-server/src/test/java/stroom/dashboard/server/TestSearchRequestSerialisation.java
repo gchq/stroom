@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.Test;
-import stroom.query.api.v1.SearchRequest;
+import stroom.query.api.v2.SearchRequest;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -38,6 +38,17 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * Checks serialisation by converting to and from the SearchRequest objects and comparing the results
  */
 public class TestSearchRequestSerialisation {
+
+    private static ObjectMapper getMapper(final boolean indent) {
+        final ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        // Enabling default typing adds type information where it would otherwise be ambiguous, i.e. for abstract classes
+//        mapper.enableDefaultTyping();
+        return mapper;
+    }
 
     @Test
     public void testJsonSearchRequestSerialisation() throws IOException {
@@ -77,17 +88,6 @@ public class TestSearchRequestSerialisation {
         // Then
         assertThat(searchRequest, equalTo(deserialisedSearchRequest));
         assertThat(serialisedSearchRequest, equalTo(reSerialisedSearchRequest));
-    }
-
-    private static ObjectMapper getMapper(final boolean indent) {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        // Enabling default typing adds type information where it would otherwise be ambiguous, i.e. for abstract classes
-//        mapper.enableDefaultTyping();
-        return mapper;
     }
 
 }

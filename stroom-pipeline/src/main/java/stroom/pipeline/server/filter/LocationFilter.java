@@ -32,8 +32,7 @@ public class LocationFilter extends AbstractXMLFilter implements Locator {
      * This method tells filters that a stream is about to be parsed so that
      * they can complete any setup necessary.
      *
-     * @throws SAXException
-     *             Could be thrown by an implementing class.
+     * @throws SAXException Could be thrown by an implementing class.
      */
     @Override
     public void startStream() {
@@ -45,19 +44,13 @@ public class LocationFilter extends AbstractXMLFilter implements Locator {
     /**
      * Counts a start element.
      *
-     * @param uri
-     *            The element's Namespace URI, or the empty string.
-     * @param localName
-     *            The element's local name, or the empty string.
-     * @param qName
-     *            The element's qualified (prefixed) name, or the empty string.
-     * @param atts
-     *            The element's attributes.
-     * @throws SAXException
-     *             Not thrown.
-     *
+     * @param uri       The element's Namespace URI, or the empty string.
+     * @param localName The element's local name, or the empty string.
+     * @param qName     The element's qualified (prefixed) name, or the empty string.
+     * @param atts      The element's attributes.
+     * @throws SAXException Not thrown.
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#startElement(java.lang.String,
-     *      java.lang.String, java.lang.String, org.xml.sax.Attributes)
+     * java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
@@ -70,17 +63,12 @@ public class LocationFilter extends AbstractXMLFilter implements Locator {
     /**
      * Counts an end element.
      *
-     * @param uri
-     *            The element's Namespace URI, or the empty string.
-     * @param localName
-     *            The element's local name, or the empty string.
-     * @param qName
-     *            The element's qualified (prefixed) name, or the empty string.
-     * @throws SAXException
-     *             Not thrown.
-     *
+     * @param uri       The element's Namespace URI, or the empty string.
+     * @param localName The element's local name, or the empty string.
+     * @param qName     The element's qualified (prefixed) name, or the empty string.
+     * @throws SAXException Not thrown.
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#endElement(java.lang.String,
-     *      java.lang.String, java.lang.String)
+     * java.lang.String, java.lang.String)
      */
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
@@ -92,17 +80,12 @@ public class LocationFilter extends AbstractXMLFilter implements Locator {
     /**
      * Adds to the content position.
      *
-     * @param ch
-     *            the characters from the XML document
-     * @param start
-     *            the start position in the array
-     * @param length
-     *            the number of characters to read from the array
-     * @throws SAXException
-     *             Not thrown.
-     *
+     * @param ch     the characters from the XML document
+     * @param start  the start position in the array
+     * @param length the number of characters to read from the array
+     * @throws SAXException Not thrown.
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#characters(char[],
-     *      int, int)
+     * int, int)
      */
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
@@ -114,7 +97,6 @@ public class LocationFilter extends AbstractXMLFilter implements Locator {
      * This method actually gets the position within the element content.
      *
      * @return The position in the element content.
-     *
      * @see org.xml.sax.Locator#getColumnNumber()
      */
     @Override
@@ -127,7 +109,6 @@ public class LocationFilter extends AbstractXMLFilter implements Locator {
      * currently being processed.
      *
      * @return The element count (start plus end).
-     *
      * @see org.xml.sax.Locator#getLineNumber()
      */
     @Override
@@ -139,7 +120,6 @@ public class LocationFilter extends AbstractXMLFilter implements Locator {
      * Not implemented.
      *
      * @return null.
-     *
      * @see org.xml.sax.Locator#getPublicId()
      */
     @Override
@@ -151,7 +131,6 @@ public class LocationFilter extends AbstractXMLFilter implements Locator {
      * Not implemented.
      *
      * @return null.
-     *
      * @see org.xml.sax.Locator#getSystemId()
      */
     @Override

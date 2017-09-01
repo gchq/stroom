@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,11 +18,9 @@ package stroom.streamstore.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestScenarioCreator;
 import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
-import stroom.query.api.v1.ExpressionTerm.Condition;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.Stream;
@@ -32,6 +30,8 @@ import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeKeyService;
 import stroom.streamstore.shared.StreamAttributeMapService;
 import stroom.streamstore.shared.StreamType;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestScenarioCreator;
 import stroom.util.date.DateUtil;
 
 import javax.annotation.Resource;

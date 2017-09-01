@@ -23,13 +23,11 @@ public abstract class FileSystemTestUtil {
 
     private static final File configDir = new File(CONFIG_PATH);
     private static final File configXSDDir = new File(configDir, "xsd");
-
+    private static final long TEST_PREFIX = System.currentTimeMillis();
+    private static long testSuffix = 0;
     private FileSystemTestUtil() {
         // Utility
     }
-
-    private static final long TEST_PREFIX = System.currentTimeMillis();
-    private static long testSuffix = 0;
 
     /**
      * @return a unique string for testing

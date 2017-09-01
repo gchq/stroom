@@ -50,14 +50,6 @@
             <property name="requireUiRestart" value="false"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.proxy.zipFilenameDelimiter"/>
-            <property name="value" value="%"/>
-            <property name="description" value="The char or string to delimit the id part of the zip file name from the templated part (see zipFilenameTemplate) if a template is provided."/>
-            <property name="editable" value="true"/>
-            <property name="requireRestart" value="false"/>
-            <property name="requireUiRestart" value="false"/>
-        </bean>
-        <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.maxAggregation"/>
             <property name="value" value="10000"/>
             <property name="description"
@@ -295,13 +287,15 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.maintenance.message"/>
             <property name="value" value=""/>
-            <property name="description" value="Provide a warning message to users about an outage or other significant event."/>
+            <property name="description"
+                      value="Provide a warning message to users about an outage or other significant event."/>
             <property name="editable" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.maintenance.preventLogin"/>
             <property name="value" value="false"/>
-            <property name="description" value="Prevent new logins to the system. This is useful if the system is scheduled to have an outage."/>
+            <property name="description"
+                      value="Prevent new logins to the system. This is useful if the system is scheduled to have an outage."/>
             <property name="editable" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
@@ -372,6 +366,20 @@
             <property name="editable" value="true"/>
         </bean>
 
+        <!-- QUERY HISTORY PROPERTIES -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.query.history.itemsRetention"/>
+            <property name="value" value="100"/>
+            <property name="description" value="The maximum number of query history items that will be retained"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.query.history.daysRetention"/>
+            <property name="value" value="365"/>
+            <property name="description" value="The number of days query history items will be retained for"/>
+            <property name="editable" value="true"/>
+        </bean>
+
         <!-- SEARCH PROPERTIES -->
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.search.maxStoredDataQueueSize"/>
@@ -437,10 +445,17 @@
             <property name="editable" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.search.maxResults"/>
+            <property name="name" value="stroom.search.storeSize"/>
             <property name="value" value="1000000,100,10,1"/>
             <property name="description"
                       value="The maximum number of search results to keep in memory at each level."/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.dashboard.defaultMaxResults"/>
+            <property name="value" value="1000000,100,10,1"/>
+            <property name="description"
+                      value="The default maximum number of search results to return to the dashboard, unless the user requests lower values"/>
             <property name="editable" value="true"/>
         </bean>
 
@@ -502,7 +517,7 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.jdbcDriverUrl"/>
             <property name="value"
-                      value="jdbc:hsqldb:file:${stroom.temp}/STROOMDB/HSQLDB.DAT;shutdown=true"/>
+                      value="jdbc:hsqldb:file:${stroom.temp}/stroom/HSQLDB.DAT;shutdown=true"/>
             <property name="description"
                       value="Should only be set per node in application property file"/>
             <property name="editable" value="false"/>
@@ -548,7 +563,7 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.statistics.sql.jdbcDriverUrl"/>
             <property name="value"
-                      value="jdbc:hsqldb:file:${stroom.temp}/STROOMDB/HSQLDB.DAT;shutdown=true"/>
+                      value="jdbc:hsqldb:file:${stroom.temp}/statistics/HSQLDB.DAT;shutdown=true"/>
             <property name="description"
                       value="Should only be set per node in application property file"/>
             <property name="editable" value="false"/>
@@ -656,21 +671,13 @@
             <property name="editable" value="true"/>
             <property name="requireRestart" value="false"/>
         </bean>
-        <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name"
-                      value="stroom.clusterCallCertificateRequiredFilterCn"/>
-            <property name="value" value=""/>
-            <property name="description"
-                      value="Allowed Certificates to talk within cluster"/>
-            <property name="editable" value="true"/>
-        </bean>
 
         <!-- EXPORT -->
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.exportCertificateRequiredFilterCn"/>
-            <property name="value" value=""/>
+            <property name="name" value="stroom.export.enabled"/>
+            <property name="value" value="false"/>
             <property name="description"
-                      value="Allowed Certificates to export config from system"/>
+                      value="Determines if the system will allow configuration to be exported via the export servlet"/>
             <property name="editable" value="true"/>
         </bean>
 
@@ -793,6 +800,13 @@
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.helpUrl"/>
+            <property name="value" value=""/>
+            <property name="description" value="The URL of hosted help files."/>
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
 
         <!-- SQL statistics store properties -->
         <bean class="stroom.node.shared.GlobalProperty">
@@ -821,7 +835,7 @@
             <property name="name" value="stroom.contentPackImportEnabled"/>
             <property name="value" value="true"/>
             <property name="description"
-                      value="If true any content packs found in ${CATALINA_BASE}/contentPackImport/ will be imported into Stroom. Only intended for use on new Stroom instances to reduce the risk of overwriting existing entities" />
+                      value="If true any content packs found in ${CATALINA_BASE}/contentPackImport/ will be imported into Stroom. Only intended for use on new Stroom instances to reduce the risk of overwriting existing entities"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -829,7 +843,7 @@
             <property name="name" value="stroom.volumes.createDefaultOnStart"/>
             <property name="value" value="true"/>
             <property name="description"
-                      value="If no existing volumes are present a default volume will be created on application start. The volume will live in the volumes sub directory of the Stroom installation directory" />
+                      value="If no existing volumes are present a default volume will be created on application start. The volume will live in the volumes sub directory of the Stroom installation directory"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -842,15 +856,15 @@
 
         <!-- Stroom-Index -->
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.services.index.name"/>
-            <property name="value" value="index"/>
+            <property name="name" value="stroom.services.stroomIndex.name"/>
+            <property name="value" value="stroom-index"/>
             <property name="description"
                       value="Name of the index service" />
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.services.index.version"/>
+            <property name="name" value="stroom.services.stroomIndex.version"/>
             <property name="value" value="1"/>
             <property name="description"
                       value="Version of the index service" />
@@ -858,8 +872,8 @@
             <property name="requireUiRestart" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.services.index.docRefType"/>
-            <property name="value" value="index"/>
+            <property name="name" value="stroom.services.stroomIndex.docRefType"/>
+            <property name="value" value="Index"/>
             <property name="description"
                       value="The entity type for the index service" />
             <property name="editable" value="true"/>
@@ -937,7 +951,7 @@
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.services.stroomStats.docRefType"/>
-            <property name="value" value="stroom-stats"/>
+            <property name="value" value="StroomStatsStore"/>
             <property name="description"
                       value="The entity type for the stroom-stats service" />
             <property name="editable" value="true"/>
@@ -961,7 +975,8 @@
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
-        <!-- SQL Statistcis -->
+
+        <!-- SQL Statistics -->
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.services.sqlStatistics.name"/>
             <property name="value" value="sql_statistics"/>
@@ -980,7 +995,7 @@
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.services.sqlStatistics.docRefType"/>
-            <property name="value" value="sql_statistics"/>
+            <property name="value" value="StatisticStore"/>
             <property name="description"
                       value="The entity type for the sql statistics service" />
             <property name="editable" value="true"/>
@@ -992,7 +1007,7 @@
 
 
 
-        <!-- Service discovery properties -->
+        <!-- Kafka properties -->
         <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~START~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.kafka.bootstrap.servers"/>
@@ -1003,10 +1018,30 @@
             <property name="requireUiRestart" value="true"/>
         </bean>
 
+
         <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
         <!-- Service discovery properties -->
         <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~START~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.serviceDiscovery.enabled"/>
+            <property name="value" value="true"/>
+            <property name="description"
+                      value="Set this to true to use Zookeeper for service discovery. Set this to false to use resolve all services locally, i.e. 127.0.0.1"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
+        </bean>
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.serviceDiscovery.simpleLookup.basePath"/>
+            <property name="value" value="http://127.0.0.1:8080"/>
+            <property name="description"
+                      value="The base path to connect to local services on, when not using service discovery"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
+        </bean>
+
+
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.serviceDiscovery.zookeeperUrl"/>
             <property name="value"
@@ -1084,7 +1119,7 @@
         <!-- Internal statistics definitions
              Each internal statistic can have multiple docRef definitions, one for each statistics engine,
              currently 'sql_statistics' and 'stroom-stats'
-             Valid values for docRef.type are 'sql_statistics' and 'stroom-stats'
+             Valid values for docRef.type are 'StatisticStore' and 'StroomStatsStore'
              The name and uuid so match those defined for the statistic in stroom-content
              If an internal statistic docRefs property has an empty value then the statistic events will be silently
              ignored.
@@ -1093,7 +1128,7 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.internalstatistics.benchmarkCluster.docRefs"/>
             <property name="value"
-                      value="docRef(sql_statistics,946a88c6-a59a-11e6-bdc4-0242ac110002,Benchmark-Cluster Test),docRef(stroom-stats,2503f703-5ce0-4432-b9d4-e3272178f47e,Benchmark-Cluster Test)"/>
+                      value="docRef(StatisticStore,946a88c6-a59a-11e6-bdc4-0242ac110002,Benchmark-Cluster Test),docRef(StroomStatsStore,2503f703-5ce0-4432-b9d4-e3272178f47e,Benchmark-Cluster Test)"/>
             <property name="description"
                       value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
             <property name="editable" value="true"/>
@@ -1103,7 +1138,7 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.internalstatistics.pipelineStreamProcessor.docRefs"/>
             <property name="value"
-                      value="docRef(sql_statistics,946a80fc-a59a-11e6-bdc4-0242ac110002,PipelineStreamProcessor),docRef(stroom-stats,efd9bad4-0bab-460f-ae98-79e9717deeaf,PipelineStreamProcessor)"/>
+                      value="docRef(StatisticStore,946a80fc-a59a-11e6-bdc4-0242ac110002,PipelineStreamProcessor),docRef(StroomStatsStore,efd9bad4-0bab-460f-ae98-79e9717deeaf,PipelineStreamProcessor)"/>
             <property name="description"
                       value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
             <property name="editable" value="true"/>
@@ -1113,7 +1148,7 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.internalstatistics.metaDataStreamSize.docRefs"/>
             <property name="value"
-                      value="docRef(sql_statistics,946a8814-a59a-11e6-bdc4-0242ac110002,Meta Data-Stream Size),docRef(stroom-stats,3b25d63b-5472-44d0-80e8-8eea94f40f14,Meta Data-Stream Size)"/>
+                      value="docRef(StatisticStore,946a8814-a59a-11e6-bdc4-0242ac110002,Meta Data-Stream Size),docRef(StroomStatsStore,3b25d63b-5472-44d0-80e8-8eea94f40f14,Meta Data-Stream Size)"/>
             <property name="description"
                       value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
             <property name="editable" value="true"/>
@@ -1123,7 +1158,7 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.internalstatistics.eventsPerSecond.docRefs"/>
             <property name="value"
-                      value="docRef(sql_statistics,a9936548-2572-448b-9d5b-8543052c4d92,EPS),docRef(stroom-stats,cde67df0-0f77-45d3-b2c0-ee8bb7b3c9c6,EPS)"/>
+                      value="docRef(StatisticStore,a9936548-2572-448b-9d5b-8543052c4d92,EPS),docRef(StroomStatsStore,cde67df0-0f77-45d3-b2c0-ee8bb7b3c9c6,EPS)"/>
             <property name="description"
                       value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
             <property name="editable" value="true"/>
@@ -1133,7 +1168,7 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.internalstatistics.cpu.docRefs"/>
             <property name="value"
-                      value="docRef(sql_statistics,af08c4a7-ee7c-44e4-8f5e-e9c6be280434,CPU),docRef(stroom-stats,1edfd582-5e60-413a-b91c-151bd544da47,CPU)"/>
+                      value="docRef(StatisticStore,af08c4a7-ee7c-44e4-8f5e-e9c6be280434,CPU),docRef(StroomStatsStore,1edfd582-5e60-413a-b91c-151bd544da47,CPU)"/>
             <property name="description"
                       value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
             <property name="editable" value="true"/>
@@ -1143,7 +1178,7 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.internalstatistics.metaDataStreamsReceived.docRefs"/>
             <property name="value"
-                      value="docRef(sql_statistics,946a87bc-a59a-11e6-bdc4-0242ac110002,Meta Data-Streams Received),docRef(stroom-stats,5535f493-29ae-4ee6-bba6-735aa3104136,Meta Data-Streams Received)"/>
+                      value="docRef(StatisticStore,946a87bc-a59a-11e6-bdc4-0242ac110002,Meta Data-Streams Received),docRef(StroomStatsStore,5535f493-29ae-4ee6-bba6-735aa3104136,Meta Data-Streams Received)"/>
             <property name="description"
                       value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
             <property name="editable" value="true"/>
@@ -1153,7 +1188,7 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.internalstatistics.streamTaskQueueSize.docRefs"/>
             <property name="value"
-                      value="docRef(sql_statistics,946a7f0f-a59a-11e6-bdc4-0242ac110002,Stream Task Queue Size),docRef(stroom-stats,4ce8d6e7-94be-40e1-8294-bf29dd089962,Stream Task Queue Size)"/>
+                      value="docRef(StatisticStore,946a7f0f-a59a-11e6-bdc4-0242ac110002,Stream Task Queue Size),docRef(StroomStatsStore,4ce8d6e7-94be-40e1-8294-bf29dd089962,Stream Task Queue Size)"/>
             <property name="description"
                       value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
             <property name="editable" value="true"/>
@@ -1163,7 +1198,7 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.internalstatistics.volumes.docRefs"/>
             <property name="value"
-                      value="docRef(sql_statistics,ac4d8d10-6f75-4946-9708-18b8cb42a5a3,Volumes),docRef(stroom-stats,60f4f5f0-4cc3-42d6-8fe7-21a7cec30f8e,Volumes)"/>
+                      value="docRef(StatisticStore,ac4d8d10-6f75-4946-9708-18b8cb42a5a3,Volumes),docRef(StroomStatsStore,60f4f5f0-4cc3-42d6-8fe7-21a7cec30f8e,Volumes)"/>
             <property name="description"
                       value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
             <property name="editable" value="true"/>
@@ -1173,7 +1208,7 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.internalstatistics.memory.docRefs"/>
             <property name="value"
-                      value="docRef(sql_statistics,77c09ccb-e251-4ca5-bca0-56a842654397,Memory),docRef(stroom-stats,d8a7da4f-ef6d-47e0-b16a-af26367a2798,Memory)"/>
+                      value="docRef(StatisticStore,77c09ccb-e251-4ca5-bca0-56a842654397,Memory),docRef(StroomStatsStore,d8a7da4f-ef6d-47e0-b16a-af26367a2798,Memory)"/>
             <property name="description"
                       value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),...'" />
             <property name="editable" value="true"/>

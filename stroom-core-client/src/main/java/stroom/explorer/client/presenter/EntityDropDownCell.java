@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,7 +20,7 @@ import com.google.inject.Inject;
 import stroom.cell.dropdowntree.client.DropDownCell;
 import stroom.explorer.shared.EntityData;
 import stroom.explorer.shared.ExplorerData;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 public class EntityDropDownCell extends DropDownCell<DocRef> {
     private final ExplorerDropDownTreePresenter explorerDropDownTreePresenter;
@@ -70,7 +70,7 @@ public class EntityDropDownCell extends DropDownCell<DocRef> {
         if (selection == null || !(selection instanceof EntityData)) {
             setValue(null);
         } else {
-            setValue(((EntityData)selection).getDocRef());
+            setValue(((EntityData) selection).getDocRef());
         }
     }
 }

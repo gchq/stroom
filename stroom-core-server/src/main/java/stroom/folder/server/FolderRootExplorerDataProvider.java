@@ -28,7 +28,7 @@ import stroom.explorer.shared.SimpleExplorerItem;
 @ProvidesExplorerData
 @Component
 public class FolderRootExplorerDataProvider implements ExplorerDataProvider {
-    private static final String ICON_URL = DocumentType.DOC_IMAGE_URL + FolderService.ROOT + ".png";
+    private static final String ICON_URL = DocumentType.DOC_IMAGE_URL + FolderService.ROOT + ".svg";
     public static final ExplorerData ROOT = new SimpleExplorerItem(ICON_URL, FolderService.ROOT, "System", null);
 
     @Override

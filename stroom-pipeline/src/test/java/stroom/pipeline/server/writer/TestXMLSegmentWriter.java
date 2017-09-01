@@ -90,9 +90,9 @@ public class TestXMLSegmentWriter extends StroomUnitTest {
         final File dataFile = new File(dir, "test.dat");
         final File indexFile = new File(dir, "test.idx");
         try (BlockGZIPInputFile data = new BlockGZIPInputFile(dataFile);
-                final UncompressedInputStream index = new UncompressedInputStream(indexFile, true)) {
+             final UncompressedInputStream index = new UncompressedInputStream(indexFile, true)) {
             try (SegmentInputStream inputStream = new RASegmentInputStream(data, index)) {
-                final Set<Long> seenBefore = new HashSet<Long>();
+                final Set<Long> seenBefore = new HashSet<>();
                 long expected = 0;
 
                 if (testInclude) {

@@ -24,12 +24,23 @@ import java.util.Set;
 
 /**
  * An implementation of TransformReader to transform malformed XML documents.
- *
+ * <p>
  * Leaf Entities are XML entity names for which, it is assumed, text delimited
  * by the start and end tags should have been escaped to avoid '<'; '>' and '&'
  * characters being interpreted as XML syntax.
  */
 public class BadTextXMLFilterReader extends TransformReader {
+    private static final int MAX_CAPACITY = 1024 * 1024; // 1 million characters
+    // should be larger
+    // than any single
+    // entity.
+    private final CharBuffer m_cbuf;
+    private final Set<String> m_forceLeafElements;
+    private XMLstate m_xmlState;
+    private int m_cbufUsed;
+    private int m_leafBeginText, m_leafEndText;
+    private int m_cachedCP;
+
     public BadTextXMLFilterReader(final Reader in, final String[] forceLeafEntities) {
         super(in);
         m_cbuf = CharBuffer.allocate(MAX_CAPACITY);
@@ -39,6 +50,19 @@ public class BadTextXMLFilterReader extends TransformReader {
         for (final String le : forceLeafEntities)
             m_forceLeafElements.add(le);
         m_xmlState = XMLstate.Initial;
+    }
+
+    private static boolean isNameStartChar(final int cp) {
+        return (cp >= 'A' && cp <= 'Z') || (cp >= 'a' && cp <= 'z') || cp == ':' || cp == '_'
+                || (cp >= 0xc0 && cp <= 0xd6) || (cp >= 0xd8 && cp <= 0xf6) || (cp >= 0xf8 && cp <= 0x2ff)
+                || (cp >= 0x370 && cp <= 0x37d) || (cp >= 0x37f && cp <= 0x1fff) || (cp >= 0x200c && cp <= 0x200d)
+                || (cp >= 0x2070 && cp <= 0x218f) || (cp >= 0x2c00 && cp <= 0x2fef) || (cp >= 0x3001 && cp <= 0xD7ff)
+                || (cp >= 0xf900 && cp <= 0xfdcf) || (cp >= 0xfdf0 && cp <= 0xfffd) || (cp >= 0x10000 && cp <= 0xeffff);
+    }
+
+    private static boolean isNameChar(final int cp) {
+        return isNameStartChar(cp) || cp == '-' || cp == '.' || Character.isDigit(cp) || cp == 0x87
+                || (cp >= 0x300 && cp <= 0x36f) || (cp >= 0x203f && cp <= 0x2040);
     }
 
     @Override
@@ -78,17 +102,17 @@ public class BadTextXMLFilterReader extends TransformReader {
         m_cbuf.put(openEntity);
         for (final char ch : raw.toCharArray()) {
             switch (ch) {
-            case '&':
-                m_cbuf.put("&amp;");
-                break;
-            case '<':
-                m_cbuf.put("&lt;");
-                break;
-            case '>':
-                m_cbuf.put("&gt;");
-                break;
-            default:
-                m_cbuf.put(ch);
+                case '&':
+                    m_cbuf.put("&amp;");
+                    break;
+                case '<':
+                    m_cbuf.put("&lt;");
+                    break;
+                case '>':
+                    m_cbuf.put("&gt;");
+                    break;
+                default:
+                    m_cbuf.put(ch);
             }
         }
         m_cbuf.put(closeEntity);
@@ -104,16 +128,16 @@ public class BadTextXMLFilterReader extends TransformReader {
         m_cbufUsed = m_cbuf.position();
         m_cbuf.rewind();
         switch (m_xmlState) {
-        case InLeafClose:
-            m_streamModified = true;
-            patchUpLeafNonXML();
-            break;
-        case InTagTail:
-        case InTagSpecial:
-        case InTextValid:
-            break;
-        default:
-            assert(false);
+            case InLeafClose:
+                m_streamModified = true;
+                patchUpLeafNonXML();
+                break;
+            case InTagTail:
+            case InTagSpecial:
+            case InTextValid:
+                break;
+            default:
+                assert (false);
         }
         m_xmlState = XMLstate.Initial;
         return true;
@@ -121,7 +145,7 @@ public class BadTextXMLFilterReader extends TransformReader {
 
     private void copyQuotedString() throws IOException {
         final char qChar = (char) m_cachedCP;
-        for (;;) {
+        for (; ; ) {
             writeCP(m_cachedCP);
             m_cachedCP = readCP();
             if (m_cachedCP == qChar) {
@@ -143,96 +167,96 @@ public class BadTextXMLFilterReader extends TransformReader {
             m_cachedCP = readCP();
         while (m_cachedCP != -1) {
             switch (m_xmlState) {
-            case Initial:
-                switch (m_cachedCP) {
-                case '<':
-                    m_xmlState = XMLstate.InTagPreName;
+                case Initial:
+                    switch (m_cachedCP) {
+                        case '<':
+                            m_xmlState = XMLstate.InTagPreName;
+                            break;
+                        default:
+                            m_xmlState = XMLstate.InTextValid;
+                    }
                     break;
-                default:
-                    m_xmlState = XMLstate.InTextValid;
-                }
-                break;
-            case InTagPreName:
-                switch (m_cachedCP) {
-                case '/':
-                    m_xmlState = XMLstate.InTagCloseName;
+                case InTagPreName:
+                    switch (m_cachedCP) {
+                        case '/':
+                            m_xmlState = XMLstate.InTagCloseName;
+                            break;
+                        case '?':
+                            m_xmlState = XMLstate.InTagSpecial;
+                            break;
+                        default:
+                            if (isNameStartChar(m_cachedCP)) {
+                                m_xmlState = XMLstate.InTagName;
+                                entityNameidx = m_cbuf.position();
+                                break;
+                            }
+                    }
                     break;
-                case '?':
-                    m_xmlState = XMLstate.InTagSpecial;
-                    break;
-                default:
+                case InTagCloseName:
                     if (isNameStartChar(m_cachedCP)) {
                         m_xmlState = XMLstate.InTagName;
                         entityNameidx = m_cbuf.position();
                         break;
                     }
-                }
-                break;
-            case InTagCloseName:
-                if (isNameStartChar(m_cachedCP)) {
-                    m_xmlState = XMLstate.InTagName;
-                    entityNameidx = m_cbuf.position();
-                    break;
-                }
-            case InTagName:
-                // Just seen '</?[-NameStartChar-]'
-                if (isNameChar(m_cachedCP))
-                    break;
-                m_entityName = String.copyValueOf(m_cbuf.array(), entityNameidx, m_cbuf.position() - entityNameidx);
-                m_xmlState = XMLstate.InTagTail;
-                // Intended to fall through...
-            case InTagTail:
-                // Intended to fall through...
-            case InTagSpecial:
-                switch (m_cachedCP) {
-                case '"':
-                case '\'':
-                    copyQuotedString();
-                    if (m_cachedCP != '>')
+                case InTagName:
+                    // Just seen '</?[-NameStartChar-]'
+                    if (isNameChar(m_cachedCP))
                         break;
+                    m_entityName = String.copyValueOf(m_cbuf.array(), entityNameidx, m_cbuf.position() - entityNameidx);
+                    m_xmlState = XMLstate.InTagTail;
                     // Intended to fall through...
-                case '>':
-                    if (m_forceLeafElements.contains(m_entityName)) {
-                        m_xmlState = XMLstate.InLeaf;
-                        m_leafBeginText = m_cbuf.position() + 1;
-                        break;
+                case InTagTail:
+                    // Intended to fall through...
+                case InTagSpecial:
+                    switch (m_cachedCP) {
+                        case '"':
+                        case '\'':
+                            copyQuotedString();
+                            if (m_cachedCP != '>')
+                                break;
+                            // Intended to fall through...
+                        case '>':
+                            if (m_forceLeafElements.contains(m_entityName)) {
+                                m_xmlState = XMLstate.InLeaf;
+                                m_leafBeginText = m_cbuf.position() + 1;
+                                break;
+                            }
+                            return foundXMLChunk(true);
                     }
-                    return foundXMLChunk(true);
-                }
-                break;
-            case InTextValid:
-                if (m_cachedCP == '<')
-                    return foundXMLChunk(false);
-                break;
-            case InLeaf:
-                if (m_cachedCP == '<') {
-                    m_xmlState = XMLstate.InLeafOpenAngle;
-                    m_leafEndText = m_cbuf.position();
-                }
-                break;
-            case InLeafOpenAngle:
-                if (m_cachedCP == '/') {
-                    m_xmlState = XMLstate.InLeafCheckName;
-                    entityNameidx = 0;
-                } else
-                    m_xmlState = XMLstate.InLeaf;
-                break;
-            case InLeafCheckName:
-                if (m_cachedCP == m_entityName.charAt(entityNameidx)) {
-                    ++entityNameidx;
-                    if (entityNameidx == m_entityName.length())
-                        m_xmlState = XMLstate.InLeafClose;
-                } else
-                    m_xmlState = XMLstate.InLeaf;
-                break;
-            case InLeafClose:
-                if (Character.isWhitespace(m_cachedCP))
                     break;
-                if (m_cachedCP == '>')
-                    return foundXMLChunk(true);
-                break;
-            default:
-                assert(false);
+                case InTextValid:
+                    if (m_cachedCP == '<')
+                        return foundXMLChunk(false);
+                    break;
+                case InLeaf:
+                    if (m_cachedCP == '<') {
+                        m_xmlState = XMLstate.InLeafOpenAngle;
+                        m_leafEndText = m_cbuf.position();
+                    }
+                    break;
+                case InLeafOpenAngle:
+                    if (m_cachedCP == '/') {
+                        m_xmlState = XMLstate.InLeafCheckName;
+                        entityNameidx = 0;
+                    } else
+                        m_xmlState = XMLstate.InLeaf;
+                    break;
+                case InLeafCheckName:
+                    if (m_cachedCP == m_entityName.charAt(entityNameidx)) {
+                        ++entityNameidx;
+                        if (entityNameidx == m_entityName.length())
+                            m_xmlState = XMLstate.InLeafClose;
+                    } else
+                        m_xmlState = XMLstate.InLeaf;
+                    break;
+                case InLeafClose:
+                    if (Character.isWhitespace(m_cachedCP))
+                        break;
+                    if (m_cachedCP == '>')
+                        return foundXMLChunk(true);
+                    break;
+                default:
+                    assert (false);
             }
             writeCP(m_cachedCP);
             m_cachedCP = readCP();
@@ -246,43 +270,18 @@ public class BadTextXMLFilterReader extends TransformReader {
         if (Character.isHighSurrogate((char) cp)) {
             final char hiSurrogate = (char) cp;
             cp = in.read();
-            assert(Character.isLowSurrogate((char) cp));
+            assert (Character.isLowSurrogate((char) cp));
             cp = Character.toCodePoint(hiSurrogate, (char) cp);
         }
         return cp;
     }
 
-    private static boolean isNameStartChar(final int cp) {
-        return (cp >= 'A' && cp <= 'Z') || (cp >= 'a' && cp <= 'z') || cp == ':' || cp == '_'
-                || (cp >= 0xc0 && cp <= 0xd6) || (cp >= 0xd8 && cp <= 0xf6) || (cp >= 0xf8 && cp <= 0x2ff)
-                || (cp >= 0x370 && cp <= 0x37d) || (cp >= 0x37f && cp <= 0x1fff) || (cp >= 0x200c && cp <= 0x200d)
-                || (cp >= 0x2070 && cp <= 0x218f) || (cp >= 0x2c00 && cp <= 0x2fef) || (cp >= 0x3001 && cp <= 0xD7ff)
-                || (cp >= 0xf900 && cp <= 0xfdcf) || (cp >= 0xfdf0 && cp <= 0xfffd) || (cp >= 0x10000 && cp <= 0xeffff);
-    }
-
-    private static boolean isNameChar(final int cp) {
-        return isNameStartChar(cp) || cp == '-' || cp == '.' || Character.isDigit(cp) || cp == 0x87
-                || (cp >= 0x300 && cp <= 0x36f) || (cp >= 0x203f && cp <= 0x2040);
-    }
-
     private void writeCP(final int cp) {
-        assert(cp >= 0 && cp <= 0x10ffff);
+        assert (cp >= 0 && cp <= 0x10ffff);
         m_cbuf.put(Character.toChars(cp));
     }
-
     private enum XMLstate {
         Initial, InTagPreName, InTagCloseName, InTagName, InTagSpecial, InTagTail, InTextValid, InTextInvalid, InLeaf, InLeafOpenAngle, InLeafCheckName, InLeafClose
     }
-
-    private XMLstate m_xmlState;
-    private static final int MAX_CAPACITY = 1024 * 1024; // 1 million characters
-                                                            // should be larger
-                                                            // than any single
-                                                            // entity.
-    private final CharBuffer m_cbuf;
-    private int m_cbufUsed;
-    private int m_leafBeginText, m_leafEndText;
-    private int m_cachedCP;
-    private final Set<String> m_forceLeafElements;
 
 }

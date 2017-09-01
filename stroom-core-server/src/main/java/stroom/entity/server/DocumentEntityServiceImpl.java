@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,8 +18,10 @@ package stroom.entity.server;
 
 import event.logging.BaseAdvancedQueryItem;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.util.SQLBuilder;
+import stroom.entity.server.util.FieldMap;
+import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
+import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
@@ -27,18 +29,20 @@ import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.FindDocumentEntityCriteria;
+import stroom.entity.shared.FindNamedEntityCriteria;
 import stroom.entity.shared.FindService;
 import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
 import stroom.entity.shared.ImportState;
 import stroom.entity.shared.ImportState.ImportMode;
 import stroom.entity.shared.ImportState.State;
+import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.PermissionException;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.importexport.server.Config;
 import stroom.importexport.server.ImportExportHelper;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.config.StroomProperties;
@@ -79,6 +83,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     @Resource
     private FolderService folderService;
     private String entityType;
+    private FieldMap sqlFieldMap;
 
     protected DocumentEntityServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext) {
         this.entityManager = entityManager;
@@ -180,7 +185,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     public E loadById(final long id, final Set<String> fetchSet) throws RuntimeException {
         E entity = null;
 
-        final SQLBuilder sql = new SQLBuilder();
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT e");
         sql.append(" FROM ");
         sql.append(getEntityClass().getName());
@@ -206,10 +211,11 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
     // TODO : Remove this method when the explorer service is broken out as a separate micro service.
     @Transactional(readOnly = true)
+    @Override
     public E loadByIdInsecure(final long id, final Set<String> fetchSet) throws RuntimeException {
         E entity = null;
 
-        final SQLBuilder sql = new SQLBuilder();
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT e");
         sql.append(" FROM ");
         sql.append(getEntityClass().getName());
@@ -242,7 +248,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     @Transactional(readOnly = true)
     @Override
     public final E loadByUuid(final String uuid, final Set<String> fetchSet) throws RuntimeException {
-        final SQLBuilder sql = new SQLBuilder();
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT e FROM ");
         sql.append(getEntityClass().getName());
         sql.append(" AS e");
@@ -264,7 +270,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     // TODO : Remove this method when the explorer service is broken out as a separate micro service.
     @Transactional(readOnly = true)
     public final E loadByUuidInsecure(final String uuid, final Set<String> fetchSet) throws RuntimeException {
-        final SQLBuilder sql = new SQLBuilder();
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT e FROM ");
         sql.append(getEntityClass().getName());
         sql.append(" AS e");
@@ -292,7 +298,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     @Transactional(readOnly = true)
     @Override
     public final E loadByName(final DocRef folder, final String name, final Set<String> fetchSet) throws RuntimeException {
-        final SQLBuilder sql = new SQLBuilder();
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT e FROM ");
         sql.append(getEntityClass().getName());
         sql.append(" AS e");
@@ -425,7 +431,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     @Transactional(readOnly = true)
     @SuppressWarnings("unchecked")
     public List<E> findByFolder(final DocRef folder, final Set<String> fetchSet) throws RuntimeException {
-        final SQLBuilder sql = new SQLBuilder();
+        final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT e FROM ");
         sql.append(getEntityClass().getName());
         sql.append(" AS e");
@@ -461,7 +467,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         // We will only limit the returned number of results once we have applied permission filtering.
         final PageRequest pageRequest = criteria.getPageRequest();
         criteria.setPageRequest(null);
-        final List<E> list = findServiceHelper.find(criteria);
+        final List<E> list = findServiceHelper.find(criteria, getSqlFieldMap());
         criteria.setPageRequest(pageRequest);
 
         // Filter the results to only include documents that the current user has permission to see.
@@ -499,7 +505,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     // TODO : Remove this method when the explorer service is broken out as a separate micro service.
     @Transactional(readOnly = true)
     public BaseResultList<E> findInsecure(final C criteria) throws RuntimeException {
-        final List<E> list = findServiceHelper.find(criteria);
+        final List<E> list = findServiceHelper.find(criteria, getSqlFieldMap());
         return BaseResultList.createCriterialBasedList(list, criteria);
     }
 
@@ -686,6 +692,20 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         }
 
         securityContext.addDocumentPermissions(sourceType, sourceUuid, destType, destUuid, owner);
+    }
+
+    protected FieldMap createFieldMap() {
+        return new FieldMap()
+                .add(BaseCriteria.FIELD_ID, BaseEntity.ID, "id")
+                .add(FindNamedEntityCriteria.FIELD_NAME, NamedEntity.NAME, "name")
+                .add(FindDocumentEntityCriteria.FIELD_FOLDER, Folder.FOREIGN_KEY, "folder.name");
+    }
+
+    final FieldMap getSqlFieldMap() {
+        if (sqlFieldMap == null) {
+            sqlFieldMap = createFieldMap();
+        }
+        return sqlFieldMap;
     }
 
     public static final class EntityReferenceQuery {

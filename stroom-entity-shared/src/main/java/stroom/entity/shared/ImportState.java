@@ -16,7 +16,7 @@
 
 package stroom.entity.shared;
 
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.util.shared.HasDisplayValue;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
@@ -29,40 +29,17 @@ import java.util.List;
  * This has been put here as import export API is not Serializable.
  */
 public class ImportState implements SharedObject {
-    public enum ImportMode {
-        CREATE_CONFIRMATION, ACTION_CONFIRMATION, IGNORE_CONFIRMATION
-    }
-
-    public enum State implements HasDisplayValue {
-        NEW("New"), UPDATE("Update"), EQUAL("Equal");
-
-        private final String displayValue;
-
-        State(final String displayValue) {
-            this.displayValue = displayValue;
-        }
-
-        @Override
-        public String getDisplayValue() {
-            return displayValue;
-        }
-    }
-
     private static final long serialVersionUID = -5451928033766595954L;
-
     private DocRef docRef;
     private String sourcePath;
     private String destPath;
-
     private boolean action;
     private List<Message> messageList = new ArrayList<>();
     private List<String> updatedFieldList = new ArrayList<>();
     private State state;
-
     public ImportState() {
         // Default constructor for GWT serialisation.
     }
-
     public ImportState(final DocRef docRef, final String sourcePath) {
         this.docRef = docRef;
         this.sourcePath = sourcePath;
@@ -140,5 +117,24 @@ public class ImportState implements SharedObject {
     @Override
     public String toString() {
         return docRef.toString();
+    }
+
+    public enum ImportMode {
+        CREATE_CONFIRMATION, ACTION_CONFIRMATION, IGNORE_CONFIRMATION
+    }
+
+    public enum State implements HasDisplayValue {
+        NEW("New"), UPDATE("Update"), EQUAL("Equal");
+
+        private final String displayValue;
+
+        State(final String displayValue) {
+            this.displayValue = displayValue;
+        }
+
+        @Override
+        public String getDisplayValue() {
+            return displayValue;
+        }
     }
 }

@@ -47,8 +47,8 @@ public class TestBlockGZIPStreams extends StroomUnitTest {
         os.close();
 
         try (BlockGZIPInputStream bgzi = new BlockGZIPInputStream(new FileInputStream(testFile));
-                final LineNumberReader in = new LineNumberReader(
-                        new InputStreamReader(bgzi, StreamUtil.DEFAULT_CHARSET))) {
+             final LineNumberReader in = new LineNumberReader(
+                     new InputStreamReader(bgzi, StreamUtil.DEFAULT_CHARSET))) {
             String line;
             int expected = 0;
             while ((line = in.readLine()) != null) {

@@ -148,32 +148,32 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
     }
 
     @Override
-    public Long executeNativeUpdate(final SQLBuilder sql) {
+    public Long executeNativeUpdate(final SqlBuilder sql) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         Long rtn;
         try {
             final Query query = createNativeQuery(sql.toString());
-            SQLUtil.setParameters(query, sql);
-            rtn = Long.valueOf(query.executeUpdate());
+            SqlUtil.setParameters(query, sql);
+            rtn = (long) query.executeUpdate();
             EntityServiceLogUtil.logUpdate(LOGGER, "executeNativeUpdate", logExecutionTime, rtn, sql);
         } catch (final RuntimeException e) {
-            LOGGER.debug("executeNativeUpdate - {} \"{}\"", new Object[]{ sql, sql.toTraceString()}, e);
+            LOGGER.debug("executeNativeUpdate - " + sql.toString() + "\"" + sql.toTraceString() + "\"", e);
             throw e;
         }
         return rtn;
     }
 
     @Override
-    public long executeNativeQueryLongResult(final SQLBuilder sql) {
+    public long executeNativeQueryLongResult(final SqlBuilder sql) {
         return executeQueryLongResult(true, sql);
     }
 
     @Override
-    public long executeQueryLongResult(final SQLBuilder sql) {
+    public long executeQueryLongResult(final HqlBuilder sql) {
         return executeQueryLongResult(false, sql);
     }
 
-    private long executeQueryLongResult(final boolean isNative, final SQLBuilder sql) {
+    private long executeQueryLongResult(final boolean isNative, final AbstractSqlBuilder sql) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         long rtn = 0;
         try {
@@ -183,7 +183,7 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
             } else {
                 query = createQuery(sql.toString());
             }
-            SQLUtil.setParameters(query, sql);
+            SqlUtil.setParameters(query, sql);
             final List<?> list = query.getResultList();
             if (list != null && list.size() > 0) {
                 final Object row = list.get(0);
@@ -207,7 +207,7 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
 
     @SuppressWarnings("unchecked")
     @Override
-    public BaseResultList<SummaryDataRow> executeNativeQuerySummaryDataResult(final SQLBuilder sql,
+    public BaseResultList<SummaryDataRow> executeNativeQuerySummaryDataResult(final SqlBuilder sql,
                                                                               final int numberKeys) {
         final ArrayList<SummaryDataRow> summaryData = new ArrayList<>();
 
@@ -247,7 +247,7 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
     public void shutdown() {
         // Shut down the database if we are using Hypersonic
         if (!stroomDatabaseInfoProvider.get().isMysql()) {
-            final SQLBuilder sql = new SQLBuilder(false);
+            final SqlBuilder sql = new SqlBuilder();
             sql.append("shutdown");
             executeNativeUpdate(sql);
         }
@@ -255,7 +255,7 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
 
     @SuppressWarnings("rawtypes")
     @Override
-    public String runSubSelectQuery(final SQLBuilder sql, final boolean handleNull) {
+    public String runSubSelectQuery(final HqlBuilder sql, final boolean handleNull) {
         final List results = executeQueryResultList(sql);
         final StringBuilder subSet = new StringBuilder();
         boolean doneOne = false;
@@ -287,41 +287,40 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
 
     @Override
     public boolean hasNativeColumn(final String nativeTable, final String nativeColumn) {
-        final SQLBuilder sql = new SQLBuilder(false);
-        sql.append("select column_name, table_name from information_schema.columns where table_name = '");
+        final SqlBuilder sql = new SqlBuilder();
+        sql.append("select column_name, table_name from information_schema.columns where table_name = ");
         sql.arg(nativeTable);
-        sql.append("' and column_name = '");
+        sql.append(" and column_name = ");
         sql.arg(nativeColumn);
-        sql.append("' and table_schema = '");
+        sql.append(" and table_schema = ");
         sql.arg("stroom");
-        sql.append("'");
         final List<?> rows = executeNativeQueryResultList(sql, null);
         return rows != null && rows.size() > 0;
     }
 
     @SuppressWarnings("rawtypes")
     @Override
-    public List executeQueryResultList(final SQLBuilder sql) {
+    public List executeQueryResultList(final HqlBuilder sql) {
         return executeQueryResultList(sql, null, false);
     }
 
     @SuppressWarnings("rawtypes")
     @Override
-    public List executeQueryResultList(final SQLBuilder sql, final BaseCriteria criteria) {
+    public List executeQueryResultList(final HqlBuilder sql, final BaseCriteria criteria) {
         return executeQueryResultList(sql, criteria, false);
     }
 
     @SuppressWarnings("rawtypes")
     @Override
-    public List executeQueryResultList(final SQLBuilder sql, final BaseCriteria criteria, final boolean allowCaching) {
+    public List executeQueryResultList(final HqlBuilder sql, final BaseCriteria criteria, final boolean allowCaching) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         List rtn;
 
         try {
             final Query query = createQuery(sql.toString());
-            SQLUtil.setParameters(query, sql);
+            SqlUtil.setParameters(query, sql);
             if (criteria != null) {
-                SQLUtil.applyRestrictionCriteria(query, criteria);
+                sql.applyRestrictionCriteria(query, criteria);
             }
             rtn = query.getResultList();
             EntityServiceLogUtil.logQuery(LOGGER, "executeQueryResultList", logExecutionTime, rtn, sql);
@@ -335,12 +334,12 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
 
     @SuppressWarnings("rawtypes")
     @Override
-    public List executeNativeQueryResultList(final SQLBuilder sql) {
+    public List executeNativeQueryResultList(final SqlBuilder sql) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         List rtn;
         try {
             final Query query = createNativeQuery(sql.toString());
-            SQLUtil.setParameters(query, sql);
+            SqlUtil.setParameters(query, sql);
             rtn = query.getResultList();
             EntityServiceLogUtil.logQuery(LOGGER, "executeQueryResultList", logExecutionTime, rtn, sql);
 
@@ -353,12 +352,12 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> List<T> executeNativeQueryResultList(final SQLBuilder sql, final Class<?> clazz) {
+    public <T> List<T> executeNativeQueryResultList(final SqlBuilder sql, final Class<?> clazz) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         List<T> rtn;
         try {
             final Query query = createNativeQuery(sql.toString(), clazz);
-            SQLUtil.setParameters(query, sql);
+            SqlUtil.setParameters(query, sql);
             rtn = query.getResultList();
             EntityServiceLogUtil.logQuery(LOGGER, "executeNativeQueryResultList", logExecutionTime, rtn, sql);
 

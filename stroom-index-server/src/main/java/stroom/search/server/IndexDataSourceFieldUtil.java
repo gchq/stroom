@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,8 +16,8 @@
 
 package stroom.search.server;
 
-import stroom.datasource.api.v1.DataSourceField;
-import stroom.datasource.api.v1.DataSourceField.DataSourceFieldType;
+import stroom.datasource.api.v2.DataSourceField;
+import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldType;

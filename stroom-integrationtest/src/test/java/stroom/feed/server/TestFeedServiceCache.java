@@ -18,10 +18,10 @@ package stroom.feed.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.CommonTestScenarioCreator;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestScenarioCreator;
 import stroom.util.test.FileSystemTestUtil;
 
 import javax.annotation.Resource;

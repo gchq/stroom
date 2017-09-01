@@ -18,7 +18,6 @@ package stroom.pipeline.structure.client.view;
 
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -29,27 +28,21 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.PipelineStructureView;
 import stroom.pipeline.structure.client.presenter.PipelineStructureUiHandlers;
-import stroom.widget.button.client.GlyphButton;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.SvgButton;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
-import stroom.widget.tickbox.client.view.TickBox;
 
 public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStructureUiHandlers>
         implements PipelineStructureView {
-    public interface Binder extends UiBinder<Widget, PipelineStructureViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField(provided = true)
-    GlyphButton add;
+    SvgButton add;
     @UiField(provided = true)
-    GlyphButton remove;
+    SvgButton remove;
     @UiField(provided = true)
-    GlyphButton restore;
+    SvgButton restore;
     @UiField
     SimplePanel inherit;
     @UiField
@@ -59,17 +52,14 @@ public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStruct
     @UiField
     ResizeSimplePanel pipelineReferences;
     @UiField
-    TickBox advancedMode;
-    @UiField
     Hyperlink viewSource;
-
     @Inject
     public PipelineStructureViewImpl(final Binder binder) {
-        add = GlyphButton.create(GlyphIcons.ADD);
+        add = SvgButton.create(SvgPresets.ADD);
         add.setTitle("Add New Pipeline Element");
-        restore = GlyphButton.create(GlyphIcons.UNDO);
+        restore = SvgButton.create(SvgPresets.UNDO);
         restore.setTitle("Restore Pipeline Element");
-        remove = GlyphButton.create(GlyphIcons.REMOVE);
+        remove = SvgButton.create(SvgPresets.REMOVE);
         remove.setTitle("Remove Pipeline Element");
 
         widget = binder.createAndBindUi(this);
@@ -136,13 +126,6 @@ public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStruct
         }
     }
 
-    @UiHandler("advancedMode")
-    void onAdvancedMode(final ValueChangeEvent<TickBoxState> event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().setAdvancedMode(event.getValue().toBoolean());
-        }
-    }
-
     @UiHandler("viewSource")
     void onViewSource(final ClickEvent event) {
         if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
@@ -150,5 +133,8 @@ public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStruct
                 getUiHandlers().viewSource();
             }
         }
+    }
+
+    public interface Binder extends UiBinder<Widget, PipelineStructureViewImpl> {
     }
 }

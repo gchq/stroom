@@ -113,11 +113,6 @@ public class EditorPresenter extends MyPresenterWidget<EditorView>
         ChangeFilterEvent.fire(this);
     }
 
-    public void setShowFilterSettings(final boolean showFilterSettings) {
-        this.showFilterSettings = showFilterSettings;
-        getView().showFilterButton(showFilterSettings);
-    }
-
     public void setFilterActive(final boolean active) {
         getView().setFilterActive(active);
     }
@@ -142,12 +137,17 @@ public class EditorPresenter extends MyPresenterWidget<EditorView>
         return showFilterSettings;
     }
 
-    public void setInput(final boolean input) {
-        this.input = input;
+    public void setShowFilterSettings(final boolean showFilterSettings) {
+        this.showFilterSettings = showFilterSettings;
+        getView().showFilterButton(showFilterSettings);
     }
 
     public boolean isInput() {
         return input;
+    }
+
+    public void setInput(final boolean input) {
+        this.input = input;
     }
 
     public EditorMenuPresenter getContextMenu() {

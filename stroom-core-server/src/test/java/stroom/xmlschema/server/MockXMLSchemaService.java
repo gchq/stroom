@@ -21,9 +21,7 @@ import org.springframework.stereotype.Component;
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.server.MockDocumentEntityService;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.Folder;
 import stroom.entity.shared.FolderService;
-import stroom.entity.shared.ImportState.ImportMode;
 import stroom.importexport.server.EntityPathResolver;
 import stroom.importexport.server.ImportExportSerializerImpl;
 import stroom.test.StroomCoreServerTestFileUtil;
@@ -35,7 +33,6 @@ import stroom.xmlschema.shared.XMLSchemaService;
 import javax.inject.Inject;
 import java.io.File;
 import java.nio.file.Path;
-import java.util.HashMap;
 
 @Profile(StroomSpringProfiles.TEST)
 @Component
@@ -79,13 +76,13 @@ public class MockXMLSchemaService extends MockDocumentEntityService<XMLSchema, F
 
     @Override
     public BaseResultList<XMLSchema> find(final FindXMLSchemaCriteria criteria) {
-        if (!loaded && xsdDir != null && folderService != null) {
-            loaded = true;
-            importExportSerializer.performImport(xsdDir, Folder.ENTITY_TYPE, new HashMap<>(),
-                    ImportMode.IGNORE_CONFIRMATION);
-            importExportSerializer.performImport(xsdDir, XMLSchema.ENTITY_TYPE, new HashMap<>(),
-                    ImportMode.IGNORE_CONFIRMATION);
-        }
+//        if (!loaded && xsdDir != null && folderService != null) {
+//            loaded = true;
+//            importExportSerializer.performImport(xsdDir, Folder.ENTITY_TYPE, new HashMap<>(),
+//                    ImportMode.IGNORE_CONFIRMATION);
+//            importExportSerializer.performImport(xsdDir, XMLSchema.ENTITY_TYPE, new HashMap<>(),
+//                    ImportMode.IGNORE_CONFIRMATION);
+//        }
 
         return super.find(criteria);
     }

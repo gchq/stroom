@@ -30,14 +30,14 @@ public abstract class ContentHandlerAdaptor implements ContentHandler {
 
     /**
      * Receive an object for locating the origin of SAX document events.
-     *
+     * <p>
      * <p>
      * SAX parsers are strongly encouraged (though not absolutely required) to
      * supply a locator: if it does so, it must supply the locator to the
      * application by invoking this method before invoking any of the other
      * methods in the ContentHandler interface.
      * </p>
-     *
+     * <p>
      * <p>
      * The locator allows the application to determine the end position of any
      * document-related event, even if the parser is not reporting an error.
@@ -46,7 +46,7 @@ public abstract class ContentHandlerAdaptor implements ContentHandler {
      * application's business rules). The information returned by the locator is
      * probably not sufficient for use with a search engine.
      * </p>
-     *
+     * <p>
      * <p>
      * Note that the locator will return correct information only during the
      * invocation SAX event callbacks after {@link #startDocument startDocument}
@@ -54,9 +54,8 @@ public abstract class ContentHandlerAdaptor implements ContentHandler {
      * application should not attempt to use it at any other time.
      * </p>
      *
-     * @param locator
-     *            an object that can return the location of any SAX document
-     *            event
+     * @param locator an object that can return the location of any SAX document
+     *                event
      * @see org.xml.sax.Locator
      */
     @Override
@@ -68,14 +67,13 @@ public abstract class ContentHandlerAdaptor implements ContentHandler {
 
     /**
      * Receive notification of the beginning of a document.
-     *
+     * <p>
      * <p>
      * The SAX parser will invoke this method only once, before any other event
      * callbacks (except for {@link #setDocumentLocator setDocumentLocator}).
      * </p>
      *
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #endDocument
      */
     @Override
@@ -85,7 +83,7 @@ public abstract class ContentHandlerAdaptor implements ContentHandler {
 
     /**
      * Receive notification of the end of a document.
-     *
+     * <p>
      * <p>
      * <strong>There is an apparent contradiction between the documentation for
      * this method and the documentation for
@@ -94,7 +92,7 @@ public abstract class ContentHandlerAdaptor implements ContentHandler {
      * about whether endDocument() will or will not be invoked when the parser
      * has reported a fatalError() or thrown an exception.</strong>
      * </p>
-     *
+     * <p>
      * <p>
      * The SAX parser will invoke this method only once, and it will be the last
      * method invoked during the parse. The parser shall not invoke this method
@@ -102,8 +100,7 @@ public abstract class ContentHandlerAdaptor implements ContentHandler {
      * or reached the end of input.
      * </p>
      *
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #startDocument
      */
     @Override
@@ -113,7 +110,7 @@ public abstract class ContentHandlerAdaptor implements ContentHandler {
 
     /**
      * Begin the scope of a prefix-URI Namespace mapping.
-     *
+     * <p>
      * <p>
      * The information from this event is not necessary for normal Namespace
      * processing: the SAX XML reader will automatically replace prefixes for
@@ -121,7 +118,7 @@ public abstract class ContentHandlerAdaptor implements ContentHandler {
      * <code>http://xml.org/sax/features/namespaces</code> feature is
      * <var>true</var> (the default).
      * </p>
-     *
+     * <p>
      * <p>
      * There are cases, however, when applications need to use prefixes in
      * character data or in attribute values, where they cannot safely be
@@ -129,7 +126,7 @@ public abstract class ContentHandlerAdaptor implements ContentHandler {
      * information to the application to expand prefixes in those contexts
      * itself, if necessary.
      * </p>
-     *
+     * <p>
      * <p>
      * Note that start/endPrefixMapping events are not guaranteed to be properly
      * nested relative to each other: all startPrefixMapping events will occur
@@ -138,19 +135,16 @@ public abstract class ContentHandlerAdaptor implements ContentHandler {
      * occur immediately after the corresponding {@link #endElement endElement}
      * event, but their order is not otherwise guaranteed.
      * </p>
-     *
+     * <p>
      * <p>
      * There should never be start/endPrefixMapping events for the "xml" prefix,
      * since it is predeclared and immutable.
      * </p>
      *
-     * @param prefix
-     *            the Namespace prefix being declared. An empty string is used
-     *            for the default element namespace, which has no prefix.
-     * @param uri
-     *            the Namespace URI the prefix is mapped to
-     * @throws org.xml.sax.SAXException
-     *             the client may throw an exception during processing
+     * @param prefix the Namespace prefix being declared. An empty string is used
+     *               for the default element namespace, which has no prefix.
+     * @param uri    the Namespace URI the prefix is mapped to
+     * @throws org.xml.sax.SAXException the client may throw an exception during processing
      * @see #endPrefixMapping
      * @see #startElement
      */
@@ -161,7 +155,7 @@ public abstract class ContentHandlerAdaptor implements ContentHandler {
 
     /**
      * End the scope of a prefix-URI mapping.
-     *
+     * <p>
      * <p>
      * See {@link #startPrefixMapping startPrefixMapping} for details. These
      * events will always occur immediately after the corresponding
@@ -170,11 +164,9 @@ public abstract class ContentHandlerAdaptor implements ContentHandler {
      * guaranteed.
      * </p>
      *
-     * @param prefix
-     *            the prefix that was being mapped. This is the empty string
-     *            when a default mapping scope ends.
-     * @throws org.xml.sax.SAXException
-     *             the client may throw an exception during processing
+     * @param prefix the prefix that was being mapped. This is the empty string
+     *               when a default mapping scope ends.
+     * @throws org.xml.sax.SAXException the client may throw an exception during processing
      * @see #startPrefixMapping
      * @see #endElement
      */
@@ -185,7 +177,7 @@ public abstract class ContentHandlerAdaptor implements ContentHandler {
 
     /**
      * Receive notification of the beginning of an element.
-     *
+     * <p>
      * <p>
      * The Parser will invoke this method at the beginning of every element in
      * the XML document; there will be a corresponding {@link #endElement
@@ -193,23 +185,23 @@ public abstract class ContentHandlerAdaptor implements ContentHandler {
      * empty). All of the element's content will be reported, in order, before
      * the corresponding endElement event.
      * </p>
-     *
+     * <p>
      * <p>
      * This event allows up to three name components for each element:
      * </p>
-     *
+     * <p>
      * <ol>
      * <li>the Namespace URI;</li>
      * <li>the local name; and</li>
      * <li>the qualified (prefixed) name.</li>
      * </ol>
-     *
+     * <p>
      * <p>
      * Any or all of these may be provided, depending on the values of the
      * <var>http://xml.org/sax/features/namespaces</var> and the
      * <var>http://xml.org/sax/features/namespace-prefixes</var> properties:
      * </p>
-     *
+     * <p>
      * <ul>
      * <li>the Namespace URI and local name are required when the namespaces
      * property is <var>true</var> (the default), and are optional when the
@@ -219,7 +211,7 @@ public abstract class ContentHandlerAdaptor implements ContentHandler {
      * is <var>true</var>, and is optional when the namespace-prefixes property
      * is <var>false</var> (the default).</li>
      * </ul>
-     *
+     * <p>
      * <p>
      * Note that the attribute list provided will contain only attributes with
      * explicit values (specified or defaulted): #IMPLIED attributes will be
@@ -228,28 +220,23 @@ public abstract class ContentHandlerAdaptor implements ContentHandler {
      * <code>http://xml.org/sax/features/namespace-prefixes</code> property is
      * true (it is false by default, and support for a true value is optional).
      * </p>
-     *
+     * <p>
      * <p>
      * Like {@link #characters characters()}, attribute values may have
      * characters that need more than one <code>char</code> value.
      * </p>
      *
-     * @param uri
-     *            the Namespace URI, or the empty string if the element has no
-     *            Namespace URI or if Namespace processing is not being
-     *            performed
-     * @param localName
-     *            the local name (without prefix), or the empty string if
-     *            Namespace processing is not being performed
-     * @param qName
-     *            the qualified name (with prefix), or the empty string if
-     *            qualified names are not available
-     * @param atts
-     *            the attributes attached to the element. If there are no
-     *            attributes, it shall be an empty Attributes object. The value
-     *            of this object after startElement returns is undefined
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param uri       the Namespace URI, or the empty string if the element has no
+     *                  Namespace URI or if Namespace processing is not being
+     *                  performed
+     * @param localName the local name (without prefix), or the empty string if
+     *                  Namespace processing is not being performed
+     * @param qName     the qualified name (with prefix), or the empty string if
+     *                  qualified names are not available
+     * @param atts      the attributes attached to the element. If there are no
+     *                  attributes, it shall be an empty Attributes object. The value
+     *                  of this object after startElement returns is undefined
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #endElement
      * @see org.xml.sax.Attributes
      * @see org.xml.sax.helpers.AttributesImpl
@@ -262,30 +249,26 @@ public abstract class ContentHandlerAdaptor implements ContentHandler {
 
     /**
      * Receive notification of the end of an element.
-     *
+     * <p>
      * <p>
      * The SAX parser will invoke this method at the end of every element in the
      * XML document; there will be a corresponding {@link #startElement
      * startElement} event for every endElement event (even when the element is
      * empty).
      * </p>
-     *
+     * <p>
      * <p>
      * For information on the names, see startElement.
      * </p>
      *
-     * @param uri
-     *            the Namespace URI, or the empty string if the element has no
-     *            Namespace URI or if Namespace processing is not being
-     *            performed
-     * @param localName
-     *            the local name (without prefix), or the empty string if
-     *            Namespace processing is not being performed
-     * @param qName
-     *            the qualified XML name (with prefix), or the empty string if
-     *            qualified names are not available
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param uri       the Namespace URI, or the empty string if the element has no
+     *                  Namespace URI or if Namespace processing is not being
+     *                  performed
+     * @param localName the local name (without prefix), or the empty string if
+     *                  Namespace processing is not being performed
+     * @param qName     the qualified XML name (with prefix), or the empty string if
+     *                  qualified names are not available
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      */
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
@@ -294,7 +277,7 @@ public abstract class ContentHandlerAdaptor implements ContentHandler {
 
     /**
      * Receive notification of character data.
-     *
+     * <p>
      * <p>
      * The Parser will call this method to report each chunk of character data.
      * SAX parsers may return all contiguous character data in a single chunk,
@@ -302,12 +285,12 @@ public abstract class ContentHandlerAdaptor implements ContentHandler {
      * in any single event must come from the same external entity so that the
      * Locator provides useful information.
      * </p>
-     *
+     * <p>
      * <p>
      * The application must not attempt to read from the array outside of the
      * specified range.
      * </p>
-     *
+     * <p>
      * <p>
      * Individual characters may consist of more than one Java <code>char</code>
      * value. There are two important cases where this happens, because
@@ -318,7 +301,7 @@ public abstract class ContentHandlerAdaptor implements ContentHandler {
      * composite characters, such as a base character combining with one or more
      * accent characters.
      * </p>
-     *
+     * <p>
      * <p>
      * Your code should not assume that algorithms using <code>char</code>
      * -at-a-time idioms will be working in character units; in some cases they
@@ -328,21 +311,17 @@ public abstract class ContentHandlerAdaptor implements ContentHandler {
      * generally relevant whenever Java code manipulates internationalized text;
      * the issue isn't unique to XML.
      * </p>
-     *
+     * <p>
      * <p>
      * Note that some parsers will report whitespace in element content using
      * the {@link #ignorableWhitespace ignorableWhitespace} method rather than
      * this one (validating parsers <em>must</em> do so).
      * </p>
      *
-     * @param ch
-     *            the characters from the XML document
-     * @param start
-     *            the start position in the array
-     * @param length
-     *            the number of characters to read from the array
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param ch     the characters from the XML document
+     * @param start  the start position in the array
+     * @param length the number of characters to read from the array
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #ignorableWhitespace
      * @see org.xml.sax.Locator
      */
@@ -353,34 +332,30 @@ public abstract class ContentHandlerAdaptor implements ContentHandler {
 
     /**
      * Receive notification of ignorable whitespace in element content.
-     *
+     * <p>
      * <p>
      * Validating Parsers must use this method to report each chunk of
      * whitespace in element content (see the W3C XML 1.0 recommendation,
      * section 2.10): non-validating parsers may also use this method if they
      * are capable of parsing and using content models.
      * </p>
-     *
+     * <p>
      * <p>
      * SAX parsers may return all contiguous whitespace in a single chunk, or
      * they may split it into several chunks; however, all of the characters in
      * any single event must come from the same external entity, so that the
      * Locator provides useful information.
      * </p>
-     *
+     * <p>
      * <p>
      * The application must not attempt to read from the array outside of the
      * specified range.
      * </p>
      *
-     * @param ch
-     *            the characters from the XML document
-     * @param start
-     *            the start position in the array
-     * @param length
-     *            the number of characters to read from the array
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param ch     the characters from the XML document
+     * @param start  the start position in the array
+     * @param length the number of characters to read from the array
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #characters
      */
     @Override
@@ -390,31 +365,28 @@ public abstract class ContentHandlerAdaptor implements ContentHandler {
 
     /**
      * Receive notification of a processing instruction.
-     *
+     * <p>
      * <p>
      * The Parser will invoke this method once for each processing instruction
      * found: note that processing instructions may occur before or after the
      * main document element.
      * </p>
-     *
+     * <p>
      * <p>
      * A SAX parser must never report an XML declaration (XML 1.0, section 2.8)
      * or a text declaration (XML 1.0, section 4.3.1) using this method.
      * </p>
-     *
+     * <p>
      * <p>
      * Like {@link #characters characters()}, processing instruction data may
      * have characters that need more than one <code>char</code> value.
      * </p>
      *
-     * @param target
-     *            the processing instruction target
-     * @param data
-     *            the processing instruction data, or null if none was supplied.
-     *            The data does not include any whitespace separating it from
-     *            the target
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param target the processing instruction target
+     * @param data   the processing instruction data, or null if none was supplied.
+     *               The data does not include any whitespace separating it from
+     *               the target
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      */
     @Override
     public void processingInstruction(final String target, final String data) throws SAXException {
@@ -427,7 +399,7 @@ public abstract class ContentHandlerAdaptor implements ContentHandler {
      * declarations. (The XML recommendation requires reporting skipped external
      * entities. SAX also reports internal entity expansion/non-expansion,
      * except within markup constructs.)
-     *
+     * <p>
      * <p>
      * The Parser will invoke this method each time the entity is skipped.
      * Non-validating processors may skip entities if they have not seen the
@@ -439,12 +411,10 @@ public abstract class ContentHandlerAdaptor implements ContentHandler {
      * properties.
      * </p>
      *
-     * @param name
-     *            the name of the skipped entity. If it is a parameter entity,
-     *            the name will begin with '%', and if it is the external DTD
-     *            subset, it will be the string "[dtd]"
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param name the name of the skipped entity. If it is a parameter entity,
+     *             the name will begin with '%', and if it is the external DTD
+     *             subset, it will be the string "[dtd]"
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      */
     @Override
     public void skippedEntity(final String name) throws SAXException {

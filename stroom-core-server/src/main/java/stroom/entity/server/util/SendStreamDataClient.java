@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import stroom.entity.shared.Period;
+import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.streamstore.server.StreamSource;
@@ -29,8 +30,8 @@ import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamTypeService;
+import stroom.util.ArgsUtil;
 import stroom.util.date.DateUtil;
-import stroom.util.zip.HeaderMap;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.IOException;
@@ -39,6 +40,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -66,12 +68,11 @@ public final class SendStreamDataClient {
 
     public static void main(final String[] args) throws IOException {
         // Load up the args
-        final HeaderMap argsMap = new HeaderMap();
-        argsMap.loadArgs(args);
+        final Map<String, String> argsMap = ArgsUtil.parse(args);
 
         // Boot up spring
         final ApplicationContext appContext = new ClassPathXmlApplicationContext(
-                new String[] { "classpath:META-INF/spring/stroomCoreServerContext.xml" });
+                new String[]{"classpath:META-INF/spring/stroomCoreServerContext.xml"});
 
         final FindStreamCriteria criteria = new FindStreamCriteria();
 
@@ -155,9 +156,9 @@ public final class SendStreamDataClient {
         }
 
         if (meta != null) {
-            final HeaderMap headerMap = new HeaderMap();
-            headerMap.read(meta.getInputStream(), true);
-            headerMap.entrySet().stream().filter(entry -> connection.getRequestProperty(entry.getKey()) == null)
+            final MetaMap metaMap = new MetaMap();
+            metaMap.read(meta.getInputStream(), true);
+            metaMap.entrySet().stream().filter(entry -> connection.getRequestProperty(entry.getKey()) == null)
                     .forEach(entry -> connection.addRequestProperty(entry.getKey(), entry.getValue()));
         }
 

@@ -23,6 +23,7 @@
     <inherits name="stroom.security.Security"/>
     <inherits name="stroom.service.Service"/>
     <inherits name="stroom.util.Util"/>
+    <inherits name="stroom.svg.SVG"/>
 
     <!-- Import Stroom widgets -->
     <inherits name="stroom.widget.util.Util"/>
@@ -36,12 +37,11 @@
     <inherits name="stroom.item.Item"/>
     <inherits name="stroom.widget.menu.Menu"/>
     <inherits name="stroom.widget.button.Button"/>
-    <inherits name="stroom.widget.panel.Panel"/>
     <inherits name="stroom.widget.popup.Popup"/>
     <inherits name="stroom.widget.tickbox.TickBox"/>
     <inherits name="stroom.widget.tooltip.Tooltip"/>
     <inherits name="stroom.widget.valuespinner.ValueSpinner"/>
-    <inherits name="stroom.editor.Editor" />
+    <inherits name="stroom.editor.Editor"/>
     <inherits name="stroom.widget.xsdbrowser.XSDBrowser"/>
     <inherits name="stroom.widget.htree.HTree"/>
     <inherits name="stroom.widget.spinner.Spinner"/>
@@ -71,7 +71,6 @@
 
     <!-- Include new data controls -->
     <inherits name="stroom.data.Data"/>
-    <inherits name="stroom.data.tree.Tree"/>
     <inherits name="stroom.data.grid.Grid"/>
     <inherits name="stroom.data.table.Table"/>
     <inherits name="stroom.data.pager.Pager"/>

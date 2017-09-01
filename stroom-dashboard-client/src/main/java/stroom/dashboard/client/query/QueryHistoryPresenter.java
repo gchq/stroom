@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,9 +24,10 @@ import com.gwtplatform.mvp.client.View;
 import stroom.dashboard.shared.FindQueryCriteria;
 import stroom.dashboard.shared.QueryEntity;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.BaseCriteria.OrderByDirection;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.PageRequest;
+import stroom.entity.shared.Sort.Direction;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -84,8 +85,9 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
 
     private void refresh(final boolean showAfterRefresh) {
         final FindQueryCriteria criteria = new FindQueryCriteria();
-        criteria.obtainDashboardIdSet().add(currentDashboardId);
-        criteria.setOrderBy(FindQueryCriteria.ORDER_BY_TIME, OrderByDirection.DESCENDING);
+        criteria.setDashboardId(currentDashboardId);
+        criteria.setQueryId(queryPresenter.getId());
+        criteria.setSort(FindQueryCriteria.FIELD_TIME, Direction.DESCENDING, false);
         criteria.setFavourite(false);
         criteria.setPageRequest(new PageRequest(0L, 100));
 
@@ -93,13 +95,13 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
         dispatcher.exec(action).onSuccess(result -> {
             selectionModel.clear();
 
-            String lastExpression = null;
+            ExpressionOperator lastExpression = null;
             final List<QueryEntity> dedupedList = new ArrayList<>(result.getSize());
-            for (final QueryEntity query : result) {
-                if (query != null && query.getQuery() != null && query.getQuery().getExpression() != null) {
-                    final String expression = query.getQuery().getExpression().toString();
+            for (final QueryEntity queryEntity : result) {
+                if (queryEntity != null && queryEntity.getQuery() != null && queryEntity.getQuery().getExpression() != null) {
+                    final ExpressionOperator expression = queryEntity.getQuery().getExpression();
                     if (lastExpression == null || !lastExpression.equals(expression)) {
-                        dedupedList.add(query);
+                        dedupedList.add(queryEntity);
                     }
 
                     lastExpression = expression;

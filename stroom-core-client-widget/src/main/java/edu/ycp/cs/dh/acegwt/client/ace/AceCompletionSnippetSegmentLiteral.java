@@ -24,24 +24,25 @@ package edu.ycp.cs.dh.acegwt.client.ace;
 
 /**
  * A segment of a completion snippet
- * */
+ */
 public class AceCompletionSnippetSegmentLiteral implements AceCompletionSnippetSegment {
-	
-	private String literalText;
 
-	/**
-	 * The literal text that makes up part of the snippet segment
-	 * @param literalText The literal text that makes up part of the snippet. This does not need to be escaped, escaping will be handled automatically.
-	 */
-	public AceCompletionSnippetSegmentLiteral(String literalText) {
-		this.literalText = literalText;
-	}
+    private String literalText;
 
-	@Override
-	public String getPreparedText(int tabstopNumber) {
-		final String escapedText = literalText.replace("\\", "\\\\").replace("$", "\\$");
-		return escapedText;
-	}
-	
-	
+    /**
+     * The literal text that makes up part of the snippet segment
+     *
+     * @param literalText The literal text that makes up part of the snippet. This does not need to be escaped, escaping will be handled automatically.
+     */
+    public AceCompletionSnippetSegmentLiteral(String literalText) {
+        this.literalText = literalText;
+    }
+
+    @Override
+    public String getPreparedText(int tabstopNumber) {
+        final String escapedText = literalText.replace("\\", "\\\\").replace("$", "\\$");
+        return escapedText;
+    }
+
+
 }

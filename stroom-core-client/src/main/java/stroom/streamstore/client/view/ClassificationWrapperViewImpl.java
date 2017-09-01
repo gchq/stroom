@@ -25,16 +25,11 @@ import stroom.streamstore.client.presenter.ClassificationWrapperPresenter.Classi
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 public class ClassificationWrapperViewImpl extends ViewImpl implements ClassificationWrapperView {
-    public interface Binder extends UiBinder<Widget, ClassificationWrapperViewImpl> {
-    }
-
     private final Widget widget;
-
     @UiField
     ResizeSimplePanel content;
     @UiField(provided = true)
     ClassificationLabel classification;
-
     @Inject
     public ClassificationWrapperViewImpl(final Binder binder, final ClassificationLabel classification) {
         this.classification = classification;
@@ -56,5 +51,8 @@ public class ClassificationWrapperViewImpl extends ViewImpl implements Classific
     @Override
     public void setClassification(final String text) {
         classification.setClassification(text);
+    }
+
+    public interface Binder extends UiBinder<Widget, ClassificationWrapperViewImpl> {
     }
 }

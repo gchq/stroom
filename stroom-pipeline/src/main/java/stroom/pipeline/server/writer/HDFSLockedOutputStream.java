@@ -33,7 +33,7 @@ public class HDFSLockedOutputStream extends WrappedOutputStream {
     private final FileSystem hdfs;
 
     public HDFSLockedOutputStream(final OutputStream outputStream, final Path lockFile, final Path outFile,
-            final FileSystem hdfs) {
+                                  final FileSystem hdfs) {
         super(outputStream);
         this.lockFile = lockFile;
         this.outFile = outFile;

@@ -9,7 +9,7 @@ jar {
     manifest {
         attributes(
                 "Implementation-Title": "Stroom",
-                "Implementation-Version": version,
+                "Implementation-Version": versions.stroom,
                 "Main-Class" : "stroom.startup.App"
         )
     }
@@ -49,6 +49,12 @@ configurations {
 }
 
 dependencies {
+
+    //Deps on -app-gwt and -
+    //compile project(':stroom-app-gwt')
+    //permitUnusedDeclared project(':stroom-app-gwt')
+    //compile project(':stroom-dashboard-gwt')
+    //permitUnusedDeclared project(':stroom-dashboard-gwt')
 
     compile project(':stroom-core-server')
     compile project(':stroom-security-server')
@@ -143,3 +149,9 @@ tasks.withType(Test) {
 run {
     args 'server', './dev.yml'
 }
+
+//The gwtCompile tasks create files in stroom-app/src/main/resources/ui
+//so those task MUST be run first else this jar and the fat jar will be
+//missing all the GWT generated files and the UI will fail to start
+processResources.dependsOn(':stroom-app-gwt:gwtCompile')
+processResources.dependsOn(':stroom-dashboard-gwt:gwtCompile')

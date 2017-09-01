@@ -19,9 +19,9 @@ package stroom.widget.tab.client.presenter;
 import com.google.gwt.user.client.ui.RequiresResize;
 
 public interface Layer extends RequiresResize {
-    void setOpacity(double opacity);
-
     double getOpacity();
+
+    void setOpacity(double opacity);
 
     void addLayer(LayerContainer container);
 

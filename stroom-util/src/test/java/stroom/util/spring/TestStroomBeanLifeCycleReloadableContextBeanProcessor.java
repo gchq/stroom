@@ -52,7 +52,7 @@ public class TestStroomBeanLifeCycleReloadableContextBeanProcessor {
         try (AnnotationConfigApplicationContext context1 = new AnnotationConfigApplicationContext(
                 StroomBeanLifeCycleTestConfiguration.class);
              AnnotationConfigApplicationContext context2 = new AnnotationConfigApplicationContext(
-                        StroomBeanLifeCycleTestConfiguration.class)) {
+                     StroomBeanLifeCycleTestConfiguration.class)) {
             MockStroomBeanLifeCycleBean context1Bean1 = (MockStroomBeanLifeCycleBean) context1.getBean("bean1");
             MockStroomBeanLifeCycleBean context1Bean2 = (MockStroomBeanLifeCycleBean) context1.getBean("bean2");
 

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,10 +18,13 @@ package stroom.stats;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.entity.shared.*;
+import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.DocRefUtil;
+import stroom.entity.shared.DocRefs;
+import stroom.entity.shared.FolderService;
+import stroom.entity.shared.ImportState;
 import stroom.importexport.server.ImportExportSerializer;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.statistics.server.sql.datasource.StatisticsDataSourceProvider;
 import stroom.statistics.server.stroomstats.entity.FindStroomStatsStoreEntityCriteria;
 import stroom.statistics.server.stroomstats.entity.StroomStatsStoreEntityService;
@@ -31,6 +34,7 @@ import stroom.stats.shared.StatisticField;
 import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.stats.shared.StroomStatsStoreEntityData;
 import stroom.streamstore.server.fs.FileSystemUtil;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.test.FileSystemTestUtil;
 
 import javax.annotation.Resource;
@@ -46,9 +50,9 @@ public class TestStroomStatsStoreImportExportSerializer extends AbstractCoreInte
     @Resource
     private StatisticsDataSourceProvider statisticsDataSourceProvider;
 
-    private DocRefs buildFindFolderCriteria() {
+    private DocRefs buildFindFolderCriteria(DocRef folderDocRef) {
         final DocRefs docRefs = new DocRefs();
-        docRefs.add(new DocRef(Folder.ENTITY_TYPE,"0", "System"));
+        docRefs.add(folderDocRef);
         return docRefs;
     }
 
@@ -76,7 +80,7 @@ public class TestStroomStatsStoreImportExportSerializer extends AbstractCoreInte
         FileSystemUtil.deleteDirectory(testDataDir);
         FileSystemUtil.mkdirs(null, testDataDir);
 
-        importExportSerializer.write(testDataDir.toPath(), buildFindFolderCriteria(), true, null);
+        importExportSerializer.write(testDataDir.toPath(), buildFindFolderCriteria(folder), true, null);
 
         Assert.assertEquals(2, testDataDir.listFiles().length);
 

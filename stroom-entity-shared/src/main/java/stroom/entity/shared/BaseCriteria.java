@@ -16,9 +16,9 @@
 
 package stroom.entity.shared;
 
+import stroom.entity.shared.Sort.Direction;
 import stroom.util.shared.SharedObject;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -28,15 +28,12 @@ import java.util.Set;
  * Base criteria object used to aid getting pages of data.
  */
 public abstract class BaseCriteria implements SharedObject {
-    public static final OrderBy ORDER_BY_ID = new OrderBy("Key", "id", BaseEntity.ID);
+
+    public static final String FIELD_ID = "Id";
     private static final long serialVersionUID = 779306892977183446L;
     private PageRequest pageRequest = null;
-    private Set<String> fetchSet = new HashSet<String>();
-    private List<OrderBySetting> orderByList;
-
-    public boolean isAscending() {
-        return OrderByDirection.ASCENDING == getOrderByDirection();
-    }
+    private Set<String> fetchSet = new HashSet<>();
+    private List<Sort> sortList;
 
     public PageRequest getPageRequest() {
         return pageRequest;
@@ -57,7 +54,7 @@ public abstract class BaseCriteria implements SharedObject {
         if (set == null) {
             return null;
         }
-        return new HashSet<Long>(set);
+        return new HashSet<>(set);
     }
 
     protected void copyFrom(BaseCriteria other) {
@@ -67,10 +64,10 @@ public abstract class BaseCriteria implements SharedObject {
             } else {
                 this.obtainPageRequest().copyFrom(other.pageRequest);
             }
-            if (other.orderByList == null) {
-                this.orderByList = null;
+            if (other.sortList == null) {
+                this.sortList = null;
             } else {
-                this.orderByList = new ArrayList<OrderBySetting>(other.orderByList);
+                this.sortList = new ArrayList<>(other.sortList);
             }
             this.fetchSet.clear();
             this.fetchSet.addAll(other.fetchSet);
@@ -85,93 +82,81 @@ public abstract class BaseCriteria implements SharedObject {
         this.fetchSet = fetchSet;
     }
 
-    public void setOrderBy(final OrderBy orderBy, final OrderByDirection orderByDirection) {
-        orderByList = null;
-        addOrderBy(orderBy, orderByDirection);
+    public void setSort(final String field) {
+        setSort(new Sort(field, Direction.ASCENDING, false));
     }
 
-    public void addOrderBy(final OrderBy orderBy) {
-        addOrderBy(orderBy, OrderByDirection.ASCENDING);
+    public void setSort(final String field, final Direction direction, final boolean ignoreCase) {
+        setSort(new Sort(field, direction, ignoreCase));
     }
 
-    public void addOrderBy(final OrderBy orderBy, final OrderByDirection orderByDirection) {
-        if (orderByList == null) {
-            orderByList = new ArrayList<BaseCriteria.OrderBySetting>();
+    public void setSort(final Sort sort) {
+        sortList = null;
+        addSort(sort);
+    }
+
+    public void addSort(final String field) {
+        addSort(new Sort(field, Direction.ASCENDING, false));
+    }
+
+    public void addSort(final String field, final Direction direction, final boolean ignoreCase) {
+        addSort(new Sort(field, direction, ignoreCase));
+    }
+
+    public void addSort(final Sort sort) {
+        if (sortList == null) {
+            sortList = new ArrayList<>();
         }
-        final OrderBySetting orderBySetting = new OrderBySetting(orderBy, orderByDirection);
-        orderByList.add(orderBySetting);
+        sortList.add(sort);
     }
 
-    public List<OrderBySetting> getOrderByList() {
-        return orderByList;
+    public List<Sort> getSortList() {
+        return sortList;
     }
 
-    public void setOrderByList(List<OrderBySetting> orderByList) {
-        this.orderByList = orderByList;
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (!(o instanceof BaseCriteria)) return false;
+
+        final BaseCriteria that = (BaseCriteria) o;
+
+        if (pageRequest != null ? !pageRequest.equals(that.pageRequest) : that.pageRequest != null) return false;
+        if (fetchSet != null ? !fetchSet.equals(that.fetchSet) : that.fetchSet != null) return false;
+        return sortList != null ? sortList.equals(that.sortList) : that.sortList == null;
     }
 
-    /**
-     * TEMPORARY TO MAINTAIN COMPATIBILITY
-     */
-    public OrderBy getOrderBy() {
-        final OrderBySetting orderBySetting = getFirstOrderBy();
-        if (orderBySetting == null) {
-            return null;
-        }
-        return orderBySetting.getOrderBy();
-    }
+//    /**
+//     * TEMPORARY TO MAINTAIN COMPATIBILITY
+//     */
+//    public OrderBy getOrderBy() {
+//        final Sort orderBySetting = getFirstOrderBy();
+//        if (orderBySetting == null) {
+//            return null;
+//        }
+//        return orderBySetting.getOrderBy();
+//    }
+//
+//    public OrderByDirection getOrderByDirection() {
+//        final Sort orderBySetting = getFirstOrderBy();
+//        if (orderBySetting == null) {
+//            return Direction.ASCENDING;
+//        }
+//        return orderBySetting.getDirection();
+//    }
+//
+//    private Sort getFirstOrderBy() {
+//        if (sortList == null || sortList.size() == 0) {
+//            return null;
+//        }
+//        return sortList.get(0);
+//    }
 
-    public void setOrderBy(final OrderBy orderBy) {
-        setOrderBy(orderBy, OrderByDirection.ASCENDING);
-    }
-
-    public OrderByDirection getOrderByDirection() {
-        final OrderBySetting orderBySetting = getFirstOrderBy();
-        if (orderBySetting == null) {
-            return OrderByDirection.ASCENDING;
-        }
-        return orderBySetting.getOrderByDirection();
-    }
-
-    private OrderBySetting getFirstOrderBy() {
-        if (orderByList == null || orderByList.size() == 0) {
-            return null;
-        }
-        return orderByList.get(0);
-    }
-
-    /**
-     * The direction of the results (based on their order by).
-     */
-    public enum OrderByDirection {
-        ASCENDING, DESCENDING
-    }
-
-    public static class OrderBySetting implements Serializable {
-        private static final long serialVersionUID = -5994197736743037915L;
-
-        private OrderBy orderBy;
-        private OrderByDirection orderByDirection;
-
-        public OrderBySetting() {
-            // Default constructor necessary for GWT serialisation.
-        }
-
-        public OrderBySetting(final OrderBy orderBy, final OrderByDirection orderByDirection) {
-            this.orderBy = orderBy;
-            this.orderByDirection = orderByDirection;
-        }
-
-        public OrderBy getOrderBy() {
-            return orderBy;
-        }
-
-        public OrderByDirection getOrderByDirection() {
-            return orderByDirection;
-        }
-
-        public boolean isAscending() {
-            return OrderByDirection.ASCENDING.equals(orderByDirection);
-        }
+    @Override
+    public int hashCode() {
+        int result = pageRequest != null ? pageRequest.hashCode() : 0;
+        result = 31 * result + (fetchSet != null ? fetchSet.hashCode() : 0);
+        result = 31 * result + (sortList != null ? sortList.hashCode() : 0);
+        return result;
     }
 }

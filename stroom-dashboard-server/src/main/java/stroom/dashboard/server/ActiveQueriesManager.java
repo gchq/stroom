@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,8 +36,11 @@ public class ActiveQueriesManager extends AbstractCacheBean<String, ActiveQuerie
         this.dataSourceProviderRegistry = dataSourceProviderRegistry;
     }
 
-    @Override
-    protected ActiveQueries create(final String key) {
+    public ActiveQueries getOrCreate(final String key) {
+        return computeIfAbsent(key, this::create);
+    }
+
+    private ActiveQueries create(final String key) {
         return new ActiveQueries(dataSourceProviderRegistry);
     }
 

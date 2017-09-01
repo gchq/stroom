@@ -26,7 +26,7 @@ import stroom.core.client.MenuKeys;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.monitoring.client.MonitoringPlugin;
 import stroom.security.client.ClientSecurityContext;
-import stroom.widget.button.client.GlyphIcons;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 public class CacheMonitoringPlugin extends MonitoringPlugin<CachePresenter> {
@@ -40,7 +40,7 @@ public class CacheMonitoringPlugin extends MonitoringPlugin<CachePresenter> {
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(CacheRow.MANAGE_CACHE_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
-                    new IconMenuItem(12, GlyphIcons.MONITORING, GlyphIcons.MONITORING, "Caches", null, true, () -> open()));
+                    new IconMenuItem(12, SvgPresets.MONITORING, SvgPresets.MONITORING, "Caches", null, true, () -> open()));
         }
     }
 }

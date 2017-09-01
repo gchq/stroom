@@ -52,7 +52,7 @@ public class MoveHandle<R> extends Widget {
     private Glass glass;
 
     public MoveHandle(final DataGridViewImpl<R> dataGridView, final DataGrid<R> dataGrid,
-            final List<ColSettings> colSettings, final DefaultResources resources) {
+                      final List<ColSettings> colSettings, final DefaultResources resources) {
         this.dataGridView = dataGridView;
         this.dataGrid = dataGrid;
         this.colSettings = colSettings;

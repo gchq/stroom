@@ -1,5 +1,6 @@
 #This is an example of the configuration file ~/.stroom/stroom.conf that sets 
 #various properties for running stroom in development
+#It is also used by travis for configuring stroom's integration tests
 
 #Prevents stroom from prompting for a new password on first login
 stroom.developmentMode=true
@@ -26,3 +27,15 @@ stroom.statistics.sql.jdbcDriverClassName=com.mysql.jdbc.Driver
 stroom.statistics.sql.jdbcDriverUrl=jdbc:mysql://localhost:3308/statistics?useUnicode=yes&characterEncoding=UTF-8
 stroom.statistics.sql.jdbcDriverUsername=stroomuser
 stroom.statistics.sql.jdbcDriverPassword=stroompassword1
+
+#Authentication properties
+stroom.auth.jwt.secret=CHANGE_ME
+stroom.auth.jwt.issuer=stroom
+
+#Service discovery
+#Set this to false to local servcie lookup when you do not have Zookeeper
+stroom.serviceDiscovery.enabled=true
+
+#Kafka
+#Set this to blank to prevent stroom from trying to establish a connection
+stroom.kafka.bootstrap.servers=localhost:9092

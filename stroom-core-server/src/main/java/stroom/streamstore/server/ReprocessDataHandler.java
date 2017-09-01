@@ -54,7 +54,7 @@ public class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataActio
 
     @Override
     public SharedList<ReprocessDataInfo> exec(final ReprocessDataAction action) {
-        final List<ReprocessDataInfo> info = new ArrayList<ReprocessDataInfo>();
+        final List<ReprocessDataInfo> info = new ArrayList<>();
 
         try {
             final FindStreamCriteria criteria = action.getCriteria();
@@ -85,7 +85,7 @@ public class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataActio
                     if (stream.getStreamProcessor() != null && stream.getParentStreamId() != null) {
                         EntityIdSet<Stream> streamSet = streamToProcessorSet.get(stream.getStreamProcessor());
                         if (streamSet == null) {
-                            streamSet = new EntityIdSet<Stream>();
+                            streamSet = new EntityIdSet<>();
                             streamToProcessorSet.put(stream.getStreamProcessor(), streamSet);
                         }
 
@@ -95,7 +95,7 @@ public class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataActio
                     }
                 }
 
-                final List<StreamProcessor> list = new ArrayList<StreamProcessor>(streamToProcessorSet.keySet());
+                final List<StreamProcessor> list = new ArrayList<>(streamToProcessorSet.keySet());
                 Collections.sort(list, (o1, o2) -> o1.getPipeline().getName().compareTo(o2.getPipeline().getName()));
 
                 for (final StreamProcessor streamProcessor : list) {
@@ -140,6 +140,6 @@ public class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataActio
             info.add(new ReprocessDataInfo(Severity.ERROR, ex.getMessage(), null));
         }
 
-        return new SharedList<ReprocessDataInfo>(info);
+        return new SharedList<>(info);
     }
 }

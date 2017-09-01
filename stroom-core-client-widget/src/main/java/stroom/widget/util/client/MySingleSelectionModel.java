@@ -37,7 +37,7 @@ import java.util.Set;
 /**
  * A simple selection model that allows only one item to be selected a a time.
  */
-public class MySingleSelectionModel<T> extends AbstractSelectionModel<T>implements SetSelectionModel<T> {
+public class MySingleSelectionModel<T> extends AbstractSelectionModel<T> implements SetSelectionModel<T> {
     private Object curKey;
     private T curSelection;
 
@@ -60,9 +60,8 @@ public class MySingleSelectionModel<T> extends AbstractSelectionModel<T>implemen
     /**
      * Constructs a SingleSelectionModel with the given key provider.
      *
-     * @param keyProvider
-     *            an instance of ProvidesKey<T>, or null if the item should act
-     *            as its own key
+     * @param keyProvider an instance of ProvidesKey<T>, or null if the item should act
+     *                    as its own key
      */
     public MySingleSelectionModel(final ProvidesKey<T> keyProvider) {
         super(keyProvider);
@@ -190,9 +189,6 @@ public class MySingleSelectionModel<T> extends AbstractSelectionModel<T>implemen
 
         return doubleSelectTest.addDoubleSelectHandler(handler);
     }
-
-
-
 
 
 //    @Override

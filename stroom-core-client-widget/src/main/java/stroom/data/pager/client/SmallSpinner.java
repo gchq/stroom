@@ -20,20 +20,10 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
-import stroom.widget.button.client.GlyphButton;
+import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.SvgButton;
 
 public class SmallSpinner extends Composite {
-    public interface Style extends CssResource {
-        String smallSpinner();
-
-        String spinning();
-    }
-
-    public interface Resources extends ClientBundle {
-        @Source("SmallSpinner.css")
-        Style style();
-    }
-
     private static Resources resources;
 
     public SmallSpinner() {
@@ -42,8 +32,7 @@ public class SmallSpinner extends Composite {
             resources.style().ensureInjected();
         }
 
-        final GlyphButton button = new GlyphButton();
-        button.setIcon("fa fa-circle-o");
+        final SvgButton button = SvgButton.create(SvgPresets.SPINNER);
         initWidget(button);
 
         getElement().setClassName(resources.style().smallSpinner());
@@ -55,5 +44,16 @@ public class SmallSpinner extends Composite {
         } else {
             getElement().removeClassName(resources.style().spinning());
         }
+    }
+
+    public interface Style extends CssResource {
+        String smallSpinner();
+
+        String spinning();
+    }
+
+    public interface Resources extends ClientBundle {
+        @Source("SmallSpinner.css")
+        Style style();
     }
 }

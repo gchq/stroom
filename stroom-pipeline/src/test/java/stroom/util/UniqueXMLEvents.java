@@ -45,10 +45,10 @@ import java.util.Set;
 public class UniqueXMLEvents {
     private static final SAXParserFactory PARSER_FACTORY;
 
-	static {
-		PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
-		PARSER_FACTORY.setNamespaceAware(true);
-	}
+    static {
+        PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
+        PARSER_FACTORY.setNamespaceAware(true);
+    }
 
     public static void main(final String[] args) {
         try {

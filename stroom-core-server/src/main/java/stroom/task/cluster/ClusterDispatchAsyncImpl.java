@@ -45,14 +45,12 @@ import java.util.Set;
 @Component(ClusterDispatchAsyncImpl.BEAN_NAME)
 @Lazy
 public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterDispatchAsyncImpl.class);
-
     public static final String BEAN_NAME = "clusterDispatchAsync";
     public static final String RECEIVE_RESULT_METHOD = "receiveResult";
+    public static final ThreadPool THREAD_POOL = new SimpleThreadPool(5);
     static final Class<?>[] RECEIVE_RESULT_METHOD_ARGS = {ClusterTask.class, Node.class, TaskId.class,
             CollectorId.class, SharedObject.class, Throwable.class, Boolean.class};
-
-    public static final ThreadPool THREAD_POOL = new SimpleThreadPool(5);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterDispatchAsyncImpl.class);
     private static final String RECEIVE_RESULT = "receiveResult";
     private static final Long DEBUG_REQUEST_DELAY = null;
 
@@ -197,7 +195,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
                 if (collector == null) {
                     // There is no collector to receive this result.
                     LOGGER.error("{}() - collector gone away - {} {}",
-                            new Object[] {RECEIVE_RESULT, task.getTaskName(), sourceTask});
+                            new Object[]{RECEIVE_RESULT, task.getTaskName(), sourceTask});
 
                 } else {
                     // Make sure the collector is happy to receive this result.
@@ -231,20 +229,20 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
                                 if (LOGGER.isDebugEnabled()) {
                                     LOGGER.debug("{}() - collector {} {} took {}",
                                             new Object[]{
-                                            RECEIVE_RESULT,
-                                            task.getTaskName(),
-                                            sourceTask,
-                                            logExecutionTime
-                                    });
+                                                    RECEIVE_RESULT,
+                                                    task.getTaskName(),
+                                                    sourceTask,
+                                                    logExecutionTime
+                                            });
                                 }
                                 if (logExecutionTime.getDuration() > 1000) {
                                     LOGGER.warn("{}() - collector {} {} took {}",
                                             new Object[]{
-                                            RECEIVE_RESULT,
-                                            task.getTaskName(),
-                                            sourceTask,
-                                            logExecutionTime
-                                    });
+                                                    RECEIVE_RESULT,
+                                                    task.getTaskName(),
+                                                    sourceTask,
+                                                    logExecutionTime
+                                            });
                                 }
                             }
                         });

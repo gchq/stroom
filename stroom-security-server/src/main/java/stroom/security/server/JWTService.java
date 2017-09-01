@@ -27,16 +27,24 @@ import static org.jose4j.jws.AlgorithmIdentifiers.HMAC_SHA256;
 public class JWTService {
     private static final Logger LOGGER = LoggerFactory.getLogger(JWTService.class);
 
-    protected static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String BEARER = "Bearer ";
+    private static final String AUTHORIZATION_HEADER = "Authorization";
 
     private final String jwtSecret;
     private final String jwtIssuer;
 
     public JWTService(
-            @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.secret')}") final String jwtSecret,
-            @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.issuer')}") final String jwtIssuer){
+        @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.secret')}") final String jwtSecret,
+        @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.issuer')}") final String jwtIssuer){
         this.jwtSecret = jwtSecret;
         this.jwtIssuer = jwtIssuer;
+
+        if (jwtSecret == null) {
+            throw new SecurityException("No JWT secret defined");
+        }
+        if (jwtIssuer == null) {
+            throw new SecurityException("No JWT issuer defined");
+        }
     }
 
 
@@ -47,10 +55,9 @@ public class JWTService {
         if (authHeader.isPresent()) {
             String bearerString = authHeader.get();
 
-            if(bearerString.contains("Bearer")){
-                // TODO This chops out 'Bearer'. We're dealing with unpredictable client data so we need a
-                // way to do this that more robustly handles an error in the string.
-                jws = bearerString.substring(7);
+            if(bearerString.startsWith(BEARER)){
+                // This chops out 'Bearer' so we get just the token.
+                jws = bearerString.substring(BEARER.length());
             }
             else{
                 jws = bearerString;
@@ -85,9 +92,9 @@ public class JWTService {
             String subject = null;
             if (token != null) {
                 JWTVerifier verifier = JWT
-                        .require(Algorithm.HMAC256(jwtSecret))
-                        .withIssuer(jwtIssuer)
-                        .build();
+                    .require(Algorithm.HMAC256(jwtSecret))
+                    .withIssuer(jwtIssuer)
+                    .build();
                 DecodedJWT jwt = verifier.verify(token);
                 subject = jwt.getSubject();
             }

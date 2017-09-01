@@ -28,7 +28,7 @@ import java.util.Date;
  * Model used to get calendar information for {@link DatePicker} and its
  * subclasses.
  */
-@SuppressWarnings(/* Required to use Date API in gwt */{ "deprecation" })
+@SuppressWarnings(/* Required to use Date API in gwt */{"deprecation"})
 public class CustomCalendarModel extends CalendarModel {
     /**
      * The number of weeks normally displayed in a month.
@@ -109,8 +109,7 @@ public class CustomCalendarModel extends CalendarModel {
     /**
      * Formats a date's day of month. For example "1".
      *
-     * @param date
-     *            the date
+     * @param date the date
      * @return the formated day of month
      */
     public String formatDayOfMonth(Date date) {
@@ -120,8 +119,7 @@ public class CustomCalendarModel extends CalendarModel {
     /**
      * Format a day in the week. So, for example "Monday".
      *
-     * @param dayInWeek
-     *            the day in week to format
+     * @param dayInWeek the day in week to format
      * @return the formatted day in week
      */
     public String formatDayOfWeek(int dayInWeek) {
@@ -160,21 +158,9 @@ public class CustomCalendarModel extends CalendarModel {
     }
 
     /**
-     * Is a date in the currently specified month?
-     *
-     * @param date
-     *            the date
-     * @return date
-     */
-    public boolean isInCurrentMonth(Date date) {
-        return currentMonth.getMonth() == date.getMonth();
-    }
-
-    /**
      * Sets the currently specified date.
      *
-     * @param currentDate
-     *            the currently specified date
+     * @param currentDate the currently specified date
      */
     public void setCurrentMonth(Date currentDate) {
         this.currentMonth.setYear(currentDate.getYear());
@@ -182,11 +168,20 @@ public class CustomCalendarModel extends CalendarModel {
     }
 
     /**
+     * Is a date in the currently specified month?
+     *
+     * @param date the date
+     * @return date
+     */
+    public boolean isInCurrentMonth(Date date) {
+        return currentMonth.getMonth() == date.getMonth();
+    }
+
+    /**
      * Shifts the currently specified date by the given number of months. The
      * day of the month will be pinned to the original value as far as possible.
      *
-     * @param deltaMonths
-     *            - number of months to be added to the current date
+     * @param deltaMonths - number of months to be added to the current date
      */
     public void shiftCurrentMonth(int deltaMonths) {
         CalendarUtil.addMonthsToDate(currentMonth, deltaMonths);

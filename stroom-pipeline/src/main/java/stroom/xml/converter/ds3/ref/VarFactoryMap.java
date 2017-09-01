@@ -29,8 +29,8 @@ public class VarFactoryMap {
     private Map<String, VarFactory> map;
 
     public VarFactoryMap() {
-        uniqueIdSet = new HashSet<String>();
-        map = new HashMap<String, VarFactory>();
+        uniqueIdSet = new HashSet<>();
+        map = new HashMap<>();
     }
 
     /**

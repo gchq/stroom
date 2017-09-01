@@ -28,7 +28,7 @@ import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 public class StreamListPresenter extends AbstractStreamListPresenter {
     @Inject
     public StreamListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
-            final TooltipPresenter tooltipPresenter, final ClientSecurityContext securityContext) {
+                               final TooltipPresenter tooltipPresenter, final ClientSecurityContext securityContext) {
         super(eventBus, dispatcher, tooltipPresenter, securityContext, true);
     }
 
@@ -51,7 +51,8 @@ public class StreamListPresenter extends AbstractStreamListPresenter {
         addAttributeColumn("Error", StreamAttributeConstants.REC_ERROR, 40);
         addAttributeColumn("Warn", StreamAttributeConstants.REC_WARN, 40);
         addAttributeColumn("Info", StreamAttributeConstants.REC_INFO, 40);
+        addAttributeColumn("Retention", StreamAttributeConstants.RETENTION_AGE, ColumnSizeConstants.SMALL_COL);
 
-        getView().addEndColumn(new EndColumn<StreamAttributeMap>());
+        getView().addEndColumn(new EndColumn<>());
     }
 }

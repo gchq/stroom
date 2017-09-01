@@ -23,14 +23,9 @@ import stroom.widget.tab.client.presenter.Layer;
 import stroom.widget.tab.client.presenter.TabData;
 
 public class OpenContentTabEvent extends GwtEvent<OpenContentTabEvent.OpenContentTabHandler> {
-    public interface OpenContentTabHandler extends EventHandler {
-        void onOpen(OpenContentTabEvent event);
-    }
-
     private static Type<OpenContentTabHandler> TYPE;
     private final TabData tabData;
     private final Layer layer;
-
     private OpenContentTabEvent(final TabData tabData, final Layer layer) {
         this.tabData = tabData;
         this.layer = layer;
@@ -63,5 +58,9 @@ public class OpenContentTabEvent extends GwtEvent<OpenContentTabEvent.OpenConten
 
     public Layer getLayer() {
         return layer;
+    }
+
+    public interface OpenContentTabHandler extends EventHandler {
+        void onOpen(OpenContentTabEvent event);
     }
 }

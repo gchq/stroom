@@ -38,7 +38,7 @@ import java.util.Collections;
 import java.util.List;
 
 @Component(SessionListServlet.BEAN_NAME)
-@Scope(StroomScope.THREAD)
+@Scope(StroomScope.PROTOTYPE)
 public class SessionListServlet extends HttpServlet {
     public static final String BEAN_NAME = "sessionListServlet";
 
@@ -49,7 +49,7 @@ public class SessionListServlet extends HttpServlet {
 
     /**
      * Method interceptor needs to go on public API By-pass authentication / authorisation checks.
-     *
+     * <p>
      * This servlet is NOT protected by default and should be filtered by Apache access controls, see documentation for
      * details.
      */
@@ -64,7 +64,7 @@ public class SessionListServlet extends HttpServlet {
             throws ServletException, IOException {
         response.setContentType("text/html");
 
-        final List<List<String>> table = new ArrayList<List<String>>();
+        final List<List<String>> table = new ArrayList<>();
 
         final SessionListAction sessionListAction = new SessionListAction();
         sessionListAction.setId(TaskIdFactory.create());
@@ -82,7 +82,7 @@ public class SessionListServlet extends HttpServlet {
                     suffix = "</b>";
                 }
             }
-            final ArrayList<String> row = new ArrayList<String>();
+            final ArrayList<String> row = new ArrayList<>();
             row.add(DateUtil.createNormalDateTimeString(sessionDetails.getLastAccessedMs()));
             row.add(DateUtil.createNormalDateTimeString(sessionDetails.getCreateMs()));
             row.add(sessionDetails.getUserName());

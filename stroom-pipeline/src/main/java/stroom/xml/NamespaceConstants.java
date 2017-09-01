@@ -20,15 +20,16 @@ package stroom.xml;
  * Namespace constants used by Stroom.
  */
 public final class NamespaceConstants {
-    private NamespaceConstants() {
-        // Constants class so not instantiable.
-    }
-
     /**
      * This namespace is used for records created by the XML converter.
      */
     public static final String RECORDS = "records:2";
-
-    /** This namespace is used for Stroom XSLT functions. */
+    /**
+     * This namespace is used for Stroom XSLT functions.
+     */
     public static final String STROOM = "stroom";
+
+    private NamespaceConstants() {
+        // Constants class so not instantiable.
+    }
 }

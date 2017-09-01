@@ -30,8 +30,8 @@ import stroom.widget.tab.client.presenter.TabData;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class LinkTabPanelPresenter extends MyPresenterWidget<LinkTabPanelView>implements Refreshable {
-    private final List<TabData> tabs = new ArrayList<TabData>();
+public abstract class LinkTabPanelPresenter extends MyPresenterWidget<LinkTabPanelView> implements Refreshable {
+    private final List<TabData> tabs = new ArrayList<>();
     private TabData selectedTab;
     private PresenterWidget<?> currentContent;
 
