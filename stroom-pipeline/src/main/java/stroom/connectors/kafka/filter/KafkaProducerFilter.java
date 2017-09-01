@@ -70,7 +70,7 @@ public class KafkaProducerFilter extends AbstractSamplingFilter {
                                final StroomPropertyService stroomPropertyService) {
         super(errorReceiverProxy, locationFactory);
         this.errorReceiverProxy = errorReceiverProxy;
-        this.stroomKafkaProducer = stroomKafkaProducerFactoryService.getProducer(null);
+        this.stroomKafkaProducer = stroomKafkaProducerFactoryService.getProducer();
     }
 
     @Override

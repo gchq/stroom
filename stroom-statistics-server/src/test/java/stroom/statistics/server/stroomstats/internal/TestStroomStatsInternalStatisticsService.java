@@ -44,7 +44,7 @@ public class TestStroomStatsInternalStatisticsService {
                 "MyTopic");
 
         StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService = new StroomStatsInternalStatisticsService(
-                name -> stroomKafkaProducer,
+                () -> stroomKafkaProducer,
                 mockStroomPropertyService
         );
 
@@ -85,7 +85,7 @@ public class TestStroomStatsInternalStatisticsService {
         }).when(stroomKafkaProducer).flush();
 
         StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService = new StroomStatsInternalStatisticsService(
-                name -> stroomKafkaProducer,
+                () -> stroomKafkaProducer,
                 mockStroomPropertyService
         );
 

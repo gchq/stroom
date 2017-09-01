@@ -27,7 +27,7 @@ import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 @SuppressWarnings("unused")
 @Component
@@ -45,10 +45,11 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     private final JAXBContext jaxbContext;
     private final DatatypeFactory datatypeFactory;
 
-    StroomStatsInternalStatisticsService(final Function<String, StroomKafkaProducer> stroomKafkaProducerFactory,
+    // If we move to a 'named' kafka config later, change the java.util.function.Supplier to a java.util.function.Function
+    StroomStatsInternalStatisticsService(final Supplier<StroomKafkaProducer> stroomKafkaProducerFactory,
                                          final StroomPropertyService stroomPropertyService) {
         this.stroomPropertyService = stroomPropertyService;
-        this.stroomKafkaProducer = stroomKafkaProducerFactory.apply(null);
+        this.stroomKafkaProducer = stroomKafkaProducerFactory.get();
         this.docRefType = stroomPropertyService.getProperty(PROP_KEY_DOC_REF_TYPE);
 
         try {

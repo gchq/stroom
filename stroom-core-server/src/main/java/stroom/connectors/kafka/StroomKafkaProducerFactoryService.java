@@ -60,14 +60,23 @@ public class StroomKafkaProducerFactoryService {
     }
 
     /**
+     * Overloaded version of getProducer that uses the default name.
+     *
+     * @return A {@link StroomKafkaProducer} connecting to the named Kafka server.
+     */
+    public synchronized StroomKafkaProducer getProducer() {
+        return getProducer(DEFAULT_NAME);
+    }
+
+    /**
      * Users of this service can request a named Kafka connection. This is used to merge in the property names of the
      * bootstrap servers and the kafka client version.
+     *
      * @param name The named configuration of Kafka client.
      * @return A {@link StroomKafkaProducer} connecting to the named Kafka server.
      */
     public synchronized StroomKafkaProducer getProducer(final String name) {
-        final String nameToUse = (null != name) ? name : DEFAULT_NAME;
-        final ConnectorProperties connectorProperties = new ConnectorPropertiesPrefixImpl(String.format(PROP_PREFIX, nameToUse), this.propertyService);
+        final ConnectorProperties connectorProperties = new ConnectorPropertiesPrefixImpl(String.format(PROP_PREFIX, name), this.propertyService);
 
         // Retrieve the settings for this named kafka
         String kafkaVersion = connectorProperties.getProperty(PROP_KAFKA_CLIENT_VERSION);
