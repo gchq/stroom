@@ -15,7 +15,7 @@ public class RollingKafkaDestination extends RollingDestination {
     private final StroomKafkaProducer stroomKafkaProducer;
 
     private final String topic;
-    private final String partition;
+    private final String recordKey;
 
     private StringBuilder data = new StringBuilder();
 
@@ -24,11 +24,11 @@ public class RollingKafkaDestination extends RollingDestination {
                                    final long maxSize,
                                    final long creationTime,
                                    final StroomKafkaProducer stroomKafkaProducer,
-                                   final String partition,
+                                   final String recordKey,
                                    final String topic) {
         super(key, frequency, maxSize, creationTime);
         this.stroomKafkaProducer = stroomKafkaProducer;
-        this.partition = partition;
+        this.recordKey = recordKey;
         this.topic = topic;
 
         setOutputStream(new ByteCountOutputStream(new OutputStream() {
@@ -47,7 +47,7 @@ public class RollingKafkaDestination extends RollingDestination {
 
     @Override
     void onFooterWritten(final Consumer<Throwable> exceptionConsumer) {
-        final ProducerRecord<String, String> newRecord = new ProducerRecord<>(topic, partition, data.toString());
+        final ProducerRecord<String, String> newRecord = new ProducerRecord<>(topic, recordKey, data.toString());
         try {
             stroomKafkaProducer.send(newRecord, StroomKafkaProducer.FlushMode.FLUSH_ON_SEND, e -> {
                 LOGGER.error("Unable to send record to Kafka!", e);

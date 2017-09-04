@@ -26,7 +26,7 @@ public class RollingKafkaAppender extends AbstractRollingAppender {
     private final PathCreator pathCreator;
 
     private String topic;
-    private String partition;
+    private String recordKey;
 
     private String key;
 
@@ -40,19 +40,19 @@ public class RollingKafkaAppender extends AbstractRollingAppender {
 
     @Override
     void validateSpecificSettings() {
-        if (partition == null || partition.length() == 0) {
+        if (recordKey == null || recordKey.length() == 0) {
             throw new ProcessException("No recordKey has been specified");
         }
 
         if (topic == null || topic.length() == 0) {
-            throw new ProcessException("No recordKey has been specified");
+            throw new ProcessException("No topic has been specified");
         }
     }
 
     @Override
     Object getKey() throws IOException {
         if (key == null) {
-            key = String.format("%s:%s", this.topic, this.partition);
+            key = String.format("%s:%s", this.topic, this.recordKey);
         }
 
         return key;
@@ -65,13 +65,13 @@ public class RollingKafkaAppender extends AbstractRollingAppender {
                 getMaxSize(),
                 System.currentTimeMillis(),
                 stroomKafkaProducer,
-                partition,
+                recordKey,
                 topic);
     }
 
-    @PipelineProperty(description = "The partition to send the record on. Replacement variables can be used in path strings such as ${feed}.")
-    public void setPartition(final String partition) {
-        this.partition = pathCreator.replaceAll(partition);
+    @PipelineProperty(description = "The record key to apply to records, used to select patition. Replacement variables can be used in path strings such as ${feed}.")
+    public void setRecordKey(final String recordKey) {
+        this.recordKey = pathCreator.replaceAll(recordKey);
     }
 
     @PipelineProperty(description = "The topic to send the record to. Replacement variables can be used in path strings such as ${feed}.")
