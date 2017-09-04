@@ -59,8 +59,8 @@ public class KafkaProducerFilter extends AbstractSamplingFilter {
     private final StroomKafkaProducer stroomKafkaProducer;
     private final PathCreator pathCreator;
 
-    private String recordKey;
     private String topic;
+    private String partition;
 
     @Inject
     public KafkaProducerFilter(final ErrorReceiverProxy errorReceiverProxy,
@@ -77,7 +77,7 @@ public class KafkaProducerFilter extends AbstractSamplingFilter {
     public void endDocument() throws SAXException {
         super.endDocument();
 
-        final ProducerRecord<String, String> newRecord = new ProducerRecord<>(topic, recordKey, getOutput());
+        final ProducerRecord<String, String> newRecord = new ProducerRecord<>(topic, partition, getOutput());
         try {
             stroomKafkaProducer.send(newRecord, StroomKafkaProducer.FlushMode.FLUSH_ON_SEND, exception -> {
                 errorReceiverProxy.log(Severity.ERROR, null, null, "Unable to send record to Kafka!", exception);
@@ -87,9 +87,9 @@ public class KafkaProducerFilter extends AbstractSamplingFilter {
         }
     }
 
-    @PipelineProperty(description = "The key for the record. This determines the partition.")
-    public void setRecordKey(final String recordKey) {
-        this.recordKey = pathCreator.replaceAll(recordKey);
+    @PipelineProperty(description = "This partition to send the record to.")
+    public void setPartition(final String partition) {
+        this.partition = pathCreator.replaceAll(partition);
     }
 
     @PipelineProperty(description = "The topic to send the record to.")
