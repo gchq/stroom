@@ -165,6 +165,10 @@ run {
     args 'server', './dev.yml'
 }
 
+runShadow {
+    args 'server', './dev.yml'
+}
+
 //The gwtCompile tasks create files in stroom-app/src/main/resources/ui
 //so those tasks MUST be run first else this jar and the fat jar will be
 //missing all the GWT generated files and the UI will fail to start

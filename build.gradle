@@ -14,7 +14,6 @@ buildscript {
 
 plugins {
     id "de.undercouch.download" version "3.2.0"
-    //id "com.benjaminsproule.swagger" version "0.1.2"
 }
 
 apply plugin: 'gchq.urldependencies'
@@ -195,7 +194,7 @@ ext.libs = [
     zzDUMMYzz: "makes sorting easier"
 ]
 
-def contentPackImportDir = new File( "${System.properties['user.home']}/.stroom/contentPackImport/")
+def contentPackImportDir = "${System.properties['user.home']}/.stroom/contentPackImport/"
 def contentReleasesUrl = "http://github.com/gchq/stroom-content/releases/download/"
 def visualisationsContentPackVer = "v3.0.4"
 def visualisationsContentPackUrl = "http://github.com/gchq/stroom-visualisations-dev/releases/download/${visualisationsContentPackVer}/visualisations-production-${visualisationsContentPackVer}.zip"
@@ -289,15 +288,19 @@ subprojects {
 
 
 task clearContentPackImportDir(type: Delete) {
-    doLast {
-        //cleans out any zip files in the contentPackImportDir
-        delete fileTree(contentPackImportDir) {
-            include '**/*.zip'
-         }
-     }
+    //ensure the import directory exists
+    new File(contentPackImportDir).mkdirs()
+
+    //cleans out any zip files in the contentPackImportDir
+    delete fileTree(new File(contentPackImportDir)) {
+        include '**/*.zip'
+    }
 }
 
 task downloadStroomContent() {
+
+    dependsOn clearContentPackImportDir
+
     doLast {
         //download each content pack to the contentPackImportDir ready for stroom to import on startup
         for (pack in contentPacks) {
@@ -306,14 +309,14 @@ task downloadStroomContent() {
             def packUrl = "${contentReleasesUrl}${packName}-${packVer}/${packName}-${packVer}.zip"
             download {
                 src packUrl
-                dest contentPackImportDir
+                dest new File(contentPackImportDir)
                 overwrite true
             }
         }
         //now get the visualisations pack from a different repo
         download {
             src visualisationsContentPackUrl
-            dest contentPackImportDir
+            dest new File(contentPackImportDir)
             overwrite true
         }
     }
