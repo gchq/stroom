@@ -12,6 +12,7 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.util.spring.StroomScope;
 
+import javax.annotation.Resource;
 import javax.inject.Inject;
 import java.io.IOException;
 
@@ -22,21 +23,16 @@ import java.io.IOException;
         PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
 public class RollingKafkaAppender extends AbstractRollingAppender {
 
-    private final StroomKafkaProducer stroomKafkaProducer;
-    private final PathCreator pathCreator;
+    @Resource
+    private StroomKafkaProducer stroomKafkaProducer;
+
+    @Resource
+    private PathCreator pathCreator;
 
     private String topic;
     private String recordKey;
 
     private String key;
-
-    @Inject
-    public RollingKafkaAppender(final StroomKafkaProducer stroomKafkaProducer,
-                                final PathCreator pathCreator) {
-        this.stroomKafkaProducer = stroomKafkaProducer;
-        this.pathCreator = pathCreator;
-    }
-
 
     @Override
     void validateSpecificSettings() {
