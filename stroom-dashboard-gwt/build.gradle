@@ -23,6 +23,8 @@ dependencies {
     compile libs.gwtp_mvp_client
 
     //needed so gwt can compile the stroom-query code that contains swagger annotations
+    compile "${libs.swagger_annotations}"
+    permitUnusedDeclared "${libs.swagger_annotations}"
     compile "${libs.swagger_annotations}:sources"
     permitUnusedDeclared "${libs.swagger_annotations}:sources"
 }

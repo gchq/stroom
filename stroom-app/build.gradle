@@ -9,6 +9,7 @@ apply plugin: 'com.benjaminsproule.swagger'
 mainClassName = 'stroom.startup.App'
 
 jar {
+    //we need to first generate the swagger spec files so they can be added in to the jar
     dependsOn generateSwaggerDocumentation
 
     manifest {
@@ -144,8 +145,6 @@ sourceSets {
     }
 }
 
-
-
 // This task lets us run the actual integration tests.
 task integrationTest(type: Test) {
     testClassesDir = sourceSets.integrationTest.output.classesDir
@@ -167,7 +166,7 @@ run {
 }
 
 //The gwtCompile tasks create files in stroom-app/src/main/resources/ui
-//so those task MUST be run first else this jar and the fat jar will be
+//so those tasks MUST be run first else this jar and the fat jar will be
 //missing all the GWT generated files and the UI will fail to start
 processResources.dependsOn(':stroom-app-gwt:gwtCompile')
 processResources.dependsOn(':stroom-dashboard-gwt:gwtCompile')

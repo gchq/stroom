@@ -26,6 +26,8 @@ dependencies {
     compile libs.gwtp_mvp_client
 
     //needed so gwt can compile the stroom-query code that contains swagger annotations
+    compile "${libs.swagger_annotations}"
+    permitUnusedDeclared "${libs.swagger_annotations}"
     compile "${libs.swagger_annotations}:sources"
     permitUnusedDeclared "${libs.swagger_annotations}:sources"
 }
@@ -73,10 +75,10 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
         println "Making directory extraDir $extraDir"
         file(extraDir).mkdirs()
 
-        println "Dumping gwtSourceDirs"
-        gwtSourceDirs.each {
-            println "${it.toString()}"
-        }
+        //println "Dumping gwtSourceDirs"
+        //gwtSourceDirs.each {
+            //println "${it.toString()}"
+        //}
     }
 
     main = gwtCompilerProps.mainClass
