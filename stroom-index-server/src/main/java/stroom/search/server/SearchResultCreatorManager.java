@@ -47,7 +47,7 @@ public class SearchResultCreatorManager extends AbstractCacheBean<SearchResultCr
     private SearchResponseCreator create(final SearchResultCreatorManager.Key key) {
         Store store = luceneSearchStoreFactory.create(key.searchRequest);
 
-        return new SearchResponseCreator(store, store.getDefaultMaxResultsSizes());
+        return new SearchResponseCreator(store);
     }
 
     @Override
