@@ -31,6 +31,8 @@
 
     <inherits name='javax.xml.bind.annotation.Adapters'/>
 
+    <inherits name='io.swagger.Swagger'/>
+
     <!-- Other module inherits -->
     <inherits name='stroom.dispatch.Dispatch'/>
 

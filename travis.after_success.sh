@@ -56,4 +56,19 @@ if [ "$doDockerBuild" = true ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then
     docker push gchq/stroom
 fi
 
+#Deploy the generated swagger specs and swagger UI (obtained from github) to gh-pages
+if [ "$TRAVIS_BRANCH" = "master" ]; then
+    ghPagesDir=$TRAVIS_BUILD_DIR/gh-pages
+    swaggerUiCloneDir=$TRAVIS_BUILD_DIR/swagger-ui
+    mkdir -p $ghPagesDir
+    #copy our generated swagger specs to gh-pages
+    cp $TRAVIS_BUILD_DIR/stroom-app/build/swagger/swagger.* $ghPagesDir/
+    #clone swagger-ui repo so we can get the ui html/js/etc
+    git clone --depth 1 https://github.com/swagger-api/swagger-ui.git $swaggerUiCloneDir
+    #copy the bits of swagger-ui that we need
+    cp -r $swaggerUiCloneDir/dist/* $ghPagesDir/
+    #repalce the default swagger spec url in swagger UI
+    sed -i 's#url: ".*"#url: "https://gchq.github.io/stroom/swagger.json"#g' $ghPagesDir/index.html
+fi
+
 
