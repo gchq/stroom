@@ -28,6 +28,7 @@ import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.server.filter.AbstractSamplingFilter;
+import stroom.pipeline.server.writer.PathCreator;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.util.shared.Severity;
@@ -59,45 +60,48 @@ public class KafkaProducerFilter extends AbstractSamplingFilter {
 
     private final ErrorReceiverProxy errorReceiverProxy;
     private final StroomKafkaProducer stroomKafkaProducer;
+    private final PathCreator pathCreator;
 
-    private String recordKey;
     private String topic;
+    private String recordKey;
 
     @Inject
     public KafkaProducerFilter(final ErrorReceiverProxy errorReceiverProxy,
                                final LocationFactoryProxy locationFactory,
                                final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
-                               final StroomPropertyService stroomPropertyService) {
+                               final StroomPropertyService stroomPropertyService,
+                               final PathCreator pathCreator) {
         super(errorReceiverProxy, locationFactory);
         this.errorReceiverProxy = errorReceiverProxy;
         this.stroomKafkaProducer = stroomKafkaProducerFactoryService.getProducer();
+        this.pathCreator = pathCreator;
     }
 
     @Override
     public void endDocument() throws SAXException {
         super.endDocument();
-        StroomKafkaProducerRecord<String, String> newRecord =
+        final StroomKafkaProducerRecord<String, String> newRecord =
                 new StroomKafkaProducerRecord.Builder<String, String>()
                         .topic(topic)
                         .key(recordKey)
                         .value(getOutput())
                         .build();
         try {
-            stroomKafkaProducer.send(newRecord, FlushMode.FLUSH_ON_SEND, exception -> {
-                errorReceiverProxy.log(Severity.ERROR, null, null, "Unable to send record to Kafka!", exception);
-            });
+            stroomKafkaProducer.send(newRecord, FlushMode.FLUSH_ON_SEND, exception ->
+                errorReceiverProxy.log(Severity.ERROR, null, null, "Unable to send record to Kafka!", exception)
+            );
         } catch (RuntimeException e) {
             errorReceiverProxy.log(Severity.ERROR, null, null, "Unable to send record to Kafka!", e);
         }
     }
 
-    @PipelineProperty(description = "The key for the record. This determines the partition.")
+    @PipelineProperty(description = "This key to apply to the records, used to select partition.")
     public void setRecordKey(final String recordKey) {
-        this.recordKey = recordKey;
+        this.recordKey = pathCreator.replaceAll(recordKey);
     }
 
     @PipelineProperty(description = "The topic to send the record to.")
     public void setTopic(final String topic) {
-        this.topic = topic;
+        this.topic = pathCreator.replaceAll(topic);
     }
 }

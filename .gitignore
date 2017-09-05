@@ -5,6 +5,7 @@ node_modules
 _book
 .gradle/
 classes/
+generated/
 libs/
 jars/
 stroom-dashboard-gwt/hs_err_pid*.log
