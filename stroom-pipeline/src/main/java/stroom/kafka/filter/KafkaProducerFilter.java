@@ -19,6 +19,7 @@ package stroom.kafka.filter;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import stroom.kafka.StroomKafkaProducer;
 import stroom.pipeline.server.LocationFactoryProxy;
@@ -74,14 +75,44 @@ public class KafkaProducerFilter extends AbstractSamplingFilter {
     }
 
     @Override
+    public void setDocumentLocator(Locator locator) {
+        super.setDocumentLocator(locator);
+    }
+
+    @Override
+    public void startProcessing() {
+        super.startProcessing();
+    }
+
+    @Override
+    public void endProcessing() {
+        super.endProcessing();
+    }
+
+    @Override
+    public void startDocument() throws SAXException {
+        super.startDocument();
+    }
+
+    @Override
+    public void startStream() {
+        super.startStream();
+    }
+
+    @Override
+    public void endStream() {
+        super.endStream();
+    }
+
+    @Override
     public void endDocument() throws SAXException {
         super.endDocument();
 
         final ProducerRecord<String, String> newRecord = new ProducerRecord<>(topic, recordKey, getOutput());
         try {
-            stroomKafkaProducer.send(newRecord, StroomKafkaProducer.FlushMode.FLUSH_ON_SEND, exception -> {
-                errorReceiverProxy.log(Severity.ERROR, null, null, "Unable to send record to Kafka!", exception);
-            });
+            stroomKafkaProducer.send(newRecord, StroomKafkaProducer.FlushMode.FLUSH_ON_SEND, exception ->
+                errorReceiverProxy.log(Severity.ERROR, null, null, "Unable to send record to Kafka!", exception)
+            );
         } catch (RuntimeException e) {
             errorReceiverProxy.log(Severity.ERROR, null, null, "Unable to send record to Kafka!", e);
         }
