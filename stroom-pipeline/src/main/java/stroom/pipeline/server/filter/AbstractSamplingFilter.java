@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import org.xml.sax.Attributes;
-import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import stroom.entity.server.util.XMLUtil;
@@ -47,16 +46,14 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
 
     private final ErrorReceiverProxy errorReceiverProxy;
     private final LocationFactoryProxy locationFactory;
-    private final ByteArrayOutputStream outputStream;
+    private ByteArrayOutputStream outputStream;
 
-    private ContentHandler handler;
+    private TransformerHandler handler;
     private ErrorListener errorListener;
 
     public AbstractSamplingFilter(final ErrorReceiverProxy errorReceiverProxy, final LocationFactoryProxy locationFactory) {
         this.errorReceiverProxy = errorReceiverProxy;
         this.locationFactory = locationFactory;
-
-        outputStream = new ByteArrayOutputStream();
     }
 
     /**
@@ -68,10 +65,7 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
         errorListener = new ErrorListenerAdaptor(getElementId(), locationFactory, errorReceiverProxy);
 
         try {
-            final TransformerHandler th = XMLUtil.createTransformerHandler(errorListener, false);
-            th.setResult(new StreamResult(outputStream));
-
-            handler = th;
+            this.handler = XMLUtil.createTransformerHandler(errorListener, false);
 
         } catch (final TransformerConfigurationException e) {
             errorReceiverProxy.log(Severity.FATAL_ERROR,
@@ -85,28 +79,7 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
 
     @Override
     public void endProcessing() {
-        try {
-            outputStream.flush();
-            outputStream.close();
-
-            if (LOGGER.isDebugEnabled()) {
-                try {
-                    LOGGER.debug(XMLUtil.prettyPrintXML(outputStream.toString()));
-                } catch (final Exception ex) {
-                    LOGGER.debug("Not XML");
-                    LOGGER.debug(outputStream.toString());
-                }
-            }
-
-        } catch (final IOException e) {
-            try {
-                errorListener.fatalError(new TransformerException(e.getMessage()));
-            } catch (final TransformerException te) {
-                LOGGER.error(MarkerFactory.getMarker("FATAL"), te.getMessage(), te);
-            }
-        } finally {
-            super.endProcessing();
-        }
+        super.endProcessing();
     }
 
     /**
@@ -128,6 +101,9 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
      */
     @Override
     public void startDocument() throws SAXException {
+        this.outputStream = new ByteArrayOutputStream();
+        handler.setResult(new StreamResult(outputStream));
+
         handler.startDocument();
         super.startDocument();
     }
@@ -139,8 +115,31 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
      */
     @Override
     public void endDocument() throws SAXException {
-        handler.endDocument();
-        super.endDocument();
+
+        try {
+            handler.endDocument();
+
+            outputStream.flush();
+            outputStream.close();
+
+            if (LOGGER.isDebugEnabled()) {
+                try {
+                    LOGGER.debug(XMLUtil.prettyPrintXML(outputStream.toString()));
+                } catch (final Exception ex) {
+                    LOGGER.debug("Not XML");
+                    LOGGER.debug(outputStream.toString());
+                }
+            }
+
+        } catch (final IOException e) {
+            try {
+                errorListener.fatalError(new TransformerException(e.getMessage()));
+            } catch (final TransformerException te) {
+                LOGGER.error(MarkerFactory.getMarker("FATAL"), te.getMessage(), te);
+            }
+        } finally {
+            super.endDocument();
+        }
     }
 
     /**

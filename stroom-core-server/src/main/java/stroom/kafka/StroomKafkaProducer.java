@@ -1,10 +1,7 @@
 package stroom.kafka;
 
 import com.google.common.base.Strings;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.clients.producer.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,7 +50,7 @@ public class StroomKafkaProducer {
 
         //kafka may not have been up on startup so ensure we have a producer instance now
         try {
-            intiProducer();
+            initProducer();
         } catch (Exception e) {
             LOGGER.error("Error initialising kafka producer to " + bootstrapServers + ", (" + e.getMessage() + ")");
             exceptionHandler.accept(e);
@@ -93,21 +90,21 @@ public class StroomKafkaProducer {
     /**
      * Lazy initialisation of the kafka producer
      */
-    private void intiProducer() {
+    private void initProducer() {
         if (producer == null && isOkToInitNow(bootstrapServers)) {
             synchronized (this) {
                 if (producer == null && isOkToInitNow(bootstrapServers)) {
                     LOGGER.info("Initialising kafka producer for {}", bootstrapServers);
                     Properties props = new Properties();
-                    props.put("bootstrap.servers", bootstrapServers);
-                    props.put("acks", "all");
-                    props.put("retries", 0);
-                    props.put("batch.size", 16384);
-                    props.put("linger.ms", 1);
-                    props.put("buffer.memory", 33554432);
-                    props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+                    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+                    props.put(ProducerConfig.ACKS_CONFIG, "all");
+                    props.put(ProducerConfig.RETRIES_CONFIG, 0);
+                    props.put(ProducerConfig.BATCH_SIZE_CONFIG, 16384);
+                    props.put(ProducerConfig.LINGER_MS_CONFIG, 1);
+                    props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, 33554432);
+                    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, org.apache.kafka.common.serialization.StringSerializer.class);
                     // TODO We will probably want to send Avro'd bytes (or something similar) at some point, so the serializer will need to change.
-                    props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+                    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, org.apache.kafka.common.serialization.StringSerializer.class);
 
                     try {
                         producer = new KafkaProducer<>(props);
