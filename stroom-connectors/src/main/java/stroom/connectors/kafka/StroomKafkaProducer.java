@@ -16,11 +16,11 @@ public interface StroomKafkaProducer {
     /**
      * Given a Record, sends to the Kafka broker.
      * @param stroomRecord The record, contains the data and partition information.
-     * @param flushMode Flush the producer on send
+     * @param flushOnSend Flush the producer on send
      * @param exceptionHandler A handler function if the exceptions are thrown. Allows custom exceptions (Runtime only)
      */
     void send(StroomKafkaProducerRecord<String, String> stroomRecord,
-              FlushMode flushMode,
+              boolean flushOnSend,
               Consumer<Exception> exceptionHandler);
 
     /**

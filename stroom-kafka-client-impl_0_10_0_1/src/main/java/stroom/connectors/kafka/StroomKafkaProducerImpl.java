@@ -51,7 +51,7 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
     }
 
     public void send(final StroomKafkaProducerRecord<String, String> stroomRecord,
-                     final FlushMode flushMode,
+                     final boolean flushOnSend,
                      final Consumer<Exception> exceptionHandler) {
 
         //kafka may not have been up on startup so ensure we have a producer instance now
@@ -83,7 +83,7 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
                     LOGGER.trace("Record sent to Kafka");
                 });
 
-                if (flushMode.equals(FlushMode.FLUSH_ON_SEND)) {
+                if (flushOnSend) {
                     future.get();
                 }
 

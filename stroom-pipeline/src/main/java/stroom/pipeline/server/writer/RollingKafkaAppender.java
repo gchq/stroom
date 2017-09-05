@@ -30,6 +30,7 @@ public class RollingKafkaAppender extends AbstractRollingAppender {
 
     private String topic;
     private String recordKey;
+    private boolean flushOnSend;
 
     private String key;
 
@@ -61,7 +62,8 @@ public class RollingKafkaAppender extends AbstractRollingAppender {
                 System.currentTimeMillis(),
                 stroomKafkaProducerFactoryService.getProducer(),
                 recordKey,
-                topic);
+                topic,
+                flushOnSend);
     }
 
     @PipelineProperty(description = "The record key to apply to records, used to select patition. Replacement variables can be used in path strings such as ${feed}.")
@@ -72,5 +74,10 @@ public class RollingKafkaAppender extends AbstractRollingAppender {
     @PipelineProperty(description = "The topic to send the record to. Replacement variables can be used in path strings such as ${feed}.")
     public void setTopic(final String topic) {
         this.topic = pathCreator.replaceAll(topic);
+    }
+
+    @PipelineProperty(description="Flush the producer each time a message is sent")
+    public void setFlushOnSend(final boolean flushOnSend) {
+        this.flushOnSend = flushOnSend;
     }
 }

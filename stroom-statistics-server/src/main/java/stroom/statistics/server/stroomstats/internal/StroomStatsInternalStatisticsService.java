@@ -96,7 +96,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
                                         .key(statName)
                                         .value(message)
                                         .build();
-                        stroomKafkaProducer.send(producerRecord, FlushMode.NO_FLUSH, exception -> {
+                        stroomKafkaProducer.send(producerRecord, false, exception -> {
                             throw new RuntimeException(String.format(
                                     "Error sending %s internal stats with name %s to kafka on topic %s, due to (%s)",
                                     events.size(), statName, topic, exception.getMessage()), exception);

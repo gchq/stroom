@@ -64,6 +64,7 @@ public class KafkaProducerFilter extends AbstractSamplingFilter {
 
     private String topic;
     private String recordKey;
+    private boolean flushOnSend;
 
     @Inject
     public KafkaProducerFilter(final ErrorReceiverProxy errorReceiverProxy,
@@ -87,7 +88,7 @@ public class KafkaProducerFilter extends AbstractSamplingFilter {
                         .value(getOutput())
                         .build();
         try {
-            stroomKafkaProducer.send(newRecord, FlushMode.FLUSH_ON_SEND, exception ->
+            stroomKafkaProducer.send(newRecord, flushOnSend, exception ->
                 errorReceiverProxy.log(Severity.ERROR, null, null, "Unable to send record to Kafka!", exception)
             );
         } catch (RuntimeException e) {
@@ -103,5 +104,10 @@ public class KafkaProducerFilter extends AbstractSamplingFilter {
     @PipelineProperty(description = "The topic to send the record to.")
     public void setTopic(final String topic) {
         this.topic = pathCreator.replaceAll(topic);
+    }
+
+    @PipelineProperty(description="Flush the producer each time a message is sent")
+    public void setFlushOnSend(final boolean flushOnSend) {
+        this.flushOnSend = flushOnSend;
     }
 }
