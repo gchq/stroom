@@ -19,7 +19,6 @@ package stroom.kafka.filter;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import stroom.kafka.StroomKafkaProducer;
 import stroom.pipeline.server.LocationFactoryProxy;
@@ -72,36 +71,6 @@ public class KafkaProducerFilter extends AbstractSamplingFilter {
         this.errorReceiverProxy = errorReceiverProxy;
         this.stroomKafkaProducer = stroomKafkaProducer;
         this.pathCreator = pathCreator;
-    }
-
-    @Override
-    public void setDocumentLocator(Locator locator) {
-        super.setDocumentLocator(locator);
-    }
-
-    @Override
-    public void startProcessing() {
-        super.startProcessing();
-    }
-
-    @Override
-    public void endProcessing() {
-        super.endProcessing();
-    }
-
-    @Override
-    public void startDocument() throws SAXException {
-        super.startDocument();
-    }
-
-    @Override
-    public void startStream() {
-        super.startStream();
-    }
-
-    @Override
-    public void endStream() {
-        super.endStream();
     }
 
     @Override
