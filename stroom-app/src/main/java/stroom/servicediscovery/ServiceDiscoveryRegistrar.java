@@ -69,9 +69,6 @@ public class ServiceDiscoveryRegistrar implements HasHealthCheck {
 
     private void curatorStartupListener(ServiceDiscovery<String> serviceDiscovery) {
         try {
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append("Successfully registered the following services: ");
-
             Map<String, String> services = new TreeMap<>();
             Arrays.stream(RegisteredService.values())
                     .forEach(registeredService -> {
@@ -83,7 +80,7 @@ public class ServiceDiscoveryRegistrar implements HasHealthCheck {
 
             health = HealthCheck.Result.builder()
                     .healthy()
-                    .withMessage("Services registered")
+                    .withMessage("Local services registered")
                     .withDetail("registered-services", services)
                     .build();
 
