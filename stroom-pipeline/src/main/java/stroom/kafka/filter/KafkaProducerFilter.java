@@ -61,6 +61,7 @@ public class KafkaProducerFilter extends AbstractSamplingFilter {
 
     private String topic;
     private String recordKey;
+    private StroomKafkaProducer.FlushMode flushMode;
 
     @Inject
     public KafkaProducerFilter(final ErrorReceiverProxy errorReceiverProxy,
@@ -95,5 +96,10 @@ public class KafkaProducerFilter extends AbstractSamplingFilter {
     @PipelineProperty(description = "The topic to send the record to.")
     public void setTopic(final String topic) {
         this.topic = pathCreator.replaceAll(topic);
+    }
+
+    @PipelineProperty(description="Flush the producer each time a message is sent")
+    public void setFlushOnSend(final boolean flushMode) {
+        this.flushMode = flushMode ? StroomKafkaProducer.FlushMode.FLUSH_ON_SEND : StroomKafkaProducer.FlushMode.NO_FLUSH;
     }
 }

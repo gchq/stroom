@@ -13,7 +13,6 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.util.spring.StroomScope;
 
 import javax.annotation.Resource;
-import javax.inject.Inject;
 import java.io.IOException;
 
 @Component
@@ -31,6 +30,7 @@ public class RollingKafkaAppender extends AbstractRollingAppender {
 
     private String topic;
     private String recordKey;
+    private StroomKafkaProducer.FlushMode flushMode;
 
     private String key;
 
@@ -62,7 +62,8 @@ public class RollingKafkaAppender extends AbstractRollingAppender {
                 System.currentTimeMillis(),
                 stroomKafkaProducer,
                 recordKey,
-                topic);
+                topic,
+                flushMode);
     }
 
     @PipelineProperty(description = "The record key to apply to records, used to select patition. Replacement variables can be used in path strings such as ${feed}.")
@@ -73,5 +74,10 @@ public class RollingKafkaAppender extends AbstractRollingAppender {
     @PipelineProperty(description = "The topic to send the record to. Replacement variables can be used in path strings such as ${feed}.")
     public void setTopic(final String topic) {
         this.topic = pathCreator.replaceAll(topic);
+    }
+
+    @PipelineProperty(description="Flush the producer each time a message is sent")
+    public void setFlushOnSend(final boolean flushOnSend) {
+        this.flushMode = flushOnSend ? StroomKafkaProducer.FlushMode.FLUSH_ON_SEND : StroomKafkaProducer.FlushMode.NO_FLUSH;
     }
 }
