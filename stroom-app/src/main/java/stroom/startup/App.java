@@ -34,6 +34,9 @@ public class App extends Application<Config> {
     public static void main(String[] args) throws Exception {
         // Hibernate requires JBoss Logging. The SLF4J API jar wasn't being detected so this sets it manually.
         System.setProperty("org.jboss.logging.provider", "slf4j");
+
+
+        //        /home/joe/git/stroom/stroom-kafka-client-impl_0_10_0_1/build/libs/stroom-kafka-client-impl_0_10_0_1-SNAPSHOT.jar
         new App().run(args);
     }
 

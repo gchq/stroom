@@ -36,7 +36,7 @@ public class TestStroomKafkaProducer {
                         .build();
 
         // When
-        stroomKafkaProducer.send(record, FlushMode.FLUSH_ON_SEND, DEFAULT_CALLBACK);
+        stroomKafkaProducer.send(record, true, DEFAULT_CALLBACK);
 
         // Then: manually check your Kafka instances 'statistics' topic for 'some record data'
     }
@@ -57,7 +57,7 @@ public class TestStroomKafkaProducer {
         AtomicBoolean hasSendFailed = new AtomicBoolean(false);
 
         // When
-        stroomKafkaProducer.send(record, FlushMode.FLUSH_ON_SEND, ex -> hasSendFailed.set(true));
+        stroomKafkaProducer.send(record, true, ex -> hasSendFailed.set(true));
 
         // Then
         Assert.assertTrue(hasSendFailed.get());
