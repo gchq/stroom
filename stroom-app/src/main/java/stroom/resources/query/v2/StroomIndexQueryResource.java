@@ -18,14 +18,17 @@ package stroom.resources.query.v2;
 
 import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.health.HealthCheck;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import stroom.datasource.api.v2.DataSource;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
-import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
+import stroom.query.common.v2.SearchResponseCreator;
 import stroom.resources.ResourcePaths;
 import stroom.search.server.IndexDataSourceFieldUtil;
 import stroom.search.server.SearchResultCreatorManager;
@@ -37,6 +40,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+@Api(
+        value = "stroom-index query - " + ResourcePaths.V2,
+        description = "Stroom Index Query API")
 @Path(ResourcePaths.STROOM_INDEX + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 public class StroomIndexQueryResource implements QueryResource {
@@ -49,7 +55,10 @@ public class StroomIndexQueryResource implements QueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path(QueryResource.DATA_SOURCE_ENDPOINT)
     @Timed
-    public DataSource getDataSource(final DocRef docRef) {
+    @ApiOperation(
+            value = "Submit a request for a data source definition, supplying the DocRef for the data source",
+            response = DataSource.class)
+    public DataSource getDataSource(@ApiParam("DocRef") final DocRef docRef) {
         final Index index = indexService.loadByUuid(docRef.getUuid());
         return new DataSource(IndexDataSourceFieldUtil.getDataSourceFields(index));
     }
@@ -59,7 +68,10 @@ public class StroomIndexQueryResource implements QueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path(QueryResource.SEARCH_ENDPOINT)
     @Timed
-    public SearchResponse search(final SearchRequest request) {
+    @ApiOperation(
+            value = "Submit a search request",
+            response = SearchResponse.class)
+    public SearchResponse search(@ApiParam("SearchRequest") final SearchRequest request) {
         final SearchResponseCreator searchResponseCreator = searchResultCreatorManager.getOrCreate(new Key(request));
         return searchResponseCreator.create(request);
     }
@@ -69,7 +81,10 @@ public class StroomIndexQueryResource implements QueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path(QueryResource.DESTROY_ENDPOINT)
     @Timed
-    public Boolean destroy(final QueryKey queryKey) {
+    @ApiOperation(
+            value = "Destroy a running query",
+            response = Boolean.class)
+    public Boolean destroy(@ApiParam("QueryKey") final QueryKey queryKey) {
         searchResultCreatorManager.remove(new Key(queryKey));
         return Boolean.TRUE;
     }

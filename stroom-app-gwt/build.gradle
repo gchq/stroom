@@ -24,6 +24,12 @@ dependencies {
     permitUnusedDeclared libs.gwt_dev
     compile libs.gwt_user
     compile libs.gwtp_mvp_client
+
+    //needed so gwt can compile the stroom-query code that contains swagger annotations
+    compile "${libs.swagger_annotations}"
+    permitUnusedDeclared "${libs.swagger_annotations}"
+    compile "${libs.swagger_annotations}:sources"
+    permitUnusedDeclared "${libs.swagger_annotations}:sources"
 }
 
 def gwtSourceDirs = []
@@ -42,11 +48,13 @@ gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(urlL
 gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(urlLibs.stroomQueryCommon))).getAsPath())
 gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(urlLibs.stroomQueryCommonSources))).getAsPath())
 
+
 //println "Dumping gwtSourceDirs contents"
 //gwtSourceDirs.each { dir -> 
     //println dir
 //}
 
+//task gwtCompile(dependsOn: [classes, addGwtDeps], type: JavaExec) {
 task gwtCompile(dependsOn: classes, type: JavaExec) {
     def module = 'stroom.app.App'
 
@@ -66,9 +74,15 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
         file(deployDir).mkdirs()
         println "Making directory extraDir $extraDir"
         file(extraDir).mkdirs()
+
+        //println "Dumping gwtSourceDirs"
+        //gwtSourceDirs.each {
+            //println "${it.toString()}"
+        //}
     }
 
     main = gwtCompilerProps.mainClass
+
 
     classpath {
         gwtSourceDirs

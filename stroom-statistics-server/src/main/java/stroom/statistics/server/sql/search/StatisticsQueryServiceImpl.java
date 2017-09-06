@@ -187,7 +187,7 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
         store.coprocessorMap(coprocessorMap);
         store.payloadMap(payloadMap);
 
-        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(store, defaultMaxResultsSizes);
+        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(store);
         SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
 
         return searchResponse;

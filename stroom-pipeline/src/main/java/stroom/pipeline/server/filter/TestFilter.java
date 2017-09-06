@@ -19,6 +19,7 @@ package stroom.pipeline.server.filter;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.xml.sax.SAXException;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.factory.ConfigurableElement;
@@ -28,10 +29,15 @@ import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A filter used to sample the output produced by SAX events at any point in the
  * XML pipeline. Many instances of this filter can be used.
+ *
+ * This filter accumulates all the complete documents so they can be asserted against at the end of parsing.
  */
 @Component
 @Scope(StroomScope.TASK)
@@ -40,8 +46,22 @@ import javax.inject.Inject;
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
         PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
 public class TestFilter extends AbstractSamplingFilter {
+
+    private final List<String> outputs;
+
     @Inject
     public TestFilter(final ErrorReceiverProxy errorReceiverProxy, final LocationFactoryProxy locationFactory) {
         super(errorReceiverProxy, locationFactory);
+        outputs = new ArrayList<>();
+    }
+
+    @Override
+    public void endDocument() throws SAXException {
+        super.endDocument();
+        outputs.add(getOutput());
+    }
+
+    public List<String> getOutputs() {
+        return Collections.unmodifiableList(outputs);
     }
 }

@@ -47,6 +47,7 @@ public class App extends Application<Config> {
             new EnvironmentVariableSubstitutor(false)));
 
         bootstrap.addBundle(new AssetsBundle("/ui", "/", "stroom.jsp", "ui"));
+//        bootstrap.addBundle(new AssetsBundle("/swagger", "/", "swagger.json", "swaggerSpec"));
     }
 
     @Override

@@ -1,9 +1,11 @@
 package stroom.resources.authorisation.v1;
 
 import com.codahale.metrics.annotation.Timed;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import stroom.resources.ResourcePaths;
 import stroom.security.SecurityContext;
-import stroom.security.server.AuthorisationService;
 
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -14,6 +16,9 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+@Api(
+        value = "authorisation - " + ResourcePaths.V1,
+        description = "Stroom Authorisation API")
 @Path(ResourcePaths.AUTHORISATION + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public class AuthorisationResource {
@@ -35,12 +40,22 @@ public class AuthorisationResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Timed
-    public Response isAuthorisedForStatistic(AuthorisationRequest authorisationRequest) {
+    @ApiOperation(
+        value = "Submit a request to verify if the user has the requested permission on a 'document'",
+        response = Response.class)
+    public Response isAuthorised(@ApiParam("AuthorisationRequest") final AuthorisationRequest authorisationRequest) {
         boolean result = securityContext.hasDocumentPermission(
             authorisationRequest.getDocRef().getType(),
             authorisationRequest.getDocRef().getUuid(),
-            authorisationRequest.getPermissions());
-        return result ? Response.ok().build() : Response.status(Response.Status.UNAUTHORIZED).build();
+            authorisationRequest.getPermission());
+
+        return result
+            ? Response
+            .ok()
+            .build()
+            : Response
+            .status(Response.Status.UNAUTHORIZED)
+            .build();
     }
 
     @POST

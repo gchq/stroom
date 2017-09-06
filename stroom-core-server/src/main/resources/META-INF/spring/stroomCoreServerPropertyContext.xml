@@ -943,7 +943,7 @@
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.services.stroomStats.version"/>
-            <property name="value" value="1"/>
+            <property name="value" value="2"/>
             <property name="description"
                       value="The version of the stroom-stats service" />
             <property name="editable" value="true"/>
@@ -1047,7 +1047,7 @@
             <property name="value"
                       value="localhost:2181"/>
             <property name="description"
-                      value="The Zookeeper quorum connection string, required for service discovery" />
+                      value="The Zookeeper quorum connection string, required for service discovery, in the form 'host1:port1,host2:port2,host3:port3'. The root znode to use in Zookeeper is defined in the property stroom.serviceDiscovery.zookeeperBasePath" />
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
