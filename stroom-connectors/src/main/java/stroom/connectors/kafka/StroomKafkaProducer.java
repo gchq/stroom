@@ -1,5 +1,7 @@
 package stroom.connectors.kafka;
 
+import stroom.connectors.StroomConnectorProducer;
+
 import java.util.function.Consumer;
 
 /**
@@ -7,7 +9,7 @@ import java.util.function.Consumer;
  * Allows us to only bind to Kafka libraries at runtime. This is proving desirable because those libraries
  * come with a fair bit of heft in transitive dependencies.
  */
-public interface StroomKafkaProducer {
+public interface StroomKafkaProducer extends StroomConnectorProducer {
     /**
      * This is the one config item that must be present, everything else can be default
      */
@@ -27,9 +29,4 @@ public interface StroomKafkaProducer {
      * Allow manual flushing of the producer by the client.
      */
     void flush();
-
-    /**
-     * Should be called when the producer is no longer required.
-     */
-    void shutdown();
 }
