@@ -43,6 +43,7 @@ import org.springframework.context.annotation.FilterType;
         "stroom.internalstatistics",
         "stroom.io",
         "stroom.jobsystem",
+        "stroom.connectors",
         "stroom.connectors.kafka",
         "stroom.lifecycle",
         "stroom.logging",

@@ -6,18 +6,13 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.connectors.ConnectorProperties;
 import stroom.connectors.ConnectorPropertiesPrefixImpl;
+import stroom.connectors.ExternalLibService;
 import stroom.node.server.StroomPropertyService;
-import stroom.util.config.StroomProperties;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomShutdown;
 
-import javax.annotation.PostConstruct;
 import javax.inject.Inject;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.ServiceLoader;
-import java.util.function.Function;
+import java.util.*;
 
 /**
  * This service can be used to create instances of StroomKafkaProducers.
@@ -53,9 +48,10 @@ public class StroomKafkaProducerFactoryService {
     private final Map<String, StroomKafkaProducer> producersByName;
 
     @Inject
-    public StroomKafkaProducerFactoryService(final StroomPropertyService propertyService) {
+    public StroomKafkaProducerFactoryService(final StroomPropertyService propertyService,
+                                             final ExternalLibService externalLibService) {
         this.propertyService = propertyService;
-        this.loader = ServiceLoader.load(StroomKafkaProducerFactory.class);
+        this.loader = externalLibService.load(StroomKafkaProducerFactory.class);
         this.producersByName = new HashMap<>();
     }
 
@@ -76,6 +72,8 @@ public class StroomKafkaProducerFactoryService {
      * @return A {@link StroomKafkaProducer} connecting to the named Kafka server.
      */
     public synchronized StroomKafkaProducer getProducer(final String name) {
+        LOGGER.info("Retrieving the Kafka Producer for " + name);
+
         final ConnectorProperties connectorProperties = new ConnectorPropertiesPrefixImpl(String.format(PROP_PREFIX, name), this.propertyService);
 
         // Retrieve the settings for this named kafka
