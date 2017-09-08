@@ -1,3 +1,7 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '1.2.4'
+}
+
 dependencies {
     compile project(':stroom-connectors')
 
@@ -5,4 +9,11 @@ dependencies {
 
     compile libs.guava
     compile libs.slf4j_api
+}
+
+shadowJar {
+    // Allows us to build fat jars with lots of files
+    zip64 true
+
+    archiveName 'stroom-kafka-client-impl_0_10_0_1-all.jar'
 }
