@@ -1,11 +1,11 @@
 plugins {
-  id 'com.github.johnrengelman.shadow' version '1.2.4'
+    id 'com.github.johnrengelman.shadow' version '1.2.4'
+    id "com.benjaminsproule.swagger" version "0.1.4"
 }
 
 def swaggerDir = "${projectDir}/src/main/resources/swagger"
 
 apply plugin: 'application'
-apply plugin: 'com.benjaminsproule.swagger'
 mainClassName = 'stroom.startup.App'
 
 jar {
