@@ -207,7 +207,7 @@ ext.contentPacks = [
 ]
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '3.5'
+    gradleVersion = '4.1'
 }
 
 allprojects {
@@ -220,6 +220,10 @@ allprojects {
 
 subprojects {
     apply plugin: 'java'
+
+    //sourceSets {
+        //logger.info "main.output.classesDirs: " + main.output.classesDirs
+    //}
     
     //analyze missing dependencies for the code base
     apply plugin: 'ca.cutterslade.analyze'
