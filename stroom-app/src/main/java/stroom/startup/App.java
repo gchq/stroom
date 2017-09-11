@@ -54,6 +54,7 @@ public class App extends Application<Config> {
     public void run(Config configuration, io.dropwizard.setup.Environment environment) throws Exception {
         // The order in which the following are run is important.
         Environment.configure(environment);
+        configureCors(environment);
         SpringContexts springContexts = new SpringContexts();
         Servlets servlets = new Servlets(environment.getApplicationContext());
         Filters filters = new Filters(environment.getApplicationContext());
@@ -63,15 +64,13 @@ public class App extends Application<Config> {
         Resources resources = new Resources(environment.jersey(), servletMonitor);
         HealthChecks.registerHealthChecks(environment.healthChecks(), resources, servletMonitor);
         AdminTasks.registerAdminTasks(environment);
-        configureCors(environment);
     }
 
     private static final void configureCors(io.dropwizard.setup.Environment environment) {
         FilterRegistration.Dynamic cors = environment.servlets().addFilter("CORS", CrossOriginFilter.class);
         cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, new String[]{"/*"});
-        cors.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_METHODS_HEADER, "GET,PUT,POST,DELETE,OPTIONS");
-        cors.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_ORIGIN_HEADER, "*");
-        cors.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_HEADERS_HEADER, "*");
-        cors.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_CREDENTIALS_HEADER, "true");
+        cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "GET,PUT,POST,DELETE,OPTIONS");
+        cors.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "*");
+        cors.setInitParameter(CrossOriginFilter.ALLOWED_HEADERS_PARAM,"*");
     }
 }
