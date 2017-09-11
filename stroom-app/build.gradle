@@ -176,23 +176,6 @@ runShadow {
 processResources.mustRunAfter(':stroom-app-gwt:gwtCompile')
 processResources.mustRunAfter(':stroom-dashboard-gwt:gwtCompile')
 
-task myTask() {
-    doLast {
-        project.sourceSets.each {
-            logger.info "SourceSet: $it.name"
-            logger.info "  output: " + it.output
-            logger.info "  classesDirs: " + it.output.classesDirs.getFiles()
-            it.output.classesDirs.each { dir -> 
-                logger.info "    " + dir.toString()
-            }
-        }
-        //logger.info project.sourceSets.main.output.classesDirs
-    }
-}
-
-tasks.generateSwaggerDocumentation.dependsOn myTask
-tasks.myTask.dependsOn compileJava
-
 swagger {
     apiSource {
         springmvc = false //makes it search for jersey annotations
@@ -223,4 +206,3 @@ swagger {
         swaggerDirectory = "${project.buildDir}/swagger"
     }
 }
-
