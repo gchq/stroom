@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **385** : Individual index shards can now be deleted without deleting all shards.
+
 ## [v5.0-beta.46] - 2017-08-15
 
 * Issue **#364** : Switched index writer lock factory to a SingleInstanceLockFactory as index shards are accessed by a single process.
