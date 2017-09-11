@@ -33,9 +33,9 @@ import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggedException;
 import stroom.pipeline.state.PipelineContext;
 import stroom.pool.PoolItem;
-import stroom.security.SecurityContext;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Severity;
+import stroom.util.shared.StoredError;
 import stroom.util.spring.StroomScope;
 import stroom.xmlschema.server.XMLSchemaCache;
 import stroom.xmlschema.server.XMLSchemaCache.SchemaSet;
@@ -44,6 +44,7 @@ import stroom.xmlschema.shared.XMLSchema;
 
 import javax.inject.Inject;
 import javax.xml.XMLConstants;
+import javax.xml.validation.Schema;
 import javax.xml.validation.ValidatorHandler;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -277,6 +278,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
             // again.
             if (pipelineContext.isStepping() && depth == 0) {
                 lineNo = 1;
+                schemaLocations = null;
             }
 
             colNo = depth * INDENT;
@@ -590,19 +592,24 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
 
             // Replay errors generated when creating schema.
             try {
-                storedSchema.getErrorReceiver().replay(errorReceiverProxy);
+                for (final StoredError storedError : storedSchema.getErrorReceiver().getList()) {
+                    errorReceiverProxy.log(storedError.getSeverity(), locationFactory.create(1, 1), getElementId(), storedError.toString(), null);
+                }
             } catch (final Exception e) {
                 errorHandler.fatalError(new SAXParseException(e.getMessage(), null));
             }
 
             // Create a validator handler.
-            validatorHandler = storedSchema.getSchema().newValidatorHandler();
-            validatorHandler.setDocumentLocator(locator);
-            validatorHandler.setErrorHandler(errorHandler);
+            final Schema schema = storedSchema.getSchema();
+            if (schema != null) {
+                validatorHandler = schema.newValidatorHandler();
+                validatorHandler.setDocumentLocator(locator);
+                validatorHandler.setErrorHandler(errorHandler);
 
-            validatorHandler.startDocument();
-            for (final String prefix : prefixes.keySet()) {
-                validatorHandler.startPrefixMapping(prefix, prefixes.get(prefix));
+                validatorHandler.startDocument();
+                for (final String prefix : prefixes.keySet()) {
+                    validatorHandler.startPrefixMapping(prefix, prefixes.get(prefix));
+                }
             }
         }
 
