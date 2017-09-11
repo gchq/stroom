@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **392** : Inherited pipelines now only require 'Use' permission to be used instead of requiring 'Read' permission.
 
+* Issue **394** : Pipeline stepping will now show errors with an alert popup.
+
 ## [v5.0-beta.46] - 2017-08-15
 
 * Issue **#364** : Switched index writer lock factory to a SingleInstanceLockFactory as index shards are accessed by a single process.
