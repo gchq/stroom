@@ -47,7 +47,7 @@ public class XMLSchemaCache implements EntityEvent.Handler {
         private final Map<String, List<XMLSchema>> schemaSystemIdMap;
         private final String locations;
 
-        public SchemaSet(final Map<String, List<XMLSchema>> schemaNameMap,
+        private SchemaSet(final Map<String, List<XMLSchema>> schemaNameMap,
                 final Map<String, List<XMLSchema>> schemaNamespaceURIMap,
                 final Map<String, List<XMLSchema>> schemaSystemIdMap, final String locations) {
             this.schemaNameMap = schemaNameMap;
@@ -92,14 +92,12 @@ public class XMLSchemaCache implements EntityEvent.Handler {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(XMLSchemaCache.class);
     private static final long TEN_MINUTES = 1000 * 60 * 10;
 
-    private static final FindXMLSchemaCriteria ALL = new FindXMLSchemaCriteria();
-
     private final XMLSchemaService xmlSchemaService;
 
-    private final List<ClearHandler> clearHandlers = new ArrayList<ClearHandler>();
+    private final List<ClearHandler> clearHandlers = new ArrayList<>();
     private volatile long lastClearTime;
 
-    private final Map<FindXMLSchemaCriteria, SchemaSet> schemaSets = new ConcurrentHashMap<FindXMLSchemaCriteria, SchemaSet>();
+    private final Map<FindXMLSchemaCriteria, SchemaSet> schemaSets = new ConcurrentHashMap<>();
 
     @Inject
     public XMLSchemaCache(final XMLSchemaService xmlSchemaService) {
@@ -126,10 +124,6 @@ public class XMLSchemaCache implements EntityEvent.Handler {
                 LOGGER.error(e, e);
             }
         }
-    }
-
-    public SchemaSet getAllSchemas() {
-        return getSchemaSet(ALL);
     }
 
     public SchemaSet getSchemaSet(final FindXMLSchemaCriteria criteria) {

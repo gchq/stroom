@@ -18,6 +18,7 @@ package stroom.cache.server;
 
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
+import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 
 import java.io.Serializable;
 
@@ -26,12 +27,12 @@ public class SchemaKey implements Serializable {
 
     private final String schemaLanguage;
     private final String data;
-    private final String user;
+    private final FindXMLSchemaCriteria findXMLSchemaCriteria;
 
-    public SchemaKey(final String schemaLanguage, final String data, final String user) {
+    public SchemaKey(final String schemaLanguage, final String data, final FindXMLSchemaCriteria findXMLSchemaCriteria) {
         this.schemaLanguage = schemaLanguage;
         this.data = data;
-        this.user = user;
+        this.findXMLSchemaCriteria = findXMLSchemaCriteria;
     }
 
     public String getSchemaLanguage() {
@@ -42,8 +43,8 @@ public class SchemaKey implements Serializable {
         return data;
     }
 
-    public String getUser() {
-        return user;
+    public FindXMLSchemaCriteria getFindXMLSchemaCriteria() {
+        return findXMLSchemaCriteria;
     }
 
     @Override
@@ -51,7 +52,7 @@ public class SchemaKey implements Serializable {
         final HashCodeBuilder builder = new HashCodeBuilder();
         builder.append(schemaLanguage);
         builder.append(data);
-        builder.append(user);
+        builder.append(findXMLSchemaCriteria);
         return builder.toHashCode();
     }
 
@@ -67,7 +68,7 @@ public class SchemaKey implements Serializable {
         final EqualsBuilder builder = new EqualsBuilder();
         builder.append(schemaLanguage, schemaKey.schemaLanguage);
         builder.append(data, schemaKey.data);
-        builder.append(user, schemaKey.user);
+        builder.append(findXMLSchemaCriteria, schemaKey.findXMLSchemaCriteria);
 
         return builder.isEquals();
     }

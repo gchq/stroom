@@ -101,7 +101,7 @@ public class MockPipelineElementRegistryFactory implements ElementRegistryFactor
             }
             if (elementClass.equals(SchemaFilterSplit.class)) {
                 return (T) new SchemaFilterSplit(
-                        new SchemaFilter(null, null, null, new LocationFactoryProxy(), new PipelineContext(), null));
+                        new SchemaFilter(null, null, null, new LocationFactoryProxy(), new PipelineContext()), null);
             }
             if (elementClass.equals(RecordOutputFilter.class)) {
                 return (T) new RecordOutputFilter();

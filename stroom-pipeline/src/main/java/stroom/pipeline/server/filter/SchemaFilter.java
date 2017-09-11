@@ -68,7 +68,6 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
     private final ErrorReceiverProxy errorReceiverProxy;
     private final LocationFactoryProxy locationFactory;
     private final PipelineContext pipelineContext;
-    private final SecurityContext securityContext;
 
     private final Map<String, String> prefixes = new TreeMap<>();
     private final CharBuffer sb = new CharBuffer(10);
@@ -92,14 +91,12 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
                         final XMLSchemaCache xmlSchemaCache,
                         final ErrorReceiverProxy errorReceiverProxy,
                         final LocationFactoryProxy locationFactory,
-                        final PipelineContext pipelineContext,
-                        final SecurityContext securityContext) {
+                        final PipelineContext pipelineContext) {
         this.schemaPool = schemaPool;
         this.xmlSchemaCache = xmlSchemaCache;
         this.errorReceiverProxy = errorReceiverProxy;
         this.locationFactory = locationFactory;
         this.pipelineContext = pipelineContext;
-        this.securityContext = securityContext;
     }
 
     /**
@@ -428,7 +425,9 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
         }
 
         // Finally check that all of the schema locations are valid.
-        final SchemaSet allSchemas = xmlSchemaCache.getAllSchemas();
+        final FindXMLSchemaCriteria findXMLSchemaCriteria = new FindXMLSchemaCriteria();
+        findXMLSchemaCriteria.setUser(schemaConstraint.getUser());
+        final SchemaSet allSchemas = xmlSchemaCache.getSchemaSet(findXMLSchemaCriteria);
         for (final Entry<String, String> entry : schemaLocations.entrySet()) {
             final String namespaceURI = entry.getKey();
             final String systemId = entry.getValue();
@@ -585,7 +584,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
             sb.clear();
 
             // Get another schema.
-            final SchemaKey schemaKey = new SchemaKey(schemaLanguage, data, getUser());
+            final SchemaKey schemaKey = new SchemaKey(schemaLanguage, data, schemaConstraint);
             poolItem = schemaPool.borrowObject(schemaKey, true);
             final StoredSchema storedSchema = poolItem.getValue();
 
@@ -608,13 +607,6 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
         }
 
         return validatorHandler;
-    }
-
-    private String getUser() {
-        if (securityContext == null) {
-            return null;
-        }
-        return securityContext.getUserId();
     }
 
     private void returnCurrentSchema() {

@@ -65,11 +65,11 @@ public class MapStoreCacheKey {
             return false;
         }
 
-        final MapStoreCacheKey mapStorePoolKey = (MapStoreCacheKey) o;
+        final MapStoreCacheKey mapStoreCacheKey = (MapStoreCacheKey) o;
         final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(pipeline, mapStorePoolKey.pipeline);
-        builder.append(streamId, mapStorePoolKey.streamId);
-        builder.append(user, mapStorePoolKey.user);
+        builder.append(pipeline, mapStoreCacheKey.pipeline);
+        builder.append(streamId, mapStoreCacheKey.streamId);
+        builder.append(user, mapStoreCacheKey.user);
         return builder.isEquals();
     }
 
