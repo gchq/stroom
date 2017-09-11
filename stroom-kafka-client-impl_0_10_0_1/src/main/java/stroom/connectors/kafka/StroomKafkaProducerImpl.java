@@ -2,6 +2,7 @@ package stroom.connectors.kafka;
 
 import com.google.common.base.Strings;
 import org.apache.kafka.clients.producer.*;
+import org.apache.kafka.clients.producer.internals.DefaultPartitioner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.connectors.ConnectorProperties;
@@ -56,7 +57,13 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
 
         //kafka may not have been up on startup so ensure we have a producer instance now
         try {
+            // This bizzarness has to be done to force the Kafka config libraries to use the 'Kafka Classloader'
+            // instead of the current thread content class loader.
+            // https://issues.apache.org/jira/browse/KAFKA-3218
+            final ClassLoader cl = Thread.currentThread().getContextClassLoader();
+            Thread.currentThread().setContextClassLoader(null);
             initProducer();
+            Thread.currentThread().setContextClassLoader(cl);
         } catch (Exception e) {
             final String msg = String.format("Error initialising kafka producer to %s, (%s)",
                     this.bootstrapServers,
@@ -127,10 +134,12 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
                     properties.copyProp(props, ProducerConfig.BUFFER_MEMORY_CONFIG, 33554432);
 
                     properties.copyProp(props, ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
-                            org.apache.kafka.common.serialization.StringSerializer.class);
+                            org.apache.kafka.common.serialization.StringSerializer.class.getName());
                     // TODO We will probably want to send Avro'd bytes (or something similar) at some point, so the serializer will need to change.
                     properties.copyProp(props, ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
-                            org.apache.kafka.common.serialization.StringSerializer.class);
+                            org.apache.kafka.common.serialization.StringSerializer.class.getName());
+
+                    LOGGER.info("Creating Kafka Producer with Props: " + props);
 
                     try {
                         producer = new KafkaProducer<>(props);

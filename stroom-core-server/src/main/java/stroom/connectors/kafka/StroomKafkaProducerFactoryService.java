@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.connectors.ConnectorProperties;
 import stroom.connectors.ExternalLibService;
-import stroom.connectors.StroomAbstractProducerFactoryService;
+import stroom.connectors.StroomAbstractConnectorFactoryService;
 import stroom.node.server.StroomPropertyService;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomShutdown;
@@ -26,7 +26,7 @@ import java.util.*;
 @Component
 @Scope(StroomScope.SINGLETON)
 public class StroomKafkaProducerFactoryService
-        extends StroomAbstractProducerFactoryService<StroomKafkaProducer, StroomKafkaProducerFactory> {
+        extends StroomAbstractConnectorFactoryService<StroomKafkaProducer, StroomKafkaProducerFactory> {
 
     // Old configs may not have named server/version properties, so use this property name
     private static final String OLD_PROP_BOOTSTRAP_SERVERS = "stroom.kafka.bootstrap.servers";

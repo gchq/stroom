@@ -4,17 +4,15 @@ dependencies {
     compile project(':stroom-entity-shared')
     compile project(':stroom-security-api')
     compile project(':stroom-statistics-api')
-    permitUnusedDeclared project(':stroom-statistics-api') //not clear why it thinks this is unused
+    //permitUnusedDeclared project(':stroom-statistics-api') //not clear why it thinks this is unused
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
+
     compile project(':stroom-connectors')
+    permitUnusedDeclared project(':stroom-connectors')
 
     compile urlDependencies.get(urlLibs.hadoopCommonShaded)
     compile urlDependencies.get(urlLibs.hadoopHdfsShaded)
-
-    // Why???
-    compile libs.commons_io
-    permitUnusedDeclared libs.commons_io
 
     compile libs.spring_beans
     compile libs.spring_context
@@ -35,13 +33,8 @@ dependencies {
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
-    testCompile project(path: ':stroom-kafka-client-impl_0_10_0_1')
-
-    compile project(path: ':stroom-kafka-client-impl_0_10_0_1')
-    permitUnusedDeclared project(path: ':stroom-kafka-client-impl_0_10_0_1') // I really hate this plugin
 
     testCompile libs.junit
-    testCompile libs.mockito_core
 
     //the following logging libs are needed when running junits outside dropwizard
     testRuntime libs.jcl_over_slf4j

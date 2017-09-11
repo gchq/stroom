@@ -9,6 +9,9 @@ dependencies {
 
     compile libs.guava
     compile libs.slf4j_api
+
+    testCompile libs.junit
+    testCompile libs.mockito_core
 }
 
 shadowJar {

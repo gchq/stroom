@@ -1,4 +1,4 @@
-package stroom.pipeline.server;
+package stroom.connectors.kafka;
 
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -6,8 +6,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 import stroom.connectors.ConnectorProperties;
-import stroom.connectors.ConnectorPropertiesPrefixImpl;
-import stroom.connectors.kafka.*;
+import stroom.connectors.ConnectorPropertiesEmptyImpl;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -25,9 +24,9 @@ public class TestStroomKafkaProducer {
     public void testManualSend() {
         // Given
         StroomKafkaProducerFactoryImpl stroomKafkaProducerFactory = new StroomKafkaProducerFactoryImpl();
-        ConnectorProperties kafkaProps = new ConnectorPropertiesPrefixImpl();
+        ConnectorProperties kafkaProps = new ConnectorPropertiesEmptyImpl();
         kafkaProps.put(StroomKafkaProducer.BOOTSTRAP_SERVERS_CONFIG, "kafka:9092");
-        StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.getProducer(KAFKA_VERSION, kafkaProps);
+        StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.getConnector(KAFKA_VERSION, kafkaProps);
         StroomKafkaProducerRecord<String, String> record =
                 new StroomKafkaProducerRecord.Builder<String, String>()
                         .topic("statistics")
@@ -45,8 +44,8 @@ public class TestStroomKafkaProducer {
     public void testBadlyConfigured() {
         // Given
         StroomKafkaProducerFactoryImpl stroomKafkaProducerFactory = new StroomKafkaProducerFactoryImpl();
-        ConnectorProperties properties = new ConnectorPropertiesPrefixImpl(null, null);
-        StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.getProducer(KAFKA_VERSION, properties);
+        ConnectorProperties properties = new ConnectorPropertiesEmptyImpl();
+        StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.getConnector(KAFKA_VERSION, properties);
         StroomKafkaProducerRecord<String, String> record =
                 new StroomKafkaProducerRecord.Builder<String, String>()
                         .topic("statistics")

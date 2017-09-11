@@ -7,7 +7,7 @@ package stroom.connectors;
  *
  * @param <P> The producer class.
  */
-public interface StroomConnectorProducerFactory<P extends StroomConnectorProducer> {
+public interface StroomConnectorFactory<P extends StroomConnector> {
 
     /**
      * Given a specific version and the connector properties, creates/returns the specific producer
@@ -17,5 +17,5 @@ public interface StroomConnectorProducerFactory<P extends StroomConnectorProduce
      * @param properties The connector properties shim
      * @return Either a connected {@link P} or null if the version was a mismatch.
      */
-    P getProducer(final String version, ConnectorProperties properties);
+    P getConnector(final String version, ConnectorProperties properties);
 }

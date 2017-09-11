@@ -32,11 +32,9 @@ public class ExternalLibService {
 
     private static final String CONNECTORS_LIB_DIR = "stroom.plugins.lib.dir";
 
-    private final ClassLoader classLoader;
+    private ClassLoader classLoader;
 
-    @Inject
-    public ExternalLibService(final StroomPropertyService propertyService) {
-        final String connectorsLibDirName = propertyService.getProperty(CONNECTORS_LIB_DIR);
+    public ExternalLibService(final String connectorsLibDirName) {
         final File connectorsLibDir = new File(connectorsLibDirName);
         final File[] connectorLibs = connectorsLibDir.listFiles();
         if (null != connectorLibs) {
@@ -52,8 +50,13 @@ public class ExternalLibService {
 
             LOGGER.info("Loaded the External Service JARs from " + connectorsLibDirName);
         } else {
-            throw new RuntimeException("Could not load External Service JARs from " + connectorsLibDirName);
+            LOGGER.warn("Could not load External Service JARs from " + connectorsLibDirName);
         }
+    }
+
+    @Inject
+    public ExternalLibService(final StroomPropertyService propertyService) {
+        this(propertyService.getProperty(CONNECTORS_LIB_DIR));
     }
 
     /**
@@ -76,7 +79,29 @@ public class ExternalLibService {
         return url;
     }
 
+    /**
+     * Calls upon the {@link ServiceLoader} to load the named service class.
+     *  By default uses the classloader that imported our external plugins.
+     *
+     *  If that classloader does not exist for some reason,
+     *
+     * @param serviceClass The service class to load using {@link ServiceLoader}
+     * @param <T> The class of the service.
+     * @return A service loader for the given service class.
+     */
     public <T> ServiceLoader<T> load(final Class<T> serviceClass) {
-        return ServiceLoader.load(serviceClass, this.classLoader);
+        if (null != this.classLoader) {
+            return ServiceLoader.load(serviceClass, this.classLoader);
+        } else {
+            return ServiceLoader.load(serviceClass);
+        }
+    }
+
+    /**
+     * Some connectors may need access to this classloader, so we must allow it to be passed down.
+     * @return The classloader used for the external JARs
+     */
+    public ClassLoader getClassLoader() {
+        return classLoader;
     }
 }

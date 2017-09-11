@@ -76,6 +76,7 @@ public class KafkaProducerFilter extends AbstractSamplingFilter {
         this.errorReceiverProxy = errorReceiverProxy;
         this.stroomKafkaProducer = stroomKafkaProducerFactoryService.getProducer();
         this.pathCreator = pathCreator;
+        this.flushOnSend = true;
     }
 
     @Override

@@ -30,7 +30,7 @@ public class RollingKafkaAppender extends AbstractRollingAppender {
 
     private String topic;
     private String recordKey;
-    private boolean flushOnSend;
+    private boolean flushOnSend = true;
 
     private String key;
 

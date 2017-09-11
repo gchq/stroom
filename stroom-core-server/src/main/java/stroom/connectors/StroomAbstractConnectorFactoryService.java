@@ -2,18 +2,27 @@ package stroom.connectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.connectors.kafka.StroomKafkaProducer;
 import stroom.node.server.StroomPropertyService;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
 
-public abstract class StroomAbstractProducerFactoryService<
-        P extends StroomConnectorProducer,
-        F extends StroomConnectorProducerFactory<P>> {
+/**
+ * The generic form of a Connector Factory Service.
+ *
+ * A specific sub class of this would be
+ * 1) Loaded as a Service
+ * 2) Each Factory would be capable of creating Connectors for specific versions of the external library
+ *
+ * @param <C> The Connector class
+ * @param <F> The Factory class, which is tied to creating instances of the Connector.
+ */
+public abstract class StroomAbstractConnectorFactoryService<
+        C extends StroomConnector,
+        F extends StroomConnectorFactory<C>> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(StroomAbstractProducerFactoryService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomAbstractConnectorFactoryService.class);
 
     // If a class requests a producer, but gives no name, use this value as the name
     private static final String DEFAULT_NAME = "default";
@@ -26,25 +35,28 @@ public abstract class StroomAbstractProducerFactoryService<
 
     private final ServiceLoader<F> loader;
 
-    // Used to keep track of the instances created, a single instance per name will be created and shared.
-    private final Map<String, P> producersByName;
+    private final ClassLoader classLoader;
 
-    protected StroomAbstractProducerFactoryService(final StroomPropertyService propertyService,
-                                                   final ExternalLibService externalLibService,
-                                                   final String propertyPrefix,
-                                                   final Class<F> factoryClass) {
+    // Used to keep track of the instances created, a single instance per name will be created and shared.
+    private final Map<String, C> connectorsByName;
+
+    protected StroomAbstractConnectorFactoryService(final StroomPropertyService propertyService,
+                                                    final ExternalLibService externalLibService,
+                                                    final String propertyPrefix,
+                                                    final Class<F> factoryClass) {
         this.propertyService = propertyService;
         this.propertyPrefix = propertyPrefix;
         this.loader = externalLibService.load(factoryClass);
-        this.producersByName = new HashMap<>();
+        this.connectorsByName = new HashMap<>();
+        this.classLoader = externalLibService.getClassLoader();
     }
 
     /**
-     * Overloaded version of getProducer that uses the default name.
+     * Overloaded version of getConnector that uses the default name.
      *
-     * @return A {@link P} configured accordingly.
+     * @return A {@link C} configured accordingly.
      */
-    public synchronized P getProducer() {
+    public synchronized C getProducer() {
         return getProducer(DEFAULT_NAME);
     }
 
@@ -53,15 +65,16 @@ public abstract class StroomAbstractProducerFactoryService<
      * bootstrap servers and the kafka client version.
      *
      * @param name The named configuration of producer.
-     * @return A {@link P} configured accordingly.
+     * @return A {@link C} configured accordingly.
      */
-    public synchronized P getProducer(final String name) {
+    public synchronized C getProducer(final String name) {
         LOGGER.info("Retrieving the Connector Producer for " + name);
 
+        // Create a properties shim for the named producer.
         final ConnectorProperties connectorProperties = new ConnectorPropertiesPrefixImpl(String.format(propertyPrefix, name), this.propertyService);
 
         // First try and find a previously created producer by this name
-        P producer = producersByName.get(name);
+        C connector = connectorsByName.get(name);
 
         // Retrieve the settings for this named kafka
         String connectorVersion = connectorProperties.getProperty(PROP_CONNECTOR_VERSION);
@@ -72,29 +85,33 @@ public abstract class StroomAbstractProducerFactoryService<
         }
 
         // If a producer has not already been created for this name, it is time to create one
-        if (producer == null) {
+        if (connector == null) {
             for (F factory : loader) {
-                producer = factory.getProducer(connectorVersion, connectorProperties);
-                if (producer != null) {
+                connector = factory.getConnector(connectorVersion, connectorProperties);
+                if (connector != null) {
                     break;
                 }
             }
         }
 
         // Either store the producer, or throw an exception as one could not be found
-        if (producer != null) {
-            producersByName.put(name, producer);
+        if (connector != null) {
+            connectorsByName.put(name, connector);
         } else {
             throw new RuntimeException(String.format("Could not find Stroom Kafka Producer Factory for version: %s", connectorVersion));
         }
 
-        return producer;
+        return connector;
     }
 
     public void shutdown() {
         LOGGER.info("Shutting Down Stroom Connector Producer Factory Service");
-        producersByName.values().forEach(StroomConnectorProducer::shutdown);
-        producersByName.clear();
+        connectorsByName.values().forEach(StroomConnector::shutdown);
+        connectorsByName.clear();
+    }
+
+    protected ClassLoader getClassLoader() {
+        return classLoader;
     }
 
     protected StroomPropertyService getPropertyService() {
