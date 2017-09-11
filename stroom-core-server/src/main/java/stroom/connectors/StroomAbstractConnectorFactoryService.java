@@ -33,9 +33,8 @@ public abstract class StroomAbstractConnectorFactoryService<
     private final String propertyPrefix;
     private final StroomPropertyService propertyService;
 
-    private final ServiceLoader<F> loader;
-
-    private final ClassLoader classLoader;
+    private final ExternalLibService externalLibService;
+    private final Class<F> factoryClass;
 
     // Used to keep track of the instances created, a single instance per name will be created and shared.
     private final Map<String, C> connectorsByName;
@@ -46,9 +45,9 @@ public abstract class StroomAbstractConnectorFactoryService<
                                                     final Class<F> factoryClass) {
         this.propertyService = propertyService;
         this.propertyPrefix = propertyPrefix;
-        this.loader = externalLibService.load(factoryClass);
+        this.externalLibService = externalLibService;
+        this.factoryClass = factoryClass;
         this.connectorsByName = new HashMap<>();
-        this.classLoader = externalLibService.getClassLoader();
     }
 
     /**
@@ -86,10 +85,16 @@ public abstract class StroomAbstractConnectorFactoryService<
 
         // If a producer has not already been created for this name, it is time to create one
         if (connector == null) {
-            for (F factory : loader) {
-                connector = factory.getConnector(connectorVersion, connectorProperties);
-                if (connector != null) {
-                    break;
+            // Loop through all the class loaders created for external JARs
+            for (final ClassLoader classLoader : externalLibService.getClassLoaders()) {
+                // Create a service loader for our specific factory class
+                final ServiceLoader<F> serviceLoader = ServiceLoader.load(factoryClass, classLoader);
+                // Iterate through the factories to see if any can create a connector for the right version.
+                for (final F factory : serviceLoader) {
+                    connector = factory.getConnector(connectorVersion, connectorProperties);
+                    if (connector != null) {
+                        break;
+                    }
                 }
             }
         }
@@ -108,10 +113,6 @@ public abstract class StroomAbstractConnectorFactoryService<
         LOGGER.info("Shutting Down Stroom Connector Producer Factory Service");
         connectorsByName.values().forEach(StroomConnector::shutdown);
         connectorsByName.clear();
-    }
-
-    protected ClassLoader getClassLoader() {
-        return classLoader;
     }
 
     protected StroomPropertyService getPropertyService() {

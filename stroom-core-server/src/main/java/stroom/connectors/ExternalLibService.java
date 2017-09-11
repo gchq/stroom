@@ -13,16 +13,14 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.ServiceLoader;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * This service can be used by any factory services that load in external libraries.
  *
  * It effectively wraps the {@link ServiceLoader} load function. Using a property in stroom.conf
- * to locate and load external JAR files in a separate class loader.
+ * to locate and load external JAR files with separate class loaders.
  */
 @Component
 @Scope(StroomScope.SINGLETON)
@@ -32,24 +30,27 @@ public class ExternalLibService {
 
     private static final String CONNECTORS_LIB_DIR = "stroom.plugins.lib.dir";
 
-    private ClassLoader classLoader;
+    // A separate class loader will be created for each JAR file found.
+    private final Collection<ClassLoader> classLoaders;
 
     public ExternalLibService(final String connectorsLibDirName) {
         final File connectorsLibDir = new File(connectorsLibDirName);
         final File[] connectorLibs = connectorsLibDir.listFiles();
+
         if (null != connectorLibs) {
-            final URL[] urls = Arrays
+            this.classLoaders = Arrays
                     .stream(connectorLibs)
                     .map(File::toURI)
                     .map(this::toURLSafe)
                     .filter(Objects::nonNull)
-                    .collect(Collectors.toList())
-                    .toArray(new URL[0]);
-
-            classLoader = new URLClassLoader(urls);
+                    .map(url -> new URL[]{url})
+                    .map(URLClassLoader::new)
+                    .collect(Collectors.toList());
 
             LOGGER.info("Loaded the External Service JARs from " + connectorsLibDirName);
         } else {
+            // Default to using the current class loader for loading services.
+            this.classLoaders = Collections.singleton(ExternalLibService.class.getClassLoader());
             LOGGER.warn("Could not load External Service JARs from " + connectorsLibDirName);
         }
     }
@@ -80,28 +81,10 @@ public class ExternalLibService {
     }
 
     /**
-     * Calls upon the {@link ServiceLoader} to load the named service class.
-     *  By default uses the classloader that imported our external plugins.
-     *
-     *  If that classloader does not exist for some reason,
-     *
-     * @param serviceClass The service class to load using {@link ServiceLoader}
-     * @param <T> The class of the service.
-     * @return A service loader for the given service class.
+     * Return all the classloaders created for the external JARs.
+     * @return A collection of the classloaders found.
      */
-    public <T> ServiceLoader<T> load(final Class<T> serviceClass) {
-        if (null != this.classLoader) {
-            return ServiceLoader.load(serviceClass, this.classLoader);
-        } else {
-            return ServiceLoader.load(serviceClass);
-        }
-    }
-
-    /**
-     * Some connectors may need access to this classloader, so we must allow it to be passed down.
-     * @return The classloader used for the external JARs
-     */
-    public ClassLoader getClassLoader() {
-        return classLoader;
+    Collection<ClassLoader> getClassLoaders() {
+        return classLoaders;
     }
 }
