@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **394** : Pipeline stepping will now show errors with an alert popup.
 
+* Issue **396** : All queries associated with a dashboard should now be correctly deleted when a dashboard is deleted.
+
 ## [v5.0-beta.46] - 2017-08-15
 
 * Issue **#364** : Switched index writer lock factory to a SingleInstanceLockFactory as index shards are accessed by a single process.
