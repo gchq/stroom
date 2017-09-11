@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **396** : All queries associated with a dashboard should now be correctly deleted when a dashboard is deleted.
 
+* Issue **393** : All caches now cache items within the context of the current user so that different users do not have the possibility of having problems caused by others users not having read permissions on items.
+
 ## [v5.0-beta.46] - 2017-08-15
 
 * Issue **#364** : Switched index writer lock factory to a SingleInstanceLockFactory as index shards are accessed by a single process.
