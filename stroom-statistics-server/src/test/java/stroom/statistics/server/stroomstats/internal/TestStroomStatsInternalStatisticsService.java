@@ -10,7 +10,7 @@ import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.kafka.StroomKafkaProducer;
+import stroom.connectors.kafka.StroomKafkaProducer;
 import stroom.node.server.MockStroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.statistics.internal.InternalStatisticEvent;
@@ -43,9 +43,8 @@ public class TestStroomStatsInternalStatisticsService {
                         InternalStatisticEvent.Type.COUNT.toString().toLowerCase(),
                 "MyTopic");
 
-
         StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService = new StroomStatsInternalStatisticsService(
-                stroomKafkaProducer,
+                () -> stroomKafkaProducer,
                 mockStroomPropertyService
         );
 
@@ -86,7 +85,7 @@ public class TestStroomStatsInternalStatisticsService {
         }).when(stroomKafkaProducer).flush();
 
         StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService = new StroomStatsInternalStatisticsService(
-                stroomKafkaProducer,
+                () -> stroomKafkaProducer,
                 mockStroomPropertyService
         );
 

@@ -1,0 +1,22 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '1.2.4'
+}
+
+dependencies {
+    compile project(':stroom-connectors')
+
+    compile group: 'org.apache.kafka', name:'kafka-clients', version:'0.10.0.1' //CDH5.10 uses kafka 10.0, Kafka <10.2 is picky about client and server versions.
+
+    compile libs.guava
+    compile libs.slf4j_api
+
+    testCompile libs.junit
+    testCompile libs.mockito_core
+}
+
+shadowJar {
+    // Allows us to build fat jars with lots of files
+    zip64 true
+
+    archiveName 'stroom-kafka-client-impl_0_10_0_1-all.jar'
+}

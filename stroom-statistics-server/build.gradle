@@ -24,6 +24,7 @@ dependencies {
     compile project(':stroom-statistics-shared')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
+    compile project(':stroom-connectors')
 
     compile urlDependencies.get(urlLibs.hadoopCommonShaded)
     compile urlDependencies.get(urlLibs.stroomExpression)
@@ -38,7 +39,6 @@ dependencies {
     compile (libs.hbase) { transitive = false } //hbase-common is currently only used for its Bytes class, so exclude all its deps
     compile libs.javax_annotation_api
     compile libs.javax_inject
-    compile libs.kafka_clients
     compile libs.slf4j_api
     compile libs.spring_beans
     compile libs.spring_context

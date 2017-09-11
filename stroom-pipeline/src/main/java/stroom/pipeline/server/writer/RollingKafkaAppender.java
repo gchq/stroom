@@ -2,18 +2,19 @@ package stroom.pipeline.server.writer;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import stroom.kafka.StroomKafkaProducer;
+import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.pipeline.destination.RollingDestination;
 import stroom.pipeline.destination.RollingKafkaDestination;
+import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
 import javax.annotation.Resource;
-import javax.inject.Inject;
 import java.io.IOException;
 
 @Component
@@ -24,13 +25,17 @@ import java.io.IOException;
 public class RollingKafkaAppender extends AbstractRollingAppender {
 
     @Resource
-    private StroomKafkaProducer stroomKafkaProducer;
+    private StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService;
 
     @Resource
     private PathCreator pathCreator;
 
+    @Resource
+    private ErrorReceiverProxy errorReceiverProxy;
+
     private String topic;
     private String recordKey;
+    private boolean flushOnSend = true;
 
     private String key;
 
@@ -60,9 +65,12 @@ public class RollingKafkaAppender extends AbstractRollingAppender {
                 getFrequency(),
                 getMaxSize(),
                 System.currentTimeMillis(),
-                stroomKafkaProducer,
+                stroomKafkaProducerFactoryService.getProducer(exception ->
+                        errorReceiverProxy.log(Severity.ERROR, null, null, "Called function on Fake Kafka proxy", exception)
+                ),
                 recordKey,
-                topic);
+                topic,
+                flushOnSend);
     }
 
     @PipelineProperty(description = "The record key to apply to records, used to select patition. Replacement variables can be used in path strings such as ${feed}.")
@@ -73,5 +81,10 @@ public class RollingKafkaAppender extends AbstractRollingAppender {
     @PipelineProperty(description = "The topic to send the record to. Replacement variables can be used in path strings such as ${feed}.")
     public void setTopic(final String topic) {
         this.topic = pathCreator.replaceAll(topic);
+    }
+
+    @PipelineProperty(description="Flush the producer each time a message is sent")
+    public void setFlushOnSend(final boolean flushOnSend) {
+        this.flushOnSend = flushOnSend;
     }
 }

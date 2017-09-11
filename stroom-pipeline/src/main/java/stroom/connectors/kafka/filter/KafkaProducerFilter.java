@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.kafka.filter;
+package stroom.connectors.kafka.filter;
 
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.SAXException;
-import stroom.kafka.StroomKafkaProducer;
+import stroom.connectors.kafka.*;
+import stroom.connectors.kafka.StroomKafkaProducer;
+import stroom.connectors.kafka.StroomKafkaProducerRecord;
+import stroom.node.server.StroomPropertyService;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.factory.ConfigurableElement;
@@ -55,31 +57,41 @@ import javax.inject.Inject;
                 PipelineElementType.VISABILITY_SIMPLE},
         icon = ElementIcons.KAFKA)
 public class KafkaProducerFilter extends AbstractSamplingFilter {
+
     private final ErrorReceiverProxy errorReceiverProxy;
     private final StroomKafkaProducer stroomKafkaProducer;
     private final PathCreator pathCreator;
 
     private String topic;
     private String recordKey;
+    private boolean flushOnSend;
 
     @Inject
     public KafkaProducerFilter(final ErrorReceiverProxy errorReceiverProxy,
                                final LocationFactoryProxy locationFactory,
-                               final StroomKafkaProducer stroomKafkaProducer,
+                               final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
+                               final StroomPropertyService stroomPropertyService,
                                final PathCreator pathCreator) {
         super(errorReceiverProxy, locationFactory);
         this.errorReceiverProxy = errorReceiverProxy;
-        this.stroomKafkaProducer = stroomKafkaProducer;
+        this.stroomKafkaProducer = stroomKafkaProducerFactoryService.getProducer(exception ->
+                errorReceiverProxy.log(Severity.ERROR, null, null, "Called function on Fake Kafka proxy!", exception)
+        );
         this.pathCreator = pathCreator;
+        this.flushOnSend = true;
     }
 
     @Override
     public void endDocument() throws SAXException {
         super.endDocument();
-
-        final ProducerRecord<String, String> newRecord = new ProducerRecord<>(topic, recordKey, getOutput());
+        final StroomKafkaProducerRecord<String, String> newRecord =
+                new StroomKafkaProducerRecord.Builder<String, String>()
+                        .topic(topic)
+                        .key(recordKey)
+                        .value(getOutput())
+                        .build();
         try {
-            stroomKafkaProducer.send(newRecord, StroomKafkaProducer.FlushMode.FLUSH_ON_SEND, exception ->
+            stroomKafkaProducer.send(newRecord, flushOnSend, exception ->
                 errorReceiverProxy.log(Severity.ERROR, null, null, "Unable to send record to Kafka!", exception)
             );
         } catch (RuntimeException e) {
@@ -95,5 +107,10 @@ public class KafkaProducerFilter extends AbstractSamplingFilter {
     @PipelineProperty(description = "The topic to send the record to.")
     public void setTopic(final String topic) {
         this.topic = pathCreator.replaceAll(topic);
+    }
+
+    @PipelineProperty(description="Flush the producer each time a message is sent")
+    public void setFlushOnSend(final boolean flushOnSend) {
+        this.flushOnSend = flushOnSend;
     }
 }

@@ -2,17 +2,17 @@ package stroom.statistics.server.stroomstats.internal;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.kafka.StroomKafkaProducer;
+import stroom.connectors.kafka.*;
 import stroom.node.server.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsService;
 import stroom.stats.schema.Statistics;
 import stroom.stats.schema.TagType;
+import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
 import javax.xml.bind.JAXBContext;
@@ -28,6 +28,7 @@ import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.function.Supplier;
 
 @SuppressWarnings("unused")
 @Component
@@ -45,12 +46,11 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     private final JAXBContext jaxbContext;
     private final DatatypeFactory datatypeFactory;
 
-    @Inject
-    StroomStatsInternalStatisticsService(final StroomKafkaProducer stroomKafkaProducer,
+    // If we move to a 'named' kafka config later, change the java.util.function.Supplier to a java.util.function.Function
+    StroomStatsInternalStatisticsService(final Supplier<StroomKafkaProducer> stroomKafkaProducerFactory,
                                          final StroomPropertyService stroomPropertyService) {
-
-        this.stroomKafkaProducer = stroomKafkaProducer;
         this.stroomPropertyService = stroomPropertyService;
+        this.stroomKafkaProducer = stroomKafkaProducerFactory.get();
         this.docRefType = stroomPropertyService.getProperty(PROP_KEY_DOC_REF_TYPE);
 
         try {
@@ -65,6 +65,15 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
         } catch (DatatypeConfigurationException e) {
             throw new RuntimeException("Unable to create new DatatypeFactory instance", e);
         }
+    }
+
+    @Inject
+    StroomStatsInternalStatisticsService(final StroomKafkaProducerFactoryService stroomKafkaProducerFactory,
+                                         final StroomPropertyService stroomPropertyService) {
+        this(() -> stroomKafkaProducerFactory.getProducer(exception ->
+                        LOGGER.error("Unable to call function on Kafka producer!", exception)
+                )
+                , stroomPropertyService);
     }
 
     @Override
@@ -85,8 +94,13 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
                         //all have same name so have same type
                         String topic = getTopic(events.get(0).getType());
                         String message = buildMessage(docRef, events);
-                        ProducerRecord<String, String> producerRecord = new ProducerRecord<>(topic, statName, message);
-                        stroomKafkaProducer.send(producerRecord, StroomKafkaProducer.FlushMode.NO_FLUSH, exception -> {
+                        StroomKafkaProducerRecord<String, String> producerRecord =
+                                new StroomKafkaProducerRecord.Builder<String, String>()
+                                        .topic(topic)
+                                        .key(statName)
+                                        .value(message)
+                                        .build();
+                        stroomKafkaProducer.send(producerRecord, false, exception -> {
                             throw new RuntimeException(String.format(
                                     "Error sending %s internal stats with name %s to kafka on topic %s, due to (%s)",
                                     events.size(), statName, topic, exception.getMessage()), exception);
