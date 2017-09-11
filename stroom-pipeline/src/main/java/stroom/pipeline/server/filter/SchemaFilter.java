@@ -33,6 +33,7 @@ import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggedException;
 import stroom.pipeline.state.PipelineContext;
 import stroom.pool.PoolItem;
+import stroom.security.SecurityContext;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
@@ -67,6 +68,8 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
     private final ErrorReceiverProxy errorReceiverProxy;
     private final LocationFactoryProxy locationFactory;
     private final PipelineContext pipelineContext;
+    private final SecurityContext securityContext;
+
     private final Map<String, String> prefixes = new TreeMap<>();
     private final CharBuffer sb = new CharBuffer(10);
     private ErrorHandler errorHandler;
@@ -85,14 +88,18 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
     private Locator locator;
 
     @Inject
-    public SchemaFilter(final SchemaPool schemaPool, final XMLSchemaCache xmlSchemaCache,
-            final ErrorReceiverProxy errorReceiverProxy, final LocationFactoryProxy locationFactory,
-            final PipelineContext pipelineContext) {
+    public SchemaFilter(final SchemaPool schemaPool,
+                        final XMLSchemaCache xmlSchemaCache,
+                        final ErrorReceiverProxy errorReceiverProxy,
+                        final LocationFactoryProxy locationFactory,
+                        final PipelineContext pipelineContext,
+                        final SecurityContext securityContext) {
         this.schemaPool = schemaPool;
         this.xmlSchemaCache = xmlSchemaCache;
         this.errorReceiverProxy = errorReceiverProxy;
         this.locationFactory = locationFactory;
         this.pipelineContext = pipelineContext;
+        this.securityContext = securityContext;
     }
 
     /**
@@ -190,9 +197,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
     /**
      * Fires necessary end document event for the current validator.
      *
-     * @throws SAXException
-     *             Could be thrown by validator.
-     *
+     * @throws SAXException Could be thrown by validator.
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#endDocument()
      */
     @Override
@@ -211,15 +216,11 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
     /**
      * Adds prefixes from the prefix map.
      *
-     * @param prefix
-     *            The prefix to add.
-     * @param uri
-     *            The URI of the prefix.
-     * @throws SAXException
-     *             Not thrown.
-     *
+     * @param prefix The prefix to add.
+     * @param uri    The URI of the prefix.
+     * @throws SAXException Not thrown.
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#startPrefixMapping(java.lang.String,
-     *      java.lang.String)
+     * java.lang.String)
      */
     @Override
     public void startPrefixMapping(final String prefix, final String uri) throws SAXException {
@@ -239,11 +240,8 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
     /**
      * Removes prefixes from the prefix map.
      *
-     * @param prefix
-     *            The prefix to remove.
-     * @throws SAXException
-     *             Not thrown.
-     *
+     * @param prefix The prefix to remove.
+     * @throws SAXException Not thrown.
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#endPrefixMapping(java.lang.String)
      */
     @Override
@@ -266,19 +264,13 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
      * start element in a document it looks for a schema declaration to use to
      * validate the rest of the document.
      *
-     * @param uri
-     *            The element's namespace URI, or the empty string.
-     * @param localName
-     *            The element's local name, or the empty string.
-     * @param qName
-     *            The element's qualified (prefixed) name, or the empty string.
-     * @param atts
-     *            The element's attributes.
-     * @exception org.xml.sax.SAXException
-     *                The client may throw an exception during processing.
-     *
+     * @param uri       The element's namespace URI, or the empty string.
+     * @param localName The element's local name, or the empty string.
+     * @param qName     The element's qualified (prefixed) name, or the empty string.
+     * @param atts      The element's attributes.
+     * @throws org.xml.sax.SAXException The client may throw an exception during processing.
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#startElement(java.lang.String,
-     *      java.lang.String, java.lang.String, org.xml.sax.Attributes)
+     * java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
@@ -310,30 +302,26 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
 
     /**
      * Receive notification of the end of an element.
-     *
+     * <p>
      * <p>
      * The SAX parser will invoke this method at the end of every element in the
      * XML document; there will be a corresponding {@link #startElement
      * startElement} event for every endElement event (even when the element is
      * empty).
      * </p>
-     *
+     * <p>
      * <p>
      * For information on the names, see startElement.
      * </p>
      *
-     * @param uri
-     *            the Namespace URI, or the empty string if the element has no
-     *            Namespace URI or if Namespace processing is not being
-     *            performed
-     * @param localName
-     *            the local name (without prefix), or the empty string if
-     *            Namespace processing is not being performed
-     * @param qName
-     *            the qualified XML name (with prefix), or the empty string if
-     *            qualified names are not available
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param uri       the Namespace URI, or the empty string if the element has no
+     *                  Namespace URI or if Namespace processing is not being
+     *                  performed
+     * @param localName the local name (without prefix), or the empty string if
+     *                  Namespace processing is not being performed
+     * @param qName     the qualified XML name (with prefix), or the empty string if
+     *                  qualified names are not available
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      */
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
@@ -359,17 +347,12 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
     /**
      * Sends characters to the current validator handler.
      *
-     * @param ch
-     *            Characters.
-     * @param start
-     *            Start of char buffer.
-     * @param length
-     *            Number of chars to send.
-     * @throws SAXException
-     *             Not thrown.
-     *
+     * @param ch     Characters.
+     * @param start  Start of char buffer.
+     * @param length Number of chars to send.
+     * @throws SAXException Not thrown.
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#characters(char[],
-     *      int, int)
+     * int, int)
      */
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
@@ -413,7 +396,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
     }
 
     private boolean validateSchemaLocations(final String rootURI, final Map<String, String> schemaLocations,
-            final FindXMLSchemaCriteria schemaConstraint) throws SAXException {
+                                            final FindXMLSchemaCriteria schemaConstraint) throws SAXException {
         final SchemaSet schemaSet = xmlSchemaCache.getSchemaSet(schemaConstraint);
         final String validLocations = schemaSet.getLocations();
 
@@ -482,7 +465,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
     }
 
     private void noSchemaLocation(final String uri, final String validLocations,
-            final FindXMLSchemaCriteria schemaConstraint) throws SAXException {
+                                  final FindXMLSchemaCriteria schemaConstraint) throws SAXException {
         sb.append("No schema location specified for: ");
         sb.append(uri);
         printSchemaLocations(sb, validLocations, schemaConstraint);
@@ -490,7 +473,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
     }
 
     private void invalidSchemaLocation(final String systemId, final String validLocations,
-            final FindXMLSchemaCriteria schemaConstraint) throws SAXException {
+                                       final FindXMLSchemaCriteria schemaConstraint) throws SAXException {
         sb.append("Invalid schema location: ");
         sb.append(systemId);
         printSchemaLocations(sb, validLocations, schemaConstraint);
@@ -498,7 +481,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
     }
 
     private void printSchemaLocations(final CharBuffer sb, final String validLocations,
-            final FindXMLSchemaCriteria schemaConstraint) {
+                                      final FindXMLSchemaCriteria schemaConstraint) {
         final StringBuilder where = new StringBuilder();
 
         if (schemaConstraint != null) {
@@ -602,7 +585,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
             sb.clear();
 
             // Get another schema.
-            final SchemaKey schemaKey = new SchemaKey(schemaLanguage, data);
+            final SchemaKey schemaKey = new SchemaKey(schemaLanguage, data, getUser());
             poolItem = schemaPool.borrowObject(schemaKey, true);
             final StoredSchema storedSchema = poolItem.getValue();
 
@@ -627,6 +610,13 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
         return validatorHandler;
     }
 
+    private String getUser() {
+        if (securityContext == null) {
+            return null;
+        }
+        return securityContext.getUserId();
+    }
+
     private void returnCurrentSchema() {
         if (poolItem != null) {
             schemaPool.returnObject(poolItem, true);
@@ -639,7 +629,6 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
      * is pretty printed..
      *
      * @return The assumed pretty printed column number.
-     *
      * @see org.xml.sax.Locator#getColumnNumber()
      */
     @Override
@@ -652,7 +641,6 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
      * is pretty printed.
      *
      * @return The assumed pretty printed line number.
-     *
      * @see org.xml.sax.Locator#getLineNumber()
      */
     @Override
@@ -664,7 +652,6 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
      * Not implemented.
      *
      * @return null.
-     *
      * @see org.xml.sax.Locator#getPublicId()
      */
     @Override
@@ -676,7 +663,6 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
      * Not implemented.
      *
      * @return null.
-     *
      * @see org.xml.sax.Locator#getSystemId()
      */
     @Override

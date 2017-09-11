@@ -33,14 +33,14 @@ import stroom.pipeline.server.parser.XMLParser;
 import stroom.pipeline.shared.TextConverterService;
 
 public class ProcessorUtil {
-    public static void processCombined(final InputStream inputStream, final ErrorReceiverProxy errorReceiverProxy,
-            final XMLFilter filter, final LocationFactoryProxy locationFactory,
-            final ParserFactoryPool parserFactoryPool, final TextConverterService textConverterService) {
-        final CombinedParser parser = new CombinedParser(errorReceiverProxy, locationFactory, parserFactoryPool,
-                textConverterService);
-        doProcess(filter, inputStream, errorReceiverProxy, parser);
-
-    }
+//    public static void processCombined(final InputStream inputStream, final ErrorReceiverProxy errorReceiverProxy,
+//            final XMLFilter filter, final LocationFactoryProxy locationFactory,
+//            final ParserFactoryPool parserFactoryPool, final TextConverterService textConverterService) {
+//        final CombinedParser parser = new CombinedParser(errorReceiverProxy, locationFactory, parserFactoryPool,
+//                textConverterService);
+//        doProcess(filter, inputStream, errorReceiverProxy, parser);
+//
+//    }
 
     public static void processXml(final InputStream inputStream, final ErrorReceiverProxy errorReceiverProxy,
             final XMLFilter filter, final LocationFactoryProxy locationFactory) {

@@ -59,7 +59,7 @@ public class SchemaFilterFactory {
         schemaConstraint.setNamespaceURI(namespaceURI);
 
         final SchemaFilter schemaFilter = new SchemaFilter(schemaPool, xmlSchemaCache, errorReceiverProxy,
-                new LocationFactoryProxy(), new PipelineContext());
+                new LocationFactoryProxy(), new PipelineContext(), null);
         schemaFilter.setSchemaConstraint(schemaConstraint);
         schemaFilter.setUseOriginalLocator(true);
 
