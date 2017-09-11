@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **393** : All caches now cache items within the context of the current user so that different users do not have the possibility of having problems caused by others users not having read permissions on items.
 
+* Issue **358** : Schemas are now selected from a subset matching the criteria set on SchemaFilter by the user.
+
 ## [v5.0-beta.46] - 2017-08-15
 
 * Issue **#364** : Switched index writer lock factory to a SingleInstanceLockFactory as index shards are accessed by a single process.
