@@ -8,7 +8,6 @@ buildscript {
     dependencies {
         classpath group: 'gchq', name: 'urlDependencyPlugin', version: 'v0.1'
         classpath group: 'ca.cutterslade.gradle', name: 'gradle-dependency-analyze', version: '1.1.0'
-        classpath 'com.benjaminsproule:swagger-gradle-plugin:+'
     }
 }
 
@@ -127,7 +126,6 @@ ext.libs = [
     hamcrest_core: "org.hamcrest:hamcrest-core:1.3",
     hbase: "org.apache.hbase:hbase-common:1.2.1", //should be set to be consistent with CDH version
     hessian: "com.caucho:hessian:4.0.38",
-    hibernate_annotations: "org.hibernate:hibernate-annotations:3.5.6-Final" /* LATEST 5.2.5.Final */,
     hibernate_core: "org.hibernate:hibernate-core:$versions.hibernate" /* LATEST 5.2.5.Final */,
     hibernate_entitymanager: "org.hibernate:hibernate-entitymanager:$versions.hibernate" /* LATEST 5.2.5.Final */,
     hibernate_jpa_api: "org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final",
@@ -186,9 +184,7 @@ ext.libs = [
     spring_web: "org.springframework:spring-web:$versions.spring", //was 4.2.1.RELEASE now 4.3.4.RELEASE
     spring_webmvc: "org.springframework:spring-webmvc:$versions.spring",
     stax_api: "stax:stax-api:1.0.1",
-    //swagger_jersey2_jaxrs: "io.swagger:swagger-jersey2-jaxrs:$versions.swagger",
     swagger_annotations: "io.swagger:swagger-annotations:$versions.swagger",
-    //swagger_core: "io.swagger:swagger-core:$versions.swagger",
     validation_api: "javax.validation:validation-api:1.0.0.GA", //GWT 2.8.0 throws errors on gwtCompile if validation-api 1.1.0.Final is used
     vavr: "io.vavr:vavr:0.9.0",
     ws_rs_api: "javax.ws.rs:javax.ws.rs-api:2.0.1",
@@ -212,7 +208,7 @@ ext.contentPacks = [
 ]
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '3.5'
+    gradleVersion = '4.1'
 }
 
 allprojects {
@@ -225,6 +221,10 @@ allprojects {
 
 subprojects {
     apply plugin: 'java'
+
+    //sourceSets {
+        //logger.info "main.output.classesDirs: " + main.output.classesDirs
+    //}
     
     //analyze missing dependencies for the code base
     apply plugin: 'ca.cutterslade.analyze'

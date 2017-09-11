@@ -1,11 +1,12 @@
 plugins {
-  id 'com.github.johnrengelman.shadow' version '1.2.4'
+    id 'com.github.johnrengelman.shadow' version '1.2.4'
+    id "com.benjaminsproule.swagger" version "0.1.4"
 }
 
 def swaggerDir = "${projectDir}/src/main/resources/swagger"
 
 apply plugin: 'application'
-apply plugin: 'com.benjaminsproule.swagger'
+apply plugin: 'java'
 mainClassName = 'stroom.startup.App'
 
 jar {
@@ -149,7 +150,7 @@ sourceSets {
 
 // This task lets us run the actual integration tests.
 task integrationTest(type: Test) {
-    testClassesDir = sourceSets.integrationTest.output.classesDir
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
 }
 
@@ -174,8 +175,8 @@ runShadow {
 //The gwtCompile tasks create files in stroom-app/src/main/resources/ui
 //so those tasks MUST be run first else this jar and the fat jar will be
 //missing all the GWT generated files and the UI will fail to start
-processResources.dependsOn(':stroom-app-gwt:gwtCompile')
-processResources.dependsOn(':stroom-dashboard-gwt:gwtCompile')
+processResources.mustRunAfter(':stroom-app-gwt:gwtCompile')
+processResources.mustRunAfter(':stroom-dashboard-gwt:gwtCompile')
 
 swagger {
     apiSource {
@@ -207,4 +208,3 @@ swagger {
         swaggerDirectory = "${project.buildDir}/swagger"
     }
 }
-
