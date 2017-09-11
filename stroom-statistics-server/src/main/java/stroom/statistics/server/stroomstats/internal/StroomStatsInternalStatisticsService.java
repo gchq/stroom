@@ -12,6 +12,7 @@ import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsService;
 import stroom.stats.schema.Statistics;
 import stroom.stats.schema.TagType;
+import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
 import javax.xml.bind.JAXBContext;
@@ -69,7 +70,10 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     @Inject
     StroomStatsInternalStatisticsService(final StroomKafkaProducerFactoryService stroomKafkaProducerFactory,
                                          final StroomPropertyService stroomPropertyService) {
-        this(stroomKafkaProducerFactory::getProducer, stroomPropertyService);
+        this(() -> stroomKafkaProducerFactory.getProducer(exception ->
+                        LOGGER.error("Unable to call function on Kafka producer!", exception)
+                )
+                , stroomPropertyService);
     }
 
     @Override

@@ -5,11 +5,13 @@ import org.springframework.stereotype.Component;
 import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.pipeline.destination.RollingDestination;
 import stroom.pipeline.destination.RollingKafkaDestination;
+import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
 import javax.annotation.Resource;
@@ -27,6 +29,9 @@ public class RollingKafkaAppender extends AbstractRollingAppender {
 
     @Resource
     private PathCreator pathCreator;
+
+    @Resource
+    private ErrorReceiverProxy errorReceiverProxy;
 
     private String topic;
     private String recordKey;
@@ -60,7 +65,9 @@ public class RollingKafkaAppender extends AbstractRollingAppender {
                 getFrequency(),
                 getMaxSize(),
                 System.currentTimeMillis(),
-                stroomKafkaProducerFactoryService.getProducer(),
+                stroomKafkaProducerFactoryService.getProducer(exception ->
+                        errorReceiverProxy.log(Severity.ERROR, null, null, "Called function on Fake Kafka proxy", exception)
+                ),
                 recordKey,
                 topic,
                 flushOnSend);

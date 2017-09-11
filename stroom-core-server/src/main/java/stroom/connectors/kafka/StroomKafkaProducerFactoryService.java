@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import stroom.connectors.ConnectorProperties;
 import stroom.connectors.ExternalLibService;
 import stroom.connectors.StroomAbstractConnectorFactoryService;
+import stroom.connectors.StroomConnector;
 import stroom.node.server.StroomPropertyService;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomShutdown;
@@ -42,12 +43,17 @@ public class StroomKafkaProducerFactoryService
     @Inject
     public StroomKafkaProducerFactoryService(final StroomPropertyService propertyService,
                                              final ExternalLibService externalLibService) {
-        super(propertyService, externalLibService, PROP_PREFIX, StroomKafkaProducerFactory.class);
+        super(propertyService,
+                externalLibService,
+                PROP_PREFIX,
+                StroomKafkaProducer.class,
+                StroomKafkaProducerFactory.class);
     }
 
     @Override
     protected String setupPropertyDefaults(final ConnectorProperties connectorProperties) {
-        connectorProperties.put(StroomKafkaProducer.BOOTSTRAP_SERVERS_CONFIG, getPropertyService().getProperty(OLD_PROP_BOOTSTRAP_SERVERS));
+        connectorProperties.put(StroomKafkaProducer.BOOTSTRAP_SERVERS_CONFIG,
+                getPropertyService().getProperty(OLD_PROP_BOOTSTRAP_SERVERS));
         return KAFKA_CLIENT_VERSION_DEFAULT;
     }
 

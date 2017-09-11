@@ -74,7 +74,9 @@ public class KafkaProducerFilter extends AbstractSamplingFilter {
                                final PathCreator pathCreator) {
         super(errorReceiverProxy, locationFactory);
         this.errorReceiverProxy = errorReceiverProxy;
-        this.stroomKafkaProducer = stroomKafkaProducerFactoryService.getProducer();
+        this.stroomKafkaProducer = stroomKafkaProducerFactoryService.getProducer(exception ->
+                errorReceiverProxy.log(Severity.ERROR, null, null, "Called function on Fake Kafka proxy!", exception)
+        );
         this.pathCreator = pathCreator;
         this.flushOnSend = true;
     }

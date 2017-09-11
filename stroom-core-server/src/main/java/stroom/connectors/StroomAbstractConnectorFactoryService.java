@@ -4,9 +4,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.server.StroomPropertyService;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.function.Consumer;
 
 /**
  * The generic form of a Connector Factory Service.
@@ -34,6 +38,7 @@ public abstract class StroomAbstractConnectorFactoryService<
     private final StroomPropertyService propertyService;
 
     private final ExternalLibService externalLibService;
+    private final Class<C> connectorClass;
     private final Class<F> factoryClass;
 
     // Used to keep track of the instances created, a single instance per name will be created and shared.
@@ -42,10 +47,12 @@ public abstract class StroomAbstractConnectorFactoryService<
     protected StroomAbstractConnectorFactoryService(final StroomPropertyService propertyService,
                                                     final ExternalLibService externalLibService,
                                                     final String propertyPrefix,
+                                                    final Class<C> connectorClass,
                                                     final Class<F> factoryClass) {
         this.propertyService = propertyService;
         this.propertyPrefix = propertyPrefix;
         this.externalLibService = externalLibService;
+        this.connectorClass = connectorClass;
         this.factoryClass = factoryClass;
         this.connectorsByName = new HashMap<>();
     }
@@ -53,20 +60,22 @@ public abstract class StroomAbstractConnectorFactoryService<
     /**
      * Overloaded version of getConnector that uses the default name.
      *
+     * @param exceptionHandler Exceptions will be passed to this if calls are made to a default proxy producer.
      * @return A {@link C} configured accordingly.
      */
-    public synchronized C getProducer() {
-        return getProducer(DEFAULT_NAME);
+    public synchronized C getProducer(final Consumer<Exception> exceptionHandler) {
+        return getProducer(DEFAULT_NAME, exceptionHandler);
     }
 
     /**
      * Users of this service can request a named Kafka connection. This is used to merge in the property names of the
      * bootstrap servers and the kafka client version.
      *
+     * @param exceptionHandler Exceptions will be passed to this if calls are made to a default proxy producer.
      * @param name The named configuration of producer.
      * @return A {@link C} configured accordingly.
      */
-    public synchronized C getProducer(final String name) {
+    public synchronized C getProducer(final String name, final Consumer<Exception> exceptionHandler) {
         LOGGER.info("Retrieving the Connector Producer for " + name);
 
         // Create a properties shim for the named producer.
@@ -103,7 +112,22 @@ public abstract class StroomAbstractConnectorFactoryService<
         if (connector != null) {
             connectorsByName.put(name, connector);
         } else {
-            throw new RuntimeException(String.format("Could not find Stroom Kafka Producer Factory for version: %s", connectorVersion));
+            final String msg = String.format("Could not find Stroom Connector Factory for %s: %s",
+                    factoryClass.getName(),
+                    connectorVersion);
+            LOGGER.warn(msg);
+
+            // Create a proxy that forwards any calls to our error handler
+            final Object fallbackConnector = Proxy.newProxyInstance(getClass().getClassLoader(),
+                    new Class[]{connectorClass},
+                    (proxy, method, args) -> {
+                        final String invokeMsg = String.format("Called method %s on default connector factory of type %s",
+                                method.getName(),
+                                connectorClass.getName());
+                        exceptionHandler.accept(new RuntimeException(invokeMsg));
+                        return null;
+                    });
+            connector = (C) fallbackConnector;
         }
 
         return connector;
