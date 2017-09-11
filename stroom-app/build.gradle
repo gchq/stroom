@@ -1,11 +1,12 @@
 plugins {
     id 'com.github.johnrengelman.shadow' version '1.2.4'
-    id "com.benjaminsproule.swagger" version "0.1.2"
+    id "com.benjaminsproule.swagger" version "0.1.4"
 }
 
 def swaggerDir = "${projectDir}/src/main/resources/swagger"
 
 apply plugin: 'application'
+apply plugin: 'java'
 mainClassName = 'stroom.startup.App'
 
 jar {
@@ -147,7 +148,7 @@ sourceSets {
 
 // This task lets us run the actual integration tests.
 task integrationTest(type: Test) {
-    testClassesDir = sourceSets.integrationTest.output.classesDir
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
 }
 
@@ -205,4 +206,3 @@ swagger {
         swaggerDirectory = "${project.buildDir}/swagger"
     }
 }
-

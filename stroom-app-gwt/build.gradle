@@ -35,7 +35,7 @@ dependencies {
 def gwtSourceDirs = []
 parent.subprojects.each { p ->
     if (p.name != 'stroom-dashboard-gwt') {
-        gwtSourceDirs.add(p.sourceSets.main.output.classesDir)
+        gwtSourceDirs.addAll(p.sourceSets.main.output.classesDirs)
         gwtSourceDirs.addAll(p.sourceSets.main.java.srcDirs)
         gwtSourceDirs.addAll(p.sourceSets.main.resources.srcDirs)
     }
