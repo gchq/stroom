@@ -119,9 +119,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         try {
             // Read the node file.
             final InputStream inputStream = Files.newInputStream(nodeFile);
-            final Properties properties = new Properties();
-            properties.load(inputStream);
-            inputStream.close();
+            final Properties properties = PropertiesSerialiser.read(inputStream);
 
             // Get the uuid.
             final String uuid = properties.getProperty("uuid");
@@ -377,8 +375,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             }
 
             final OutputStream outputStream = Files.newOutputStream(parentDir.resolve(fileName));
-            properties.store(outputStream, "Explorer Node Data");
-            outputStream.close();
+            PropertiesSerialiser.write(properties, outputStream);
         } catch (final IOException e) {
             messageList.add(new Message(Severity.ERROR, "Failed to write file '" + fileName + "'"));
         }
@@ -387,7 +384,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
     private Path createDirs(final Path dir, final List<String> pathElements) throws IOException {
         Path parentDir = dir;
         for (final String pathElement : pathElements) {
-            final String safeName = toSafeFileName(pathElement);
+            final String safeName = toSafeFileName(pathElement, 100);
             final Path child = parentDir.resolve(safeName);
 
             // If this folder hasn't been created yet then output data for the folder and create it.
@@ -402,13 +399,13 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
     }
 
     private String createFilePrefix(final DocRef docRef) {
-        return docRef.getUuid() + "." + toSafeFileName(docRef.getName()) + "." + docRef.getType();
+        return docRef.getUuid() + "." + toSafeFileName(docRef.getName(), 20) + "." + docRef.getType();
     }
 
-    private String toSafeFileName(final String string) {
+    private String toSafeFileName(final String string, final int maxLength) {
         String safe = string.replaceAll("[^A-Za-z0-9]", "_");
-        if (safe.length() > 20) {
-            safe = safe.substring(0, 20);
+        if (safe.length() > maxLength) {
+            safe = safe.substring(0, maxLength);
         }
         return safe;
     }

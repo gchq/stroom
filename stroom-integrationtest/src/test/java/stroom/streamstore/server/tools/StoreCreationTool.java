@@ -82,17 +82,17 @@ import java.util.Set;
 public final class StoreCreationTool {
     private static final int OLD_YEAR = 2006;
     private static final File eventDataPipeline = StroomCoreServerTestFileUtil
-            .getFile("samples/config/Standard Pipelines/Event Data.Pipeline.data.xml");
+            .getFile("samples/config/Standard_Pipelines/7740cfc4-3443-4001-bf0b-6adc77d5a3cf.Event_Data.Pipeline.data.xml");
     private static final File referenceDataPipeline = StroomCoreServerTestFileUtil
-            .getFile("samples/config/Standard Pipelines/Reference Data.Pipeline.data.xml");
+            .getFile("samples/config/Standard_Pipelines/b15e0cc8-3f82-446d-b106-04f43c38e19c.Reference_Data.Pipeline.data.xml");
     private static final File referenceLoaderPipeline = StroomCoreServerTestFileUtil
-            .getFile("samples/config/Standard Pipelines/Reference Loader.Pipeline.data.xml");
+            .getFile("samples/config/Standard_Pipelines/da1c7351-086f-493b-866a-b42dbe990700.Reference_Loader.Pipeline.data.xml");
     private static final File contextDataPipeline = StroomCoreServerTestFileUtil
-            .getFile("samples/config/Standard Pipelines/Context Data.Pipeline.data.xml");
+            .getFile("samples/config/Standard_Pipelines/fc281170-360d-4773-ad79-5378c5dcf52e.Context_Data.Pipeline.data.xml");
     private static final File indexingPipeline = StroomCoreServerTestFileUtil
-            .getFile("samples/config/Standard Pipelines/Indexing.Pipeline.data.xml");
+            .getFile("samples/config/Standard_Pipelines/fcef1b20-083e-436c-ab95-47a6ce453435.Indexing.Pipeline.data.xml");
     private static final File searchExtractionPipeline = StroomCoreServerTestFileUtil
-            .getFile("samples/config/Standard Pipelines/Search Extraction.Pipeline.data.xml");
+            .getFile("samples/config/Standard_Pipelines/3d9d60e9-61c2-4c88-a57b-7bc584dd970e.Search_Extraction.Pipeline.data.xml");
     private static long effectiveMsOffset = 0;
     @Resource
     private StreamStore streamStore;
