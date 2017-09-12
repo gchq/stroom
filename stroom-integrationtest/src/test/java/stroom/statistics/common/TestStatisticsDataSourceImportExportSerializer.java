@@ -20,12 +20,11 @@ package stroom.statistics.common;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.datasource.api.v1.DataSource;
-import stroom.entity.server.FolderService;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
-import stroom.entity.shared.Folder;
 import stroom.entity.shared.ImportState.ImportMode;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.server.ImportExportSerializer;
 import stroom.query.api.v1.DocRef;
 import stroom.statistics.server.sql.datasource.FindStatisticsEntityCriteria;
@@ -38,7 +37,6 @@ import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.statistics.shared.common.StatisticField;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.util.test.FileSystemTestUtil;
 
 import javax.annotation.Resource;
 import java.io.File;
@@ -47,15 +45,13 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
     @Resource
     private ImportExportSerializer importExportSerializer;
     @Resource
-    private FolderService folderService;
-    @Resource
-    private StatisticStoreService statisticsDataSourceService;
+    private StatisticStoreEntityService statisticsDataSourceService;
     @Resource
     private StatisticsDataSourceProvider statisticsDataSourceProvider;
 
     private DocRefs buildFindFolderCriteria() {
         final DocRefs docRefs = new DocRefs();
-        docRefs.add(new DocRef(Folder.ENTITY_TYPE, "0", "System"));
+        docRefs.add(ExplorerConstants.ROOT_DOC_REF);
         return docRefs;
     }
 
@@ -66,9 +62,7 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
      */
     @Test
     public void testStatisticsDataSource() {
-        final DocRef folder = DocRefUtil.create(folderService.create(FileSystemTestUtil.getUniqueTestString()));
-
-        final StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(folder, "StatName1");
+        final StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create("StatName1");
         statisticsDataSource.setDescription("My Description");
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData());
@@ -111,9 +105,7 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
 
     @Test
     public void testDeSerialiseOnLoad() {
-        final DocRef folder = DocRefUtil.create(folderService.create(FileSystemTestUtil.getUniqueTestString()));
-
-        final StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create(folder, "StatName1");
+        final StatisticStoreEntity statisticsDataSource = statisticsDataSourceService.create("StatName1");
         statisticsDataSource.setDescription("My Description");
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
 

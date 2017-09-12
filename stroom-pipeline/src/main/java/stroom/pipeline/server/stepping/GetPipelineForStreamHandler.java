@@ -19,7 +19,6 @@ package stroom.pipeline.server.stepping;
 
 import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.Folder;
 import stroom.entity.shared.SharedDocRef;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
@@ -72,27 +71,29 @@ public class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipeline
             }
         }
 
-        if (docRef == null) {
-            // If we still don't have a pipeline docRef then just try and find the
-            // first pipeline we can in the folder that the stream belongs
-            // to.
-            final Stream stream = getStream(action.getStreamId());
-            if (stream != null) {
-                final Feed feed = feedService.load(stream.getFeed());
-                if (feed != null) {
-                    final Folder folder = feed.getFolder();
-                    if (folder != null) {
-                        final FindPipelineEntityCriteria findPipelineCriteria = new FindPipelineEntityCriteria();
-                        findPipelineCriteria.getFolderIdSet().add(folder);
-                        final List<PipelineEntity> pipelines = pipelineService.find(findPipelineCriteria);
-                        if (pipelines != null && pipelines.size() > 0) {
-                            final PipelineEntity pipelineEntity = pipelines.get(0);
-                            docRef = DocRefUtil.create(pipelineEntity);
-                        }
-                    }
-                }
-            }
-        }
+//        if (docRef == null) {
+//            // If we still don't have a pipeline docRef then just try and find the
+//            // first pipeline we can in the folder that the stream belongs
+//            // to.
+//            final Stream stream = getStream(action.getStreamId());
+//            if (stream != null) {
+//                final Feed feed = feedService.load(stream.getFeed());
+//                if (feed != null) {
+//
+//
+//                    final Folder folder = feed.getFolder();
+//                    if (folder != null) {
+//                        final FindPipelineEntityCriteria findPipelineCriteria = new FindPipelineEntityCriteria();
+//                        findPipelineCriteria.getFolderIdSet().add(folder);
+//                        final List<PipelineEntity> pipelines = pipelineService.find(findPipelineCriteria);
+//                        if (pipelines != null && pipelines.size() > 0) {
+//                            final PipelineEntity pipelineEntity = pipelines.get(0);
+//                            docRef = DocRefUtil.create(pipelineEntity);
+//                        }
+//                    }
+//                }
+//            }
+//        }
 
         return SharedDocRef.create(docRef);
     }
@@ -104,7 +105,6 @@ public class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipeline
             criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
             criteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
             criteria.getFetchSet().add(Feed.ENTITY_TYPE);
-            criteria.getFetchSet().add(Folder.ENTITY_TYPE);
             criteria.obtainStreamIdSet().add(id);
             final List<Stream> streamList = streamStore.find(criteria);
             if (streamList != null && streamList.size() > 0) {

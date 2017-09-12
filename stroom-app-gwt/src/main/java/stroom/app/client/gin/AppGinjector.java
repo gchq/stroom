@@ -43,7 +43,6 @@ import stroom.explorer.client.presenter.ExplorerTabPanePresenter;
 import stroom.explorer.client.presenter.ExplorerTreePresenter;
 import stroom.feed.client.gin.FeedGinjector;
 import stroom.feed.client.gin.FeedModule;
-import stroom.folder.client.FolderRootPresenter;
 import stroom.folder.client.gin.FolderGinjector;
 import stroom.folder.client.gin.FolderModule;
 import stroom.importexport.client.gin.ImportExportConfigGinjector;
@@ -152,6 +151,4 @@ public interface AppGinjector extends
     AsyncProvider<ExplorerTreePresenter> getExplorerTreePresenter();
 
     AsyncProvider<AboutPresenter> getAboutPresenter();
-
-    AsyncProvider<FolderRootPresenter> getFolderRootPresenter();
 }

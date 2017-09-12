@@ -66,10 +66,6 @@ public class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAct
             criteria.obtainPipelineIdSet().add(action.getPipelineId());
             criteriaRoot.obtainPipelineIdSet().add(action.getPipelineId());
         }
-        if (action.getFolderId() != null) {
-            criteria.obtainFolderIdSet().add(action.getFolderId());
-            criteriaRoot.obtainFolderIdSet().add(action.getFolderId());
-        }
 
         // If the user is not an admin then only show them filters that were created by them.
         if (!securityContext.isAdmin()) {

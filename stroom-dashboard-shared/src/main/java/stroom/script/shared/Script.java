@@ -36,7 +36,7 @@ import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlTransient;
 
 @Entity
-@Table(name = "SCRIPT", uniqueConstraints = @UniqueConstraint(columnNames = {"FK_FOLDER_ID", "NAME"}))
+@Table(name = "SCRIPT")
 public class Script extends DocumentEntity implements Copyable<Script> {
     public static final String TABLE_NAME = SQLNameConstants.SCRIPT;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;

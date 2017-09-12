@@ -19,46 +19,33 @@ package stroom.explorer.server;
 import org.springframework.stereotype.Component;
 import stroom.explorer.shared.DocumentType;
 
-import javax.inject.Provider;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
-public class ExplorerActionHandlersImpl implements ExplorerActionHandlers {
-    private final Map<String, Provider<?>> allHandlers = new ConcurrentHashMap<>();
+class ExplorerActionHandlersImpl implements ExplorerActionHandlers {
+    private final Map<String, ExplorerActionHandler> allHandlers = new ConcurrentHashMap<>();
     private final Map<String, DocumentType> allTypes = new ConcurrentHashMap<>();
-    private final Map<String, Set<String>> allTags = new ConcurrentHashMap<>();
 
     private final AtomicBoolean rebuild = new AtomicBoolean();
     private volatile List<DocumentType> documentTypes;
 
     @Override
-    public <T extends ExplorerActionHandler> void add(final int priority, final String type, final String displayType, final Provider<T> provider, final String... tags) {
-        allHandlers.put(type, provider);
+    public void add(final int priority, final String type, final String displayType, final ExplorerActionHandler explorerActionHandler) {
+        allHandlers.put(type, explorerActionHandler);
 
         final DocumentType documentType = new DocumentType(priority, type, displayType, getIconUrl(type));
         allTypes.put(type, documentType);
-
-        if (tags == null) {
-            allTags.put(type, Collections.emptySet());
-        } else {
-            allTags.put(type, new HashSet<>(Arrays.asList(tags)));
-        }
 
         rebuild.set(true);
     }
 
     private String getIconUrl(final String type) {
-        return DocumentType.DOC_IMAGE_URL + type + ".png";
+        return DocumentType.DOC_IMAGE_URL + type + ".svg";
     }
 
     List<DocumentType> getTypes() {
@@ -76,16 +63,11 @@ public class ExplorerActionHandlersImpl implements ExplorerActionHandlers {
     }
 
     ExplorerActionHandler getHandler(final String type) {
-        final Provider<?> provider = allHandlers.get(type);
-        if (provider == null) {
+        final ExplorerActionHandler explorerActionHandler = allHandlers.get(type);
+        if (explorerActionHandler == null) {
             throw new RuntimeException("No handler can be found for '" + type + "'");
         }
 
-        final Object object = provider.get();
-        return (ExplorerActionHandler) object;
-    }
-
-    Set<String> getTags(final String type) {
-        return allTags.get(type);
+        return explorerActionHandler;
     }
 }

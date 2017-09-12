@@ -23,13 +23,13 @@ import org.springframework.context.annotation.Scope;
 import stroom.explorer.server.ExplorerActionHandlers;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
+import stroom.importexport.server.ImportExportActionHandlers;
 import stroom.util.config.StroomProperties;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomScope;
 import stroom.util.thread.ThreadLocalBuffer;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 /**
  * Defines the application context configuration for the server module.
@@ -39,8 +39,10 @@ import javax.inject.Provider;
 public class ServerConfiguration {
     @Inject
     public ServerConfiguration(final ExplorerActionHandlers explorerActionHandlers,
-                               final Provider<FeedService> feedServiceProvider) {
-        explorerActionHandlers.add(3, Feed.ENTITY_TYPE, Feed.ENTITY_TYPE, feedServiceProvider);
+                               final ImportExportActionHandlers importExportActionHandlers,
+                               final FeedService feedService) {
+        explorerActionHandlers.add(3, Feed.ENTITY_TYPE, Feed.ENTITY_TYPE, feedService);
+        importExportActionHandlers.add(Feed.ENTITY_TYPE, feedService);
     }
 
     @Bean

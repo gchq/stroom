@@ -23,14 +23,12 @@ import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.SystemEntityServiceImpl;
-import stroom.entity.server.UserManagerQueryUtil;
 import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.Folder;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.entity.shared.SummaryDataRow;
 import stroom.feed.shared.Feed;
@@ -138,9 +136,6 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
                 criteria.obtainFindStreamCriteria().getPipelineIdSet());
         sql.appendIncludeExcludeSetQuery("F." + BaseEntity.ID,
                 criteria.obtainFindStreamCriteria().getFeeds());
-
-        UserManagerQueryUtil.appendFolderCriteria(criteria.obtainFindStreamCriteria().getFolderIdSet(),
-                "P." + Folder.FOREIGN_KEY, sql, getEntityManager());
 
         sql.append(" GROUP BY PIPE_ID, FEED_ID, PRIORITY_1, STAT_ID1");
         sql.append(") D");
@@ -262,9 +257,6 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
                 sql.appendRangeQuery(alias + ".stream.createMs", findStreamCriteria.getCreatePeriod());
                 sql.appendRangeQuery(alias + ".stream.effectiveMs", findStreamCriteria.getEffectivePeriod());
             }
-
-            UserManagerQueryUtil.appendFolderCriteria(criteria.obtainFindStreamCriteria().getFolderIdSet(),
-                    alias + ".streamProcessorFilter.streamProcessor.pipeline.folder", sql, getEntityManager());
         }
     }
 }

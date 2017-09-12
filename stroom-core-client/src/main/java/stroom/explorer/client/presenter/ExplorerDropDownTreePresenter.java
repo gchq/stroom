@@ -25,7 +25,7 @@ import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.Folder;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.query.api.v1.DocRef;
 import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter;
@@ -77,7 +77,7 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
             return true;
         }
 
-        return !Folder.ENTITY_TYPE.equals(selected.getType());
+        return !ExplorerConstants.FOLDER.equals(selected.getType());
     }
 
     @Override

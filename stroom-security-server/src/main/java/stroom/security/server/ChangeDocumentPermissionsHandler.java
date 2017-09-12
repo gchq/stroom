@@ -20,14 +20,10 @@ package stroom.security.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
-import stroom.entity.server.DocumentEntityService;
-import stroom.entity.server.GenericEntityService;
-import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.EntityServiceException;
-import stroom.entity.shared.Folder;
-import stroom.explorer.server.ExplorerService;
+import stroom.explorer.shared.ExplorerConstants;
+import stroom.explorer.server.ExplorerNodeService;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.query.api.v1.DocRef;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
@@ -58,14 +54,14 @@ public class ChangeDocumentPermissionsHandler
     private final DocumentPermissionService documentPermissionService;
     private final DocumentPermissionsCache documentPermissionsCache;
     private final SecurityContext securityContext;
-    private final ExplorerService explorerService;
+    private final ExplorerNodeService explorerNodeService;
 
     @Inject
-    ChangeDocumentPermissionsHandler(final DocumentPermissionService documentPermissionService, final DocumentPermissionsCache documentPermissionsCache, final SecurityContext securityContext, final ExplorerService explorerService) {
+    ChangeDocumentPermissionsHandler(final DocumentPermissionService documentPermissionService, final DocumentPermissionsCache documentPermissionsCache, final SecurityContext securityContext, final ExplorerNodeService explorerNodeService) {
         this.documentPermissionService = documentPermissionService;
         this.documentPermissionsCache = documentPermissionsCache;
         this.securityContext = securityContext;
-        this.explorerService = explorerService;
+        this.explorerNodeService = explorerNodeService;
     }
 
     @Override
@@ -134,7 +130,7 @@ public class ChangeDocumentPermissionsHandler
         // Add permissions from the change set.
         for (final UserPermission userPermission : changeSet.getAddSet()) {
             // Don't add create permissions to items that aren't folders as it makes no sense.
-            if (Folder.ENTITY_TYPE.equals(docRef.getType()) || !userPermission.getPermission().startsWith(DocumentPermissionNames.CREATE)) {
+            if (ExplorerConstants.FOLDER.equals(docRef.getType()) || !userPermission.getPermission().startsWith(DocumentPermissionNames.CREATE)) {
                 final UserRef userRef = userPermission.getUserRef();
                 try {
                     documentPermissionService.addPermission(userRef, docRef, userPermission.getPermission());
@@ -202,7 +198,7 @@ public class ChangeDocumentPermissionsHandler
 //    }
 
     private void cascadeChanges(final DocRef docRef, final ChangeSet<UserPermission> changeSet, final Set<DocRef> affectedDocRefs, final Set<UserRef> affectedUserRefs, final ChangeDocumentPermissionsAction.Cascade cascade) {
-        if ("System".equals(docRef.getType()) || "Folder".equals(docRef.getType())) {
+        if (ExplorerConstants.FOLDER.equals(docRef.getType())) {
             switch (cascade) {
                 case CHANGES_ONLY:
                     // We are only cascading changes so just pass on the change set.
@@ -233,12 +229,12 @@ public class ChangeDocumentPermissionsHandler
     }
 
     private void changeDescendantPermissions(final DocRef folder, final ChangeSet<UserPermission> changeSet, final Set<DocRef> affectedDocRefs, final Set<UserRef> affectedUserRefs, final boolean clear) {
-        final List<DocRef> descendants = explorerService.getDescendants(folder);
+        final List<ExplorerNode> descendants = explorerNodeService.getDescendants(folder);
         if (descendants != null && descendants.size() > 0) {
-            for (final DocRef descendant : descendants) {
+            for (final ExplorerNode descendant : descendants) {
                 // Ensure that the user has permission to change the permissions of this child.
                 if (securityContext.hasDocumentPermission(descendant.getType(), descendant.getUuid(), DocumentPermissionNames.OWNER)) {
-                    changeDocPermissions(descendant, changeSet, affectedDocRefs, affectedUserRefs, clear);
+                    changeDocPermissions(descendant.getDocRef(), changeSet, affectedDocRefs, affectedUserRefs, clear);
                 } else {
                     LOGGER.debug("User does not have permission to change permissions on " + descendant.toString());
                 }

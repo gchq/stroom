@@ -61,6 +61,11 @@ public class ImportState implements SharedObject {
         this.destPath = destPath;
     }
 
+    public boolean ok(final ImportMode importMode) {
+        return importMode == ImportMode.IGNORE_CONFIRMATION
+                || (importMode == ImportMode.ACTION_CONFIRMATION && action);
+    }
+
     public boolean isAction() {
         return action;
     }

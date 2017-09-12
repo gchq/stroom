@@ -31,7 +31,7 @@ import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlTransient;
 
 @Entity
-@Table(name = "VIS", uniqueConstraints = @UniqueConstraint(columnNames = {"FK_FOLDER_ID", "NAME"}))
+@Table(name = "VIS")
 public class Visualisation extends DocumentEntity implements Copyable<Visualisation> {
     public static final String TABLE_NAME = SQLNameConstants.VISUALISATION;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;

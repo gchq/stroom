@@ -1,7 +1,0 @@
-<?xml version="1.1" encoding="UTF-8"?>
-<textConverter>
-   <converterType>DATA_SPLITTER</converterType>
-   <description/>
-   <name>CSV_WITH_HEADER</name>
-   <uuid>7e4452ed-bf26-4187-b849-e3e721780cba</uuid>
-</textConverter>

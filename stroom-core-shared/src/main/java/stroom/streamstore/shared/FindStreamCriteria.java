@@ -20,8 +20,6 @@ import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.Copyable;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
-import stroom.entity.shared.FolderIdSet;
-import stroom.entity.shared.HasFolderIdSet;
 import stroom.entity.shared.HasIsConstrained;
 import stroom.entity.shared.IdRange;
 import stroom.entity.shared.IncludeExcludeEntityIdSet;
@@ -45,14 +43,13 @@ import java.util.List;
  */
 @XmlRootElement
 public class FindStreamCriteria extends BaseCriteria
-        implements HasFolderIdSet, Copyable<FindStreamCriteria>, HasIsConstrained, Matcher<Stream> {
+        implements Copyable<FindStreamCriteria>, HasIsConstrained, Matcher<Stream> {
     public static final String FIELD_CREATE_MS = "Create";
     private static final long serialVersionUID = -4777723504698304778L;
     /**
      * Keep up to date as it's used to cache SQL queries.
      */
     private EntityIdSet<StreamProcessor> streamProcessorIdSet;
-    private FolderIdSet folderIdSet;
 
     /**
      * You must use feeds instead this is here for compatibility with previous
@@ -95,11 +92,6 @@ public class FindStreamCriteria extends BaseCriteria
     public boolean isMatch(final Stream stream) {
         if (streamProcessorIdSet != null) {
             if (!streamProcessorIdSet.isMatch(stream.getStreamProcessor())) {
-                return false;
-            }
-        }
-        if (folderIdSet != null) {
-            if (!folderIdSet.isMatch(stream.getFeed().getFolder())) {
                 return false;
             }
         }
@@ -162,9 +154,6 @@ public class FindStreamCriteria extends BaseCriteria
         if (streamProcessorIdSet != null && streamProcessorIdSet.isConstrained()) {
             return true;
         }
-        if (folderIdSet != null && folderIdSet.isConstrained()) {
-            return true;
-        }
         if (feeds != null && feeds.isConstrained()) {
             return true;
         }
@@ -224,23 +213,6 @@ public class FindStreamCriteria extends BaseCriteria
             statusSet = new CriteriaSet<>();
         }
         return statusSet;
-    }
-
-    @Override
-    public FolderIdSet getFolderIdSet() {
-        return folderIdSet;
-    }
-
-    public void setFolderIdSet(final FolderIdSet folderIdSet) {
-        this.folderIdSet = folderIdSet;
-    }
-
-    @Override
-    public FolderIdSet obtainFolderIdSet() {
-        if (folderIdSet == null) {
-            folderIdSet = new FolderIdSet();
-        }
-        return folderIdSet;
     }
 
     public IncludeExcludeEntityIdSet<Feed> getFeeds() {
@@ -440,7 +412,6 @@ public class FindStreamCriteria extends BaseCriteria
     public int hashCode() {
         final HashCodeBuilder builder = new HashCodeBuilder();
         builder.append(streamProcessorIdSet);
-        builder.append(folderIdSet);
         builder.append(feeds);
         builder.append(pipelineIdSet);
         builder.append(streamTypeIdSet);
@@ -469,7 +440,6 @@ public class FindStreamCriteria extends BaseCriteria
         final FindStreamCriteria other = (FindStreamCriteria) o;
         final EqualsBuilder builder = new EqualsBuilder();
         builder.append(this.streamProcessorIdSet, other.streamProcessorIdSet);
-        builder.append(this.folderIdSet, other.folderIdSet);
         builder.append(this.feeds, other.feeds);
         builder.append(this.pipelineIdSet, other.pipelineIdSet);
         builder.append(this.streamTypeIdSet, other.streamTypeIdSet);
@@ -490,7 +460,6 @@ public class FindStreamCriteria extends BaseCriteria
     @Override
     public void copyFrom(final FindStreamCriteria other) {
         this.obtainStreamProcessorIdSet().copyFrom(other.obtainStreamProcessorIdSet());
-        this.obtainFolderIdSet().copyFrom(other.obtainFolderIdSet());
         this.obtainFeeds().copyFrom(other.obtainFeeds());
         this.obtainPipelineIdSet().copyFrom(other.obtainPipelineIdSet());
         this.obtainStreamTypeIdSet().copyFrom(other.obtainStreamTypeIdSet());

@@ -17,19 +17,15 @@
 package stroom.entity.shared;
 
 import javax.persistence.Column;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.MappedSuperclass;
 
 @MappedSuperclass
-public abstract class DocumentEntity extends NamedEntity implements Document, HasFolder {
+public abstract class DocumentEntity extends NamedEntity implements Document {
     public static final String UUID = SQLNameConstants.UUID;
 
     private static final long serialVersionUID = -6752797140242673318L;
 
     private String uuid;
-    private Folder folder;
 
     @Override
     @Column(name = UUID, unique = true, nullable = false)
@@ -47,20 +43,7 @@ public abstract class DocumentEntity extends NamedEntity implements Document, Ha
         uuid = null;
     }
 
-    @Override
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = Folder.FOREIGN_KEY)
-    public Folder getFolder() {
-        return folder;
-    }
-
-    @Override
-    public void setFolder(final Folder folder) {
-        this.folder = folder;
-    }
-
     protected void copyFrom(final DocumentEntity t) {
-        this.folder = t.folder;
         super.copyFrom(t);
     }
 }

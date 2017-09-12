@@ -39,7 +39,6 @@ import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityServiceFindDeleteAction;
-import stroom.entity.shared.Folder;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.ResultList;
 import stroom.entity.shared.SharedDocRef;
@@ -223,7 +222,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 
         registerHandler(streamListFilter.addClickHandler(event -> {
             final StreamFilterPresenter presenter = streamListFilterPresenter.get();
-            presenter.setCriteria(findStreamAttributeMapCriteria, folderVisible, feedVisible, pipelineVisible, true,
+            presenter.setCriteria(findStreamAttributeMapCriteria, feedVisible, pipelineVisible,
                     true);
 
             final PopupUiHandlers streamFilterPUH = new DefaultPopupUiHandlers() {
@@ -352,9 +351,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 
     @Override
     public void read(final BaseEntity entity) {
-        if (entity instanceof Folder) {
-            setFolderCriteria((Folder) entity);
-        } else if (entity instanceof Feed) {
+        if (entity instanceof Feed) {
             setFeedCriteria((Feed) entity);
         } else if (entity instanceof PipelineEntity) {
             setPipelineCriteria((PipelineEntity) entity);
@@ -378,21 +375,6 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         criteria.obtainFindStreamCriteria().setSort(FindStreamCriteria.FIELD_CREATE_MS, Direction.DESCENDING, false);
 
         return criteria;
-    }
-
-    private void setFolderCriteria(final Folder folder) {
-        showStreamListButtons(false);
-        showStreamRelationListButtons(false);
-        findStreamAttributeMapCriteria = createFindStreamAttributeMapCriteria();
-        if (folder != null) {
-            findStreamAttributeMapCriteria.obtainFindStreamCriteria().obtainFolderIdSet().add(folder);
-        }
-
-        this.folderVisible = false;
-        this.feedVisible = false;
-        this.pipelineVisible = true;
-
-        initCriteria();
     }
 
     private void setFeedCriteria(final Feed feed) {

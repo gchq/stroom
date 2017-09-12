@@ -31,11 +31,13 @@ import java.util.Map;
 
 @Component
 @Transactional
-public class ExplorerTreeDaoImpl implements ExplorerTreeDao {
+class ExplorerTreeDaoImpl implements ExplorerTreeDao {
+    private final DbSession session;
     private final ClosureTableTreeDao dao;
 
     @Inject
     ExplorerTreeDaoImpl(final DbSession session) {
+        this.session = session;
         this.dao = new ClosureTableTreeDao(ExplorerTreeNode.class, ExplorerTreePath.class, false, session);
         this.dao.setRemoveReferencedNodes(true);
     }
@@ -235,27 +237,29 @@ public class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     @SuppressWarnings("unchecked")
     private List<ExplorerTreeNode> convertTo(final List<ClosureTableTreeNode> list) {
         return (List<ExplorerTreeNode>) (List) list;
-//
-//
-//        if (list == null) {
-//            return null;
-//        }
-//
-//        final List<ExplorerTreeNode> newList = new ArrayList<>(list.size());
-//        list.stream().forEachOrdered(item -> newList.add((ExplorerTreeNode) item));
-//        return newList;
     }
 
     @SuppressWarnings("unchecked")
     private List<ClosureTableTreeNode> convertFrom(final List<ExplorerTreeNode> list) {
         return (List<ClosureTableTreeNode>) (List) list;
-//
-//        if (list == null) {
-//            return null;
-//        }
-//
-//        final List<ClosureTableTreeNode> newList = new ArrayList<>(list.size());
-//        list.stream().forEachOrdered(item -> newList.add((ClosureTableTreeNode) item));
-//        return newList;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public ExplorerTreeNode findByUUID(final String uuid) {
+        if (uuid == null) {
+            return null;
+        }
+
+        final List<ExplorerTreeNode> list = (List<ExplorerTreeNode>) this.session.queryList("select n from " + ExplorerTreeNode.class.getSimpleName() + " n where n.uuid = ?", new String[]{uuid});
+        if (list == null || list.size() == 0) {
+            return null;
+        }
+
+        if (list.size() > 1) {
+            throw new RuntimeException("Found more than 1 tree node with uuid=" + uuid);
+        }
+
+        return list.get(0);
     }
 }

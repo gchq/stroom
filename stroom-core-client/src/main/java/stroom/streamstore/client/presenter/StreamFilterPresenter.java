@@ -21,15 +21,12 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.EntityIdSet;
-import stroom.entity.shared.Folder;
 import stroom.entity.shared.IncludeExcludeEntityIdSet;
 import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
 import stroom.item.client.ItemListBox;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.StreamStatus;
@@ -37,30 +34,26 @@ import stroom.streamstore.shared.StreamType;
 import stroom.widget.customdatebox.client.DateBoxView;
 
 public class StreamFilterPresenter extends MyPresenterWidget<StreamFilterPresenter.StreamFilterView> {
-    private final EntityIdSetPresenter folderPresenter;
     private final IncludeExcludeEntityIdSetPresenter<Feed> feedPresenter;
     private final EntityIdSetPresenter pipelinePresenter;
     private final EntityIdSetPresenter streamTypePresenter;
-    private final ClientSecurityContext securityContext;
     private final StreamAttributeListPresenter streamAttributeListPresenter;
     private FindStreamAttributeMapCriteria criteria;
 
     @Inject
-    public StreamFilterPresenter(final EventBus eventBus, final ClientSecurityContext securityContext,
-                                 final EntityIdSetPresenter folderPresenter, final IncludeExcludeEntityIdSetPresenter<Feed> feedPresenter,
-                                 final EntityIdSetPresenter pipelinePresenter, final EntityIdSetPresenter streamTypePresenter,
+    public StreamFilterPresenter(final EventBus eventBus,
+                                 final IncludeExcludeEntityIdSetPresenter<Feed> feedPresenter,
+                                 final EntityIdSetPresenter pipelinePresenter,
+                                 final EntityIdSetPresenter streamTypePresenter,
                                  final StreamAttributeListPresenter streamAttributeListPresenter,
-                                 final StreamTypeUiManager streamTypeUiManager, final StreamFilterView view,
-                                 final ClientDispatchAsync dispatcher) {
+                                 final StreamTypeUiManager streamTypeUiManager,
+                                 final StreamFilterView view) {
         super(eventBus, view);
-        this.securityContext = securityContext;
-        this.folderPresenter = folderPresenter;
         this.feedPresenter = feedPresenter;
         this.pipelinePresenter = pipelinePresenter;
         this.streamTypePresenter = streamTypePresenter;
         this.streamAttributeListPresenter = streamAttributeListPresenter;
 
-        view.setFolderView(folderPresenter.getView());
         view.setFeedView(feedPresenter.getView());
         view.setPipelineView(pipelinePresenter.getView());
         view.setStreamTypeView(streamTypePresenter.getView());
@@ -118,31 +111,17 @@ public class StreamFilterPresenter extends MyPresenterWidget<StreamFilterPresent
         return criteria;
     }
 
-    public void setCriteria(final FindStreamAttributeMapCriteria criteria, final boolean folderEnabled,
-                            final boolean feedEnabled, final boolean pipelineEnabled, final boolean attributesEnabled,
+    public void setCriteria(final FindStreamAttributeMapCriteria criteria,
+                            final boolean feedEnabled, final boolean pipelineEnabled,
                             final boolean advancedVisable) {
         this.criteria = new FindStreamAttributeMapCriteria();
         this.criteria.copyFrom(criteria);
 
-        folderPresenter.setEnabled(folderEnabled);
-
-        //if (securityContext.hasAppPermission(Feed.ENTITY_TYPE, DocumentPermissionNames.READ)) {
         feedPresenter.setEnabled(feedEnabled);
         getView().setFeedVisible(true);
-//        } else {
-//            feedPresenter.setEnabled(false);
-//            getView().setFeedVisible(false);
-//        }
 
-        //if (securityContext.hasAppPermission(PipelineEntity.ENTITY_TYPE, DocumentPermissionNames.READ)) {
         pipelinePresenter.setEnabled(pipelineEnabled);
         getView().setPipelineVisible(true);
-//        } else {
-//            pipelinePresenter.setEnabled(false);
-//            getView().setPipelineVisible(false);
-//        }
-
-        folderPresenter.setEnabled(folderEnabled);
 
         getView().setStreamAttributeListVisible(true);
         getView().setAdvancedVisible(advancedVisable);
@@ -151,9 +130,7 @@ public class StreamFilterPresenter extends MyPresenterWidget<StreamFilterPresent
 
     private void read() {
         final FindStreamCriteria findStreamCriteria = criteria.obtainFindStreamCriteria();
-        final EntityIdSet<Folder> folderIdSet = findStreamCriteria.obtainFolderIdSet();
 
-        folderPresenter.read(Folder.ENTITY_TYPE, true, folderIdSet);
         final IncludeExcludeEntityIdSet<Feed> feeds = findStreamCriteria.obtainFeeds();
         feedPresenter.read(Feed.ENTITY_TYPE, true, feeds);
         final EntityIdSet<PipelineEntity> pipelineIdSet = findStreamCriteria.obtainPipelineIdSet();
@@ -179,11 +156,6 @@ public class StreamFilterPresenter extends MyPresenterWidget<StreamFilterPresent
     public void write() {
         final FindStreamCriteria findStreamCriteria = criteria.obtainFindStreamCriteria();
 
-        if (folderPresenter.isEnabled()) {
-            final EntityIdSet<Folder> folderIdSet = findStreamCriteria.obtainFolderIdSet();
-            folderIdSet.clear();
-            folderPresenter.write(folderIdSet);
-        }
         if (feedPresenter.isEnabled()) {
             final IncludeExcludeEntityIdSet<Feed> feeds = findStreamCriteria.obtainFeeds();
             feeds.clear();
@@ -221,10 +193,6 @@ public class StreamFilterPresenter extends MyPresenterWidget<StreamFilterPresent
 
     public interface StreamFilterView extends View {
         ItemListBox<StreamListFilterTemplate> getStreamListFilterTemplate();
-
-        void setFolderView(View view);
-
-        void setFolderVisible(boolean visible);
 
         void setFeedView(View view);
 

@@ -19,7 +19,6 @@ package stroom.stats;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.entity.server.FolderService;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
@@ -36,7 +35,6 @@ import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.stats.shared.StroomStatsStoreEntityData;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.util.test.FileSystemTestUtil;
 
 import javax.annotation.Resource;
 import java.io.File;
@@ -44,8 +42,6 @@ import java.io.File;
 public class TestStroomStatsStoreImportExportSerializer extends AbstractCoreIntegrationTest {
     @Resource
     private ImportExportSerializer importExportSerializer;
-    @Resource
-    private FolderService folderService;
     @Resource
     private StroomStatsStoreEntityService stroomStatsStoreEntityService;
     @Resource
@@ -64,9 +60,7 @@ public class TestStroomStatsStoreImportExportSerializer extends AbstractCoreInte
      */
     @Test
     public void testStatisticsDataSource() {
-        final DocRef folder = DocRefUtil.create(folderService.create(FileSystemTestUtil.getUniqueTestString()));
-
-        final StroomStatsStoreEntity entity = stroomStatsStoreEntityService.create(folder, "StatName1");
+        final StroomStatsStoreEntity entity = stroomStatsStoreEntityService.create("StatName1");
         entity.setDescription("My Description");
         entity.setStatisticType(StatisticType.COUNT);
         entity.setDataObject(new StroomStatsStoreEntityData());
@@ -81,7 +75,9 @@ public class TestStroomStatsStoreImportExportSerializer extends AbstractCoreInte
         FileSystemUtil.deleteDirectory(testDataDir);
         FileSystemUtil.mkdirs(null, testDataDir);
 
-        importExportSerializer.write(testDataDir.toPath(), buildFindFolderCriteria(folder), true, null);
+        final DocRefs docRefs = new DocRefs();
+        docRefs.add(DocRefUtil.create(entity));
+        importExportSerializer.write(testDataDir.toPath(), docRefs, true, null);
 
         Assert.assertEquals(2, testDataDir.listFiles().length);
 

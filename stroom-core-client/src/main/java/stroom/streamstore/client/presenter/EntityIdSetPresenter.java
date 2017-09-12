@@ -34,7 +34,6 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityReferenceComparator;
-import stroom.entity.shared.Folder;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.process.shared.LoadEntityIdSetAction;
 import stroom.process.shared.SetId;
@@ -150,7 +149,7 @@ public class EntityIdSetPresenter extends MyPresenterWidget<EntityIdSetPresenter
         } else {
             treePresenter.setIncludedTypes(type);
             treePresenter.setRequiredPermissions(DocumentPermissionNames.USE);
-            treePresenter.setAllowFolderSelection(Folder.ENTITY_TYPE.equals(type));
+            treePresenter.setAllowFolderSelection(false);
         }
 
         enableButtons();

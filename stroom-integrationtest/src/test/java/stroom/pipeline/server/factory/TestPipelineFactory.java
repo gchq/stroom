@@ -66,8 +66,8 @@ public class TestPipelineFactory extends AbstractProcessIntegrationTest {
         PipelineEntity pipeline2 = PipelineTestUtil.createBasicPipeline(data2);
 
         // Read the pipelines.
-        pipeline1 = PipelineTestUtil.savePipeline(pipeline1, false);
-        pipeline2 = PipelineTestUtil.savePipeline(pipeline2, false);
+        pipeline1 = PipelineTestUtil.savePipeline(pipeline1);
+        pipeline2 = PipelineTestUtil.savePipeline(pipeline2);
 
         Assert.assertEquals(data1, pipeline1.getData());
         Assert.assertEquals(data2, pipeline2.getData());
@@ -81,7 +81,7 @@ public class TestPipelineFactory extends AbstractProcessIntegrationTest {
         // Take a look at the merged config.
         PipelineEntity pipeline3 = new PipelineEntity();
         pipeline3.setPipelineData(pipelineData3);
-        pipeline3 = PipelineTestUtil.savePipeline(pipeline3, false);
+        pipeline3 = PipelineTestUtil.savePipeline(pipeline3);
 
         Assert.assertEquals(data3, pipeline3.getData());
 
@@ -90,12 +90,12 @@ public class TestPipelineFactory extends AbstractProcessIntegrationTest {
 
         // Now try and serialize pipeline data for import export (external
         // form).
-        pipeline1 = PipelineTestUtil.savePipeline(pipeline1, true);
-        pipeline2 = PipelineTestUtil.savePipeline(pipeline2, true);
+        pipeline1 = PipelineTestUtil.savePipeline(pipeline1);
+        pipeline2 = PipelineTestUtil.savePipeline(pipeline2);
 
         // Read the external form back in and make sure it is unchanged.
-        pipeline1 = PipelineTestUtil.loadPipeline(pipeline1, true);
-        pipeline2 = PipelineTestUtil.loadPipeline(pipeline2, true);
+        pipeline1 = PipelineTestUtil.loadPipeline(pipeline1);
+        pipeline2 = PipelineTestUtil.loadPipeline(pipeline2);
 
         Assert.assertEquals(data1, pipeline1.getData());
         Assert.assertEquals(data2, pipeline2.getData());

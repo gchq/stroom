@@ -17,15 +17,16 @@
 package stroom.explorer.server;
 
 import org.springframework.stereotype.Component;
-import stroom.entity.server.event.EntityEventBus;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.query.api.v1.DocRef;
 import stroom.security.Insecure;
 import stroom.util.task.TaskScopeRunnable;
 
 import javax.inject.Inject;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 @Component
 class ExplorerTreeModel {
@@ -40,7 +41,7 @@ class ExplorerTreeModel {
     private volatile boolean rebuildRequired;
 
     @Inject
-    ExplorerTreeModel(final ExplorerTreeDao explorerTreeDao, final ExplorerActionHandlersImpl explorerActionHandlers, final EntityEventBus eventBus) {
+    ExplorerTreeModel(final ExplorerTreeDao explorerTreeDao, final ExplorerActionHandlersImpl explorerActionHandlers) {
         this.explorerTreeDao = explorerTreeDao;
         this.explorerActionHandlers = explorerActionHandlers;
     }
@@ -93,7 +94,7 @@ class ExplorerTreeModel {
 
     private void addChildren(final TreeModel treeModel, final List<ExplorerTreeNode> children, final ExplorerNode parentNode) {
         for (final ExplorerTreeNode child : children) {
-            final ExplorerNode explorerNode = new ExplorerNode(child.getId(), child.getType(), child.getUuid(), child.getName(), child.getTags());
+            final ExplorerNode explorerNode = createExplorerNode(child);
             explorerNode.setIconUrl(getIconUrl(child.getType()));
             treeModel.add(parentNode, explorerNode);
 
@@ -135,7 +136,11 @@ class ExplorerTreeModel {
         return documentType.getPriority();
     }
 
-    public void setRebuildRequired(final boolean rebuildRequired) {
+    void setRebuildRequired(final boolean rebuildRequired) {
         this.rebuildRequired = rebuildRequired;
+    }
+
+    private ExplorerNode createExplorerNode(final ExplorerTreeNode explorerTreeNode) {
+        return new ExplorerNode(explorerTreeNode.getType(), explorerTreeNode.getUuid(), explorerTreeNode.getName(), explorerTreeNode.getTags());
     }
 }

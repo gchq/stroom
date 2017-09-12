@@ -28,63 +28,27 @@ import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.dashboard.server.logging.EventInfoProvider;
 import stroom.dashboard.server.logging.StroomEventLoggingService;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.query.api.v1.DocRef;
 import stroom.security.Insecure;
-import stroom.util.spring.StroomBeanStore;
 
-import javax.annotation.Resource;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import javax.inject.Inject;
 
 @Component
 @Insecure
 class ExplorerEventLogImpl implements ExplorerEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerEventLogImpl.class);
 
-    @Resource
-    private StroomEventLoggingService eventLoggingService;
-    @Resource
-    private StroomBeanStore stroomBeanStore;
+    private final StroomEventLoggingService eventLoggingService;
 
-    private volatile Map<Class<?>, EventInfoProvider> entityInfoAppenders;
-
-    private EventInfoProvider getInfoAppender(final Class<?> type) {
-        if (entityInfoAppenders == null) {
-            synchronized (this) {
-                if (entityInfoAppenders == null) {
-                    final Map<Class<?>, EventInfoProvider> appenders = new HashMap<>();
-                    final Set<String> beanNames = stroomBeanStore.getStroomBeanByType(EventInfoProvider.class);
-                    for (final String beanName : beanNames) {
-                        final java.lang.Object bean = stroomBeanStore.getBean(beanName);
-                        if (bean instanceof EventInfoProvider) {
-                            final EventInfoProvider entityInfoAppender = (EventInfoProvider) bean;
-                            appenders.put(entityInfoAppender.getType(), entityInfoAppender);
-                        }
-                    }
-                    entityInfoAppenders = appenders;
-                }
-            }
-        }
-
-        EventInfoProvider appender = entityInfoAppenders.get(type);
-        if (appender == null) {
-            // Get basic appender.
-            appender = entityInfoAppenders.get(null);
-        }
-
-        if (appender == null) {
-            LOGGER.error("No appender found for " + type.getName());
-        }
-
-        return appender;
+    @Inject
+    ExplorerEventLogImpl(final StroomEventLoggingService eventLoggingService) {
+        this.eventLoggingService = eventLoggingService;
     }
 
     @Override
-    public void create(final String type, final String name, final DocRef folder, final PermissionInheritance permissionInheritance, final Exception ex) {
+    public void create(final String type, final String uuid, final String name, final DocRef folder, final PermissionInheritance permissionInheritance, final Exception ex) {
         try {
             final Event event = createAction("Create", "Creating", type, name);
             final ObjectOutcome objectOutcome = new ObjectOutcome();
@@ -92,6 +56,7 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
 
             final Object object = new Object();
             object.setType(type);
+            object.setId(uuid);
             object.setName(name);
 
             objectOutcome.getObjects().add(object);
@@ -216,7 +181,7 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
     private Event createAction(final String typeId, final String description, final DocRef entity) {
         String desc = description;
         if (entity != null) {
-            desc = description + " " + getObjectType(entity) + " \"" + entity.getName() + "\" id="
+            desc = description + " " + entity.getType() + " \"" + entity.getName() + "\" id="
                     + entity.getId();
         }
 
@@ -229,19 +194,11 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
         return eventLoggingService.createAction(typeId, desc);
     }
 
-    private String getObjectType(final java.lang.Object object) {
-        final EventInfoProvider entityInfoAppender = getInfoAppender(object.getClass());
-        if (entityInfoAppender == null) {
-            return null;
-        }
-        return entityInfoAppender.getObjectType(object);
-    }
-
-    private BaseObject createBaseObject(final java.lang.Object object) {
-        final EventInfoProvider entityInfoAppender = getInfoAppender(object.getClass());
-        if (entityInfoAppender == null) {
-            return null;
-        }
-        return entityInfoAppender.createBaseObject(object);
+    private BaseObject createBaseObject(final DocRef docRef) {
+        final Object object = new Object();
+        object.setType(docRef.getType());
+        object.setId(docRef.getUuid());
+        object.setName(docRef.getName());
+        return object;
     }
 }

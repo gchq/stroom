@@ -27,7 +27,6 @@ import stroom.dashboard.server.QueryService;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.FindQueryCriteria;
 import stroom.dashboard.shared.QueryEntity;
-import stroom.entity.server.FolderService;
 import stroom.entity.server.util.BaseEntityDeProxyProcessor;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
@@ -60,9 +59,8 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
     @Resource
     private UserService userService;
     @Resource
-    private FolderService folderService;
-    @Resource
     private QueryHistoryCleanExecutor queryHistoryCleanExecutor;
+
     private Dashboard dashboard;
     private UserRef userRef;
     private QueryEntity testQuery;
@@ -74,12 +72,9 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         clean();
 
         userRef = userService.createUser("testuser");
+        dashboard = dashboardService.create("Test");
 
-        final DocRef testFolder = DocRefUtil.create(folderService.create("Test Folder"));
-
-        dashboard = dashboardService.create(testFolder, "Test");
-
-        final Index index = indexService.create(testFolder, "Test index");
+        final Index index = indexService.create("Test index");
         final DocRef dataSourceRef = DocRefUtil.create(index);
 
         refQuery = queryService.create("Ref query");

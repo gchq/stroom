@@ -1,8 +1,0 @@
-<?xml version="1.1" encoding="UTF-8"?>
-<pipeline>
-   <description/>
-   <name>HDFS</name>
-   <parentPipelineXML/>
-   <pipelineType>Event Data</pipelineType>
-   <uuid>85fa215e-7a7f-4ad3-8b88-7155ff0ade37</uuid>
-</pipeline>

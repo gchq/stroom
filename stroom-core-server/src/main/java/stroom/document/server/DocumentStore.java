@@ -18,7 +18,8 @@
 package stroom.document.server;
 
 import stroom.explorer.server.ExplorerActionHandler;
+import stroom.importexport.server.ImportExportActionHandler;
 
-public interface DocumentStore<D> extends ExplorerActionHandler, DocumentActionHandler<D> {
+public interface DocumentStore<D> extends ExplorerActionHandler, ImportExportActionHandler, DocumentActionHandler<D> {
     String getDocType();
 }

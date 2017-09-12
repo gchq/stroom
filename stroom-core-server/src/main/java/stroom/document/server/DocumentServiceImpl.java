@@ -47,7 +47,7 @@ class DocumentServiceImpl implements DocumentService {
                 documentEventLog.view(result);
             }
         } catch (final RuntimeException e) {
-            documentEventLog.view(result, e);
+            documentEventLog.view(docRef, e);
             throw e;
         }
 
@@ -81,7 +81,7 @@ class DocumentServiceImpl implements DocumentService {
                 documentEventLog.create(result, null);
             }
         } catch (final RuntimeException e) {
-            documentEventLog.create(result, e);
+            documentEventLog.create(docRef, e);
             throw e;
         }
 

@@ -26,7 +26,6 @@ import stroom.util.shared.SharedObject;
 public class ExplorerNode implements HasType, HasUuid, HasNodeState, HasDisplayValue, SharedObject {
     private static final long serialVersionUID = -5216736591679930246L;
 
-    private Long id;
     private String type;
     private String uuid;
     private String name;
@@ -40,8 +39,7 @@ public class ExplorerNode implements HasType, HasUuid, HasNodeState, HasDisplayV
         // Default constructor necessary for GWT serialisation.
     }
 
-    public ExplorerNode(final Long id, final String type, final String uuid, final String name, final String tags) {
-        this.id = id;
+    public ExplorerNode(final String type, final String uuid, final String name, final String tags) {
         this.type = type;
         this.uuid = uuid;
         this.name = name;
@@ -49,11 +47,10 @@ public class ExplorerNode implements HasType, HasUuid, HasNodeState, HasDisplayV
     }
 
     public static ExplorerNode create(final DocRef docRef) {
-        return new ExplorerNode(null, docRef.getType(), docRef.getUuid(), docRef.getName(), null);
-    }
-
-    public Long getId() {
-        return id;
+        if (docRef == null) {
+            return null;
+        }
+        return new ExplorerNode(docRef.getType(), docRef.getUuid(), docRef.getName(), null);
     }
 
     @Override
@@ -110,7 +107,7 @@ public class ExplorerNode implements HasType, HasUuid, HasNodeState, HasDisplayV
 
     @Override
     public int hashCode() {
-        return Long.hashCode(id);
+        return uuid.hashCode();
     }
 
     @Override
@@ -120,12 +117,7 @@ public class ExplorerNode implements HasType, HasUuid, HasNodeState, HasDisplayV
         }
 
         final ExplorerNode explorerNode = (ExplorerNode) obj;
-
-        if (id == null || explorerNode.id == null) {
-            return uuid.equals(explorerNode.uuid);
-        }
-
-        return id.equals(explorerNode.id);
+        return uuid.equals(explorerNode.uuid);
     }
 
     @Override

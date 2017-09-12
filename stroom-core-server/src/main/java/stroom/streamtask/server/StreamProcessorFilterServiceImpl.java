@@ -23,7 +23,6 @@ import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.SystemEntityServiceImpl;
-import stroom.entity.server.UserManagerQueryUtil;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
@@ -144,7 +143,6 @@ public class StreamProcessorFilterServiceImpl
         CriteriaLoggingUtil.appendRangeTerm(items, "lastPollPeriod", criteria.getLastPollPeriod());
         CriteriaLoggingUtil.appendEntityIdSet(items, "streamProcessorIdSet", criteria.getStreamProcessorIdSet());
         CriteriaLoggingUtil.appendEntityIdSet(items, "pipelineIdSet", criteria.getPipelineIdSet());
-        CriteriaLoggingUtil.appendEntityIdSet(items, "folderIdSet", criteria.getFolderIdSet());
         CriteriaLoggingUtil.appendBooleanTerm(items, "streamProcessorEnabled", criteria.getStreamProcessorEnabled());
         CriteriaLoggingUtil.appendBooleanTerm(items, "streamProcessorFilterEnabled",
                 criteria.getStreamProcessorFilterEnabled());
@@ -194,9 +192,6 @@ public class StreamProcessorFilterServiceImpl
             sql.appendRangeQuery(alias + ".streamProcessorFilterTracker.lastPollMs", criteria.getLastPollPeriod());
 
             sql.appendEntityIdSetQuery(alias + ".streamProcessor.pipeline", criteria.getPipelineIdSet());
-
-            UserManagerQueryUtil.appendFolderCriteria(criteria.getFolderIdSet(), alias + ".streamProcessor.pipeline.folder", sql,
-                    getEntityManager());
 
             sql.appendEntityIdSetQuery(alias + ".streamProcessor", criteria.getStreamProcessorIdSet());
 

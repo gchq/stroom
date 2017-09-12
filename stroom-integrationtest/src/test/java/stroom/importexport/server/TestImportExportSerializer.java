@@ -22,10 +22,10 @@ import org.junit.Test;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
-import stroom.entity.shared.Folder;
 import stroom.entity.shared.ImportState;
 import stroom.entity.shared.ImportState.ImportMode;
 import stroom.entity.shared.ImportState.State;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.server.ExplorerService;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
@@ -71,7 +71,7 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
     private DocRefs buildFindFolderCriteria() {
         final DocRefs criteria = new DocRefs();
-        criteria.add(new DocRef(Folder.ENTITY_TYPE, "0", "System"));
+        criteria.add(ExplorerConstants.ROOT_DOC_REF);
         return criteria;
     }
 
@@ -92,7 +92,7 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         FileSystemUtil.deleteDirectory(testDataDir);
         Files.createDirectories(testDataDir);
 
-        importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true, null);
+        importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true, new ArrayList<>());
 
         List<ImportState> list = new ArrayList<>();
         importExportSerializer.read(testDataDir, list, ImportMode.CREATE_CONFIRMATION);
@@ -149,7 +149,7 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
     @Test
     public void testPipeline() throws IOException {
-        final DocRef folder = explorerService.create("Folder", FileSystemTestUtil.getUniqueTestString(), null, null);
+        final DocRef folder = explorerService.create(ExplorerConstants.FOLDER, FileSystemTestUtil.getUniqueTestString(), null, null);
         final DocRef parentPipelineRef = explorerService.create(PipelineEntity.ENTITY_TYPE, "Parent", folder, null);
         final PipelineEntity parentPipeline = pipelineService.readDocument(parentPipelineRef);
 
@@ -165,7 +165,7 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         FileSystemUtil.deleteDirectory(testDataDir);
         Files.createDirectories(testDataDir);
 
-        importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true, null);
+        importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true, new ArrayList<>());
 
         final String childXml = new String(Files.readAllBytes(testDataDir.resolve(folder.getName()).resolve("Child.Pipeline.xml")));
 
@@ -194,7 +194,7 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         importExportSerializer.read(inDir, null, ImportMode.IGNORE_CONFIRMATION);
 
         // Write to output.
-        importExportSerializer.write(outDir, buildFindFolderCriteria(), true, null);
+        importExportSerializer.write(outDir, buildFindFolderCriteria(), true, new ArrayList<>());
 
         // Compare input and output directory.
         ComparisonHelper.compareDirs(inDir.toFile(), outDir.toFile());

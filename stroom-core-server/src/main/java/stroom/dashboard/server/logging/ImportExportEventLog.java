@@ -103,29 +103,6 @@ public class ImportExportEventLog {
         }
     }
 
-//    private void appendCriteria(final Criteria parent, final FindFolderCriteria criteria) {
-//        if (criteria != null && criteria.getFolderIdSet() != null && criteria.getFolderIdSet().size() > 0) {
-//            final Query query = new Query();
-//            parent.setQuery(query);
-//
-//            final Advanced advanced = new Advanced();
-//            query.setAdvanced(advanced);
-//
-//            final Or or = new Or();
-//            advanced.getAdvancedQueryItems().add(or);
-//
-//            for (final Long folderId : criteria.getFolderIdSet()) {
-//                final Folder folder = folderService.loadById(folderId);
-//                final event.logging.Term term = new event.logging.Term();
-//                term.setName("Folder");
-//                term.setCondition(TermCondition.EQUALS);
-//                term.setValue(folder.getName());
-//
-//                or.getAdvancedQueryItems().add(term);
-//            }
-//        }
-//    }
-
     private void appendCriteria(final Criteria parent, final DocRefs docRefs) {
         if (docRefs != null) {
             final Query query = new Query();

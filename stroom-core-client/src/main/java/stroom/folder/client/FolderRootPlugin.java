@@ -25,10 +25,10 @@ import stroom.core.client.ContentManager.CloseHandler;
 import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.shared.Folder;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.presenter.ExplorerTreePresenter;
 import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.shared.Stream;
@@ -40,8 +40,6 @@ import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.SelectionType;
 
 public class FolderRootPlugin extends Plugin implements TabData {
-    private static final String SYSTEM = "System";
-
     private final ContentManager contentManager;
     private final Provider<FolderRootPresenter> editorProvider;
     private final ClientSecurityContext securityContext;
@@ -68,7 +66,7 @@ public class FolderRootPlugin extends Plugin implements TabData {
                     final SelectionType selectionType = event.getSelectionType();
                     if (!selectionType.isRightClick() && !selectionType.isMultiSelect()) {
                         final ExplorerNode selected = event.getSelectionModel().getSelected();
-                        if (selected != null && "System".equals(selected.getType())) {
+                        if (selected != null && ExplorerConstants.SYSTEM.equals(selected.getType())) {
                             if (presenter == null && selectionType.isDoubleSelect()) {
                                 // If the presenter is null then we haven't got
                                 // this tab open.
@@ -105,12 +103,12 @@ public class FolderRootPlugin extends Plugin implements TabData {
 
     @Override
     public Icon getIcon() {
-        return new SvgIcon(ImageUtil.getImageURL() + DocumentType.DOC_IMAGE_URL + SYSTEM, 18, 18);
+        return new SvgIcon(ImageUtil.getImageURL() + DocumentType.DOC_IMAGE_URL + ExplorerConstants.SYSTEM, 18, 18);
     }
 
     @Override
     public String getLabel() {
-        return "System";
+        return ExplorerConstants.SYSTEM;
     }
 
     @Override

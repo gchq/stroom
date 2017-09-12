@@ -26,7 +26,6 @@ import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.server.factory.Pipeline;
 import stroom.pipeline.server.factory.PipelineFactory;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineService;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.test.StroomProcessTestFileUtil;

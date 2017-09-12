@@ -23,18 +23,14 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.FindDocumentEntityCriteria;
-import stroom.entity.shared.Folder;
 import stroom.entity.shared.ImportState;
 import stroom.entity.shared.ImportState.ImportMode;
 import stroom.entity.shared.ImportState.State;
-import stroom.entity.shared.PermissionInheritance;
-import stroom.importexport.server.Config;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.query.api.v1.DocRef;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -360,48 +356,19 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
 //    }
 
     @Override
-    public DocRef importDocument(final Folder folder, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
+    public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
         if (importExportHelper == null) {
             throw new RuntimeException("Import not supported for this test");
         }
 
-//        // We don't want to overwrite any marshaled data so disable marshalling on creation.
-//        setFolder(entity, folder);
-//
-//        // Save directly so there is no marshalling of objects that would destroy imported data.
-//        return doSave(entity);
-//
-//        return null;
-
-
         E entity = null;
 
         try {
-            // Get the main config data.
-            String mainConfigPath = null;
-            for (final String key : dataMap.keySet()) {
-                if (key.endsWith(getEntityType() + ".xml")) {
-                    mainConfigPath = key;
-                }
-            }
-
-            if (mainConfigPath == null) {
-                throw new RuntimeException("Unable to find config data");
-            }
-
-            final Config config = new Config();
-            config.read(new StringReader(dataMap.get(mainConfigPath)));
-
-            final String uuid = config.getString("uuid");
-            if (uuid == null) {
-                throw new RuntimeException("Unable to get UUID for item");
-            }
-
-            entity = loadByUuid(uuid, Collections.singleton("all"));
+            // See if a document already exists with this uuid.
+            entity = loadByUuid(docRef.getUuid(), Collections.singleton("all"));
 
             if (entity == null) {
                 entity = getEntityClass().newInstance();
-                entity.setFolder(folder);
 
                 if (importMode == ImportMode.CREATE_CONFIRMATION) {
                     importState.setState(State.NEW);
@@ -412,7 +379,7 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
                 }
             }
 
-            importExportHelper.performImport(entity, dataMap, mainConfigPath, importState, importMode);
+            importExportHelper.performImport(entity, dataMap, importState, importMode);
 
             // Save directly so there is no marshalling of objects that would destroy imported data.
             if (importMode == ImportMode.IGNORE_CONFIRMATION

@@ -42,7 +42,6 @@ import stroom.document.client.event.ShowPermissionsDialogEvent;
 import stroom.document.client.event.ShowRenameDocumentDialogEvent;
 import stroom.document.client.event.WriteDocumentEvent;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.entity.shared.Folder;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.entity.shared.SharedDocRef;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
@@ -55,6 +54,7 @@ import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerPermissions;
 import stroom.explorer.shared.ExplorerServiceCopyAction;
@@ -502,7 +502,7 @@ public class DocumentPluginEventManager extends Plugin {
                         explorerNode, documentType.getType(), documentType.getDisplayType(), true));
                 children.add(item);
 
-                if (Folder.ENTITY_TYPE.equals(documentType.getType())) {
+                if (ExplorerConstants.FOLDER.equals(documentType.getType())) {
                     children.add(new Separator(documentType.getPriority()));
                 }
             }

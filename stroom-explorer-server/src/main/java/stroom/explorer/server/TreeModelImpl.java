@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class TreeModelImpl implements TreeModel {
+class TreeModelImpl implements TreeModel {
     private final Map<ExplorerNode, ExplorerNode> parentMap = new HashMap<>();
     private final Map<ExplorerNode, List<ExplorerNode>> childMap = new HashMap<>();
 

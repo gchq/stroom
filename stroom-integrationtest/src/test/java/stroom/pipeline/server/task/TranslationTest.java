@@ -32,7 +32,6 @@ import stroom.node.server.NodeCache;
 import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.SharedStepData;
 import stroom.pipeline.shared.StepType;

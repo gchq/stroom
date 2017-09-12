@@ -27,8 +27,8 @@ import stroom.dashboard.shared.QueryEntity;
 import stroom.dictionary.shared.Dictionary;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
-import stroom.entity.shared.Folder;
 import stroom.entity.shared.Res;
+import stroom.explorer.server.ExplorerNodeService;
 import stroom.feed.shared.Feed;
 import stroom.index.server.IndexShardManager;
 import stroom.index.server.IndexShardService;
@@ -103,6 +103,8 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
     private LifecycleServiceImpl lifecycleServiceImpl;
     @Resource
     private StroomCacheManager cacheManager;
+    @Resource
+    private ExplorerNodeService explorerNodeService;
 
     private ApplicationContext applicationContext;
 
@@ -169,8 +171,8 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
         deleteEntity(Permission.class);
         deleteEntity(User.class);
 
-        // Delete folders last as they are the parent for many other entities.
-        deleteEntity(Folder.class);
+        // Delete all explorer nodes.
+        explorerNodeService.deleteAllNodes();
 
         // deleteTable("sys_user_role");
         // deleteTable("sys_user_group");

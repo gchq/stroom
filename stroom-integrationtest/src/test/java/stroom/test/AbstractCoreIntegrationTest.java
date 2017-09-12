@@ -21,6 +21,7 @@ import org.springframework.test.context.ContextConfiguration;
 import stroom.dashboard.server.logging.spring.EventLoggingConfiguration;
 import stroom.dashboard.spring.DashboardConfiguration;
 import stroom.dictionary.spring.DictionaryConfiguration;
+import stroom.explorer.server.ExplorerConfiguration;
 import stroom.index.spring.IndexConfiguration;
 import stroom.pipeline.spring.PipelineConfiguration;
 import stroom.script.spring.ScriptConfiguration;
@@ -53,6 +54,7 @@ import stroom.visualisation.spring.VisualisationConfiguration;
         ScriptConfiguration.class,
         SearchConfiguration.class,
         SecurityConfiguration.class,
+        ExplorerConfiguration.class,
         ServerComponentScanTestConfiguration.class,
         ServerConfiguration.class,
         StatisticsConfiguration.class,

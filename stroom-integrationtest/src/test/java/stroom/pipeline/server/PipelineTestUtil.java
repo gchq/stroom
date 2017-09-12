@@ -31,7 +31,7 @@ public final class PipelineTestUtil {
         pipelineEntity.setDescription("test");
         if (data != null) {
             pipelineEntity.setData(data);
-            pipelineEntity = pipelineMarshaller.unmarshal(pipelineEntity, true, false);
+            pipelineEntity = pipelineMarshaller.unmarshal(pipelineEntity);
         }
         return pipelineEntity;
     }
@@ -43,21 +43,21 @@ public final class PipelineTestUtil {
 
     public static PipelineEntity createTestPipeline(final PipelineService pipelineService, final String name,
                                                     final String description, final String data) {
-        PipelineEntity pipelineEntity = pipelineService.read(pipelineService.create(null, name));
+        PipelineEntity pipelineEntity = pipelineService.create(name);
         pipelineEntity.setName(name);
         pipelineEntity.setDescription(description);
         if (data != null) {
             pipelineEntity.setData(data);
-            pipelineEntity = pipelineMarshaller.unmarshal(pipelineEntity, true, false);
+            pipelineEntity = pipelineMarshaller.unmarshal(pipelineEntity);
         }
         return pipelineService.save(pipelineEntity);
     }
 
-    public static PipelineEntity loadPipeline(final PipelineEntity pipeline, final boolean external) {
-        return pipelineMarshaller.unmarshal(pipeline, external, false);
+    public static PipelineEntity loadPipeline(final PipelineEntity pipeline) {
+        return pipelineMarshaller.unmarshal(pipeline);
     }
 
-    public static PipelineEntity savePipeline(final PipelineEntity pipeline, final boolean external) {
-        return pipelineMarshaller.marshal(pipeline, external, false);
+    public static PipelineEntity savePipeline(final PipelineEntity pipeline) {
+        return pipelineMarshaller.marshal(pipeline);
     }
 }

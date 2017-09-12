@@ -63,16 +63,6 @@ public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrat
         findStreamCriteria.obtainPipelineIdSet().add(1L);
         Assert.assertEquals(0,
                 streamTaskCreatorTransactionHelper.runSelectStreamQuery(null, findStreamCriteria, 0, 100).size());
-
-        findStreamCriteria = new FindStreamCriteria();
-        findStreamCriteria.obtainFolderIdSet().add(feed1.getFolder());
-        Assert.assertEquals(1,
-                streamTaskCreatorTransactionHelper.runSelectStreamQuery(null, findStreamCriteria, 0, 100).size());
-
-        findStreamCriteria = new FindStreamCriteria();
-        findStreamCriteria.obtainFolderIdSet().add(feed1.getFolder().getId() + 1);
-        Assert.assertEquals(0,
-                streamTaskCreatorTransactionHelper.runSelectStreamQuery(null, findStreamCriteria, 0, 100).size());
     }
 
     @Test

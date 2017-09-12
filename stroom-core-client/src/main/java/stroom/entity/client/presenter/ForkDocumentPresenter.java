@@ -31,9 +31,9 @@ import stroom.document.client.event.ForkDocumentEvent;
 import stroom.document.client.event.ShowForkDocumentDialogEvent;
 import stroom.entity.client.presenter.ForkDocumentPresenter.ForkDocumentProxy;
 import stroom.entity.client.presenter.ForkDocumentPresenter.ForkDocumentView;
-import stroom.entity.shared.Folder;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.explorer.client.presenter.EntityTreePresenter;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.query.api.v1.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
@@ -60,7 +60,7 @@ public class ForkDocumentPresenter
 
         view.setFolderView(entityTreePresenter.getView());
 
-        entityTreePresenter.setIncludedTypes(Folder.ENTITY_TYPE);
+        entityTreePresenter.setIncludedTypes(ExplorerConstants.FOLDER);
         entityTreePresenter.setRequiredPermissions(DocumentPermissionNames.USE, DocumentPermissionNames.READ);
     }
 

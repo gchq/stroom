@@ -18,8 +18,6 @@
 package stroom.dashboard.server.logging;
 
 import event.logging.BaseObject;
-import event.logging.Group;
-import event.logging.Groups;
 import event.logging.Object;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
@@ -28,8 +26,6 @@ import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.Document;
-import stroom.entity.shared.Folder;
-import stroom.entity.shared.HasFolder;
 import stroom.entity.shared.NamedEntity;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
@@ -59,135 +55,80 @@ public class BasicEventInfoProvider implements EventInfoProvider {
         if (obj instanceof BaseEntity) {
             final BaseEntity entity = (BaseEntity) obj;
 
-            if (entity instanceof Folder) {
-                final Folder folder = (Folder) entity;
-                try {
-                    final Group group = new Group();
-                    group.setType("Folder");
-                    group.setId(getId(folder));
-                    group.setName(folder.getName());
+            final String type = getObjectType(entity);
+            final String id = getId(entity);
+            String name = null;
+            String description = null;
 
-                    // Add groups.
-                    try {
-                        final Folder parentGroup = folder.getFolder();
-                        if (parentGroup != null) {
-                            final Groups groups = new Groups();
-                            group.setGroups(groups);
-                            appendGroup(groups, parentGroup);
-                        }
-                    } catch (final Exception ex) {
-                        LOGGER.error("Unable to add folders!", ex);
-                    }
-
-                    return group;
-                } catch (final Exception ex) {
-                    LOGGER.error("Unable to set up groups!", ex);
-                }
-            } else {
-                final String type = getObjectType(entity);
-                final String id = getId(entity);
-                String name = null;
-                String description = null;
-
-                // Add name.
-                if (entity instanceof NamedEntity) {
-                    final NamedEntity namedEntity = (NamedEntity) entity;
-                    name = namedEntity.getName();
-                }
-
-                // Add description.
-                if (entity instanceof Feed) {
-                    try {
-                        final Feed feed = (Feed) entity;
-                        description = feed.getDescription();
-                    } catch (final Exception ex) {
-                        LOGGER.error("Unable to get feed description!", ex);
-                    }
-                } else if (entity instanceof PipelineEntity) {
-                    try {
-                        final PipelineEntity pipelineEntity = (PipelineEntity) entity;
-                        description = pipelineEntity.getDescription();
-                    } catch (final Exception ex) {
-                        LOGGER.error("Unable to get pipeline description!", ex);
-                    }
-                }
-
-                final Object object = new Object();
-                object.setType(type);
-                object.setId(id);
-                object.setName(name);
-                object.setDescription(description);
-
-                // Add groups.
-                if (entity instanceof HasFolder) {
-                    try {
-                        final HasFolder hasFolder = (HasFolder) entity;
-                        final Folder folder = hasFolder.getFolder();
-                        final Groups groups = new Groups();
-                        object.setGroups(groups);
-                        appendGroup(groups, folder);
-                    } catch (final Exception ex) {
-                        LOGGER.error("Unable to configure groups!", ex);
-                    }
-                }
-
-                // Add unknown but useful data items.
-                if (entity instanceof Feed) {
-                    try {
-                        final Feed feed = (Feed) entity;
-                        object.getData()
-                                .add(EventLoggingUtil.createData("FeedStatus", feed.getStatus().getDisplayValue()));
-                        // Stream type is now lazy
-                        if (feed.getStreamType() != null) {
-                            object.getData().add(EventLoggingUtil.createData("StreamType",
-                                    streamTypeService.load(feed.getStreamType()).getDisplayValue()));
-                        }
-                        object.getData().add(EventLoggingUtil.createData("DataEncoding", feed.getEncoding()));
-                        object.getData().add(EventLoggingUtil.createData("ContextEncoding", feed.getContextEncoding()));
-                        object.getData().add(EventLoggingUtil.createData("RetentionDayAge",
-                                String.valueOf(feed.getRetentionDayAge())));
-                        object.getData()
-                                .add(EventLoggingUtil.createData("Reference", Boolean.toString(feed.isReference())));
-                    } catch (final Exception ex) {
-                        LOGGER.error("Unable to add unknown but useful data!", ex);
-                    }
-                } else if (entity instanceof Stream) {
-                    try {
-                        final Stream stream = (Stream) entity;
-                        if (stream.getFeed() != null) {
-                            EventLoggingUtil.createData("Feed", feedService.load(stream.getFeed()).getName());
-                        }
-                        // Stream type is now lazy
-                        if (stream.getStreamType() != null) {
-                            object.getData().add(EventLoggingUtil.createData("StreamType",
-                                    streamTypeService.load(stream.getStreamType()).getDisplayValue()));
-                        }
-                    } catch (final Exception ex) {
-                        LOGGER.error("Unable to configure stream!", ex);
-                    }
-                }
-
-                return object;
+            // Add name.
+            if (entity instanceof NamedEntity) {
+                final NamedEntity namedEntity = (NamedEntity) entity;
+                name = namedEntity.getName();
             }
+
+            // Add description.
+            if (entity instanceof Feed) {
+                try {
+                    final Feed feed = (Feed) entity;
+                    description = feed.getDescription();
+                } catch (final Exception ex) {
+                    LOGGER.error("Unable to get feed description!", ex);
+                }
+            } else if (entity instanceof PipelineEntity) {
+                try {
+                    final PipelineEntity pipelineEntity = (PipelineEntity) entity;
+                    description = pipelineEntity.getDescription();
+                } catch (final Exception ex) {
+                    LOGGER.error("Unable to get pipeline description!", ex);
+                }
+            }
+
+            final Object object = new Object();
+            object.setType(type);
+            object.setId(id);
+            object.setName(name);
+            object.setDescription(description);
+
+            // Add unknown but useful data items.
+            if (entity instanceof Feed) {
+                try {
+                    final Feed feed = (Feed) entity;
+                    object.getData()
+                            .add(EventLoggingUtil.createData("FeedStatus", feed.getStatus().getDisplayValue()));
+                    // Stream type is now lazy
+                    if (feed.getStreamType() != null) {
+                        object.getData().add(EventLoggingUtil.createData("StreamType",
+                                streamTypeService.load(feed.getStreamType()).getDisplayValue()));
+                    }
+                    object.getData().add(EventLoggingUtil.createData("DataEncoding", feed.getEncoding()));
+                    object.getData().add(EventLoggingUtil.createData("ContextEncoding", feed.getContextEncoding()));
+                    object.getData().add(EventLoggingUtil.createData("RetentionDayAge",
+                            String.valueOf(feed.getRetentionDayAge())));
+                    object.getData()
+                            .add(EventLoggingUtil.createData("Reference", Boolean.toString(feed.isReference())));
+                } catch (final Exception ex) {
+                    LOGGER.error("Unable to add unknown but useful data!", ex);
+                }
+            } else if (entity instanceof Stream) {
+                try {
+                    final Stream stream = (Stream) entity;
+                    if (stream.getFeed() != null) {
+                        EventLoggingUtil.createData("Feed", feedService.load(stream.getFeed()).getName());
+                    }
+                    // Stream type is now lazy
+                    if (stream.getStreamType() != null) {
+                        object.getData().add(EventLoggingUtil.createData("StreamType",
+                                streamTypeService.load(stream.getStreamType()).getDisplayValue()));
+                    }
+                } catch (final Exception ex) {
+                    LOGGER.error("Unable to configure stream!", ex);
+                }
+            }
+
+            return object;
         }
 
         return null;
-    }
-
-    private void appendGroup(final Groups groups, final Folder folder) {
-        try {
-//            if (folder != null) {
-//                final Folder loaded = folderService.load(folder);
-//
-//                final Group group = new Group();
-//                group.setType("Folder");
-//                group.setId(getId(loaded));
-//                group.setName(loaded.getName());
-//                groups.getGroup().add(group);
-//            }
-        } catch (final Exception e) {
-            LOGGER.debug(e.getMessage(), e);
-        }
     }
 
     private String getId(final BaseEntity entity) {

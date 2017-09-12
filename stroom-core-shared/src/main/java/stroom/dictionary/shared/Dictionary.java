@@ -33,7 +33,7 @@ import javax.persistence.UniqueConstraint;
  * </p>
  */
 @Entity
-@Table(name = "DICT", uniqueConstraints = @UniqueConstraint(columnNames = {"FK_FOLDER_ID", "NAME"}))
+@Table(name = "DICT")
 public class Dictionary extends DocumentEntity {
     public static final String TABLE_NAME = SQLNameConstants.DICTIONARY;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;

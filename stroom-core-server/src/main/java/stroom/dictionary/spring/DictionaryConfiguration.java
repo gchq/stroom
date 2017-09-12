@@ -22,9 +22,9 @@ import org.springframework.context.annotation.FilterType;
 import stroom.dictionary.server.DictionaryService;
 import stroom.dictionary.shared.Dictionary;
 import stroom.explorer.server.ExplorerActionHandlers;
+import stroom.importexport.server.ImportExportActionHandlers;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 
 /**
@@ -37,7 +37,9 @@ import javax.inject.Provider;
 public class DictionaryConfiguration {
     @Inject
     public DictionaryConfiguration(final ExplorerActionHandlers explorerActionHandlers,
-                                   final Provider<DictionaryService> dictionaryServiceProvider) {
-        explorerActionHandlers.add(9, Dictionary.ENTITY_TYPE, Dictionary.ENTITY_TYPE, dictionaryServiceProvider);
+                                   final ImportExportActionHandlers importExportActionHandlers,
+                                   final DictionaryService dictionaryService) {
+        explorerActionHandlers.add(9, Dictionary.ENTITY_TYPE, Dictionary.ENTITY_TYPE, dictionaryService);
+        importExportActionHandlers.add(Dictionary.ENTITY_TYPE, dictionaryService);
     }
 }

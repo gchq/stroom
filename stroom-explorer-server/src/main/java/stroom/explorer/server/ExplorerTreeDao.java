@@ -19,4 +19,5 @@ package stroom.explorer.server;
 import fri.util.database.jpa.tree.TreeDao;
 
 public interface ExplorerTreeDao extends TreeDao<ExplorerTreeNode> {
+    ExplorerTreeNode findByUUID(final String uuid);
 }

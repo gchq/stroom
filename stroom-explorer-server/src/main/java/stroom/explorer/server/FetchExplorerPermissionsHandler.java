@@ -19,8 +19,8 @@ package stroom.explorer.server;
 
 import org.springframework.context.annotation.Scope;
 import stroom.explorer.shared.DocumentType;
-import stroom.entity.shared.Folder;
 import stroom.explorer.shared.DocumentTypes;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerPermissions;
 import stroom.explorer.shared.FetchExplorerPermissionsAction;
@@ -43,8 +43,6 @@ import java.util.Set;
 @Scope(value = StroomScope.TASK)
 class FetchExplorerPermissionsHandler
         extends AbstractTaskHandler<FetchExplorerPermissionsAction, SharedMap<ExplorerNode, ExplorerPermissions>> {
-    private static final DocRef ROOT = new DocRef("System", "00000000", "System");
-
     private final ExplorerService explorerService;
     private final SecurityContext securityContext;
 
@@ -75,11 +73,11 @@ class FetchExplorerPermissionsHandler
 
             // If no entity reference has been passed then assume root folder.
             if (docRef == null) {
-                docRef = ROOT;
+                docRef = ExplorerConstants.ROOT_DOC_REF;
             }
 
             // Add special permissions for folders to control creation of sub items.
-            if (Folder.ENTITY_TYPE.equals(docRef.getType())) {
+            if (ExplorerConstants.FOLDER.equals(docRef.getType())) {
                 final DocumentTypes documentTypes = explorerService.getDocumentTypes();
                 for (final DocumentType documentType : documentTypes.getAllTypes()) {
                     final String permissionName = DocumentPermissionNames.getDocumentCreatePermission(documentType.getType());

@@ -44,7 +44,6 @@ import stroom.pipeline.server.TextConverterServiceImpl;
 import stroom.pipeline.server.XSLTServiceImpl;
 import stroom.policy.server.DataRetentionExecutor;
 import stroom.resource.server.ResourceStoreImpl;
-import stroom.security.server.MockFolderService;
 import stroom.security.server.UserServiceImpl;
 import stroom.streamstore.server.MockStreamTypeService;
 import stroom.streamstore.server.StreamAttributeKeyServiceImpl;
@@ -85,7 +84,6 @@ import stroom.xmlschema.server.XMLSchemaServiceImpl;
         "stroom.dictionary",
         "stroom.dispatch",
         "stroom.entity",
-        "stroom.explorer",
         "stroom.feed",
         "stroom.folder",
         "stroom.importexport",
@@ -169,11 +167,6 @@ public class ProcessTestServerComponentScanConfiguration {
 
     public ProcessTestServerComponentScanConfiguration() {
         LOGGER.info("ProcessConfiguration loading...");
-    }
-
-    @Bean(name = "cachedFolderService")
-    public MockFolderService getCachedFolderService(final MockFolderService folderService) {
-        return folderService;
     }
 
     @Bean(name = "cachedStreamTypeService")

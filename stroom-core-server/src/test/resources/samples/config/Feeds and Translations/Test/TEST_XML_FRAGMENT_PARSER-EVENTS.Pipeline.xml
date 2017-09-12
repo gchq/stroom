@@ -1,7 +1,0 @@
-<?xml version="1.1" encoding="UTF-8"?>
-<pipeline>
-   <description/>
-   <name>TEST_XML_FRAGMENT_PARSER-EVENTS</name>
-   <pipelineType>Event Data</pipelineType>
-   <uuid>db3e2c61-b83e-4dc1-a62d-993ed5476333</uuid>
-</pipeline>

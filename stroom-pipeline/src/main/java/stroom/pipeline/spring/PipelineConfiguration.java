@@ -19,11 +19,8 @@ package stroom.pipeline.spring;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
-import stroom.dictionary.server.DictionaryService;
-import stroom.dictionary.shared.Dictionary;
 import stroom.explorer.server.ExplorerActionHandlers;
-import stroom.feed.server.FeedService;
-import stroom.feed.shared.Feed;
+import stroom.importexport.server.ImportExportActionHandlers;
 import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.server.TextConverterService;
 import stroom.pipeline.server.XSLTService;
@@ -34,7 +31,6 @@ import stroom.xmlschema.server.XMLSchemaService;
 import stroom.xmlschema.shared.XMLSchema;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 /**
  * Defines the component scanning required for the server module.
@@ -52,13 +48,18 @@ import javax.inject.Provider;
 public class PipelineConfiguration {
     @Inject
     public PipelineConfiguration(final ExplorerActionHandlers explorerActionHandlers,
-                               final Provider<TextConverterService> textConverterServiceProvider,
-                               final Provider<XSLTService> xsltServiceProvider,
-                               final Provider<PipelineService> pipelineServiceProvider,
-                               final Provider<XMLSchemaService> xmlSchemaServiceProvider) {
-        explorerActionHandlers.add(4, TextConverter.ENTITY_TYPE,"Text Converter", textConverterServiceProvider);
-        explorerActionHandlers.add(5, XSLT.ENTITY_TYPE, XSLT.ENTITY_TYPE, xsltServiceProvider);
-        explorerActionHandlers.add(6, PipelineEntity.ENTITY_TYPE, PipelineEntity.ENTITY_TYPE, pipelineServiceProvider);
-        explorerActionHandlers.add(13, XMLSchema.ENTITY_TYPE, "XML Schema", xmlSchemaServiceProvider);
+                                 final ImportExportActionHandlers importExportActionHandlers,
+                                 final TextConverterService textConverterService,
+                                 final XSLTService xsltService,
+                                 final PipelineService pipelineService,
+                                 final XMLSchemaService xmlSchemaService) {
+        explorerActionHandlers.add(4, TextConverter.ENTITY_TYPE, "Text Converter", textConverterService);
+        explorerActionHandlers.add(5, XSLT.ENTITY_TYPE, XSLT.ENTITY_TYPE, xsltService);
+        explorerActionHandlers.add(6, PipelineEntity.ENTITY_TYPE, PipelineEntity.ENTITY_TYPE, pipelineService);
+        explorerActionHandlers.add(13, XMLSchema.ENTITY_TYPE, "XML Schema", xmlSchemaService);
+        importExportActionHandlers.add(TextConverter.ENTITY_TYPE, textConverterService);
+        importExportActionHandlers.add(XSLT.ENTITY_TYPE, xsltService);
+        importExportActionHandlers.add(PipelineEntity.ENTITY_TYPE, pipelineService);
+        importExportActionHandlers.add(XMLSchema.ENTITY_TYPE, xmlSchemaService);
     }
 }

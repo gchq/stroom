@@ -19,13 +19,18 @@ package stroom.ruleset.server;
 
 import org.springframework.stereotype.Component;
 import stroom.document.server.fs.FSDocumentStore;
+import stroom.entity.shared.ImportState;
+import stroom.entity.shared.ImportState.ImportMode;
 import stroom.query.api.v1.DocRef;
 import stroom.ruleset.shared.RuleSet;
 import stroom.security.SecurityContext;
+import stroom.util.shared.Message;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
 
 @Component
 public class RuleSetServiceImpl implements RuleSetService {
@@ -92,6 +97,23 @@ public class RuleSetServiceImpl implements RuleSetService {
     // END OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
 
+    ////////////////////////////////////////////////////////////////////////
+    // START OF ImportExportActionHandler
+    ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
+        return documentStore.importDocument(docRef, dataMap, importState, importMode);
+    }
+
+    @Override
+    public Map<String, String> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
+        return documentStore.exportDocument(docRef, omitAuditFields, messageList);
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    // END OF ImportExportActionHandler
+    ////////////////////////////////////////////////////////////////////////
 
     @Override
     public String getDocType() {

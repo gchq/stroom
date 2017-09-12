@@ -26,6 +26,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import stroom.explorer.server.ExplorerActionHandlers;
+import stroom.importexport.server.ImportExportActionHandlers;
 import stroom.node.server.GlobalProperties;
 import stroom.statistics.server.sql.datasource.StatisticStoreEntityService;
 import stroom.statistics.server.stroomstats.entity.StroomStatsStoreEntityService;
@@ -54,10 +55,13 @@ public class StatisticsConfiguration {
 
     @Inject
     public StatisticsConfiguration(final ExplorerActionHandlers explorerActionHandlers,
-                                   final Provider<StatisticStoreEntityService> statisticStoreEntityServiceProvider,
-                                   final Provider<StroomStatsStoreEntityService> stroomStatsStoreEntityServiceProvider) {
-        explorerActionHandlers.add(11, StatisticStoreEntity.ENTITY_TYPE, StatisticStoreEntity.ENTITY_TYPE_FOR_DISPLAY, statisticStoreEntityServiceProvider, "DataSource");
-        explorerActionHandlers.add(12, StroomStatsStoreEntity.ENTITY_TYPE, StroomStatsStoreEntity.ENTITY_TYPE_FOR_DISPLAY, stroomStatsStoreEntityServiceProvider, "DataSource");
+                                   final ImportExportActionHandlers importExportActionHandlers,
+                                   final StatisticStoreEntityService statisticStoreEntityService,
+                                   final StroomStatsStoreEntityService stroomStatsStoreEntityService) {
+        explorerActionHandlers.add(11, StatisticStoreEntity.ENTITY_TYPE, StatisticStoreEntity.ENTITY_TYPE_FOR_DISPLAY, statisticStoreEntityService);
+        explorerActionHandlers.add(12, StroomStatsStoreEntity.ENTITY_TYPE, StroomStatsStoreEntity.ENTITY_TYPE_FOR_DISPLAY, stroomStatsStoreEntityService);
+        importExportActionHandlers.add(StatisticStoreEntity.ENTITY_TYPE, statisticStoreEntityService);
+        importExportActionHandlers.add(StroomStatsStoreEntity.ENTITY_TYPE, stroomStatsStoreEntityService);
     }
 
     @Bean

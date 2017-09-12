@@ -19,7 +19,6 @@ package stroom.index.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.entity.server.FolderService;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Range;
@@ -42,8 +41,6 @@ import javax.annotation.Resource;
 
 public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
     @Resource
-    private FolderService folderService;
-    @Resource
     private IndexService indexService;
     @Resource
     private IndexShardService indexShardService;
@@ -64,14 +61,12 @@ public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
     public void test() {
         final Volume volume = volumeService.find(new FindVolumeCriteria()).getFirst();
 
-        final DocRef testFolder = DocRefUtil.create(folderService.create("Test Group"));
-
-        Index index1 = indexService.create(testFolder, "Test Index 1");
+        Index index1 = indexService.create("Test Index 1");
         index1.getVolumes().add(volume);
         index1 = indexService.save(index1);
         final IndexShardKey indexShardKey1 = IndexShardKeyUtil.createTestKey(index1);
 
-        Index index2 = indexService.create(testFolder, "Test Index 2");
+        Index index2 = indexService.create("Test Index 2");
         index2.getVolumes().add(volume);
         index2 = indexService.save(index2);
         final IndexShardKey indexShardKey2 = IndexShardKeyUtil.createTestKey(index2);
@@ -111,9 +106,7 @@ public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
     public void testOrderBy() {
         final Volume volume = volumeService.find(new FindVolumeCriteria()).getFirst();
 
-        final DocRef testFolder = DocRefUtil.create(folderService.create("Test Group"));
-
-        Index index = indexService.create(testFolder, "Test Index 1");
+        Index index = indexService.create("Test Index 1");
         index.getVolumes().add(volume);
         index.setPartitionBy(PartitionBy.MONTH);
         index.setPartitionSize(1);

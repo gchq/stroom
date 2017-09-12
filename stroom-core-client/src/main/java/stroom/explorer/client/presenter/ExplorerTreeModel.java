@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Set;
 
 public class ExplorerTreeModel {
-    static final ExplorerNode NULL_SELECTION = new ExplorerNode(-1L, "", "", "None", null);
+    static final ExplorerNode NULL_SELECTION = new ExplorerNode("", "", "None", null);
 
     private final OpenItems<ExplorerNode> openItems = new OpenItems<>();
     private final NameFilterTimer timer = new NameFilterTimer();

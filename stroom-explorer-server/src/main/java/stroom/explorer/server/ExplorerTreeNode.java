@@ -17,27 +17,20 @@
 package stroom.explorer.server;
 
 import fri.util.database.jpa.tree.closuretable.ClosureTableTreeNode;
-import stroom.entity.shared.BaseEntitySmall;
-import stroom.entity.shared.HasName;
-import stroom.entity.shared.HasUuid;
-import stroom.entity.shared.SQLNameConstants;
-import stroom.explorer.shared.ExplorerNode;
-import stroom.util.shared.HasDisplayValue;
-import stroom.util.shared.HasType;
+import stroom.query.api.v1.DocRef;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.MappedSuperclass;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlTransient;
 
 @Entity
-@Table(name = "explorerTreeNode", uniqueConstraints = @UniqueConstraint(columnNames = { "type", "uuid" }) )
+@Table(name = "explorerTreeNode", uniqueConstraints = @UniqueConstraint(columnNames = {"type", "uuid"}))
 public class ExplorerTreeNode implements ClosureTableTreeNode {
     private Long id;
     private String type;
@@ -45,26 +38,25 @@ public class ExplorerTreeNode implements ClosureTableTreeNode {
     private String name;
     private String tags;
 
-    public ExplorerTreeNode() {
+    ExplorerTreeNode() {
     }
 
-    public ExplorerTreeNode(final String type, final String uuid, final String name, final String tags) {
+    ExplorerTreeNode(final String type, final String uuid, final String name, final String tags) {
         this.type = type;
         this.uuid = uuid;
         this.name = name;
         this.tags = tags;
     }
 
-    public static ExplorerTreeNode create(final ExplorerNode node) {
-        if (node == null) {
+    static ExplorerTreeNode create(final DocRef docRef) {
+        if (docRef == null) {
             return null;
         }
 
         final ExplorerTreeNode explorerTreeNode = new ExplorerTreeNode();
-        explorerTreeNode.setType(node.getType());
-        explorerTreeNode.setUuid(node.getUuid());
-        explorerTreeNode.setName(node.getName());
-        explorerTreeNode.setTags(node.getTags());
+        explorerTreeNode.setType(docRef.getType());
+        explorerTreeNode.setUuid(docRef.getUuid());
+        explorerTreeNode.setName(docRef.getName());
         return explorerTreeNode;
     }
 
@@ -116,16 +108,10 @@ public class ExplorerTreeNode implements ClosureTableTreeNode {
         this.tags = tags;
     }
 
-//    @Override
-//    protected void toString(final StringBuilder sb) {
-//        super.toString(sb);
-//        sb.append(", type=");
-//        sb.append(type);
-//        sb.append(", uuid=");
-//        sb.append(uuid);
-//        sb.append(", name=");
-//        sb.append(name);
-//    }
+    @Transient
+    public DocRef getDocRef() {
+        return new DocRef(type, uuid, name);
+    }
 
     @Override
     public ExplorerTreeNode clone() {

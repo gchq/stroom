@@ -29,7 +29,7 @@ import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlTransient;
 
 @Entity
-@Table(name = "DASH", uniqueConstraints = @UniqueConstraint(columnNames = {"FK_FOLDER_ID", "NAME"}))
+@Table(name = "DASH")
 public class Dashboard extends DocumentEntity {
     public static final String ENTITY_TYPE = "Dashboard";
     public static final String TABLE_NAME = SQLNameConstants.DASHBOARD;

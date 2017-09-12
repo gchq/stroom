@@ -20,12 +20,11 @@ package stroom.importexport.server;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.DocRefs;
-import stroom.entity.shared.Folder;
 import stroom.entity.shared.ImportState;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.server.PipelineService;
-import stroom.query.api.v1.DocRef;
 import stroom.resource.server.ResourceStore;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
@@ -63,9 +62,9 @@ public class TestImportExportServiceImpl3 extends AbstractCoreIntegrationTest {
         final Path testFile = getCurrentTestPath().resolve("ExportTest" + FileSystemTestUtil.getUniqueTestString() + ".zip");
 
         final DocRefs docRefs = new DocRefs();
-        docRefs.add(new DocRef(Folder.ENTITY_TYPE, "0", "System"));
+        docRefs.add(ExplorerConstants.ROOT_DOC_REF);
 
-        importExportService.exportConfig(docRefs, testFile, msgList);
+        importExportService.exportConfig(null, testFile, msgList);
 
         Assert.assertEquals(0, msgList.size());
 

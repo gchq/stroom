@@ -19,7 +19,9 @@ package stroom.visualisation.spring;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
+import stroom.dashboard.shared.Dashboard;
 import stroom.explorer.server.ExplorerActionHandlers;
+import stroom.importexport.server.ImportExportActionHandlers;
 import stroom.visualisation.server.VisualisationService;
 import stroom.visualisation.shared.Visualisation;
 
@@ -37,7 +39,9 @@ import javax.inject.Provider;
 public class VisualisationConfiguration {
     @Inject
     public VisualisationConfiguration(final ExplorerActionHandlers explorerActionHandlers,
-                                      final Provider<VisualisationService> visualisationServiceProvider) {
-        explorerActionHandlers.add(9, Visualisation.ENTITY_TYPE, Visualisation.ENTITY_TYPE, visualisationServiceProvider);
+                                      final ImportExportActionHandlers importExportActionHandlers,
+                                      final VisualisationService visualisationService) {
+        explorerActionHandlers.add(9, Visualisation.ENTITY_TYPE, Visualisation.ENTITY_TYPE, visualisationService);
+        importExportActionHandlers.add(Visualisation.ENTITY_TYPE, visualisationService);
     }
 }

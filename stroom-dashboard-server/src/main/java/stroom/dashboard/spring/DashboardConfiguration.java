@@ -23,6 +23,7 @@ import org.springframework.context.annotation.FilterType;
 import stroom.dashboard.server.DashboardService;
 import stroom.dashboard.shared.Dashboard;
 import stroom.explorer.server.ExplorerActionHandlers;
+import stroom.importexport.server.ImportExportActionHandlers;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -37,7 +38,9 @@ import javax.inject.Provider;
 public class DashboardConfiguration {
     @Inject
     public DashboardConfiguration(final ExplorerActionHandlers explorerActionHandlers,
-                               final Provider<DashboardService> dashboardServiceProvider) {
-        explorerActionHandlers.add(7, Dashboard.ENTITY_TYPE, Dashboard.ENTITY_TYPE, dashboardServiceProvider);
+                                  final ImportExportActionHandlers importExportActionHandlers,
+                               final DashboardService dashboardService) {
+        explorerActionHandlers.add(7, Dashboard.ENTITY_TYPE, Dashboard.ENTITY_TYPE, dashboardService);
+        importExportActionHandlers.add(Dashboard.ENTITY_TYPE, dashboardService);
     }
 }

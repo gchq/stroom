@@ -22,15 +22,17 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.entity.shared.Folder;
+import stroom.entity.shared.SharedDocRef;
+import stroom.explorer.shared.ExplorerConstants;
+import stroom.query.api.v1.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.shared.Stream;
 import stroom.streamtask.shared.StreamProcessor;
 
-public class FolderPlugin extends EntityPlugin<Folder> {
+public class FolderPlugin extends DocumentPlugin<SharedDocRef> {
     private final Provider<FolderPresenter> editorProvider;
     private final ClientSecurityContext securityContext;
 
@@ -56,7 +58,12 @@ public class FolderPlugin extends EntityPlugin<Folder> {
     }
 
     @Override
+    protected DocRef getDocRef(final SharedDocRef document) {
+        return document;
+    }
+
+    @Override
     public String getType() {
-        return Folder.ENTITY_TYPE;
+        return ExplorerConstants.FOLDER;
     }
 }

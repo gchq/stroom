@@ -20,11 +20,9 @@ package stroom.streamstore.server.fs;
 import org.hibernate.LazyInitializationException;
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.entity.server.FolderService;
 import stroom.entity.server.util.PeriodUtil;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.Folder;
 import stroom.entity.shared.IdRange;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.Period;
@@ -85,11 +83,10 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     @Resource
     private FeedService feedService;
     @Resource
-    private FolderService folderService;
-    @Resource
     private StreamTaskCreator streamTaskCreator;
     @Resource
     private StreamAttributeMapService streamMDService;
+
     private Feed feed1;
     private Feed feed2;
     private int initialReplicationCount = 1;
@@ -114,10 +111,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     private Feed setupFeed(final String feedName) {
         Feed sample = feedService.loadByName(feedName);
         if (sample == null) {
-            Folder folder = folderService.create(FileSystemTestUtil.getUniqueTestString());
-            folder = folderService.save(folder);
-
-            sample = feedService.create(DocRefUtil.create(folder), feedName);
+            sample = feedService.create(feedName);
             sample.setDescription("Junit");
             sample = feedService.save(sample);
         }
@@ -135,7 +129,6 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         findStreamCriteria.obtainStreamIdSet().add(1L);
         findStreamCriteria.obtainStreamProcessorIdSet().add(1L);
         findStreamCriteria.obtainStreamTypeIdSet().add(1L);
-        findStreamCriteria.obtainFolderIdSet().add(1L);
         testCriteria(findStreamCriteria, 0);
     }
 

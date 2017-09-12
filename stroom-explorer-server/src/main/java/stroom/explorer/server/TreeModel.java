@@ -21,7 +21,7 @@ import stroom.explorer.shared.ExplorerNode;
 import java.util.List;
 import java.util.Map;
 
-public interface TreeModel {
+interface TreeModel {
     void add(ExplorerNode parent, ExplorerNode child);
 
     Map<ExplorerNode, ExplorerNode> getParentMap();

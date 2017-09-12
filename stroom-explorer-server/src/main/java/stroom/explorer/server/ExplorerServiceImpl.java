@@ -19,9 +19,7 @@ package stroom.explorer.server;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import stroom.entity.server.NameValidationUtil;
 import stroom.entity.shared.PermissionInheritance;
-import stroom.entity.shared.ProvidesNamePattern;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
@@ -47,16 +45,19 @@ import java.util.stream.Collectors;
 @Component
 @Scope(StroomScope.PROTOTYPE)
 class ExplorerServiceImpl implements ExplorerService {
+    private final ExplorerNodeService explorerNodeService;
     private final ExplorerTreeModel explorerTreeModel;
     private final ExplorerActionHandlersImpl explorerActionHandlers;
     private final SecurityContext securityContext;
     private final ExplorerEventLog explorerEventLog;
 
     @Inject
-    ExplorerServiceImpl(final ExplorerTreeModel explorerTreeModel,
+    ExplorerServiceImpl(final ExplorerNodeService explorerNodeService,
+                        final ExplorerTreeModel explorerTreeModel,
                         final ExplorerActionHandlersImpl explorerActionHandlers,
                         final SecurityContext securityContext,
                         final ExplorerEventLog explorerEventLog) {
+        this.explorerNodeService = explorerNodeService;
         this.explorerTreeModel = explorerTreeModel;
         this.explorerActionHandlers = explorerActionHandlers;
         this.securityContext = securityContext;
@@ -91,24 +92,6 @@ class ExplorerServiceImpl implements ExplorerService {
 
         result.setTemporaryOpenedItems(temporaryOpenItems);
         return result;
-    }
-
-    @Override
-    public List<DocRef> getDescendants(final DocRef folderRef) {
-        final List<DocRef> descendants = new ArrayList<>();
-        final ExplorerNode parent = ExplorerNode.create(folderRef);
-        addDescendants(parent, descendants);
-        return descendants;
-    }
-
-    private void addDescendants(final ExplorerNode parent, final List<DocRef> descendants) {
-        final List<ExplorerNode> children = explorerTreeModel.getModel().getChildMap().get(parent);
-        if (children != null) {
-            children.forEach(node -> {
-                        descendants.add(node.getDocRef());
-                        addDescendants(node, descendants);
-                    });
-        }
     }
 
     private Set<ExplorerNode> getForcedOpenItems(final TreeModel masterTreeModel,
@@ -308,128 +291,113 @@ class ExplorerServiceImpl implements ExplorerService {
     }
 
     @Override
-    public DocRef create(final String type, final String name, final DocRef folder, final PermissionInheritance permissionInheritance) {
+    public DocRef create(final String type, final String name, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+        DocRef folderRef = destinationFolderRef;
+        if (folderRef == null) {
+            folderRef = explorerNodeService.getRoot().getDocRef();
+        }
+
         final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
 
         DocRef result;
 
+        // Create the document.
         try {
-            // Validate the entity name.
-            validateName(handler, name);
-
-            result = handler.createDocument(folder.getUuid(), name);
-
-            // Create the initial user permissions for this new document.
-            switch (permissionInheritance) {
-                case NONE:
-                    addDocumentPermissions(null, result, true);
-                    break;
-                case COMBINED:
-                    addDocumentPermissions(folder, result, true);
-                    break;
-                case INHERIT:
-                    addDocumentPermissions(folder, result, true);
-                    break;
-            }
-
-            explorerTreeModel.setRebuildRequired(true);
-
-            explorerEventLog.create(type, name, folder, permissionInheritance, null);
+            result = handler.createDocument(name, getUUID(folderRef));
+            explorerEventLog.create(type, name, result.getUuid(), folderRef, permissionInheritance, null);
         } catch (final RuntimeException e) {
-            explorerEventLog.create(type, name, folder, permissionInheritance, e);
+            explorerEventLog.create(type, name,null, folderRef, permissionInheritance, e);
             throw e;
         }
+
+        // Create the explorer node.
+        explorerNodeService.createNode(result, folderRef, permissionInheritance);
+
+        // Make sure the tree model is rebuilt.
+        rebuildTree();
 
         return result;
     }
 
     @Override
     public BulkActionResult copy(final List<DocRef> docRefs, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+        DocRef folderRef = destinationFolderRef;
+        if (folderRef == null) {
+            folderRef = explorerNodeService.getRoot().getDocRef();
+        }
+
         final List<DocRef> resultDocRefs = new ArrayList<>();
         final StringBuilder resultMessage = new StringBuilder();
 
         for (final DocRef docRef : docRefs) {
             final ExplorerActionHandler handler = explorerActionHandlers.getHandler(docRef.getType());
 
-            DocRef result;
+            DocRef result = null;
 
             try {
-                result = handler.copyDocument(docRef.getUuid(), destinationFolderRef.getUuid());
-
-                if (permissionInheritance != null) {
-                    switch (permissionInheritance) {
-                        case NONE:
-                            addDocumentPermissions(docRef, result, true);
-                            break;
-                        case COMBINED:
-                            addDocumentPermissions(docRef, result, true);
-                            addDocumentPermissions(destinationFolderRef, result, true);
-                            break;
-                        case INHERIT:
-                            addDocumentPermissions(destinationFolderRef, result, true);
-                            break;
-                    }
-                }
-
-                explorerEventLog.copy(docRef, destinationFolderRef, permissionInheritance, null);
+                result = handler.copyDocument(docRef.getUuid(), getUUID(folderRef));
+                explorerEventLog.copy(docRef, folderRef, permissionInheritance, null);
                 resultDocRefs.add(result);
 
             } catch (final Exception e) {
-                explorerEventLog.copy(docRef, destinationFolderRef, permissionInheritance, e);
+                explorerEventLog.copy(docRef, folderRef, permissionInheritance, e);
                 resultMessage.append("Unable to copy '");
                 resultMessage.append(docRef.getName());
                 resultMessage.append("' ");
                 resultMessage.append(e.getMessage());
                 resultMessage.append("\n");
             }
+
+            // Create the explorer node
+            if (result != null) {
+                explorerNodeService.copyNode(docRef, result, folderRef, permissionInheritance);
+            }
         }
 
-        explorerTreeModel.setRebuildRequired(true);
+        // Make sure the tree model is rebuilt.
+        rebuildTree();
+
         return new BulkActionResult(resultDocRefs, resultMessage.toString());
     }
 
     @Override
     public BulkActionResult move(final List<DocRef> docRefs, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+        DocRef folderRef = destinationFolderRef;
+        if (folderRef == null) {
+            folderRef = explorerNodeService.getRoot().getDocRef();
+        }
+
         final List<DocRef> resultDocRefs = new ArrayList<>();
         final StringBuilder resultMessage = new StringBuilder();
 
         for (final DocRef docRef : docRefs) {
             final ExplorerActionHandler handler = explorerActionHandlers.getHandler(docRef.getType());
 
-            DocRef result;
+            DocRef result = null;
 
             try {
-                result = handler.moveDocument(docRef.getUuid(), destinationFolderRef.getUuid());
-
-                if (permissionInheritance != null) {
-                    switch (permissionInheritance) {
-                        case NONE:
-                            addDocumentPermissions(docRef, result, false);
-                            break;
-                        case COMBINED:
-                            addDocumentPermissions(docRef, result, false);
-                            addDocumentPermissions(destinationFolderRef, result, false);
-                            break;
-                        case INHERIT:
-                            addDocumentPermissions(destinationFolderRef, result, false);
-                            break;
-                    }
-                }
-
-                explorerEventLog.move(docRef, destinationFolderRef, permissionInheritance, null);
+                result = handler.moveDocument(docRef.getUuid(), getUUID(folderRef));
+                explorerEventLog.move(docRef, folderRef, permissionInheritance, null);
                 resultDocRefs.add(result);
 
             } catch (final Exception e) {
-                explorerEventLog.move(docRef, destinationFolderRef, permissionInheritance, e);
+                explorerEventLog.move(docRef, folderRef, permissionInheritance, e);
                 resultMessage.append("Unable to move '");
                 resultMessage.append(docRef.getName());
                 resultMessage.append("' ");
                 resultMessage.append(e.getMessage());
                 resultMessage.append("\n");
             }
+
+            // Create the explorer node
+            if (result != null) {
+                explorerNodeService.moveNode(result, folderRef, permissionInheritance);
+            }
         }
 
-        explorerTreeModel.setRebuildRequired(true);
+        // Make sure the tree model is rebuilt.
+        rebuildTree();
+
         return new BulkActionResult(resultDocRefs, resultMessage.toString());
     }
 
@@ -440,17 +408,18 @@ class ExplorerServiceImpl implements ExplorerService {
         DocRef result;
 
         try {
-            // Validate the entity name.
-            validateName(handler, docName);
             result = handler.renameDocument(docRef.getUuid(), docName);
-
-            explorerTreeModel.setRebuildRequired(true);
-
             explorerEventLog.rename(docRef, docName, null);
         } catch (final RuntimeException e) {
             explorerEventLog.rename(docRef, docName, e);
             throw e;
         }
+
+        // Rename the explorer node.
+        explorerNodeService.renameNode(result);
+
+        // Make sure the tree model is rebuilt.
+        rebuildTree();
 
         return result;
     }
@@ -475,35 +444,45 @@ class ExplorerServiceImpl implements ExplorerService {
                 resultMessage.append(e.getMessage());
                 resultMessage.append("\n");
             }
+
+            // Delete the explorer node.
+            explorerNodeService.deleteNode(docRef);
         }
 
-        explorerTreeModel.setRebuildRequired(true);
+        // Make sure the tree model is rebuilt.
+        rebuildTree();
+
         return new BulkActionResult(resultDocRefs, resultMessage.toString());
     }
 
-    private void validateName(final ExplorerActionHandler handler, final String name) {
-        if (handler instanceof ProvidesNamePattern) {
-            final ProvidesNamePattern providesNamePattern = (ProvidesNamePattern) handler;
-            NameValidationUtil.validate(providesNamePattern, name);
-        }
+    @Override
+    public void rebuildTree() {
+        explorerTreeModel.setRebuildRequired(true);
     }
 
-    private void addDocumentPermissions(final DocRef source, final DocRef dest, final boolean owner) {
-        String sourceType = null;
-        String sourceUuid = null;
-        String destType = null;
-        String destUuid = null;
-
-        if (source != null) {
-            sourceType = source.getType();
-            sourceUuid = source.getUuid();
+    private String getUUID(final DocRef docRef) {
+        if (docRef == null) {
+            return null;
         }
-
-        if (dest != null) {
-            destType = dest.getType();
-            destUuid = dest.getUuid();
-        }
-
-        securityContext.addDocumentPermissions(sourceType, sourceUuid, destType, destUuid, owner);
+        return docRef.getUuid();
     }
+
+//    private void addDocumentPermissions(final DocRef source, final DocRef dest, final boolean owner) {
+//        String sourceType = null;
+//        String sourceUuid = null;
+//        String destType = null;
+//        String destUuid = null;
+//
+//        if (source != null) {
+//            sourceType = source.getType();
+//            sourceUuid = source.getUuid();
+//        }
+//
+//        if (dest != null) {
+//            destType = dest.getType();
+//            destUuid = dest.getUuid();
+//        }
+//
+//        securityContext.addDocumentPermissions(sourceType, sourceUuid, destType, destUuid, owner);
+//    }
 }

@@ -35,7 +35,7 @@ public class TestFeedServiceCache extends AbstractCoreIntegrationTest {
     @Test
     public void testSimple() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        final Feed feed = cachedFeedService.create(commonTestScenarioCreator.getTestFolder(), feedName);
+        final Feed feed = cachedFeedService.create(feedName);
 
         Feed loaded = cachedFeedService.loadByName(feedName);
 

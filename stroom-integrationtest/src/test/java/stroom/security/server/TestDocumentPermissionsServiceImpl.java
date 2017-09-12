@@ -27,6 +27,7 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.index.server.IndexService;
 import stroom.index.shared.Index;
 import stroom.query.api.v1.DocRef;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.UserRef;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -62,7 +63,7 @@ public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationT
         final UserRef userGroup3 = createUserGroup(FileSystemTestUtil.getUniqueTestString());
 
         final Index doc = commonTestScenarioCreator.createIndex(FileSystemTestUtil.getUniqueTestString());
-        final String[] permissions = indexService.getPermissions();
+        final String[] permissions = DocumentPermissionNames.DOCUMENT_PERMISSIONS;
         final String c1 = permissions[0];
         final String p1 = permissions[1];
         final String p2 = permissions[2];

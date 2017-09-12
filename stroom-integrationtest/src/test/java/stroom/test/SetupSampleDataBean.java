@@ -20,12 +20,9 @@ package stroom.test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.shared.Dashboard;
-import stroom.entity.server.FolderService;
-import stroom.db.migration.mysql.V6_0_0_1__Explorer;
+import stroom.db.migration.mysql.V6_0_0_11__Explorer;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.Folder;
 import stroom.entity.shared.ImportState.ImportMode;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
@@ -44,10 +41,9 @@ import stroom.node.shared.Volume;
 import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineService;
 import stroom.security.server.DBRealm;
 import stroom.statistics.server.sql.datasource.FindStatisticsEntityCriteria;
-import stroom.statistics.server.sql.datasource.StatisticStoreService;
+import stroom.statistics.server.sql.datasource.StatisticStoreEntityService;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.streamstore.server.StreamAttributeKeyService;
@@ -66,10 +62,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Connection;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.sql.Connection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -93,8 +89,6 @@ public final class SetupSampleDataBean {
     private DBRealm dbRealm;
     @Resource
     private FeedService feedService;
-    @Resource
-    private FolderService folderService;
     @Resource
     private StreamStore streamStore;
     @Resource
@@ -120,7 +114,7 @@ public final class SetupSampleDataBean {
     @Resource
     private ContentImportService contentImportService;
     @Resource
-    private StatisticStoreService statisticsDataSourceService;
+    private StatisticStoreEntityService statisticsDataSourceService;
 
     public SetupSampleDataBean() {
     }
@@ -257,7 +251,7 @@ public final class SetupSampleDataBean {
         }
 
         try (final Connection connection = ConnectionUtil.getConnection()) {
-            new V6_0_0_1__Explorer().migrate(connection);
+            new V6_0_0_11__Explorer().migrate(connection);
         } catch (final Exception e) {
             LOGGER.error(e.getMessage());
         }
@@ -408,26 +402,6 @@ public final class SetupSampleDataBean {
             sb.append("\n");
         }
         return sb.toString();
-    }
-
-    private void createRandomExplorerNode(final Folder parentFolder, final String path, final int depth, final int maxDepth) {
-        for (int i = 0; i < 100; i++) {
-            final String folderName = "TEST_FOLDER_" + path + i;
-            LOGGER.info("Creating folder: " + folderName);
-            final Folder folder = folderService.create(DocRefUtil.create(parentFolder), folderName);
-
-            for (int j = 0; j < 20; j++) {
-                final String newPath = path + String.valueOf(i) + "_";
-                final String feedName = "TEST_FEED_" + newPath + j;
-
-                LOGGER.info("Creating feed: " + feedName);
-                feedService.create(DocRefUtil.create(folder), feedName);
-
-                if (depth < maxDepth) {
-                    createRandomExplorerNode(folder, newPath, depth + 1, maxDepth);
-                }
-            }
-        }
     }
 
     private String createNum(final int max) {

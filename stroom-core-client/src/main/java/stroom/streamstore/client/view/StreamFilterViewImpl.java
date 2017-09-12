@@ -41,8 +41,6 @@ public class StreamFilterViewImpl extends ViewImpl implements StreamFilterView {
     @UiField
     DockLayoutPanel layout;
     @UiField
-    SimplePanel folder;
-    @UiField
     SimplePanel feed;
     @UiField
     SimplePanel pipeline;
@@ -64,8 +62,6 @@ public class StreamFilterViewImpl extends ViewImpl implements StreamFilterView {
     TextBox parentStreamId;
     @UiField
     Widget southPanel;
-    @UiField
-    Widget folderPanel;
     @UiField
     Widget feedPanel;
     @UiField
@@ -125,13 +121,6 @@ public class StreamFilterViewImpl extends ViewImpl implements StreamFilterView {
     }
 
     @Override
-    public void setFolderView(final View view) {
-        final Widget w = view.asWidget();
-        w.setSize("100%", "100%");
-        this.folder.setWidget(w);
-    }
-
-    @Override
     public void setFeedView(final View view) {
         final Widget w = view.asWidget();
         w.setSize("100%", "100%");
@@ -160,11 +149,6 @@ public class StreamFilterViewImpl extends ViewImpl implements StreamFilterView {
     @Override
     public ItemListBox<StreamListFilterTemplate> getStreamListFilterTemplate() {
         return streamListFilterTemplate;
-    }
-
-    @Override
-    public void setFolderVisible(final boolean visible) {
-        folderPanel.setVisible(visible);
     }
 
     @Override

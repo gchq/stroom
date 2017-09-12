@@ -35,7 +35,7 @@ import javax.xml.bind.annotation.XmlTransient;
  * This entity is used to persist pipeline configuration.
  */
 @Entity
-@Table(name = "PIPE", uniqueConstraints = @UniqueConstraint(columnNames = {"FK_FOLDER_ID", "NAME"}))
+@Table(name = "PIPE")
 public class PipelineEntity extends DocumentEntity {
     public static final String TABLE_NAME = SQLNameConstants.PIPELINE;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;

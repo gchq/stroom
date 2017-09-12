@@ -25,6 +25,7 @@ dependencies {
     testCompile project(path: ':stroom-security-server', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
+    testCompile project(path: ':stroom-pipeline', configuration: 'testArtifacts')
 
     testCompile libs.slf4j_api
     testCompile libs.junit

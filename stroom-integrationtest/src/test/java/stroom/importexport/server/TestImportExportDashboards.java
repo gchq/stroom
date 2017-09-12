@@ -32,10 +32,12 @@ import stroom.dictionary.shared.Dictionary;
 import stroom.dictionary.shared.FindDictionaryCriteria;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
-import stroom.entity.shared.Folder;
 import stroom.entity.shared.ImportState;
 import stroom.entity.shared.Res;
+import stroom.explorer.shared.ExplorerConstants;
+import stroom.explorer.server.ExplorerNodeService;
 import stroom.explorer.server.ExplorerService;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.feed.server.FeedService;
 import stroom.index.server.IndexService;
 import stroom.index.shared.FindIndexCriteria;
@@ -85,6 +87,8 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     private CommonTestControl commonTestControl;
     @Resource
     private ExplorerService explorerService;
+    @Resource
+    private ExplorerNodeService explorerNodeService;
 
     @Test
     public void testComplete() {
@@ -114,10 +118,11 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     private void test(final boolean skipVisCreation, final boolean skipVisExport, final boolean update) {
         deleteAllAndCheck();
 
-        final DocRef folder1 = explorerService.create("Folder", "Group1", null, null);
-        final DocRef folder2 = explorerService.create("Folder", "Group2", null, null);
+        final DocRef folder1 = explorerService.create(ExplorerConstants.FOLDER, "Group1", null, null);
+        final DocRef folder2 = explorerService.create(ExplorerConstants.FOLDER, "Group2", null, null);
 
-        Assert.assertEquals(2, commonTestControl.countEntity(Folder.class));
+        final List<ExplorerNode> nodes = explorerNodeService.getDescendants(null);
+        Assert.assertEquals(3, nodes.size());
 
         Visualisation vis = null;
         if (!skipVisCreation) {
@@ -201,7 +206,7 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         dashboard = dashboardService.save(dashboard);
         Assert.assertEquals(1, commonTestControl.countEntity(Dashboard.class));
 
-        int startFolderSize = commonTestControl.countEntity(Folder.class);
+//        int startFolderSize = commonTestControl.countEntity(Folder.class);
         int startVisualisationSize = commonTestControl.countEntity(Visualisation.class);
         final int startPipelineSize = commonTestControl.countEntity(PipelineEntity.class);
         final int startIndexSize = commonTestControl.countEntity(Index.class);
@@ -214,16 +219,16 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         if (!skipVisExport) {
             docRefs.add(folder2);
         } else {
-            startFolderSize = 1;
+//            startFolderSize = 1;
             startVisualisationSize = 0;
         }
 
         // Export all
-        importExportService.exportConfig(docRefs, resourceStore.getTempFile(file), null);
+        importExportService.exportConfig(docRefs, resourceStore.getTempFile(file), new ArrayList<>());
 
         final ResourceKey exportConfig = resourceStore.createTempFile("ExportPlain.zip");
 
-        importExportService.exportConfig(docRefs, resourceStore.getTempFile(exportConfig), null);
+        importExportService.exportConfig(docRefs, resourceStore.getTempFile(exportConfig), new ArrayList<>());
 
         if (!update) {
             // Delete everything.
@@ -240,7 +245,7 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
 
         importExportService.performImportWithConfirmation(resourceStore.getTempFile(file), confirmations);
 
-        Assert.assertEquals(startFolderSize, commonTestControl.countEntity(Folder.class));
+//        Assert.assertEquals(startFolderSize, commonTestControl.countEntity(Folder.class));
         Assert.assertEquals(startVisualisationSize, commonTestControl.countEntity(Visualisation.class));
         Assert.assertEquals(startPipelineSize, commonTestControl.countEntity(PipelineEntity.class));
         Assert.assertEquals(startIndexSize, commonTestControl.countEntity(Index.class));
@@ -279,7 +284,7 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     private void deleteAllAndCheck() {
         clean(true);
 
-        Assert.assertEquals(0, commonTestControl.countEntity(Folder.class));
+//        Assert.assertEquals(0, commonTestControl.countEntity(Folder.class));
         Assert.assertEquals(0, commonTestControl.countEntity(Visualisation.class));
         Assert.assertEquals(0, commonTestControl.countEntity(PipelineEntity.class));
         Assert.assertEquals(0, commonTestControl.countEntity(Index.class));

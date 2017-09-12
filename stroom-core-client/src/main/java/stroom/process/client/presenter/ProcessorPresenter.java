@@ -32,7 +32,6 @@ import stroom.entity.shared.DocumentServiceReadAction;
 import stroom.entity.shared.DocumentServiceWriteAction;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityReferenceComparator;
-import stroom.entity.shared.Folder;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
@@ -225,13 +224,11 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                     expressionPresenter.read(expression);
                 }
             } else {
-                final SetId folderSetId = new SetId("Folder", Folder.ENTITY_TYPE);
                 final SetId feedIncludeSetId = new SetId("Feed Include", Feed.ENTITY_TYPE);
                 final SetId feedExcludeSetId = new SetId("Feed Exclude", Feed.ENTITY_TYPE);
                 final SetId streamTypeSetId = new SetId("Stream Type", StreamType.ENTITY_TYPE);
 
                 final SharedMap<SetId, EntityIdSet<?>> entitySetMap = new SharedMap<>();
-                entitySetMap.put(folderSetId, findStreamCriteria.getFolderIdSet());
                 if (findStreamCriteria.getFeeds() != null) {
                     if (findStreamCriteria.getFeeds().getInclude() != null) {
                         entitySetMap.put(feedIncludeSetId, findStreamCriteria.getFeeds().getInclude());
@@ -244,13 +241,11 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 
                 // Load entities.
                 dispatcher.exec(new LoadEntityIdSetAction(entitySetMap)).onSuccess(result -> {
-                    final DocRefs folders = result.get(folderSetId);
                     final DocRefs feedsInclude = result.get(feedIncludeSetId);
                     final DocRefs feedsExclude = result.get(feedExcludeSetId);
                     final DocRefs streamTypes = result.get(streamTypeSetId);
 
                     final ExpressionBuilder operator = new ExpressionBuilder(Op.AND);
-                    addEntityListTerm(operator, folders, "Folder");
                     addEntityListTerm(operator, feedsInclude, "Feed");
 
                     if (feedsExclude != null && feedsExclude.iterator().hasNext()) {
@@ -368,7 +363,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             criteria.obtainFindStreamCriteria().copyFrom(filter.getFindStreamCriteria());
         }
 
-        streamFilterPresenter.setCriteria(criteria, true, true, true, false, false);
+        streamFilterPresenter.setCriteria(criteria, true, true, false);
 
         final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
             @Override
@@ -415,7 +410,6 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     private void validateFeed(final StreamProcessorFilter filter, final FindStreamCriteria findStreamCriteria) {
         if (findStreamCriteria.obtainStreamIdSet().size() == 0
                 && findStreamCriteria.obtainParentStreamIdSet().size() == 0
-                && findStreamCriteria.obtainFolderIdSet().size() == 0
                 && findStreamCriteria.obtainFeeds().obtainInclude().getSet().size() == 0
                 && findStreamCriteria.obtainFeeds().obtainExclude().getSet().size() == 0) {
             ConfirmEvent.fire(ProcessorPresenter.this,

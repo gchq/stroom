@@ -19,7 +19,9 @@ package stroom.script.spring;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
+import stroom.dashboard.shared.Dashboard;
 import stroom.explorer.server.ExplorerActionHandlers;
+import stroom.importexport.server.ImportExportActionHandlers;
 import stroom.script.server.ScriptService;
 import stroom.script.shared.Script;
 
@@ -37,7 +39,9 @@ import javax.inject.Provider;
 public class ScriptConfiguration {
     @Inject
     public ScriptConfiguration(final ExplorerActionHandlers explorerActionHandlers,
-                               final Provider<ScriptService> scriptServiceProvider) {
-        explorerActionHandlers.add(99, Script.ENTITY_TYPE, Script.ENTITY_TYPE, scriptServiceProvider);
+                               final ImportExportActionHandlers importExportActionHandlers,
+                               final ScriptService scriptService) {
+        explorerActionHandlers.add(99, Script.ENTITY_TYPE, Script.ENTITY_TYPE, scriptService);
+        importExportActionHandlers.add(Script.ENTITY_TYPE, scriptService);
     }
 }

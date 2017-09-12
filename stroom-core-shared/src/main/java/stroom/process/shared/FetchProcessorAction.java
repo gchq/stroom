@@ -30,7 +30,6 @@ public class FetchProcessorAction extends Action<ResultList<SharedObject>>
     private static final long serialVersionUID = -1773544031158236156L;
 
     private Long pipelineId;
-    private Long folderId;
     private Set<SharedObject> expandedRows;
 
     public FetchProcessorAction() {
@@ -43,7 +42,7 @@ public class FetchProcessorAction extends Action<ResultList<SharedObject>>
 
     @Override
     public boolean isConstrained() {
-        return pipelineId != null || folderId != null;
+        return pipelineId != null;
     }
 
     public Long getPipelineId() {
@@ -52,14 +51,6 @@ public class FetchProcessorAction extends Action<ResultList<SharedObject>>
 
     public void setPipelineId(final Long pipelineId) {
         this.pipelineId = pipelineId;
-    }
-
-    public Long getFolderId() {
-        return folderId;
-    }
-
-    public void setFolderId(final Long folderId) {
-        this.folderId = folderId;
     }
 
     @Override

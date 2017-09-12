@@ -58,7 +58,6 @@ import stroom.pipeline.server.MockTextConverterService;
 import stroom.pipeline.server.MockXSLTService;
 import stroom.pipeline.server.factory.MockPipelineElementRegistryFactory;
 import stroom.resource.server.MockResourceStore;
-import stroom.security.server.MockFolderService;
 import stroom.security.server.MockUserService;
 import stroom.statistic.server.MockMetaDataStatistic;
 import stroom.streamstore.server.MockStreamStore;
@@ -88,7 +87,6 @@ import stroom.xmlschema.server.MockXMLSchemaService;
         "stroom.dictionary",
         "stroom.dispatch",
         "stroom.entity",
-        "stroom.explorer",
         "stroom.feed",
         "stroom.folder",
         "stroom.importexport",
@@ -158,7 +156,6 @@ import stroom.xmlschema.server.MockXMLSchemaService;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockStreamTaskCreator.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockStreamTaskService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockStreamTypeService.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockFolderService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockUserService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockTask.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockTaskFactory.class),

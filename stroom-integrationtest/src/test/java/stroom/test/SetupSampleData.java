@@ -20,6 +20,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import stroom.dashboard.server.logging.spring.EventLoggingConfiguration;
 import stroom.dashboard.spring.DashboardConfiguration;
 import stroom.dictionary.spring.DictionaryConfiguration;
+import stroom.explorer.server.ExplorerConfiguration;
 import stroom.index.spring.IndexConfiguration;
 import stroom.pipeline.spring.PipelineConfiguration;
 import stroom.ruleset.spring.RuleSetConfiguration;
@@ -55,6 +56,7 @@ public final class SetupSampleData {
                     PersistenceConfiguration.class,
                     SetupSampleDataComponentScanConfiguration.class,
                     ServerConfiguration.class,
+                    ExplorerConfiguration.class,
                     RuleSetConfiguration.class,
                     SecurityConfiguration.class,
                     ScopeTestConfiguration.class,

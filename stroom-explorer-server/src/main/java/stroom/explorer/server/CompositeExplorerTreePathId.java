@@ -20,7 +20,7 @@ import stroom.util.shared.EqualsBuilder;
 
 import java.io.Serializable;
 
-public class CompositeExplorerTreePathId implements Serializable {
+class CompositeExplorerTreePathId implements Serializable {
     private long ancestor;
     private long descendant;
 

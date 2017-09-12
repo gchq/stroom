@@ -23,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.SystemEntityServiceImpl;
-import stroom.entity.server.UserManagerQueryUtil;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.pipeline.shared.PipelineEntity;
@@ -65,7 +64,6 @@ public class StreamProcessorServiceImpl extends SystemEntityServiceImpl<StreamPr
     @Override
     public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindStreamProcessorCriteria criteria) {
         CriteriaLoggingUtil.appendEntityIdSet(items, "pipelineIdSet", criteria.getPipelineIdSet());
-        CriteriaLoggingUtil.appendEntityIdSet(items, "folderIdSet", criteria.getFolderIdSet());
         super.appendCriteria(items, criteria);
     }
 
@@ -83,7 +81,7 @@ public class StreamProcessorServiceImpl extends SystemEntityServiceImpl<StreamPr
         protected void appendBasicJoin(final HqlBuilder sql, final String alias, final Set<String> fetchSet) {
             super.appendBasicJoin(sql, alias, fetchSet);
             if (fetchSet != null && fetchSet.contains(PipelineEntity.ENTITY_TYPE)) {
-                sql.append(" LEFT	OUTER JOIN FETCH ");
+                sql.append(" LEFT OUTER JOIN FETCH ");
                 sql.append(alias);
                 sql.append(".pipeline");
             }
@@ -94,9 +92,6 @@ public class StreamProcessorServiceImpl extends SystemEntityServiceImpl<StreamPr
                                            final FindStreamProcessorCriteria criteria) {
             super.appendBasicCriteria(sql, entityName, criteria);
             sql.appendEntityIdSetQuery(entityName + ".pipeline", criteria.getPipelineIdSet());
-
-            UserManagerQueryUtil.appendFolderCriteria(criteria.getFolderIdSet(), entityName + ".pipeline.folder", sql,
-                    getEntityManager());
         }
     }
 }

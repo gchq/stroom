@@ -26,9 +26,9 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "parentFolderUUID"})
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
 @XmlRootElement(name = "document")
-@XmlType(name = "document", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "parentFolderUUID"})
+@XmlType(name = "document", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Document implements SharedObject {
     private static final long serialVersionUID = -7268601402378907741L;
@@ -49,9 +49,6 @@ public class Document implements SharedObject {
     private String createUser;
     @XmlElement(name = "updateUser")
     private String updateUser;
-
-    // TODO: This is temporary until the explorer service takes over from establishing all parent child relationships.
-    private String parentFolderUUID;
 
     public Document() {
     }
@@ -126,14 +123,6 @@ public class Document implements SharedObject {
         this.updateUser = updateUser;
     }
 
-    public String getParentFolderUUID() {
-        return parentFolderUUID;
-    }
-
-    public void setParentFolderUUID(final String parentFolderUUID) {
-        this.parentFolderUUID = parentFolderUUID;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
@@ -148,8 +137,7 @@ public class Document implements SharedObject {
         if (createTime != null ? !createTime.equals(document.createTime) : document.createTime != null) return false;
         if (updateTime != null ? !updateTime.equals(document.updateTime) : document.updateTime != null) return false;
         if (createUser != null ? !createUser.equals(document.createUser) : document.createUser != null) return false;
-        if (updateUser != null ? !updateUser.equals(document.updateUser) : document.updateUser != null) return false;
-        return parentFolderUUID != null ? parentFolderUUID.equals(document.parentFolderUUID) : document.parentFolderUUID == null;
+        return updateUser != null ? !updateUser.equals(document.updateUser) : document.updateUser != null;
     }
 
     @Override
@@ -162,7 +150,6 @@ public class Document implements SharedObject {
         result = 31 * result + (updateTime != null ? updateTime.hashCode() : 0);
         result = 31 * result + (createUser != null ? createUser.hashCode() : 0);
         result = 31 * result + (updateUser != null ? updateUser.hashCode() : 0);
-        result = 31 * result + (parentFolderUUID != null ? parentFolderUUID.hashCode() : 0);
         return result;
     }
 }

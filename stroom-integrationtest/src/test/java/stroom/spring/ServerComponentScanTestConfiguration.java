@@ -47,7 +47,6 @@ import stroom.streamtask.server.StreamProcessorTaskFactory;
         "stroom.db",
         "stroom.dispatch",
         "stroom.entity",
-        "stroom.explorer",
         "stroom.feed",
         "stroom.folder",
         "stroom.importexport",

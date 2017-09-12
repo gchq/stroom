@@ -21,11 +21,11 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import stroom.explorer.server.ExplorerActionHandlers;
+import stroom.importexport.server.ImportExportActionHandlers;
 import stroom.ruleset.server.RuleSetService;
 import stroom.ruleset.shared.RuleSet;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 /**
  * Exclude other configurations that might be found accidentally during a
@@ -37,7 +37,9 @@ import javax.inject.Provider;
 public class RuleSetConfiguration {
     @Inject
     public RuleSetConfiguration(final ExplorerActionHandlers explorerActionHandlers,
-                                final Provider<RuleSetService> ruleSetServiceProvider) {
-        explorerActionHandlers.add(100, RuleSet.DOCUMENT_TYPE, "Rule Set", ruleSetServiceProvider);
+                                final ImportExportActionHandlers importExportActionHandlers,
+                                final RuleSetService ruleSetService) {
+        explorerActionHandlers.add(100, RuleSet.DOCUMENT_TYPE, "Rule Set", ruleSetService);
+        importExportActionHandlers.add(RuleSet.DOCUMENT_TYPE, ruleSetService);
     }
 }

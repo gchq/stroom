@@ -29,7 +29,6 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.EntityServiceFindActionDataProvider;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.Folder;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.Sort.Direction;
 import stroom.feed.shared.Feed;
@@ -205,12 +204,6 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
         return dataProvider;
     }
 
-    private void setCriteria(final Folder folder) {
-        final FindStreamTaskCriteria criteria = initCriteria();
-        criteria.obtainFindStreamCriteria().obtainFolderIdSet().add(folder);
-        dataProvider.setCriteria(criteria);
-    }
-
     private void setCriteria(final Feed feed) {
         final FindStreamTaskCriteria criteria = initCriteria();
         criteria.obtainFindStreamCriteria().obtainFeeds().obtainInclude().add(feed);
@@ -240,8 +233,6 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
     public void read(final BaseEntity entity) {
         if (entity instanceof Feed) {
             setCriteria((Feed) entity);
-        } else if (entity instanceof Folder) {
-            setCriteria((Folder) entity);
         } else if (entity instanceof PipelineEntity) {
             setCriteria((PipelineEntity) entity);
         } else {

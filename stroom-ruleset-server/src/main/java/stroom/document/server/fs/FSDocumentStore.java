@@ -23,28 +23,39 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import stroom.document.server.DocumentActionHandler;
 import stroom.document.shared.Document;
-import stroom.entity.shared.EntityServiceException;
-import stroom.entity.shared.Folder;
-import stroom.entity.shared.PermissionInheritance;
+import stroom.entity.shared.ImportState;
+import stroom.entity.shared.ImportState.ImportMode;
+import stroom.entity.shared.PermissionException;
 import stroom.explorer.server.ExplorerActionHandler;
+import stroom.explorer.shared.ExplorerConstants;
+import stroom.importexport.server.ImportExportActionHandler;
 import stroom.query.api.v1.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.shared.EqualsUtil;
+import stroom.util.shared.Message;
+import stroom.util.shared.Severity;
 import stroom.util.task.ServerTask;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Stream;
 
-public final class FSDocumentStore<D extends Document> implements ExplorerActionHandler, DocumentActionHandler<D> {
+public final class FSDocumentStore<D extends Document> implements ExplorerActionHandler, DocumentActionHandler<D>, ImportExportActionHandler {
+    public static final String FOLDER = ExplorerConstants.FOLDER;
     private static final String FILE_EXTENSION = ".json";
+    private static final Charset CHARSET = Charset.forName("UTF-8");
+    public static final String KEY = "dat";
 
     private final Path dir;
     private final String type;
@@ -73,7 +84,6 @@ public final class FSDocumentStore<D extends Document> implements ExplorerAction
         final String userId = securityContext.getUserId();
 
         final D document = create(type, UUID.randomUUID().toString(), name);
-        document.setParentFolderUUID(parentFolderUUID);
         document.setVersion(UUID.randomUUID().toString());
         document.setCreateTime(now);
         document.setUpdateTime(now);
@@ -92,7 +102,6 @@ public final class FSDocumentStore<D extends Document> implements ExplorerAction
         final D document = read(uuid);
         document.setType(type);
         document.setUuid(UUID.randomUUID().toString());
-        document.setParentFolderUUID(parentFolderUUID);
         document.setName("Copy of " + document.getName());
         document.setVersion(UUID.randomUUID().toString());
         document.setCreateTime(now);
@@ -112,16 +121,11 @@ public final class FSDocumentStore<D extends Document> implements ExplorerAction
         final D document = read(uuid);
 
         // If we are moving folder then make sure we are allowed to create items in the target folder.
-        if (!EqualsUtil.isEquals(document.getParentFolderUUID(), parentFolderUUID)) {
-            // Check that the user has permission to create this item.
-            final String permissionName = DocumentPermissionNames.getDocumentCreatePermission(type);
-            if (!securityContext.hasDocumentPermission(Folder.ENTITY_TYPE, parentFolderUUID, permissionName)) {
-                throw new RuntimeException("You are not authorised to create items in this folder");
-            }
+        final String permissionName = DocumentPermissionNames.getDocumentCreatePermission(type);
+        if (!securityContext.hasDocumentPermission(FOLDER, parentFolderUUID, permissionName)) {
+            throw new RuntimeException("You are not authorised to create items in this folder");
         }
 
-        document.setParentFolderUUID(parentFolderUUID);
-//        document.setVersion(UUID.randomUUID().toString());
         document.setUpdateTime(now);
         document.setUpdateUser(userId);
 
@@ -199,7 +203,6 @@ public final class FSDocumentStore<D extends Document> implements ExplorerAction
 
         document.setUuid(UUID.randomUUID().toString());
         document.setName(docName);
-        document.setParentFolderUUID(parentFolderUUID);
         document.setVersion(UUID.randomUUID().toString());
         document.setCreateTime(now);
         document.setUpdateTime(now);
@@ -215,6 +218,94 @@ public final class FSDocumentStore<D extends Document> implements ExplorerAction
     // END OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
 
+    ////////////////////////////////////////////////////////////////////////
+    // START OF ImportExportActionHandler
+    ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
+        D document = null;
+
+        final String uuid = docRef.getUuid();
+
+        try {
+            final Path filePath = getPathForUUID(uuid);
+
+            // See if a document already exists with this uuid.
+            document = readDocument(docRef);
+            if (document == null) {
+                if (Files.isRegularFile(filePath)) {
+                    throw new RuntimeException("Document already exists with uuid=" + uuid);
+                }
+            } else {
+                if (!securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.UPDATE)) {
+                    throw new RuntimeException("You are not authorised to update this document " + docRef);
+                }
+            }
+
+            if (importState.ok(importMode)) {
+                final Lock lock = stripedLock.getLockForKey(document.getUuid());
+                lock.lock();
+                try {
+                    Files.write(filePath, dataMap.get(KEY).getBytes(CHARSET));
+                } finally {
+                    lock.unlock();
+                }
+
+                // Now do final update.
+                document = read(uuid);
+                document = update(document);
+            }
+
+        } catch (final Exception e) {
+            importState.addMessage(Severity.ERROR, e.getMessage());
+        }
+
+        return docRef;
+    }
+
+    @Override
+    public Map<String, String> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
+        Map<String, String> data = Collections.emptyMap();
+
+        final String uuid = docRef.getUuid();
+
+        try {
+            // Check that the user has permission to read this item.
+            if (!securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.READ)) {
+                throw new PermissionException("You are not authorised to read this document " + docRef);
+            } else if (!securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.EXPORT)) {
+                throw new PermissionException("You are not authorised to export this document " + docRef);
+            } else {
+                D document = read(uuid);
+                if (document == null) {
+                    throw new IOException("Unable to read " + docRef);
+                }
+
+                if (omitAuditFields) {
+                    document.setCreateTime(null);
+                    document.setCreateUser(null);
+                    document.setUpdateTime(null);
+                    document.setUpdateUser(null);
+                }
+
+                final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                mapper.writeValue(byteArrayOutputStream, document);
+
+                data = new HashMap<>();
+                data.put(KEY, new String(byteArrayOutputStream.toByteArray(), CHARSET));
+            }
+        } catch (final Exception e) {
+            messageList.add(new Message(Severity.ERROR, e.getMessage()));
+        }
+
+        return data;
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    // END OF ImportExportActionHandler
+    ////////////////////////////////////////////////////////////////////////
+
     private DocRef createDocRef(final D document) {
         if (document == null) {
             return null;
@@ -227,7 +318,7 @@ public final class FSDocumentStore<D extends Document> implements ExplorerAction
         try {
             // Check that the user has permission to create this item.
             final String permissionName = DocumentPermissionNames.getDocumentCreatePermission(type);
-            if (!securityContext.hasDocumentPermission(Folder.ENTITY_TYPE, parentFolderUUID, permissionName)) {
+            if (!securityContext.hasDocumentPermission(FOLDER, parentFolderUUID, permissionName)) {
                 throw new RuntimeException("You are not authorised to create documents of type '" + type + "' in this folder");
             }
 
@@ -237,7 +328,13 @@ public final class FSDocumentStore<D extends Document> implements ExplorerAction
                 throw new RuntimeException("Document already exists with uuid=" + document.getUuid());
             }
 
-            mapper.writeValue(Files.newOutputStream(filePath), document);
+            final Lock lock = stripedLock.getLockForKey(document.getUuid());
+            lock.lock();
+            try {
+                mapper.writeValue(Files.newOutputStream(filePath), document);
+            } finally {
+                lock.unlock();
+            }
 
             return document;
 

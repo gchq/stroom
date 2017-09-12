@@ -19,15 +19,12 @@ package stroom.index.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.entity.server.FolderService;
 import stroom.entity.server.util.BaseEntityDeProxyProcessor;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocRefUtil;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
-import stroom.query.api.v1.DocRef;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.annotation.Resource;
@@ -35,17 +32,14 @@ import javax.annotation.Resource;
 public class TestIndexServiceImpl extends AbstractCoreIntegrationTest {
     @Resource
     private IndexService indexService;
-    @Resource
-    private FolderService folderService;
 
     private Index testIndex;
     private Index refIndex;
 
     @Override
     protected void onBefore() {
-        final DocRef testFolder = DocRefUtil.create(folderService.create("Test Group"));
-        refIndex = indexService.create(testFolder, "Ref index");
-        testIndex = indexService.create(testFolder, "Test index");
+        refIndex = indexService.create("Ref index");
+        testIndex = indexService.create("Test index");
 
         final IndexFields indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(IndexField.createDateField("TimeCreated"));

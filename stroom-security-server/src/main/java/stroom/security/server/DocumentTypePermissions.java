@@ -3,6 +3,7 @@ package stroom.security.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.server.ExplorerService;
 import stroom.explorer.shared.DocumentType;
 import stroom.security.shared.DocumentPermissionNames;
@@ -31,7 +32,7 @@ class DocumentTypePermissions {
     }
 
     String[] getPermissions(final String type) {
-        if ("Folder".equals(type)) {
+        if (ExplorerConstants.FOLDER.equals(type)) {
             return getFolderPermissions();
         }
 

@@ -29,7 +29,6 @@ import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.FindDocumentEntityCriteria;
 import stroom.entity.shared.FindNamedEntityCriteria;
-import stroom.entity.shared.Folder;
 import stroom.entity.shared.ImportState;
 import stroom.entity.shared.ImportState.ImportMode;
 import stroom.entity.shared.ImportState.State;
@@ -37,7 +36,7 @@ import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.PermissionException;
 import stroom.entity.shared.ProvidesNamePattern;
-import stroom.importexport.server.Config;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.query.api.v1.DocRef;
 import stroom.security.SecurityContext;
@@ -47,7 +46,6 @@ import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
 import javax.persistence.Transient;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -59,6 +57,7 @@ import java.util.stream.Collectors;
 @Transactional
 @AutoMarshal
 public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C extends FindDocumentEntityCriteria> implements DocumentEntityService<E>, BaseEntityService<E>, FindService<E, C>, ProvidesNamePattern {
+    public static final String FOLDER = ExplorerConstants.FOLDER;
     private static final String NAME_PATTERN_PROPERTY = "stroom.namePattern";
     private static final String NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
     public static final String ID = "@ID@";
@@ -124,7 +123,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
             entity.setUuid(UUID.randomUUID().toString());
 
             // Validate the entity name.
-            NameValidationUtil.validate(this, name);
+            NameValidationUtil.validate(getNamePattern(), name);
             entity.setName(name);
 
             entity = entityServiceHelper.save(entity, queryAppender);
@@ -452,7 +451,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
             after.setUuid(UUID.randomUUID().toString());
 
             // Validate the entity name.
-            NameValidationUtil.validate(this, name);
+            NameValidationUtil.validate(getNamePattern(), name);
             after.setName(name);
 
             after = entityServiceHelper.save(after, queryAppender);
@@ -499,7 +498,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
         try {
             // Validate the entity name.
-            NameValidationUtil.validate(this, name);
+            NameValidationUtil.validate(getNamePattern(), name);
             after.setName(name);
 
             after = entityServiceHelper.save(after, queryAppender);
@@ -609,50 +608,20 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 //    }
 
     @Override
-    public DocRef importDocument(final Folder folder, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
+    public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
         E entity = null;
 
         try {
-            // Get the main config data.
-            String mainConfigPath = null;
-            for (final String key : dataMap.keySet()) {
-                if (key.endsWith(getEntityType() + ".xml")) {
-                    mainConfigPath = key;
-                }
-            }
-
-            if (mainConfigPath == null) {
-                throw new RuntimeException("Unable to find config data");
-            }
-
-            final Config config = new Config();
-            config.read(new StringReader(dataMap.get(mainConfigPath)));
-
-            final String uuid = config.getString("uuid");
-            if (uuid == null) {
-                throw new RuntimeException("Unable to get UUID for item");
-            }
-
-            entity = loadByUuid(uuid, Collections.singleton("all"));
-
+            // See if a document already exists with this uuid.
+            entity = loadByUuid(docRef.getUuid(), Collections.singleton("all"));
             if (entity == null) {
                 entity = getEntityClass().newInstance();
-                entity.setFolder(folder);
-
-                if (importMode == ImportMode.CREATE_CONFIRMATION) {
-                    importState.setState(State.NEW);
-                }
-            } else {
-                if (importMode == ImportMode.CREATE_CONFIRMATION) {
-                    importState.setState(State.UPDATE);
-                }
             }
 
-            importExportHelper.performImport(entity, dataMap, mainConfigPath, importState, importMode);
+            importExportHelper.performImport(entity, dataMap, importState, importMode);
 
             // Save directly so there is no marshalling of objects that would destroy imported data.
-            if (importMode == ImportMode.IGNORE_CONFIRMATION
-                    || (importMode == ImportMode.ACTION_CONFIRMATION && importState.isAction())) {
+            if (importState.ok(importMode)) {
                 entity = getEntityManager().saveEntity(entity);
             }
 
@@ -680,10 +649,6 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     public String getNamePattern() {
         return StroomProperties.getProperty(NAME_PATTERN_PROPERTY, NAME_PATTERN_VALUE);
     }
-
-//    private String getDocReference(BaseEntity entity) {
-//        return "(" + DocRefUtil.create(entity).toString() + ")";
-//    }
 
     public abstract Class<E> getEntityClass();
 
@@ -805,7 +770,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
                 throw new PermissionException("Only administrators can create root level entries");
             }
         } else {
-            if (!securityContext.hasDocumentPermission(Folder.ENTITY_TYPE, folderUUID, DocumentPermissionNames.getDocumentCreatePermission(getEntityType()))) {
+            if (!securityContext.hasDocumentPermission(FOLDER, folderUUID, DocumentPermissionNames.getDocumentCreatePermission(getEntityType()))) {
                 throw new PermissionException("You do not have permission to create (" + getEntityType() + ") in folder " + folderUUID);
             }
         }
@@ -825,6 +790,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 //    }
 
     protected void checkUpdatePermission(final E entity) {
+
         if (!entity.isPersistent()) {
             throw new EntityServiceException("You cannot update an entity that has not been created");
         }
@@ -891,8 +857,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     protected FieldMap createFieldMap() {
         return new FieldMap()
                 .add(BaseCriteria.FIELD_ID, BaseEntity.ID, "id")
-                .add(FindNamedEntityCriteria.FIELD_NAME, NamedEntity.NAME, "name")
-                .add(FindDocumentEntityCriteria.FIELD_FOLDER, Folder.FOREIGN_KEY, "folder.name");
+                .add(FindNamedEntityCriteria.FIELD_NAME, NamedEntity.NAME, "name");
     }
 
     final FieldMap getSqlFieldMap() {

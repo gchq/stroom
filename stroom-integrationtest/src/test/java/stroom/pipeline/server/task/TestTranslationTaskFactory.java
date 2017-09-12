@@ -328,7 +328,7 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     private void createStore(final File data, final File reference, final File xslt) {
         try {
             // Add imported XSLT.
-            final XSLT xsltImport = xsltService.create(commonTestScenarioCreator.getTestFolder(), "imported.xsl");
+            final XSLT xsltImport = xsltService.create("imported.xsl");
             xsltImport.setDescription("Imported XSLT");
             xsltImport.setData(StreamUtil.fileToString(IMPORTED_XSLT));
             xsltService.save(xsltImport);
@@ -349,9 +349,7 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
             }
 
             // Force creation of stream tasks.
-            if (streamTaskCreator instanceof StreamTaskCreator) {
-                streamTaskCreator.createTasks(new TaskMonitorImpl());
-            }
+            streamTaskCreator.createTasks(new TaskMonitorImpl());
 
         } catch (final Exception ex) {
             ex.printStackTrace();

@@ -21,27 +21,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import stroom.entity.server.DocumentEntityService;
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.server.util.BaseEntityBeanWrapper;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
-import stroom.entity.shared.Entity;
 import stroom.entity.shared.EntityDependencyServiceException;
-import stroom.entity.shared.Folder;
 import stroom.entity.shared.ImportState;
 import stroom.entity.shared.ImportState.ImportMode;
 import stroom.entity.shared.ImportState.State;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.Res;
-import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v1.DocRef;
 import stroom.streamstore.server.fs.FileSystemUtil;
-import stroom.streamstore.shared.StreamType;
 import stroom.util.date.DateUtil;
-import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
@@ -50,7 +44,6 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -128,16 +121,15 @@ public class ImportExportHelper {
 //    }
 
     @SuppressWarnings("unchecked")
-    public <E extends DocumentEntity> void performImport(final E entity, final Map<String, String> dataMap, final String mainConfigPath,
+    public <E extends DocumentEntity> void performImport(final E entity, final Map<String, String> dataMap,
                                                          final ImportState importState, final ImportMode importMode) {
         try {
             init();
 
-            final String stem = mainConfigPath.substring(0, mainConfigPath.length() - ".xml".length());
             final List<Property> propertyList = BeanPropertyUtil.getPropertyList(entity.getClass(), false);
 
             final Config config = new Config();
-            config.read(new StringReader(dataMap.get(mainConfigPath)));
+            config.read(new StringReader(dataMap.get("xml")));
 
             final BaseEntityBeanWrapper beanWrapper = new BaseEntityBeanWrapper(entity);
 
@@ -155,7 +147,7 @@ public class ImportExportHelper {
                 }
 
                 if (!found) {
-                    importState.addMessage(Severity.WARNING, String.format("%s %s contains invalid property %s", entity.getType(), mainConfigPath, property));
+                    importState.addMessage(Severity.WARNING, String.format("%s contains invalid property %s", entity.getType(), property));
                 }
             }
 
@@ -183,7 +175,7 @@ public class ImportExportHelper {
                 // to.
                 if (property.isExternalFile()) {
                     final String fileExtension = property.getExtensionProvider().getExtension(entity, propertyName);
-                    final String dataKey = stem + "." + propertyName + "." + fileExtension;
+                    final String dataKey = propertyName + "." + fileExtension;
                     final String data = dataMap.get(dataKey);
                     if (data != null) {
                         final List<Object> newDataList = new ArrayList<>();
@@ -192,7 +184,7 @@ public class ImportExportHelper {
 
                     } else {
                         importState.addMessage(Severity.WARNING, String
-                                .format("%s %s external property data not found %s", entity.getType(), mainConfigPath, property));
+                                .format("%s external property data not found %s", entity.getType(), property));
 
                     }
                 }
@@ -513,7 +505,7 @@ public class ImportExportHelper {
                             final String fileExtension = property.getExtensionProvider().getExtension(entity,
                                     propertyName);
                             if (fileExtension != null) {
-                                dataMap.put(getDataName(name, entity.getType(), propertyName, fileExtension), data);
+                                dataMap.put(propertyName + "." + fileExtension, data);
                             }
                         }
                     }
@@ -531,7 +523,7 @@ public class ImportExportHelper {
 //                                    list.add(entityPathResolver.getEntityPath(documentEntity.getType(), entity,
 //                                            documentEntity));
 //                                } else {
-                                    list.add(String.valueOf(valueItem));
+                                list.add(String.valueOf(valueItem));
 //                                }
                             }
 
@@ -569,30 +561,13 @@ public class ImportExportHelper {
 
             final StringWriter writer = new StringWriter();
             config.write(writer, entity.getType());
-            dataMap.put(getConfigName(entity.getType(), name), writer.toString());
+            dataMap.put("xml", writer.toString());
 
         } catch (final Exception e) {
             messageList.add(new Message(Severity.ERROR, EntityServiceExceptionUtil.getDefaultMessage(e, e)));
         }
 
         return dataMap;
-    }
-
-    private String getConfigName(final String entityType, final String name) {
-        return FileSystemUtil.encodeFileName(name) + "." + entityType + ".xml";
-    }
-
-    private String getDataName(final String entityName, final String entityType,
-                               final String propertyName, final String fileExtension) {
-        String path = ""
-                + FileSystemUtil.encodeFileName(entityName)
-                + "."
-                + entityType
-                + "."
-                + propertyName
-                + "."
-                + fileExtension;
-        return path;
     }
 
     private static class EntityClassComparator implements Comparator<Class<? extends DocumentEntity>> {

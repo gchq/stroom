@@ -89,6 +89,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -815,11 +816,12 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         // Ensure a user cannot match all feeds.
         feeds.setMatchAll(Boolean.FALSE);
 
-        final List<Feed> restrictedFeeds = getRestrictedFeeds(findStreamCriteria, requiredPermission);
+        final List<Feed> restrictedFeeds = getRestrictedFeeds(requiredPermission);
 
         if (feeds.size() > 0) {
-            final Set<Long> restrictedFeedIds = new HashSet<>();
-            restrictedFeeds.stream().forEach(feed -> restrictedFeedIds.add(feed.getId()));
+            final Set<Long> restrictedFeedIds = restrictedFeeds.stream()
+                    .map(Feed::getId)
+                    .collect(Collectors.toSet());
 
             // Retain only the feeds that the user has the required permission on.
             feeds.getSet().retainAll(restrictedFeedIds);
@@ -827,20 +829,12 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         } else {
             feeds.addAllEntities(restrictedFeeds);
         }
-
-        // We should be constrained by feed now so forget any folder constraints.
-        findStreamCriteria.setFolderIdSet(null);
     }
 
-    private List<Feed> getRestrictedFeeds(final FindStreamCriteria findStreamCriteria, final String requiredPermission) {
+    private List<Feed> getRestrictedFeeds(final String requiredPermission) {
         final FindFeedCriteria findFeedCriteria = new FindFeedCriteria();
         findFeedCriteria.setRequiredPermission(requiredPermission);
         findFeedCriteria.setPageRequest(null);
-
-        // Constrain by folder too if the criteria is constrained.
-        if (findStreamCriteria.getFolderIdSet() != null && findStreamCriteria.getFolderIdSet().isConstrained()) {
-            findFeedCriteria.getFolderIdSet().copyFrom(findStreamCriteria.getFolderIdSet());
-        }
 
         return feedService.find(findFeedCriteria);
     }
@@ -1446,7 +1440,6 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindStreamCriteria findStreamCriteria) {
         CriteriaLoggingUtil.appendEntityIdSet(items, "streamProcessorIdSet",
                 findStreamCriteria.getStreamProcessorIdSet());
-        CriteriaLoggingUtil.appendEntityIdSet(items, "folderIdSet", findStreamCriteria.getFolderIdSet());
         CriteriaLoggingUtil.appendIncludeExcludeEntityIdSet(items, "feeds", findStreamCriteria.getFeeds());
         CriteriaLoggingUtil.appendEntityIdSet(items, "pipelineIdSet", findStreamCriteria.getPipelineIdSet());
         CriteriaLoggingUtil.appendEntityIdSet(items, "streamTypeIdSet", findStreamCriteria.getStreamTypeIdSet());

@@ -169,7 +169,7 @@ public final class StoreCreationTool {
 
         if (referenceFeed == null) {
             // Setup the feeds in mock feed configuration manager.
-            referenceFeed = feedService.read(feedService.create(null, feedName));
+            referenceFeed = feedService.readDocument(feedService.createDocument(feedName, null));
             referenceFeed.setReference(true);
             referenceFeed.setDescription("Description " + feedName);
             referenceFeed.setStatus(FeedStatus.RECEIVE);
@@ -306,7 +306,7 @@ public final class StoreCreationTool {
 
         if (eventFeed == null) {
             // Setup the feeds in mock feed configuration manager.
-            eventFeed = feedService.read(feedService.create(null, feedName));
+            eventFeed = feedService.create(feedName);
             eventFeed.setStatus(FeedStatus.RECEIVE);
             eventFeed.setDescription("Description " + feedName);
             eventFeed = feedService.save(eventFeed);
@@ -494,7 +494,7 @@ public final class StoreCreationTool {
         // Create a new text converter entity.
         TextConverter textConverter = null;
         if (data != null) {
-            textConverter = textConverterService.read(textConverterService.create(null, name));
+            textConverter = textConverterService.create(name);
             textConverter.setDescription("Description " + name);
             textConverter.setConverterType(textConverterType);
             textConverter.setData(data);
@@ -523,7 +523,7 @@ public final class StoreCreationTool {
         // Create the new XSLT entity.
         XSLT xslt = null;
         if (data != null) {
-            xslt = xsltService.read(xsltService.create(null, name));
+            xslt = xsltService.create(name);
             xslt.setDescription("Description " + name);
             xslt.setData(data);
 
@@ -541,7 +541,7 @@ public final class StoreCreationTool {
             return list.getFirst();
         }
 
-        return PipelineTestUtil.createTestPipeline(pipelineService, commonTestScenarioCreator.getTestFolder(), name, "Description " + name,
+        return PipelineTestUtil.createTestPipeline(pipelineService,name, "Description " + name,
                 data);
     }
 

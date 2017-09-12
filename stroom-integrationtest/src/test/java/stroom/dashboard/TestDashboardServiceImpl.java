@@ -27,10 +27,8 @@ import stroom.dashboard.shared.SplitLayoutConfig.Direction;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.dashboard.shared.VisComponentSettings;
-import stroom.entity.server.FolderService;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Res;
-import stroom.query.api.v1.DocRef;
 import stroom.script.server.ScriptService;
 import stroom.script.shared.Script;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -48,16 +46,12 @@ public class TestDashboardServiceImpl extends AbstractCoreIntegrationTest {
     private VisualisationService visualisationService;
     @Resource
     private ScriptService scriptService;
-    @Resource
-    private FolderService folderService;
 
     @Test
     public void test() {
-        final DocRef testGroup = DocRefUtil.create(folderService.create("Test Group"));
+        final VisComponentSettings visSettings = getVisSettings();
 
-        final VisComponentSettings visSettings = getVisSettings(testGroup);
-
-        Dashboard dashboard = dashboardService.create(testGroup, "Test Dashboard");
+        Dashboard dashboard = dashboardService.create("Test Dashboard");
 
         final List<ComponentConfig> components = new ArrayList<>();
 
@@ -109,15 +103,15 @@ public class TestDashboardServiceImpl extends AbstractCoreIntegrationTest {
         dashboard = dashboardService.load(dashboard);
     }
 
-    private VisComponentSettings getVisSettings(final DocRef testGroup) {
+    private VisComponentSettings getVisSettings() {
         final Res res = new Res();
         res.setData("Test");
 
-        Script script = scriptService.create(testGroup, "Test");
+        Script script = scriptService.create("Test");
         script.setResource(res);
         script = scriptService.save(script);
 
-        Visualisation vis = visualisationService.create(testGroup, "Test");
+        Visualisation vis = visualisationService.create("Test");
         vis.setScriptRef(DocRefUtil.create(script));
         vis = visualisationService.save(vis);
 
