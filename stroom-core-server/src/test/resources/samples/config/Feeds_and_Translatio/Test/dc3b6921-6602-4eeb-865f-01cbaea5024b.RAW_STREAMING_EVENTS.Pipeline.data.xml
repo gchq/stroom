@@ -1,0 +1,22 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<pipeline>
+   <elements>
+      <add>
+         <element>
+            <id>streamAppender</id>
+            <type>StreamAppender</type>
+         </element>
+      </add>
+   </elements>
+   <properties>
+      <add>
+         <property>
+            <element>streamAppender</element>
+            <name>streamType</name>
+            <value>
+               <string>Test Events</string>
+            </value>
+         </property>
+      </add>
+   </properties>
+</pipeline>

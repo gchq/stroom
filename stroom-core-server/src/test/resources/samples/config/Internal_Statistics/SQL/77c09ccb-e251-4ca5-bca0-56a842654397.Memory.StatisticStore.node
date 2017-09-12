@@ -1,0 +1,7 @@
+#Explorer Node Data
+#Tue Sep 12 15:07:15 BST 2017
+tags=DataSource
+name=Memory
+type=StatisticStore
+uuid=77c09ccb-e251-4ca5-bca0-56a842654397
+path=Internal Statistics/SQL

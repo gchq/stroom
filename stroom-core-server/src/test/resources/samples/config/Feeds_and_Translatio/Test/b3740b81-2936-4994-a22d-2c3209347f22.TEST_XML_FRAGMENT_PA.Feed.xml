@@ -1,0 +1,16 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<feed>
+   <classification/>
+   <contextEncoding>UTF-8</contextEncoding>
+   <createTime>1505224195385</createTime>
+   <createUser>admin</createUser>
+   <description>TEST_XML_FRAGMENT_PARSER-EVENTS</description>
+   <encoding>UTF-8</encoding>
+   <name>TEST_XML_FRAGMENT_PARSER-EVENTS</name>
+   <reference>false</reference>
+   <status>RECEIVE</status>
+   <streamType>Raw Events</streamType>
+   <updateTime>1505224195385</updateTime>
+   <updateUser>admin</updateUser>
+   <uuid>b3740b81-2936-4994-a22d-2c3209347f22</uuid>
+</feed>

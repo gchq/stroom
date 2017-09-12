@@ -1,0 +1,18 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<index>
+   <createTime>1505224195495</createTime>
+   <createUser>admin</createUser>
+   <description/>
+   <maxDocsPerShard>1000000000</maxDocsPerShard>
+   <name>Example index</name>
+   <partitionBy>MONTH</partitionBy>
+   <partitionSize>1</partitionSize>
+   <shardsPerPartition>1</shardsPerPartition>
+   <updateTime>1505224213483</updateTime>
+   <updateUser>admin</updateUser>
+   <uuid>57a35b9a-083c-4a93-a813-fc3ddfe1ff44</uuid>
+   <volumes>Volume (id=1, version=0, node=node1a, volumeType=Public, path=/Users/stroomdev66/tmp/dev/rack1/node1a/v1 (Used: 208G, Free: 23G, Total: 232G, Use%: 89%))</volumes>
+   <volumes>Volume (id=2, version=0, node=node1a, volumeType=Public, path=/Users/stroomdev66/tmp/dev/rack1/node1a/v2 (Used: 208G, Free: 23G, Total: 232G, Use%: 89%))</volumes>
+   <volumes>Volume (id=3, version=0, node=node2a, volumeType=Public, path=/Users/stroomdev66/tmp/dev/rack2/node2a/v1 ())</volumes>
+   <volumes>Volume (id=4, version=0, node=node2a, volumeType=Public, path=/Users/stroomdev66/tmp/dev/rack2/node2a/v2 ())</volumes>
+</index>

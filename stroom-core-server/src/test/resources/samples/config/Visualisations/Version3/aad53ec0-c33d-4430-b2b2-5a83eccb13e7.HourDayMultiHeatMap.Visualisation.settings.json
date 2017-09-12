@@ -1,0 +1,79 @@
+{
+    "tabs" : [ 
+        {
+            "name" : "Data",
+            "controls" : [ 
+                {
+                    "id" : "series",
+                    "type" :  "field",
+                    "label" : "Series"
+                }, 
+                {
+                    "id" : "hours",
+                    "type" :  "field",
+                    "label" : "Hours"
+                }, 
+                {
+                    "id" : "values",
+                    "type" :  "field",
+                    "label" : "Values"
+                } 
+            ]
+        }, 
+        {
+            "name" : "Series",
+            "controls" : [ 
+                {
+                    "id" : "sortSeries",
+                    "type" :  "selection",
+                    "label" : "Sort Series",
+                    "values" : [ 
+                        "", 
+                        "Ascending", 
+                        "Descending" 
+                    ],
+                    "defaultValue" : "Ascending"
+                }, 
+                {
+                    "id" : "maxSeries",
+                    "type" :  "number",
+                    "label" : "Max Series",
+                    "defaultValue" : "20"
+                } ,
+                {
+                    "id" : "gridSeriesDateFormat",
+                    "type" : "text",
+                    "label" : "Series Date Format (optional)",
+                    "defaultValue" : ""
+                }
+            ]
+        } 
+    ],
+    "data" : {
+        "structure" : {
+            "nest" : {
+                "key" : {
+                    "id" : "${series}",
+                    "sort" : {
+                        "enabled" : "true",
+                        "direction" : "${sortSeries}"
+                    }
+                },
+                "limit" : {
+                    "enabled" : "true",
+                    "size" : "${maxSeries}"
+                },
+                "values" : {
+                    "fields" : [ 
+                        {
+                            "id" : "${hours}"
+                        }, 
+                        {
+                            "id" : "${values}"
+                        } 
+                    ]
+                }      
+            }
+        }
+    }
+}

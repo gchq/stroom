@@ -1,0 +1,7 @@
+#Explorer Node Data
+#Tue Sep 12 15:07:15 BST 2017
+tags=DataSource
+name=Stream Task Queue Size
+type=StatisticStore
+uuid=603f0695-26ae-11e7-b9dc-0242ac110002
+path=Internal Statistics/SQL

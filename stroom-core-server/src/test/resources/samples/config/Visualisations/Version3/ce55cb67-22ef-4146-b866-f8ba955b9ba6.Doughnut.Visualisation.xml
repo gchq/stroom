@@ -1,0 +1,19 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<visualisation>
+   <createTime>1505224197307</createTime>
+   <createUser>admin</createUser>
+   <description>Git commit: a1e3bba4e658189a7de874fd1c6748624084d7e4
+Git commit time: 2016-09-21 17:03:32 +0100</description>
+   <functionName>visualisations.Doughnut</functionName>
+   <name>Doughnut</name>
+   <scriptRefXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
+           &lt;doc&gt;
+&lt;type&gt;Script&lt;/type&gt;
+&lt;uuid&gt;213eb661-579e-4c08-b7a5-1355d7b782f8&lt;/uuid&gt;
+&lt;name&gt;Doughnut&lt;/name&gt;
+&lt;/doc&gt;
+    </scriptRefXML>
+   <updateTime>1505224197307</updateTime>
+   <updateUser>admin</updateUser>
+   <uuid>ce55cb67-22ef-4146-b866-f8ba955b9ba6</uuid>
+</visualisation>

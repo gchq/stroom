@@ -1,0 +1,19 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<visualisation>
+   <createTime>1505224197243</createTime>
+   <createUser>admin</createUser>
+   <description>Git commit: a1e3bba4e658189a7de874fd1c6748624084d7e4
+Git commit time: 2016-09-21 17:03:32 +0100</description>
+   <functionName>visualisations.HourDayPointMap</functionName>
+   <name>HourDayPointMap</name>
+   <scriptRefXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
+           &lt;doc&gt;
+&lt;type&gt;Script&lt;/type&gt;
+&lt;uuid&gt;e733aa62-ede1-4530-bd05-5702de05f9fd&lt;/uuid&gt;
+&lt;name&gt;HourDayPointMap&lt;/name&gt;
+&lt;/doc&gt;
+    </scriptRefXML>
+   <updateTime>1505224197243</updateTime>
+   <updateUser>admin</updateUser>
+   <uuid>4a6f5935-4e75-4579-8f74-112fbe8aee88</uuid>
+</visualisation>

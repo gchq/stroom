@@ -1,0 +1,19 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<visualisation>
+   <createTime>1505224197505</createTime>
+   <createUser>admin</createUser>
+   <description>Git commit: a1e3bba4e658189a7de874fd1c6748624084d7e4
+Git commit time: 2016-09-21 17:03:32 +0100</description>
+   <functionName>visualisations.TrafficLights</functionName>
+   <name>TrafficLights</name>
+   <scriptRefXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
+           &lt;doc&gt;
+&lt;type&gt;Script&lt;/type&gt;
+&lt;uuid&gt;bee10b7d-023d-487a-af83-414ee1b7174f&lt;/uuid&gt;
+&lt;name&gt;TrafficLights&lt;/name&gt;
+&lt;/doc&gt;
+    </scriptRefXML>
+   <updateTime>1505224197505</updateTime>
+   <updateUser>admin</updateUser>
+   <uuid>1eae814a-c11a-4cc5-865d-b906908a5b28</uuid>
+</visualisation>

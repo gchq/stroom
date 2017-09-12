@@ -1,0 +1,12 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<pipeline>
+   <createTime>1505224198172</createTime>
+   <createUser>admin</createUser>
+   <description/>
+   <name>Indexing</name>
+   <parentPipelineXML/>
+   <pipelineType>Indexing</pipelineType>
+   <updateTime>1505224198172</updateTime>
+   <updateUser>admin</updateUser>
+   <uuid>fcef1b20-083e-436c-ab95-47a6ce453435</uuid>
+</pipeline>

@@ -1,0 +1,25 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<script>
+   <createTime>1505224195829</createTime>
+   <createUser>admin</createUser>
+   <dependenciesXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
+	&lt;docs&gt;
+        &lt;doc&gt;
+&lt;type&gt;Script&lt;/type&gt;
+&lt;uuid&gt;49a5f46c-f627-49ed-afb9-0066b99e235a&lt;/uuid&gt;
+&lt;name&gt;Common&lt;/name&gt;
+&lt;/doc&gt;
+        &lt;doc&gt;
+&lt;type&gt;Script&lt;/type&gt;
+&lt;uuid&gt;5d4252d6-6f13-4f24-9481-9e98e038747c&lt;/uuid&gt;
+&lt;name&gt;GenericGrid&lt;/name&gt;
+&lt;/doc&gt;
+	&lt;/docs&gt;
+    </dependenciesXML>
+   <description>Git commit: 54ee8ab06163f37c179b38616a4b1e3a6cf473ae
+Git commit time: 2016-09-21 17:10:16 +0100</description>
+   <name>HourDaySessionMap</name>
+   <updateTime>1505224195829</updateTime>
+   <updateUser>admin</updateUser>
+   <uuid>69305470-0ff8-4797-9f6e-baf52123547f</uuid>
+</script>

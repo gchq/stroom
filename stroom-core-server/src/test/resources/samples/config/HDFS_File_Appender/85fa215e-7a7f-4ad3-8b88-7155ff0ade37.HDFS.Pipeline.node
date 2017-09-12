@@ -1,0 +1,6 @@
+#Explorer Node Data
+#Tue Sep 12 15:07:15 BST 2017
+name=HDFS
+type=Pipeline
+uuid=85fa215e-7a7f-4ad3-8b88-7155ff0ade37
+path=HDFS File Appender

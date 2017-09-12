@@ -1,0 +1,14 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<statisticStore>
+   <createTime>1505224196838</createTime>
+   <createUser>admin</createUser>
+   <description>This is my description</description>
+   <enabled>true</enabled>
+   <name>PipelineStreamProcessor</name>
+   <precision>60000</precision>
+   <rollUpType>ALL</rollUpType>
+   <statisticType>COUNT</statisticType>
+   <updateTime>1505224196838</updateTime>
+   <updateUser>admin</updateUser>
+   <uuid>603f0853-26ae-11e7-b9dc-0242ac110002</uuid>
+</statisticStore>

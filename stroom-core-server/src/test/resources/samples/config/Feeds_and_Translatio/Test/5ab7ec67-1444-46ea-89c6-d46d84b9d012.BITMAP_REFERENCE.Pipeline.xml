@@ -1,0 +1,18 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<pipeline>
+   <createTime>1505224198879</createTime>
+   <createUser>admin</createUser>
+   <description/>
+   <name>BITMAP-REFERENCE</name>
+   <parentPipelineXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
+      &lt;doc&gt;
+      &lt;type&gt;Pipeline&lt;/type&gt;
+      &lt;uuid&gt;7630b1ff-e65d-4744-b05f-0ea178a97a41&lt;/uuid&gt;
+      &lt;name&gt;Common Test Reference Pipeline&lt;/name&gt;
+      &lt;/doc&gt;
+   </parentPipelineXML>
+   <pipelineType>Reference Data</pipelineType>
+   <updateTime>1505224198879</updateTime>
+   <updateUser>admin</updateUser>
+   <uuid>5ab7ec67-1444-46ea-89c6-d46d84b9d012</uuid>
+</pipeline>

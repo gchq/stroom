@@ -1,0 +1,16 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<feed>
+   <classification/>
+   <contextEncoding>UTF-8</contextEncoding>
+   <createTime>1505224194959</createTime>
+   <createUser>admin</createUser>
+   <description>JSON-EVENTS</description>
+   <encoding>UTF-8</encoding>
+   <name>JSON-EVENTS</name>
+   <reference>false</reference>
+   <status>RECEIVE</status>
+   <streamType>Raw Events</streamType>
+   <updateTime>1505224194959</updateTime>
+   <updateUser>admin</updateUser>
+   <uuid>f925da86-72be-44ec-9afd-7ebc278f9be1</uuid>
+</feed>

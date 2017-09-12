@@ -1,0 +1,12 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<pipeline>
+   <createTime>1505224198353</createTime>
+   <createUser>admin</createUser>
+   <description/>
+   <name>Common Test Reference Pipeline</name>
+   <parentPipelineXML/>
+   <pipelineType>Reference Data</pipelineType>
+   <updateTime>1505224198353</updateTime>
+   <updateUser>admin</updateUser>
+   <uuid>7630b1ff-e65d-4744-b05f-0ea178a97a41</uuid>
+</pipeline>

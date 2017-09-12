@@ -1,0 +1,12 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<pipeline>
+   <createTime>1505224198231</createTime>
+   <createUser>admin</createUser>
+   <description/>
+   <name>Event Data</name>
+   <parentPipelineXML/>
+   <pipelineType>Event Data</pipelineType>
+   <updateTime>1505224198231</updateTime>
+   <updateUser>admin</updateUser>
+   <uuid>7740cfc4-3443-4001-bf0b-6adc77d5a3cf</uuid>
+</pipeline>

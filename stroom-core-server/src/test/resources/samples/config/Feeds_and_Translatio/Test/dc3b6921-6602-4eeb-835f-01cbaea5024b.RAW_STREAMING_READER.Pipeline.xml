@@ -1,0 +1,11 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<pipeline>
+   <createTime>1505224198758</createTime>
+   <createUser>admin</createUser>
+   <description/>
+   <name>RAW_STREAMING_READER-EVENTS</name>
+   <pipelineType>Event Data</pipelineType>
+   <updateTime>1505224198758</updateTime>
+   <updateUser>admin</updateUser>
+   <uuid>dc3b6921-6602-4eeb-835f-01cbaea5024b</uuid>
+</pipeline>

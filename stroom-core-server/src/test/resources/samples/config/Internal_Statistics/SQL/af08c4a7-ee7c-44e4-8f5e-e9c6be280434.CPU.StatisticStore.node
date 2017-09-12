@@ -1,0 +1,7 @@
+#Explorer Node Data
+#Tue Sep 12 15:07:15 BST 2017
+tags=DataSource
+name=CPU
+type=StatisticStore
+uuid=af08c4a7-ee7c-44e4-8f5e-e9c6be280434
+path=Internal Statistics/SQL

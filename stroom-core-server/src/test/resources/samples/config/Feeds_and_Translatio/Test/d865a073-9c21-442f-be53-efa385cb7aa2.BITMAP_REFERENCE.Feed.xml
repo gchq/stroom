@@ -1,0 +1,16 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<feed>
+   <classification/>
+   <contextEncoding>UTF-8</contextEncoding>
+   <createTime>1505224195277</createTime>
+   <createUser>admin</createUser>
+   <description/>
+   <encoding>UTF-16LE</encoding>
+   <name>BITMAP-REFERENCE</name>
+   <reference>true</reference>
+   <status>RECEIVE</status>
+   <streamType>Raw Events</streamType>
+   <updateTime>1505224195277</updateTime>
+   <updateUser>admin</updateUser>
+   <uuid>d865a073-9c21-442f-be53-efa385cb7aa2</uuid>
+</feed>

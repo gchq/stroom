@@ -1,0 +1,14 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<statisticStore>
+   <createTime>1505224196693</createTime>
+   <createUser>admin</createUser>
+   <description>Meta Data-Bytes Received</description>
+   <enabled>true</enabled>
+   <name>Meta Data-Bytes Received</name>
+   <precision>3600000</precision>
+   <rollUpType>ALL</rollUpType>
+   <statisticType>COUNT</statisticType>
+   <updateTime>1505224196693</updateTime>
+   <updateUser>admin</updateUser>
+   <uuid>603f1058-26ae-11e7-b9dc-0242ac110002</uuid>
+</statisticStore>

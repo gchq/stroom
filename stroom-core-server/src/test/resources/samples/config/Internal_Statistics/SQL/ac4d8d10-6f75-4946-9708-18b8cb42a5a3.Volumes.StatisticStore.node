@@ -1,0 +1,7 @@
+#Explorer Node Data
+#Tue Sep 12 15:07:15 BST 2017
+tags=DataSource
+name=Volumes
+type=StatisticStore
+uuid=ac4d8d10-6f75-4946-9708-18b8cb42a5a3
+path=Internal Statistics/SQL

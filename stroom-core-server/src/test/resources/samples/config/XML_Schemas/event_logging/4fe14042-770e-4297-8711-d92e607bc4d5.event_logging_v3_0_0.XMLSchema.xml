@@ -1,0 +1,14 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<xmlSchema>
+   <createTime>1505224197687</createTime>
+   <createUser>admin</createUser>
+   <deprecated>false</deprecated>
+   <description/>
+   <name>event-logging v3.0.0</name>
+   <namespaceURI>event-logging:3</namespaceURI>
+   <schemaGroup>EVENTS</schemaGroup>
+   <systemId>file://event-logging-v3.0.0.xsd</systemId>
+   <updateTime>1505224197687</updateTime>
+   <updateUser>admin</updateUser>
+   <uuid>4fe14042-770e-4297-8711-d92e607bc4d5</uuid>
+</xmlSchema>
