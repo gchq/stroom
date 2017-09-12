@@ -27,9 +27,12 @@ import stroom.Config;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import java.util.EnumSet;
+import java.util.concurrent.CountDownLatch;
 
 public class App extends Application<Config> {
     private final Logger LOGGER = LoggerFactory.getLogger(App.class);
+
+    private final CountDownLatch applicationContextReadyLatch = new CountDownLatch(1);
 
     public static void main(String[] args) throws Exception {
         // Hibernate requires JBoss Logging. The SLF4J API jar wasn't being detected so this sets it manually.
@@ -40,7 +43,6 @@ public class App extends Application<Config> {
     @Override
     public void initialize(Bootstrap<Config> bootstrap) {
         bootstrap.addBundle(new AssetsBundle("/ui", "/", "stroom.jsp", "ui"));
-//        bootstrap.addBundle(new AssetsBundle("/swagger", "/", "swagger.json", "swaggerSpec"));
     }
 
     @Override
@@ -57,12 +59,26 @@ public class App extends Application<Config> {
         HealthChecks.registerHealthChecks(environment.healthChecks(), resources, servletMonitor);
         AdminTasks.registerAdminTasks(environment);
         configureCors(environment);
+        //Allows us to expose a method so other threads can block until the application has fully started
+        servletMonitor.registerApplicationContextListener(
+                applicationContext -> {
+                    applicationContextReadyLatch.countDown();
+                    LOGGER.debug("applicationContextReadyLatch counted down - application started");
+                });
+    }
+
+    /**
+     * @return Will block until the application has fully started
+     */
+    public void waitForApplicationStart() throws InterruptedException {
+        LOGGER.debug("Waiting for the application to start");
+        applicationContextReadyLatch.await();
     }
 
     private static final void configureCors(io.dropwizard.setup.Environment environment) {
         FilterRegistration.Dynamic cors = environment.servlets().
                 addFilter("CORS", CrossOriginFilter.class);
-        cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, new String[]{"/*"});
+        cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
         cors.setInitParameter(
                 CrossOriginFilter.ACCESS_CONTROL_ALLOW_METHODS_HEADER, "GET,PUT,POST,DELETE,OPTIONS");
         cors.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_ORIGIN_HEADER, "*");
