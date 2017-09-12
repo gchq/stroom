@@ -47,10 +47,10 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     private final DatatypeFactory datatypeFactory;
 
     // If we move to a 'named' kafka config later, change the java.util.function.Supplier to a java.util.function.Function
-    StroomStatsInternalStatisticsService(final Supplier<StroomKafkaProducer> stroomKafkaProducerFactory,
+    StroomStatsInternalStatisticsService(final StroomKafkaProducer stroomKafkaProducer,
                                          final StroomPropertyService stroomPropertyService) {
         this.stroomPropertyService = stroomPropertyService;
-        this.stroomKafkaProducer = stroomKafkaProducerFactory.get();
+        this.stroomKafkaProducer = stroomKafkaProducer;
         this.docRefType = stroomPropertyService.getProperty(PROP_KEY_DOC_REF_TYPE);
 
         try {
@@ -70,9 +70,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     @Inject
     StroomStatsInternalStatisticsService(final StroomKafkaProducerFactoryService stroomKafkaProducerFactory,
                                          final StroomPropertyService stroomPropertyService) {
-        this(() -> stroomKafkaProducerFactory.getProducer(exception ->
-                        LOGGER.error("Unable to call function on Kafka producer!", exception)
-                )
+        this(stroomKafkaProducerFactory.getProducer(exception -> LOGGER.error("Unable to call function on Kafka producer!", exception))
                 , stroomPropertyService);
     }
 

@@ -44,7 +44,7 @@ public class TestStroomStatsInternalStatisticsService {
                 "MyTopic");
 
         StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService = new StroomStatsInternalStatisticsService(
-                () -> stroomKafkaProducer,
+                stroomKafkaProducer,
                 mockStroomPropertyService
         );
 
@@ -62,7 +62,7 @@ public class TestStroomStatsInternalStatisticsService {
 
         //two different doc refs so two calls to producer
         Mockito.verify(stroomKafkaProducer, Mockito.times(2))
-                .send(Mockito.any(), Mockito.any(), Mockito.any());
+                .send(Mockito.any(), Mockito.anyBoolean(), Mockito.any());
     }
 
     @Test(expected = RuntimeException.class)
@@ -78,14 +78,14 @@ public class TestStroomStatsInternalStatisticsService {
         //to the handler to simulate a failure on the send that will only manifest itself on the flush
         Mockito.doAnswer(invocation -> {
             Mockito.verify(stroomKafkaProducer)
-                    .send(Mockito.any(), Mockito.any(), exceptionHandlerCaptor.capture());
+                    .send(Mockito.any(), Mockito.anyBoolean(), exceptionHandlerCaptor.capture());
             exceptionHandlerCaptor.getValue()
                     .accept(new RuntimeException("Exception inside StroomKafkaProducer"));
             return null;
         }).when(stroomKafkaProducer).flush();
 
         StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService = new StroomStatsInternalStatisticsService(
-                () -> stroomKafkaProducer,
+                stroomKafkaProducer,
                 mockStroomPropertyService
         );
 
@@ -102,5 +102,4 @@ public class TestStroomStatsInternalStatisticsService {
             throw e;
         }
     }
-
 }
