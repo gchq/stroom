@@ -387,35 +387,26 @@ task setupSampleData() {
 }
 
 project(':stroom-util') {
-    //publishing {
-        //publications {
     publishing.publications {
-            mavenJava(MavenPublication) {
-                from components.java
-            }
-        //}
+        mavenJava(MavenPublication) {
+            from components.java
+        }
     }
 }
 
 project(':stroom-util-shared') {
-    //publishing {
-        //publications {
     publishing.publications {
-            mavenJava(MavenPublication) {
-                from components.java
-            }
-        //}
+        mavenJava(MavenPublication) {
+            from components.java
+        }
     }
 }
 
 project(':stroom-entity-shared') {
-    //publishing {
-        //publications {
     publishing.publications {
-            mavenJava(MavenPublication) {
-                from components.java
-            }
-        //}
+        mavenJava(MavenPublication) {
+            from components.java
+        }
     }
 }
 
