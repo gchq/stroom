@@ -12,7 +12,11 @@ buildscript {
 }
 
 plugins {
+    //plugin for downloading content from the 'net
     id "de.undercouch.download" version "3.2.0"
+
+    //plugin for producing a tree of task dependencies, run task 'taskTree'
+    id "com.dorongold.task-tree" version "1.3"
 }
 
 apply plugin: 'gchq.urldependencies'
@@ -284,6 +288,8 @@ subprojects {
         }
     }
 
+    //ensure we download our libs before compiling java
+    tasks.compileJava.dependsOn downloadUrlDependencies
 }
 
 
@@ -389,4 +395,5 @@ urlDependencies {
     compile(urlLibs.hadoopCommonShaded,
             "https://github.com/gchq/hadoop-common-shaded/releases/download/$versions.hadoopCommonShaded/${urlLibs.hadoopCommonShaded}.jar")
 }
+
 

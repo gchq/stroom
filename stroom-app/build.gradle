@@ -11,7 +11,7 @@ mainClassName = 'stroom.startup.App'
 
 jar {
     //we need to first generate the swagger spec files so they can be added in to the jar
-    dependsOn generateSwaggerDocumentation
+    mustRunAfter generateSwaggerDocumentation
 
     manifest {
         attributes(
@@ -206,3 +206,6 @@ swagger {
         swaggerDirectory = "${project.buildDir}/swagger"
     }
 }
+
+tasks.build.dependsOn generateSwaggerDocumentation
+tasks.build.dependsOn shadowJar
