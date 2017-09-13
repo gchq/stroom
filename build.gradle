@@ -21,6 +21,7 @@ plugins {
 
 apply plugin: 'gchq.urldependencies'
 
+ext.stroomPluginsDir = System.getProperty("user.home") + "/.stroom/plugins"
 
 //if the project has a value for the passed property (i.e from the cmd line via -PpropName=xxx)
 //use that, else use a default value
@@ -223,10 +224,6 @@ allprojects {
 subprojects {
     apply plugin: 'java'
 
-    //sourceSets {
-        //logger.info "main.output.classesDirs: " + main.output.classesDirs
-    //}
-    
     //analyze missing dependencies for the code base
     apply plugin: 'ca.cutterslade.analyze'
     apply plugin: 'idea'
@@ -341,7 +338,7 @@ configure(subprojects.findAll {it.name != 'stroom-app' && it.name != 'stroom-int
     //so stroom-app can access thier code
     //However, generateSwaggerDocumentation must run before stroom-app:jar as its artefacts (the json/yaml spec files) 
     // need to go into that jar 
-    tasks.findByPath(':stroom-app:generateSwaggerDocumentation').mustRunAfter jar
+    tasks.getByPath(':stroom-app:generateSwaggerDocumentation').mustRunAfter jar
 }
 
 
