@@ -78,11 +78,10 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
     @Test
     public void testExport() throws IOException {
-        final Feed eventFeed = commonTestScenarioCreator.createSimpleFeed();
-        final DocRef docRef = DocRefUtil.create(eventFeed);
-//        final Folder folder = folderService.load(eventFeed.getFolder());
-
-//        final String eventFeedPath = folder.getName() + "/" + eventFeed.getName();
+        final DocRef docRef = explorerService.create(Feed.ENTITY_TYPE, FileSystemTestUtil.getUniqueTestString(), null, null);
+        Feed eventFeed = feedService.readDocument(docRef);
+        eventFeed.setDescription("Original Description");
+        feedService.save(eventFeed);
 
         commonTestControl.createRequiredXMLSchemas();
 
@@ -97,18 +96,17 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
         List<ImportState> list = new ArrayList<>();
         importExportSerializer.read(testDataDir, list, ImportMode.CREATE_CONFIRMATION);
+        Assert.assertTrue(list.size() > 0);
 
         // Should all be relative
         Map<DocRef, ImportState> map = new HashMap<>();
         for (final ImportState confirmation : list) {
-//            Assert.assertTrue("Expected to start with / " + confirmation.getSourcePath(),
-//                    confirmation.getSourcePath().startsWith("/"));
             map.put(confirmation.getDocRef(), confirmation);
         }
 
-        Assert.assertTrue(list.size() > 0);
         Assert.assertEquals(State.EQUAL, map.get(docRef).getState());
 
+        eventFeed = feedService.readDocument(docRef);
         eventFeed.setDescription("New Description");
         feedService.save(eventFeed);
         for (final XMLSchema xmlSchema : allSchemas) {

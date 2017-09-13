@@ -261,25 +261,27 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         final String[] elements = path.split("/");
 
         for (final String element : elements) {
-            List<ExplorerNode> nodes = explorerNodeService.getNodesByName(parent, element);
-            nodes = nodes.stream().filter(n -> FOLDER.equals(n.getType())).collect(Collectors.toList());
+            if (element.length() > 0) {
+                List<ExplorerNode> nodes = explorerNodeService.getNodesByName(parent, element);
+                nodes = nodes.stream().filter(n -> FOLDER.equals(n.getType())).collect(Collectors.toList());
 
-            if (nodes.size() == 0) {
-                // No parent node can be found for this element so create one if possible.
-                final DocRef folderRef = new DocRef(parent.getType(), parent.getUuid(), parent.getName());
-                if (!securityContext.hasDocumentPermission(folderRef.getType(), folderRef.getUuid(), DocumentPermissionNames.getDocumentCreatePermission(FOLDER))) {
-                    throw new PermissionException("You do not have permission to create a folder in '" + folderRef);
+                if (nodes.size() == 0) {
+                    // No parent node can be found for this element so create one if possible.
+                    final DocRef folderRef = new DocRef(parent.getType(), parent.getUuid(), parent.getName());
+                    if (!securityContext.hasDocumentPermission(folderRef.getType(), folderRef.getUuid(), DocumentPermissionNames.getDocumentCreatePermission(FOLDER))) {
+                        throw new PermissionException("You do not have permission to create a folder in '" + folderRef);
+                    }
+
+                    // Go and create the folder if we are actually importing now.
+                    if (create) {
+                        // Go and create the folder.
+                        final DocRef newFolder = explorerService.create(FOLDER, element, folderRef, PermissionInheritance.INHERIT);
+                        parent = ExplorerNode.create(newFolder);
+                    }
+
+                } else {
+                    parent = nodes.get(0);
                 }
-
-                // Go and create the folder if we are actually importing now.
-                if (create) {
-                    // Go and create the folder.
-                    final DocRef newFolder = explorerService.create(FOLDER, element, folderRef, PermissionInheritance.INHERIT);
-                    parent = ExplorerNode.create(newFolder);
-                }
-
-            } else {
-                parent = nodes.get(0);
             }
         }
 

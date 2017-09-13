@@ -21,6 +21,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.ImportState;
+import stroom.explorer.server.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
@@ -48,14 +49,14 @@ public class TestImportExportServiceImpl3 extends AbstractCoreIntegrationTest {
     private FeedService feedService;
     @Resource
     private CommonTestScenarioCreator commonTestScenarioCreator;
+    @Resource
+    private ExplorerService explorerService;
 
     @Test
     public void testImportZip() throws Exception {
-        Feed feed = null;
-
         final int BATCH_SIZE = 200;
         for (int i = 0; i < BATCH_SIZE; i++) {
-            feed = commonTestScenarioCreator.createSimpleFeed();
+            explorerService.create(Feed.ENTITY_TYPE, FileSystemTestUtil.getUniqueTestString(), null, null);
         }
         final List<Message> msgList = new ArrayList<>();
 
@@ -71,12 +72,12 @@ public class TestImportExportServiceImpl3 extends AbstractCoreIntegrationTest {
         final List<String> list = ZipUtil.pathList(testFile.toFile());
 
         // Expected size is 1 greater than batch size because it should contain the parent folder for the feeds.
-        final int expectedSize = BATCH_SIZE + 1;
+        final int expectedSize = BATCH_SIZE * 2;
 
         Assert.assertEquals(expectedSize, list.size());
 
         final List<ImportState> confirmList = importExportService.createImportConfirmationList(testFile);
 
-        Assert.assertEquals(expectedSize, confirmList.size());
+        Assert.assertEquals(BATCH_SIZE, confirmList.size());
     }
 }

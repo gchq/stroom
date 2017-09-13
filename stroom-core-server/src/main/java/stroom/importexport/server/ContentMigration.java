@@ -36,7 +36,7 @@ public class ContentMigration {
     // UUID structure 8-4-4-4-12
     private static final String UUID_REGEX = "[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}";
 
-    public void migrate(Path path) {
+    public void migrate(final Path path) {
         // Migrate node files.
         boolean hasNodes = false;
         try (final Stream<Path> stream = Files.walk(path)) {
@@ -75,10 +75,10 @@ public class ContentMigration {
                         .filter(p -> {
                             final String fileName = p.getFileName().toString();
                             return fileName.matches("([^.]*\\.){2,}xml") &&
-                                    fileName.matches(".*\\.[A-Z][a-z]+\\.xml$");
+                                    fileName.matches(".*\\.[A-Z][A-Za-z]+\\.xml$");
                         })
                         .collect(Collectors.toList());
-                list.forEach(this::process);
+                list.forEach(p -> process(path, p));
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -105,7 +105,7 @@ public class ContentMigration {
         }
     }
 
-    private void process(final Path path) {
+    private void process(final Path dir, final Path path) {
         try {
             LOGGER.info("Processing: " + path.toAbsolutePath().toString());
 
@@ -116,7 +116,10 @@ public class ContentMigration {
             // Get path elements
             final List<String> pathElements = new ArrayList<>();
             Path parent = path.getParent();
-            while (parent != null && parent.getFileName() != null && !parent.getFileName().toString().equalsIgnoreCase("stroomContent")) {
+            while (parent != null &&
+                    parent.getFileName() != null &&
+                    !dir.equals(parent) &&
+                    !parent.getFileName().toString().equalsIgnoreCase("stroomContent")) {
                 pathElements.add(0, parent.getFileName().toString());
                 parent = parent.getParent();
             }

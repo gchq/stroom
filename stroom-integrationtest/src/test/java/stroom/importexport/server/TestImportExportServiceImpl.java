@@ -22,9 +22,9 @@ import org.junit.Test;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.ImportState;
-import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.server.ExplorerNodeService;
 import stroom.explorer.server.ExplorerService;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.server.PipelineService;
@@ -59,14 +59,15 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
     public void testExport() {
         // commonTestControl.deleteAll();
 
-        Assert.assertEquals(0, explorerNodeService.getDescendants(null).size());
+        final DocRef system = explorerNodeService.getRoot().getDocRef();
+        Assert.assertEquals(1, explorerNodeService.getDescendants(system).size());
 
-        final DocRef folder1 = explorerService.create(ExplorerConstants.FOLDER, "Root1_", null, null);
-        DocRef folder2 = explorerService.create(ExplorerConstants.FOLDER, "Root2_" + FileSystemTestUtil.getUniqueTestString(), null, null);
+        final DocRef folder1 = explorerService.create(ExplorerConstants.FOLDER, "Root1_", system, null);
+        DocRef folder2 = explorerService.create(ExplorerConstants.FOLDER, "Root2_" + FileSystemTestUtil.getUniqueTestString(), system, null);
         DocRef folder2child1 = explorerService.create(ExplorerConstants.FOLDER, "Root2_Child1_" + FileSystemTestUtil.getUniqueTestString(), folder2, null);
         DocRef folder2child2 = explorerService.create(ExplorerConstants.FOLDER, "Root2_Child2_" + FileSystemTestUtil.getUniqueTestString(), folder2, null);
 
-        Assert.assertEquals(4, explorerNodeService.getDescendants(null).size());
+        Assert.assertEquals(5, explorerNodeService.getDescendants(system).size());
 
         final DocRef tran1Ref = explorerService.create(PipelineEntity.ENTITY_TYPE, FileSystemTestUtil.getUniqueTestString(), folder1, null);
         final PipelineEntity tran1 = pipelineService.readDocument(tran1Ref);
