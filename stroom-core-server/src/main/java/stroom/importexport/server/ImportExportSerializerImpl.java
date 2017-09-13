@@ -140,7 +140,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             try {
                 // Get other associated data.
                 final Map<String, String> dataMap = new HashMap<>();
-                final String filePrefix = createFilePrefix(docRef);
+                final String filePrefix = ImportExportFileNameUtil.createFilePrefix(docRef);
                 final Path dir = nodeFile.getParent();
                 try (final Stream<Path> stream = Files.list(dir)) {
                     stream
@@ -339,7 +339,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
             } else {
                 // Write a file for this explorer entry.
-                final String filePrefix = createFilePrefix(docRef);
+                final String filePrefix = ImportExportFileNameUtil.createFilePrefix(docRef);
                 writeNodeProperties(explorerNode, pathElements, parentDir, filePrefix, messageList);
 
                 // Write out all associated data.
@@ -384,7 +384,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
     private Path createDirs(final Path dir, final List<String> pathElements) throws IOException {
         Path parentDir = dir;
         for (final String pathElement : pathElements) {
-            final String safeName = toSafeFileName(pathElement, 100);
+            final String safeName = ImportExportFileNameUtil.toSafeFileName(pathElement, 100);
             final Path child = parentDir.resolve(safeName);
 
             // If this folder hasn't been created yet then output data for the folder and create it.
@@ -396,18 +396,6 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         }
 
         return parentDir;
-    }
-
-    private String createFilePrefix(final DocRef docRef) {
-        return docRef.getUuid() + "." + toSafeFileName(docRef.getName(), 20) + "." + docRef.getType();
-    }
-
-    private String toSafeFileName(final String string, final int maxLength) {
-        String safe = string.replaceAll("[^A-Za-z0-9]", "_");
-        if (safe.length() > maxLength) {
-            safe = safe.substring(0, maxLength);
-        }
-        return safe;
     }
 
     private String createPath(final String parent, final String child) {

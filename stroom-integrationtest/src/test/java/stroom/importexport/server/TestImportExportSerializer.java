@@ -25,8 +25,8 @@ import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.ImportState;
 import stroom.entity.shared.ImportState.ImportMode;
 import stroom.entity.shared.ImportState.State;
-import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.server.ExplorerService;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.server.PipelineService;
@@ -39,6 +39,7 @@ import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.ComparisonHelper;
 import stroom.test.StroomCoreServerTestFileUtil;
+import stroom.util.io.StreamUtil;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.xmlschema.server.XMLSchemaService;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
@@ -167,7 +168,10 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
         importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true, new ArrayList<>());
 
-        final String childXml = new String(Files.readAllBytes(testDataDir.resolve(folder.getName()).resolve("Child.Pipeline.xml")));
+        final String fileNamePrefix = ImportExportFileNameUtil.createFilePrefix(childPipelineRef);
+        final String fileName = fileNamePrefix + ".xml";
+        final Path path = testDataDir.resolve(folder.getName()).resolve(fileName);
+        final String childXml = new String(Files.readAllBytes(path), StreamUtil.DEFAULT_CHARSET);
 
         Assert.assertTrue("Parent reference not serialised\n" + childXml,
                 childXml.contains("&lt;name&gt;Parent&lt;/name&gt;"));
