@@ -1,7 +1,5 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <pipeline>
-   <createTime>1505224198326</createTime>
-   <createUser>admin</createUser>
    <description/>
    <name>FILENO_TO_LOCATION-REFERENCE</name>
    <parentPipelineXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
@@ -12,7 +10,5 @@
       &lt;/doc&gt;
    </parentPipelineXML>
    <pipelineType>Reference Data</pipelineType>
-   <updateTime>1505224198326</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>7826035a-b248-4d86-bf15-3fbdd03084a6</uuid>
 </pipeline>

@@ -1,14 +1,10 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <statisticStore>
-   <createTime>1505224196866</createTime>
-   <createUser>admin</createUser>
    <description>EPS</description>
    <enabled>true</enabled>
    <name>EPS</name>
    <precision>60000</precision>
    <rollUpType>NONE</rollUpType>
    <statisticType>VALUE</statisticType>
-   <updateTime>1505224196866</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>a9936548-2572-448b-9d5b-8543052c4d92</uuid>
 </statisticStore>

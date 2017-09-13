@@ -1,14 +1,10 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <xmlSchema>
-   <createTime>1505224197738</createTime>
-   <createUser>admin</createUser>
    <deprecated>false</deprecated>
    <description>This is a schema for the XML representation of JSON used as the target for the XSLT 3.0 function fn:json-to-xml()</description>
    <name>json</name>
    <namespaceURI>http://www.w3.org/2013/XSL/json</namespaceURI>
    <schemaGroup/>
    <systemId>json</systemId>
-   <updateTime>1505224197738</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>5dd0956b-2e8b-4d6e-9a3e-8e3756dae746</uuid>
 </xmlSchema>

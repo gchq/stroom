@@ -1,11 +1,7 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <textConverter>
    <converterType>DATA_SPLITTER</converterType>
-   <createTime>1505224197033</createTime>
-   <createUser>admin</createUser>
    <description/>
    <name>BITMAP-REFERENCE</name>
-   <updateTime>1505224197033</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>8e43a4dd-6780-4055-b8dc-03c6318e31e0</uuid>
 </textConverter>

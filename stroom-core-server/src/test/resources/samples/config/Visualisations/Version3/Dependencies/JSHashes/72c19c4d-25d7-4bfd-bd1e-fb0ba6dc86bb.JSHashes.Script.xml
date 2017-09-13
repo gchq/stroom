@@ -1,14 +1,10 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <script>
-   <createTime>1505224196645</createTime>
-   <createUser>admin</createUser>
    <dependenciesXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
 	&lt;docs&gt;
 	&lt;/docs&gt;
     </dependenciesXML>
    <description>Library for generating hashes such as MD5</description>
    <name>JSHashes</name>
-   <updateTime>1505224196645</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>72c19c4d-25d7-4bfd-bd1e-fb0ba6dc86bb</uuid>
 </script>

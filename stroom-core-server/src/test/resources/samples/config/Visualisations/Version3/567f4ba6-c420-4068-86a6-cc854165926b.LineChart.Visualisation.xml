@@ -1,7 +1,5 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <visualisation>
-   <createTime>1505224197158</createTime>
-   <createUser>admin</createUser>
    <description>Git commit: a1e3bba4e658189a7de874fd1c6748624084d7e4
 Git commit time: 2016-09-21 17:03:32 +0100</description>
    <functionName>visualisations.LineChart</functionName>
@@ -13,7 +11,5 @@ Git commit time: 2016-09-21 17:03:32 +0100</description>
 &lt;name&gt;LineChart&lt;/name&gt;
 &lt;/doc&gt;
     </scriptRefXML>
-   <updateTime>1505224197158</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>567f4ba6-c420-4068-86a6-cc854165926b</uuid>
 </visualisation>

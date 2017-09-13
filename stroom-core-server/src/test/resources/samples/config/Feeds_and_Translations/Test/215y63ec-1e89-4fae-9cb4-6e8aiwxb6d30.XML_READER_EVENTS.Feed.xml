@@ -2,15 +2,11 @@
 <feed>
    <classification/>
    <contextEncoding>UTF-8</contextEncoding>
-   <createTime>1505224195023</createTime>
-   <createUser>admin</createUser>
    <description>XML_READER-EVENTS</description>
    <encoding>UTF-8</encoding>
    <name>XML_READER-EVENTS</name>
    <reference>false</reference>
    <status>RECEIVE</status>
    <streamType>Raw Events</streamType>
-   <updateTime>1505224195023</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>215y63ec-1e89-4fae-9cb4-6e8aiwxb6d30</uuid>
 </feed>

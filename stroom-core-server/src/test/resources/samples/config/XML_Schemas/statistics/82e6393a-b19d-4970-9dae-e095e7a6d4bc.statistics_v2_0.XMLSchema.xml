@@ -1,14 +1,10 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <xmlSchema>
-   <createTime>1505224197629</createTime>
-   <createUser>admin</createUser>
    <deprecated>false</deprecated>
    <description/>
    <name>statistics v2.0</name>
    <namespaceURI>statistics:2</namespaceURI>
    <schemaGroup>STATISTICS</schemaGroup>
    <systemId>file://statistics-v2.0.xsd</systemId>
-   <updateTime>1505224197629</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>82e6393a-b19d-4970-9dae-e095e7a6d4bc</uuid>
 </xmlSchema>

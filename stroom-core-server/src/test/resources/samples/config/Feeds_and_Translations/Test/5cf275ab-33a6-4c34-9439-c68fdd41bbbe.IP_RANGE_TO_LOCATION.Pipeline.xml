@@ -1,7 +1,5 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <pipeline>
-   <createTime>1505224198491</createTime>
-   <createUser>admin</createUser>
    <description/>
    <name>IP_RANGE_TO_LOCATION-REFERENCE</name>
    <parentPipelineXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
@@ -12,7 +10,5 @@
       &lt;/doc&gt;
    </parentPipelineXML>
    <pipelineType>Reference Data</pipelineType>
-   <updateTime>1505224198491</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>5cf275ab-33a6-4c34-9439-c68fdd41bbbe</uuid>
 </pipeline>

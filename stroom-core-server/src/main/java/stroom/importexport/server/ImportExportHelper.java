@@ -27,6 +27,7 @@ import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
+import stroom.entity.shared.Entity;
 import stroom.entity.shared.EntityDependencyServiceException;
 import stroom.entity.shared.ImportState;
 import stroom.entity.shared.ImportState.ImportMode;
@@ -36,6 +37,7 @@ import stroom.entity.shared.Res;
 import stroom.query.api.v1.DocRef;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.date.DateUtil;
+import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
@@ -358,29 +360,30 @@ public class ImportExportHelper {
     private void setStringProperty(final BaseEntityBeanWrapper beanWrapper, final String propertyName,
                                    final String value, final ImportState importState,
                                    final ImportMode importMode) {
-//        final Class<? extends Entity> clazz = beanWrapper.getPropertyBaseEntityType(propertyName);
-//
-//        // See if this property is a resource. If it is then create
-//        // a new resource or update an existing one.
-//        if (Res.class.equals(clazz)) {
-//            Res res;
-//            final Object existing = beanWrapper.getPropertyValue(propertyName);
-//            if (existing == null) {
-//                res = new Res();
-//            } else {
-//                res = (Res) existing;
-//            }
-//
-//            if (importMode == ImportMode.CREATE_CONFIRMATION) {
-//                if (!EqualsUtil.isEquals(res.getData(), value)) {
-//                    importState.getUpdatedFieldList().add(propertyName);
-//                }
-//            } else {
-//                res.setData(value);
-//                beanWrapper.setPropertyValue(propertyName, res);
-//            }
-//
-//        } else {
+        final Class<? extends Entity> clazz = beanWrapper.getPropertyBaseEntityType(propertyName);
+
+        // See if this property is a resource. If it is then create
+        // a new resource or update an existing one.
+        if (Res.class.equals(clazz)) {
+            Res res;
+            final Object existing = beanWrapper.getPropertyValue(propertyName);
+            if (existing == null) {
+                res = new Res();
+            } else {
+                res = (Res) existing;
+            }
+
+            if (importMode == ImportMode.CREATE_CONFIRMATION) {
+                if (!EqualsUtil.isEquals(res.getData(), value)) {
+                    importState.getUpdatedFieldList().add(propertyName);
+                }
+            } else {
+                res.setData(value);
+                beanWrapper.setPropertyValue(propertyName, res);
+            }
+
+        }
+//        else {
 //            // This property is an entity so get the referenced
 //            // entity if we can.
 //            final BaseEntity entity = resolveEntityByPath(beanWrapper, clazz, value);

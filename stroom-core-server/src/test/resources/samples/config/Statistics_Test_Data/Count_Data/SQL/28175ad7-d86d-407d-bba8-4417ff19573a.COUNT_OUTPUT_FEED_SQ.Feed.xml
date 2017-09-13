@@ -2,15 +2,11 @@
 <feed>
    <classification/>
    <contextEncoding/>
-   <createTime>1505224208717</createTime>
-   <createUser>admin</createUser>
    <description/>
    <encoding/>
    <name>COUNT_OUTPUT_FEED_SQL</name>
    <reference>false</reference>
    <status>RECEIVE</status>
    <streamType>Raw Events</streamType>
-   <updateTime>1505224208717</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>28175ad7-d86d-407d-bba8-4417ff19573a</uuid>
 </feed>

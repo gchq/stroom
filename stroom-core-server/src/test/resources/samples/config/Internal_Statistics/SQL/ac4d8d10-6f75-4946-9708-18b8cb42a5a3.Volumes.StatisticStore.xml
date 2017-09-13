@@ -1,14 +1,10 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <statisticStore>
-   <createTime>1505224196810</createTime>
-   <createUser>admin</createUser>
    <description>Volumes</description>
    <enabled>true</enabled>
    <name>Volumes</name>
    <precision>60000</precision>
    <rollUpType>NONE</rollUpType>
    <statisticType>VALUE</statisticType>
-   <updateTime>1505224196810</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>ac4d8d10-6f75-4946-9708-18b8cb42a5a3</uuid>
 </statisticStore>

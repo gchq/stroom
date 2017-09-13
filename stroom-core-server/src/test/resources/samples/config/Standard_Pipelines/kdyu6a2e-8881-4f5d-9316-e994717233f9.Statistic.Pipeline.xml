@@ -1,11 +1,7 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <pipeline>
-   <createTime>1505224208933</createTime>
-   <createUser>admin</createUser>
    <description/>
    <name>Statistic</name>
    <pipelineType>Statistic</pipelineType>
-   <updateTime>1505224208933</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>kdyu6a2e-8881-4f5d-9316-e994717233f9</uuid>
 </pipeline>

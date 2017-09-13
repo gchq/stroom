@@ -1,5 +1,5 @@
-tags=DataSource
 name=Example index
+path=Indexes/Example index
+tags=DataSource
 type=Index
 uuid=57a35b9a-083c-4a93-a813-fc3ddfe1ff44
-path=Indexes/Example index

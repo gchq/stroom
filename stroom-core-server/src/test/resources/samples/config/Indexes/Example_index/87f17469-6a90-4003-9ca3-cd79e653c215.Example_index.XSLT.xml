@@ -1,10 +1,6 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <xslt>
-   <createTime>1505224197994</createTime>
-   <createUser>admin</createUser>
    <description/>
    <name>Example index</name>
-   <updateTime>1505224197994</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>87f17469-6a90-4003-9ca3-cd79e653c215</uuid>
 </xslt>

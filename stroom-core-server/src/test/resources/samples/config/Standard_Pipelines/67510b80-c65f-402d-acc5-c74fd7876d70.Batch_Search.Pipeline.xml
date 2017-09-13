@@ -1,12 +1,8 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <pipeline>
-   <createTime>1505224198191</createTime>
-   <createUser>admin</createUser>
    <description/>
    <name>Batch Search</name>
    <parentPipelineXML/>
    <pipelineType>Search Extraction</pipelineType>
-   <updateTime>1505224198191</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>67510b80-c65f-402d-acc5-c74fd7876d70</uuid>
 </pipeline>

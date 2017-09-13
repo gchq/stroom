@@ -1,5 +1,5 @@
-tags=DataSource
 name=ValueStatisticSQL
+path=Statistics Test Data/ValueData/SQL
+tags=DataSource
 type=StatisticStore
 uuid=a5b76a2e-7689-4f5d-9316-e948140423f9
-path=Statistics Test Data/ValueData/SQL

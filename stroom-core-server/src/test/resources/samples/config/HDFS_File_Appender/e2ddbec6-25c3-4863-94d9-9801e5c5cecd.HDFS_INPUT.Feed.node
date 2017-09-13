@@ -1,4 +1,4 @@
 name=HDFS_INPUT
+path=HDFS File Appender
 type=Feed
 uuid=e2ddbec6-25c3-4863-94d9-9801e5c5cecd
-path=HDFS File Appender

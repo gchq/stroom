@@ -1,5 +1,5 @@
-tags=DataSource
 name=CountStatisticSQL
+path=Statistics Test Data/Count Data/SQL
+tags=DataSource
 type=StatisticStore
 uuid=e2528c85-722e-46e0-91b6-742149691047
-path=Statistics Test Data/Count Data/SQL

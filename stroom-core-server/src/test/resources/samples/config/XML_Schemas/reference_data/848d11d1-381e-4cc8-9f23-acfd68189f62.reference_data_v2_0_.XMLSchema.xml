@@ -1,14 +1,10 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <xmlSchema>
-   <createTime>1505224197654</createTime>
-   <createUser>admin</createUser>
    <deprecated>false</deprecated>
    <description/>
    <name>reference-data v2.0.1</name>
    <namespaceURI>reference-data:2</namespaceURI>
    <schemaGroup>REFERENCE_DATA</schemaGroup>
    <systemId>file://reference-data-v2.0.1.xsd</systemId>
-   <updateTime>1505224197654</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>848d11d1-381e-4cc8-9f23-acfd68189f62</uuid>
 </xmlSchema>

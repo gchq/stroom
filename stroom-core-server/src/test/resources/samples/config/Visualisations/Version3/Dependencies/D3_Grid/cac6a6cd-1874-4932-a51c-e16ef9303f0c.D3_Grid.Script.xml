@@ -1,7 +1,5 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <script>
-   <createTime>1505224196602</createTime>
-   <createUser>admin</createUser>
    <dependenciesXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
 	&lt;docs&gt;
         &lt;doc&gt;
@@ -13,7 +11,5 @@
     </dependenciesXML>
    <description>Library for creating grids of things in d3.js</description>
    <name>D3-Grid</name>
-   <updateTime>1505224196602</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>cac6a6cd-1874-4932-a51c-e16ef9303f0c</uuid>
 </script>

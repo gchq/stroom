@@ -1,14 +1,10 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <script>
-   <createTime>1505224196498</createTime>
-   <createUser>admin</createUser>
    <dependenciesXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
 	&lt;docs&gt;
 	&lt;/docs&gt;
     </dependenciesXML>
    <description>The D3 library v3.4.8</description>
    <name>D3</name>
-   <updateTime>1505224196498</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>61cc6424-9899-4f38-ad77-f4204f9de166</uuid>
 </script>

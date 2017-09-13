@@ -1,11 +1,7 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <pipeline>
-   <createTime>1505224198697</createTime>
-   <createUser>admin</createUser>
    <description/>
    <name>TEST_JSON_PARSER-EVENTS</name>
    <pipelineType>Event Data</pipelineType>
-   <updateTime>1505224198697</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>40fd858d-9e0b-4547-bad9-032500ea390b</uuid>
 </pipeline>

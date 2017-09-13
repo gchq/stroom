@@ -1,7 +1,5 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <visualisation>
-   <createTime>1505224197445</createTime>
-   <createUser>admin</createUser>
    <description>Git commit: a1e3bba4e658189a7de874fd1c6748624084d7e4
 Git commit time: 2016-09-21 17:03:32 +0100</description>
    <functionName>visualisations.Scatter</functionName>
@@ -13,7 +11,5 @@ Git commit time: 2016-09-21 17:03:32 +0100</description>
 &lt;name&gt;Scatter&lt;/name&gt;
 &lt;/doc&gt;
     </scriptRefXML>
-   <updateTime>1505224197445</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>8b5e5f4f-c1a8-474f-9ff2-88bdb0f9a0a5</uuid>
 </visualisation>

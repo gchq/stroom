@@ -1,7 +1,5 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <pipeline>
-   <createTime>1505224198461</createTime>
-   <createUser>admin</createUser>
    <description/>
    <name>XML_JSON-EVENTS</name>
    <parentPipelineXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
@@ -12,7 +10,5 @@
       &lt;/doc&gt;
    </parentPipelineXML>
    <pipelineType>Event Data</pipelineType>
-   <updateTime>1505224198461</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>05dfe822-2a9d-47e7-9251-79260d4c6244</uuid>
 </pipeline>

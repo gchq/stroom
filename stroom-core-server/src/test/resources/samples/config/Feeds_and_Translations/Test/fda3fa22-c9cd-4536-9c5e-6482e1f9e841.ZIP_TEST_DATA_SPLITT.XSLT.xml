@@ -1,10 +1,6 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <xslt>
-   <createTime>1505224197809</createTime>
-   <createUser>admin</createUser>
    <description/>
    <name>ZIP_TEST-DATA_SPLITTER-CONTEXT</name>
-   <updateTime>1505224197809</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>fda3fa22-c9cd-4536-9c5e-6482e1f9e841</uuid>
 </xslt>

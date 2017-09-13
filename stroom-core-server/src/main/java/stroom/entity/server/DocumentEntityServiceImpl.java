@@ -866,28 +866,4 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         }
         return sqlFieldMap;
     }
-//
-//    public static final class EntityReferenceQuery {
-//        private final String entityType;
-//        private final String tableName;
-//        private final String whereClause;
-//
-//        public EntityReferenceQuery(final String entityType, final String tableName, final String whereClause) {
-//            this.entityType = entityType;
-//            this.tableName = tableName;
-//            this.whereClause = whereClause;
-//        }
-//
-//        public String getEntityType() {
-//            return entityType;
-//        }
-//
-//        public String getTableName() {
-//            return tableName;
-//        }
-//
-//        public String getWhereClause() {
-//            return whereClause;
-//        }
-//    }
 }

@@ -1,7 +1,5 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <script>
-   <createTime>1505224195906</createTime>
-   <createUser>admin</createUser>
    <dependenciesXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
 	&lt;docs&gt;
         &lt;doc&gt;
@@ -24,7 +22,5 @@
    <description>Git commit: a1e3bba4e658189a7de874fd1c6748624084d7e4
 Git commit time: 2016-09-21 17:03:32 +0100</description>
    <name>GenericGrid</name>
-   <updateTime>1505224195906</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>5d4252d6-6f13-4f24-9481-9e98e038747c</uuid>
 </script>

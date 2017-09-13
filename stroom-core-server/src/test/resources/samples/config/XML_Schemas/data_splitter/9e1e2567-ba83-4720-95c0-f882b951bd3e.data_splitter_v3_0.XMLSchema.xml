@@ -1,14 +1,10 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <xmlSchema>
-   <createTime>1505224197601</createTime>
-   <createUser>admin</createUser>
    <deprecated>false</deprecated>
    <description/>
    <name>data-splitter v3.0</name>
    <namespaceURI>data-splitter:3</namespaceURI>
    <schemaGroup>DATA_SPLITTER</schemaGroup>
    <systemId>file://data-splitter-v3.0.xsd</systemId>
-   <updateTime>1505224197601</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>9e1e2567-ba83-4720-95c0-f882b951bd3e</uuid>
 </xmlSchema>

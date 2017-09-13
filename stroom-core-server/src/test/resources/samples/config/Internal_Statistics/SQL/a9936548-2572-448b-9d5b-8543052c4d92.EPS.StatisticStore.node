@@ -1,5 +1,5 @@
-tags=DataSource
 name=EPS
+path=Internal Statistics/SQL
+tags=DataSource
 type=StatisticStore
 uuid=a9936548-2572-448b-9d5b-8543052c4d92
-path=Internal Statistics/SQL
