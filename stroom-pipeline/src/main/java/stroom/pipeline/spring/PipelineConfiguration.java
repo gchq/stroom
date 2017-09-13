@@ -27,8 +27,14 @@ import org.springframework.context.annotation.FilterType;
  * overridden.
  */
 @Configuration
-@ComponentScan(basePackages = {"stroom.pipeline", "stroom.refdata", "stroom.cache",
-        "stroom.resource", "stroom.xml", "stroom.benchmark", "stroom.kafka"}, excludeFilters = {
+@ComponentScan(basePackages = {
+        "stroom.pipeline",
+        "stroom.refdata",
+        "stroom.cache",
+        "stroom.resource",
+        "stroom.xml",
+        "stroom.benchmark",
+        "stroom.connectors.kafka"}, excludeFilters = {
         // Exclude other configurations that might be found accidentally
         // during a component scan as configurations should be specified
         // explicitly.
