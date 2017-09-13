@@ -119,7 +119,7 @@
         }
       ],
       "resultStyle": "FLAT",
-      "fetchData": true
+      "fetch": "ALL"
     },
     {
       "componentId": "vis-SPSCW",
@@ -215,7 +215,7 @@
         }
       ],
       "resultStyle": "FLAT",
-      "fetchData": true
+      "fetch": "ALL"
     },
     {
       "componentId": "table-78LF4",
@@ -271,7 +271,7 @@
         "length": 100
       },
       "resultStyle": "TABLE",
-      "fetchData": true
+      "fetch": "ALL"
     },
     {
       "componentId": "table-BKJT6",
@@ -319,7 +319,7 @@
         "length": 100
       },
       "resultStyle": "TABLE",
-      "fetchData": true
+      "fetch": "ALL"
     },
     {
       "componentId": "vis-QYG7H",
@@ -393,7 +393,7 @@
         }
       ],
       "resultStyle": "FLAT",
-      "fetchData": true
+      "fetch": "ALL"
     }
   ],
   "dateTimeLocale": "Etc/GMT",

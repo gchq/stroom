@@ -15,39 +15,25 @@ dependencies {
     compile project(':stroom-statistics-server')
     permitUnusedDeclared project(':stroom-statistics-server')
 
-    testCompile urlDependencies.get(urlLibs.stroomQueryApi)
-    testCompile urlDependencies.get(urlLibs.stroomQueryCommon)
-    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
-    testCompile project(path: ':stroom-dashboard-server', configuration: 'testArtifacts')
-    testCompile project(path: ':stroom-index-server', configuration: 'testArtifacts')
-    testCompile project(path: ':stroom-security-server', configuration: 'testArtifacts')
-    testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
-    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
+    integrationTestCompile urlDependencies.get(urlLibs.stroomQueryApi)
+    integrationTestCompile urlDependencies.get(urlLibs.stroomQueryCommon)
+    integrationTestCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
+    integrationTestCompile project(path: ':stroom-dashboard-server', configuration: 'testArtifacts')
+    integrationTestCompile project(path: ':stroom-index-server', configuration: 'testArtifacts')
+    integrationTestCompile project(path: ':stroom-security-server', configuration: 'testArtifacts')
+    integrationTestCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
+    integrationTestCompile project(path: ':stroom-util', configuration: 'testArtifacts')
 
-    testCompile libs.slf4j_api
-    testCompile libs.junit
+    integrationTestCompile libs.slf4j_api
+    integrationTestCompile libs.junit
 
-    testRuntime libs.javax_el
+    integrationTestRuntime libs.javax_el
     //the following logging libs are needed when running junits outside dropwizard
-    testRuntime libs.jcl_over_slf4j
-    testRuntime libs.jul_to_slf4j
-    testRuntime libs.log4j_over_slf4j
-    testRuntime libs.logback_classic
-    testRuntime libs.logback_core
-}
-
-// Integration tests are quite slow so output progress for each test to keep travis alive
-test {
-    afterTest { desc, result -> 
-        println "Executed test ${desc.name} [${desc.className}] with result: ${result.resultType}"
-    }
-
-    //Use full logging for test exceptions so we can see where the failure occurred 
-    testLogging {
-        events "failed"
-        exceptionFormat = 'full'
-        showStackTraces = true
-    }
+    integrationTestRuntime libs.jcl_over_slf4j
+    integrationTestRuntime libs.jul_to_slf4j
+    integrationTestRuntime libs.log4j_over_slf4j
+    integrationTestRuntime libs.logback_classic
+    integrationTestRuntime libs.logback_core
 }
 
 task setupSampleData(type: JavaExec) {

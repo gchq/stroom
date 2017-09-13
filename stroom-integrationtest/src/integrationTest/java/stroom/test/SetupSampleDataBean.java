@@ -80,7 +80,7 @@ public final class SetupSampleDataBean {
     private static final String STATS_COUNT_FEED_NAME = "COUNT_FEED";
     private static final String STATS_VALUE_FEED_NAME = "VALUE_FEED";
     private static final String STATS_COUNT_API_FEED_NAME = "COUNT_V3";
-    private static final String STATS_COUNT_API_DATA_FILE = "./stroom-integrationtest/src/test/resources/SetupSampleDataBean_COUNT_V3.xml";
+    private static final String STATS_COUNT_API_DATA_FILE = "./stroom-integrationtest/src/integrationTest/resources/SetupSampleDataBean_COUNT_V3.xml";
 
     private static final int LOAD_CYCLES = 10;
 

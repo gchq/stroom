@@ -210,4 +210,4 @@ task gwtClean {
 }
 
 gwtCompile.onlyIf { !project.hasProperty('skipGWT') }
-build.dependsOn('gwtCompile')
+build.dependsOn gwtCompile
