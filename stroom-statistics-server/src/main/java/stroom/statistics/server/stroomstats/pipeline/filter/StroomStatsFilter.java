@@ -7,12 +7,15 @@ import stroom.connectors.kafka.filter.AbstractKafkaProducerFilter;
 import stroom.node.server.StroomPropertyService;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.server.errorhandler.LoggedException;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.server.writer.PathCreator;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.statistics.server.stroomstats.kafka.TopicNameFactory;
 import stroom.stats.shared.StroomStatsStoreEntity;
+import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
@@ -29,25 +32,49 @@ import javax.inject.Inject;
         icon = ElementIcons.STROOM_STATS)
 public class StroomStatsFilter extends AbstractKafkaProducerFilter {
 
+    private final TopicNameFactory topicNameFactory;
     private StroomStatsStoreEntity stroomStatsStoreEntity;
+    String topic = null;
+    String recordKey = null;
 
     @Inject
     public StroomStatsFilter(final ErrorReceiverProxy errorReceiverProxy,
                              final LocationFactoryProxy locationFactory,
                              final StroomPropertyService stroomPropertyService,
                              final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
-                             final PathCreator pathCreator) {
+                             final PathCreator pathCreator,
+                             final TopicNameFactory topicNameFactory) {
         super(errorReceiverProxy, locationFactory, stroomKafkaProducerFactoryService);
+        this.topicNameFactory = topicNameFactory;
     }
 
     @Override
     public String getTopic() {
-        return null;
+        return topic;
     }
 
     @Override
     public String getRecordKey() {
-        return null;
+        return recordKey;
+    }
+
+    @Override
+    public void startProcessing() {
+        if (stroomStatsStoreEntity == null) {
+            super.log(Severity.FATAL_ERROR, "Stroom-Stats data source has not been set", null);
+            throw new LoggedException("Stroom-Stats data source has not been set");
+        }
+
+        if (!stroomStatsStoreEntity.isEnabled()) {
+            final String msg = "Stroom-Stats data source with name [" + stroomStatsStoreEntity.getName() + "] is disabled";
+            log(Severity.FATAL_ERROR, msg, null);
+            throw new LoggedException(msg);
+        }
+
+        topic = topicNameFactory.getTopic(stroomStatsStoreEntity.getStatisticType());
+        recordKey = stroomStatsStoreEntity.getUuid();
+
+        super.startProcessing();
     }
 
     @PipelineProperty(description = "The stroom-stats data source to record statistics against.")

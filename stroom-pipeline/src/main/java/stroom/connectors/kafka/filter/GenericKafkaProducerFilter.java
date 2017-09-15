@@ -18,7 +18,6 @@ package stroom.connectors.kafka.filter;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.xml.sax.SAXException;
 import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
@@ -65,12 +64,6 @@ public class GenericKafkaProducerFilter extends AbstractKafkaProducerFilter {
                                       final PathCreator pathCreator) {
         super(errorReceiverProxy, locationFactory, stroomKafkaProducerFactoryService);
         this.pathCreator = pathCreator;
-    }
-
-    @Override
-    public void endDocument() throws SAXException {
-        super.endDocument();
-        super.sendOutputToKafka();
     }
 
     @PipelineProperty(description = "This key to apply to the records, used to select partition.")
