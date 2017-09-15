@@ -96,7 +96,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
                         StroomKafkaProducerRecord<String, String> producerRecord =
                                 new StroomKafkaProducerRecord.Builder<String, String>()
                                         .topic(topic)
-                                        .key(statName)
+                                        .key(docRef.getUuid())
                                         .value(message)
                                         .build();
                         stroomKafkaProducer.send(producerRecord, false, exception -> {
