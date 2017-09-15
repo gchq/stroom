@@ -19,19 +19,14 @@ package stroom.connectors.kafka.filter;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.SAXException;
-import stroom.connectors.kafka.*;
-import stroom.connectors.kafka.StroomKafkaProducer;
-import stroom.connectors.kafka.StroomKafkaProducerRecord;
-import stroom.node.server.StroomPropertyService;
+import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
-import stroom.pipeline.server.filter.AbstractSamplingFilter;
 import stroom.pipeline.server.writer.PathCreator;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
@@ -50,53 +45,32 @@ import javax.inject.Inject;
 @Component
 @Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(
-        type = "KafkaProducerFilter",
+        type = "GenericKafkaProducerFilter",
         category = PipelineElementType.Category.FILTER,
         roles = {PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_HAS_TARGETS,
                 PipelineElementType.VISABILITY_SIMPLE},
         icon = ElementIcons.KAFKA)
-public class KafkaProducerFilter extends AbstractSamplingFilter {
+public class GenericKafkaProducerFilter extends AbstractKafkaProducerFilter {
 
-    private final ErrorReceiverProxy errorReceiverProxy;
-    private final StroomKafkaProducer stroomKafkaProducer;
     private final PathCreator pathCreator;
 
     private String topic;
     private String recordKey;
-    private boolean flushOnSend;
 
     @Inject
-    public KafkaProducerFilter(final ErrorReceiverProxy errorReceiverProxy,
-                               final LocationFactoryProxy locationFactory,
-                               final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
-                               final StroomPropertyService stroomPropertyService,
-                               final PathCreator pathCreator) {
-        super(errorReceiverProxy, locationFactory);
-        this.errorReceiverProxy = errorReceiverProxy;
-        this.stroomKafkaProducer = stroomKafkaProducerFactoryService.getProducer(exception ->
-                errorReceiverProxy.log(Severity.ERROR, null, null, "Called function on Fake Kafka proxy!", exception)
-        );
+    public GenericKafkaProducerFilter(final ErrorReceiverProxy errorReceiverProxy,
+                                      final LocationFactoryProxy locationFactory,
+                                      final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
+                                      final PathCreator pathCreator) {
+        super(errorReceiverProxy, locationFactory, stroomKafkaProducerFactoryService);
         this.pathCreator = pathCreator;
-        this.flushOnSend = true;
     }
 
     @Override
     public void endDocument() throws SAXException {
         super.endDocument();
-        final StroomKafkaProducerRecord<String, String> newRecord =
-                new StroomKafkaProducerRecord.Builder<String, String>()
-                        .topic(topic)
-                        .key(recordKey)
-                        .value(getOutput())
-                        .build();
-        try {
-            stroomKafkaProducer.send(newRecord, flushOnSend, exception ->
-                errorReceiverProxy.log(Severity.ERROR, null, null, "Unable to send record to Kafka!", exception)
-            );
-        } catch (RuntimeException e) {
-            errorReceiverProxy.log(Severity.ERROR, null, null, "Unable to send record to Kafka!", e);
-        }
+        super.sendOutputToKafka();
     }
 
     @PipelineProperty(description = "This key to apply to the records, used to select partition.")
@@ -109,8 +83,13 @@ public class KafkaProducerFilter extends AbstractSamplingFilter {
         this.topic = pathCreator.replaceAll(topic);
     }
 
-    @PipelineProperty(description="Flush the producer each time a message is sent")
-    public void setFlushOnSend(final boolean flushOnSend) {
-        this.flushOnSend = flushOnSend;
+    @Override
+    public String getTopic() {
+        return topic;
+    }
+
+    @Override
+    public String getRecordKey() {
+        return recordKey;
     }
 }
