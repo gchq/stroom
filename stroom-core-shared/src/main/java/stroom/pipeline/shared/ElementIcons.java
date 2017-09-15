@@ -29,7 +29,7 @@ public final class ElementIcons {
     public static final String SPLIT = "split.svg";
     public static final String STATISTICS = "statistics.svg";
     public static final String STREAM = "stream.svg";
-    public static final String STROOM_STATS = "stroomStats.png";
+    public static final String STROOM_STATS = "StroomStatsStore.svg";
     public static final String TEXT = "text.svg";
     public static final String XML = "xml.svg";
     public static final String XSD = "xsd.svg";
