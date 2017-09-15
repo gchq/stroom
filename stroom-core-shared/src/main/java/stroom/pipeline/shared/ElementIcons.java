@@ -21,7 +21,7 @@ public final class ElementIcons {
     public static final String ID = "id.svg";
     public static final String INDEX = "index.svg";
     public static final String JSON = "json.svg";
-    public static final String KAFKA = "kafka.png";
+    public static final String KAFKA = "apache_kafka-icon.svg";
     public static final String RECORD_COUNT = "recordCount.svg";
     public static final String RECORD_OUTPUT = "recordOutput.svg";
     public static final String REFERENCE_DATA = "referenceData.svg";
