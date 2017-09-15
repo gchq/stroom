@@ -5,14 +5,16 @@ import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.connectors.kafka.*;
+import stroom.connectors.kafka.StroomKafkaProducer;
+import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
+import stroom.connectors.kafka.StroomKafkaProducerRecord;
 import stroom.node.server.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsService;
-import stroom.stats.schema.Statistics;
-import stroom.stats.schema.TagType;
-import stroom.util.shared.Severity;
+import stroom.stats.schema.v3.ObjectFactory;
+import stroom.stats.schema.v3.Statistics;
+import stroom.stats.schema.v3.TagType;
 
 import javax.inject.Inject;
 import javax.xml.bind.JAXBContext;
@@ -28,7 +30,6 @@ import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
-import java.util.function.Supplier;
 
 @SuppressWarnings("unused")
 @Component
@@ -95,7 +96,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
                         StroomKafkaProducerRecord<String, String> producerRecord =
                                 new StroomKafkaProducerRecord.Builder<String, String>()
                                         .topic(topic)
-                                        .key(statName)
+                                        .key(docRef.getUuid())
                                         .value(message)
                                         .build();
                         stroomKafkaProducer.send(producerRecord, false, exception -> {
@@ -123,8 +124,12 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     private Statistics.Statistic internalStatisticMapper(final DocRef docRef,
                                                          final InternalStatisticEvent internalStatisticEvent) {
         Preconditions.checkNotNull(internalStatisticEvent);
-        Statistics.Statistic statistic = new Statistics.Statistic();
-        statistic.setName(docRef.getName());
+        ObjectFactory objectFactory = new ObjectFactory();
+        Statistics.Statistic statistic = objectFactory.createStatisticsStatistic();
+        Statistics.Statistic.Key key = objectFactory.createStatisticsStatisticKey();
+        key.setValue(docRef.getUuid());
+        key.setStatisticName(docRef.getName());
+        statistic.setKey(key);
         statistic.setTime(toXMLGregorianCalendar(internalStatisticEvent.getTimeMs()));
         InternalStatisticEvent.Type type = internalStatisticEvent.getType();
 
