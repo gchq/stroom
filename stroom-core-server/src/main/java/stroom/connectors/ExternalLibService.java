@@ -8,17 +8,24 @@ import stroom.node.server.StroomPropertyService;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
-import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Objects;
+import java.util.ServiceLoader;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This service can be used by any factory services that load in external libraries.
- *
+ * <p>
  * It effectively wraps the {@link ServiceLoader} load function. Using a property in stroom.conf
  * to locate and load external JAR files with separate class loaders.
  */
@@ -34,25 +41,31 @@ public class ExternalLibService {
     private final Collection<ClassLoader> classLoaders;
 
     public ExternalLibService(final String connectorsLibDirName) {
-        final File connectorsLibDir = new File(connectorsLibDirName);
-        final File[] connectorLibs = connectorsLibDir.listFiles();
+        // Default to using the current class loader for loading services.
+        Collection<ClassLoader> classLoaders = Collections.singleton(ExternalLibService.class.getClassLoader());
 
-        if (null != connectorLibs) {
-            this.classLoaders = Arrays
-                    .stream(connectorLibs)
-                    .map(File::toURI)
-                    .map(this::toURLSafe)
-                    .filter(Objects::nonNull)
-                    .map(url -> new URL[]{url})
-                    .map(URLClassLoader::new)
-                    .collect(Collectors.toList());
+        if (connectorsLibDirName != null) {
+            final Path connectorsLibDir = Paths.get(connectorsLibDirName);
+            if (Files.isDirectory(connectorsLibDir)) {
+                try (final Stream<Path> stream = Files.list(connectorsLibDir)) {
+                    classLoaders = stream
+                            .map(Path::toUri)
+                            .map(this::toURLSafe)
+                            .filter(Objects::nonNull)
+                            .map(url -> new URL[]{url})
+                            .map(URLClassLoader::new)
+                            .collect(Collectors.toList());
 
-            LOGGER.info("Loaded the External Service JARs from " + connectorsLibDirName);
-        } else {
-            // Default to using the current class loader for loading services.
-            this.classLoaders = Collections.singleton(ExternalLibService.class.getClassLoader());
-            LOGGER.warn("Could not load External Service JARs from " + connectorsLibDirName);
+                    LOGGER.info("Loaded the External Service JARs from '" + connectorsLibDirName + "'");
+                } catch (final IOException e) {
+                    LOGGER.warn("Could not load External Service JARs from '" + connectorsLibDirName + "'", e);
+                }
+            } else {
+                LOGGER.warn("Could not load External Service JARs from '" + connectorsLibDirName + "' as dir does not exist");
+            }
         }
+
+        this.classLoaders = classLoaders;
     }
 
     @Inject
@@ -62,6 +75,7 @@ public class ExternalLibService {
 
     /**
      * Wraps the call to URL, catches and prints the exception.
+     *
      * @param uri The URI to call toURL() on.
      * @return The URL from the URI, or null if that fails.
      */
@@ -82,6 +96,7 @@ public class ExternalLibService {
 
     /**
      * Return all the classloaders created for the external JARs.
+     *
      * @return A collection of the classloaders found.
      */
     Collection<ClassLoader> getClassLoaders() {
