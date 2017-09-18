@@ -42,6 +42,6 @@ task setupSampleData(type: JavaExec) {
     // We need to set the working directory as the stroom root otherwise
     // setupSampleData won't find 'samples' directories in other modules.
     workingDir '../'
-    classpath = sourceSets.test.runtimeClasspath
+    classpath = sourceSets.integrationTest.runtimeClasspath
     main = 'stroom.test.SetupSampleData'
 }
