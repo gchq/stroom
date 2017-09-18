@@ -218,10 +218,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                             explorerNodeService.createNode(imported, folderRef, PermissionInheritance.INHERIT);
                             importExportEventLog.importDocument(type, imported.getUuid(), name, null);
                         }
-                    } else {
-                        LOGGER.error("No import handler can be found for type '" + type + "'");
                     }
-
                 } catch (final RuntimeException e) {
                     importExportEventLog.importDocument(docRef.getType(), docRef.getUuid(), docRef.getName(), e);
                     throw e;
@@ -330,6 +327,10 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
             // Get an explorer node for this doc ref.
             final ExplorerNode explorerNode = explorerNodeService.getNode(docRef);
+            if (explorerNode == null) {
+                throw new RuntimeException("Unable to locate a '" + docRef + "' in explorer tree");
+            }
+
             // Get the explorer path to this doc ref.
             List<ExplorerNode> path = explorerNodeService.getPath(docRef);
             // Turn the path into a list of strings but ignore any nodes that aren't folders, e.g. the root.

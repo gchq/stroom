@@ -27,6 +27,7 @@ import stroom.util.test.StroomUnitTest;
 
 import java.io.File;
 import java.io.StringReader;
+import java.nio.file.Path;
 import java.util.List;
 
 public class TestFetchMarkerHandler extends StroomUnitTest {
@@ -43,9 +44,9 @@ public class TestFetchMarkerHandler extends StroomUnitTest {
 
     private void doTest(final int expectedSize, final int expectedTotal, final Severity... expanded) throws Exception {
         // Get the testing directory.
-        final File testDataDir = StroomCoreServerTestFileUtil.getTestResourcesDir();
-        final File testDir = new File(testDataDir, "TestFetchMarkerHandler");
-        final File inFile = new File(testDir, "001.dat");
+        final Path testDataDir = StroomCoreServerTestFileUtil.getTestResourcesDir();
+        final Path testDir = testDataDir.resolve( "TestFetchMarkerHandler");
+        final Path inFile = testDir.resolve("001.dat");
         final String string = StreamUtil.fileToString(inFile);
 
         final MarkerListCreator fetchMarkerHandler = new MarkerListCreator();

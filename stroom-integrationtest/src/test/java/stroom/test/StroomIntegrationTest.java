@@ -183,11 +183,11 @@ public abstract class StroomIntegrationTest implements StroomTest {
     }
 
     @Override
-    public File getCurrentTestDir() {
+    public Path getCurrentTestDir() {
         return FileUtil.getTempDir();
     }
 
-    public Path getCurrentTestPath() {
-        return FileUtil.getTempDir().toPath();
-    }
+//    public Path getCurrentTestDir() {
+//        return FileUtil.getTempDir();
+//    }
 }

@@ -16,13 +16,18 @@
 
 package stroom.util.test;
 
+import stroom.util.io.FileUtil;
+
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public abstract class FileSystemTestUtil {
     private static final String CONFIG_PATH = "../stroom-config";
 
-    private static final File configDir = new File(CONFIG_PATH);
-    private static final File configXSDDir = new File(configDir, "xsd");
+    private static final Path configDir = Paths.get(CONFIG_PATH);
+    private static final Path configXSDDir = configDir.resolve("xsd");
     private static final long TEST_PREFIX = System.currentTimeMillis();
     private static long testSuffix = 0;
     private FileSystemTestUtil() {
@@ -37,9 +42,9 @@ public abstract class FileSystemTestUtil {
         return TEST_PREFIX + "_" + testSuffix;
     }
 
-    public static File getConfigXSDDir() {
-        if (!configXSDDir.isDirectory()) {
-            throw new RuntimeException("Directory not found: " + configXSDDir.getAbsolutePath());
+    public static Path getConfigXSDDir() {
+        if (!Files.isDirectory(configXSDDir)) {
+            throw new RuntimeException("Directory not found: " + FileUtil.getCanonicalPath(configXSDDir));
         }
         return configXSDDir;
     }

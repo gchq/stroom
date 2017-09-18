@@ -68,22 +68,20 @@ import stroom.util.zip.StroomHeaderArguments;
 import javax.annotation.Resource;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TranslationTest.class);
@@ -116,14 +114,14 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     protected void testTranslationTask(final boolean translate, final boolean compareOutput) {
         final List<Exception> exceptions = new ArrayList<>();
 
-        final File dir = new File(StroomCoreServerTestFileUtil.getTestResourcesDir(), "samples");
-        final File configDir = new File(dir, "config");
-        final File inputDir = new File(dir, "input");
-        final File outputDir = new File(dir, "output");
+        final Path dir = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve("samples");
+        final Path configDir = dir.resolve("config");
+        final Path inputDir = dir.resolve("input");
+        final Path outputDir = dir.resolve("output");
 
         FileUtil.mkdirs(outputDir);
 
-        importExportSerializer.read(configDir.toPath(), null, ImportMode.IGNORE_CONFIRMATION);
+        importExportSerializer.read(configDir, null, ImportMode.IGNORE_CONFIRMATION);
 
         contentImportService.importXmlSchemas();
 
@@ -137,7 +135,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         }
     }
 
-    protected void processData(final File inputDir, final File outputDir, final boolean reference,
+    protected void processData(final Path inputDir, final Path outputDir, final boolean reference,
                                final boolean compareOutput, final List<Exception> exceptions) {
         // Create a stream processor for each pipeline.
         final BaseResultList<PipelineEntity> pipelines = pipelineService.find(new FindPipelineEntityCriteria());
@@ -166,36 +164,37 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 streamProcessorFilterService.addFindStreamCriteria(streamProcessor, priority, findStreamCriteria);
 
                 // Add data.
-                final File[] dataFiles = inputDir.listFiles(new FileFilter() {
-                    @Override
-                    public boolean accept(final File file) {
-                        return file.getName().startsWith(feed.getName())
-                                && (file.getName().endsWith(".in") || file.getName().endsWith(".zip"));
-                    }
-                });
+                try (final java.util.stream.Stream<Path> stream = Files.list(inputDir)) {
+                    final List<Path> files = stream
+                            .filter(p -> {
+                                final String fileName = p.getFileName().toString();
+                                return fileName.startsWith(feed.getName()) && (fileName.endsWith(".in") || fileName.endsWith(".zip"));
+                            })
+                            .sorted(Comparator.naturalOrder())         // The order these files are added in is important for the stepping tests.
+                            .collect(Collectors.toList());
 
-                // The order these files are added in is important for the
-                // stepping tests.
-                Arrays.sort(dataFiles);
+                    files.forEach(p -> {
+                        // Add and test each file.
+                        final String fileName = p.getFileName().toString();
+                        final int index = fileName.lastIndexOf(".");
+                        final String stem = fileName.substring(0, index);
 
-                // Add and test each file.
-                for (final File inputFile : dataFiles) {
-                    final int index = inputFile.getName().lastIndexOf(".");
-                    final String stem = inputFile.getName().substring(0, index);
-
-                    try {
-                        test(inputFile, feed, outputDir, stem, compareOutput, exceptions);
-                    } catch (final Exception e) {
-                        Assert.fail(e.getMessage());
-                    }
+                        try {
+                            test(p, feed, outputDir, stem, compareOutput, exceptions);
+                        } catch (final Exception e) {
+                            Assert.fail(e.getMessage());
+                        }
+                    });
+                } catch (final IOException e) {
+                    throw new RuntimeException(e.getMessage(), e);
                 }
             }
         }
     }
 
-    private void test(final File inputFile, final Feed feed, final File outputDir, final String stem,
+    private void test(final Path inputFile, final Feed feed, final Path outputDir, final String stem,
                       final boolean compareOutput, final List<Exception> exceptions) throws Exception {
-        LOGGER.info("Testing: " + inputFile.getName());
+        LOGGER.info("Testing: " + inputFile.getFileName().toString());
 
         addStream(inputFile, feed);
 
@@ -230,12 +229,12 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                         num = "_" + String.valueOf(i);
                     }
 
-                    final File actualFile = new File(outputDir, stem + num + ".out_tmp");
-                    final File expectedFile = new File(outputDir, stem + num + ".out");
+                    final Path actualFile = outputDir.resolve(stem + num + ".out_tmp");
+                    final Path expectedFile = outputDir.resolve(stem + num + ".out");
 
-                    final OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(actualFile));
-                    copyStream(processedStream, outputStream);
-                    outputStream.close();
+                    try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(actualFile))) {
+                        copyStream(processedStream, outputStream);
+                    }
 
                     compareFiles(expectedFile, actualFile, exceptions);
 
@@ -249,8 +248,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         Assert.assertTrue("There should not be any more tasks here", tasks.size() == 0);
     }
 
-    private void addStream(final File file, final Feed feed) throws IOException {
-        if (file.getName().endsWith(".zip")) {
+    private void addStream(final Path file, final Feed feed) throws IOException {
+        if (file.getFileName().toString().endsWith(".zip")) {
             loadZipData(file, feed);
 
         } else {
@@ -274,7 +273,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     millis);
             final StreamTarget target = streamStore.openStreamTarget(stream);
 
-            final InputStream inputStream = new BufferedInputStream(new FileInputStream(file));
+            final InputStream inputStream = new BufferedInputStream(Files.newInputStream(file));
             final RASegmentOutputStream outputStream = new RASegmentOutputStream(target);
 
             final RawInputSegmentWriter writer = new RawInputSegmentWriter();
@@ -285,16 +284,14 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             // Check that what was written to the store is the same as the
             // contents of the file.
             final StreamSource checkSource = streamStore.openStreamSource(stream.getId());
-            final ByteArrayOutputStream original = StreamUtil
-                    .streamToBuffer(new BufferedInputStream(new FileInputStream(file)));
-            final ByteArrayOutputStream stored = StreamUtil
-                    .streamToBuffer(new BufferedInputStream(checkSource.getInputStream()));
+            final byte[] original = Files.readAllBytes(file);
+            final byte[] stored = StreamUtil.streamToBytes(checkSource.getInputStream());
             streamStore.closeStreamSource(checkSource);
-            Assert.assertTrue(Arrays.equals(original.toByteArray(), stored.toByteArray()));
+            Assert.assertTrue(Arrays.equals(original, stored));
         }
     }
 
-    private void loadZipData(final File file, final Feed feed) throws IOException {
+    private void loadZipData(final Path file, final Feed feed) throws IOException {
         final MetaMap metaMap = new MetaMap();
         metaMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
 
@@ -304,7 +301,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlerList, new byte[1000],
                 "DefaultDataFeedRequest-");
 
-        stroomStreamProcessor.process(new FileInputStream(file), "test");
+        stroomStreamProcessor.process(Files.newInputStream(file), "test");
         stroomStreamProcessor.closeHandlers();
     }
 
@@ -328,7 +325,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         return streamProcessorTasks;
     }
 
-    protected void testSteppingTask(final String feedName, final File dir) throws IOException {
+    protected void testSteppingTask(final String feedName, final Path dir) throws IOException {
         final List<Exception> exceptions = new ArrayList<>();
 
         // We first need to get all of the feeds from the DB.
@@ -389,14 +386,14 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
             final String stem = feed.getName() + "~STEPPING~" + elementId;
             if (elementData.getInput() != null) {
-                final File actualFile = new File(dir, stem + "~input.out_tmp");
-                final File expectedFile = new File(dir, stem + "~input.out");
+                final Path actualFile = dir.resolve(stem + "~input.out_tmp");
+                final Path expectedFile = dir.resolve(stem + "~input.out");
                 write(actualFile, elementData.getInput());
                 compareFiles(expectedFile, actualFile, exceptions);
             }
             if (elementData.getOutput() != null) {
-                final File actualFile = new File(dir, stem + "~output.out_tmp");
-                final File expectedFile = new File(dir, stem + "~output.out");
+                final Path actualFile = dir.resolve(stem + "~output.out_tmp");
+                final Path expectedFile = dir.resolve(stem + "~output.out");
                 write(actualFile, elementData.getOutput());
                 compareFiles(expectedFile, actualFile, exceptions);
             }
@@ -487,13 +484,10 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         return newResponse;
     }
 
-    private void write(final File file, final String data) throws IOException {
+    private void write(final Path file, final String data) throws IOException {
         // We need to remove event id's because they change every time.
         final String tmp = data.replaceAll("<Event Id=\"[^\"]+\"", "<Event");
-        final FileWriter fileWriter = new FileWriter(file);
-        fileWriter.write(tmp);
-        fileWriter.flush();
-        fileWriter.close();
+        StreamUtil.stringToFile(tmp, file);
     }
 
     private long getLatestStreamId() {
@@ -512,7 +506,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         streamStore.closeStreamSource(streamSource);
     }
 
-    private void compareFiles(final File expectedFile, final File actualFile, final List<Exception> exceptions) {
+    private void compareFiles(final Path expectedFile, final Path actualFile, final List<Exception> exceptions) {
         try {
             ComparisonHelper.compare(expectedFile, actualFile, false, true);
         } catch (final Exception e) {

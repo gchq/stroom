@@ -19,9 +19,9 @@ package stroom.statistics.server.sql;
 import stroom.statistics.shared.StatisticType;
 import stroom.util.date.DateUtil;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
@@ -50,21 +50,15 @@ public class GenerateSampleStatisticsDataForPurge {
     public static void main(final String[] args) throws Exception {
         System.out.println("Writing value data...");
 
-        Writer writer = new FileWriter(new File("StatsPurgeTestData_Values.xml"));
-
-        writer.write(generateValueData());
-        writer.close();
-
+        try (final Writer writer = Files.newBufferedWriter(Paths.get("StatsPurgeTestData_Values.xml"))) {
+            writer.write(generateValueData());
+        }
         System.out.println("Writing count data...");
 
-        writer = new FileWriter(new File("StatsPurgeTestData_Counts.xml"));
-
-        writer.write(generateCountData());
-
-        writer.close();
-
+        try (final Writer writer = Files.newBufferedWriter(Paths.get("StatsPurgeTestData_Counts.xml"))) {
+            writer.write(generateCountData());
+        }
         System.out.println("Finished!");
-
     }
 
     private static long generateStartTime() {

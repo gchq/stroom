@@ -25,7 +25,7 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.test.AbstractProcessIntegrationTest;
-import stroom.test.StroomProcessTestFileUtil;
+import stroom.test.StroomPipelineTestFileUtil;
 
 import java.util.Map;
 
@@ -35,7 +35,7 @@ public class TestPipelineFactory extends AbstractProcessIntegrationTest {
     @Test
     public void testSingle() throws Exception {
         final PipelineEntity pipelineEntity = PipelineTestUtil.createBasicPipeline(
-                StroomProcessTestFileUtil.getString("TestPipelineFactory/EventDataPipeline.Pipeline.data.xml"));
+                StroomPipelineTestFileUtil.getString("TestPipelineFactory/EventDataPipeline.Pipeline.data.xml"));
 
         final Map<String, PipelineElementType> elementMap = PipelineDataMerger.createElementMap();
         final PipelineDataValidator pipelineDataValidator = new PipelineDataValidator(elementRegistryFactory);
@@ -57,10 +57,10 @@ public class TestPipelineFactory extends AbstractProcessIntegrationTest {
         final PipelineFactory pipelineFactory = new PipelineFactory(elementRegistryFactory, elementRegistryFactory,
                 new SimpleProcessorFactory(), null);
 
-        final String data1 = StroomProcessTestFileUtil
+        final String data1 = StroomPipelineTestFileUtil
                 .getString("TestPipelineFactory/EventDataPipeline.Pipeline.data.xml");
-        final String data2 = StroomProcessTestFileUtil.getString("TestPipelineFactory/OverridePipeline.Pipeline.data.xml");
-        final String data3 = StroomProcessTestFileUtil.getString("TestPipelineFactory/CombinedPipeline.Pipeline.data.xml");
+        final String data2 = StroomPipelineTestFileUtil.getString("TestPipelineFactory/OverridePipeline.Pipeline.data.xml");
+        final String data3 = StroomPipelineTestFileUtil.getString("TestPipelineFactory/CombinedPipeline.Pipeline.data.xml");
 
         PipelineEntity pipeline1 = PipelineTestUtil.createBasicPipeline(data1);
         PipelineEntity pipeline2 = PipelineTestUtil.createBasicPipeline(data2);

@@ -31,6 +31,7 @@ import stroom.util.spring.StroomSpringProfiles;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
@@ -42,7 +43,7 @@ public final class SampleRepositoryCreator {
     private final FeedService feedService;
     private final CommonTestControl commonTestControl;
     private final ImportExportSerializer importExportSerializer;
-    private final File testDir;
+    private final Path testDir;
 
     public SampleRepositoryCreator() {
         FileSystemUtil.deleteContents(FileUtil.getTempDir());
@@ -64,7 +65,7 @@ public final class SampleRepositoryCreator {
 
         importExportSerializer = appContext.getBean(ImportExportSerializer.class);
 
-        testDir = new File(StroomCoreServerTestFileUtil.getTestResourcesDir(), "samples/config");
+        testDir = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve("samples/config");
     }
 
     /**
@@ -84,13 +85,13 @@ public final class SampleRepositoryCreator {
 
     public void run(final boolean shutdown) throws IOException {
         // Load config.
-        importExportSerializer.read(testDir.toPath(), null, ImportMode.IGNORE_CONFIRMATION);
+        importExportSerializer.read(testDir, null, ImportMode.IGNORE_CONFIRMATION);
 
-        final File repoDir = new File(StroomCoreServerTestFileUtil.getTestResourcesDir(), "SampleRepositoryCreator/repo");
-        repoDir.mkdirs();
+        final Path repoDir = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve( "SampleRepositoryCreator/repo");
+        Files.createDirectories(repoDir);
         FileSystemUtil.deleteContents(repoDir);
 
-        final StroomZipRepository repository = new StroomZipRepository(repoDir.getAbsolutePath());
+        final StroomZipRepository repository = new StroomZipRepository(FileUtil.getCanonicalPath(repoDir));
 
         // Add data.
         final ProxyRepositoryCreator creator = new ProxyRepositoryCreator(feedService, repository);
@@ -102,14 +103,13 @@ public final class SampleRepositoryCreator {
         long startTime = System.currentTimeMillis() - (14 * dayMs);
 
         // Load each data item 5 times to create a reasonable amount to test.
-        final Path p = testDir.toPath();
         for (int i = 0; i < 5; i++) {
             // Load reference data first.
-            creator.read(p, true, startTime);
+            creator.read(testDir, true, startTime);
             startTime += tenMinMs;
 
             // Then load event data.
-            creator.read(p, false, startTime);
+            creator.read(testDir, false, startTime);
             startTime += tenMinMs;
         }
 

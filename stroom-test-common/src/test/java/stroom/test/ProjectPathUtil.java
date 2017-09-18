@@ -16,23 +16,21 @@
 
 package stroom.test;
 
-import java.io.File;
-import java.io.IOException;
+import stroom.util.io.FileUtil;
 
-public final class ProjectPathUtil {
-    public static File resolveDir(final String projectDir) {
-        File dir;
-        try {
-            File root = new File(".").getCanonicalFile();
-            dir = new File(root, projectDir);
-            if (!dir.isDirectory()) {
-                dir = new File(root.getParentFile(), projectDir);
-                if (!dir.isDirectory()) {
-                    throw new RuntimeException("Path not found: " + dir.getAbsolutePath());
-                }
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+final class ProjectPathUtil {
+    static Path resolveDir(final String projectDir) {
+        Path root = Paths.get(".").toAbsolutePath().normalize();
+        Path dir = root.resolve(projectDir);
+        if (!Files.isDirectory(dir)) {
+            dir = root.getParent().resolve(projectDir);
+            if (!Files.isDirectory(dir)) {
+                throw new RuntimeException("Path not found: " + FileUtil.getCanonicalPath(dir));
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
 
         return dir;

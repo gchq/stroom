@@ -9,6 +9,7 @@ import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -113,11 +114,24 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
 
     @Override
     public ExplorerNode getRoot() {
-        final List<ExplorerTreeNode> roots = explorerTreeDao.getRoots();
+        List<ExplorerTreeNode> roots = explorerTreeDao.getRoots();
+        if (roots == null || roots.size() == 0) {
+            createRoot();
+            roots = explorerTreeDao.getRoots();
+        }
         if (roots == null || roots.size() == 0) {
             return null;
         }
         return createExplorerNode(roots.get(0));
+    }
+
+    private synchronized void createRoot() {
+        final List<ExplorerTreeNode> roots = explorerTreeDao.getRoots();
+        if (roots == null || roots.size() == 0) {
+            // Insert System root node.
+            final DocRef root = ExplorerConstants.ROOT_DOC_REF;
+            addNode(null, root);
+        }
     }
 
     @Override
@@ -154,9 +168,10 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
         } else {
             final ExplorerTreeNode node = getNodeForDocRef(docRef);
             if (node == null) {
-                return null;
+                nodes = Collections.emptyList();
+            } else {
+                nodes = explorerTreeDao.getTree(node);
             }
-            nodes = explorerTreeDao.getTree(node);
         }
 
         return nodes.stream()

@@ -33,7 +33,7 @@ import stroom.xmlschema.server.XMLSchemaService;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XMLSchema;
 
-import java.io.File;
+import java.nio.file.Path;
 
 public class SchemaFilterFactory {
     private final XMLSchemaService xmlSchemaService = new MockXMLSchemaService();
@@ -69,9 +69,9 @@ public class SchemaFilterFactory {
 
     public void loadXMLSchema(final String schemaGroup, final String schemaName, final String namespaceURI,
                               final String systemId, final String fileName) {
-        final File dir = FileSystemTestUtil.getConfigXSDDir();
+        final Path dir = FileSystemTestUtil.getConfigXSDDir();
 
-        final File file = new File(dir, fileName);
+        final Path file = dir.resolve(fileName);
 
         final XMLSchema xmlSchema = new XMLSchema();
         xmlSchema.setSchemaGroup(schemaGroup);

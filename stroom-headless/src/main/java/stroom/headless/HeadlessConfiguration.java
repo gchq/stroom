@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.headless.spring;
+package stroom.headless;
 
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -30,7 +30,9 @@ import org.springframework.context.annotation.FilterType;
 @ComponentScan(basePackages = {
         "stroom.cache",
         "stroom.dictionary",
+        "stroom.logging",
         "stroom.entity",
+        "stroom.explorer",
         "stroom.feed",
         "stroom.folder",
         "stroom.importexport",
@@ -54,5 +56,5 @@ import org.springframework.context.annotation.FilterType;
         // Exclude other configurations that might be found accidentally during
         // a component scan as configurations should be specified explicitly.
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
-public class HeadlessConfiguration {
+class HeadlessConfiguration {
 }

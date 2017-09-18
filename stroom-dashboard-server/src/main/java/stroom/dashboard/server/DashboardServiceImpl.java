@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.dashboard.server.logging.DocumentEventLog;
+import stroom.logging.DocumentEventLog;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.FindDashboardCriteria;
 import stroom.dashboard.shared.QueryEntity;

@@ -2,7 +2,7 @@ dependencies {
     compile urlDependencies.get(urlLibs.stroomExpression)
 
 //    compile project(':stroom-core-shared')
-//    compile project(':stroom-entity-shared')
+    compile project(':stroom-entity-shared')
     compile project(':stroom-util-shared')
     compile project(':stroom-util')
 

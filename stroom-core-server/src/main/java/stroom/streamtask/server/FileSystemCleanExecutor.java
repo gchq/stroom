@@ -43,10 +43,10 @@ import stroom.util.task.TaskMonitor;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -153,14 +153,12 @@ public class FileSystemCleanExecutor {
                 for (final Volume volume : volumeList) {
                     final FileSystemCleanProgress taskProgress = new FileSystemCleanProgress();
                     if (deleteOut) {
-                        final File dir = new File(volume.getPath());
-                        if (dir.isDirectory()) {
+                        final Path dir = Paths.get(volume.getPath());
+                        if (Files.isDirectory(dir)) {
                             try {
                                 printWriterMap
                                         .put(volume,
-                                                new PrintWriter(new OutputStreamWriter(
-                                                        new FileOutputStream(new File(dir, DELETE_OUT)),
-                                                        StreamUtil.DEFAULT_CHARSET)));
+                                                new PrintWriter(Files.newBufferedWriter(dir.resolve(DELETE_OUT), StreamUtil.DEFAULT_CHARSET)));
                             } catch (final Exception ex) {
                                 LOGGER.error("exec() - Error opening file", ex);
                             }

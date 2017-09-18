@@ -62,7 +62,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         commonTestScenarioCreator.createSample2LineRawFile(feed, StreamType.RAW_EVENTS);
         commonTestScenarioCreator.createSample2LineRawFile(feed, StreamType.RAW_EVENTS);
 
-        final Path file = Files.createTempFile(getCurrentTestPath(), "TestStreamDownloadTaskHandler", ".zip");
+        final Path file = Files.createTempFile(getCurrentTestDir(), "TestStreamDownloadTaskHandler", ".zip");
         final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
         findStreamCriteria.obtainFeeds().obtainInclude().add(feed.getId());
         final StreamDownloadSettings streamDownloadSettings = new StreamDownloadSettings();
@@ -92,7 +92,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
         findStreamCriteria.obtainFeeds().obtainInclude().add(feed.getId());
 
-        final Path file = Files.createTempFile(getCurrentTestPath(), "TestStreamDownloadTaskHandler", ".dat");
+        final Path file = Files.createTempFile(getCurrentTestDir(), "TestStreamDownloadTaskHandler", ".dat");
         Files.write(file, "TEST".getBytes());
 
         taskManager.exec(new StreamUploadTask(ServerTask.INTERNAL_PROCESSING_USER_TOKEN, "test.dat", file, DocRefUtil.create(feed),
@@ -103,7 +103,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
 
     @Test
     public void testDownloadNestedComplex() throws IOException {
-        final Path file = Files.createTempFile(getCurrentTestPath(), "TestStreamDownloadTaskHandler", ".zip");
+        final Path file = Files.createTempFile(getCurrentTestDir(), "TestStreamDownloadTaskHandler", ".zip");
         final Feed feed = commonTestScenarioCreator.createSimpleFeed();
 
         final StreamTarget streamTarget = streamStore

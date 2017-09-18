@@ -21,9 +21,6 @@ import stroom.util.io.StreamUtil;
 import stroom.util.zip.ZipUtil;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -51,7 +48,7 @@ public class ZipResource extends ExternalResource {
     private static final String ZIP_EXTENSION = ".zip";
 
     private final String folderToZip;
-    private File zip;
+    private Path zip;
 
     public ZipResource(String folderToZip) {
         this.folderToZip = folderToZip;
@@ -61,29 +58,29 @@ public class ZipResource extends ExternalResource {
         return Paths.get(RESOURCES + folderToZip + ZIP_EXTENSION);
     }
 
-    public InputStream getStream() throws FileNotFoundException {
-        return new FileInputStream(getPath().toFile());
+    public InputStream getStream() throws IOException {
+        return Files.newInputStream(getPath());
     }
 
-    public byte[] getBytes() throws FileNotFoundException {
+    public byte[] getBytes() throws IOException {
         return StreamUtil.streamToBuffer(getStream()).toByteArray();
     }
 
-    public ZipInputStream getZipInputStream() throws FileNotFoundException {
+    public ZipInputStream getZipInputStream() throws IOException {
         return new ZipInputStream(new ByteArrayInputStream(getBytes()));
     }
 
     @Override
     public void before() throws IOException {
-        File inputDir = new File(RESOURCES + folderToZip);
-        zip = new File(RESOURCES + folderToZip + ZIP_EXTENSION);
+        Path inputDir = Paths.get(RESOURCES + folderToZip);
+        zip = Paths.get(RESOURCES + folderToZip + ZIP_EXTENSION);
         ZipUtil.zip(zip, inputDir);
     }
 
     @Override
     public void after() {
         try {
-            Files.deleteIfExists(zip.toPath());
+            Files.deleteIfExists(zip);
         } catch (IOException e) {
             e.printStackTrace();
         }

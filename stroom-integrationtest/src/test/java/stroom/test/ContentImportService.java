@@ -2,6 +2,7 @@ package stroom.test;
 
 import org.springframework.stereotype.Component;
 import stroom.importexport.server.ImportExportService;
+import stroom.util.io.FileUtil;
 import stroom.util.shared.Version;
 
 import javax.inject.Inject;
@@ -60,12 +61,12 @@ public class ContentImportService {
     }
 
     private Path getContentPackDirPath() {
-        Path contentPackDir = new File(StroomCoreServerTestFileUtil.getTestResourcesDir(), CONTENT_PACK_IMPORT_DIR).toPath();
+        Path contentPackDir = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(CONTENT_PACK_IMPORT_DIR);
         try {
             Files.createDirectories(contentPackDir);
         } catch (IOException e) {
             throw new RuntimeException(String.format("Error creating directory %s for content packs",
-                    contentPackDir.toAbsolutePath().toString()), e);
+                    FileUtil.getCanonicalPath(contentPackDir)), e);
         }
         return contentPackDir;
     }

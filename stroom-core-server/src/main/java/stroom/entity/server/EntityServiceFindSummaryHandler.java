@@ -21,7 +21,7 @@ import event.logging.BaseAdvancedQueryOperator.And;
 import event.logging.Query;
 import event.logging.Query.Advanced;
 import org.springframework.context.annotation.Scope;
-import stroom.dashboard.server.logging.DocumentEventLog;
+import stroom.logging.DocumentEventLog;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.EntityServiceFindSummaryAction;

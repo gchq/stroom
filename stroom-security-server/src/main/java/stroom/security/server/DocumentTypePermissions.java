@@ -13,14 +13,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Component
 class DocumentTypePermissions {
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentTypePermissions.class);
-    private static final String[] STANDARD_PERMISSIONS = new String[]{DocumentPermissionNames.USE,
-            DocumentPermissionNames.READ, DocumentPermissionNames.UPDATE, DocumentPermissionNames.DELETE, DocumentPermissionNames.OWNER};
-    private static final String[] DASHBOARD_PERMISSIONS = new String[]{DocumentPermissionNames.USE,
-            DocumentPermissionNames.READ, DocumentPermissionNames.UPDATE, DocumentPermissionNames.DELETE, DocumentPermissionNames.OWNER, "Download"};
+    private static final String[] STANDARD_PERMISSIONS = DocumentPermissionNames.DOCUMENT_PERMISSIONS;
+    private static final String[] DASHBOARD_PERMISSIONS = Stream.concat(Stream.of(STANDARD_PERMISSIONS), Stream.of("Download")).toArray(String[]::new);
 
     private final ExplorerService explorerService;
 

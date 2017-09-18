@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server.logging.spring;
+package stroom.logging.spring;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

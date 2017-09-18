@@ -16,14 +16,16 @@
 
 package stroom.util.config;
 
-import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import stroom.util.io.FileUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestConfigure extends StroomUnitTest {
@@ -47,13 +49,13 @@ public class TestConfigure extends StroomUnitTest {
 
     @Test
     public void test_Main() throws Exception {
-        final File testFile = new File(getCurrentTestDir(), "TestConfigure_server.xml");
-        final File sourceFile = new File("./src/test/resources/stroom/util/config/server.xml");
-        testFile.delete();
-        FileUtils.copyFile(sourceFile, testFile);
+        final Path testFile = getCurrentTestDir().resolve("TestConfigure_server.xml");
+        final Path sourceFile = Paths.get("./src/test/resources/stroom/util/config/server.xml");
+        Files.deleteIfExists(testFile);
+        Files.copy(sourceFile, testFile);
 
         Configure.main(new String[]{
                 "parameterFile=./src/test/resources/stroom/util/config/ConfigureTestParameters.xml",
-                "processFile=" + testFile.getAbsolutePath(), "readParameter=false", "exitOnError=false"});
+                "processFile=" + FileUtil.getCanonicalPath(testFile), "readParameter=false", "exitOnError=false"});
     }
 }

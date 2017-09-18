@@ -19,7 +19,7 @@ package stroom.startup;
 
 import io.dropwizard.jetty.MutableServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import stroom.dashboard.server.logging.spring.EventLoggingConfiguration;
+import stroom.logging.spring.EventLoggingConfiguration;
 import stroom.dashboard.spring.DashboardConfiguration;
 import stroom.dictionary.spring.DictionaryConfiguration;
 import stroom.explorer.server.ExplorerConfiguration;

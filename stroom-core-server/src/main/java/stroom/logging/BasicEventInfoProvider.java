@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.dashboard.server.logging;
+package stroom.logging;
 
 import event.logging.BaseObject;
 import event.logging.Object;

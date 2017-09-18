@@ -19,7 +19,7 @@ package stroom.dictionary.server;
 
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.dashboard.server.logging.DocumentEventLog;
+import stroom.logging.DocumentEventLog;
 import stroom.dictionary.shared.Dictionary;
 import stroom.dictionary.shared.FindDictionaryCriteria;
 import stroom.entity.server.DocumentEntityServiceImpl;

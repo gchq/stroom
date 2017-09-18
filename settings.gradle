@@ -66,6 +66,9 @@ include 'stroom-ruleset-server'
 // Package it all together.
 include 'stroom-app'
 
+// Headless
+include 'stroom-headless'
+
 // Integration tests.
 include 'stroom-integrationtest'
 

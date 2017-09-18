@@ -33,21 +33,24 @@ import stroom.util.test.StroomUnitTest;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestFileSystemUtil extends StroomUnitTest {
     public static final String NO_WRITE_DIR1 = "/usr/bin/username";
     public static final String NO_WRITE_DIR2 = "/unable/to/create/this";
-    private volatile boolean allOk = true;
 
     private Volume buildTestVolume() throws IOException {
         final Volume config = new Volume();
-        config.setPath(getCurrentTestDir().getCanonicalPath());
+        config.setPath(FileUtil.getCanonicalPath(getCurrentTestDir()));
         config.setNode(buildTestNode());
         return config;
     }
@@ -82,7 +85,7 @@ public class TestFileSystemUtil extends StroomUnitTest {
 
     @Test
     public void testCreateFileTypeRoot() throws IOException {
-        final String root = FileSystemUtil.createFileTypeRoot(buildTestVolume()).getAbsolutePath();
+        final String root = FileUtil.getCanonicalPath(FileSystemUtil.createFileTypeRoot(buildTestVolume()));
 
         Assert.assertNotNull(root);
         Assert.assertTrue(root.endsWith("store"));
@@ -145,24 +148,24 @@ public class TestFileSystemUtil extends StroomUnitTest {
 
     @Test
     public void testParentMkdirsAndDelete() {
-        final File dir1 = new File(getCurrentTestDir(), FileSystemTestUtil.getUniqueTestString());
-        final File dir2 = new File(getCurrentTestDir(), FileSystemTestUtil.getUniqueTestString());
-        final File file1 = new File(dir1, "test.dat");
-        final File file2 = new File(dir2, "test.dat");
-        final HashSet<File> files = new HashSet<>();
+        final Path dir1 = getCurrentTestDir().resolve(FileSystemTestUtil.getUniqueTestString());
+        final Path dir2 = getCurrentTestDir().resolve(FileSystemTestUtil.getUniqueTestString());
+        final Path file1 = dir1.resolve("test.dat");
+        final Path file2 = dir2.resolve("test.dat");
+        final HashSet<Path> files = new HashSet<>();
         files.add(file1);
         files.add(file2);
 
-        Assert.assertTrue("Create dirs", FileSystemUtil.mkdirs(getCurrentTestDir(), file1.getParentFile()));
-        Assert.assertTrue("Create dirs", FileSystemUtil.mkdirs(getCurrentTestDir(), file2.getParentFile()));
+        FileUtil.mkdirs(file1);
+        FileUtil.mkdirs(file2);
 
         Assert.assertTrue("Dirs exist... but not error",
-                FileSystemUtil.mkdirs(FileUtil.getTempDir(), file1.getParentFile()));
+                FileSystemUtil.mkdirs(FileUtil.getTempDir(), file1.getParent()));
         Assert.assertTrue("Dirs exist... but not error",
-                FileSystemUtil.mkdirs(FileUtil.getTempDir(), file2.getParentFile()));
+                FileSystemUtil.mkdirs(FileUtil.getTempDir(), file2.getParent()));
 
-        Assert.assertTrue("Delete Files", FileSystemUtil.deleteAnyFile(files));
-        Assert.assertTrue("Delete Files Gone", FileSystemUtil.deleteAnyFile(files));
+        Assert.assertTrue("Delete Files", FileSystemUtil.deleteAnyPath(files));
+        Assert.assertTrue("Delete Files Gone", FileSystemUtil.deleteAnyPath(files));
 
         Assert.assertTrue("Delete Files Gone", FileSystemUtil.deleteContents(dir1));
         Assert.assertTrue("Delete Files Gone", FileSystemUtil.deleteContents(dir2));
@@ -171,8 +174,8 @@ public class TestFileSystemUtil extends StroomUnitTest {
 
     @Test
     public void testCreateBadDirs() {
-        Assert.assertFalse(FileSystemUtil.mkdirs(null, new File(NO_WRITE_DIR1)));
-        Assert.assertFalse(FileSystemUtil.mkdirs(null, new File(NO_WRITE_DIR2)));
+        Assert.assertFalse(FileSystemUtil.mkdirs(null, Paths.get(NO_WRITE_DIR1)));
+        Assert.assertFalse(FileSystemUtil.mkdirs(null, Paths.get(NO_WRITE_DIR2)));
     }
 
     /**
@@ -182,26 +185,31 @@ public class TestFileSystemUtil extends StroomUnitTest {
      */
     @Test
     public void testParentMkdirs() throws Exception {
-        final HashSet<File> fileSet = new HashSet<>();
+        final HashSet<Path> fileSet = new HashSet<>();
 
         final String dir = FileSystemTestUtil.getUniqueTestString();
-        final File dir1 = new File(getCurrentTestDir(), dir);
+        final Path dir1 = getCurrentTestDir().resolve(dir);
         // Create 100 files in 10 similar directories
         for (int i = 0; i < 100; i++) {
-            final File dir2 = new File(dir1, dir);
-            final File dir3 = new File(dir2, "" + (i % 2));
-            final File dir4 = new File(dir3, "" + (i % 2));
-            final File dir5 = new File(dir4, "" + (i % 2));
-            final File file = new File(dir5, "test.dat");
+            final Path dir2 = dir1.resolve(dir);
+            final Path dir3 = dir2.resolve("" + (i % 2));
+            final Path dir4 = dir3.resolve("" + (i % 2));
+            final Path dir5 = dir4.resolve("" + (i % 2));
+            final Path file = dir5.resolve("test.dat");
             fileSet.add(file);
         }
 
         final ExecutorService threadPoolExecutor = Executors.newFixedThreadPool(100);
 
+        final AtomicBoolean allOk = new AtomicBoolean(true);
         for (int i = 0; i < 100; i++) {
             final Runnable r = () -> {
-                for (final File file : fileSet) {
-                    setOk(FileSystemUtil.mkdirs(null, file.getParentFile()));
+                for (final Path file : fileSet) {
+                    try {
+                        Files.createDirectories(file.getParent());
+                    } catch (final IOException e) {
+                        allOk.set(false);
+                    }
                 }
             };
             threadPoolExecutor.submit(r);
@@ -211,26 +219,19 @@ public class TestFileSystemUtil extends StroomUnitTest {
 
         threadPoolExecutor.awaitTermination(100, TimeUnit.SECONDS);
 
-        Assert.assertTrue(allOk);
+        Assert.assertTrue(allOk.get());
 
         FileSystemUtil.deleteDirectory(dir1);
     }
 
-    private synchronized void setOk(final boolean ok) {
-        if (!ok) {
-            System.out.println("One thread failed!");
-            allOk = false;
-        }
-    }
-
     @Test
     public void testMkDirs() {
-        final File rootDir = getCurrentTestDir();
+        final Path rootDir = getCurrentTestDir();
         Assert.assertTrue("Should be OK to create a dir off the root",
-                FileSystemUtil.mkdirs(rootDir, new File(rootDir, FileSystemTestUtil.getUniqueTestString())));
-        final File nonExistingRoot = new File(rootDir, FileSystemTestUtil.getUniqueTestString());
+                FileSystemUtil.mkdirs(rootDir, rootDir.resolve(FileSystemTestUtil.getUniqueTestString())));
+        final Path nonExistingRoot = rootDir.resolve(FileSystemTestUtil.getUniqueTestString());
         Assert.assertFalse("Should be NOT be OK to create a dir off a non existant root", FileSystemUtil
-                .mkdirs(nonExistingRoot, new File(nonExistingRoot, FileSystemTestUtil.getUniqueTestString() + "/a/b")));
+                .mkdirs(nonExistingRoot, nonExistingRoot.resolve(FileSystemTestUtil.getUniqueTestString() + "/a/b")));
 
     }
 

@@ -33,11 +33,15 @@ import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.date.DateUtil;
+import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.spring.StroomSpringProfiles;
 
-import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 /**
@@ -96,10 +100,12 @@ public class StreamDumpTool extends AbstractCommandLineTool {
             throw new RuntimeException("Output directory must be specified");
         }
 
-        final File dir = new File(outputDir);
-        if (!dir.isDirectory()) {
+        final Path dir = Paths.get(outputDir);
+        if (!Files.isDirectory(dir)) {
             System.out.println("Creating directory '" + outputDir + "'");
-            if (!dir.mkdirs()) {
+            try {
+                Files.createDirectories(dir);
+            } catch (final IOException e) {
                 throw new RuntimeException("Unable to create output directory '" + outputDir + "'");
             }
         }
@@ -161,7 +167,7 @@ public class StreamDumpTool extends AbstractCommandLineTool {
      * Scan a file
      */
     private void processFile(final int count, final int total, final StreamStore streamStore, final long streamId,
-                             final File outputDir) {
+                             final Path outputDir) {
         StreamSource streamSource = null;
         try {
             streamSource = streamStore.openStreamSource(streamId);
@@ -169,9 +175,9 @@ public class StreamDumpTool extends AbstractCommandLineTool {
                 InputStream inputStream = null;
                 try {
                     inputStream = streamSource.getInputStream();
-                    final File outputFile = new File(outputDir, streamId + ".dat");
+                    final Path outputFile = outputDir.resolve(streamId + ".dat");
                     System.out.println(
-                            "Dumping stream " + count + " of " + total + " to file '" + outputFile.getName() + "'");
+                            "Dumping stream " + count + " of " + total + " to file '" + FileUtil.getCanonicalPath(outputFile) + "'");
                     StreamUtil.streamToFile(inputStream, outputFile);
                 } catch (final Exception ex) {
                     ex.printStackTrace();

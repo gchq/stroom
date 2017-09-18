@@ -18,7 +18,7 @@ package stroom.feed.server;
 
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.dashboard.server.logging.DocumentEventLog;
+import stroom.logging.DocumentEventLog;
 import stroom.entity.server.CachingEntityManager;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.security.SecurityContext;

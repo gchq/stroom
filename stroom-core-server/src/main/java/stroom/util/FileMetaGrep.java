@@ -23,7 +23,11 @@ import stroom.streamstore.server.fs.serializable.RANestedInputStream;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class FileMetaGrep extends AbstractCommandLineTool {
     Map<String, String> matchMap;
@@ -62,31 +66,28 @@ public class FileMetaGrep extends AbstractCommandLineTool {
             path.append(part);
         }
 
-        scanDir(new File(path.toString()));
+        scanDir(Paths.get(path.toString()));
     }
 
-    public void scanDir(File root) {
-        String kids[] = root.list();
-
-        if (kids != null) {
-            for (String kid : kids) {
-                File kidFile = new File(root, kid);
-                if (matches(kidFile.getAbsolutePath())) {
-                    if (kidFile.isDirectory()) {
-                        scanDir(kidFile);
-                    } else {
-                        scanFile(kidFile);
+    private void scanDir(Path root) {
+        try (final Stream<Path> stream = Files.walk(root)) {
+            stream.forEach(p -> {
+                if (matches(p.toAbsolutePath().normalize().toString())) {
+                    if (Files.isRegularFile(p)) {
+                        scanFile(p);
                     }
                 }
-            }
+            });
+        } catch (final IOException e) {
+            // Ignore.
         }
     }
 
-    public void scanFile(File file) {
+    private void scanFile(Path file) {
         try {
-            String path = file.getAbsolutePath();
+            String path = file.toAbsolutePath().normalize().toString();
             if (feedId != null) {
-                if (!file.getName().startsWith(feedId)) {
+                if (!file.getFileName().toString().startsWith(feedId)) {
                     return;
                 }
             }
@@ -94,7 +95,7 @@ public class FileMetaGrep extends AbstractCommandLineTool {
             if (path.endsWith("meta.bgz")) {
                 String bdyPath = path.substring(0, path.length() - 4) + ".bdy.dat";
                 RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(file),
-                        new UncompressedInputStream(new File(bdyPath), true));
+                        new UncompressedInputStream(Paths.get(bdyPath), true));
                 int segment = 0;
                 while (nestedInputStream.getNextEntry()) {
                     segment++;

@@ -266,10 +266,6 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
         if (!entity.isPersistent()) {
             throw new EntityServiceException("You cannot update an entity that has not been created");
         }
-
-        if (entity.getUuid() == null) {
-            entity.setUuid(UUID.randomUUID().toString());
-        }
         return doSave(entity);
     }
 
@@ -294,6 +290,9 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
     private E doSave(final E entity) {
         if (!entity.isPersistent()) {
             entity.setId(currentId.incrementAndGet());
+        }
+        if (entity.getUuid() == null) {
+            entity.setUuid(UUID.randomUUID().toString());
         }
         map.put(entity.getId(), entity);
         return entity;

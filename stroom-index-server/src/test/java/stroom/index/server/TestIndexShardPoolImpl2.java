@@ -31,6 +31,7 @@ import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.concurrent.SimpleExecutor;
+import stroom.util.io.FileUtil;
 import stroom.util.test.CheckedLimit;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
@@ -47,7 +48,7 @@ public class TestIndexShardPoolImpl2 extends StroomUnitTest {
 
     @Before
     public void before() {
-        FileSystemUtil.deleteContents(new File(getCurrentTestDir(), "index"));
+        FileSystemUtil.deleteContents(getCurrentTestDir().resolve( "index"));
     }
 
     @Test
@@ -77,7 +78,7 @@ public class TestIndexShardPoolImpl2 extends StroomUnitTest {
                 indexShard.setNode(ownerNode);
                 indexShard.setId(indexShardId.incrementAndGet());
                 indexShard.setVolume(
-                        Volume.create(defaultNode, getCurrentTestDir().getAbsolutePath(), VolumeType.PUBLIC));
+                        Volume.create(defaultNode, FileUtil.getCanonicalPath(getCurrentTestDir()), VolumeType.PUBLIC));
                 indexShard.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
                 FileSystemUtil.deleteContents(IndexShardUtil.getIndexPath(indexShard));
                 return indexShard;

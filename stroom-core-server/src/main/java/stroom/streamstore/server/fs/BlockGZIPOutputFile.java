@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.nio.file.Path;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -59,6 +60,14 @@ public class BlockGZIPOutputFile extends OutputStream implements SeekableOutputS
     // ((blockCount+1) * blockSize)
     private long currentBlockEndPos = 0;
     private boolean closed;
+
+    public BlockGZIPOutputFile(final Path file) throws IOException {
+        this(file.toFile());
+    }
+
+    public BlockGZIPOutputFile(final Path file, final int blockSize) throws IOException {
+        this(file.toFile(), blockSize);
+    }
 
     /**
      * @see BlockGZIPConstants

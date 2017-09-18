@@ -18,7 +18,7 @@
 package stroom.document.server;
 
 import org.springframework.stereotype.Component;
-import stroom.dashboard.server.logging.DocumentEventLog;
+import stroom.logging.DocumentEventLog;
 import stroom.entity.server.EntityServiceBeanRegistry;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.PermissionInheritance;

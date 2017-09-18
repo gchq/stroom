@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.dashboard.server.logging;
+package stroom.logging;
 
 import event.logging.BaseAdvancedQueryOperator.Or;
 import event.logging.Criteria;

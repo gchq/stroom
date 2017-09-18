@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * @see BlockGZIPConstants
@@ -35,6 +37,10 @@ public class BlockGZIPInputFile extends BlockGZIPInput {
 
     private final StreamCloser streamCloser = new StreamCloser();
 
+    public BlockGZIPInputFile(final Path bgz) throws IOException {
+        this(bgz.toFile());
+    }
+
     /**
      * Constructor to open a Block GZIP File.
      */
@@ -47,6 +53,10 @@ public class BlockGZIPInputFile extends BlockGZIPInput {
 
         // Make sure the streams are closed.
         streamCloser.add(raFile);
+    }
+
+    public BlockGZIPInputFile(final Path bgz, final int rawBufferSize) throws IOException {
+        this(bgz.toFile(), rawBufferSize);
     }
 
     /**
@@ -65,7 +75,7 @@ public class BlockGZIPInputFile extends BlockGZIPInput {
     }
 
     public static void main(final String[] args) throws IOException {
-        final BlockGZIPInputFile is = new BlockGZIPInputFile(new File(args[0]));
+        final BlockGZIPInputFile is = new BlockGZIPInputFile(Paths.get(args[0]));
 
         final byte[] buffer = new byte[1024];
         int len = 0;

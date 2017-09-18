@@ -35,8 +35,8 @@ public class ComplexTest extends AbstractProcessIntegrationTest {
 
     @Test
     public void test() throws Exception {
-//		final File expectedFile = StroomProcessTestFileUtil.getTestResourcesFile(OUTPUT);
-//		final File actualFile = new File(getCurrentTestDir(), "ComplexTestOutput.xml");
+//		final Path expectedFile = StroomProcessTestFileUtil.getTestResourcesFile(OUTPUT);
+//		final Path actualFile = getCurrentTestDir().resolve("ComplexTestOutput.xml");
 //
 //		// Get some input streams.
 //		final Reader input = new InputStreamReader(StroomProcessTestFileUtil.getInputStream(INPUT));

@@ -40,6 +40,10 @@ import javax.annotation.Resource;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Properties;
 
 /**
@@ -111,11 +115,11 @@ public class SecurityConfiguration {
         if (!StringUtils.isEmpty(propertiesFile)) {
             propertiesFile = propertiesFile.replaceAll("~", System.getProperty("user.home"));
 
-            final File file = new File(propertiesFile);
-            if (file.isFile()) {
-                try (FileInputStream fis = new FileInputStream(file)) {
+            final Path file = Paths.get(propertiesFile);
+            if (Files.isRegularFile(file)) {
+                try (final InputStream is = Files.newInputStream(file)) {
                     final Properties properties = new Properties();
-                    properties.load(fis);
+                    properties.load(is);
                     javaMailSender.setJavaMailProperties(properties);
                 } catch (final IOException e) {
                     LOGGER.warn("Unable to load mail properties '" + propertiesFile + "'");

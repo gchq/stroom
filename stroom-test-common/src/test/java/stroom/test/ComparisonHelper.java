@@ -20,18 +20,20 @@ import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.io.FileUtil;
+import stroom.util.io.StreamUtil;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Provides methods that are used by multiple tests.
@@ -107,48 +109,56 @@ public final class ComparisonHelper {
         return str.substring(start, end);
     }
 
-    public static void compareDirs(final File in, final File out) {
-        final File[] inFiles = in.listFiles(new Filter());
-        final File[] outFiles = out.listFiles(new Filter());
+    public static void compareDirs(final Path in, final Path out) {
+        final List<Path> inFiles = list(in);
+        final List<Path> outFiles = list(out);
 
-        Assert.assertEquals("Dir " + in.getAbsolutePath() + " does not contain the same number of files as "
-                + out.getAbsolutePath(), inFiles.length, outFiles.length);
+        Assert.assertEquals("Dir " + FileUtil.getCanonicalPath(in) + " does not contain the same number of files as "
+                + FileUtil.getCanonicalPath(out), inFiles.size(), outFiles.size());
 
-        for (final File inFile : inFiles) {
-            File outFile = null;
+        for (final Path inFile : inFiles) {
+            Path outFile = null;
 
             // Get corresponding output file.
-            for (final File tmp : outFiles) {
-                if (tmp.getName().equals(inFile.getName())) {
+            for (final Path tmp : outFiles) {
+                if (tmp.getFileName().toString().equals(inFile.getFileName().toString())) {
                     outFile = tmp;
                     break;
                 }
             }
 
             // Make sure we found the file.
-            Assert.assertNotNull("Output file not found for: " + inFile.getAbsolutePath(), outFile);
+            Assert.assertNotNull("Output file not found for: " + FileUtil.getCanonicalPath(inFile), outFile);
 
-            LOGGER.debug("Comparing \"" + inFile.getAbsolutePath() + "\" and \"" + outFile.getAbsolutePath() + "\"");
+            LOGGER.debug("Comparing \"" + FileUtil.getCanonicalPath(inFile) + "\" and \"" + FileUtil.getCanonicalPath(outFile) + "\"");
 
-            if (inFile.isDirectory()) {
+            if (Files.isDirectory(inFile)) {
                 // Make sure files are the same type.
-                Assert.assertTrue("Output file is not a directory for: " + inFile.getAbsolutePath(),
-                        outFile.isDirectory());
+                Assert.assertTrue("Output file is not a directory for: " + FileUtil.getCanonicalPath(inFile),
+                        Files.isDirectory(outFile));
 
                 // Recurse.
                 compareDirs(inFile, outFile);
 
-            } else if (inFile.isFile()) {
+            } else if (Files.isRegularFile(inFile)) {
                 compareFiles(inFile, outFile);
             }
         }
     }
 
-    public static void compareFiles(final File expectedFile, final File actualFile) {
+    private static List<Path> list(final Path path) {
+        try (final Stream<Path> stream = Files.list(path)) {
+            return stream.filter(p -> !p.getFileName().startsWith(".")).collect(Collectors.toList());
+        } catch (final IOException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    public static void compareFiles(final Path expectedFile, final Path actualFile) {
         compareFiles(expectedFile, actualFile, false, true);
     }
 
-    public static void compareFiles(final File expectedFile, final File actualFile, final boolean ignoreWhitespace,
+    public static void compareFiles(final Path expectedFile, final Path actualFile, final boolean ignoreWhitespace,
                                     final boolean xml) {
         try {
             compare(expectedFile, actualFile, ignoreWhitespace, xml);
@@ -157,22 +167,22 @@ public final class ComparisonHelper {
         }
     }
 
-    public static void compare(final File expectedFile, final File actualFile, final boolean ignoreWhitespace,
+    public static void compare(final Path expectedFile, final Path actualFile, final boolean ignoreWhitespace,
                                final boolean xml) {
         // Make sure both files exist.
-        if (!expectedFile.isFile()) {
+        if (!Files.isRegularFile(expectedFile)) {
             throw new RuntimeException(
                     "Expected file '" + FileUtil.getCanonicalPath(expectedFile) + "' does not exist");
         }
-        if (!actualFile.isFile()) {
+        if (!Files.isRegularFile(actualFile)) {
             throw new RuntimeException("Actual file '" + FileUtil.getCanonicalPath(actualFile) + "' does not exist");
         }
 
         Reader reader1 = null;
         Reader reader2 = null;
         try {
-            reader1 = new BufferedReader(new FileReader(expectedFile));
-            reader2 = new BufferedReader(new FileReader(actualFile));
+            reader1 = new BufferedReader(new InputStreamReader(Files.newInputStream(expectedFile), StreamUtil.DEFAULT_CHARSET));
+            reader2 = new BufferedReader(new InputStreamReader(Files.newInputStream(actualFile), StreamUtil.DEFAULT_CHARSET));
 
             if (!doCompareReaders(reader1, reader2, ignoreWhitespace, xml)) {
                 throw new RuntimeException("Files are not the same: \n" + FileUtil.getCanonicalPath(expectedFile) + "\n"
@@ -353,13 +363,5 @@ public final class ComparisonHelper {
 
     private static boolean isCharNothing(final char c) {
         return c == ' ' || c == '\n';
-    }
-
-    private static class Filter implements FileFilter {
-        @Override
-        public boolean accept(final File file) {
-            return !file.getName().startsWith(".");
-
-        }
     }
 }

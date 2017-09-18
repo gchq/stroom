@@ -22,7 +22,7 @@ import event.logging.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.dashboard.server.logging.EventInfoProvider;
+import stroom.logging.EventInfoProvider;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.Entity;

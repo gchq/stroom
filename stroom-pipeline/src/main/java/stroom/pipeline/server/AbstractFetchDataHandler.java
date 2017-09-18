@@ -19,7 +19,7 @@ package stroom.pipeline.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dashboard.server.logging.StreamEventLog;
+import stroom.logging.StreamEventLog;
 import stroom.entity.shared.EntityServiceException;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;

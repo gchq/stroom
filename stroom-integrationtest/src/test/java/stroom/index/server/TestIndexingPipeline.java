@@ -39,7 +39,7 @@ import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.StreamHolder;
 import stroom.streamstore.shared.Stream;
 import stroom.test.AbstractProcessIntegrationTest;
-import stroom.test.StroomProcessTestFileUtil;
+import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
 
 import javax.annotation.Resource;
@@ -79,7 +79,7 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
     public void testSimple() {
         // Setup the XSLT.
         XSLT xslt = xsltService.create("Indexing XSLT");
-        xslt.setData(StreamUtil.streamToString(StroomProcessTestFileUtil.getInputStream(SAMPLE_INDEX_XSLT)));
+        xslt.setData(StreamUtil.streamToString(StroomPipelineTestFileUtil.getInputStream(SAMPLE_INDEX_XSLT)));
         xslt = xsltService.save(xslt);
 
         final IndexFields indexFields = IndexFields.createStreamIndexFields();
@@ -107,7 +107,7 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
 
         // Create the pipeline.
         PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService,
-                StroomProcessTestFileUtil.getString(PIPELINE));
+                StroomPipelineTestFileUtil.getString(PIPELINE));
         pipelineEntity.getPipelineData().addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xslt));
         pipelineEntity.getPipelineData().addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", index));
         pipelineEntity = pipelineService.save(pipelineEntity);
@@ -116,7 +116,7 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
         final PipelineData pipelineData = pipelineDataCache.getOrCreate(pipelineEntity);
         final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
-        final InputStream inputStream = StroomProcessTestFileUtil.getInputStream(SAMPLE_INDEX_INPUT);
+        final InputStream inputStream = StroomPipelineTestFileUtil.getInputStream(SAMPLE_INDEX_INPUT);
         pipeline.process(inputStream);
 
         // Make sure we only used one writer.

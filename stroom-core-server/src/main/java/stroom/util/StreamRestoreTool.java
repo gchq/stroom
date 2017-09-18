@@ -28,15 +28,16 @@ import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.concurrent.SimpleConcurrentMap;
 import stroom.util.date.DateUtil;
-import stroom.util.io.LineReader;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -52,14 +53,14 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 public class StreamRestoreTool extends DatabaseTool {
-    public static final int KEY_PAD = 30;
-    public static final int COUNT_PAD = 10;
-    public static final String VOLUME_PATH = "VolumePath";
-    public static final String STREAM_TYPE_PATH = "StreamTypePath";
-    public static final String FILE_NAME = "FileName";
-    public static final String FEED_ID = "FeedId";
-    public static final String DATE_PATH = "DatePath";
-    public static final String DEPTH = "Depth";
+    static final int KEY_PAD = 30;
+    static final int COUNT_PAD = 10;
+    private static final String VOLUME_PATH = "VolumePath";
+    private static final String STREAM_TYPE_PATH = "StreamTypePath";
+    private static final String FILE_NAME = "FileName";
+    private static final String FEED_ID = "FeedId";
+    private static final String DATE_PATH = "DatePath";
+    private static final String DEPTH = "Depth";
     private final BufferedReader inputReader = new BufferedReader(
             new InputStreamReader(System.in, StreamUtil.DEFAULT_CHARSET));
     private final SimpleConcurrentMap<String, KeyCount> streamTypeStreamCount = new SimpleConcurrentMap<String, KeyCount>() {
@@ -90,7 +91,7 @@ public class StreamRestoreTool extends DatabaseTool {
             };
         }
     };
-    public Integer autoDeleteThreshold = null;
+    private Integer autoDeleteThreshold = null;
     private String deleteFile = null;
     private Map<String, Long> pathStreamTypeMap = null;
     private Map<String, Long> pathVolumeMap = null;
@@ -110,8 +111,7 @@ public class StreamRestoreTool extends DatabaseTool {
     public String readLine(final String question) {
         try {
             System.out.print(question + " : ");
-            final String line = inputReader.readLine();
-            return line;
+            return inputReader.readLine();
         } catch (final Exception ex) {
             handleException(ex);
             return null;
@@ -177,7 +177,7 @@ public class StreamRestoreTool extends DatabaseTool {
         return feedIdNameMap;
     }
 
-    public void writeLine(final String msg) {
+    private void writeLine(final String msg) {
         System.out.println(msg);
     }
 
@@ -206,12 +206,9 @@ public class StreamRestoreTool extends DatabaseTool {
         } else {
             fileName = readLine("Please enter file name to process");
         }
-        try {
-            final LineReader lineReader = new LineReader(new FileInputStream(fileName),
-                    StreamUtil.DEFAULT_CHARSET_NAME);
-
-            String line = null;
-            while ((line = lineReader.nextLine()) != null) {
+        try (final BufferedReader reader = Files.newBufferedReader(Paths.get(fileName), StreamUtil.DEFAULT_CHARSET)) {
+            String line;
+            while ((line = reader.readLine()) != null) {
                 if (line.contains(".")) {
                     final StringTokenizer stringTokenizer = new StringTokenizer(line, "/");
                     while (stringTokenizer.hasMoreTokens()) {
@@ -238,9 +235,7 @@ public class StreamRestoreTool extends DatabaseTool {
                         streamTypeFeedStreamCount.get(Arrays.asList(type, feed)).getCount().increment();
                         streamTypeFeedDateStreamCount.get(type).get(feed).get(date).getCount().increment();
                     }
-
                 }
-
             }
 
             final List<KeyCount> sortedList = writeTable(streamTypeStreamCount.values(), "Stream Types");
@@ -293,14 +288,11 @@ public class StreamRestoreTool extends DatabaseTool {
                 }
             }
 
-        } catch (final IOException ioEx) {
+        } catch (final IOException | SQLException ioEx) {
             handleException(ioEx);
-        } catch (final SQLException sqlException) {
-            handleException(sqlException);
         } finally {
             closeConnection();
         }
-
     }
 
     public void setMock(final boolean mock) {
@@ -368,28 +360,32 @@ public class StreamRestoreTool extends DatabaseTool {
         // Inspect File? (Expensive)
         if ((streamType == null || streamType.equals(rtnMap.get(STREAM_TYPE_PATH)))
                 && (feedId == null || feedId.equals(rtnMap.get(FEED_ID)))) {
-            final File file = new File(line);
-            if (file.exists()) {
-                final String fileLastModified = DateUtil.createNormalDateTimeString(file.lastModified());
-
-                rtnMap.put(StreamAttributeConstants.CREATE_TIME,
-                        rtnMap.get(DATE_PATH) + fileLastModified.substring(datePart.length()));
-
-            } else {
-                rtnMap.put(StreamAttributeConstants.CREATE_TIME, rtnMap.get(DATE_PATH) + "T00:00:00.000Z");
-
-            }
+            final Path file = Paths.get(line);
+            rtnMap.put(StreamAttributeConstants.CREATE_TIME, rtnMap.get(DATE_PATH) + getTime(file, datePart));
         }
 
         return rtnMap;
     }
 
+    private String getTime(final Path file, final String datePart) {
+        String time = "T00:00:00.000Z";
+        try {
+            if (Files.exists(file)) {
+                final String fileLastModified = DateUtil.createNormalDateTimeString(Files.getLastModifiedTime(file).toMillis());
+                time = fileLastModified.substring(datePart.length());
+            }
+        } catch (final IOException e) {
+            // Ignore.
+        }
+        return time;
+    }
+
     private Map<String, String> readManifestAttributes(final String rootFile) {
         final Map<String, String> rtnMap = new HashMap<>();
-        final File manifest = new File(rootFile.substring(0, rootFile.lastIndexOf(".")) + ".mf.dat");
-        if (manifest.isFile()) {
+        final Path manifest = Paths.get(rootFile.substring(0, rootFile.lastIndexOf(".")) + ".mf.dat");
+        if (Files.isRegularFile(manifest)) {
             final MetaMap metaMap = new MetaMap();
-            try (FileInputStream inputStream = new FileInputStream(manifest)) {
+            try (final InputStream inputStream = Files.newInputStream(manifest)) {
                 metaMap.read(inputStream, true);
             } catch (final IOException ioEx) {
             }
@@ -398,121 +394,120 @@ public class StreamRestoreTool extends DatabaseTool {
         return rtnMap;
     }
 
-    public void processStreamTypeFeed(final String fileName, final String processStreamType, final String processFeedId,
-                                      final char action) throws IOException, SQLException {
-        final LineReader lineReader = new LineReader(new FileInputStream(fileName), StreamUtil.DEFAULT_CHARSET_NAME);
+    private void processStreamTypeFeed(final String fileName, final String processStreamType, final String processFeedId,
+                                       final char action) throws IOException, SQLException {
+        try (final BufferedReader reader = Files.newBufferedReader(Paths.get(fileName), StreamUtil.DEFAULT_CHARSET)) {
+            String line = null;
+            int lineCount = 0;
+            int count = 0;
 
-        String line = null;
-        int lineCount = 0;
-        int count = 0;
+            long nextLog = System.currentTimeMillis() + 10000;
 
-        long nextLog = System.currentTimeMillis() + 10000;
+            while ((line = reader.readLine()) != null) {
+                final Map<String, String> streamAttributes = readAttributes(line, processStreamType, processFeedId);
 
-        while ((line = lineReader.nextLine()) != null) {
-            final Map<String, String> streamAttributes = readAttributes(line, processStreamType, processFeedId);
-
-            lineCount++;
-            if (System.currentTimeMillis() > nextLog) {
-                writeLine("Reading line " + lineCount + " " + line);
-                nextLog = System.currentTimeMillis() + 10000;
-            }
-
-            if (processStreamType.equals(streamAttributes.get(STREAM_TYPE_PATH))
-                    && (processFeedId == null || processFeedId.equals(streamAttributes.get(FEED_ID)))) {
-                final File systemFile = new File(line);
-                if (action == 'd') {
-                    if (mock) {
-                        writeLine("rm " + line);
-                    } else {
-                        writeLine("rm " + line);
-                        systemFile.delete();
-                    }
+                lineCount++;
+                if (System.currentTimeMillis() > nextLog) {
+                    writeLine("Reading line " + lineCount + " " + line);
+                    nextLog = System.currentTimeMillis() + 10000;
                 }
 
-                // Restore and a root file
-                if (action == 'r' && "0".equals(streamAttributes.get(DEPTH))) {
-                    streamAttributes.putAll(readManifestAttributes(line));
-
-                    final Stream stream = new Stream();
-                    stream.setId(Long.parseLong(streamAttributes.get(StreamAttributeConstants.STREAM_ID)));
-                    stream.setVersion((byte) 1);
-
-                    stream.setCreateMs(DateUtil
-                            .parseNormalDateTimeString(streamAttributes.get(StreamAttributeConstants.CREATE_TIME)));
-                    if (streamAttributes.containsKey(StreamAttributeConstants.EFFECTIVE_TIME)) {
-                        stream.setEffectiveMs(DateUtil.parseNormalDateTimeString(
-                                streamAttributes.get(StreamAttributeConstants.EFFECTIVE_TIME)));
-                    }
-                    if (stream.getEffectiveMs() == null) {
-                        stream.setEffectiveMs(stream.getCreateMs());
-                    }
-
-                    if (streamAttributes.containsKey(StreamAttributeConstants.PARENT_STREAM_ID)) {
-                        stream.setParentStreamId(
-                                Long.valueOf(streamAttributes.get(StreamAttributeConstants.PARENT_STREAM_ID)));
-                    }
-                    stream.updateStatus(StreamStatus.UNLOCKED);
-                    stream.setFeed(Feed.createStub(Long.valueOf(streamAttributes.get(FEED_ID))));
-                    stream.setStreamType(
-                            StreamType.createStub(getPathStreamTypeMap().get(streamAttributes.get(STREAM_TYPE_PATH))));
-
-                    final String logInfo = StringUtils.leftPad(String.valueOf(stream.getId()), 10) + " "
-                            + DateUtil.createNormalDateTimeString(stream.getCreateMs());
-
-                    writeLine("Restore " + logInfo + " for file " + line);
-
-                    if (!mock) {
-                        try {
-                            try (PreparedStatement statement1 = getConnection().prepareStatement(
-                                    "insert into strm (id,ver, crt_ms,effect_ms, parnt_strm_id,stat, fk_fd_id,fk_strm_proc_id, fk_strm_tp_id) "
-                                            + " values (?,1, ?,?, ?,?, ?,?, ?)")) {
-                                int s1i = 1;
-                                statement1.setLong(s1i++, stream.getId());
-
-                                statement1.setLong(s1i++, stream.getCreateMs());
-                                if (stream.getEffectiveMs() != null) {
-                                    statement1.setLong(s1i++, stream.getEffectiveMs());
-                                } else {
-                                    statement1.setNull(s1i++, Types.BIGINT);
-                                }
-
-                                if (stream.getParentStreamId() != null) {
-                                    statement1.setLong(s1i++, stream.getParentStreamId());
-                                } else {
-                                    statement1.setNull(s1i++, Types.BIGINT);
-                                }
-                                statement1.setByte(s1i++, stream.getStatus().getPrimitiveValue());
-
-                                statement1.setLong(s1i++, stream.getFeed().getId());
-                                statement1.setNull(s1i++, Types.BIGINT);
-
-                                statement1.setLong(s1i++, stream.getStreamType().getId());
-
-                                statement1.executeUpdate();
-                                statement1.close();
-                            }
-
-                            try (PreparedStatement statement2 = getConnection().prepareStatement(
-                                    "insert into strm_vol (ver, fk_strm_id,fk_vol_id) " + " values (1, ?,?)")) {
-                                int s2i = 1;
-                                statement2.setLong(s2i++, stream.getId());
-                                statement2.setLong(s2i++, getPathVolumeMap().get(streamAttributes.get(VOLUME_PATH)));
-                                statement2.executeUpdate();
-                                statement2.close();
-                            }
-                        } catch (final Exception ex) {
-                            writeLine("Failed " + logInfo + " " + ex.getMessage());
+                if (processStreamType.equals(streamAttributes.get(STREAM_TYPE_PATH))
+                        && (processFeedId == null || processFeedId.equals(streamAttributes.get(FEED_ID)))) {
+                    if (action == 'd') {
+                        if (mock) {
+                            writeLine("rm " + line);
+                        } else {
+                            writeLine("rm " + line);
+                            final Path systemFile = Paths.get(line);
+                            Files.deleteIfExists(systemFile);
                         }
                     }
-                    count++;
+
+                    // Restore and a root file
+                    if (action == 'r' && "0".equals(streamAttributes.get(DEPTH))) {
+                        streamAttributes.putAll(readManifestAttributes(line));
+
+                        final Stream stream = new Stream();
+                        stream.setId(Long.parseLong(streamAttributes.get(StreamAttributeConstants.STREAM_ID)));
+                        stream.setVersion((byte) 1);
+
+                        stream.setCreateMs(DateUtil
+                                .parseNormalDateTimeString(streamAttributes.get(StreamAttributeConstants.CREATE_TIME)));
+                        if (streamAttributes.containsKey(StreamAttributeConstants.EFFECTIVE_TIME)) {
+                            stream.setEffectiveMs(DateUtil.parseNormalDateTimeString(
+                                    streamAttributes.get(StreamAttributeConstants.EFFECTIVE_TIME)));
+                        }
+                        if (stream.getEffectiveMs() == null) {
+                            stream.setEffectiveMs(stream.getCreateMs());
+                        }
+
+                        if (streamAttributes.containsKey(StreamAttributeConstants.PARENT_STREAM_ID)) {
+                            stream.setParentStreamId(
+                                    Long.valueOf(streamAttributes.get(StreamAttributeConstants.PARENT_STREAM_ID)));
+                        }
+                        stream.updateStatus(StreamStatus.UNLOCKED);
+                        stream.setFeed(Feed.createStub(Long.valueOf(streamAttributes.get(FEED_ID))));
+                        stream.setStreamType(
+                                StreamType.createStub(getPathStreamTypeMap().get(streamAttributes.get(STREAM_TYPE_PATH))));
+
+                        final String logInfo = StringUtils.leftPad(String.valueOf(stream.getId()), 10) + " "
+                                + DateUtil.createNormalDateTimeString(stream.getCreateMs());
+
+                        writeLine("Restore " + logInfo + " for file " + line);
+
+                        if (!mock) {
+                            try {
+                                try (PreparedStatement statement1 = getConnection().prepareStatement(
+                                        "insert into strm (id,ver, crt_ms,effect_ms, parnt_strm_id,stat, fk_fd_id,fk_strm_proc_id, fk_strm_tp_id) "
+                                                + " values (?,1, ?,?, ?,?, ?,?, ?)")) {
+                                    int s1i = 1;
+                                    statement1.setLong(s1i++, stream.getId());
+
+                                    statement1.setLong(s1i++, stream.getCreateMs());
+                                    if (stream.getEffectiveMs() != null) {
+                                        statement1.setLong(s1i++, stream.getEffectiveMs());
+                                    } else {
+                                        statement1.setNull(s1i++, Types.BIGINT);
+                                    }
+
+                                    if (stream.getParentStreamId() != null) {
+                                        statement1.setLong(s1i++, stream.getParentStreamId());
+                                    } else {
+                                        statement1.setNull(s1i++, Types.BIGINT);
+                                    }
+                                    statement1.setByte(s1i++, stream.getStatus().getPrimitiveValue());
+
+                                    statement1.setLong(s1i++, stream.getFeed().getId());
+                                    statement1.setNull(s1i++, Types.BIGINT);
+
+                                    statement1.setLong(s1i++, stream.getStreamType().getId());
+
+                                    statement1.executeUpdate();
+                                    statement1.close();
+                                }
+
+                                try (PreparedStatement statement2 = getConnection().prepareStatement(
+                                        "insert into strm_vol (ver, fk_strm_id,fk_vol_id) " + " values (1, ?,?)")) {
+                                    int s2i = 1;
+                                    statement2.setLong(s2i++, stream.getId());
+                                    statement2.setLong(s2i++, getPathVolumeMap().get(streamAttributes.get(VOLUME_PATH)));
+                                    statement2.executeUpdate();
+                                    statement2.close();
+                                }
+                            } catch (final Exception ex) {
+                                writeLine("Failed " + logInfo + " " + ex.getMessage());
+                            }
+                        }
+                        count++;
+                    }
                 }
             }
+            writeLine("Processed " + ModelStringUtil.formatCsv(count) + " count");
         }
-        writeLine("Processed " + ModelStringUtil.formatCsv(count) + " count");
-
     }
 
-    public ArrayList<KeyCount> writeTable(final Collection<KeyCount> values, final String heading) {
+    private ArrayList<KeyCount> writeTable(final Collection<KeyCount> values, final String heading) {
         writeLine("========================");
         writeLine(heading);
         writeLine("========================");
@@ -533,12 +528,12 @@ public class StreamRestoreTool extends DatabaseTool {
         List<String> key;
         MutableInt count;
 
-        public KeyCount(final String key) {
+        KeyCount(final String key) {
             this.key = Arrays.asList(key);
             this.count = new MutableInt();
         }
 
-        public KeyCount(final List<String> key) {
+        KeyCount(final List<String> key) {
             this.key = key;
             this.count = new MutableInt();
         }

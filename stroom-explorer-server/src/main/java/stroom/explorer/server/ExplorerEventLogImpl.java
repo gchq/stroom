@@ -28,7 +28,7 @@ import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.dashboard.server.logging.StroomEventLoggingService;
+import stroom.logging.StroomEventLoggingService;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.query.api.v1.DocRef;
 import stroom.security.Insecure;

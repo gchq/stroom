@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server.logging;
+package stroom.logging;
 
 import event.logging.Authorisation;
 import event.logging.Event;

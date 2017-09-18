@@ -26,10 +26,11 @@ import stroom.util.test.StroomUnitTest;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestBlockGZIPFiles extends StroomUnitTest {
@@ -81,7 +82,7 @@ public class TestBlockGZIPFiles extends StroomUnitTest {
 
     @Test
     public void testBig() throws IOException {
-        final File testFile = new File(getCurrentTestDir(), "testBig.bgz");
+        final Path testFile = getCurrentTestDir().resolve("testBig.bgz");
         FileUtil.deleteFile(testFile);
         final OutputStream os = new BufferedOutputStream(new BlockGZIPOutputFile(testFile, 1000000));
         for (int i = 0; i < 10000; i++) {
@@ -109,13 +110,13 @@ public class TestBlockGZIPFiles extends StroomUnitTest {
 
         is.close();
 
-        Assert.assertTrue("Should not have any locks on file", testFile.delete());
-        Assert.assertFalse("file deleted", testFile.isFile());
+        Assert.assertTrue("Should not have any locks on file", FileUtil.delete(testFile));
+        Assert.assertFalse("file deleted", Files.isRegularFile(testFile));
 
     }
 
     private void testWriteAndRead(final int blockSize, final int fileSize) throws IOException {
-        final File file = File.createTempFile("test", ".bgz", getCurrentTestDir());
+        final Path file = Files.createTempFile(getCurrentTestDir(), "test", ".bgz");
         FileUtil.deleteFile(file);
 
         // Stupid Block Size For Testing
@@ -144,7 +145,7 @@ public class TestBlockGZIPFiles extends StroomUnitTest {
 
     private void testWriteAndReadBuffered(final int blockSize, final int fileSize, final int inBuff, final int outBuf)
             throws IOException {
-        final File file = File.createTempFile("test", ".bgz", getCurrentTestDir());
+        final Path file = Files.createTempFile(getCurrentTestDir(), "test", ".bgz");
         FileUtil.deleteFile(file);
 
         // Stupid Block Size For Testing
@@ -172,7 +173,7 @@ public class TestBlockGZIPFiles extends StroomUnitTest {
 
     @Test
     public void testSeeking() throws Exception {
-        final File file = new File(getCurrentTestDir(), "tom.bgz");
+        final Path file = getCurrentTestDir().resolve("test.bgz");
         FileUtil.deleteFile(file);
 
         // Stupid Block Size For Testing

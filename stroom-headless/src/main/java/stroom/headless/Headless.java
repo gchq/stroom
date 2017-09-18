@@ -20,8 +20,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import stroom.dictionary.spring.DictionaryConfiguration;
 import stroom.entity.server.util.XMLUtil;
-import stroom.headless.spring.HeadlessConfiguration;
+import stroom.explorer.server.ExplorerConfiguration;
 import stroom.importexport.server.ImportExportService;
 import stroom.node.server.NodeCache;
 import stroom.node.server.VolumeService;
@@ -53,13 +54,13 @@ import stroom.util.task.TaskScopeRunnable;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.stream.Stream;
 
 /**
@@ -75,10 +76,10 @@ public class Headless extends AbstractCommandLineTool {
     private String config;
     private String tmp;
 
-    private File inputDir;
-    private File outputFile;
-    private File configFile;
-    private File tmpDir;
+    private Path inputDir;
+    private Path outputFile;
+    private Path configFile;
+    private Path tmpDir;
 
     public static void main(final String[] args) throws Exception {
         new Headless().doMain(args);
@@ -99,10 +100,10 @@ public class Headless extends AbstractCommandLineTool {
     public void setTmp(final String tmp) throws IOException {
         this.tmp = tmp;
 
-        final File tempDir = new File(tmp);
+        final Path tempDir = Paths.get(tmp);
 
         // Redirect the temp dir for headless.
-        StroomProperties.setOverrideProperty(StroomProperties.STROOM_TEMP, tempDir.getCanonicalPath(), StroomProperties.Source.USER_CONF);
+        StroomProperties.setOverrideProperty(StroomProperties.STROOM_TEMP, FileUtil.getCanonicalPath(tempDir), StroomProperties.Source.USER_CONF);
 
         FileUtil.forgetTempDir();
     }
@@ -124,20 +125,20 @@ public class Headless extends AbstractCommandLineTool {
     }
 
     private void init() {
-        inputDir = new File(input);
-        outputFile = new File(output);
-        configFile = new File(config);
-        tmpDir = new File(tmp);
+        inputDir = Paths.get(input);
+        outputFile = Paths.get(output);
+        configFile = Paths.get(config);
+        tmpDir = Paths.get(tmp);
 
-        if (!inputDir.isDirectory()) {
-            throw new RuntimeException("Input directory \"" + inputDir.getAbsolutePath() + "\" cannot be found!");
+        if (!Files.isDirectory(inputDir)) {
+            throw new RuntimeException("Input directory \"" + FileUtil.getCanonicalPath(inputDir) + "\" cannot be found!");
         }
-        if (!outputFile.getParentFile().isDirectory()) {
-            throw new RuntimeException("Output file \"" + outputFile.getParentFile().getAbsolutePath()
+        if (!Files.isDirectory(outputFile.getParent())) {
+            throw new RuntimeException("Output file \"" + FileUtil.getCanonicalPath(outputFile.getParent())
                     + "\" parent directory cannot be found!");
         }
-        if (!configFile.isFile()) {
-            throw new RuntimeException("Config file \"" + configFile.getAbsolutePath() + "\" cannot be found!");
+        if (!Files.isRegularFile(configFile)) {
+            throw new RuntimeException("Config file \"" + FileUtil.getCanonicalPath(configFile) + "\" cannot be found!");
         }
 
         // Make sure tmp dir exists and is empty.
@@ -190,7 +191,7 @@ public class Headless extends AbstractCommandLineTool {
         OutputStreamWriter outputStreamWriter = null;
         try {
             // Create the required output stream writer.
-            final OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(outputFile));
+            final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(outputFile));
             outputStreamWriter = new OutputStreamWriter(outputStream, StreamUtil.DEFAULT_CHARSET);
 
             // Create an XML writer.
@@ -236,11 +237,11 @@ public class Headless extends AbstractCommandLineTool {
             final TaskManager taskManager = getAppContext().getBean(TaskManager.class);
 
             // Loop over all of the data files in the repository.
-            final StroomZipRepository repo = new StroomZipRepository(inputDir.getAbsolutePath());
+            final StroomZipRepository repo = new StroomZipRepository(FileUtil.getCanonicalPath(inputDir));
             try (final Stream<Path> stream = repo.walkZipFiles()) {
                 stream.forEach(p -> {
                     try {
-                        LOGGER.info("Processing: " + p.toAbsolutePath().toString());
+                        LOGGER.info("Processing: " + FileUtil.getCanonicalPath(p));
 
                         final StroomZipFile stroomZipFile = new StroomZipFile(p);
                         final StroomZipNameSet nameSet = stroomZipFile.getStroomZipNameSet();
@@ -270,15 +271,15 @@ public class Headless extends AbstractCommandLineTool {
     }
 
     private void readConfig() {
-        LOGGER.info("Reading configuration from: " + configFile.getAbsolutePath());
+        LOGGER.info("Reading configuration from: " + FileUtil.getCanonicalPath(configFile));
 
         final ImportExportService importExportService = getAppContext().getBean(ImportExportService.class);
-        importExportService.performImportWithoutConfirmation(configFile.toPath());
+        importExportService.performImportWithoutConfirmation(configFile);
 
         final NodeCache nodeCache = getAppContext().getBean(NodeCache.class);
         final VolumeService volumeService = getAppContext().getBean(VolumeService.class);
         volumeService
-                .save(Volume.create(nodeCache.getDefaultNode(), tmpDir.getAbsolutePath() + "/cvol", VolumeType.PUBLIC));
+                .save(Volume.create(nodeCache.getDefaultNode(), FileUtil.getCanonicalPath(tmpDir) + "/cvol", VolumeType.PUBLIC));
     }
 
     private ApplicationContext getAppContext() {
@@ -291,8 +292,22 @@ public class Headless extends AbstractCommandLineTool {
     private ApplicationContext buildAppContext() {
         System.setProperty("spring.profiles.active", StroomSpringProfiles.PROD + ", Headless");
         final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-                ScopeConfiguration.class, PersistenceConfiguration.class,
-                ServerConfiguration.class, PipelineConfiguration.class, HeadlessConfiguration.class);
+//                DashboardConfiguration.class,
+//                EventLoggingConfiguration.class,
+//                IndexConfiguration.class,
+//                MetaDataStatisticConfiguration.class,
+                PersistenceConfiguration.class,
+                DictionaryConfiguration.class,
+                PipelineConfiguration.class,
+                ScopeConfiguration.class,
+//                ScriptConfiguration.class,
+//                SearchConfiguration.class,
+//                SecurityConfiguration.class,
+                ExplorerConfiguration.class,
+                ServerConfiguration.class,
+//                StatisticsConfiguration.class,
+//                VisualisationConfiguration.class,
+                HeadlessConfiguration.class);
         return context;
     }
 }

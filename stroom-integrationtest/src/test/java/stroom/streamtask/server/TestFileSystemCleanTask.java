@@ -41,6 +41,8 @@ import stroom.util.io.StreamUtil;
 
 import javax.annotation.Resource;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Collection;
@@ -90,7 +92,7 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         // Close the file but not the stream (you should use the closeStream
         // API)
         lockstreamTarget1.close();
-        final Collection<File> lockedFiles = streamMaintenanceService.findAllStreamFile(lockstreamTarget1.getStream());
+        final Collection<Path> lockedFiles = streamMaintenanceService.findAllStreamFile(lockstreamTarget1.getStream());
         FileSystemUtil.updateLastModified(lockedFiles, oldDate.toInstant().toEpochMilli());
         streamMaintenanceService.find(FindStreamVolumeCriteria.create(lockstreamTarget1.getStream()));
         // // Hack making the last access time quite old
@@ -108,27 +110,27 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         // API)
         streamStore.closeStreamTarget(nolockstreamTarget1);
 
-        final Collection<File> unlockedFiles = streamMaintenanceService
+        final Collection<Path> unlockedFiles = streamMaintenanceService
                 .findAllStreamFile(nolockstreamTarget1.getStream());
-        final File directory = unlockedFiles.iterator().next().getParentFile();
+        final Path directory = unlockedFiles.iterator().next().getParent();
         // Create some other files on the file system
 
         // Copy something that is quite old into the same directory.
-        final File oldfile = new File(directory, "oldfile.txt");
-        FileUtil.createNewFile(oldfile);
+        final Path oldfile = directory.resolve( "oldfile.txt");
+        Files.createFile(oldfile);
         FileUtil.setLastModified(oldfile, oldDate.toInstant().toEpochMilli());
 
         // Create a old sub directory;
-        final File olddir = new File(directory, "olddir");
+        final Path olddir = directory.resolve( "olddir");
         FileUtil.mkdirs(olddir);
         FileUtil.setLastModified(olddir, ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_SIXTY).toInstant().toEpochMilli());
 
-        final File newdir = new File(directory, "newdir");
+        final Path newdir = directory.resolve( "newdir");
         FileUtil.mkdirs(newdir);
         FileUtil.setLastModified(newdir, ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_SIXTY).toInstant().toEpochMilli());
 
-        final File oldfileinnewdir = new File(newdir, "oldfileinnewdir.txt");
-        FileUtil.createNewFile(oldfileinnewdir);
+        final Path oldfileinnewdir = newdir.resolve( "oldfileinnewdir.txt");
+        Files.createFile(oldfileinnewdir);
         FileUtil.setLastModified(oldfileinnewdir, ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_FOUR).toInstant().toEpochMilli());
 
         // Run the clean
@@ -141,10 +143,10 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         Assert.assertTrue("Locked files should still exist", FileSystemUtil.isAllFile(lockedFiles));
         Assert.assertTrue("Unlocked files should still exist", FileSystemUtil.isAllFile(unlockedFiles));
 
-        Assert.assertFalse("expected deleted " + oldfile, oldfile.isFile());
-        Assert.assertFalse("deleted deleted " + olddir, olddir.isDirectory());
-        Assert.assertTrue("not deleted new dir", newdir.isDirectory());
-        Assert.assertFalse("deleted old file in new dir", oldfileinnewdir.isFile());
+        Assert.assertFalse("expected deleted " + oldfile, Files.isRegularFile(oldfile));
+        Assert.assertFalse("deleted deleted " + olddir, Files.isDirectory(olddir));
+        Assert.assertTrue("not deleted new dir", Files.isDirectory(newdir));
+        Assert.assertFalse("deleted old file in new dir",  Files.isRegularFile(oldfileinnewdir));
 
     }
 
@@ -154,10 +156,10 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
 
         final Stream data = commonTestScenarioCreator.createSample2LineRawFile(feed, StreamType.RAW_EVENTS);
 
-        Collection<File> files = streamMaintenanceService.findAllStreamFile(data);
+        Collection<Path> files = streamMaintenanceService.findAllStreamFile(data);
 
-        for (final File file : files) {
-            Assert.assertTrue(file.delete());
+        for (final Path file : files) {
+            Assert.assertTrue(FileUtil.delete(file));
         }
 
         final FindStreamVolumeCriteria streamVolumeCriteria = new FindStreamVolumeCriteria();

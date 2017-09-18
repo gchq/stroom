@@ -34,6 +34,7 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
+import stroom.util.io.FileUtil;
 import stroom.util.logging.LoggerPrintStream;
 import stroom.util.shared.ModelStringUtil;
 
@@ -142,14 +143,14 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                     if (!Files.isDirectory(dir)) {
                         // Make sure the index hasn't been deleted.
                         if (indexShard.getDocumentCount() > 0) {
-                            throw new IndexException("Unable to find index shard data in directory: " + dir.toAbsolutePath().toString());
+                            throw new IndexException("Unable to find index shard data in directory: " + FileUtil.getCanonicalPath(dir));
                         }
 
                         // Try and make all required directories.
                         try {
                             Files.createDirectories(dir);
                         } catch (final IOException e) {
-                            throw new IndexException("Unable to create directories for new index in \"" + dir.toAbsolutePath().toString() + "\"", e);
+                            throw new IndexException("Unable to create directories for new index in \"" + FileUtil.getCanonicalPath(dir) + "\"", e);
                         }
                     }
 
@@ -157,7 +158,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                     if (indexShard.getDocumentCount() > 0) {
                         try (final Stream<Path> stream = Files.list(dir)) {
                             if (stream.count() == 0) {
-                                throw new IndexException("Unable to find index shard data in directory: " + dir.toAbsolutePath().toString());
+                                throw new IndexException("Unable to find index shard data in directory: " + FileUtil.getCanonicalPath(dir));
                             }
                         }
                     }

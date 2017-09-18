@@ -35,6 +35,7 @@ import stroom.streamstore.shared.StreamType;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.io.CloseableUtil;
+import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogItemProgress;
 import stroom.util.shared.Monitor;
@@ -93,7 +94,7 @@ public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloa
             long id = 0;
             long fileCount = 0;
 
-            final String fileBasePath = data.toAbsolutePath().toString().substring(0, data.toAbsolutePath().toString().lastIndexOf(".zip"));
+            final String fileBasePath = FileUtil.getCanonicalPath(data).substring(0, FileUtil.getCanonicalPath(data).lastIndexOf(".zip"));
 
             final LogItemProgress logItemProgress = new LogItemProgress(0, list.size());
             streamProgressMonitor.info("Stream {}", logItemProgress);

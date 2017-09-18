@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
+import stroom.util.io.FileUtil;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -78,7 +79,7 @@ public abstract class AbstractIndexShard {
                     }
 
                     if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("Opening and locking index dir = " + dir.toAbsolutePath().toString() + " exists "
+                        LOGGER.debug("Opening and locking index dir = " + FileUtil.getCanonicalPath(dir) + " exists "
                                 + Files.isDirectory(dir));
                     }
 
@@ -92,7 +93,7 @@ public abstract class AbstractIndexShard {
                 }
             } finally {
                 if (directory == null) {
-                    LOGGER.error("Failed to open: " + dir.toAbsolutePath().toString());
+                    LOGGER.error("Failed to open: " + FileUtil.getCanonicalPath(dir));
                 }
             }
         }

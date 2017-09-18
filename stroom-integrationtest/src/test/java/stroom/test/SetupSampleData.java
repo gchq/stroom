@@ -17,7 +17,7 @@
 package stroom.test;
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import stroom.dashboard.server.logging.spring.EventLoggingConfiguration;
+import stroom.logging.spring.EventLoggingConfiguration;
 import stroom.dashboard.spring.DashboardConfiguration;
 import stroom.dictionary.spring.DictionaryConfiguration;
 import stroom.explorer.server.ExplorerConfiguration;

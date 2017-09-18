@@ -29,6 +29,7 @@ import stroom.node.shared.Volume;
 import stroom.search.server.shard.IndexShardSearcher;
 import stroom.search.server.shard.IndexShardSearcherImpl;
 import stroom.streamstore.server.fs.FileSystemUtil;
+import stroom.util.io.FileUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
@@ -74,7 +75,7 @@ public class TestIndexShardIO extends StroomUnitTest {
     @Test
     public void testOpenCloseManyWrite() throws IOException {
         final Volume volume = new Volume();
-        volume.setPath(getCurrentTestDir().getAbsolutePath());
+        volume.setPath(FileUtil.getCanonicalPath(getCurrentTestDir()));
         final Index index = new Index();
         index.setName("Test");
 
@@ -105,7 +106,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         index.setName("Test");
 
         final Volume volume = new Volume();
-        volume.setPath(getCurrentTestDir().getAbsolutePath());
+        volume.setPath(FileUtil.getCanonicalPath(getCurrentTestDir()));
         final IndexShard idx1 = new IndexShard();
         idx1.setIndex(index);
         idx1.setPartition("all");
@@ -135,7 +136,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         index.setName("Test");
 
         final Volume volume = new Volume();
-        volume.setPath(getCurrentTestDir().getAbsolutePath());
+        volume.setPath(FileUtil.getCanonicalPath(getCurrentTestDir()));
         final IndexShard idx1 = new IndexShard();
         idx1.setIndex(index);
         idx1.setPartition("all");
@@ -164,7 +165,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         index.setName("Test");
 
         final Volume volume = new Volume();
-        volume.setPath(getCurrentTestDir().getAbsolutePath());
+        volume.setPath(FileUtil.getCanonicalPath(getCurrentTestDir()));
         final IndexShard idx1 = new IndexShard();
         idx1.setIndex(index);
         idx1.setPartition("all");
@@ -193,8 +194,8 @@ public class TestIndexShardIO extends StroomUnitTest {
         index.setName("Test");
 
         final Volume volume = new Volume();
-        final File testDir = getCurrentTestDir();
-        volume.setPath(testDir.getAbsolutePath());
+        final Path testDir = getCurrentTestDir();
+        volume.setPath(FileUtil.getCanonicalPath(testDir));
         FileSystemUtil.deleteDirectory(testDir);
         final IndexShard idx1 = new IndexShard();
         idx1.setIndex(index);

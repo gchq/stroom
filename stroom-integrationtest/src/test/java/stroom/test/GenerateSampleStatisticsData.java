@@ -19,9 +19,9 @@ package stroom.test;
 import stroom.statistics.shared.StatisticType;
 import stroom.util.date.DateUtil;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
@@ -46,21 +46,15 @@ public class GenerateSampleStatisticsData {
     public static void main(final String[] args) throws Exception {
         System.out.println("Writing value data...");
 
-        Writer writer = new FileWriter(new File("StatsTestData_Values.xml"));
-
-        writer.write(generateValueData());
-        writer.close();
-
+        try (final Writer writer = Files.newBufferedWriter(Paths.get("StatsTestData_Values.xml"))) {
+            writer.write(generateValueData());
+        }
         System.out.println("Writing count data...");
 
-        writer = new FileWriter(new File("StatsTestData_Counts.xml"));
-
-        writer.write(generateCountData());
-
-        writer.close();
-
+        try (final Writer writer = Files.newBufferedWriter(Paths.get("StatsTestData_Counts.xml"))) {
+            writer.write(generateCountData());
+        }
         System.out.println("Finished!");
-
     }
 
     private static long getStartTime() {

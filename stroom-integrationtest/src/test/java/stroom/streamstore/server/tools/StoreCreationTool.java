@@ -60,6 +60,7 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.StroomCoreServerTestFileUtil;
+import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.spring.StroomSpringProfiles;
 
@@ -68,6 +69,8 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -81,17 +84,17 @@ import java.util.Set;
 @Profile(StroomSpringProfiles.IT)
 public final class StoreCreationTool {
     private static final int OLD_YEAR = 2006;
-    private static final File eventDataPipeline = StroomCoreServerTestFileUtil
+    private static final Path eventDataPipeline = StroomCoreServerTestFileUtil
             .getFile("samples/config/Standard_Pipelines/Event_Data.Pipeline.7740cfc4-3443-4001-bf0b-6adc77d5a3cf.data.xml");
-    private static final File referenceDataPipeline = StroomCoreServerTestFileUtil
+    private static final Path referenceDataPipeline = StroomCoreServerTestFileUtil
             .getFile("samples/config/Standard_Pipelines/Reference_Data.Pipeline.b15e0cc8-3f82-446d-b106-04f43c38e19c.data.xml");
-    private static final File referenceLoaderPipeline = StroomCoreServerTestFileUtil
+    private static final Path referenceLoaderPipeline = StroomCoreServerTestFileUtil
             .getFile("samples/config/Standard_Pipelines/Reference_Loader.Pipeline.da1c7351-086f-493b-866a-b42dbe990700.data.xml");
-    private static final File contextDataPipeline = StroomCoreServerTestFileUtil
+    private static final Path contextDataPipeline = StroomCoreServerTestFileUtil
             .getFile("samples/config/Standard_Pipelines/Context_Data.Pipeline.fc281170-360d-4773-ad79-5378c5dcf52e.data.xml");
-    private static final File indexingPipeline = StroomCoreServerTestFileUtil
+    private static final Path indexingPipeline = StroomCoreServerTestFileUtil
             .getFile("samples/config/Standard_Pipelines/Indexing.Pipeline.fcef1b20-083e-436c-ab95-47a6ce453435.data.xml");
-    private static final File searchExtractionPipeline = StroomCoreServerTestFileUtil
+    private static final Path searchExtractionPipeline = StroomCoreServerTestFileUtil
             .getFile("samples/config/Standard_Pipelines/Search_Extraction.Pipeline.3d9d60e9-61c2-4c88-a57b-7bc584dd970e.data.xml");
     private static long effectiveMsOffset = 0;
     @Resource
@@ -126,7 +129,7 @@ public final class StoreCreationTool {
      * @throws IOException Thrown if files not found.
      */
     public Feed addReferenceData(final String feedName, final TextConverterType textConverterType,
-                                 final File textConverterLocation, final File xsltLocation, final File dataLocation) throws IOException {
+                                 final Path textConverterLocation, final Path xsltLocation, final Path dataLocation) throws IOException {
         commonTestControl.createRequiredXMLSchemas();
 
         final Feed referenceFeed = getRefFeed(feedName, textConverterType, textConverterLocation, xsltLocation);
@@ -164,7 +167,7 @@ public final class StoreCreationTool {
     }
 
     private Feed getRefFeed(final String feedName, final TextConverterType textConverterType,
-                            final File textConverterLocation, final File xsltLocation) {
+                            final Path textConverterLocation, final Path xsltLocation) {
         Feed referenceFeed = feedService.loadByName(feedName);
 
         if (referenceFeed == null) {
@@ -201,7 +204,7 @@ public final class StoreCreationTool {
     }
 
     private PipelineEntity getReferencePipeline(final String feedName, final Feed referenceFeed,
-                                                final TextConverterType textConverterType, final File textConverterLocation, final File xsltLocation) {
+                                                final TextConverterType textConverterType, final Path textConverterLocation, final Path xsltLocation) {
         // Setup the pipeline.
         final String data = StreamUtil.fileToString(referenceDataPipeline);
         final PipelineEntity pipeline = getPipeline(feedName, data);
@@ -233,7 +236,7 @@ public final class StoreCreationTool {
      * @throws IOException Thrown if files not found.
      */
     public Feed addEventData(final String feedName, final TextConverterType translationTextConverterType,
-                             final File translationTextConverterLocation, final File translationXsltLocation, final File dataLocation,
+                             final Path translationTextConverterLocation, final Path translationXsltLocation, final Path dataLocation,
                              final Set<Feed> referenceFeeds) throws IOException {
         return addEventData(feedName, translationTextConverterType, translationTextConverterLocation,
                 translationXsltLocation, null, null, null, null, dataLocation, null, referenceFeeds);
@@ -251,10 +254,10 @@ public final class StoreCreationTool {
      * @throws IOException Thrown if files not found.
      */
     public Feed addEventData(final String feedName, final TextConverterType translationTextConverterType,
-                             final File translationTextConverterLocation, final File translationXsltLocation,
-                             final TextConverterType contextTextConverterType, final File contextTextConverterLocation,
-                             final File contextXsltLocation, final File flatteningXsltLocation, final File dataLocation,
-                             final File contextLocation, final Set<Feed> referenceFeeds) throws IOException {
+                             final Path translationTextConverterLocation, final Path translationXsltLocation,
+                             final TextConverterType contextTextConverterType, final Path contextTextConverterLocation,
+                             final Path contextXsltLocation, final Path flatteningXsltLocation, final Path dataLocation,
+                             final Path contextLocation, final Set<Feed> referenceFeeds) throws IOException {
         commonTestControl.createRequiredXMLSchemas();
 
         final Feed eventFeed = getEventFeed(feedName, translationTextConverterType, translationTextConverterLocation,
@@ -267,7 +270,7 @@ public final class StoreCreationTool {
 
         final StreamTarget dataTarget = streamStore.openStreamTarget(stream);
 
-        final InputStream dataInputStream = StreamUtil.fileToStream(dataLocation);
+        final InputStream dataInputStream = Files.newInputStream(dataLocation);
 
         final RASegmentOutputStream dataOutputStream = new RASegmentOutputStream(dataTarget);
 
@@ -277,7 +280,7 @@ public final class StoreCreationTool {
         if (contextLocation != null) {
             final StreamTarget contextTarget = dataTarget.addChildStream(StreamType.CONTEXT);
 
-            final InputStream contextInputStream = StreamUtil.fileToStream(contextLocation);
+            final InputStream contextInputStream = Files.newInputStream(contextLocation);
 
             final RASegmentOutputStream contextOutputStream = new RASegmentOutputStream(contextTarget);
 
@@ -297,9 +300,9 @@ public final class StoreCreationTool {
     }
 
     private Feed getEventFeed(final String feedName, final TextConverterType translationTextConverterType,
-                              final File translationTextConverterLocation, final File translationXsltLocation,
-                              final TextConverterType contextTextConverterType, final File contextTextConverterLocation,
-                              final File contextXsltLocation, final File flatteningXsltLocation, final Set<Feed> referenceFeeds) {
+                              final Path translationTextConverterLocation, final Path translationXsltLocation,
+                              final TextConverterType contextTextConverterType, final Path contextTextConverterLocation,
+                              final Path contextXsltLocation, final Path flatteningXsltLocation, final Set<Feed> referenceFeeds) {
         final List<PipelineReference> pipelineReferences = new ArrayList<>();
 
         Feed eventFeed = feedService.loadByName(feedName);
@@ -351,7 +354,7 @@ public final class StoreCreationTool {
     }
 
     private PipelineEntity getContextPipeline(final Feed feed, final TextConverterType textConverterType,
-                                              final File contextTextConverterLocation, final File contextXsltLocation) {
+                                              final Path contextTextConverterLocation, final Path contextXsltLocation) {
         final TextConverter contextTextConverter = getTextConverter(feed.getName() + "_CONTEXT", textConverterType,
                 contextTextConverterLocation);
         final XSLT contextXSLT = getXSLT(feed.getName() + "_CONTEXT", contextXsltLocation);
@@ -378,8 +381,8 @@ public final class StoreCreationTool {
     }
 
     private PipelineEntity getEventPipeline(final Feed feed, final TextConverterType textConverterType,
-                                            final File translationTextConverterLocation, final File translationXsltLocation,
-                                            final File flatteningXsltLocation, final List<PipelineReference> pipelineReferences) {
+                                            final Path translationTextConverterLocation, final Path translationXsltLocation,
+                                            final Path flatteningXsltLocation, final List<PipelineReference> pipelineReferences) {
         final PipelineEntity pipeline = getPipeline(feed.getName(), StreamUtil.fileToString(eventDataPipeline));
 
         // Setup the text converter.
@@ -441,7 +444,7 @@ public final class StoreCreationTool {
         return pipelineService.save(pipeline);
     }
 
-    private PipelineEntity getIndexingPipeline(final Index index, final File xsltLocation) {
+    private PipelineEntity getIndexingPipeline(final Index index, final Path xsltLocation) {
         final PipelineEntity pipeline = getPipeline(index.getName(), StreamUtil.fileToString(indexingPipeline));
 
         // Setup the xslt.
@@ -475,7 +478,7 @@ public final class StoreCreationTool {
     }
 
     private TextConverter getTextConverter(final String name, final TextConverterType textConverterType,
-                                           final File textConverterLocation) {
+                                           final Path textConverterLocation) {
         // Try to find an existing one first.
         final FindTextConverterCriteria criteria = new FindTextConverterCriteria();
         criteria.getName().setString(name);
@@ -488,7 +491,7 @@ public final class StoreCreationTool {
         String data = null;
         if (textConverterLocation != null) {
             data = StreamUtil.fileToString(textConverterLocation);
-            Assert.assertNotNull("Did not find " + textConverterLocation.getAbsolutePath(), data);
+            Assert.assertNotNull("Did not find " + FileUtil.getCanonicalPath(textConverterLocation), data);
         }
 
         // Create a new text converter entity.
@@ -504,7 +507,7 @@ public final class StoreCreationTool {
         return textConverter;
     }
 
-    private XSLT getXSLT(final String name, final File xsltLocation) {
+    private XSLT getXSLT(final String name, final Path xsltLocation) {
         // Try to find an existing one first.
         final FindXSLTCriteria criteria = new FindXSLTCriteria();
         criteria.getName().setString(name);
@@ -545,7 +548,7 @@ public final class StoreCreationTool {
                 data);
     }
 
-    public Index addIndex(final String name, final File translationXsltLocation) {
+    public Index addIndex(final String name, final Path translationXsltLocation) {
         final FindIndexCriteria criteria = new FindIndexCriteria();
         criteria.getName().setString(name);
         final BaseResultList<Index> list = indexService.find(criteria);
@@ -596,7 +599,7 @@ public final class StoreCreationTool {
         return indexFields;
     }
 
-    public PipelineEntity getSearchResultPipeline(final String name, final File xsltLocation) {
+    public PipelineEntity getSearchResultPipeline(final String name, final Path xsltLocation) {
         final PipelineEntity pipeline = getPipeline(name, StreamUtil.fileToString(searchExtractionPipeline));
         pipeline.setPipelineType(PipelineType.SEARCH_EXTRACTION.getDisplayValue());
 

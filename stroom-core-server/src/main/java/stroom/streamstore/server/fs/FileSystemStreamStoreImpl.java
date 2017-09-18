@@ -82,6 +82,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -641,7 +642,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
             // Are we appending?
             if (streamTarget.isAppend()) {
-                final Set<File> childFile = FileSystemStreamTypeUtil.createChildStreamFile(
+                final Set<Path> childFile = FileSystemStreamTypeUtil.createChildStreamPath(
                         ((FileSystemStreamTarget) streamTarget).getFiles(false), StreamType.MANIFEST);
 
                 // Does the manifest exist ... overwrite it

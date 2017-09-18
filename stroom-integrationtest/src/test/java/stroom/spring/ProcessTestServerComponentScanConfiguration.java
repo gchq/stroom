@@ -26,8 +26,10 @@ import org.springframework.context.annotation.FilterType;
 import stroom.cluster.server.ClusterNodeManagerImpl;
 import stroom.dashboard.server.QueryServiceImpl;
 import stroom.dictionary.server.DictionaryServiceImpl;
+import stroom.explorer.server.ExplorerActionHandlers;
 import stroom.feed.server.FeedServiceImpl;
 import stroom.feed.server.MockFeedService;
+import stroom.importexport.server.ImportExportActionHandlers;
 import stroom.internalstatistics.MetaDataStatisticImpl;
 import stroom.jobsystem.server.ClusterLockServiceImpl;
 import stroom.jobsystem.server.JobManagerImpl;
@@ -39,9 +41,15 @@ import stroom.node.server.NodeConfigImpl;
 import stroom.node.server.NodeServiceImpl;
 import stroom.node.server.RecordCountServiceImpl;
 import stroom.pipeline.server.MockPipelineService;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.server.PipelineServiceImpl;
+import stroom.pipeline.server.TextConverterService;
 import stroom.pipeline.server.TextConverterServiceImpl;
+import stroom.pipeline.server.XSLTService;
 import stroom.pipeline.server.XSLTServiceImpl;
+import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.TextConverter;
+import stroom.pipeline.shared.XSLT;
 import stroom.policy.server.DataRetentionExecutor;
 import stroom.resource.server.ResourceStoreImpl;
 import stroom.security.server.UserServiceImpl;
@@ -59,7 +67,9 @@ import stroom.streamtask.server.StreamTaskCreatorImpl;
 import stroom.streamtask.server.StreamTaskServiceImpl;
 import stroom.test.DatabaseCommonTestControl;
 import stroom.volume.server.VolumeServiceImpl;
+import stroom.xmlschema.server.XMLSchemaService;
 import stroom.xmlschema.server.XMLSchemaServiceImpl;
+import stroom.xmlschema.shared.XMLSchema;
 
 /**
  * Configures the context for process integration tests.
@@ -165,8 +175,20 @@ import stroom.xmlschema.server.XMLSchemaServiceImpl;
 public class ProcessTestServerComponentScanConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessTestServerComponentScanConfiguration.class);
 
-    public ProcessTestServerComponentScanConfiguration() {
-        LOGGER.info("ProcessConfiguration loading...");
+    public ProcessTestServerComponentScanConfiguration(final ExplorerActionHandlers explorerActionHandlers,
+                                                       final ImportExportActionHandlers importExportActionHandlers,
+                                                       final TextConverterService textConverterService,
+                                                       final XSLTService xsltService,
+                                                       final PipelineService pipelineService,
+                                                       final XMLSchemaService xmlSchemaService) {
+        explorerActionHandlers.add(4, TextConverter.ENTITY_TYPE, "Text Converter", textConverterService);
+        explorerActionHandlers.add(5, XSLT.ENTITY_TYPE, XSLT.ENTITY_TYPE, xsltService);
+        explorerActionHandlers.add(6, PipelineEntity.ENTITY_TYPE, PipelineEntity.ENTITY_TYPE, pipelineService);
+        explorerActionHandlers.add(13, XMLSchema.ENTITY_TYPE, "XML Schema", xmlSchemaService);
+        importExportActionHandlers.add(TextConverter.ENTITY_TYPE, textConverterService);
+        importExportActionHandlers.add(XSLT.ENTITY_TYPE, xsltService);
+        importExportActionHandlers.add(PipelineEntity.ENTITY_TYPE, pipelineService);
+        importExportActionHandlers.add(XMLSchema.ENTITY_TYPE, xmlSchemaService);
     }
 
     @Bean(name = "cachedStreamTypeService")

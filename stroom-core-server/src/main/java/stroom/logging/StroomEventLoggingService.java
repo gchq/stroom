@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server.logging;
+package stroom.logging;
 
 import event.logging.Device;
 import event.logging.Event;
@@ -29,19 +29,22 @@ import event.logging.util.DeviceUtil;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.stereotype.Component;
 import stroom.security.SecurityContext;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.util.BuildInfoUtil;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Date;
 
 @Component
-public class StroomEventLoggingService extends DefaultEventLoggingService implements EventLoggingService {
+public class StroomEventLoggingService extends DefaultEventLoggingService implements EventLoggingService, BeanFactoryAware {
     /**
      * Logger - should not be used for event logs
      */
@@ -54,16 +57,18 @@ public class StroomEventLoggingService extends DefaultEventLoggingService implem
     private volatile boolean obtainedDevice;
     private volatile Device storedDevice;
 
-    @Resource
-    private transient HttpServletRequestHolder httpServletRequestHolder;
-    @Resource
-    private SecurityContext security;
+    private BeanFactory beanFactory;
+    private final SecurityContext security;
+
+    @Inject
+    StroomEventLoggingService(final SecurityContext security) {
+        this.security = security;
+    }
 
     @Override
     public Event createEvent() {
         // Get the current request.
-        final HttpServletRequest request = httpServletRequestHolder.get();
-
+        final HttpServletRequest request = getRequest();
         // Create event time.
         final EventTime eventTime = new EventTime();
         eventTime.setTimeCreated(new Date());
@@ -215,5 +220,24 @@ public class StroomEventLoggingService extends DefaultEventLoggingService implem
         dest.setHostName(source.getHostName());
         dest.setMACAddress(source.getMACAddress());
         return dest;
+    }
+
+    private HttpServletRequest getRequest() {
+        if (beanFactory != null) {
+            try {
+                final HttpServletRequestHolder holder = beanFactory.getBean(HttpServletRequestHolder.class);
+                if (holder != null) {
+                    return holder.get();
+                }
+            } catch (final RuntimeException e) {
+                // Ignore.
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public void setBeanFactory(final BeanFactory beanFactory) throws BeansException {
+        this.beanFactory = beanFactory;
     }
 }

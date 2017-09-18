@@ -18,6 +18,7 @@ package stroom.importexport.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.util.io.FileUtil;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -107,7 +108,7 @@ public class ContentMigration {
 
     private void process(final Path dir, final Path path) {
         try {
-            LOGGER.info("Processing: " + path.toAbsolutePath().toString());
+            LOGGER.info("Processing: " + FileUtil.getCanonicalPath(path));
 
             final String fileName = path.getFileName().toString();
             final String fileStem = fileName.substring(0, fileName.lastIndexOf("."));

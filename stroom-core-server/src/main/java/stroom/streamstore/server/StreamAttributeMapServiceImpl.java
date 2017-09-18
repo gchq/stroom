@@ -54,8 +54,9 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -315,12 +316,12 @@ public class StreamAttributeMapServiceImpl
                 }
             }
 
-            final File manifest = FileSystemStreamTypeUtil.createChildStreamFile(streamVolume, StreamType.MANIFEST);
+            final Path manifest = FileSystemStreamTypeUtil.createChildStreamFile(streamVolume, StreamType.MANIFEST);
 
-            if (manifest.isFile()) {
+            if (Files.isRegularFile(manifest)) {
                 final MetaMap metaMap = new MetaMap();
                 try {
-                    metaMap.read(new FileInputStream(manifest), true);
+                    metaMap.read(Files.newInputStream(manifest), true);
                 } catch (final IOException ioException) {
                     LOGGER.error("loadAttributeMapFromFileSystem() {}", manifest, ioException);
                 }

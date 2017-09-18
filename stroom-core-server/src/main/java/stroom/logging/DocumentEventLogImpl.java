@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.dashboard.server.logging;
+package stroom.logging;
 
 import event.logging.BaseObject;
 import event.logging.CopyMove;
@@ -42,7 +42,6 @@ import stroom.security.Insecure;
 import stroom.util.shared.HasId;
 import stroom.util.spring.StroomBeanStore;
 
-import javax.annotation.Resource;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.math.BigInteger;

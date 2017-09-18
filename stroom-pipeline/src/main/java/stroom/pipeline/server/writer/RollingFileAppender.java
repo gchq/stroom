@@ -27,12 +27,16 @@ import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.util.io.FileUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Joins text instances into a single text instance.
@@ -42,7 +46,7 @@ import java.io.IOException;
 @ConfigurableElement(type = "RollingFileAppender", category = Category.DESTINATION, roles = {
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_DESTINATION,
         PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
-public class RollingFileAppender extends AbstractRollingAppender {
+class RollingFileAppender extends AbstractRollingAppender {
     private static final int MB = 1024 * 1024;
     private static final int DEFAULT_MAX_SIZE = 100 * MB;
 
@@ -50,8 +54,7 @@ public class RollingFileAppender extends AbstractRollingAppender {
     private static final int MINUTE = 60 * SECOND;
     private static final int HOUR = 60 * MINUTE;
 
-    @Resource
-    private PathCreator pathCreator;
+    private final PathCreator pathCreator;
 
     private String[] outputPaths;
     private String fileNamePattern;
@@ -66,6 +69,11 @@ public class RollingFileAppender extends AbstractRollingAppender {
     private String rolledFileName;
     private String key;
 
+    @Inject
+    RollingFileAppender(final PathCreator pathCreator) {
+        this.pathCreator = pathCreator;
+    }
+
     @Override
     public RollingDestination createDestination() throws IOException {
         String dir = this.dir;
@@ -78,20 +86,20 @@ public class RollingFileAppender extends AbstractRollingAppender {
         fileName = PathCreator.replaceUUIDVars(fileName);
 
         // Create a new destination.
-        final File file = new File(dir + File.separator + fileName);
+        final Path file = Paths.get(dir + File.separator + fileName);
 
         // Try and create the path.
-        final File parentDir = file.getParentFile();
-        if (!parentDir.isDirectory()) {
-            if (!parentDir.mkdirs()) {
-                throw new ProcessException("Unable to create output dirs: " + parentDir.getAbsolutePath());
+        final Path parentDir = file.getParent();
+        if (!Files.isDirectory(parentDir)) {
+            try {
+                Files.createDirectories(parentDir);
+            } catch (final IOException e) {
+                throw new ProcessException("Unable to create output dirs: " + FileUtil.getCanonicalPath(parentDir));
             }
         }
 
-        final RollingFileDestination dest = new RollingFileDestination(key, fileName, rolledFileName, frequency,
+        return new RollingFileDestination(key, fileName, rolledFileName, frequency,
                 maxSize, parentDir, file, System.currentTimeMillis());
-
-        return dest;
     }
 
     @Override

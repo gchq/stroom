@@ -19,7 +19,7 @@ package stroom.util.test;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 
-import java.io.File;
+import java.nio.file.Path;
 
 public class TestState {
     /**
@@ -39,7 +39,7 @@ public class TestState {
     }
 
     public static class State {
-        private File testDir;
+        private Path testDir;
         private int classTestCount;
         private int threadTestCount;
         private boolean doneSetup;
@@ -47,12 +47,12 @@ public class TestState {
         public void create() {
             try {
                 if (testDir == null) {
-                    final File initialTempDir = FileUtil.getInitialTempDir();
-                    final File rootTestDir = StroomTestUtil.createRootTestDir(initialTempDir);
+                    final Path initialTempPath = FileUtil.getInitialTempDir();
+                    final Path rootTestDir = StroomTestUtil.createRootTestDir(initialTempPath);
                     testDir = StroomTestUtil.createPerThreadTestDir(rootTestDir);
 
                     // Redirect the temp dir for the tests.
-                    StroomProperties.setOverrideProperty(StroomProperties.STROOM_TEMP, testDir.getCanonicalPath(), StroomProperties.Source.TEST);
+                    StroomProperties.setOverrideProperty(StroomProperties.STROOM_TEMP, FileUtil.getCanonicalPath(testDir), StroomProperties.Source.TEST);
 
                     FileUtil.forgetTempDir();
 
@@ -70,7 +70,7 @@ public class TestState {
         public void destroy() {
             try {
                 if (testDir != null) {
-                    FileUtil.forceDelete(testDir);
+                    FileUtil.deleteAll(testDir);
                     FileUtil.forgetTempDir();
                     StroomProperties.removeOverrides();
                 }

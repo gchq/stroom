@@ -60,7 +60,7 @@ public class TestImportExportServiceImpl3 extends AbstractCoreIntegrationTest {
         }
         final List<Message> msgList = new ArrayList<>();
 
-        final Path testFile = getCurrentTestPath().resolve("ExportTest" + FileSystemTestUtil.getUniqueTestString() + ".zip");
+        final Path testFile = getCurrentTestDir().resolve("ExportTest" + FileSystemTestUtil.getUniqueTestString() + ".zip");
 
         final DocRefs docRefs = new DocRefs();
         docRefs.add(ExplorerConstants.ROOT_DOC_REF);
@@ -69,7 +69,7 @@ public class TestImportExportServiceImpl3 extends AbstractCoreIntegrationTest {
 
         Assert.assertEquals(0, msgList.size());
 
-        final List<String> list = ZipUtil.pathList(testFile.toFile());
+        final List<String> list = ZipUtil.pathList(testFile);
 
         // Expected size is 1 greater than batch size because it should contain the parent folder for the feeds.
         final int expectedSize = BATCH_SIZE * 2;

@@ -409,7 +409,7 @@ public class TestStatisticsFilter implements Statistics {
     }
 
     private String getString(final String resourceName) {
-        return StreamUtil.streamToString(StroomStatisticsServerTestFileUtil.getInputStream(resourceName));
+        return StroomStatisticsServerTestFileUtil.getString(resourceName);
     }
 
     @Override

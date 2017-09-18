@@ -66,13 +66,13 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
     private final Node node1c = Node.create(rack1, "1c");
     private final Node node2a = Node.create(rack2, "2a");
     private final Node node2b = Node.create(rack2, "2b");
-    private final Volume public1a = Volume.create(node1a, FileUtil.getTempDir().getAbsolutePath() + "/PUBLIC_1A", VolumeType.PUBLIC,
+    private final Volume public1a = Volume.create(node1a, FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_1A")), VolumeType.PUBLIC,
             VolumeState.create(0, 1000));
-    private final Volume public1b = Volume.create(node1b, FileUtil.getTempDir().getAbsolutePath() + "/PUBLIC_1B", VolumeType.PUBLIC,
+    private final Volume public1b = Volume.create(node1b, FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_1B")), VolumeType.PUBLIC,
             VolumeState.create(0, 1000));
-    private final Volume public2a = Volume.create(node2a, FileUtil.getTempDir().getAbsolutePath() + "/PUBLIC_2A", VolumeType.PUBLIC,
+    private final Volume public2a = Volume.create(node2a, FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_2A")), VolumeType.PUBLIC,
             VolumeState.create(0, 1000));
-    private final Volume public2b = Volume.create(node2b, FileUtil.getTempDir().getAbsolutePath() + "/PUBLIC_2B", VolumeType.PUBLIC,
+    private final Volume public2b = Volume.create(node2b, FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_2B")), VolumeType.PUBLIC,
             VolumeState.create(0, 1000));
     private List<Volume> volumeList = null;
     private MockVolumeService volumeServiceImpl = null;
@@ -186,17 +186,17 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
         //make sure both paths have been saved
         Assert.assertEquals(2, volumeServiceImpl.savedVolumes.stream()
                 .map(vol -> vol.getPath())
-                .filter(path -> path.equals(DEFAULT_INDEX_VOLUME_PATH.toAbsolutePath().toString()) ||
-                        path.equals(DEFAULT_STREAM_VOLUME_PATH.toAbsolutePath().toString()))
+                .filter(path -> path.equals(FileUtil.getCanonicalPath(DEFAULT_INDEX_VOLUME_PATH)) ||
+                        path.equals(FileUtil.getCanonicalPath(DEFAULT_STREAM_VOLUME_PATH)))
                 .count());
         Assert.assertTrue(Files.exists(DEFAULT_INDEX_VOLUME_PATH));
         Assert.assertTrue(Files.exists(DEFAULT_STREAM_VOLUME_PATH));
     }
 
     private void deleteDefaultVolumesDir() throws IOException {
-        FileUtil.forceDelete(DEFAULT_INDEX_VOLUME_PATH);
-        FileUtil.forceDelete(DEFAULT_STREAM_VOLUME_PATH);
-        FileUtil.forceDelete(DEFAULT_VOLUMES_PATH);
+        FileUtil.deleteAll(DEFAULT_INDEX_VOLUME_PATH);
+        FileUtil.deleteAll(DEFAULT_STREAM_VOLUME_PATH);
+        FileUtil.deleteAll(DEFAULT_VOLUMES_PATH);
     }
 
     private static class MockVolumeService extends VolumeServiceImpl {

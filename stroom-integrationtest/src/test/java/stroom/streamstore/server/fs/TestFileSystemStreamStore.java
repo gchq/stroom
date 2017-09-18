@@ -53,16 +53,18 @@ import stroom.task.server.TaskMonitorImpl;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.config.StroomProperties;
 import stroom.util.date.DateUtil;
+import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.util.test.StroomExpectedException;
 import stroom.volume.server.VolumeServiceImpl;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -652,10 +654,10 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         stream = streamTarget.getStream();
 
         final Set<StreamVolume> volumes = ((FileSystemStreamStore) streamStore).findStreamVolume(stream.getId());
-        final Set<File> rootFile = new HashSet<>();
+        final Set<Path> rootFile = new HashSet<>();
 
         for (final StreamVolume streamVolume : volumes) {
-            rootFile.add(FileSystemStreamTypeUtil.createRootStreamFile(streamVolume.getVolume(), stream,
+            rootFile.add(FileSystemStreamTypeUtil.createRootStreamPath(streamVolume.getVolume(), stream,
                     StreamType.RAW_EVENTS));
         }
         Assert.assertTrue(FileSystemUtil.isAllFile(rootFile));
@@ -665,7 +667,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         Assert.assertEquals(testString2, streamSource.getAttributeMap().get(testString1));
         streamStore.closeStreamSource(streamSource);
 
-        final Set<File> manifestFile = FileSystemStreamTypeUtil.createChildStreamFile(rootFile, StreamType.MANIFEST);
+        final Set<Path> manifestFile = FileSystemStreamTypeUtil.createChildStreamPath(rootFile, StreamType.MANIFEST);
 
         Assert.assertTrue(FileSystemUtil.isAllFile(manifestFile));
 
@@ -680,7 +682,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         Assert.assertEquals(testString4, streamSource.getAttributeMap().get(testString3));
         streamStore.closeStreamSource(streamSource);
 
-        Assert.assertTrue(FileSystemUtil.deleteAnyFile(manifestFile));
+        Assert.assertTrue(FileSystemUtil.deleteAnyPath(manifestFile));
         for (final StreamAttributeValue value : streamAttributeValueService
                 .find(FindStreamAttributeValueCriteria.create(stream))) {
             Assert.assertTrue(streamAttributeValueService.delete(value));
@@ -746,12 +748,12 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         final Stream stream = Stream.createStream(StreamType.RAW_EVENTS, feed1, null);
         final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
         streamTarget.getOutputStream().write(testString.getBytes(StreamUtil.DEFAULT_CHARSET));
-        final Set<File> dirSet = new HashSet<>();
-        for (final File file : ((FileSystemStreamTarget) streamTarget).getFiles(true)) {
-            dirSet.add(file.getParentFile());
+        final Set<Path> dirSet = new HashSet<>();
+        for (final Path file : ((FileSystemStreamTarget) streamTarget).getFiles(true)) {
+            dirSet.add(file.getParent());
         }
-        for (final File dir : dirSet) {
-            dir.setWritable(false);
+        for (final Path dir : dirSet) {
+            FileUtil.addFilePermision(dir, PosixFilePermission.OWNER_WRITE, PosixFilePermission.GROUP_WRITE, PosixFilePermission.OTHERS_WRITE);
         }
         try {
             streamStore.closeStreamTarget(streamTarget);
@@ -759,8 +761,8 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             Assert.fail("Expecting an error");
 
         } catch (final Throwable th) {
-            for (final File dir : dirSet) {
-                dir.setWritable(true);
+            for (final Path dir : dirSet) {
+                FileUtil.addFilePermision(dir, PosixFilePermission.OWNER_WRITE, PosixFilePermission.GROUP_WRITE, PosixFilePermission.OTHERS_WRITE);
             }
         }
     }

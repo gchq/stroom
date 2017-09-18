@@ -17,7 +17,7 @@
 package stroom.streamstore.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.dashboard.server.logging.StreamEventLog;
+import stroom.logging.StreamEventLog;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.security.Secured;
 import stroom.servlet.SessionResourceStore;

@@ -101,7 +101,7 @@ public class ImportExportServiceImpl implements ImportExportService {
             importExportSerializer.write(explodeDir, docRefs, false, messageList);
 
             // Now zip the dir.
-            ZipUtil.zip(zipFile.toFile(), explodeDir.toFile());
+            ZipUtil.zip(zipFile, explodeDir);
 
         } catch (final Exception ex) {
             throw EntityServiceExceptionUtil.create(ex);

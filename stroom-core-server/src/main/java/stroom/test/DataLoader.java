@@ -34,6 +34,7 @@ import stroom.streamstore.server.fs.serializable.RawInputSegmentWriter;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.server.StreamTargetStroomStreamHandler;
+import stroom.util.io.FileUtil;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -85,9 +86,9 @@ public class DataLoader {
     private void loadInputFile(final Path file, final boolean mandateEffectiveDate, final Long effectiveMs) {
         final Feed feed = getFeed(file);
         try (final InputStream inputStream = Files.newInputStream(file)) {
-            loadInputStream(feed, file.toAbsolutePath().toString(), inputStream, mandateEffectiveDate, effectiveMs);
+            loadInputStream(feed, FileUtil.getCanonicalPath(file), inputStream, mandateEffectiveDate, effectiveMs);
         } catch (final IOException e) {
-            throw new RuntimeException("Error loading file: " + file.toAbsolutePath(), e);
+            throw new RuntimeException("Error loading file: " + FileUtil.getCanonicalPath(file), e);
         }
     }
 
@@ -125,7 +126,7 @@ public class DataLoader {
         final Feed feed = getFeed(file);
 
         if (feed.isReference() == mandateEffectiveDate) {
-            LOGGER.info("Loading data: " + file.toAbsolutePath());
+            LOGGER.info("Loading data: " + FileUtil.getCanonicalPath(file));
 
             try {
                 final StroomZipFile stroomZipFile = new StroomZipFile(file);
@@ -161,7 +162,7 @@ public class DataLoader {
                 stroomZipFile.close();
 
             } catch (final IOException e) {
-                throw new RuntimeException("Error loading file: " + file.toAbsolutePath(), e);
+                throw new RuntimeException("Error loading file: " + FileUtil.getCanonicalPath(file), e);
             }
         }
     }

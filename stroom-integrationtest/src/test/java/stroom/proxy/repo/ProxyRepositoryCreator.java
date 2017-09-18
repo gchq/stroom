@@ -26,6 +26,7 @@ import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.util.date.DateUtil;
+import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.zip.StroomHeaderArguments;
 
@@ -81,7 +82,7 @@ public class ProxyRepositoryCreator {
 
         try {
             if (feed.isReference() == mandateEffectiveDate) {
-                LOGGER.info("Loading data: " + file.toAbsolutePath().toString());
+                LOGGER.info("Loading data: " + FileUtil.getCanonicalPath(file));
 
                 final StroomZipOutputStream zipOutputStream = repository.getStroomZipOutputStream();
 
@@ -102,7 +103,7 @@ public class ProxyRepositoryCreator {
                 zipOutputStream.close();
             }
         } catch (final IOException e) {
-            throw new RuntimeException("Error loading file: " + file.toAbsolutePath().toString(), e);
+            throw new RuntimeException("Error loading file: " + FileUtil.getCanonicalPath(file), e);
         }
     }
 
@@ -111,7 +112,7 @@ public class ProxyRepositoryCreator {
         final Feed feed = getFeed(file);
 
         if (feed.isReference() == mandateEffectiveDate) {
-            LOGGER.info("Loading data: " + file.toAbsolutePath().toString());
+            LOGGER.info("Loading data: " + FileUtil.getCanonicalPath(file));
 
             try {
                 final StroomZipOutputStream zipOutputStream = repository.getStroomZipOutputStream();
@@ -153,7 +154,7 @@ public class ProxyRepositoryCreator {
                 zipOutputStream.close();
 
             } catch (final IOException e) {
-                throw new RuntimeException("Error loading file: " + file.toAbsolutePath().toString(), e);
+                throw new RuntimeException("Error loading file: " + FileUtil.getCanonicalPath(file), e);
             }
         }
     }

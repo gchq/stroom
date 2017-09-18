@@ -23,16 +23,17 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.dashboard.server.vis.VisSettings;
-import stroom.test.StroomProcessTestFileUtil;
+import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class TestVisSettings {
     @Test
     public void test() throws Exception {
-        final File jsonFile = StroomProcessTestFileUtil.getTestResourcesFile("TestVisSettings/settings.json");
-        Assert.assertTrue(jsonFile.isFile());
+        final Path jsonFile = StroomPipelineTestFileUtil.getTestResourcesFile("TestVisSettings/settings.json");
+        Assert.assertTrue(Files.isRegularFile(jsonFile));
         final String json = StreamUtil.fileToString(jsonFile);
 
         final ObjectMapper mapper = new ObjectMapper();

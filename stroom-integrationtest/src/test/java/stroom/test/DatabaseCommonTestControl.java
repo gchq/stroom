@@ -184,7 +184,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
         for (final Volume volume : volumes) {
             // The parent will also pick up the index shard (as well as the
             // store)
-            FileSystemUtil.deleteContents(FileSystemUtil.createFileTypeRoot(volume).getParentFile());
+            FileSystemUtil.deleteContents(FileSystemUtil.createFileTypeRoot(volume).getParent());
         }
 
         // These are static

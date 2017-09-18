@@ -1,5 +1,6 @@
 package stroom.test;
 
+import stroom.util.io.FileUtil;
 import stroom.util.shared.Version;
 
 import java.io.FileOutputStream;
@@ -9,6 +10,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -64,15 +66,14 @@ public abstract class AbstractContentDownloader {
             byte[] buffer = new byte[4096];
             int n = -1;
 
-            try (OutputStream output = new FileOutputStream(destFilename.toFile())) {
-
+            try (OutputStream output = Files.newOutputStream(destFilename)) {
                 while ((n = input.read(buffer)) != -1) {
                     output.write(buffer, 0, n);
                 }
             }
         } catch (IOException e) {
             throw new RuntimeException(String.format("Error downloading url %s to %s",
-                    fileUrl.toString(), destFilename.toAbsolutePath().toString()), e);
+                    fileUrl.toString(), FileUtil.getCanonicalPath(destFilename)), e);
         }
     }
 

@@ -27,7 +27,6 @@ import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XMLSchema;
 
 import javax.inject.Inject;
-import java.io.File;
 import java.nio.file.Path;
 
 @Profile(StroomSpringProfiles.TEST)
@@ -42,7 +41,7 @@ public class MockXMLSchemaService extends MockDocumentEntityService<XMLSchema, F
     public MockXMLSchemaService() {
 //        this.folderService = null;
 //        this.importExportSerializer = null;
-        xsdDir = new File(StroomCoreServerTestFileUtil.getTestResourcesDir(), "samples/config/XML Schemas").toPath();
+        xsdDir = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve("samples/config/XML Schemas");
     }
 
     @Inject
@@ -50,7 +49,7 @@ public class MockXMLSchemaService extends MockDocumentEntityService<XMLSchema, F
         super(importExportHelper);
 //        this.folderService = folderService;
 //        this.importExportSerializer = importExportSerializer;
-        xsdDir = new File(StroomCoreServerTestFileUtil.getTestResourcesDir(), "samples/config/XML Schemas").toPath();
+        xsdDir = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve("samples/config/XML Schemas");
     }
 
     @Override

@@ -42,7 +42,7 @@ public class MockIndexShardService extends MockEntityService<IndexShard, FindInd
     public IndexShard createIndexShard(final IndexShardKey indexShardKey, final Node ownerNode) {
         final IndexShard indexShard = new IndexShard();
         indexShard.setVolume(
-                Volume.create(ownerNode, FileUtil.getTempDir().getAbsolutePath(), VolumeType.PUBLIC));
+                Volume.create(ownerNode, FileUtil.getCanonicalPath(FileUtil.getTempDir()), VolumeType.PUBLIC));
         indexShard.setIndex(indexShardKey.getIndex());
         indexShard.setPartition(indexShardKey.getPartition());
         indexShard.setPartitionFromTime(indexShardKey.getPartitionFromTime());

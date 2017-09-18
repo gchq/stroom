@@ -28,7 +28,7 @@ import stroom.pipeline.server.factory.PipelineFactory;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
-import stroom.test.StroomProcessTestFileUtil;
+import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.spring.StroomScope;
 
 import javax.annotation.Resource;
@@ -63,14 +63,14 @@ public class XMLValidator {
             try {
                 // Buffer the stream.
                 final InputStream inputStream = new BufferedInputStream(
-                        StroomProcessTestFileUtil.getInputStream(resourceName));
+                        StroomPipelineTestFileUtil.getInputStream(resourceName));
 
                 // Setup the error receiver.
                 errorReceiver.setErrorReceiver(new LoggingErrorReceiver());
 
                 // Create the pipeline.
                 PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService,
-                        StroomProcessTestFileUtil.getString("F2XTestUtil/validation.Pipeline.data.xml"));
+                        StroomPipelineTestFileUtil.getString("F2XTestUtil/validation.Pipeline.data.xml"));
                 final PipelineData pipelineData = pipelineEntity.getPipelineData();
 
                 // final ElementType schemaFilterElementType = new ElementType(

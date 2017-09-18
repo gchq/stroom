@@ -23,7 +23,7 @@ import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.test.ComparisonHelper;
 import stroom.test.ContentImportService.ContentPack;
 import stroom.test.ContentPackDownloader;
-import stroom.test.StroomProcessTestFileUtil;
+import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.Version;
@@ -45,15 +45,15 @@ public class TestHeadless {
     @Test
     public void test() throws Exception {
         try {
-            Path newTempDir = FileUtil.getTempDir().toPath().resolve("headless");
-            StroomProperties.setOverrideProperty("stroom.temp", newTempDir.toAbsolutePath().toString(), StroomProperties.Source.TEST);
+            Path newTempDir = FileUtil.getTempDir().resolve("headless");
+            StroomProperties.setOverrideProperty("stroom.temp", FileUtil.getCanonicalPath(newTempDir), StroomProperties.Source.TEST);
 
             // Make sure the new temp directory is empty.
             if (Files.isDirectory(newTempDir)) {
                 FileUtils.deleteDirectory(newTempDir.toFile());
             }
 
-            final Path base = StroomProcessTestFileUtil.getTestResourcesDir().toPath();
+            final Path base = StroomHeadlessTestFileUtil.getTestResourcesDir();
             final Path testPath = base.resolve("TestHeadless");
             final Path tmpPath = testPath.resolve("tmp");
             FileSystemUtil.deleteDirectory(tmpPath);
@@ -65,7 +65,7 @@ public class TestHeadless {
             Files.createDirectories(inputDirPath);
             Files.createDirectories(outputDirPath);
 
-            final Path samplesPath = base.resolve("../../../../stroom-core-server/src/test/resources/samples").toAbsolutePath();
+            final Path samplesPath = base.resolve("../../../../stroom-core-server/src/test/resources/samples").toAbsolutePath().normalize();
             final Path outputFilePath = outputDirPath.resolve("output");
             final Path expectedOutputFilePath = testPath.resolve("expectedOutput");
 
@@ -74,7 +74,7 @@ public class TestHeadless {
             Files.createDirectories(rawInputPath);
             final Path inputFilePath = inputDirPath.resolve("001.zip");
             Files.deleteIfExists(inputFilePath);
-            ZipUtil.zip(inputFilePath.toFile(), rawInputPath.toFile());
+            ZipUtil.zip(inputFilePath, rawInputPath);
 
             // Create config zip file
             final Path contentPacks = tmpPath.resolve("contentPacks");
@@ -101,14 +101,14 @@ public class TestHeadless {
             // Build the config zip file.
             final Path configFilePath = tmpPath.resolve("config.zip");
             Files.deleteIfExists(configFilePath);
-            ZipUtil.zip(configFilePath.toFile(), rawConfigPath.toFile());
+            ZipUtil.zip(configFilePath, rawConfigPath);
 
             final Headless headless = new Headless();
 
-            headless.setConfig(configFilePath.toAbsolutePath().toString());
-            headless.setInput(inputDirPath.toAbsolutePath().toString());
-            headless.setOutput(outputFilePath.toAbsolutePath().toString());
-            headless.setTmp(newTempDir.toAbsolutePath().toString());
+            headless.setConfig(FileUtil.getCanonicalPath(configFilePath));
+            headless.setInput(FileUtil.getCanonicalPath(inputDirPath));
+            headless.setOutput(FileUtil.getCanonicalPath(outputFilePath));
+            headless.setTmp(FileUtil.getCanonicalPath(newTempDir));
             headless.run();
 
             final List<String> expectedLines = Files.readAllLines(expectedOutputFilePath, Charset.defaultCharset());
@@ -121,7 +121,7 @@ public class TestHeadless {
             Assert.assertEquals(new HashSet<>(expectedLines), new HashSet<>(outputLines));
 
             // content should exactly match expected file
-            ComparisonHelper.compareFiles(expectedOutputFilePath.toFile(), outputFilePath.toFile());
+            ComparisonHelper.compareFiles(expectedOutputFilePath, outputFilePath);
 
         } finally {
             StroomProperties.removeOverrides();

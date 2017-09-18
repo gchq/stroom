@@ -44,14 +44,15 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
 import stroom.test.AbstractProcessIntegrationTest;
-import stroom.test.StroomProcessTestFileUtil;
+import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.date.DateUtil;
+import stroom.util.io.FileUtil;
 
 import javax.annotation.Resource;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.List;
 
 public class TestIndexingFilter extends AbstractProcessIntegrationTest {
@@ -181,17 +182,17 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
         index = new IndexMarshaller().marshal(index);
         index = indexService.save(index);
 
-        final File tempDir = getCurrentTestDir();
+        final Path tempDir = getCurrentTestDir();
 
         // Make sure the config dir is set.
-        System.setProperty("stroom.temp", tempDir.getCanonicalPath());
+        System.setProperty("stroom.temp", FileUtil.getCanonicalPath(tempDir));
 
         // Setup the error handler.
         final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
         errorReceiver.setErrorReceiver(loggingErrorReceiver);
 
         // Create the pipeline.
-        final String data = StroomProcessTestFileUtil.getString(PIPELINE);
+        final String data = StroomPipelineTestFileUtil.getString(PIPELINE);
         PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService, data);
         pipelineEntity.getPipelineData().addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", index));
         pipelineEntity = pipelineService.save(pipelineEntity);
@@ -203,7 +204,7 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
         feedHolder.setFeed(new Feed());
 
         // Set the input.
-        final InputStream input = StroomProcessTestFileUtil.getInputStream(resourceName);
+        final InputStream input = StroomPipelineTestFileUtil.getInputStream(resourceName);
         try {
             pipeline.process(input);
         } catch (final Exception e) {

@@ -17,8 +17,8 @@
 package stroom.util.cert;
 
 import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.KeyFactory;
@@ -92,10 +92,10 @@ public final class ImportKey {
             final KeyStore ks = KeyStore.getInstance("JKS", "SUN");
             ks.load(null, keyPass.toCharArray());
 
-            try (FileOutputStream outputStream = new FileOutputStream(keystore)) {
+            try (final OutputStream outputStream = Files.newOutputStream(Paths.get(keystore))) {
                 ks.store(outputStream, keyPass.toCharArray());
             }
-            try (FileInputStream inputStream = new FileInputStream(keystore)) {
+            try (final InputStream inputStream = Files.newInputStream(Paths.get(keystore))) {
                 ks.load(inputStream, keyPass.toCharArray());
             }
 
@@ -121,7 +121,9 @@ public final class ImportKey {
             }
 
             ks.setKeyEntry(alias, ff, keyPass.toCharArray(), certs);
-            ks.store(new FileOutputStream(keystore), keyPass.toCharArray());
+            try (final OutputStream outputStream = Files.newOutputStream(Paths.get(keystore))) {
+                ks.store(outputStream, keyPass.toCharArray());
+            }
 
         } catch (final Exception ex) {
             ex.printStackTrace();

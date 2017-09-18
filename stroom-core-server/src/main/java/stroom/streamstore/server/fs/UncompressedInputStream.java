@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.nio.file.Path;
 
 /**
  * A stream that interfaces with a random access file.
@@ -37,6 +38,10 @@ public class UncompressedInputStream extends InputStream implements SeekableInpu
 
     // Use to help track non-closed streams
     private StreamCloser streamCloser = new StreamCloser();
+
+    public UncompressedInputStream(final Path file, boolean lazy) throws IOException {
+        this(file.toFile(), lazy);
+    }
 
     public UncompressedInputStream(final File file, boolean lazy) throws IOException {
         if (lazy && !file.isFile()) {

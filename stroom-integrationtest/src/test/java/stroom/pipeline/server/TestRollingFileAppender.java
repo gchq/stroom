@@ -34,18 +34,20 @@ import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.RecordCount;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.ComparisonHelper;
-import stroom.test.StroomProcessTestFileUtil;
+import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
 import javax.annotation.Resource;
 import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FilenameFilter;
 import java.io.InputStream;
-import java.util.Arrays;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class TestRollingFileAppender extends AbstractProcessIntegrationTest {
     @Resource
@@ -90,7 +92,7 @@ public class TestRollingFileAppender extends AbstractProcessIntegrationTest {
     private PipelineEntity createPipeline(final String pipelineFile, final TextConverter textConverter,
                                           final XSLT xslt) {
         // Load the pipeline config.
-        final String data = StroomProcessTestFileUtil.getString(pipelineFile);
+        final String data = StroomPipelineTestFileUtil.getString(pipelineFile);
         final PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService, data);
 
         if (textConverter != null) {
@@ -108,7 +110,7 @@ public class TestRollingFileAppender extends AbstractProcessIntegrationTest {
     private TextConverter createTextConverter(final String textConverterFile, final String name,
                                               final TextConverterType textConverterType) {
         // Create a record for the TextConverter.
-        final InputStream textConverterInputStream = StroomProcessTestFileUtil.getInputStream(textConverterFile);
+        final InputStream textConverterInputStream = StroomPipelineTestFileUtil.getInputStream(textConverterFile);
         TextConverter textConverter = textConverterService.create(name);
         textConverter.setConverterType(textConverterType);
         textConverter.setData(StreamUtil.streamToString(textConverterInputStream));
@@ -118,7 +120,7 @@ public class TestRollingFileAppender extends AbstractProcessIntegrationTest {
 
     private XSLT createXSLT(final String xsltPath, final String name) {
         // Create a record for the XSLT.
-        final InputStream xsltInputStream = StroomProcessTestFileUtil.getInputStream(xsltPath);
+        final InputStream xsltInputStream = StroomPipelineTestFileUtil.getInputStream(xsltPath);
         XSLT xslt = xsltService.create(name);
         xslt.setData(StreamUtil.streamToString(xsltInputStream));
         xslt = xsltService.save(xslt);
@@ -136,13 +138,13 @@ public class TestRollingFileAppender extends AbstractProcessIntegrationTest {
             fileName += ".xml";
         }
 
-        final File tempDir = getCurrentTestDir();
+        final Path tempDir = getCurrentTestDir();
 
-        final File outputFile = new File(tempDir, fileName);
-        final File outputLockFile = new File(tempDir, fileName + ".lock");
+        final Path outputFile = tempDir.resolve(fileName);
+        final Path outputLockFile = tempDir.resolve(fileName + ".lock");
 
         // Make sure the config dir is set.
-        System.setProperty("stroom.temp", tempDir.getCanonicalPath());
+        System.setProperty("stroom.temp", FileUtil.getCanonicalPath(tempDir));
 
         // Delete any output file.
         FileUtil.deleteFile(outputFile);
@@ -157,23 +159,26 @@ public class TestRollingFileAppender extends AbstractProcessIntegrationTest {
         final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
         // Get the input streams.
-        final File inputDir = new File(StroomProcessTestFileUtil.getTestResourcesDir(), inputPath);
-        Assert.assertTrue("Can't find input dir", inputDir.isDirectory());
+        final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(inputPath);
+        Assert.assertTrue("Can't find input dir", Files.isDirectory(inputDir));
 
-        final File[] inputFiles = inputDir.listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(final File dir, final String name) {
-                return name.startsWith(inputStem) && name.endsWith(".in");
-            }
-        });
-        Arrays.sort(inputFiles);
+        List<Path> inputFiles;
+        try (final Stream<Path> stream = Files.list(inputDir)) {
+            inputFiles = stream
+                    .filter(p -> {
+                        final String fn = p.getFileName().toString();
+                        return fn.startsWith(inputStem) && fn.endsWith(".in");
+                    })
+                    .sorted(Comparator.naturalOrder())
+                    .collect(Collectors.toList());
+        }
 
-        Assert.assertTrue("Can't find any input files", inputFiles.length > 0);
+        Assert.assertTrue("Can't find any input files", inputFiles.size() > 0);
 
         pipeline.startProcessing();
 
-        for (final File inputFile : inputFiles) {
-            final InputStream inputStream = new BufferedInputStream(new FileInputStream(inputFile));
+        for (final Path inputFile : inputFiles) {
+            final InputStream inputStream = new BufferedInputStream(Files.newInputStream(inputFile));
             pipeline.process(inputStream, encoding);
             inputStream.close();
         }
@@ -183,8 +188,8 @@ public class TestRollingFileAppender extends AbstractProcessIntegrationTest {
         // FORCE ROLL SO WE CAN GET OUTPUT
         destinations.forceRoll();
 
-        final File refFile = StroomProcessTestFileUtil.getTestResourcesFile(outputReference);
-        final File tmpFile = new File(refFile.getParentFile(), fileName + ".tmp");
+        final Path refFile = StroomPipelineTestFileUtil.getTestResourcesFile(outputReference);
+        final Path tmpFile = refFile.getParent().resolve(fileName + ".tmp");
 
         Assert.assertTrue(recordCount.getRead() > 0);
         Assert.assertTrue(recordCount.getWritten() > 0);

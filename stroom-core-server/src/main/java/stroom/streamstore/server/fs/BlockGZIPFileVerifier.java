@@ -23,6 +23,8 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.zip.GZIPInputStream;
 
@@ -48,13 +50,13 @@ public class BlockGZIPFileVerifier {
     /**
      * Constructor to open a Block GZIP File.
      */
-    public BlockGZIPFileVerifier(final File bgz) throws IOException {
-        raFile = new RandomAccessFile(bgz, BlockGZIPConstants.READ_ONLY);
+    public BlockGZIPFileVerifier(final Path bgz) throws IOException {
+        raFile = new RandomAccessFile(bgz.toFile(), BlockGZIPConstants.READ_ONLY);
         stream = new RAInputStreamAdaptor();
     }
 
     public static void main(String[] args) throws IOException {
-        new BlockGZIPFileVerifier(new File(args[0])).verify();
+        new BlockGZIPFileVerifier(Paths.get(args[0])).verify();
     }
 
     RandomAccessFile getRaFile() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,28 +14,25 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server;
+package stroom.headless;
+
+import stroom.util.io.FileUtil;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public final class TestFileUtil {
-    private static final Path TEST_DATA_DIR;
-
-    static {
-        final Path dir = Paths.get("../stroom-dashboard-server/src/test/resources");
+final class ProjectPathUtil {
+    static Path resolveDir(final String projectDir) {
+        Path root = Paths.get(".").toAbsolutePath().normalize();
+        Path dir = root.resolve(projectDir);
         if (!Files.isDirectory(dir)) {
-            throw new RuntimeException("Test data directory not found: " + dir.toAbsolutePath().toString());
+            dir = root.getParent().resolve(projectDir);
+            if (!Files.isDirectory(dir)) {
+                throw new RuntimeException("Path not found: " + FileUtil.getCanonicalPath(dir));
+            }
         }
-        TEST_DATA_DIR = dir;
-    }
 
-    private TestFileUtil() {
-        // Utility class.
-    }
-
-    public static Path getTestResourcesDir() {
-        return TEST_DATA_DIR;
+        return dir;
     }
 }

@@ -25,7 +25,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.XPathFilter.MatchType;
-import stroom.test.StroomProcessTestFileUtil;
+import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 import stroom.util.xml.SAXParserFactoryFactory;
@@ -34,9 +34,8 @@ import javax.xml.namespace.NamespaceContext;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.xpath.XPathConstants;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 @RunWith(StroomJUnit4ClassRunner.class)
@@ -51,14 +50,14 @@ public class TestXPathFilter extends StroomUnitTest {
 
     @Test
     public void test() throws Exception {
-        final File input = StroomProcessTestFileUtil.getTestResourcesFile(INPUT);
+        final Path input = StroomPipelineTestFileUtil.getTestResourcesFile(INPUT);
         final SAXParser parser = PARSER_FACTORY.newSAXParser();
         final XMLReader xmlReader = parser.getXMLReader();
         final SAXEventRecorder steppingFilter = new SAXEventRecorder();
         steppingFilter.clear();
         xmlReader.setContentHandler(steppingFilter);
 
-        xmlReader.parse(new InputSource(new BufferedInputStream(new FileInputStream(input))));
+        xmlReader.parse(new InputSource(Files.newBufferedReader(input)));
 
         testPathExists("/records", steppingFilter);
         testPathExists("records", steppingFilter);

@@ -18,7 +18,9 @@ package stroom.util;
 
 import org.springframework.util.Base64Utils;
 
-import java.io.FileInputStream;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.Key;
 import java.security.KeyStore;
 import java.util.HashMap;
@@ -46,7 +48,9 @@ public class ExportKey {
         String keystore = argsMap.get("keystore");
 
         KeyStore ks = KeyStore.getInstance("JKS", "SUN");
-        ks.load(new FileInputStream(keystore), keyPass.toCharArray());
+        try (final InputStream inputStream = Files.newInputStream(Paths.get(keystore))) {
+            ks.load(inputStream, keyPass.toCharArray());
+        }
 
         Key key = ks.getKey(alias, keyPass.toCharArray());
 

@@ -87,7 +87,7 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
         BaseResultList<XMLSchema> allSchemas = xmlSchemaService.find(new FindXMLSchemaCriteria());
 
-        final Path testDataDir = getCurrentTestPath().resolve("ExportTest");
+        final Path testDataDir = getCurrentTestDir().resolve("ExportTest");
 
         FileSystemUtil.deleteDirectory(testDataDir);
         Files.createDirectories(testDataDir);
@@ -159,7 +159,7 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
         Assert.assertEquals(2, pipelineService.find(new FindPipelineEntityCriteria()).size());
 
-        final Path testDataDir = getCurrentTestPath().resolve("ExportTest");
+        final Path testDataDir = getCurrentTestDir().resolve("ExportTest");
 
         FileSystemUtil.deleteDirectory(testDataDir);
         Files.createDirectories(testDataDir);
@@ -186,8 +186,8 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
     @Test
     public void test() throws IOException {
-        final Path inDir = StroomCoreServerTestFileUtil.getTestResourcesDir().toPath().resolve("samples/config");
-        final Path outDir = StroomCoreServerTestFileUtil.getTestOutputDir().toPath().resolve("samples/config");
+        final Path inDir = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve("samples/config");
+        final Path outDir = StroomCoreServerTestFileUtil.getTestOutputDir().resolve("samples/config");
 
         FileSystemUtil.deleteDirectory(outDir);
         Files.createDirectories(outDir);
@@ -199,7 +199,7 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         importExportSerializer.write(outDir, buildFindFolderCriteria(), true, new ArrayList<>());
 
         // Compare input and output directory.
-        ComparisonHelper.compareDirs(inDir.toFile(), outDir.toFile());
+        ComparisonHelper.compareDirs(inDir, outDir);
 
         // If the comparison was ok then delete the output.
         FileSystemUtil.deleteDirectory(outDir);

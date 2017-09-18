@@ -25,12 +25,12 @@ import stroom.streamtask.server.StreamProcessorTaskExecutor;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.CommonTranslationTest;
 import stroom.test.ComparisonHelper;
-import stroom.test.StroomProcessTestFileUtil;
+import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.util.List;
 
 public class TestTranslationTask extends AbstractProcessIntegrationTest {
@@ -62,21 +62,21 @@ public class TestTranslationTask extends AbstractProcessIntegrationTest {
             Assert.assertEquals(result.toString(), 0, processor.getMarkerCount(Severity.SEVERITIES));
         }
 
-        final File inputDir = new File(StroomProcessTestFileUtil.getTestResourcesDir(), DIR);
-        final File outputDir = new File(StroomProcessTestFileUtil.getTestOutputDir(), DIR);
+        final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(DIR);
+        final Path outputDir = StroomPipelineTestFileUtil.getTestOutputDir().resolve(DIR);
 
         for (final Stream stream : streamStore.getFileData().keySet()) {
             if (stream.getStreamType().equals(StreamType.EVENTS)) {
                 final byte[] data = streamStore.getFileData().get(stream).get(stream.getStreamType().getId());
 
                 // Write the actual XML out.
-                final OutputStream os = StroomProcessTestFileUtil.getOutputStream(outputDir, "TestTranslationTask.out");
+                final OutputStream os = StroomPipelineTestFileUtil.getOutputStream(outputDir, "TestTranslationTask.out");
                 os.write(data);
                 os.flush();
                 os.close();
 
-                ComparisonHelper.compareFiles(new File(inputDir, "TestTranslationTask.out"),
-                        new File(outputDir, "TestTranslationTask.out"));
+                ComparisonHelper.compareFiles(inputDir.resolve("TestTranslationTask.out"),
+                        outputDir.resolve("TestTranslationTask.out"));
             }
         }
 

@@ -33,7 +33,8 @@ import stroom.util.config.StroomProperties;
 import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Inject;
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -146,7 +147,7 @@ public class NodeConfigForTesting implements NodeConfig {
                 }
 
                 if (!found) {
-                    new File(volume.getPath()).mkdirs();
+                    Files.createDirectories(Paths.get(volume.getPath()));
 
                     final Node node = BaseEntityUtil.findByName(realNodeList, volume.getNode().getName());
 

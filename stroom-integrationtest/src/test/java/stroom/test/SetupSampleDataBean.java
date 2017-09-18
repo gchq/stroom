@@ -55,6 +55,7 @@ import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.server.StreamProcessorFilterService;
 import stroom.streamtask.server.StreamProcessorService;
+import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
 import javax.annotation.Resource;
@@ -148,7 +149,7 @@ public final class SetupSampleDataBean {
         // Sample data/config can exist in many projects so here we define all
         // the root directories that we want to
         // process
-        final Path[] rootDirs = new Path[]{StroomCoreServerTestFileUtil.getTestResourcesDir().toPath().resolve(ROOT_DIR_NAME),
+        final Path[] rootDirs = new Path[]{StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(ROOT_DIR_NAME),
                 Paths.get("./stroom-statistics-server/src/test/resources").resolve(ROOT_DIR_NAME)};
 
         // process each root dir in turn
@@ -262,7 +263,7 @@ public final class SetupSampleDataBean {
     }
 
     public void loadDirectory(final boolean shutdown, final Path importRootDir) throws IOException {
-        LOGGER.info("Loading sample data for directory: " + importRootDir.toAbsolutePath());
+        LOGGER.info("Loading sample data for directory: " + FileUtil.getCanonicalPath(importRootDir));
 
         final Path configDir = importRootDir.resolve("config");
         final Path dataDir = importRootDir.resolve("input");
