@@ -43,16 +43,28 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 @Component
 public class RemoteServiceHandlerAdapter extends RemoteServiceServlet implements HandlerAdapter, ServletContextAware {
     private static final Logger LOGGER = LoggerFactory.getLogger(RemoteServiceHandlerAdapter.class);
     // This path is where we expect to find the `.gwt.rpc` file. It must be valid for startup for both dev and executable
     // jar. If you change where the webapp/ui files are stored, which is currently 'ui', then this path must change too.
-    private static final String GWT_RPC_PATH = "/ui/stroom/%s.gwt.rpc";
+
     private static final long serialVersionUID = -7421136737990135393L;
     private static ThreadLocal<Object> handlerHolder = new ThreadLocal<>();
     private transient ServletContext servletContext;
+
+    private static final String GWT_RPC_PATH_STROOM = "/ui/stroom/%s.gwt.rpc";
+    private static final String GWT_RPC_PATH_DASHBOARD = "/ui/dashboard/%s.gwt.rpc";
+
+    private static final Map<String, String> MODULE_BASE_URL_TO_RPC = new HashMap<>();
+    static {
+        MODULE_BASE_URL_TO_RPC.put("/stroom/", GWT_RPC_PATH_STROOM);
+        MODULE_BASE_URL_TO_RPC.put("/dashboard/", GWT_RPC_PATH_DASHBOARD);
+    }
 
     @Resource
     private transient HttpServletRequestHolder httpServletRequestHolder;
@@ -179,8 +191,17 @@ public class RemoteServiceHandlerAdapter extends RemoteServiceServlet implements
     @Override
     protected SerializationPolicy doGetSerializationPolicy(
             HttpServletRequest request, String moduleBaseURL, String strongName) {
+        final Optional<String> gwtRpcPath = MODULE_BASE_URL_TO_RPC.entrySet().stream()
+                .filter(e -> moduleBaseURL.endsWith(e.getKey()))
+                .map(Map.Entry::getValue)
+                .findFirst();
 
-        String serializationPolicyFilePath = String.format(GWT_RPC_PATH, strongName);
+        if (!gwtRpcPath.isPresent()) {
+            final String msg = String.format("Could not find GWT RPC Policy Path for moduleBaseURL: %s", moduleBaseURL);
+            throw new RuntimeException(msg);
+        }
+
+        String serializationPolicyFilePath = String.format(gwtRpcPath.get(), strongName);
 
         try (InputStream is = getClass().getResourceAsStream(serializationPolicyFilePath)) {
             return SerializationPolicyLoader.loadFromStream(is, null);
