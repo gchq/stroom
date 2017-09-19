@@ -31,7 +31,12 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
         this.errorReceiverProxy = errorReceiverProxy;
         this.locationFactory = locationFactory;
         this.stroomKafkaProducer = stroomKafkaProducerFactoryService.getProducer(exception ->
-                errorReceiverProxy.log(Severity.ERROR, null, null, "Called function on Fake Kafka proxy!", exception)
+                errorReceiverProxy.log(
+                        Severity.ERROR,
+                        null,
+                        null,
+                        "Called function on Fake Kafka proxy!",
+                        exception)
         );
         this.flushOnSend = true;
     }
