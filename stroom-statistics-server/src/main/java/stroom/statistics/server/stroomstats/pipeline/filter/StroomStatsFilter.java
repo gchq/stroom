@@ -34,8 +34,8 @@ public class StroomStatsFilter extends AbstractKafkaProducerFilter {
 
     private final TopicNameFactory topicNameFactory;
     private StroomStatsStoreEntity stroomStatsStoreEntity;
-    String topic = null;
-    String recordKey = null;
+    private String topic = null;
+    private String recordKey = null;
 
     @Inject
     public StroomStatsFilter(final ErrorReceiverProxy errorReceiverProxy,
