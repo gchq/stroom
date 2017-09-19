@@ -91,6 +91,7 @@ import java.util.Set;
 
 public class TablePresenter extends AbstractComponentPresenter<TableView>
         implements HasDirtyHandlers, ResultComponent {
+
     public static final ComponentType TYPE = new ComponentType(1, "table", "Table");
     private static final int MIN_EXPANDER_COL_WIDTH = 0;
 
@@ -98,6 +99,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final TableResultRequest tableResultRequest = new TableResultRequest(0, 100);
     private final List<Column<Row, ?>> existingColumns = new ArrayList<>();
     private final List<HandlerRegistration> searchModelHandlerRegistrations = new ArrayList<>();
+    private final UrlDetector urlDetector = new UrlDetector();
     private final ButtonView addFieldButton;
     private final ButtonView downloadButton;
     private final Provider<FieldAddPresenter> fieldAddPresenterProvider;
@@ -434,7 +436,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 if (values != null) {
                     final String value = values[pos];
                     if (value != null) {
-                        if (field.getGroup() != null && field.getGroup() >= row.depth) {
+                        final UrlDetector.Hyperlink hyperlink = urlDetector.detect(value);
+
+                        if (null != hyperlink) {
+                            return hyperlink.getSafeHtml();
+                        } else if (field.getGroup() != null && field.getGroup() >= row.depth) {
                             final SafeHtmlBuilder sb = new SafeHtmlBuilder();
                             sb.appendHtmlConstant("<b>");
                             sb.appendEscaped(value);

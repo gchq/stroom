@@ -25,6 +25,7 @@
     <inherits name="com.google.gwt.inject.Inject"/>
 
     <inherits name='com.google.gwt.xml.XML'/>
+    <inherits name="com.google.gwt.logging.Logging"/>
     <!--   <inherits name='ca.nanometrics.gflot.GFlot' /> -->
     <!--   <inherits name='com.github.gwtd3.D3' /> -->
     <!--   <inherits name='stroom.d3.D3' /> -->
