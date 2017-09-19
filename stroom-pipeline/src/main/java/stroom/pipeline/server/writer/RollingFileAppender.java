@@ -32,7 +32,6 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -86,7 +85,7 @@ class RollingFileAppender extends AbstractRollingAppender {
         fileName = PathCreator.replaceUUIDVars(fileName);
 
         // Create a new destination.
-        final Path file = Paths.get(dir + File.separator + fileName);
+        final Path file = Paths.get(dir).resolve(fileName);
 
         // Try and create the path.
         final Path parentDir = file.getParent();
@@ -119,7 +118,7 @@ class RollingFileAppender extends AbstractRollingAppender {
                 rolledFileName = pathCreator.replaceContextVars(rolledFileName);
                 rolledFileName = PathCreator.replaceSystemProperties(rolledFileName);
 
-                key = dir + File.separator + fileName;
+                key = dir + '/' + fileName;
             }
 
             return key;

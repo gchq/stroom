@@ -16,7 +16,6 @@
 
 package stroom.streamstore.server.fs;
 
-import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,7 +30,6 @@ import stroom.util.test.FileSystemTestUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,8 +43,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestFileSystemUtil extends StroomUnitTest {
-    public static final String NO_WRITE_DIR1 = "/usr/bin/username";
-    public static final String NO_WRITE_DIR2 = "/unable/to/create/this";
+    private static final String NO_WRITE_DIR1 = "/usr/bin/username";
+    private static final String NO_WRITE_DIR2 = "/unable/to/create/this";
 
     private Volume buildTestVolume() throws IOException {
         final Volume config = new Volume();
@@ -97,7 +95,7 @@ public class TestFileSystemUtil extends StroomUnitTest {
                 DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z"));
         md.setId(1001001L);
 
-        final File rootFile = FileSystemStreamTypeUtil.createRootStreamFile(buildTestVolume(), md, StreamType.EVENTS);
+        final Path rootFile = FileSystemStreamTypeUtil.createRootStreamFile(buildTestVolume(), md, StreamType.EVENTS);
 
         Assert.assertNotNull(rootFile);
         assertPathEndsWith(rootFile, "EVENTS/2010/01/01/001/001/1=001001001.evt.bgz");
@@ -109,34 +107,39 @@ public class TestFileSystemUtil extends StroomUnitTest {
                 DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z"));
         md.setId(1001001L);
 
-        final File rootFile = FileSystemStreamTypeUtil.createRootStreamFile(buildTestVolume(), md,
+        final Path rootFile = FileSystemStreamTypeUtil.createRootStreamFile(buildTestVolume(), md,
                 StreamType.RAW_EVENTS);
 
-        FileUtils.touch(rootFile);
+        touch(rootFile);
 
-        final File child1 = FileSystemStreamTypeUtil.createChildStreamFile(rootFile, StreamType.CONTEXT);
-        FileUtils.touch(child1);
+        final Path child1 = FileSystemStreamTypeUtil.createChildStreamFile(rootFile, StreamType.CONTEXT);
+        touch(child1);
         assertPathEndsWith(child1, "EVENTS/2010/01/01/001/001/1=001001001.revt.ctx.bgz");
 
-        final File child2 = FileSystemStreamTypeUtil.createChildStreamFile(rootFile, StreamType.SEGMENT_INDEX);
-        FileUtils.touch(child2);
+        final Path child2 = FileSystemStreamTypeUtil.createChildStreamFile(rootFile, StreamType.SEGMENT_INDEX);
+        touch(child2);
         assertPathEndsWith(child2, "EVENTS/2010/01/01/001/001/1=001001001.revt.seg.dat");
 
-        final File child1_1 = FileSystemStreamTypeUtil.createChildStreamFile(child1, StreamType.SEGMENT_INDEX);
-        FileUtils.touch(child1_1);
+        final Path child1_1 = FileSystemStreamTypeUtil.createChildStreamFile(child1, StreamType.SEGMENT_INDEX);
+        touch(child1_1);
         assertPathEndsWith(child1_1, "EVENTS/2010/01/01/001/001/1=001001001.revt.ctx.seg.dat");
 
-        final List<File> kids = FileSystemStreamTypeUtil.findAllDescendantStreamFileList(rootFile);
+        final List<Path> kids = FileSystemStreamTypeUtil.findAllDescendantStreamFileList(rootFile);
         Assert.assertEquals("should match 3 kids", 3, kids.size());
 
-        for (final File kid : kids) {
+        for (final Path kid : kids) {
             FileUtil.deleteFile(kid);
         }
         FileUtil.deleteFile(rootFile);
     }
 
-    private void assertPathEndsWith(final File file, String check) {
-        String fullPath = file.getAbsolutePath();
+    private void touch(final Path path) throws IOException {
+        FileUtil.mkdirs(path.getParent());
+        FileUtil.touch(path);
+    }
+
+    private void assertPathEndsWith(final Path file, String check) {
+        String fullPath = FileUtil.getCanonicalPath(file);
         fullPath = fullPath.replace('/', '-');
         fullPath = fullPath.replace('\\', '-');
         check = check.replace('/', '-');

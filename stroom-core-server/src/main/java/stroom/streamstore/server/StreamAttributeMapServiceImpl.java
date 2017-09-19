@@ -49,11 +49,11 @@ import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
 import stroom.streamtask.server.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
+import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -316,44 +316,46 @@ public class StreamAttributeMapServiceImpl
                 }
             }
 
-            final Path manifest = FileSystemStreamTypeUtil.createChildStreamFile(streamVolume, StreamType.MANIFEST);
+            if (streamAttributeMap != null) {
+                final Path manifest = FileSystemStreamTypeUtil.createChildStreamFile(streamVolume, StreamType.MANIFEST);
 
-            if (Files.isRegularFile(manifest)) {
-                final MetaMap metaMap = new MetaMap();
-                try {
-                    metaMap.read(Files.newInputStream(manifest), true);
-                } catch (final IOException ioException) {
-                    LOGGER.error("loadAttributeMapFromFileSystem() {}", manifest, ioException);
-                }
+                if (Files.isRegularFile(manifest)) {
+                    final MetaMap metaMap = new MetaMap();
+                    try {
+                        metaMap.read(Files.newInputStream(manifest), true);
+                    } catch (final IOException ioException) {
+                        LOGGER.error("loadAttributeMapFromFileSystem() {}", manifest, ioException);
+                    }
 
-                for (final String name : metaMap.keySet()) {
-                    final StreamAttributeKey key = keyMap.get(name);
-                    final String value = metaMap.get(name);
-                    if (key == null) {
-                        streamAttributeMap.addAttribute(name, value);
-                    } else {
-                        streamAttributeMap.addAttribute(key, value);
+                    for (final String name : metaMap.keySet()) {
+                        final StreamAttributeKey key = keyMap.get(name);
+                        final String value = metaMap.get(name);
+                        if (key == null) {
+                            streamAttributeMap.addAttribute(name, value);
+                        } else {
+                            streamAttributeMap.addAttribute(key, value);
+                        }
                     }
                 }
-            }
-            if (criteria.getFetchSet().contains(Volume.ENTITY_TYPE)) {
-                try {
-                    final File rootFile = FileSystemStreamTypeUtil.createRootStreamFile(streamVolume.getVolume(),
-                            streamVolume.getStream(), streamVolume.getStream().getStreamType());
+                if (criteria.getFetchSet().contains(Volume.ENTITY_TYPE)) {
+                    try {
+                        final Path rootFile = FileSystemStreamTypeUtil.createRootStreamFile(streamVolume.getVolume(),
+                                streamVolume.getStream(), streamVolume.getStream().getStreamType());
 
-                    final List<File> allFiles = FileSystemStreamTypeUtil.findAllDescendantStreamFileList(rootFile);
-                    streamAttributeMap.setFileNameList(new ArrayList<>());
-                    streamAttributeMap.getFileNameList().add(rootFile.getPath());
-                    for (final File file : allFiles) {
-                        streamAttributeMap.getFileNameList().add(file.getPath());
+                        final List<Path> allFiles = FileSystemStreamTypeUtil.findAllDescendantStreamFileList(rootFile);
+                        streamAttributeMap.setFileNameList(new ArrayList<>());
+                        streamAttributeMap.getFileNameList().add(FileUtil.getCanonicalPath(rootFile));
+                        for (final Path file : allFiles) {
+                            streamAttributeMap.getFileNameList().add(FileUtil.getCanonicalPath(file));
+                        }
+                    } catch (final Exception e) {
+                        LOGGER.error("loadAttributeMapFromFileSystem() ", e);
                     }
-                } catch (final Exception e) {
-                    LOGGER.error("loadAttributeMapFromFileSystem() ", e);
                 }
-            }
 
-            // Add additional data retention information.
-            ruleDecorator.addMatchingRetentionRuleInfo(streamAttributeMap);
+                // Add additional data retention information.
+                ruleDecorator.addMatchingRetentionRuleInfo(streamAttributeMap);
+            }
         }
     }
 

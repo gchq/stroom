@@ -40,7 +40,6 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZoneOffset;

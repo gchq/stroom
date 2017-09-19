@@ -6,7 +6,6 @@ import stroom.util.io.FileUtil;
 import stroom.util.shared.Version;
 
 import javax.inject.Inject;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;

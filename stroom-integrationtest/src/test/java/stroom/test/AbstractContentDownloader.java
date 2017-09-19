@@ -3,7 +3,6 @@ package stroom.test;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.Version;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;

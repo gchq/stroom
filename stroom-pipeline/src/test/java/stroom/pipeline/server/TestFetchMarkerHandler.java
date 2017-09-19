@@ -25,7 +25,6 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.Summary;
 import stroom.util.test.StroomUnitTest;
 
-import java.io.File;
 import java.io.StringReader;
 import java.nio.file.Path;
 import java.util.List;

@@ -32,7 +32,6 @@ import stroom.util.test.TestState;
 import stroom.util.test.TestState.State;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 

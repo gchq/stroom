@@ -20,7 +20,6 @@ import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.CloseableUtil;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -48,12 +47,11 @@ public class RASegmentOutputStream extends OutputStream implements SegmentOutput
      *
      * @param streamTarget to write the data to.
      */
-    public RASegmentOutputStream(final StreamTarget streamTarget) throws IOException {
+    public RASegmentOutputStream(final StreamTarget streamTarget) {
         this(streamTarget.getOutputStream(), streamTarget.addChildStream(StreamType.SEGMENT_INDEX).getOutputStream());
     }
 
-    public RASegmentOutputStream(final OutputStream dataFile, final OutputStream indexFile)
-            throws FileNotFoundException {
+    public RASegmentOutputStream(final OutputStream dataFile, final OutputStream indexFile) {
         dataOutputStream = dataFile;
         indexOutputStream = indexFile;
 

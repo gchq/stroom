@@ -36,13 +36,11 @@ import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.statistics.shared.common.StatisticField;
-import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.FileUtil;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.nio.file.Path;
 
 public class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegrationTest {

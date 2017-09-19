@@ -26,8 +26,6 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -153,7 +151,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
             files = new HashSet<>();
             if (parent == null) {
                 for (final StreamVolume smVolume : metaDataVolume) {
-                    final Path aFile = FileSystemStreamTypeUtil.createRootStreamPath(smVolume.getVolume(), stream,
+                    final Path aFile = FileSystemStreamTypeUtil.createRootStreamFile(smVolume.getVolume(), stream,
                             streamType);
                     if (createPath) {
                         final Path rootDir = Paths.get(smVolume.getVolume().getPath());

@@ -25,7 +25,6 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.FileUtilException;
 import stroom.util.thread.ThreadUtil;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -136,20 +135,6 @@ public final class FileSystemUtil {
         return builder.toString();
     }
 
-    public static boolean deleteAnyFile(final Collection<File> files) {
-        boolean ok = true;
-        for (File file : files) {
-            if (file.isFile()) {
-                ok &= file.delete();
-            } else {
-                if (file.isDirectory()) {
-                    ok &= deleteDirectory(file);
-                }
-            }
-        }
-        return ok;
-    }
-
     public static boolean deleteAnyPath(final Collection<Path> files) {
         boolean ok = true;
         for (Path file : files) {
@@ -176,14 +161,6 @@ public final class FileSystemUtil {
         return allFiles;
     }
 
-//    public static boolean isAllFile(final Collection<File> files) {
-//        boolean allFiles = true;
-//        for (File file : files) {
-//            allFiles &= file.isFile();
-//        }
-//        return allFiles;
-//    }
-
     public static boolean isAllParentDirectoryExist(final Collection<Path> files) {
         boolean allDirs = true;
         for (Path file : files) {
@@ -192,14 +169,6 @@ public final class FileSystemUtil {
         return allDirs;
     }
 
-//    public static boolean updateLastModified(final Collection<File> files, final long lastModified) {
-//        boolean allOk = true;
-//        for (File file : files) {
-//            allOk &= file.setLastModified(lastModified);
-//        }
-//        return allOk;
-//    }
-
     public static boolean updateLastModified(final Collection<Path> files, final long lastModified) {
         boolean allOk = true;
         for (Path file : files) {
@@ -207,57 +176,6 @@ public final class FileSystemUtil {
                 Files.setLastModifiedTime(file, FileTime.fromMillis(lastModified));
             } catch (final IOException e) {
                 allOk = false;
-            }
-        }
-        return allOk;
-    }
-
-    public static boolean deleteDirectory(final File path) {
-        boolean success = true;
-        if (path != null && path.isDirectory()) {
-            if (deleteContents(path)) {
-                final boolean deleteDir = path.delete();
-                if (!deleteDir) {
-                    LOGGER.error("Failed to delete file " + path);
-                    success = false;
-                } else {
-                    LOGGER.debug("Deleted file " + path);
-                }
-            } else {
-                LOGGER.error("Failed to delete file " + path);
-                success = false;
-            }
-        }
-        return success;
-    }
-
-
-
-    public static boolean deleteContents(final File path) {
-        boolean allOk = true;
-        File[] kids = path.listFiles();
-        if (kids != null) {
-            for (File kid : kids) {
-                if (kid.isFile()) {
-                    if (!kid.delete()) {
-                        LOGGER.error("Failed to delete file " + kid);
-                        allOk = false;
-                    } else if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("Deleted file " + kid);
-                    }
-                } else {
-                    boolean kidsDeleted = deleteContents(kid);
-                    if (kidsDeleted) {
-                        if (!kid.delete()) {
-                            LOGGER.error("Failed to delete file " + kid);
-                            allOk = false;
-                        } else if (LOGGER.isDebugEnabled()) {
-                            LOGGER.debug("Deleted directory " + kid);
-                        }
-                    } else {
-                        allOk = false;
-                    }
-                }
             }
         }
         return allOk;
@@ -317,17 +235,6 @@ public final class FileSystemUtil {
      * WE ASSUME here that mkdir is ATOMIC .... which it is.
      * </p>
      */
-    public static boolean mkdirs(final File superDir, final File dir) {
-        return doMkdirs(toPath(superDir), toPath(dir), FileUtil.MKDIR_RETRY_COUNT);
-    }
-
-    private static Path toPath(final File file) {
-        if (file == null) {
-            return null;
-        }
-        return file.toPath();
-    }
-
     public static boolean mkdirs(final Path superDir, final Path dir) {
         return doMkdirs(superDir, dir, FileUtil.MKDIR_RETRY_COUNT);
     }
@@ -344,7 +251,7 @@ public final class FileSystemUtil {
         }
     }
 
-    public static boolean doMkdirs(final Path superDir, final Path dir, int retry) {
+    private static boolean doMkdirs(final Path superDir, final Path dir, int retry) {
         // Make sure the parent exists first
         final Path parentDir = dir.getParent();
         if (parentDir != null && !Files.isDirectory(parentDir)) {
@@ -380,6 +287,5 @@ public final class FileSystemUtil {
             }
         }
         return true;
-
     }
 }

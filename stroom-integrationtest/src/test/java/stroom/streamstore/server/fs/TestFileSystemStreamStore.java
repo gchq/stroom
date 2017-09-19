@@ -60,7 +60,6 @@ import stroom.util.test.StroomExpectedException;
 import stroom.volume.server.VolumeServiceImpl;
 
 import javax.annotation.Resource;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -657,7 +656,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         final Set<Path> rootFile = new HashSet<>();
 
         for (final StreamVolume streamVolume : volumes) {
-            rootFile.add(FileSystemStreamTypeUtil.createRootStreamPath(streamVolume.getVolume(), stream,
+            rootFile.add(FileSystemStreamTypeUtil.createRootStreamFile(streamVolume.getVolume(), stream,
                     StreamType.RAW_EVENTS));
         }
         Assert.assertTrue(FileSystemUtil.isAllFile(rootFile));
@@ -740,7 +739,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
      * Test.
      */
     @Test
-    @StroomExpectedException(exception = {FileNotFoundException.class, StreamException.class, IOException.class,
+    @StroomExpectedException(exception = {StreamException.class, IOException.class,
             RuntimeException.class})
     public void testIOErrors() throws Exception {
         final String testString = FileSystemTestUtil.getUniqueTestString();

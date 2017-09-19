@@ -23,12 +23,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
 import stroom.util.io.CloseableUtil;
+import stroom.util.io.FileUtil;
 import stroom.util.spring.StroomResourceLoaderUtil;
 import stroom.util.upgrade.UpgradeDispatcherSingleton;
 import stroom.util.web.ServletContextUtil;
 
-import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -51,7 +53,6 @@ public class StroomProperties {
     private static final PropertyMap override = new PropertyMap();
 
     private static volatile boolean doneInit;
-    private static volatile File propertiesDir;
 
     private static void init() {
         if (!doneInit) {
@@ -99,25 +100,24 @@ public class StroomProperties {
 
                 String path = "";
                 try {
-                    final File file = resource.getFile();
-                    final File dir = file.getParentFile();
-                    path = dir.getPath();
-                    path = dir.getCanonicalPath();
+                    final Path file = Paths.get(resource.getURI());
+                    final Path dir = file.getParent();
+                    path = FileUtil.getCanonicalPath(dir);
                 } catch (final Exception e) {
                     // Ignore.
                 }
 
                 LOGGER.info("Using properties '{}' from '{}'", resourceName, path);
 
-                // Is this this web app property file?
-                if (Source.WAR.equals(source)) {
-                    try {
-                        final File resourceFile = resource.getFile();
-                        propertiesDir = resourceFile.getParentFile();
-                    } catch (final Exception ex) {
-                        LOGGER.warn("Unable to locate properties dir ... maybe running in maven?");
-                    }
-                }
+//                // Is this this web app property file?
+//                if (Source.WAR.equals(source)) {
+//                    try {
+//                        final Path resourceFile = resource.getFile();
+//                        propertiesDir = resourceFile.getParentFile();
+//                    } catch (final Exception ex) {
+//                        LOGGER.warn("Unable to locate properties dir ... maybe running in maven?");
+//                    }
+//                }
             } else {
                 LOGGER.info("Properties not found at '{}'", resourceName);
             }

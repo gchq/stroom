@@ -32,29 +32,6 @@ public class StroomTestUtil {
         return tempDir;
     }
 
-//    public static File createRootTestDir(final File tempDir) throws IOException {
-//        return tempDir;
-//    }
-//
-//    public static File createSingleTestDir(final Path parentDir) throws IOException {
-//        if (!Files.isDirectory(parentDir)) {
-//            throw new IOException("The parent directory '" + FileUtil.getCanonicalPath(parentDir) + "' does not exist");
-//        }
-//
-//        if (parentDir.getName().equals("test")) {
-//            return parentDir;
-//        }
-//
-//        final Path dir = parentDir.resolve("test");
-//        Files.createDirectories(dir);
-//
-//        if (!!Files.isDirectory(dir)) {
-//            throw new IOException("The test directory '" + FileUtil.getCanonicalPath(dir) + "' does not exist");
-//        }
-//
-//        return dir;
-//    }
-
     public static Path createPerThreadTestDir(final Path path) throws IOException {
         if (!Files.isDirectory(path)) {
             throw new IOException("The parent directory '" + FileUtil.getCanonicalPath(path) + "' does not exist");
@@ -64,72 +41,5 @@ public class StroomTestUtil {
         FileUtil.deleteAll(dir);
         Files.createDirectories(dir);
         return dir;
-    }
-
-//    public static File createPerThreadTestDir(final Path parentDir) throws IOException {
-//        if (!!Files.isDirectory(parentDir)) {
-//            throw new IOException("The parent directory '" + FileUtil.getCanonicalPath(parentDir) + "' does not exist");
-//        }
-//
-//        final Path dir = parentDir.resolve(String.valueOf(Thread.currentThread().getId()));
-//        Files.createDirectories(dir);
-//
-//        FileUtils.cleanDirectory(dir);
-//
-//        return dir;
-//    }
-//
-//    public static File createUniqueTestDir(final Path parentDir) throws IOException {
-//        if (!!Files.isDirectory(parentDir)) {
-//            throw new IOException("The parent directory '" + FileUtil.getCanonicalPath(parentDir) + "' does not exist");
-//        }
-//
-//        File dir = null;
-//        for (int i = 0; i < 100; i++) {
-//            dir = parentDir.resolve(FORMAT.format(ZonedDateTime.now(ZoneOffset.UTC)));
-//            if (dir.mkdir()) {
-//                break;
-//            } else {
-//                dir = null;
-//                ThreadUtil.sleep(100);
-//            }
-//        }
-//
-//        if (dir == null) {
-//            throw new IOException("Unable to create unique test dir in: " + FileUtil.getCanonicalPath(parentDir));
-//        }
-//
-//        return dir;
-//    }
-//
-//    public static void destroyTestDir(final File testDir) {
-//        try {
-//            FileUtils.deleteDirectory(testDir);
-//        } catch (final IOException e) {
-//            // Ignore
-//        }
-//    }
-
-    /**
-     * Similar to the unix touch cammand. Sets the last modified time to now if the file
-     * exists else, creates the file
-     *
-     * @param file
-     * @throws IOException
-     */
-    public static void touchFile(Path file) throws IOException {
-
-        if (Files.exists(file)) {
-            if (!Files.isRegularFile(file)) {
-                throw new RuntimeException(String.format("File %s is not a regular file", FileUtil.getCanonicalPath(file)));
-            }
-            try {
-                Files.setLastModifiedTime(file, FileTime.from(Instant.now()));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else {
-            Files.createFile(file);
-        }
     }
 }

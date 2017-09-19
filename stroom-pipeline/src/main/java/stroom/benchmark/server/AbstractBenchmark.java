@@ -73,28 +73,21 @@ public abstract class AbstractBenchmark {
     }
 
     protected Stream writeData(final Feed feed, final StreamType streamType, final String data) {
-        try {
-            // Add the associated data to the stream store.
-            final Stream stream = Stream.createStream(streamType, feed, System.currentTimeMillis());
+        // Add the associated data to the stream store.
+        final Stream stream = Stream.createStream(streamType, feed, System.currentTimeMillis());
 
-            final StreamTarget dataTarget = streamStore.openStreamTarget(stream);
+        final StreamTarget dataTarget = streamStore.openStreamTarget(stream);
 
-            final InputStream dataInputStream = StreamUtil.stringToStream(data);
+        final InputStream dataInputStream = StreamUtil.stringToStream(data);
 
-            final RASegmentOutputStream dataOutputStream = new RASegmentOutputStream(dataTarget);
+        final RASegmentOutputStream dataOutputStream = new RASegmentOutputStream(dataTarget);
 
-            final RawInputSegmentWriter dataWriter = new RawInputSegmentWriter();
-            dataWriter.write(dataInputStream, dataOutputStream);
+        final RawInputSegmentWriter dataWriter = new RawInputSegmentWriter();
+        dataWriter.write(dataInputStream, dataOutputStream);
 
-            streamStore.closeStreamTarget(dataTarget);
+        streamStore.closeStreamTarget(dataTarget);
 
-            return dataTarget.getStream();
-
-        } catch (final IOException e) {
-            LOGGER.error("Unable to write data!", e);
-        }
-
-        return null;
+        return dataTarget.getStream();
     }
 
     protected String readData(final long streamId) throws IOException {

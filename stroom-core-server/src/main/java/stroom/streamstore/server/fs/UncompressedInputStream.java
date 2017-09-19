@@ -19,11 +19,14 @@ package stroom.streamstore.server.fs;
 import stroom.io.SeekableInputStream;
 import stroom.io.StreamCloser;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 /**
  * A stream that interfaces with a random access file.
@@ -31,7 +34,7 @@ import java.nio.file.Path;
  * if lazy it is assumed that a missing file means a blank stream.
  */
 public class UncompressedInputStream extends InputStream implements SeekableInputStream {
-    private final RandomAccessFile raFile;
+    private final FileChannel raFile;
     private final BlockBufferedInputStream streamAdaptor;
     private long position;
     private long lastMarkPosition;
@@ -40,17 +43,12 @@ public class UncompressedInputStream extends InputStream implements SeekableInpu
     private StreamCloser streamCloser = new StreamCloser();
 
     public UncompressedInputStream(final Path file, boolean lazy) throws IOException {
-        this(file.toFile(), lazy);
-    }
-
-    public UncompressedInputStream(final File file, boolean lazy) throws IOException {
-        if (lazy && !file.isFile()) {
+        if (lazy && !Files.isRegularFile(file)) {
             raFile = null;
             streamAdaptor = null;
         } else {
-            raFile = new RandomAccessFile(file, BlockGZIPConstants.READ_ONLY);
-            streamAdaptor = new BlockBufferedInputStream(new RandomAccessStreamAdaptor(raFile));
-
+            raFile = FileChannel.open(file, StandardOpenOption.READ);
+            streamAdaptor = new BlockBufferedInputStream(Channels.newInputStream(raFile));
             streamCloser.add(raFile).add(streamAdaptor);
         }
     }
@@ -130,7 +128,7 @@ public class UncompressedInputStream extends InputStream implements SeekableInpu
             // LAZY empty
             return 0;
         } else {
-            return raFile.getChannel().size();
+            return raFile.size();
         }
     }
 
@@ -138,8 +136,8 @@ public class UncompressedInputStream extends InputStream implements SeekableInpu
     public void seek(final long pos) throws IOException {
         position = pos;
         if (raFile != null) {
-            raFile.seek(pos);
-            streamAdaptor.recycle(new RandomAccessStreamAdaptor(raFile));
+            raFile.position(pos);
+            streamAdaptor.recycle(Channels.newInputStream(raFile));
         }
     }
 

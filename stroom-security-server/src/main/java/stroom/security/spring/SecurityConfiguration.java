@@ -37,8 +37,6 @@ import stroom.util.config.StroomProperties;
 import stroom.util.spring.StroomScope;
 
 import javax.annotation.Resource;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;

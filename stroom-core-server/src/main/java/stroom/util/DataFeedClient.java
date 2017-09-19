@@ -19,8 +19,6 @@ package stroom.util;
 import stroom.util.io.StreamUtil;
 
 import javax.net.ssl.HttpsURLConnection;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;

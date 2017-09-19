@@ -162,11 +162,7 @@ public class CommonTestScenarioCreator {
         final InputStream inputStream = new ByteArrayInputStream("line1\nline2".getBytes(StreamUtil.DEFAULT_CHARSET));
 
         final RawInputSegmentWriter writer = new RawInputSegmentWriter();
-        try {
-            writer.write(inputStream, new RASegmentOutputStream(target));
-        } catch (final IOException ioEx) {
-            throw new RuntimeException(ioEx);
-        }
+        writer.write(inputStream, new RASegmentOutputStream(target));
 
         target.getAttributeMap().put(StroomHeaderArguments.FEED, feed.getName());
 
@@ -188,11 +184,7 @@ public class CommonTestScenarioCreator {
                 + "Version=\"3.0.0\"/>").getBytes(StreamUtil.DEFAULT_CHARSET));
 
         final RawInputSegmentWriter writer = new RawInputSegmentWriter();
-        try {
-            writer.write(inputStream, new RASegmentOutputStream(target));
-        } catch (final IOException ioEx) {
-            throw new RuntimeException(ioEx);
-        }
+        writer.write(inputStream, new RASegmentOutputStream(target));
         streamStore.closeStreamTarget(target);
         return target.getStream();
     }

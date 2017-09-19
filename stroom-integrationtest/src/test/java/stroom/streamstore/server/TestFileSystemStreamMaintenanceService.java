@@ -28,7 +28,6 @@ import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.FileUtil;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;

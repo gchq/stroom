@@ -48,7 +48,6 @@ import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Writer;
@@ -285,7 +284,7 @@ public class TestDS3 extends StroomUnitTest {
         return reader;
     }
 
-    private void compareFiles(final Path actualFile, final Path expectedFile) throws FileNotFoundException {
+    private void compareFiles(final Path actualFile, final Path expectedFile) {
         ComparisonHelper.compareFiles(expectedFile, actualFile);
         // If the files matched then delete the temporary file.
         FileUtil.deleteFile(actualFile);

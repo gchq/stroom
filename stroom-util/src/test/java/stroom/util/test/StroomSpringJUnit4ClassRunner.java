@@ -31,7 +31,6 @@ import stroom.util.io.FileUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.task.TaskScopeContextHolder;
 
-import java.io.File;
 import java.nio.file.Path;
 
 public class StroomSpringJUnit4ClassRunner extends SpringJUnit4ClassRunner {

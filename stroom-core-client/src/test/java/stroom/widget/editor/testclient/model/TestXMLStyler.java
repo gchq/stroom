@@ -22,7 +22,6 @@ import stroom.test.ComparisonHelper;
 import stroom.test.StroomCoreClientTestFileUtil;
 import stroom.util.io.StreamUtil;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -70,7 +69,7 @@ public class TestXMLStyler {
         test("TestAttributes4");
     }
 
-    private void test(final String name) throws FileNotFoundException {
+    private void test(final String name) {
         // Get the testing directory.
         final Path testDataDir = StroomCoreClientTestFileUtil.getTestResourcesDir();
         final Path testDir = testDataDir.resolve("TestXMLStyler");

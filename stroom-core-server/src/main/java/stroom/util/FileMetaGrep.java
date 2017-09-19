@@ -21,7 +21,6 @@ import stroom.streamstore.server.fs.BlockGZIPInputFile;
 import stroom.streamstore.server.fs.UncompressedInputStream;
 import stroom.streamstore.server.fs.serializable.RANestedInputStream;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;

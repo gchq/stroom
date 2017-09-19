@@ -149,32 +149,13 @@ public class FileSystemStreamMaintenanceService
         boolean allOk = true;
 
         for (final StreamVolume streamVolume : toDelete) {
-            final Path rootFile = FileSystemStreamTypeUtil.createRootStreamPath(streamVolume.getVolume(),
+            final Path rootFile = FileSystemStreamTypeUtil.createRootStreamFile(streamVolume.getVolume(),
                     streamVolume.getStream(), streamTypeService.load(streamVolume.getStream().getStreamType()));
             allOk &= deleteAllFiles(rootFile);
         }
 
         return allOk;
     }
-
-//    private boolean deleteAllFiles(final File file) {
-//        boolean allOk = true;
-//        if (file.isFile()) {
-//            if (!file.delete()) {
-//                LOGGER.error("Failed to delete file {}", file.getAbsolutePath());
-//                allOk = false;
-//            }
-//            final List<File> kids = FileSystemStreamTypeUtil.findAllDescendantStreamFileList(file);
-//
-//            for (final File kid : kids) {
-//                if (!kid.delete()) {
-//                    LOGGER.error("Failed to delete file {}", kid.getAbsolutePath());
-//                    allOk = false;
-//                }
-//            }
-//        }
-//        return allOk;
-//    }
 
     private boolean deleteAllFiles(final Path file) {
         boolean allOk = true;
@@ -209,7 +190,7 @@ public class FileSystemStreamMaintenanceService
         final List<StreamVolume> volumeMatches = entityManager.executeQueryResultList(sql);
 
         for (final StreamVolume volumeMatch : volumeMatches) {
-            final Path rootFile = FileSystemStreamTypeUtil.createRootStreamPath(volumeMatch.getVolume(),
+            final Path rootFile = FileSystemStreamTypeUtil.createRootStreamFile(volumeMatch.getVolume(),
                     volumeMatch.getStream(), streamTypeService.load(volumeMatch.getStream().getStreamType()));
             if (Files.isRegularFile(rootFile)) {
                 results.add(rootFile);

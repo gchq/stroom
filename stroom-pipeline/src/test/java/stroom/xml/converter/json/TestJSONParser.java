@@ -52,7 +52,6 @@ import stroom.xmlschema.shared.XMLSchema;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -267,7 +266,7 @@ public class TestJSONParser extends StroomUnitTest {
         }
     }
 
-    private void compareFiles(final Path actualFile, final Path expectedFile) throws FileNotFoundException {
+    private void compareFiles(final Path actualFile, final Path expectedFile) {
         ComparisonHelper.compareFiles(expectedFile, actualFile, true, false);
         // If the files matched then delete the temporary file.
         FileUtil.deleteFile(actualFile);

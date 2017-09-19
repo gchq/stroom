@@ -24,7 +24,6 @@ import stroom.streamstore.shared.StreamVolume;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -42,26 +41,24 @@ public class FileSystemStreamTypeUtil {
      * We use this rather than the File.separator as we need to be standard
      * across Windows and UNIX.
      */
-    public static final char SEPERATOR_CHAR = '/';
-    public static final char FILE_SEPERATOR_CHAR = '=';
-    public static final String STORE_NAME = "store";
+    private static final String SEPERATOR_CHAR = "/";
+    private static final String FILE_SEPERATOR_CHAR = "=";
+    private static final String STORE_NAME = "store";
 
     private static String createFilePathBase(final Volume volume, final Stream stream, final StreamType streamType) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(volume.getPath());
-        builder.append(SEPERATOR_CHAR);
-        builder.append(STORE_NAME);
-        builder.append(SEPERATOR_CHAR);
-        builder.append(getDirectory(stream, streamType));
-        builder.append(SEPERATOR_CHAR);
-        builder.append(getBaseName(stream));
-        return builder.toString();
+        return volume.getPath() +
+                SEPERATOR_CHAR +
+                STORE_NAME +
+                SEPERATOR_CHAR +
+                getDirectory(stream, streamType) +
+                SEPERATOR_CHAR +
+                getBaseName(stream);
     }
 
     /**
      * Return back a input stream for a given stream type and file.
      */
-    public static InputStream getInputStream(final StreamType streamType, final File file) throws IOException {
+    public static InputStream getInputStream(final StreamType streamType, final Path file) throws IOException {
         if (streamType == null) {
             throw new IllegalArgumentException("Must Have a non-null stream type");
         }
@@ -76,25 +73,7 @@ public class FileSystemStreamTypeUtil {
      * Find all existing child files of this parent.
      * </p>
      */
-    public static List<File> findChildStreamFileList(final File parent) {
-        List<File> kids = new ArrayList<>();
-        for (StreamType type : StreamType.initialValues()) {
-            if (type.isStreamTypeChild()) {
-                File child = createChildStreamFile(parent, type);
-                if (child.isFile()) {
-                    kids.add(child);
-                }
-            }
-        }
-        return kids;
-    }
-
-    /**
-     * <p>
-     * Find all existing child files of this parent.
-     * </p>
-     */
-    public static List<Path> findChildStreamFileList(final Path parent) {
+    private static List<Path> findChildStreamFileList(final Path parent) {
         List<Path> kids = new ArrayList<>();
         for (StreamType type : StreamType.initialValues()) {
             if (type.isStreamTypeChild()) {
@@ -144,16 +123,15 @@ public class FileSystemStreamTypeUtil {
      * Create a child file for a parent.
      */
     public static Path createChildStreamFile(final StreamVolume streamVolume, final StreamType streamType) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(createFilePathBase(streamVolume.getVolume(), streamVolume.getStream(),
-                streamVolume.getStream().getStreamType()));
-        builder.append(".");
-        builder.append(streamVolume.getStream().getStreamType().getExtension());
-        builder.append(".");
-        builder.append(streamType.getExtension());
-        builder.append(".");
-        builder.append(String.valueOf(streamType.getFileStoreType()));
-        return Paths.get(builder.toString());
+        final String path = createFilePathBase(streamVolume.getVolume(), streamVolume.getStream(),
+                streamVolume.getStream().getStreamType()) +
+                "." +
+                streamVolume.getStream().getStreamType().getExtension() +
+                "." +
+                streamType.getExtension() +
+                "." +
+                String.valueOf(streamType.getFileStoreType());
+        return Paths.get(path);
     }
 
     /**
@@ -169,11 +147,9 @@ public class FileSystemStreamTypeUtil {
         if (!stream.isPersistent()) {
             throw new RuntimeException("Can't build a file path until the meta data is persistent");
         }
-        StringBuilder builder = new StringBuilder();
-        builder.append(stream.getFeed().getId());
-        builder.append(FILE_SEPERATOR_CHAR);
-        builder.append(FileSystemPrefixUtil.padId(stream.getId()));
-        return builder.toString();
+        return stream.getFeed().getId() +
+                FILE_SEPERATOR_CHAR +
+                FileSystemPrefixUtil.padId(stream.getId());
     }
 
     public static String getDirectory(Stream stream, StreamType streamType) {
@@ -194,37 +170,14 @@ public class FileSystemStreamTypeUtil {
         return builder.toString();
     }
 
-//    /**
-//     * Create a child file set for a parent file set.
-//     */
-//    public static Set<File> createChildStreamFile(final Set<File> parentSet, final StreamType streamType) {
-//        Set<File> childSet = new HashSet<>();
-//        childSet.addAll(parentSet.stream().map(parent -> createChildStreamFile(parent, streamType))
-//                .collect(Collectors.toList()));
-//        return childSet;
-//    }
-
     /**
      * Create a child file set for a parent file set.
      */
-    public static Set<Path> createChildStreamPath(final Set<Path> parentSet, final StreamType streamType) {
+    static Set<Path> createChildStreamPath(final Set<Path> parentSet, final StreamType streamType) {
         Set<Path> childSet = new HashSet<>();
         childSet.addAll(parentSet.stream().map(parent -> createChildStreamFile(parent, streamType))
                 .collect(Collectors.toList()));
         return childSet;
-    }
-
-    /**
-     * Find all the descendants to this file.
-     */
-    public static List<File> findAllDescendantStreamFileList(final File parent) {
-        List<File> rtn = new ArrayList<>();
-        List<File> kids = findChildStreamFileList(parent);
-        for (File kid : kids) {
-            rtn.add(kid);
-            rtn.addAll(findAllDescendantStreamFileList(kid));
-        }
-        return rtn;
     }
 
     /**
@@ -240,66 +193,22 @@ public class FileSystemStreamTypeUtil {
         return rtn;
     }
 
-//    /**
-//     * Return a File IO object.
-//     */
-//    public static Path createRootStreamFile(final Volume volume, final Stream stream, final StreamType streamType) {
-//        StringBuilder builder = new StringBuilder();
-//        builder.append(createFilePathBase(volume, stream, streamType));
-//        builder.append(".");
-//        builder.append(streamType.getExtension());
-//        builder.append(".");
-//        builder.append(String.valueOf(streamType.getFileStoreType()));
-//
-//        return Paths.get(builder.toString());
-//    }
-
     /**
      * Return a File IO object.
      */
-    public static Path createRootStreamPath(final Volume volume, final Stream stream, final StreamType streamType) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(createFilePathBase(volume, stream, streamType));
-        builder.append(".");
-        builder.append(streamType.getExtension());
-        builder.append(".");
-        builder.append(String.valueOf(streamType.getFileStoreType()));
-
-        return Paths.get(builder.toString());
-    }
-
-    /**
-     * Return a File IO object.
-     */
-    public static File createRootStreamFile(final Volume volume, final Stream stream, final StreamType streamType) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(createFilePathBase(volume, stream, streamType));
-        builder.append(".");
-        builder.append(streamType.getExtension());
-        builder.append(".");
-        builder.append(String.valueOf(streamType.getFileStoreType()));
-
-        return new File(builder.toString());
+    public static Path createRootStreamFile(final Volume volume, final Stream stream, final StreamType streamType) {
+        final String path = createFilePathBase(volume, stream, streamType) +
+                "." +
+                streamType.getExtension() +
+                "." +
+                String.valueOf(streamType.getFileStoreType());
+        return Paths.get(path);
     }
 
     /**
      * Create a child file for a parent.
      */
-    public static File createChildStreamFile(final File parent, final StreamType streamType) {
-        StringBuilder builder = new StringBuilder(parent.getAbsolutePath());
-        // Drop ".dat" or ".bgz"
-        builder.setLength(builder.lastIndexOf("."));
-        builder.append(".");
-        builder.append(streamType.getExtension());
-        builder.append(".");
-        builder.append(String.valueOf(streamType.getFileStoreType()));
-        return new File(builder.toString());
-    }
-
-    /**
-     * Create a child file for a parent.
-     */
-    public static Path createChildStreamFile(final Path parent, final StreamType streamType) {
+    static Path createChildStreamFile(final Path parent, final StreamType streamType) {
         StringBuilder builder = new StringBuilder(FileUtil.getCanonicalPath(parent));
         // Drop ".dat" or ".bgz"
         builder.setLength(builder.lastIndexOf("."));
@@ -309,5 +218,4 @@ public class FileSystemStreamTypeUtil {
         builder.append(String.valueOf(streamType.getFileStoreType()));
         return Paths.get(builder.toString());
     }
-
 }
