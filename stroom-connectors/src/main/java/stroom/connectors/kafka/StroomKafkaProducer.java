@@ -9,7 +9,7 @@ import java.util.function.Consumer;
  * Allows us to only bind to Kafka libraries at runtime. This is proving desirable because those libraries
  * come with a fair bit of heft in transitive dependencies.
  */
-public interface StroomKafkaProducer extends StroomConnector {
+public interface  StroomKafkaProducer extends StroomConnector {
     /**
      * This is the one config item that must be present, everything else can be default
      */
@@ -21,12 +21,14 @@ public interface StroomKafkaProducer extends StroomConnector {
      * @param flushOnSend Flush the producer on send
      * @param exceptionHandler A handler function if the exceptions are thrown. Allows custom exceptions (Runtime only)
      */
-    void send(StroomKafkaProducerRecord<String, String> stroomRecord,
+    void send(StroomKafkaProducerRecord<String, byte[]> stroomRecord,
               boolean flushOnSend,
               Consumer<Exception> exceptionHandler);
 
     /**
-     * Allow manual flushing of the producer by the client.
+     * Allow manual flushing of the producer by the client. Be aware that the producer
+     * is typically shared by many threads so a flush may involve waiting for the messages
+     * of other threads to be acknowledged by the broker.
      */
     void flush();
 }

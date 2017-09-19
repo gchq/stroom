@@ -7,13 +7,14 @@ import stroom.connectors.kafka.StroomKafkaProducerRecord;
 import stroom.node.server.StroomPropertyService;
 import stroom.node.server.StroomPropertyServiceImpl;
 
+import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
-public class KafkaExternalLoader {
+public class TestKafkaExternalLoader {
     private static final String DEV_EXTERNAL_LIB_DIR = System.getenv("HOME") + "/.stroom/plugins";
 
     @Test
@@ -33,11 +34,11 @@ public class KafkaExternalLoader {
 
         final StroomKafkaProducer stroomKafkaProducer = kafkaProducerFactoryService.getProducer(exceptionConsumer);
 
-        final StroomKafkaProducerRecord<String, String> record =
-                new StroomKafkaProducerRecord.Builder<String, String>()
+        final StroomKafkaProducerRecord<String, byte[]> record =
+                new StroomKafkaProducerRecord.Builder<String, byte[]>()
                         .topic(KAFKA_TOPIC)
                         .key(KAFKA_RECORD_KEY)
-                        .value(TEST_MESSAGE)
+                        .value(TEST_MESSAGE.getBytes(StandardCharsets.UTF_8))
                         .build();
 
         stroomKafkaProducer.send(record, true, e -> fail(e.getLocalizedMessage()));
@@ -61,11 +62,11 @@ public class KafkaExternalLoader {
         final Consumer<Exception> exceptionConsumer = (Consumer<Exception>) mock(Consumer.class);
         final StroomKafkaProducer stroomKafkaProducer = kafkaProducerFactoryService.getProducer(exceptionConsumer);
 
-        final StroomKafkaProducerRecord<String, String> record =
-                new StroomKafkaProducerRecord.Builder<String, String>()
+        final StroomKafkaProducerRecord<String, byte[]> record =
+                new StroomKafkaProducerRecord.Builder<String, byte[]>()
                         .topic(KAFKA_TOPIC)
                         .key(KAFKA_RECORD_KEY)
-                        .value(TEST_MESSAGE)
+                        .value(TEST_MESSAGE.getBytes(StandardCharsets.UTF_8))
                         .build();
 
         stroomKafkaProducer.send(record, true, e -> fail(e.getLocalizedMessage()));

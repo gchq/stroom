@@ -1,15 +1,13 @@
-package stroom.statistics.server.stroomstats.pipeline.filter;
+package stroom.statistics.server.stroomstats.pipeline.appender;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
-import stroom.connectors.kafka.filter.AbstractKafkaProducerFilter;
-import stroom.node.server.StroomPropertyService;
-import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggedException;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.server.writer.AbstractKafkaAppender;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.statistics.server.stroomstats.kafka.TopicNameFactory;
@@ -23,26 +21,26 @@ import javax.inject.Inject;
 @Component
 @Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(
-        type = "StroomStatsFilter",
-        category = PipelineElementType.Category.FILTER,
-        roles = {PipelineElementType.ROLE_TARGET,
-                PipelineElementType.ROLE_HAS_TARGETS,
-                PipelineElementType.VISABILITY_SIMPLE},
+        type = "StroomStatsAppender",
+        category = PipelineElementType.Category.DESTINATION,
+        roles = {
+                PipelineElementType.ROLE_TARGET,
+                PipelineElementType.ROLE_DESTINATION,
+                PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.STROOM_STATS)
-public class StroomStatsFilter extends AbstractKafkaProducerFilter {
+public class StroomStatsAppender extends AbstractKafkaAppender {
 
     private final TopicNameFactory topicNameFactory;
     private StroomStatsStoreEntity stroomStatsStoreEntity;
     private String topic = null;
     private String recordKey = null;
 
+    @SuppressWarnings("unused")
     @Inject
-    public StroomStatsFilter(final ErrorReceiverProxy errorReceiverProxy,
-                             final LocationFactoryProxy locationFactory,
-                             final StroomPropertyService stroomPropertyService,
-                             final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
-                             final TopicNameFactory topicNameFactory) {
-        super(errorReceiverProxy, locationFactory, stroomKafkaProducerFactoryService);
+    public StroomStatsAppender(final ErrorReceiverProxy errorReceiverProxy,
+                               final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
+                               final TopicNameFactory topicNameFactory) {
+        super(errorReceiverProxy, stroomKafkaProducerFactoryService);
         this.topicNameFactory = topicNameFactory;
     }
 

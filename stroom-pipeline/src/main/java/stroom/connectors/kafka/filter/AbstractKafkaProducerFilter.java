@@ -11,6 +11,7 @@ import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggedException;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.server.filter.AbstractSamplingFilter;
+import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
 public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter {
@@ -74,11 +75,11 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
         String topic = getTopic();
         String recordKey = getRecordKey();
 
-        final StroomKafkaProducerRecord<String, String> newRecord =
-                new StroomKafkaProducerRecord.Builder<String, String>()
+        final StroomKafkaProducerRecord<String, byte[]> newRecord =
+                new StroomKafkaProducerRecord.Builder<String, byte[]>()
                         .topic(getTopic())
                         .key(getRecordKey())
-                        .value(getOutput())
+                        .value(getOutput().getBytes(StreamUtil.DEFAULT_CHARSET))
                         .build();
         try {
             stroomKafkaProducer.send(newRecord, flushOnSend, this::error);

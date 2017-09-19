@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import stroom.connectors.kafka.StroomKafkaProducer;
 import stroom.connectors.kafka.StroomKafkaProducerRecord;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.function.Consumer;
@@ -18,7 +19,7 @@ public class RollingKafkaDestination extends RollingDestination {
     private final String recordKey;
     private final boolean flushOnSend;
 
-    private StringBuilder data = new StringBuilder();
+    private ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
     public RollingKafkaDestination(final String key,
                                    final long frequency,
@@ -37,7 +38,7 @@ public class RollingKafkaDestination extends RollingDestination {
         setOutputStream(new ByteCountOutputStream(new OutputStream() {
             @Override
             public void write(int b) throws IOException {
-                data.append((char)b);
+                byteArrayOutputStream.write(b);
             }
         }));
     }
@@ -50,11 +51,13 @@ public class RollingKafkaDestination extends RollingDestination {
 
     @Override
     void onFooterWritten(final Consumer<Throwable> exceptionConsumer) {
-        final StroomKafkaProducerRecord<String, String> newRecord =
-                new StroomKafkaProducerRecord.Builder<String, String>()
+        byte[] msgValue = byteArrayOutputStream.toByteArray();
+
+        final StroomKafkaProducerRecord<String, byte[]> newRecord =
+                new StroomKafkaProducerRecord.Builder<String, byte[]>()
                         .topic(topic)
                         .key(recordKey)
-                        .value(data.toString())
+                        .value(msgValue)
                         .build();
         try {
             stroomKafkaProducer.send(newRecord, flushOnSend, e ->

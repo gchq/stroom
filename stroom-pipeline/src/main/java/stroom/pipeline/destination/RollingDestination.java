@@ -77,7 +77,7 @@ public abstract class RollingDestination implements Destination {
     }
 
     @Override
-    public final OutputStream getOutputStream() throws IOException {
+    public final OutputStream getByteArrayOutputStream() throws IOException {
         return getOutputStream(null, null);
     }
 

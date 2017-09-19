@@ -280,7 +280,7 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
 
                     final List<OutputStream> outputStreams = new ArrayList<>(otherOutputStreams);
                     for (final Destination destination : getDestinations()) {
-                        outputStreams.add(destination.getOutputStream());
+                        outputStreams.add(destination.getByteArrayOutputStream());
                     }
 
                     if (inputStream != null) {
@@ -334,7 +334,7 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
 
                     final List<Writer> writers = new ArrayList<>(otherWriters);
                     for (final Destination destination : getDestinations()) {
-                        writers.add(new OutputStreamWriter(destination.getOutputStream(), StreamUtil.DEFAULT_CHARSET));
+                        writers.add(new OutputStreamWriter(destination.getByteArrayOutputStream(), StreamUtil.DEFAULT_CHARSET));
                     }
 
                     final char[] buffer = new char[8192];
