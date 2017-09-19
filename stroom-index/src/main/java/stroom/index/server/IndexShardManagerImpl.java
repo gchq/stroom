@@ -17,7 +17,6 @@
 package stroom.index.server;
 
 import org.joda.time.DateTime;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
@@ -27,6 +26,7 @@ import stroom.index.shared.IndexShardService;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
+import stroom.security.Insecure;
 import stroom.security.Secured;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.task.server.GenericServerTask;
@@ -36,9 +36,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomFrequencySchedule;
-import stroom.util.spring.StroomShutdown;
 import stroom.util.spring.StroomSimpleCronSchedule;
-import stroom.util.spring.StroomSpringProfiles;
+import stroom.util.task.TaskScopeRunnable;
 import stroom.util.thread.ThreadScopeRunnable;
 
 import javax.inject.Inject;
@@ -92,13 +91,6 @@ public class IndexShardManagerImpl implements IndexShardManager {
         allowedStateTransitions.put(IndexShardStatus.CORRUPT, Collections.singleton(IndexShardStatus.DELETED));
     }
 
-    @Override
-    @StroomShutdown
-    public void shutdown() {
-        // Close all currently used writers and clear the cache.
-        indexShardWriterCacheProvider.get().clear();
-    }
-
     /**
      * Delete anything that has been marked to delete
      */
@@ -124,7 +116,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
                         final Iterator<IndexShard> iter = shards.iterator();
                         while (!task.isTerminated() && iter.hasNext()) {
                             final IndexShard shard = iter.next();
-                            final IndexShardWriter writer = indexShardWriterCache.getQuiet(shard.getId());
+                            final IndexShardWriter writer = indexShardWriterCache.getWriterByShardId(shard.getId());
                             try {
                                 if (writer != null) {
                                     LOGGER.debug(() -> "deleteLogicallyDeleted() - Unable to delete index shard " + shard.getId() + " as it is currently in use");
@@ -230,7 +222,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
                     try {
                         switch (action) {
                             case FLUSH:
-                                final IndexShardWriter indexShardWriter = indexShardWriterCache.getQuiet(shard.getId());
+                                final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardId(shard.getId());
                                 if (indexShardWriter != null) {
                                     LOGGER.debug(() -> action.getActivity() + " index shard " + shard.getId());
                                     shardCount.incrementAndGet();
@@ -311,6 +303,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
         return null;
     }
 
+    @Insecure
     @Override
     public void setStatus(final long indexShardId, final IndexShardStatus status) {
         // Allow the thing to run without a service (e.g. benchmark mode)
@@ -318,20 +311,23 @@ public class IndexShardManagerImpl implements IndexShardManager {
             final Lock lock = shardUpdateLocks.getLockForKey(indexShardId);
             lock.lock();
             try {
-                final IndexShard indexShard = indexShardService.loadById(indexShardId);
+                run(() -> {
+                    final IndexShard indexShard = indexShardService.loadById(indexShardId);
 
-                // Only allow certain state transitions.
-                final Set<IndexShardStatus> allowed = allowedStateTransitions.get(indexShard.getStatus());
-                if (allowed.contains(status)) {
-                    indexShard.setStatus(status);
-                    indexShardService.save(indexShard);
-                }
+                    // Only allow certain state transitions.
+                    final Set<IndexShardStatus> allowed = allowedStateTransitions.get(indexShard.getStatus());
+                    if (allowed.contains(status)) {
+                        indexShard.setStatus(status);
+                        indexShardService.save(indexShard);
+                    }
+                });
             } finally {
                 lock.unlock();
             }
         }
     }
 
+    @Insecure
     @Override
     public void update(final long indexShardId, final Integer documentCount, final Long commitDurationMs, final Long commitMs, final Long fileSize) {
         // Allow the thing to run without a service (e.g. benchmark mode)
@@ -339,33 +335,53 @@ public class IndexShardManagerImpl implements IndexShardManager {
             final Lock lock = shardUpdateLocks.getLockForKey(indexShardId);
             lock.lock();
             try {
-                final IndexShard indexShard = indexShardService.loadById(indexShardId);
+                run(() -> {
+                    final IndexShard indexShard = indexShardService.loadById(indexShardId);
 
-                if (documentCount != null) {
-                    indexShard.setDocumentCount(documentCount);
-                    indexShard.setCommitDocumentCount(documentCount - indexShard.getDocumentCount());
+                    if (documentCount != null) {
+                        indexShard.setDocumentCount(documentCount);
+                        indexShard.setCommitDocumentCount(documentCount - indexShard.getDocumentCount());
 
-                    // Output some debug so we know how long commits are taking.
-                    LOGGER.debug(() -> {
-                        final String durationString = ModelStringUtil.formatDurationString(commitDurationMs);
-                        return "Documents written since last update " + (documentCount - indexShard.getDocumentCount()) + " ("
-                                + durationString + ")";
-                    });
-                }
-                if (commitDurationMs != null) {
-                    indexShard.setCommitDurationMs(commitDurationMs);
-                }
-                if (commitMs != null) {
-                    indexShard.setCommitMs(commitMs);
-                }
-                if (fileSize != null) {
-                    indexShard.setFileSize(fileSize);
-                }
+                        // Output some debug so we know how long commits are taking.
+                        LOGGER.debug(() -> {
+                            final String durationString = ModelStringUtil.formatDurationString(commitDurationMs);
+                            return "Documents written since last update " + (documentCount - indexShard.getDocumentCount()) + " ("
+                                    + durationString + ")";
+                        });
+                    }
+                    if (commitDurationMs != null) {
+                        indexShard.setCommitDurationMs(commitDurationMs);
+                    }
+                    if (commitMs != null) {
+                        indexShard.setCommitMs(commitMs);
+                    }
+                    if (fileSize != null) {
+                        indexShard.setFileSize(fileSize);
+                    }
 
-                indexShardService.save(indexShard);
+                    indexShardService.save(indexShard);
+                });
             } finally {
                 lock.unlock();
             }
+        }
+    }
+
+    private void run(final Runnable runnable) {
+        try {
+            new TaskScopeRunnable(GenericServerTask.create("update", null)) {
+                @Override
+                protected void exec() {
+                    new ThreadScopeRunnable() {
+                        @Override
+                        protected void exec() {
+                            runnable.run();
+                        }
+                    }.run();
+                }
+            }.run();
+        } catch (final Throwable t) {
+            LOGGER.error(t::getMessage, t);
         }
     }
 

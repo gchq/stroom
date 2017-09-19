@@ -18,9 +18,11 @@ package stroom.entity.shared;
 
 public class VersionedEntityDecorator<T extends BaseEntity> {
     private final T entity;
+    private final String user;
 
-    public VersionedEntityDecorator(final T entity) {
+    public VersionedEntityDecorator(final T entity, final String user) {
         this.entity = entity;
+        this.user = user;
     }
 
     public T getEntity() {
@@ -30,7 +32,8 @@ public class VersionedEntityDecorator<T extends BaseEntity> {
     @Override
     public int hashCode() {
         int hash = entity.hashCode();
-        hash = hash * 31 + entity.getVersion();
+        hash = 31 * hash + entity.getVersion();
+        hash = 31 * hash + (user != null ? user.hashCode() : 0);
         return hash;
     }
 
@@ -53,6 +56,10 @@ public class VersionedEntityDecorator<T extends BaseEntity> {
             return false;
         }
 
-        return entity.getVersion() == entityDecorator.entity.getVersion();
+        if (entity.getVersion() != entityDecorator.entity.getVersion()) {
+            return false;
+        }
+
+        return user != null ? user.equals(entityDecorator.user) : entityDecorator.user == null;
     }
 }

@@ -53,6 +53,7 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.PipelineContext;
 import stroom.pool.PoolItem;
+import stroom.security.SecurityContext;
 import stroom.util.CharBuffer;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
@@ -71,10 +72,10 @@ import java.util.List;
  */
 @Component
 @Scope(StroomScope.PROTOTYPE)
-@ConfigurableElement(type = "XSLTFilter", category = Category.FILTER, roles = { PipelineElementType.ROLE_TARGET,
+@ConfigurableElement(type = "XSLTFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
         PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
-        PipelineElementType.ROLE_HAS_CODE }, icon = ElementIcons.XSLT)
+        PipelineElementType.ROLE_HAS_CODE}, icon = ElementIcons.XSLT)
 public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjection {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(XSLTFilter.class);
     private static final int DEFAULT_MAX_ELEMENTS = 1000000;
@@ -86,6 +87,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     private final LocationFactoryProxy locationFactory;
     private final PipelineContext pipelineContext;
     private final PathCreator pathCreator;
+    private final SecurityContext securityContext;
 
     private ErrorListener errorListener;
 
@@ -111,10 +113,14 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     private int maxElementCount;
 
     @Inject
-    public XSLTFilter(final XSLTPool xsltPool, final ErrorReceiverProxy errorReceiverProxy,
-            final XSLTService xsltService, final StroomPropertyService stroomPropertyService,
-            final LocationFactoryProxy locationFactory, final PipelineContext pipelineContext,
-            final PathCreator pathCreator) {
+    public XSLTFilter(final XSLTPool xsltPool,
+                      final ErrorReceiverProxy errorReceiverProxy,
+                      final XSLTService xsltService,
+                      final StroomPropertyService stroomPropertyService,
+                      final LocationFactoryProxy locationFactory,
+                      final PipelineContext pipelineContext,
+                      final PathCreator pathCreator,
+                      final SecurityContext securityContext) {
         this.xsltPool = xsltPool;
         this.errorReceiverProxy = errorReceiverProxy;
         this.xsltService = xsltService;
@@ -122,6 +128,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         this.locationFactory = locationFactory;
         this.pipelineContext = pipelineContext;
         this.pathCreator = pathCreator;
+        this.securityContext = securityContext;
     }
 
     @Override
@@ -229,7 +236,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                     // Get compiled XSLT from the pool.
                     final ErrorReceiver errorReceiver = new ErrorReceiverIdDecorator(getElementId(),
                             errorReceiverProxy);
-                    poolItem = xsltPool.borrowConfiguredTemplate(new VersionedEntityDecorator<>(xslt), errorReceiver,
+                    poolItem = xsltPool.borrowConfiguredTemplate(new VersionedEntityDecorator<>(xslt, getUser()), errorReceiver,
                             locationFactory, pipelineReferences, usePool);
                     final StoredXsltExecutable storedXsltExecutable = poolItem.getValue();
                     // Get the errors.
@@ -286,9 +293,8 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     }
 
     /**
-     * @param locator
-     *            an object that can return the location of any SAX document
-     *            event
+     * @param locator an object that can return the location of any SAX document
+     *                event
      * @see org.xml.sax.Locator
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#setDocumentLocator(org.xml.sax.Locator)
      */
@@ -301,8 +307,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     }
 
     /**
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #endDocument
      * @see org.xml.sax.helpers.XMLFilterImpl#startDocument()
      */
@@ -342,8 +347,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     }
 
     /**
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #startDocument
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#endDocument()
      */
@@ -403,17 +407,14 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     }
 
     /**
-     * @param prefix
-     *            the Namespace prefix being declared. An empty string is used
-     *            for the default element namespace, which has no prefix.
-     * @param uri
-     *            the Namespace URI the prefix is mapped to
-     * @throws org.xml.sax.SAXException
-     *             the client may throw an exception during processing
+     * @param prefix the Namespace prefix being declared. An empty string is used
+     *               for the default element namespace, which has no prefix.
+     * @param uri    the Namespace URI the prefix is mapped to
+     * @throws org.xml.sax.SAXException the client may throw an exception during processing
      * @see #endPrefixMapping
      * @see #startElement
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#startPrefixMapping(java.lang.String,
-     *      java.lang.String)
+     * java.lang.String)
      */
     @Override
     public void startPrefixMapping(final String prefix, final String uri) throws SAXException {
@@ -428,11 +429,9 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
      * the prefix that was being mapped. This is the empty string when a default
      * mapping scope ends.
      *
-     * @param prefix
-     *            the prefix that was being mapped. This is the empty string
-     *            when a default mapping scope ends.
-     * @throws org.xml.sax.SAXException
-     *             the client may throw an exception during processing
+     * @param prefix the prefix that was being mapped. This is the empty string
+     *               when a default mapping scope ends.
+     * @throws org.xml.sax.SAXException the client may throw an exception during processing
      * @see #startPrefixMapping
      * @see #endElement
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#endPrefixMapping(java.lang.String)
@@ -447,27 +446,22 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     }
 
     /**
-     * @param uri
-     *            the Namespace URI, or the empty string if the element has no
-     *            Namespace URI or if Namespace processing is not being
-     *            performed
-     * @param localName
-     *            the local name (without prefix), or the empty string if
-     *            Namespace processing is not being performed
-     * @param qName
-     *            the qualified name (with prefix), or the empty string if
-     *            qualified names are not available
-     * @param atts
-     *            the attributes attached to the element. If there are no
-     *            attributes, it shall be an empty Attributes object. The value
-     *            of this object after startElement returns is undefined
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param uri       the Namespace URI, or the empty string if the element has no
+     *                  Namespace URI or if Namespace processing is not being
+     *                  performed
+     * @param localName the local name (without prefix), or the empty string if
+     *                  Namespace processing is not being performed
+     * @param qName     the qualified name (with prefix), or the empty string if
+     *                  qualified names are not available
+     * @param atts      the attributes attached to the element. If there are no
+     *                  attributes, it shall be an empty Attributes object. The value
+     *                  of this object after startElement returns is undefined
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #endElement
      * @see org.xml.sax.Attributes
      * @see org.xml.sax.helpers.AttributesImpl
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#startElement(java.lang.String,
-     *      java.lang.String, java.lang.String, org.xml.sax.Attributes)
+     * java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
@@ -504,20 +498,16 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     }
 
     /**
-     * @param uri
-     *            the Namespace URI, or the empty string if the element has no
-     *            Namespace URI or if Namespace processing is not being
-     *            performed
-     * @param localName
-     *            the local name (without prefix), or the empty string if
-     *            Namespace processing is not being performed
-     * @param qName
-     *            the qualified XML name (with prefix), or the empty string if
-     *            qualified names are not available
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param uri       the Namespace URI, or the empty string if the element has no
+     *                  Namespace URI or if Namespace processing is not being
+     *                  performed
+     * @param localName the local name (without prefix), or the empty string if
+     *                  Namespace processing is not being performed
+     * @param qName     the qualified XML name (with prefix), or the empty string if
+     *                  qualified names are not available
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#endElement(java.lang.String,
-     *      java.lang.String, java.lang.String)
+     * java.lang.String, java.lang.String)
      */
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
@@ -529,18 +519,14 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     }
 
     /**
-     * @param ch
-     *            the characters from the XML document
-     * @param start
-     *            the start position in the array
-     * @param length
-     *            the number of characters to read from the array
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param ch     the characters from the XML document
+     * @param start  the start position in the array
+     * @param length the number of characters to read from the array
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #ignorableWhitespace
      * @see org.xml.sax.Locator
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#characters(char[],
-     *      int, int)
+     * int, int)
      */
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
@@ -552,17 +538,13 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     }
 
     /**
-     * @param ch
-     *            the characters from the XML document
-     * @param start
-     *            the start position in the array
-     * @param length
-     *            the number of characters to read from the array
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param ch     the characters from the XML document
+     * @param start  the start position in the array
+     * @param length the number of characters to read from the array
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #characters
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#ignorableWhitespace(char[],
-     *      int, int)
+     * int, int)
      */
     @Override
     public void ignorableWhitespace(final char[] ch, final int start, final int length) throws SAXException {
@@ -574,16 +556,13 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     }
 
     /**
-     * @param target
-     *            the processing instruction target
-     * @param data
-     *            the processing instruction data, or null if none was supplied.
-     *            The data does not include any whitespace separating it from
-     *            the target
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param target the processing instruction target
+     * @param data   the processing instruction data, or null if none was supplied.
+     *               The data does not include any whitespace separating it from
+     *               the target
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#processingInstruction(java.lang.String,
-     *      java.lang.String)
+     * java.lang.String)
      */
     @Override
     public void processingInstruction(final String target, final String data) throws SAXException {
@@ -595,12 +574,10 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     }
 
     /**
-     * @param name
-     *            the name of the skipped entity. If it is a parameter entity,
-     *            the name will begin with '%', and if it is the external DTD
-     *            subset, it will be the string "[dtd]"
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param name the name of the skipped entity. If it is a parameter entity,
+     *             the name will begin with '%', and if it is the external DTD
+     *             subset, it will be the string "[dtd]"
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#skippedEntity(java.lang.String)
      */
     @Override
@@ -637,6 +614,13 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
             }
         }
         return maxElements;
+    }
+
+    private String getUser() {
+        if (securityContext == null) {
+            return null;
+        }
+        return securityContext.getUserId();
     }
 
     @PipelineProperty(description = "The XSLT to use.")

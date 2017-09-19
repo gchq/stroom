@@ -19,6 +19,7 @@ package stroom.pipeline.server.filter;
 import javax.inject.Inject;
 import javax.xml.XMLConstants;
 
+import stroom.security.SecurityContext;
 import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -46,9 +47,15 @@ public class SchemaFilterSplit extends AbstractXMLFilter {
     private final FindXMLSchemaCriteria schemaConstraint = new FindXMLSchemaCriteria();
     private boolean addedSchemaFilter;
 
+
     @Inject
-    public SchemaFilterSplit(final SchemaFilter schemaFilter) {
+    public SchemaFilterSplit(final SchemaFilter schemaFilter,
+                             final SecurityContext securityContext) {
         this.schemaFilter = schemaFilter;
+
+        if (securityContext != null) {
+            schemaConstraint.setUser(securityContext.getUserId());
+        }
     }
 
     private AbstractXMLFilter getSchemaFilter() {

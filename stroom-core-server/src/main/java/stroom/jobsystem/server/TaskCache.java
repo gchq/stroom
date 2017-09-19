@@ -16,24 +16,20 @@
 
 package stroom.jobsystem.server;
 
+import net.sf.ehcache.CacheManager;
+import org.springframework.stereotype.Component;
+import stroom.cache.AbstractCacheBean;
+import stroom.util.logging.StroomLogger;
+import stroom.util.shared.Task;
+import stroom.util.spring.StroomFrequencySchedule;
+
+import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
-
-import javax.inject.Inject;
-
-import org.apache.commons.pool2.ObjectPool;
-import stroom.pool.PoolItem;
-import stroom.util.logging.StroomLogger;
-import org.springframework.stereotype.Component;
-
-import stroom.cache.AbstractCacheBean;
-import stroom.util.shared.Task;
-import stroom.util.spring.StroomFrequencySchedule;
-import net.sf.ehcache.CacheManager;
 
 @Component
 public class TaskCache extends AbstractCacheBean<String, Queue<Task<?>>> {
@@ -70,15 +66,17 @@ public class TaskCache extends AbstractCacheBean<String, Queue<Task<?>>> {
         return queue;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    protected void destroy(final String job, final Queue<Task<?>> queue) {
-        if (job != null && queue != null) {
+    protected void destroy(final String job, final Object object) {
+        if (job != null && object != null && object instanceof Queue<?>) {
+            final Queue<Task<?>> queue = (Queue<Task<?>>) object;
             final TaskDestructionHandler handler = destructionHandlers.get(job);
             if (handler != null) {
                 handler.onDestroy(queue);
             }
         }
-        super.destroy(job, queue);
+        super.destroy(job, object);
     }
 
     public Integer taskCount(final String job) {

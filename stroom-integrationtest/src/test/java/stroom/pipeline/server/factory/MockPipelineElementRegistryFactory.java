@@ -16,13 +16,7 @@
 
 package stroom.pipeline.server.factory;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import stroom.pipeline.server.source.SourceElement;
-import stroom.util.spring.StroomSpringProfiles;
 import org.springframework.context.annotation.Profile;
-
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.filter.RecordCountFilter;
 import stroom.pipeline.server.filter.RecordOutputFilter;
@@ -35,12 +29,17 @@ import stroom.pipeline.server.parser.DSParser;
 import stroom.pipeline.server.parser.JSONParser;
 import stroom.pipeline.server.parser.XMLFragmentParser;
 import stroom.pipeline.server.parser.XMLParser;
+import stroom.pipeline.server.source.SourceElement;
 import stroom.pipeline.server.writer.FileAppender;
 import stroom.pipeline.server.writer.JSONWriter;
 import stroom.pipeline.server.writer.StreamAppender;
 import stroom.pipeline.server.writer.TextWriter;
 import stroom.pipeline.server.writer.XMLWriter;
 import stroom.pipeline.state.PipelineContext;
+import stroom.util.spring.StroomSpringProfiles;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Profile(StroomSpringProfiles.TEST)
 public class MockPipelineElementRegistryFactory implements ElementRegistryFactory, ElementFactory {
@@ -77,16 +76,16 @@ public class MockPipelineElementRegistryFactory implements ElementRegistryFactor
     public <T extends Element> T getElementInstance(final Class<T> elementClass) {
         try {
             if (elementClass.equals(CombinedParser.class)) {
-                return (T) new CombinedParser(null, null, null, null);
+                return (T) new CombinedParser(null, null, null, null, null);
             }
             if (elementClass.equals(DSParser.class)) {
-                return (T) new DSParser(null, null, null, null);
+                return (T) new DSParser(null, null, null, null, null);
             }
             if (elementClass.equals(JSONParser.class)) {
                 return (T) new JSONParser(null, null);
             }
             if (elementClass.equals(XMLFragmentParser.class)) {
-                return (T) new XMLFragmentParser(null, null, null, null);
+                return (T) new XMLFragmentParser(null, null, null, null, null);
             }
             if (elementClass.equals(XMLParser.class)) {
                 return (T) new XMLParser(null, null);
@@ -98,11 +97,11 @@ public class MockPipelineElementRegistryFactory implements ElementRegistryFactor
                 return (T) new SplitFilter();
             }
             if (elementClass.equals(XSLTFilter.class)) {
-                return (T) new XSLTFilter(null, null, null, null, null, null, null);
+                return (T) new XSLTFilter(null, null, null, null, null, null, null, null);
             }
             if (elementClass.equals(SchemaFilterSplit.class)) {
                 return (T) new SchemaFilterSplit(
-                        new SchemaFilter(null, null, null, new LocationFactoryProxy(), new PipelineContext()));
+                        new SchemaFilter(null, null, null, new LocationFactoryProxy(), new PipelineContext()), null);
             }
             if (elementClass.equals(RecordOutputFilter.class)) {
                 return (T) new RecordOutputFilter();

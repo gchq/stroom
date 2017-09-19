@@ -17,39 +17,26 @@
 package stroom.index.server;
 
 import org.apache.lucene.document.Document;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
-import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.util.spring.StroomSpringProfiles;
-
-import javax.inject.Inject;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 //@Profile(StroomSpringProfiles.TEST)
 //@Component("indexer")
 public class MockIndexer implements Indexer {
-    private final IndexShardKeyCache indexShardKeyCache;
     private final IndexShardWriterCache indexShardWriterCache;
 
     MockIndexer() {
-        this.indexShardKeyCache = new MockIndexShardKeyCache(new MockIndexShardService());
         this.indexShardWriterCache = new MockIndexShardWriterCache();
     }
 
 //    @Inject
-    MockIndexer(final IndexShardKeyCache indexShardKeyCache, final IndexShardWriterCache indexShardWriterCache) {
-        this.indexShardKeyCache = indexShardKeyCache;
+MockIndexer(final IndexShardWriterCache indexShardWriterCache) {
         this.indexShardWriterCache = indexShardWriterCache;
     }
 
     @Override
     public void addDocument(final IndexShardKey key, final Document document) {
         try {
-            final IndexShard indexShard = indexShardKeyCache.getOrCreate(key);
-            final IndexShardWriter indexShardWriter = indexShardWriterCache.getOrCreate(indexShard.getId());
+            final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardKey(key);
             indexShardWriter.addDocument(document);
         } catch (final Exception e) {
             throw new RuntimeException(e.getMessage(), e);

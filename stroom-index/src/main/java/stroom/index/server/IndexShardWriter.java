@@ -19,18 +19,28 @@ package stroom.index.server;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.store.AlreadyClosedException;
-import stroom.cache.AbstractCacheBean.Destroyable;
+import stroom.index.shared.IndexShardKey;
 
 import java.io.IOException;
 
-public interface IndexShardWriter extends Destroyable {
+public interface IndexShardWriter {
+    IndexShardKey getIndexShardKey();
+
+    long getIndexShardId();
+
     void addDocument(Document document) throws IOException, IndexException, AlreadyClosedException;
 
     void flush();
+
+    void close();
 
     IndexWriter getWriter();
 
     int getDocumentCount();
 
     void updateIndexConfig(IndexConfig indexConfig);
+
+    long getCreationTime();
+
+    long getLastUsedTime();
 }

@@ -33,12 +33,6 @@ public interface TaskManager extends FindService<TaskProgress, FindTaskProgressC
     void shutdown();
 
     /**
-     * Get an executor for use in places where we don't want to use tasks and task handlers.
-     * @return An executor.
-     */
-    Executor getExecutor();
-
-    /**
      * Execute a task synchronously.
      *
      * @param task

@@ -16,18 +16,15 @@
 
 package stroom.search.server.shard;
 
-import java.util.List;
-
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.search.TermQuery;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-
 import stroom.index.server.IndexShardUtil;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
@@ -39,6 +36,8 @@ import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.fs.serializable.RASegmentInputStream;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.io.StreamUtil;
+
+import java.util.List;
 
 public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {
     private String searchField = null;
@@ -56,7 +55,7 @@ public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {
     public void run() {
         // Boot up spring
         final ApplicationContext appContext = new ClassPathXmlApplicationContext(
-                new String[] { "classpath:META-INF/spring/stroomCoreServerContext.xml" });
+                new String[]{"classpath:META-INF/spring/stroomCoreServerContext.xml"});
 
         final Query query = new TermQuery(new Term(searchField, searchValue));
 
@@ -73,33 +72,37 @@ public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {
                 System.out.println("");
                 System.out.println("Searching Index " + IndexShardUtil.getIndexDir(indexShard));
                 final SimpleCollector simpleCollector = new SimpleCollector();
-                final IndexReader reader = indexShardSearcher.getReader();
-                final IndexSearcher searcher = new IndexSearcher(reader);
-                searcher.search(query, simpleCollector);
-                for (final Integer doc : simpleCollector.getDocIdList()) {
-                    System.out.println("\tFound match " + doc);
-                    final Document document = reader.document(doc);
-                    for (final IndexableField fieldable : document.getFields()) {
-                        System.out.println("\t\t" + fieldable.name() + "=" + fieldable.stringValue());
+                final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
+                final IndexSearcher searcher = searcherManager.acquire();
+                try {
+                    searcher.search(query, simpleCollector);
+                    for (final Integer docId : simpleCollector.getDocIdList()) {
+                        System.out.println("\tFound match " + docId);
+                        final Document document = searcher.doc(docId);
+                        for (final IndexableField fieldable : document.getFields()) {
+                            System.out.println("\t\t" + fieldable.name() + "=" + fieldable.stringValue());
+                        }
+
+                        final Long streamId = Long.valueOf(document.getField(IndexConstants.STREAM_ID).stringValue());
+                        final Long segment = Long.valueOf(document.getField(IndexConstants.EVENT_ID).stringValue());
+
+                        // Try and open the stream source - pnly open unlocked ones.
+                        final StreamSource streamSource = streamStore.openStreamSource(streamId);
+                        if (streamSource != null) {
+                            final RASegmentInputStream inputStream = new RASegmentInputStream(streamSource);
+                            inputStream.include(segment);
+                            System.out.println("\t\t" + StreamUtil.streamToString(inputStream));
+                            streamStore.closeStreamSource(streamSource);
+                        }
                     }
 
-                    final Long streamId = Long.valueOf(document.getField(IndexConstants.STREAM_ID).stringValue());
-                    final Long segment = Long.valueOf(document.getField(IndexConstants.EVENT_ID).stringValue());
-
-                    // Try and open the stream source - pnly open unlocked ones.
-                    final StreamSource streamSource = streamStore.openStreamSource(streamId);
-                    if (streamSource != null) {
-                        final RASegmentInputStream inputStream = new RASegmentInputStream(streamSource);
-                        inputStream.include(segment);
-                        System.out.println("\t\t" + StreamUtil.streamToString(inputStream));
-                        streamStore.closeStreamSource(streamSource);
+                    if (simpleCollector.getDocIdList().size() == 0) {
+                        System.out.println("\tNo Matches");
                     }
+                    System.out.println("");
+                } finally {
+                    searcherManager.release(searcher);
                 }
-
-                if (simpleCollector.getDocIdList().size() == 0) {
-                    System.out.println("\tNo Matches");
-                }
-                System.out.println("");
                 indexShardSearcher.destroy();
             } catch (final Exception ex) {
                 ex.printStackTrace();

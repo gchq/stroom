@@ -16,7 +16,6 @@
 
 package stroom;
 
-import net.sf.ehcache.CacheManager;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -33,6 +32,7 @@ import stroom.entity.shared.Res;
 import stroom.feed.shared.Feed;
 import stroom.importexport.server.ImportExportSerializer;
 import stroom.index.server.IndexShardManager;
+import stroom.index.server.IndexShardWriterCache;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardService;
@@ -97,6 +97,8 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
     @Resource
     private IndexShardManager indexShardManager;
     @Resource
+    private IndexShardWriterCache indexShardWriterCache;
+    @Resource
     private DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper;
     @Resource
     private NodeConfig nodeConfig;
@@ -148,7 +150,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
         streamTaskCreator.shutdown();
 
         // Make sure we don't delete database entries without clearing the pool.
-        indexShardManager.shutdown();
+        indexShardWriterCache.shutdown();
         indexShardManager.deleteFromDisk();
 
         deleteEntity(IndexShard.class);

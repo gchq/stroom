@@ -96,7 +96,7 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
         sql.append("DELETE FROM ");
         sql.append(Query.TABLE_NAME);
         sql.append(" WHERE ");
-        sql.append(Dashboard.FOREIGN_KEY);
+        sql.append(Query.DASHBOARD_ID);
         sql.append(" = ");
         sql.arg(entity.getId());
         getEntityManager().executeNativeUpdate(sql);

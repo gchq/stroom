@@ -356,7 +356,10 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
             dispatcher.exec(action)
                     .onSuccess(this::readResult)
-                    .onFailure(caught -> busyTranslating = false);
+                    .onFailure(caught -> {
+                        AlertEvent.fireErrorFromException(SteppingPresenter.this, caught, null);
+                        busyTranslating = false;
+                    });
         }
     }
 

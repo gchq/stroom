@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
+import org.springframework.stereotype.Component;
 import stroom.util.logging.LoggerUtil;
 import stroom.util.shared.Monitor;
 import stroom.util.shared.TerminateHandler;
@@ -36,6 +37,8 @@ public class MonitorImpl implements Monitor {
     private transient volatile List<TerminateHandler> terminateHandlers;
 
     private final ReentrantLock terminateHandlersLock = new ReentrantLock();
+
+    private volatile String name;
 
     @SuppressWarnings(value = "VO_VOLATILE_REFERENCE_TO_ARRAY", justification = "Private array that we don't change")
     private volatile Object[] info;
@@ -99,6 +102,16 @@ public class MonitorImpl implements Monitor {
         } finally {
             terminateHandlersLock.unlock();
         }
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public void setName(final String name) {
+        this.name = name;
     }
 
     @Override

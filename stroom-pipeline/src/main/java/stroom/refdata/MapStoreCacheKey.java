@@ -27,16 +27,19 @@ import stroom.util.shared.HashCodeBuilder;
 public class MapStoreCacheKey {
     private final DocRef pipeline;
     private final long streamId;
+    private final String user;
 
     private final int hashCode;
 
-    public MapStoreCacheKey(final DocRef pipeline, final long streamId) {
+    public MapStoreCacheKey(final DocRef pipeline, final long streamId, final String user) {
         this.pipeline = pipeline;
         this.streamId = streamId;
+        this.user = user;
 
         final HashCodeBuilder builder = new HashCodeBuilder();
         builder.append(pipeline);
         builder.append(streamId);
+        builder.append(user);
         hashCode = builder.toHashCode();
     }
 
@@ -62,10 +65,11 @@ public class MapStoreCacheKey {
             return false;
         }
 
-        final MapStoreCacheKey mapStorePoolKey = (MapStoreCacheKey) o;
+        final MapStoreCacheKey mapStoreCacheKey = (MapStoreCacheKey) o;
         final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(pipeline, mapStorePoolKey.pipeline);
-        builder.append(streamId, mapStorePoolKey.streamId);
+        builder.append(pipeline, mapStoreCacheKey.pipeline);
+        builder.append(streamId, mapStoreCacheKey.streamId);
+        builder.append(user, mapStoreCacheKey.user);
         return builder.isEquals();
     }
 

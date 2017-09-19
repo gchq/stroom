@@ -91,12 +91,11 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
         ExternalShutdownController.addTerminateHandler(TaskManagerImpl.class, () -> shutdown());
     }
 
-    @Override
-    public Executor getExecutor() {
+    private Executor getExecutor() {
         return getExecutor(DEFAULT_THREAD_POOL);
     }
 
-    private ThreadPoolExecutor getExecutor(final ThreadPool threadPool) {
+    private Executor getExecutor(final ThreadPool threadPool) {
         ThreadPoolExecutor executor = threadPoolMap.get(threadPool);
         if (executor == null) {
             poolCreationLock.lock();
@@ -332,7 +331,7 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
 
             // Now we have a task scoped runnable we will execute it in a new
             // thread.
-            final ThreadPoolExecutor executor = getExecutor(threadPool);
+            final Executor executor = getExecutor(threadPool);
             if (executor != null) {
                 currentAsyncTaskCount.incrementAndGet();
                 currentTasks.put(task.getId(), taskThread);
@@ -393,12 +392,18 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
                     taskMonitor.setMonitor(hasMonitor.getMonitor());
                 }
 
-                // Get the task handler that will deal with this task.
-                final TaskHandler<Task<R>, R> taskHandler = taskHandlerBeanRegistry.findHandler(task);
+                CurrentTaskState.pushState(task, taskMonitor);
+                try {
+                    // Get the task handler that will deal with this task.
+                    final TaskHandler<Task<R>, R> taskHandler = taskHandlerBeanRegistry.findHandler(task);
 
-                LOGGER.debug("doExec() - exec >> '%s' %s", task.getClass().getName(), task);
-                taskHandler.exec(task, callback);
-                LOGGER.debug("doExec() - exec << '%s' %s", task.getClass().getName(), task);
+                    LOGGER.debug("doExec() - exec >> '%s' %s", task.getClass().getName(), task);
+                    taskHandler.exec(task, callback);
+                    LOGGER.debug("doExec() - exec << '%s' %s", task.getClass().getName(), task);
+
+                } finally {
+                    CurrentTaskState.popState();
+                }
 
             } finally {
                 securityContext.popUser();
@@ -493,11 +498,7 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
     private TaskProgress buildTaskProgress(final long timeNowMs, final TaskThread<?> taskThread, final Task<?> task) {
         final TaskProgress taskProgress = new TaskProgress();
         taskProgress.setId(task.getId());
-        if (task.isTerminated()) {
-            taskProgress.setTaskName("<<terminated>> " + task.getTaskName());
-        } else {
-            taskProgress.setTaskName(task.getTaskName());
-        }
+        taskProgress.setTaskName(taskThread.getName());
         taskProgress.setSessionId(UserTokenUtil.getSessionId(task.getUserToken()));
         taskProgress.setUserName(UserTokenUtil.getUserId(task.getUserToken()));
         taskProgress.setThreadName(taskThread.getThreadName());

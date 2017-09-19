@@ -16,11 +16,14 @@
 
 package stroom.refdata;
 
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import stroom.entity.shared.DocRef;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.StreamHolder;
+import stroom.security.SecurityContext;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.Stream;
@@ -29,8 +32,6 @@ import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 import stroom.xml.event.EventList;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -60,22 +61,21 @@ public class ReferenceData {
     private StreamHolder streamHolder;
     @Resource
     private ContextDataLoader contextDataLoader;
+    @Resource
+    private SecurityContext securityContext;
 
     /**
      * <p>
      * Given a date and a map name get some reference data value.
      * </p>
      *
-     * @param time
-     *            The event time (or the time the reference data is valid for)
-     * @param mapName
-     *            The map name
-     * @param key
-     *            The key of the reference data
+     * @param time    The event time (or the time the reference data is valid for)
+     * @param mapName The map name
+     * @param key     The key of the reference data
      * @return the value of ref data
      */
     public EventList getValue(final List<PipelineReference> pipelineReferences, final ErrorReceiver errorReceiver,
-            final long time, final String mapName, final String key) {
+                              final long time, final String mapName, final String key) {
         // Do we have a nested token?
         final int splitPos = mapName.indexOf(NEST_SEPERATOR);
         if (splitPos != -1) {
@@ -97,7 +97,7 @@ public class ReferenceData {
     }
 
     private EventList doGetValue(final List<PipelineReference> pipelineReferences, final ErrorReceiver errorReceiver,
-            final long time, final String mapName, final String keyName) {
+                                 final long time, final String mapName, final String keyName) {
         for (final PipelineReference pipelineReference : pipelineReferences) {
             EventList eventList = null;
 
@@ -123,7 +123,7 @@ public class ReferenceData {
      * stream context and is therefore not effective time sensitive.
      */
     private EventList getNestedStreamEventList(final PipelineReference pipelineReference,
-            final ErrorReceiver errorReceiver, final String mapName, final String keyName) {
+                                               final ErrorReceiver errorReceiver, final String mapName, final String keyName) {
         EventList events = null;
 
         try {
@@ -189,7 +189,7 @@ public class ReferenceData {
      * to effective time.
      */
     private EventList getExternalEventList(final PipelineReference pipelineReference, final ErrorReceiver errorReceiver,
-            final long time, final String mapName, final String keyName) {
+                                           final long time, final String mapName, final String keyName) {
         // First round down the time to the nearest 10 days approx (actually
         // more like 11.5, one billion milliseconds).
         final long baseTime = effectiveStreamCache.getBaseTime(time);
@@ -202,7 +202,7 @@ public class ReferenceData {
 
         // Create a key to find a set of effective times in the pool.
         final EffectiveStreamKey effectiveStreamKey = new EffectiveStreamKey(pipelineReference.getFeed(),
-                pipelineReference.getStreamType(), baseTime);
+                pipelineReference.getStreamType(), baseTime, getUser());
         // Try and fetch a tree set of effective streams for this key.
         final TreeSet<EffectiveStream> streamSet = effectiveStreamCache.getOrCreate(effectiveStreamKey);
 
@@ -214,7 +214,7 @@ public class ReferenceData {
             if (effectiveStream != null) {
                 // Now try and get reference data for the feed at this time.
                 final MapStoreCacheKey mapStorePoolKey = new MapStoreCacheKey(pipelineReference.getPipeline(),
-                        effectiveStream.getStreamId());
+                        effectiveStream.getStreamId(), getUser());
                 // Get the map store associated with this effective feed.
                 final MapStore mapStore = getMapStore(mapStorePoolKey);
                 if (mapStore != null) {
@@ -259,6 +259,13 @@ public class ReferenceData {
 
     void setMapStorePool(final MapStoreCache mapStorePool) {
         this.mapStoreCache = mapStorePool;
+    }
+
+    private String getUser() {
+        if (securityContext == null) {
+            return null;
+        }
+        return securityContext.getUserId();
     }
 
     private static class CachedMapStore {

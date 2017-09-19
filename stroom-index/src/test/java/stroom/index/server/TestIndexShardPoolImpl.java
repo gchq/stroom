@@ -25,7 +25,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
-import stroom.cache.CacheManagerAutoCloseable;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
@@ -138,7 +137,7 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
         // }
         // });
 
-        try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
+//        try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
 //            final IndexShardManagerImpl indexShardManager = new IndexShardManagerImpl(mockIndexShardService, cacheManager, null, null,
 //                    mockIndexShardService, nodeCache, null) {
 //                @Override
@@ -160,9 +159,8 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
 //                }
 //            };
 
-            final IndexShardKeyCache indexShardKeyCache = new MockIndexShardKeyCache(mockIndexShardService);
-            final IndexShardWriterCache indexShardWriterCache = new MockIndexShardWriterCache(maxDocumentsPerIndexShard);
-            final Indexer indexer = new IndexerImpl(indexShardKeyCache, indexShardWriterCache, null);
+        final IndexShardWriterCache indexShardWriterCache = new MockIndexShardWriterCache(mockIndexShardService, maxDocumentsPerIndexShard);
+        final Indexer indexer = new IndexerImpl(indexShardWriterCache, null);
 
             indexShardsCreated.set(0);
             failedThreads.set(0);
@@ -188,9 +186,9 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
 //            indexShardManager.shutdown();
 
             Assert.assertEquals("Not expecting any errored threads", 0, failedThreads.get());
-        } catch (final Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+//        } catch (final Exception e) {
+//            throw new RuntimeException(e.getMessage(), e);
+//        }
     }
 
     class IndexThread extends Thread {

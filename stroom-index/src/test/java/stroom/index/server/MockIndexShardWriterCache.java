@@ -18,7 +18,8 @@ package stroom.index.server;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-import stroom.cache.AbstractCacheBean.Destroyable;
+import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShardKey;
 import stroom.util.spring.StroomSpringProfiles;
 
 import java.util.Map;
@@ -28,43 +29,62 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component("indexShardWriterCache")
 public class MockIndexShardWriterCache implements IndexShardWriterCache {
     private final int maxDocumentCount;
-    private final Map<Long, IndexShardWriter> writers = new ConcurrentHashMap<>();
+
+    private final MockIndexShardService indexShardService;
+    private final Map<Long, IndexShardWriter> openWritersByShardId = new ConcurrentHashMap<>();
+    private final Map<IndexShardKey, IndexShardWriter> openWritersByShardKey = new ConcurrentHashMap<>();
 
     MockIndexShardWriterCache() {
-        this(Integer.MAX_VALUE);
+        this(new MockIndexShardService(), Integer.MAX_VALUE);
     }
 
-    MockIndexShardWriterCache(final int maxDocumentCount) {
+    MockIndexShardWriterCache(final MockIndexShardService indexShardService, final int maxDocumentCount) {
+        this.indexShardService = indexShardService;
         this.maxDocumentCount = maxDocumentCount;
     }
 
     @Override
-    public IndexShardWriter getOrCreate(final Long key) {
-        return writers.computeIfAbsent(key, k -> new MockIndexShardWriter(maxDocumentCount));
+    public IndexShardWriter getWriterByShardId(final Long indexShardId) {
+        return openWritersByShardId.get(indexShardId);
     }
 
     @Override
-    public IndexShardWriter getQuiet(final Long key) {
-        return writers.get(key);
-    }
-
-    @Override
-    public void remove(final Long key) {
-        writers.remove(key);
-    }
-
-    @Override
-    public void clear() {
-        writers.values().forEach(Destroyable::destroy);
-        writers.clear();
+    public IndexShardWriter getWriterByShardKey(final IndexShardKey indexShardKey) {
+        return openWritersByShardKey.computeIfAbsent(indexShardKey, k -> {
+            final IndexShard indexShard = indexShardService.createIndexShard(k, null);
+            final IndexShardWriter indexShardWriter = new MockIndexShardWriter(indexShardKey, indexShard, maxDocumentCount);
+            openWritersByShardId.put(indexShard.getId(), indexShardWriter);
+            return indexShardWriter;
+        });
     }
 
     @Override
     public void flushAll() {
-        writers.values().forEach(IndexShardWriter::flush);
+        openWritersByShardId.values().parallelStream().forEach(IndexShardWriter::flush);
     }
 
-    Map<Long, IndexShardWriter> getWriters() {
-        return writers;
+    @Override
+    public void sweep() {
+    }
+
+    @Override
+    public void close(final IndexShardWriter indexShardWriter) {
+        indexShardWriter.close();
+        openWritersByShardId.remove(indexShardWriter.getIndexShardId());
+        openWritersByShardKey.remove(indexShardWriter.getIndexShardKey());
+    }
+
+//    @Override
+//    public void clear() {
+//        openWritersByShardId.values().parallelStream().forEach(this::close);
+//    }
+
+    @Override
+    public void shutdown() {
+        openWritersByShardId.values().parallelStream().forEach(this::close);
+    }
+
+    public Map<IndexShardKey, IndexShardWriter> getWriters() {
+        return openWritersByShardKey;
     }
 }

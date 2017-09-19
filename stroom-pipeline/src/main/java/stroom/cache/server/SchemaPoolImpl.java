@@ -16,18 +16,17 @@
 
 package stroom.cache.server;
 
-import javax.annotation.Resource;
-import javax.inject.Inject;
-
+import net.sf.ehcache.CacheManager;
 import org.springframework.stereotype.Component;
-
-import stroom.security.Insecure;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventHandler;
 import stroom.pool.AbstractPoolCacheBean;
+import stroom.security.Insecure;
 import stroom.xmlschema.server.XMLSchemaCache;
 import stroom.xmlschema.shared.XMLSchema;
-import net.sf.ehcache.CacheManager;
+
+import javax.annotation.Resource;
+import javax.inject.Inject;
 
 @Insecure
 @Component
@@ -44,7 +43,7 @@ public class SchemaPoolImpl extends AbstractPoolCacheBean<SchemaKey, StoredSchem
 
     @Override
     protected StoredSchema createValue(final SchemaKey key) {
-        return schemaLoader.load(key.getSchemaLanguage(), key.getData());
+        return schemaLoader.load(key.getSchemaLanguage(), key.getData(), key.getFindXMLSchemaCriteria());
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.util.shared;
+package stroom.task.server;
 
-import java.io.Serializable;
+import stroom.util.shared.ThreadPool;
 
-public interface Monitor extends HasTerminateHandlers, HasTerminate, HasInfo, Serializable {
-    String getName();
+import java.util.concurrent.Executor;
 
-    void setName(String name);
+public interface ExecutorProvider {
+    Executor getExecutor();
 
-    Monitor getParent();
+    Executor getExecutor(ThreadPool threadPool);
 }

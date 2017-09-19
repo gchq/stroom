@@ -17,11 +17,14 @@
 package stroom.index.server;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.SearcherManager;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShardKey;
 import stroom.node.shared.Volume;
 import stroom.query.shared.IndexField;
 import stroom.query.shared.IndexFields;
@@ -39,9 +42,9 @@ import java.util.HashSet;
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestIndexShardIO extends StroomUnitTest {
 
-//    private static final IndexShardService INDEX_SHARD_SERVICE = new MockIndexShardService();
+    //    private static final IndexShardService INDEX_SHARD_SERVICE = new MockIndexShardService();
     private static final IndexFields INDEX_FIELDS = IndexFields.createStreamIndexFields();
-//    private static final IndexShardWriterCache INDEX_SHARD_WRITER_CACHE = new MockIndexShardWriterCache();
+    //    private static final IndexShardWriterCache INDEX_SHARD_WRITER_CACHE = new MockIndexShardWriterCache();
 //    private static final IndexShardManager INDEX_SHARD_MANAGER = new MockIndexShardManager();
     private static final IndexConfig INDEX_CONFIG;
 
@@ -78,17 +81,19 @@ public class TestIndexShardIO extends StroomUnitTest {
         idx1.setVolume(volume);
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
+        final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
+
         // Clean up from previous tests.
         final File dir = IndexShardUtil.getIndexDir(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
         for (int i = 1; i <= 10; i++) {
-            final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, idx1);
+            final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, indexShardKey, idx1);
             writer.flush();
             writer.addDocument(buildDocument(i));
             writer.flush();
             Assert.assertEquals(i, writer.getDocumentCount());
-            writer.destroy();
+            writer.close();
         }
     }
 
@@ -106,19 +111,27 @@ public class TestIndexShardIO extends StroomUnitTest {
         idx1.setVolume(volume);
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
+        final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
+
         // Clean up from previous tests.
         final File dir = IndexShardUtil.getIndexDir(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
         for (int i = 1; i <= 10; i++) {
-            final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, idx1);
+            final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, indexShardKey, idx1);
             writer.addDocument(buildDocument(i));
-            writer.destroy();
+            writer.close();
             Assert.assertEquals(i, writer.getDocumentCount());
 
-            final IndexShardSearcher searcher = new IndexShardSearcherImpl(idx1);
-            Assert.assertEquals(i, searcher.getReader().maxDoc());
-            searcher.destroy();
+            final IndexShardSearcher indexShardSearcher = new IndexShardSearcherImpl(idx1);
+            final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
+            final IndexSearcher searcher = searcherManager.acquire();
+            try {
+                Assert.assertEquals(i, searcher.getIndexReader().maxDoc());
+            } finally {
+                searcherManager.release(searcher);
+            }
+            indexShardSearcher.destroy();
         }
     }
 
@@ -136,11 +149,13 @@ public class TestIndexShardIO extends StroomUnitTest {
         idx1.setVolume(volume);
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
+        final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
+
         // Clean up from previous tests.
         final File dir = IndexShardUtil.getIndexDir(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
-        final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, idx1);
+        final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, indexShardKey, idx1);
 
         for (int i = 1; i <= 10; i++) {
             writer.addDocument(buildDocument(i));
@@ -148,7 +163,7 @@ public class TestIndexShardIO extends StroomUnitTest {
             Assert.assertEquals(i, writer.getDocumentCount());
         }
 
-        writer.destroy();
+        writer.close();
     }
 
     @Test
@@ -165,11 +180,13 @@ public class TestIndexShardIO extends StroomUnitTest {
         idx1.setVolume(volume);
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
+        final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
+
         // Clean up from previous tests.
         final File dir = IndexShardUtil.getIndexDir(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
-        final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, idx1);
+        final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, indexShardKey, idx1);
 
         for (int i = 1; i <= 10; i++) {
             writer.addDocument(buildDocument(i));
@@ -177,7 +194,7 @@ public class TestIndexShardIO extends StroomUnitTest {
             Assert.assertEquals("No docs flushed ", i, writer.getDocumentCount());
         }
 
-        writer.destroy();
+        writer.close();
     }
 
     @Test
@@ -196,11 +213,13 @@ public class TestIndexShardIO extends StroomUnitTest {
         idx1.setVolume(volume);
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
+        final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
+
         // Clean up from previous tests.
         final File dir = IndexShardUtil.getIndexDir(idx1);
         FileSystemUtil.deleteDirectory(dir);
 
-        final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, idx1);
+        final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, indexShardKey, idx1);
 
         Long lastSize = null;
 
@@ -227,7 +246,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         // Assert.assertEquals("Some flush happened before we expected it "
         // + flushSet, 0, flushSet.size());
 
-        writer.destroy();
+        writer.close();
         Assert.assertTrue("Expected not to flush", flushSet.isEmpty());
         // Assert.assertEquals("Expected to flush every 2048 docs...","[2048,
         // 6144, 4096, 8192]",

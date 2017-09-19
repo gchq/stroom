@@ -16,20 +16,23 @@
 
 package stroom.cache.server;
 
-import java.io.Serializable;
-
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
+import stroom.xmlschema.shared.FindXMLSchemaCriteria;
+
+import java.io.Serializable;
 
 public class SchemaKey implements Serializable {
     private static final long serialVersionUID = 8418383654436897040L;
 
     private final String schemaLanguage;
     private final String data;
+    private final FindXMLSchemaCriteria findXMLSchemaCriteria;
 
-    public SchemaKey(final String schemaLanguage, final String data) {
+    public SchemaKey(final String schemaLanguage, final String data, final FindXMLSchemaCriteria findXMLSchemaCriteria) {
         this.schemaLanguage = schemaLanguage;
         this.data = data;
+        this.findXMLSchemaCriteria = findXMLSchemaCriteria;
     }
 
     public String getSchemaLanguage() {
@@ -40,11 +43,16 @@ public class SchemaKey implements Serializable {
         return data;
     }
 
+    public FindXMLSchemaCriteria getFindXMLSchemaCriteria() {
+        return findXMLSchemaCriteria;
+    }
+
     @Override
     public int hashCode() {
         final HashCodeBuilder builder = new HashCodeBuilder();
         builder.append(schemaLanguage);
         builder.append(data);
+        builder.append(findXMLSchemaCriteria);
         return builder.toHashCode();
     }
 
@@ -60,6 +68,7 @@ public class SchemaKey implements Serializable {
         final EqualsBuilder builder = new EqualsBuilder();
         builder.append(schemaLanguage, schemaKey.schemaLanguage);
         builder.append(data, schemaKey.data);
+        builder.append(findXMLSchemaCriteria, schemaKey.findXMLSchemaCriteria);
 
         return builder.isEquals();
     }
