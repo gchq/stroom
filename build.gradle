@@ -52,7 +52,7 @@ ext.versions = [
     stroom: getPropertyOrDefault('version', 'SNAPSHOT'),
 
     //------Stroom-repos---------------
-    stroomProxyRepo: 'v5.1-beta.8',
+//    stroomProxyRepo: 'v5.1-beta.8',
     eventLogging: 'v3.1.0',
     hadoopCommonShaded: 'v2.6.4-3',
     hadoopHdfsShaded: 'v2.6.4',
@@ -86,7 +86,7 @@ ext.urlLibs = [
     stroomQueryCommonSources: "stroom-query-common-$versions.stroomQuery-sources",
     stroomExpression: "stroom-expression-$versions.stroomExpression",
     stroomStatsSchema: "stroom-stats-schema-$versions.stroomStats",
-    stroomProxyRepo: "stroom-proxy-repo-$versions.stroomProxyRepo",
+//    stroomProxyRepo: "stroom-proxy-repo-$versions.stroomProxyRepo",
     eventLogging: "event-logging-$versions.eventLogging",
     hadoopCommonShaded: "hadoop-common-shaded-$versions.hadoopCommonShaded-all",
     hadoopHdfsShaded: "hadoop-hdfs-shaded-$versions.hadoopHdfsShaded-all",
@@ -426,8 +426,8 @@ urlDependencies {
     compile(urlLibs.stroomStatsSchema,
             "https://github.com/gchq/stroom-stats/releases/download/$versions.stroomStats/${urlLibs.stroomStatsSchema}.jar")
 
-    compile(urlLibs.stroomProxyRepo,
-            "https://github.com/gchq/stroom-proxy/releases/download/$versions.stroomProxyRepo/${urlLibs.stroomProxyRepo}.jar")
+//    compile(urlLibs.stroomProxyRepo,
+//            "https://github.com/gchq/stroom-proxy/releases/download/$versions.stroomProxyRepo/${urlLibs.stroomProxyRepo}.jar")
 
     compile(urlLibs.eventLogging,
             "https://github.com/gchq/event-logging/releases/download/$versions.eventLogging/${urlLibs.eventLogging}.jar")

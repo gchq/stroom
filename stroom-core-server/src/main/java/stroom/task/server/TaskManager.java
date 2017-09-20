@@ -25,19 +25,10 @@ import stroom.util.shared.Task;
 import stroom.util.shared.TaskId;
 import stroom.util.shared.ThreadPool;
 
-import java.util.concurrent.Executor;
-
 public interface TaskManager extends FindService<TaskProgress, FindTaskProgressCriteria> {
     void startup();
 
     void shutdown();
-
-    /**
-     * Get an executor for use in places where we don't want to use tasks and task handlers.
-     *
-     * @return An executor.
-     */
-    Executor getExecutor();
 
     /**
      * Execute a task synchronously.

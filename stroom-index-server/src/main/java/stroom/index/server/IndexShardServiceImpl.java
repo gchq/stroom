@@ -169,6 +169,7 @@ public class IndexShardServiceImpl
             super.appendBasicCriteria(sql, alias, criteria);
 
             sql.appendEntityIdSetQuery(alias + ".index", criteria.getIndexIdSet());
+            sql.appendEntityIdSetQuery(alias, criteria.getIndexShardSet());
             sql.appendEntityIdSetQuery(alias + ".node", criteria.getNodeIdSet());
             sql.appendEntityIdSetQuery(alias + ".volume", criteria.getVolumeIdSet());
             sql.appendPrimitiveValueSetQuery(alias + ".pstatus", criteria.getIndexShardStatusSet());

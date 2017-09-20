@@ -19,7 +19,6 @@ package stroom.index.server;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.store.AlreadyClosedException;
 import org.springframework.stereotype.Component;
-import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.util.logging.LambdaLogger;
@@ -36,17 +35,14 @@ public class IndexerImpl implements Indexer {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexerImpl.class);
     private static final int MAX_ATTEMPTS = 10000;
 
-    private final IndexShardKeyCache indexShardKeyCache;
     private final IndexShardWriterCache indexShardWriterCache;
     private final IndexShardManager indexShardManager;
 
     private final StripedLock keyLocks = new StripedLock();
 
     @Inject
-    IndexerImpl(final IndexShardKeyCache indexShardKeyCache,
-                final IndexShardWriterCache indexShardWriterCache,
+    IndexerImpl(final IndexShardWriterCache indexShardWriterCache,
                 final IndexShardManager indexShardManager) {
-        this.indexShardKeyCache = indexShardKeyCache;
         this.indexShardWriterCache = indexShardWriterCache;
         this.indexShardManager = indexShardManager;
     }
@@ -57,8 +53,7 @@ public class IndexerImpl implements Indexer {
             // Try and add the document silently without locking.
             boolean success = false;
             try {
-                final IndexShard indexShard = indexShardKeyCache.getOrCreate(indexShardKey);
-                final IndexShardWriter indexShardWriter = indexShardWriterCache.getOrCreate(indexShard.getId());
+                final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardKey(indexShardKey);
                 indexShardWriter.addDocument(document);
                 success = true;
             } catch (final Throwable t) {
@@ -72,22 +67,14 @@ public class IndexerImpl implements Indexer {
                 lock.lock();
                 try {
                     // Ask the cache for the current one (it might have been changed by another thread) and try again.
-                    final IndexShard indexShard = indexShardKeyCache.getOrCreate(indexShardKey);
-                    final IndexShardWriter indexShardWriter = indexShardWriterCache.getOrCreate(indexShard.getId());
-                    success = addDocument(indexShard, indexShardWriter, document);
+                    final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardKey(indexShardKey);
+                    success = addDocument(indexShardWriter, document);
 
                     if (!success) {
-                        LOGGER.info(() -> "Removing key{" + indexShardKey + "} shard{" + indexShard + "} writer{" + indexShardWriter + "}");
+                        LOGGER.info(() -> "Closing key{" + indexShardKey + "} writer{" + indexShardWriter + "}");
 
-                        // Ensure the writer is destroyed as we cannot guarantee that cache removal will perform
-                        // immediate destruction.
-                        indexShardWriter.destroy();
-
-                        // Remove the writer from the cache.
-                        indexShardWriterCache.remove(indexShard.getId());
-
-                        // Failed to add it so remove this shard key from the cache and try to get another one.
-                        indexShardKeyCache.remove(indexShardKey);
+                        // Close the writer.
+                        indexShardWriterCache.close(indexShardWriter);
                     }
 
                 } catch (final Throwable t) {
@@ -105,8 +92,7 @@ public class IndexerImpl implements Indexer {
             // One final try that will throw an index exception if needed.
             if (!success) {
                 try {
-                    final IndexShard indexShard = indexShardKeyCache.getOrCreate(indexShardKey);
-                    final IndexShardWriter indexShardWriter = indexShardWriterCache.getOrCreate(indexShard.getId());
+                    final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardKey(indexShardKey);
                     indexShardWriter.addDocument(document);
                 } catch (final IndexException e) {
                     throw e;
@@ -117,7 +103,7 @@ public class IndexerImpl implements Indexer {
         }
     }
 
-    private boolean addDocument(final IndexShard indexShard, final IndexShardWriter indexShardWriter, final Document document) {
+    private boolean addDocument(final IndexShardWriter indexShardWriter, final Document document) {
         boolean success = false;
         try {
             indexShardWriter.addDocument(document);
@@ -134,7 +120,7 @@ public class IndexerImpl implements Indexer {
             // Mark the shard as corrupt as this should be the
             // only reason we can't add a document.
             if (indexShardManager != null) {
-                indexShardManager.setStatus(indexShard.getId(), IndexShardStatus.CORRUPT);
+                indexShardManager.setStatus(indexShardWriter.getIndexShardId(), IndexShardStatus.CORRUPT);
             }
         }
 

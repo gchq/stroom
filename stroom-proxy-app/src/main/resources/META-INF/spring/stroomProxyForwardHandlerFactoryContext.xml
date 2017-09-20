@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:aop="http://www.springframework.org/schema/aop" xmlns:context="http://www.springframework.org/schema/context"
+  xmlns:util="http://www.springframework.org/schema/util" xmlns:ehcache="http://ehcache-spring-annotations.googlecode.com/svn/schema/ehcache-spring"
+  xsi:schemaLocation="
+    http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
+    http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+    http://ehcache-spring-annotations.googlecode.com/svn/schema/ehcache-spring http://ehcache-spring-annotations.googlecode.com/svn/schema/ehcache-spring/ehcache-spring-1.1.xsd
+    http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd">
+
+  <bean name="forwardRequestHandler" class="stroom.proxy.handler.ForwardRequestHandler" scope="prototype">
+    <property name="forwardTimeoutMs" value="${forwardTimeoutMs}" />
+    <property name="forwardChunkSize" value="${forwardChunkSize}" />
+    <property name="forwardDelayMs" value="${forwardDelayMs}" />
+  </bean>
+
+  <bean name="forwardRequestHandlerUrlFactory" class="stroom.proxy.handler.ForwardRequestHandlerUrlFactory"
+    scope="thread">
+    <property name="forwardUrl" value="${forwardUrl}" />
+  </bean>
+
+  <bean name="forwardRequestHandlerNameListFactory" class="stroom.proxy.handler.ForwardRequestHandlerNameListFactory">
+    <property name="forwardUrl" value="${forwardUrl}" />
+  </bean>
+
+  <bean name="forwardRequestHandlerNameList" factory-bean="forwardRequestHandlerNameListFactory" factory-method="create" />
+
+  <bean class="stroom.util.spring.ListMerge">
+    <property name="target" ref="incomingRequestHandlerNameList" />
+    <property name="source" ref="forwardRequestHandlerNameList" />
+  </bean>
+
+
+
+</beans>

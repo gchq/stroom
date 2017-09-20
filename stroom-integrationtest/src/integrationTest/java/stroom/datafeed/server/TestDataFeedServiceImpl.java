@@ -34,7 +34,7 @@ import stroom.test.StroomIntegrationTest;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.spring.StroomSpringProfiles;
-import stroom.util.zip.StroomHeaderArguments;
+import stroom.feed.StroomHeaderArguments;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;

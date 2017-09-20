@@ -23,6 +23,6 @@
   </bean>
   <bean name="remoteStatusServiceRPC" class="org.springframework.remoting.caucho.HessianServiceExporter">
     <property name="service" ref="remoteStatusService" />
-    <property name="serviceInterface" value="stroom.status.remote.RemoteStatusService" />
+    <property name="serviceInterface" value="stroom.node.server.RemoteStatusService" />
   </bean>
 </beans>

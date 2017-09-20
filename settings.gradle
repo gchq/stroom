@@ -16,6 +16,9 @@ rootProject.name = 'stroom'
  * limitations under the License.
  */
 
+// Proxy projects.
+include 'stroom-proxy-app'
+
 // Shared projects.
 include 'stroom-util-shared'
 include 'stroom-entity-shared'
@@ -49,7 +52,6 @@ include 'stroom-test-common'
 
 // Server projects
 include 'stroom-config'
-include 'stroom-remote'
 
 include 'stroom-util'
 include 'stroom-core-server'

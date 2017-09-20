@@ -25,14 +25,12 @@ import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.statistics.server.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.server.sql.rollup.RolledUpStatisticEvent;
 import stroom.statistics.shared.StatisticType;
+import stroom.task.server.TaskMonitorImpl;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.util.config.StroomProperties;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.Monitor;
-import stroom.util.shared.TerminateHandler;
-import stroom.util.task.TaskMonitor;
 
 import javax.annotation.Resource;
 import javax.sql.DataSource;
@@ -50,6 +48,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
     private static final long STAT_VALUE = 10L;
     private static final String COL_NAME_VAL = "VAL";
     private static final String COL_NAME_CNT = "CT";
+
     @Resource
     private CommonTestControl commonTestControl;
     @Resource
@@ -651,7 +650,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
         }
 
         final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                sqlStatisticValueBatchSaveService, new MockTaskMonitor());
+                sqlStatisticValueBatchSaveService, new TaskMonitorImpl());
 
         final SQLStatisticFlushTask flushTask = new SQLStatisticFlushTask(sqlStatisticAggregateMap);
 
@@ -750,35 +749,35 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
         }
     }
 
-    private static class MockTaskMonitor implements TaskMonitor {
-        private static final long serialVersionUID = -8415095958756818805L;
-
-        @Override
-        public Monitor getParent() {
-            return null;
-        }
-
-        @Override
-        public void addTerminateHandler(final TerminateHandler handler) {
-        }
-
-        @Override
-        public void terminate() {
-        }
-
-        @Override
-        public boolean isTerminated() {
-            return false;
-        }
-
-        @Override
-        public String getInfo() {
-            return null;
-        }
-
-        @Override
-        public void info(final Object... args) {
-            // do nothing
-        }
-    }
+//    private static class MockTaskMonitor implements TaskMonitor {
+//        private static final long serialVersionUID = -8415095958756818805L;
+//
+//        @Override
+//        public Monitor getParent() {
+//            return null;
+//        }
+//
+//        @Override
+//        public void addTerminateHandler(final TerminateHandler handler) {
+//        }
+//
+//        @Override
+//        public void terminate() {
+//        }
+//
+//        @Override
+//        public boolean isTerminated() {
+//            return false;
+//        }
+//
+//        @Override
+//        public String getInfo() {
+//            return null;
+//        }
+//
+//        @Override
+//        public void info(final Object... args) {
+//            // do nothing
+//        }
+//    }
 }
