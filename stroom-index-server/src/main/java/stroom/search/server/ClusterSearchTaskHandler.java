@@ -75,6 +75,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 @TaskHandlerBean(task = ClusterSearchTask.class)
 @Scope(StroomScope.TASK)
@@ -212,11 +213,12 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                             }
 
                             // Create a parameter map.
-                            final Map<String, String> paramMap = Collections.emptyMap();
+                            final Map<String, String> paramMap;
                             if (query.getParams() != null) {
-                                for (final Param param : query.getParams()) {
-                                    paramMap.put(param.getKey(), param.getValue());
-                                }
+                                paramMap = query.getParams().stream()
+                                        .collect(Collectors.toMap(Param::getKey, Param::getValue));
+                            } else {
+                                paramMap = Collections.emptyMap();
                             }
                             final Coprocessor coprocessor = coprocessorFactory.create(
                                     coprocessorSettings, fieldIndexMap, paramMap, taskMonitor);
