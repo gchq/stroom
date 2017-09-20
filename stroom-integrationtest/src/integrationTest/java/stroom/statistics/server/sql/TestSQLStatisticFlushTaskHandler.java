@@ -24,10 +24,8 @@ import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.statistics.server.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.server.sql.rollup.RolledUpStatisticEvent;
+import stroom.task.server.TaskMonitorImpl;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.util.shared.Monitor;
-import stroom.util.shared.TerminateHandler;
-import stroom.util.task.TaskMonitor;
 
 import javax.annotation.Resource;
 import javax.sql.DataSource;
@@ -38,6 +36,7 @@ import java.sql.SQLException;
 
 public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestSQLStatisticFlushTaskHandler.class);
+
     @Resource
     private DataSource statisticsDataSource;
     @Resource
@@ -58,7 +57,7 @@ public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTes
             Assert.assertEquals(0, getRowCount());
 
             final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                    sqlStatisticValueBatchSaveService, new MockTaskMonitor());
+                    sqlStatisticValueBatchSaveService, new TaskMonitorImpl());
 
             final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 
@@ -89,7 +88,7 @@ public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTes
             Assert.assertEquals(0, getRowCount());
 
             final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                    sqlStatisticValueBatchSaveService, new MockTaskMonitor());
+                    sqlStatisticValueBatchSaveService, new TaskMonitorImpl());
 
             final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 
@@ -116,7 +115,7 @@ public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTes
             Assert.assertEquals(0, getRowCount());
 
             final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                    sqlStatisticValueBatchSaveService, new MockTaskMonitor());
+                    sqlStatisticValueBatchSaveService, new TaskMonitorImpl());
 
             final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 
@@ -139,7 +138,7 @@ public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTes
             Assert.assertEquals(0, getRowCount());
 
             final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                    sqlStatisticValueBatchSaveService, new MockTaskMonitor());
+                    sqlStatisticValueBatchSaveService, new TaskMonitorImpl());
 
             final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 
@@ -228,35 +227,35 @@ public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTes
         return statisticsDataSource.getConnection();
     }
 
-    private static class MockTaskMonitor implements TaskMonitor {
-        private static final long serialVersionUID = -8415095958756818805L;
-
-        @Override
-        public Monitor getParent() {
-            return null;
-        }
-
-        @Override
-        public void addTerminateHandler(final TerminateHandler handler) {
-        }
-
-        @Override
-        public void terminate() {
-        }
-
-        @Override
-        public boolean isTerminated() {
-            return false;
-        }
-
-        @Override
-        public String getInfo() {
-            return null;
-        }
-
-        @Override
-        public void info(final Object... args) {
-            // do nothing
-        }
-    }
+//    private static class MockTaskMonitor implements TaskMonitor {
+//        private static final long serialVersionUID = -8415095958756818805L;
+//
+//        @Override
+//        public Monitor getParent() {
+//            return null;
+//        }
+//
+//        @Override
+//        public void addTerminateHandler(final TerminateHandler handler) {
+//        }
+//
+//        @Override
+//        public void terminate() {
+//        }
+//
+//        @Override
+//        public boolean isTerminated() {
+//            return false;
+//        }
+//
+//        @Override
+//        public String getInfo() {
+//            return null;
+//        }
+//
+//        @Override
+//        public void info(final Object... args) {
+//            // do nothing
+//        }
+//    }
 }

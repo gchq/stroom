@@ -26,6 +26,7 @@ public class FindXMLSchemaCriteria extends FindDocumentEntityCriteria {
     private String namespaceURI;
     private String systemId;
     private String schemaGroup;
+    private String user;
 
     public FindXMLSchemaCriteria() {
         // Default constructor necessary for GWT serialisation.
@@ -59,6 +60,14 @@ public class FindXMLSchemaCriteria extends FindDocumentEntityCriteria {
         this.schemaGroup = schemaGroup;
     }
 
+    public String getUser() {
+        return user;
+    }
+
+    public void setUser(final String user) {
+        this.user = user;
+    }
+
     @Override
     public int hashCode() {
         final HashCodeBuilder builder = new HashCodeBuilder();
@@ -66,6 +75,7 @@ public class FindXMLSchemaCriteria extends FindDocumentEntityCriteria {
         builder.append(namespaceURI);
         builder.append(systemId);
         builder.append(schemaGroup);
+        builder.append(user);
         return builder.toHashCode();
     }
 
@@ -85,6 +95,7 @@ public class FindXMLSchemaCriteria extends FindDocumentEntityCriteria {
         builder.append(namespaceURI, criteria.namespaceURI);
         builder.append(systemId, criteria.systemId);
         builder.append(schemaGroup, criteria.schemaGroup);
+        builder.append(user, criteria.user);
 
         return builder.isEquals();
     }

@@ -295,10 +295,10 @@ public class IndexShard extends AuditedEntity {
         OPEN("Open", 1),
         //        // Final - used to mark that a shard is full or will no longer be used.
 //        FINAL("Final", 3),
-//        // Closing - We are in the process of closing the index shard.
-//        CLOSING("Closing", 10),
-//        // Opening - We are in the process of opening an index shard.
-//        OPENING("Opening", 20),
+// Closing - We are in the process of closing the index shard.
+        CLOSING("Closing", 10),
+        // Opening - We are in the process of opening an index shard.
+        OPENING("Opening", 20),
         // Deleted - Used to mark shard for deletion
         DELETED("Deleted", 99),
         // Corrupt - Used to mark shard has been corrupted

@@ -25,6 +25,7 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.query.api.v2.DocRef;
+import stroom.security.SecurityContext;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.Stream;
@@ -61,6 +62,8 @@ public class ReferenceData {
     private StreamHolder streamHolder;
     @Resource
     private ContextDataLoader contextDataLoader;
+    @Resource
+    private SecurityContext securityContext;
 
     /**
      * <p>
@@ -200,7 +203,7 @@ public class ReferenceData {
 
         // Create a key to find a set of effective times in the pool.
         final EffectiveStreamKey effectiveStreamKey = new EffectiveStreamKey(pipelineReference.getFeed(),
-                pipelineReference.getStreamType(), baseTime);
+                pipelineReference.getStreamType(), baseTime, getUser());
         // Try and fetch a tree set of effective streams for this key.
         final TreeSet<EffectiveStream> streamSet = effectiveStreamCache.getOrCreate(effectiveStreamKey);
 
@@ -212,7 +215,7 @@ public class ReferenceData {
             if (effectiveStream != null) {
                 // Now try and get reference data for the feed at this time.
                 final MapStoreCacheKey mapStorePoolKey = new MapStoreCacheKey(pipelineReference.getPipeline(),
-                        effectiveStream.getStreamId());
+                        effectiveStream.getStreamId(), getUser());
                 // Get the map store associated with this effective feed.
                 final MapStore mapStore = getMapStore(mapStorePoolKey);
                 if (mapStore != null) {
@@ -257,6 +260,13 @@ public class ReferenceData {
 
     void setMapStorePool(final MapStoreCache mapStorePool) {
         this.mapStoreCache = mapStorePool;
+    }
+
+    private String getUser() {
+        if (securityContext == null) {
+            return null;
+        }
+        return securityContext.getUserId();
     }
 
     private static class CachedMapStore {

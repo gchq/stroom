@@ -358,6 +358,44 @@
             <property name="editable" value="true"/>
         </bean>
 
+
+        <!-- INDEX WRITER CACHE PROPERTIES -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.index.writer.cache.timeToLive"/>
+            <property name="value" value=""/>
+            <property name="description"
+                      value="How long a cache item can live before it is removed from the cache during a sweep"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.index.writer.cache.timeToIdle"/>
+            <property name="value" value="10m"/>
+            <property name="description"
+                      value="How long a cache item can idle before it is removed from the cache during a sweep"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.index.writer.cache.minItems"/>
+            <property name="value" value="0"/>
+            <property name="description"
+                      value="The minimum number of items that will be left in the cache after a sweep"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.index.writer.cache.coreItems"/>
+            <property name="value" value="50"/>
+            <property name="description"
+                      value="The number of items that we hope to keep in the cache if items aren't removed due to TTL or TTI constraints"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.index.writer.cache.maxItems"/>
+            <property name="value" value="100"/>
+            <property name="description"
+                      value="The maximum number of items that can be kept in the cache. LRU items are removed to ensure we do not exceed this amount"/>
+            <property name="editable" value="true"/>
+        </bean>
+
         <!-- QUERY HISTORY PROPERTIES -->
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.query.history.itemsRetention"/>

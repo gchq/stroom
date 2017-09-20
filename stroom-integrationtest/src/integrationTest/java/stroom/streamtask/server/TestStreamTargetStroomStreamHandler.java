@@ -27,7 +27,7 @@ import stroom.streamstore.server.MockStreamStore;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractProcessIntegrationTest;
-import stroom.util.zip.StroomHeaderArguments;
+import stroom.feed.StroomHeaderArguments;
 
 import javax.annotation.Resource;
 import java.io.IOException;

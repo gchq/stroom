@@ -31,7 +31,7 @@ import stroom.util.spring.StroomBeanStore;
 import stroom.util.task.ServerTask;
 import stroom.util.task.TaskIdFactory;
 import stroom.util.thread.ThreadScopeRunnable;
-import stroom.util.zip.StroomHeaderArguments;
+import stroom.feed.StroomHeaderArguments;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;

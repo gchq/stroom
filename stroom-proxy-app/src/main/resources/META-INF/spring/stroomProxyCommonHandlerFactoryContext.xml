@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans
+        xmlns="http://www.springframework.org/schema/beans"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:context="http://www.springframework.org/schema/context"
+        xmlns:util="http://www.springframework.org/schema/util"
+        xmlns:ehcache="http://ehcache-spring-annotations.googlecode.com/svn/schema/ehcache-spring"
+        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
+
+    http://ehcache-spring-annotations.googlecode.com/svn/schema/ehcache-spring http://ehcache-spring-annotations.googlecode.com/svn/schema/ehcache-spring/ehcache-spring-1.1.xsd
+    http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd">
+    <context:annotation-config/>
+
+    <ehcache:annotation-driven/>
+
+    <ehcache:config cache-manager="cacheManager">
+        <ehcache:evict-expired-elements interval="60"/>
+    </ehcache:config>
+    <bean id="cacheManager" class="stroom.util.spring.ConfigurableEhCacheManagerFactoryBean">
+        <property name="configLocation" value="classpath:META-INF/ehcache/stroomProxyEhCache.xml"/>
+        <property name="propertyProvider" ref="proxyProperties"/>
+    </bean>
+
+    <!-- GENERIC SPRING STUFF -->
+    <bean id="proxyProperties" class="stroom.util.spring.PropertyConfigurer">
+        <property name="ignoreUnresolvablePlaceholders" value="true"/>
+        <property name="locations">
+            <value>classpath:proxy.properties</value>
+        </property>
+        <property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE"/>
+        <property name="properties">
+            <value>
+                forwardTimeoutMs=30000
+                forwardChunkSize=
+                forwardThreadCount=3
+                requestDelayMs=
+                forwardDelayMs=
+                repoDir=
+                dbRequestValidatorContext=
+                dbRequestValidatorJndiName=
+                dbRequestValidatorAuthQuery=
+                dbRequestValidatorFeedQuery=
+                remotingUrl=
+                remotingReadTimeoutMs=10000
+                remotingConnectTimeoutMs=10000
+                maxAggregation=1000
+                # 1G stream maybe a file around 100MB in size (with 90% compression)
+                maxStreamSize=1G
+                maxFileScan=50000
+                bufferSize=
+                readCron=
+                rollCron=
+                forwardUrl=
+                cacheTimeToIdleSeconds=60
+                cacheTimeToLiveSeconds=60
+                logRequest=guid,feed,system,environment,remotehost,remoteaddress
+                repositoryFormat
+            </value>
+        </property>
+        <property name="ignoreResourceNotFound" value="true"/>
+    </bean>
+
+    <bean class="stroom.util.spring.StroomBeanStore"/>
+    <bean class="stroom.util.spring.StroomBeanLifeCycle"/>
+
+    <bean class="stroom.util.spring.StroomBeanLifeCycleReloadableContextBeanProcessor">
+        <property name="name" value="proxyContext"/>
+    </bean>
+
+    <bean id="metaMap" class="stroom.feed.MetaMap" scope="thread" lazy-init="true"/>
+
+    <!--  Define some custom scopes -->
+    <bean class="org.springframework.beans.factory.config.CustomScopeConfigurer">
+        <property name="scopes">
+            <map>
+                <entry key="thread">
+                    <bean class="stroom.util.thread.ThreadScope"/>
+                </entry>
+            </map>
+        </property>
+    </bean>
+
+    <bean id="proxyRequestThreadLocalBuffer" class=" stroom.util.thread.ThreadLocalBuffer">
+        <property name="bufferSize" value="${bufferSize}"/>
+    </bean>
+
+
+    <util:list id="incomingRequestHandlerNameList">
+        <!--  Populated During List Merge -->
+    </util:list>
+    <util:list id="outgoingRequestHandlerNameList">
+        <!--  Populated During List Merge -->
+    </util:list>
+
+    <bean id="incomingRequestHandlerListFactory" class="stroom.util.spring.BeanListFactory" lazy-init="true">
+        <property name="beanList" ref="incomingRequestHandlerNameList"/>
+    </bean>
+
+    <bean id="outgoingRequestHandlerListFactory" class="stroom.util.spring.BeanListFactory" lazy-init="true">
+        <property name="beanList" ref="outgoingRequestHandlerNameList"/>
+    </bean>
+
+    <bean id="incomingRequestHandlerList" scope="thread" factory-bean="incomingRequestHandlerListFactory"
+          factory-method="create"/>
+
+    <bean id="outgoingRequestHandlerList" scope="thread" factory-bean="outgoingRequestHandlerListFactory"
+          factory-method="create"/>
+</beans>

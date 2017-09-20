@@ -25,6 +25,7 @@ import stroom.index.shared.IndexShardService;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
+import stroom.security.Insecure;
 import stroom.security.Secured;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.task.server.GenericServerTask;
@@ -34,7 +35,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomFrequencySchedule;
-import stroom.util.spring.StroomShutdown;
 import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.thread.ThreadScopeRunnable;
 
@@ -92,13 +92,6 @@ public class IndexShardManagerImpl implements IndexShardManager {
         allowedStateTransitions.put(IndexShardStatus.CORRUPT, Collections.singleton(IndexShardStatus.DELETED));
     }
 
-    @Override
-    @StroomShutdown
-    public void shutdown() {
-        // Close all currently used writers and clear the cache.
-        indexShardWriterCacheProvider.get().clear();
-    }
-
     /**
      * Delete anything that has been marked to delete
      */
@@ -124,7 +117,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
                         final Iterator<IndexShard> iter = shards.iterator();
                         while (!task.isTerminated() && iter.hasNext()) {
                             final IndexShard shard = iter.next();
-                            final IndexShardWriter writer = indexShardWriterCache.getQuiet(shard.getId());
+                            final IndexShardWriter writer = indexShardWriterCache.getWriterByShardId(shard.getId());
                             try {
                                 if (writer != null) {
                                     LOGGER.debug(() -> "deleteLogicallyDeleted() - Unable to delete index shard " + shard.getId() + " as it is currently in use");
@@ -230,7 +223,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
                     try {
                         switch (action) {
                             case FLUSH:
-                                final IndexShardWriter indexShardWriter = indexShardWriterCache.getQuiet(shard.getId());
+                                final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardId(shard.getId());
                                 if (indexShardWriter != null) {
                                     LOGGER.debug(() -> action.getActivity() + " index shard " + shard.getId());
                                     shardCount.incrementAndGet();
@@ -311,6 +304,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
         return null;
     }
 
+    @Insecure
     @Override
     public void setStatus(final long indexShardId, final IndexShardStatus status) {
         // Allow the thing to run without a service (e.g. benchmark mode)
@@ -332,6 +326,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
         }
     }
 
+    @Insecure
     @Override
     public void update(final long indexShardId, final Integer documentCount, final Long commitDurationMs, final Long commitMs, final Long fileSize) {
         // Allow the thing to run without a service (e.g. benchmark mode)

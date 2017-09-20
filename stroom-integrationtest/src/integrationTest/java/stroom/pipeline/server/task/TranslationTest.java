@@ -62,7 +62,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Indicators;
 import stroom.util.task.ServerTask;
-import stroom.util.zip.StroomHeaderArguments;
+import stroom.feed.StroomHeaderArguments;
 
 import javax.annotation.Resource;
 import java.io.BufferedInputStream;

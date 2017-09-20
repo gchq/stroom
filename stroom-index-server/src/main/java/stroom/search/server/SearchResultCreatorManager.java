@@ -19,9 +19,9 @@ package stroom.search.server;
 import net.sf.ehcache.CacheManager;
 import org.springframework.stereotype.Component;
 import stroom.cache.AbstractCacheBean;
-import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.Store;
 import stroom.util.spring.StroomFrequencySchedule;
 
@@ -51,10 +51,10 @@ public class SearchResultCreatorManager extends AbstractCacheBean<SearchResultCr
     }
 
     @Override
-    protected void destroy(final Key key, final SearchResponseCreator value) {
+    protected void destroy(final Key key, final Object value) {
         super.destroy(key, value);
-        if (value != null) {
-            value.destroy();
+        if (value != null && value instanceof SearchResponseCreator) {
+            ((SearchResponseCreator) value).destroy();
         }
     }
 

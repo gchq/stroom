@@ -17,10 +17,10 @@
 package stroom.search.server.shard;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,15 +82,8 @@ public class IndexShardSearchTaskHandler extends AbstractTaskHandler<IndexShardS
     private void searchPool(final IndexShardSearchTask task) {
         try {
             // Borrow a searcher from this pool.
-            final IndexShardSearcher indexShardSearcher = indexShardSearcherCache.borrowSearcher(task.getIndexShardId());
-            try {
-                searchShard(task, indexShardSearcher);
-            } catch (final Throwable t) {
-                error(task, t.getMessage(), t);
-
-            } finally {
-                indexShardSearcherCache.returnSearcher(indexShardSearcher);
-            }
+            final IndexShardSearcher indexShardSearcher = indexShardSearcherCache.get(task.getIndexShardId());
+            searchShard(task, indexShardSearcher);
         } catch (final Throwable t) {
             error(task, t.getMessage(), t);
         }
@@ -114,53 +107,58 @@ public class IndexShardSearchTaskHandler extends AbstractTaskHandler<IndexShardS
             final IndexShardHitCollector collector = new IndexShardHitCollector(task.getMonitor(), docIdStore,
                     task.getHitCount());
 
-            final IndexReader reader = indexShardSearcher.getReader();
-            final IndexSearcher searcher = new IndexSearcher(reader);
-
             try {
-                final GenericServerTask searchingTask = GenericServerTask.create(task, "Index Searcher", "");
-                searchingTask.setRunnable(() -> {
-                    try {
-                        searcher.search(query, collector);
-                    } catch (final Throwable t) {
-                        error(task, t.getMessage(), t);
-                    } finally {
-                        completedSearch.set(true);
-                    }
-                });
-                taskManager.execAsync(searchingTask, IndexShardSearchTask.THREAD_POOL);
-
-                // Start retrieving stored data from the shard.
-                boolean complete = false;
-                List<Integer> list = null;
-
-                while (!complete && !task.isTerminated()) {
-                    complete = completedSearch.get();
-
-                    if (complete) {
-                        // If we are finished then we don't need to wait for
-                        // items to arrive in the list.
-                        list = docIdStore.swap();
-                    } else {
-                        // Search is in progress so wait for items to arrive in
-                        // the list if necessary.
+                final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
+                final IndexSearcher searcher = searcherManager.acquire();
+                try {
+                    final GenericServerTask searchingTask = GenericServerTask.create(task, "Index Searcher", "");
+                    searchingTask.setRunnable(() -> {
                         try {
-                            list = docIdStore.swap(ONE_SECOND);
-                        } catch (final InterruptedException e) {
-                            // Ignore.
+                            searcher.search(query, collector);
+                        } catch (final Throwable t) {
+                            error(task, t.getMessage(), t);
+                        } finally {
+                            completedSearch.set(true);
                         }
-                    }
+                    });
+                    taskManager.execAsync(searchingTask, IndexShardSearchTask.THREAD_POOL);
 
-                    // Get stored data for every doc id in the list.
-                    if (list != null && list.size() > 0) {
-                        for (final Integer docId : list) {
-                            if (task.isTerminated()) {
-                                throw new TerminatedException();
+                    // Start retrieving stored data from the shard.
+                    boolean complete = false;
+                    List<Integer> list = null;
+
+                    while (!complete && !task.isTerminated()) {
+                        complete = completedSearch.get();
+
+                        if (complete) {
+                            // If we are finished then we don't need to wait for
+                            // items to arrive in the list.
+                            list = docIdStore.swap();
+                        } else {
+                            // Search is in progress so wait for items to arrive in
+                            // the list if necessary.
+                            try {
+                                list = docIdStore.swap(ONE_SECOND);
+                            } catch (final InterruptedException e) {
+                                // Ignore.
                             }
+                        }
 
-                            getStoredData(task, reader, docId);
+                        // Get stored data for every doc id in the list.
+                        if (list != null && list.size() > 0) {
+                            for (final Integer docId : list) {
+                                if (task.isTerminated()) {
+                                    throw new TerminatedException();
+                                }
+
+                                getStoredData(task, searcher, docId);
+                            }
                         }
                     }
+                } catch (final Throwable t) {
+                    error(task, t.getMessage(), t);
+                } finally {
+                    searcherManager.release(searcher);
                 }
             } catch (final Throwable t) {
                 error(task, t.getMessage(), t);
@@ -174,10 +172,10 @@ public class IndexShardSearchTaskHandler extends AbstractTaskHandler<IndexShardS
      * only want to get stream and event ids, in these cases no values are
      * retrieved, only stream and event ids.
      */
-    private void getStoredData(final IndexShardSearchTask task, final IndexReader reader, final int docId) {
+    private void getStoredData(final IndexShardSearchTask task, final IndexSearcher searcher, final int docId) {
         final String[] fieldNames = task.getFieldNames();
         try {
-            final Document document = reader.document(docId);
+            final Document document = searcher.doc(docId);
             String[] values = null;
 
             for (int i = 0; i < fieldNames.length; i++) {

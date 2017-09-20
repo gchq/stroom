@@ -218,4 +218,8 @@ public final class FileUtil {
 
         return file.getAbsolutePath();
     }
+
+    public static String getCanonicalPath(final Path file) {
+        return file.toAbsolutePath().normalize().toString();
+    }
 }

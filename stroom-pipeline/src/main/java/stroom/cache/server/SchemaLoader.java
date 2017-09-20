@@ -16,6 +16,8 @@
 
 package stroom.cache.server;
 
+import stroom.xmlschema.shared.FindXMLSchemaCriteria;
+
 public interface SchemaLoader {
-    StoredSchema load(String schemaLanguage, String data);
+    StoredSchema load(String schemaLanguage, String data, FindXMLSchemaCriteria findXMLSchemaCriteria);
 }

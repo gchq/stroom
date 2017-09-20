@@ -32,7 +32,7 @@
   </bean>
   <bean id="httpInvokerProxyStatusService" class="stroom.remote.StroomHessianProxyFactoryBean">
     <property name="serviceUrl" value="${remotingUrl}/remotestatusservice" />
-    <property name="serviceInterface" value="stroom.status.remote.RemoteStatusService" />
+    <property name="serviceInterface" value="stroom.node.server.RemoteStatusService" />
     <property name="readTimeout" value="${remotingReadTimeoutMs}" />
   </bean>
 </beans>

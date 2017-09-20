@@ -25,6 +25,7 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.security.Insecure;
+import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -38,19 +39,31 @@ public class PipelineDataCacheImpl extends AbstractCacheBean<VersionedEntityDeco
     private static final int MAX_CACHE_ENTRIES = 1000000;
 
     private final PipelineStackLoader pipelineStackLoader;
+    private final SecurityContext securityContext;
 
     @Inject
-    public PipelineDataCacheImpl(final CacheManager cacheManager, final PipelineStackLoader pipelineStackLoader) {
+    public PipelineDataCacheImpl(final CacheManager cacheManager,
+                                 final PipelineStackLoader pipelineStackLoader,
+                                 final SecurityContext securityContext) {
         super(cacheManager, "Pipeline Structure Cache", MAX_CACHE_ENTRIES);
         this.pipelineStackLoader = pipelineStackLoader;
+        this.securityContext = securityContext;
+
         setMaxIdleTime(10, TimeUnit.MINUTES);
         setMaxLiveTime(10, TimeUnit.MINUTES);
     }
 
     @Override
     public PipelineData getOrCreate(final PipelineEntity pipelineEntity) {
-        final VersionedEntityDecorator<PipelineEntity> key = new VersionedEntityDecorator<>(pipelineEntity);
+        final VersionedEntityDecorator<PipelineEntity> key = new VersionedEntityDecorator<>(pipelineEntity, getUser());
         return computeIfAbsent(key, this::create);
+    }
+
+    private String getUser() {
+        if (securityContext == null) {
+            return null;
+        }
+        return securityContext.getUserId();
     }
 
     private PipelineData create(final VersionedEntityDecorator<PipelineEntity> key) {

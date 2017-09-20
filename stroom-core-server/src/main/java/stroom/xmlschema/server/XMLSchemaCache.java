@@ -38,11 +38,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public class XMLSchemaCache implements EntityEvent.Handler {
     private static final Logger LOGGER = LoggerFactory.getLogger(XMLSchemaCache.class);
     private static final long TEN_MINUTES = 1000 * 60 * 10;
-    private static final FindXMLSchemaCriteria ALL = new FindXMLSchemaCriteria();
+
+
     private final XMLSchemaService xmlSchemaService;
     private final List<ClearHandler> clearHandlers = new ArrayList<>();
     private final Map<FindXMLSchemaCriteria, SchemaSet> schemaSets = new ConcurrentHashMap<>();
     private volatile long lastClearTime;
+
     @Inject
     public XMLSchemaCache(final XMLSchemaService xmlSchemaService) {
         this.xmlSchemaService = xmlSchemaService;
@@ -68,10 +70,6 @@ public class XMLSchemaCache implements EntityEvent.Handler {
                 LOGGER.error("Unable to clear cache!", e);
             }
         }
-    }
-
-    public SchemaSet getAllSchemas() {
-        return getSchemaSet(ALL);
     }
 
     public SchemaSet getSchemaSet(final FindXMLSchemaCriteria criteria) {
@@ -141,12 +139,7 @@ public class XMLSchemaCache implements EntityEvent.Handler {
     }
 
     private void addToMap(final Map<String, List<XMLSchema>> map, final String name, final XMLSchema xmlSchema) {
-        List<XMLSchema> list = map.get(name);
-        if (list == null) {
-            list = new ArrayList<>();
-            map.put(name, list);
-        }
-        list.add(xmlSchema);
+        map.computeIfAbsent(name, k -> new ArrayList<>()).add(xmlSchema);
     }
 
     private void clearIfOld() {
@@ -172,9 +165,9 @@ public class XMLSchemaCache implements EntityEvent.Handler {
         private final Map<String, List<XMLSchema>> schemaSystemIdMap;
         private final String locations;
 
-        public SchemaSet(final Map<String, List<XMLSchema>> schemaNameMap,
-                         final Map<String, List<XMLSchema>> schemaNamespaceURIMap,
-                         final Map<String, List<XMLSchema>> schemaSystemIdMap, final String locations) {
+        SchemaSet(final Map<String, List<XMLSchema>> schemaNameMap,
+                  final Map<String, List<XMLSchema>> schemaNamespaceURIMap,
+                  final Map<String, List<XMLSchema>> schemaSystemIdMap, final String locations) {
             this.schemaNameMap = schemaNameMap;
             this.schemaNamespaceURIMap = schemaNamespaceURIMap;
             this.schemaSystemIdMap = schemaSystemIdMap;

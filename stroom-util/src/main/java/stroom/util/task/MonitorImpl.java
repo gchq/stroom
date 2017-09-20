@@ -34,6 +34,7 @@ public class MonitorImpl implements Monitor {
     private transient volatile List<TerminateHandler> terminateHandlers;
     @SuppressWarnings(value = "VO_VOLATILE_REFERENCE_TO_ARRAY") // Private array that we don't change
     private volatile Object[] info;
+    private volatile String name;
 
     public MonitorImpl() {
         this.parent = null;
@@ -94,6 +95,16 @@ public class MonitorImpl implements Monitor {
         } finally {
             terminateHandlersLock.unlock();
         }
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public void setName(final String name) {
+        this.name = name;
     }
 
     @Override
