@@ -24,14 +24,20 @@
     <!-- TODO: restore this templating -->
     <title>Stroom</title>
 
-    <link rel="shortcut icon" href="dashboard.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
 
     <!-- Material Design Lite -->
 	<!-- <link rel="stylesheet" href="mdl/material.min.css" /> -->
     <!-- <script type="text/javascript" src='mdl/material.min.js'></script> -->
 
+	<!-- Font Awesome -->
+	<link rel="stylesheet" type="text/css" href="css/font-awesome.css">
+
     <!-- Roboto Font -->
 	<link rel="stylesheet" type="text/css" href="css/roboto.css">
+
+    <!-- Roboto Monospace Font -->
+    <link rel="stylesheet" type="text/css" href="css/Roboto_Mono.css">
 
     <!-- Standard GWT CSS plus Stroom modifications -->
     <link rel="stylesheet" href="css/standard.css" type="text/css" />
@@ -41,10 +47,12 @@
     <link rel="stylesheet" href="css/firefox-scrollbar.css" type="text/css" />
     <link rel="stylesheet" href="css/stroom-control.css" type="text/css" />
     <link rel="stylesheet" href="css/stroom-button.css" type="text/css" />
+    <link rel="stylesheet" href="css/fa-button.css" type="text/css" />
     <link rel="stylesheet" href="css/stroom-dashboard.css" type="text/css" />
     <link rel="stylesheet" href="css/stroom.css" type="text/css" />
     <link rel="stylesheet" href="dynamic.css" type="text/css" />
-
+    <link rel="stylesheet" href="css/editor.css" type="text/css" />
+    <link rel="stylesheet" href="css/TabLayout.css" type="text/css" />
     <link rel="stylesheet" href="xsdbrowser/xsdbrowser.css" type="text/css" />
 
     <!-- Themes -->
@@ -56,13 +64,23 @@
     <link rel="stylesheet" href="css/spinner.min.css" type="text/css" />
     <link rel="stylesheet" href="css/spinner.custom.css" type="text/css" />
 
+    <script type="text/javascript" src="stroom/moment-with-locales.min.js" charset="utf-8"></script>
+
+    <script type="text/javascript" src="stroom/ace/ace.js" charset="utf-8"></script>
+    <script type="text/javascript" src="stroom/ace/beautify/beautify.js" charset="utf-8"></script>
+    <script type="text/javascript" src="stroom/ace/theme-chrome.js" charset="utf-8"></script>
+    <script type="text/javascript" src="stroom/ace/mode-text.js" charset="utf-8"></script>
+    <script type="text/javascript" src="stroom/ace/mode-xml.js" charset="utf-8"></script>
+    <script type="text/javascript" src="stroom/ace/mode-json.js" charset="utf-8"></script>
+    <script type="text/javascript" src="stroom/ace/mode-javascript.js" charset="utf-8"></script>
+
     <script type="text/javascript" src='dashboard/dashboard.nocache.js'></script>
   </head>
 
-  <!-- TODO restore this as a configurable option -->
+  <!-- TODO: restore this as a configurable option -->
   <!-- Set this to true to enable the browser's context menu -->
   <!-- <body class="stroom-body" oncontextmenu="return true;"> -->
-  <body class="stroom-body" oncontextmenu="return false;">
+    <body class="stroom-body" oncontextmenu="return false;">
       <!-- Add history support -->
     <iframe src="javascript:''" id="__gwt_historyFrame" tabIndex='-1' style="position:absolute;width:0;height:0;border:0"></iframe>
 
