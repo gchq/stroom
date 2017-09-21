@@ -71,7 +71,7 @@ public class DashboardAppPresenter
 
             final String type = Window.Location.getParameter("type");
             final String uuid = Window.Location.getParameter("uuid");
-            params = convertUrlParamsToKV(Window.Location.getParameter("params"));
+            params = Window.Location.getParameter("params");
 
             if (type == null || uuid == null) {
                 AlertEvent.fireError(this, "No dashboard uuid has been specified", null);
@@ -104,30 +104,6 @@ public class DashboardAppPresenter
                 event.setMessage("Dashboard " + name + " has unsaved changes. Are you sure you want to close it?");
             }
         });
-    }
-
-    private String convertUrlParamsToKV(final String params) {
-        logger.log(Level.INFO, "Convert URL Params to KV: " + params);
-
-        // The URL separates keys and value by spaces, we need to replace those spaces with equals
-        String kvParams = null;
-        if (params != null) {
-            final String[] parts = params.split(" ");
-
-            // Looking for even number
-            if (0 == (parts.length %2)) {
-                final StringBuilder kvParamsBuilder = new StringBuilder();
-                for (int x=0; x<parts.length/2; x++) {
-                    kvParamsBuilder.append(parts[x]);
-                    kvParamsBuilder.append("=");
-                    kvParamsBuilder.append(parts[x+1]);
-                    kvParamsBuilder.append(" ");
-                }
-                kvParams = kvParamsBuilder.toString().trim();
-            }
-        }
-
-        return kvParams;
     }
 
     private void onLoadSuccess(final Dashboard dashboard) {
