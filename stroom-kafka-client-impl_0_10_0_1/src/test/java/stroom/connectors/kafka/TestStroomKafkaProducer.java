@@ -8,6 +8,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import stroom.connectors.ConnectorProperties;
 import stroom.connectors.ConnectorPropertiesEmptyImpl;
 
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -27,11 +28,11 @@ public class TestStroomKafkaProducer {
         ConnectorProperties kafkaProps = new ConnectorPropertiesEmptyImpl();
         kafkaProps.put(StroomKafkaProducer.BOOTSTRAP_SERVERS_CONFIG, "kafka:9092");
         StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.getConnector(KAFKA_VERSION, kafkaProps);
-        StroomKafkaProducerRecord<String, String> record =
-                new StroomKafkaProducerRecord.Builder<String, String>()
+        StroomKafkaProducerRecord<String, byte[]> record =
+                new StroomKafkaProducerRecord.Builder<String, byte[]>()
                         .topic("statistics")
                         .key("statistics")
-                        .value("some record data")
+                        .value("some record data".getBytes(StandardCharsets.UTF_8))
                         .build();
 
         // When
@@ -46,11 +47,11 @@ public class TestStroomKafkaProducer {
         StroomKafkaProducerFactoryImpl stroomKafkaProducerFactory = new StroomKafkaProducerFactoryImpl();
         ConnectorProperties properties = new ConnectorPropertiesEmptyImpl();
         StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.getConnector(KAFKA_VERSION, properties);
-        StroomKafkaProducerRecord<String, String> record =
-                new StroomKafkaProducerRecord.Builder<String, String>()
+        StroomKafkaProducerRecord<String, byte[]> record =
+                new StroomKafkaProducerRecord.Builder<String, byte[]>()
                         .topic("statistics")
                         .key("statistics")
-                        .value("some record data")
+                        .value("some record data".getBytes(StandardCharsets.UTF_8))
                         .build();
 
         AtomicBoolean hasSendFailed = new AtomicBoolean(false);
