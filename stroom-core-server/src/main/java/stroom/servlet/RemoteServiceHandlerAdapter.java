@@ -195,6 +195,7 @@ public class RemoteServiceHandlerAdapter extends RemoteServiceServlet implements
                 .filter(e -> moduleBaseURL.endsWith(e.getKey()))
                 .map(Map.Entry::getValue)
                 .findFirst();
+        LOGGER.debug("Remote Service Handler " + gwtRpcPath);
 
         if (!gwtRpcPath.isPresent()) {
             final String msg = String.format("Could not find GWT RPC Policy Path for moduleBaseURL: %s", moduleBaseURL);

@@ -65,9 +65,13 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.DashboardView, Dashboard>
         implements FlexLayoutChangeHandler, EntityTabData, DashboardUiHandlers {
+    private static final Logger logger = Logger.getLogger(DashboardPresenter.class.getName());
+
     private final ButtonView saveButton;
     private final ButtonView saveAsButton;
     private final DashboardLayoutPresenter layoutPresenter;
@@ -161,6 +165,8 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
     }
 
     public void setParams(final String params) {
+        logger.log(Level.SEVERE, "Dashboard Presenter setParams " + params);
+
         this.currentParams = params;
     }
 
@@ -175,9 +181,11 @@ public class DashboardPresenter extends EntityEditPresenter<DashboardPresenter.D
 
             final DashboardConfig dashboardData = dashboard.getDashboardData();
             if (dashboardData != null) {
-                currentParams = "";
-                if (dashboardData.getParameters() != null && dashboardData.getParameters().trim().length() > 0) {
-                    currentParams = dashboardData.getParameters().trim();
+                if (null == currentParams) {
+                    currentParams = "";
+                    if (dashboardData.getParameters() != null && dashboardData.getParameters().trim().length() > 0) {
+                        currentParams = dashboardData.getParameters().trim();
+                    }
                 }
                 getView().setParams(currentParams);
 
