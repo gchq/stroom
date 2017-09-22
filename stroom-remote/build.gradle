@@ -1,9 +1,0 @@
-dependencies {
-    compile project(':stroom-util')
-
-    compile libs.commons_lang
-    compile libs.hessian
-    compile libs.slf4j_api
-    compile libs.spring_context
-    compile libs.spring_web
-}
