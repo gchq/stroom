@@ -85,7 +85,7 @@ deploy:
       - stroom-app/build/swagger/swagger.yaml
     skip_cleanup: true
     on:
-    tags: true
+      tags: true
 
 #clean out gradle caches as per travis docs
 before_cache:
