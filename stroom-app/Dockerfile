@@ -39,7 +39,7 @@ WORKDIR /stroom
 #Copy the content packs in so they get imported on first run of Stroom
 #TODO this should be a singley named jar
 ADD ./build/libs/stroom-app-all.jar /stroom/stroom-app-all.jar
-ADD ../stroom-kafka-client-impl_0_10_0_1/build/libs/stroom-kafka-client-impl_0_10_0_1-all.jar /stroom/plugins/stroom-kafka-client-impl_0_10_0_1-all.jar
+ADD ./build/libs/stroom-kafka-client-impl_0_10_0_1-all.jar /stroom/plugins/stroom-kafka-client-impl_0_10_0_1-all.jar
 ADD ./prod.yml /stroom/config.yml
 ADD ./docker-entrypoint.sh /usr/local/bin/
 
