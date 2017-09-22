@@ -34,7 +34,7 @@ import stroom.entity.shared.ImportState.ImportMode;
 import stroom.entity.shared.ImportState.State;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.Res;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.EqualsUtil;

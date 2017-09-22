@@ -46,7 +46,7 @@ import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.streamstore.client.presenter.ClassificationUiHandlers;
 import stroom.streamstore.client.presenter.DataPresenter;
 import stroom.streamstore.shared.FindStreamCriteria;
@@ -357,7 +357,10 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
             dispatcher.exec(action)
                     .onSuccess(this::readResult)
-                    .onFailure(caught -> busyTranslating = false);
+                    .onFailure(caught -> {
+                        AlertEvent.fireErrorFromException(SteppingPresenter.this, caught, null);
+                        busyTranslating = false;
+                    });
         }
     }
 

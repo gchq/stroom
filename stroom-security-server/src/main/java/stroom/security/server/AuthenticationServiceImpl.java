@@ -153,7 +153,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                     user.setTotalLoginFailures(user.getTotalLoginFailures() + 1);
 
                     if (user.getCurrentLoginFailures() > 3) {
-                        LOGGER.error("login() - Locking account {}", user.getName());
+                        LOGGER.error("login() - Locking account {} due to {} failures", user.getName(), user.getCurrentLoginFailures());
                         user.updateStatus(UserStatus.LOCKED);
                     }
 

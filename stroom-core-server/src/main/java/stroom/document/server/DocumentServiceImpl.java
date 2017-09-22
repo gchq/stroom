@@ -22,7 +22,7 @@ import stroom.logging.DocumentEventLog;
 import stroom.entity.server.EntityServiceBeanRegistry;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.PermissionInheritance;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 import javax.inject.Inject;
 

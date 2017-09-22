@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 import stroom.document.server.fs.FSDocumentStore;
 import stroom.entity.shared.ImportState;
 import stroom.entity.shared.ImportState.ImportMode;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.ruleset.shared.RuleSet;
 import stroom.security.SecurityContext;
 import stroom.util.shared.Message;

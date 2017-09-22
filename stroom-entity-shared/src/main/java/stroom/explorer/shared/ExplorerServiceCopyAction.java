@@ -19,7 +19,7 @@ package stroom.explorer.shared;
 
 import stroom.entity.shared.Action;
 import stroom.entity.shared.PermissionInheritance;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 import java.util.List;
 

@@ -61,7 +61,7 @@ import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
-import stroom.datasource.api.v1.DataSourceField;
+import stroom.datasource.api.v2.DataSourceField;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.document.client.event.DirtyEvent;
@@ -69,11 +69,11 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
-import stroom.query.api.v1.ResultRequest.Fetch;
+import stroom.query.api.v2.ResultRequest.Fetch;
+import stroom.query.shared.v2.ParamUtil;
 import stroom.security.client.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
-import stroom.util.shared.ParamUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -92,6 +92,7 @@ import java.util.Set;
 
 public class TablePresenter extends AbstractComponentPresenter<TableView>
         implements HasDirtyHandlers, ResultComponent {
+
     public static final ComponentType TYPE = new ComponentType(1, "table", "Table");
     private static final int MIN_EXPANDER_COL_WIDTH = 0;
 
@@ -99,6 +100,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final TableResultRequest tableResultRequest = new TableResultRequest(0, 100);
     private final List<Column<Row, ?>> existingColumns = new ArrayList<>();
     private final List<HandlerRegistration> searchModelHandlerRegistrations = new ArrayList<>();
+    private final UrlDetector urlDetector = new UrlDetector();
     private final ButtonView addFieldButton;
     private final ButtonView downloadButton;
     private final Provider<FieldAddPresenter> fieldAddPresenterProvider;
@@ -161,7 +163,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         clientPropertyCache.get()
                 .onSuccess(result -> {
-                    final String value = result.get(ClientProperties.MAX_RESULTS);
+                    final String value = result.get(ClientProperties.DEFAULT_MAX_RESULTS);
                     if (value != null) {
                         final String[] parts = value.split(",");
                         final int[] arr = new int[parts.length];
@@ -435,7 +437,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 if (values != null) {
                     final String value = values[pos];
                     if (value != null) {
-                        if (field.getGroup() != null && field.getGroup() >= row.depth) {
+                        final UrlDetector.Hyperlink hyperlink = urlDetector.detect(value);
+
+                        if (null != hyperlink) {
+                            return hyperlink.getSafeHtml();
+                        } else if (field.getGroup() != null && field.getGroup() >= row.depth) {
                             final SafeHtmlBuilder sb = new SafeHtmlBuilder();
                             sb.appendHtmlConstant("<b>");
                             sb.appendEscaped(value);

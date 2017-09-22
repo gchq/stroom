@@ -18,7 +18,7 @@ package stroom.dashboard.server.download;
 
 import stroom.dashboard.server.SampleGenerator;
 import stroom.dashboard.shared.Field;
-import stroom.query.api.v1.Row;
+import stroom.query.api.v2.Row;
 
 import java.io.IOException;
 import java.util.List;

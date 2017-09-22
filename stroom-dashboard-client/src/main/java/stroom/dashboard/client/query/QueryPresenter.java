@@ -26,6 +26,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
+import stroom.core.client.LocationManager;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.DashboardUUID;
@@ -38,10 +39,14 @@ import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.Dashboard;
+import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DataSourceFieldsMap;
+import stroom.dashboard.shared.DownloadQueryAction;
 import stroom.dashboard.shared.QueryComponentSettings;
-import stroom.datasource.api.v1.DataSourceField;
+import stroom.datasource.api.v2.DataSourceField;
+import stroom.dashboard.shared.SearchRequest;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -51,10 +56,10 @@ import stroom.node.shared.ClientProperties;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.process.shared.CreateProcessorAction;
-import stroom.query.api.v1.DocRef;
-import stroom.query.api.v1.ExpressionBuilder;
-import stroom.query.api.v1.ExpressionOperator;
-import stroom.query.api.v1.ExpressionOperator.Op;
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionBuilder;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.security.client.ClientSecurityContext;
@@ -99,6 +104,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final ProcessorLimitsPresenter processorLimitsPresenter;
     private final MenuListPresenter menuListPresenter;
     private final ClientDispatchAsync dispatcher;
+    private final LocationManager locationManager;
+    private final TimeZones timeZones;
 
     private final IndexLoader indexLoader;
     private final SearchModel searchModel;
@@ -108,6 +115,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final ButtonView deleteItemButton;
     private final ButtonView historyButton;
     private final ButtonView favouriteButton;
+    private final ButtonView downloadQueryButton;
     private final ButtonView warningsButton;
 
     private String params;
@@ -120,14 +128,20 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private Timer autoRefreshTimer;
 
     @Inject
-    public QueryPresenter(final EventBus eventBus, final QueryView view, final SearchBus searchBus,
+    public QueryPresenter(final EventBus eventBus,
+                          final QueryView view,
+                          final SearchBus searchBus,
                           final Provider<QuerySettingsPresenter> settingsPresenterProvider,
-                          final ExpressionTreePresenter expressionPresenter, final QueryHistoryPresenter historyPresenter,
+                          final ExpressionTreePresenter expressionPresenter,
+                          final QueryHistoryPresenter historyPresenter,
                           final QueryFavouritesPresenter favouritesPresenter,
                           final Provider<EntityChooser> pipelineSelection,
                           final ProcessorLimitsPresenter processorLimitsPresenter,
-                          final MenuListPresenter menuListPresenter, final ClientDispatchAsync dispatcher,
-                          final ClientSecurityContext securityContext, final ClientPropertyCache clientPropertyCache,
+                          final MenuListPresenter menuListPresenter,
+                          final ClientDispatchAsync dispatcher,
+                          final ClientSecurityContext securityContext,
+                          final ClientPropertyCache clientPropertyCache,
+                          final LocationManager locationManager,
                           final TimeZones timeZones) {
         super(eventBus, view, settingsPresenterProvider);
         this.expressionPresenter = expressionPresenter;
@@ -137,6 +151,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         this.processorLimitsPresenter = processorLimitsPresenter;
         this.menuListPresenter = menuListPresenter;
         this.dispatcher = dispatcher;
+        this.locationManager = locationManager;
+        this.timeZones = timeZones;
 
         view.setExpressionView(expressionPresenter.getView());
         view.setUiHandlers(this);
@@ -160,6 +176,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         deleteItemButton = view.addButton(SvgPresets.DELETE);
         historyButton = view.addButton(SvgPresets.HISTORY.enabled(true));
         favouriteButton = view.addButton(SvgPresets.FAVOURITES.enabled(true));
+        downloadQueryButton = view.addButton(SvgPresets.DOWNLOAD);
 
         if (securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)) {
             processButton = view.addButton(SvgPresets.PROCESS.enabled(true));
@@ -220,7 +237,11 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         registerHandler(favouriteButton.addClickHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
                 final ExpressionOperator root = expressionPresenter.write();
-                favouritesPresenter.show(QueryPresenter.this, getComponents().getDashboard().getId(), getSettings().getDataSource(), root);
+                favouritesPresenter.show(
+                        QueryPresenter.this,
+                        getComponents().getDashboard().getId(),
+                        getSettings().getDataSource(),
+                        root);
 
             }
         }));
@@ -236,7 +257,10 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                 showWarnings();
             }
         }));
-        registerHandler(indexLoader.addChangeDataHandler(event -> loadedDataSource(indexLoader.getLoadedDataSourceRef(), indexLoader.getDataSourceFieldsMap())));
+        registerHandler(indexLoader.addChangeDataHandler(event ->
+                loadedDataSource(indexLoader.getLoadedDataSourceRef(), indexLoader.getDataSourceFieldsMap())));
+
+        registerHandler(downloadQueryButton.addClickHandler(event -> downloadQuery()));
     }
 
     public void setErrors(final String errors) {
@@ -262,10 +286,21 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             deleteItemButton.setEnabled(true);
             deleteItemButton.setTitle("Delete");
         }
+
+        final DocRef dataSourceRef = queryComponentSettings.getDataSource();
+
+        if (dataSourceRef == null) {
+            downloadQueryButton.setEnabled(false);
+            downloadQueryButton.setTitle("");
+        } else {
+            downloadQueryButton.setEnabled(true);
+            downloadQueryButton.setTitle("Download Query");
+        }
     }
 
     private void loadDataSource(final DocRef dataSourceRef) {
         searchModel.getIndexLoader().loadDataSource(dataSourceRef);
+        setButtonsEnabled();
     }
 
     private void loadedDataSource(final DocRef dataSourceRef, final DataSourceFieldsMap dataSourceFieldsMap) {
@@ -293,6 +328,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         getView().setEnabled(dataSourceRef != null && fields.size() > 0);
 
         init();
+        setButtonsEnabled();
     }
 
     private void addOperator() {
@@ -614,6 +650,35 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             }
         };
         ShowPopupEvent.fire(this, menuListPresenter, PopupType.POPUP, popupPosition, popupUiHandlers);
+    }
+
+
+    private void downloadQuery() {
+        if (queryComponentSettings.getDataSource() != null) {
+
+            SearchRequest searchRequest = searchModel.buildSearchRequest(
+                    queryComponentSettings.getExpression(),
+                    params,
+                    false,
+                    false);
+
+            final Dashboard dashboard = getComponents().getDashboard();
+            final DashboardUUID dashboardUUID = new DashboardUUID(
+                    dashboard.getId(),
+                    dashboard.getName(),
+                    getComponentData().getId());
+            final DashboardQueryKey dashboardQueryKey = DashboardQueryKey.create(
+                    dashboardUUID.getUUID(),
+                    dashboard.getId(),
+                    dashboardUUID.getComponentId());
+
+            if (dashboardQueryKey != null) {
+                dispatcher.exec(
+                        new DownloadQueryAction(dashboardQueryKey, searchRequest))
+                        .onSuccess(result ->
+                                ExportFileCompleteUtil.onSuccess(locationManager, null, result));
+            }
+        }
     }
 
     public interface QueryView extends View, HasUiHandlers<QueryUiHandlers> {

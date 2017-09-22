@@ -35,7 +35,7 @@ import stroom.entity.shared.DocumentServiceWriteAction;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.util.shared.SharedObject;

@@ -17,15 +17,15 @@
 
 package stroom.streamstore.server;
 
-import stroom.datasource.api.v1.DataSourceField;
-import stroom.datasource.api.v1.DataSourceField.DataSourceFieldType;
+import stroom.datasource.api.v2.DataSourceField;
+import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
 import stroom.dictionary.server.DictionaryService;
 import stroom.dictionary.shared.Dictionary;
-import stroom.query.api.v1.DocRef;
-import stroom.query.api.v1.ExpressionItem;
-import stroom.query.api.v1.ExpressionOperator;
-import stroom.query.api.v1.ExpressionTerm;
-import stroom.query.api.v1.ExpressionTerm.Condition;
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionItem;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.date.DateUtil;
 
 import java.util.HashMap;

@@ -4,7 +4,7 @@ import org.springframework.stereotype.Component;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 
 import javax.inject.Inject;

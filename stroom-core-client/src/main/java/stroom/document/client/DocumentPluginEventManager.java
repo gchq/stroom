@@ -64,7 +64,7 @@ import stroom.explorer.shared.ExplorerServiceMoveAction;
 import stroom.explorer.shared.ExplorerServiceRenameAction;
 import stroom.explorer.shared.FetchExplorerPermissionsAction;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.SvgIcon;
 import stroom.svg.client.SvgPresets;

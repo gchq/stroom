@@ -33,8 +33,6 @@ public interface IndexShardManager extends FindDeleteService<FindIndexShardCrite
 
     IndexShard load(long indexShardId);
 
-    void shutdown();
-
     void deleteFromDisk();
 
     void checkRetention();

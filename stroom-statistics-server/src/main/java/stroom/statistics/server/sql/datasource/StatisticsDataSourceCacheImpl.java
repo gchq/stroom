@@ -28,7 +28,7 @@ import stroom.entity.server.event.EntityEventHandler;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityAction;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.statistics.shared.StatisticStoreEntity;
 
 import javax.inject.Inject;

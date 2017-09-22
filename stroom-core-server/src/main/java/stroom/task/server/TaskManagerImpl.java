@@ -31,7 +31,6 @@ import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskProgress;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.Monitor;
-import stroom.util.shared.SimpleThreadPool;
 import stroom.util.shared.Task;
 import stroom.util.shared.TaskId;
 import stroom.util.shared.ThreadPool;
@@ -63,10 +62,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * NB: we also define this in Spring XML so we can set some of the properties.
  */
 @Component("taskManager")
-public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskProgressCriteria> {
+class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskProgressCriteria> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskManagerImpl.class);
-
-    private static final ThreadPool DEFAULT_THREAD_POOL = new SimpleThreadPool("Default", 2);
 
     private final TaskHandlerBeanRegistry taskHandlerBeanRegistry;
     private final NodeCache nodeCache;
@@ -88,15 +85,10 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
 
         // When we are running unit tests we need to make sure that all Stroom
         // threads complete and are shutdown between tests.
-        ExternalShutdownController.addTerminateHandler(TaskManagerImpl.class, () -> shutdown());
+        ExternalShutdownController.addTerminateHandler(TaskManagerImpl.class, this::shutdown);
     }
 
-    @Override
-    public Executor getExecutor() {
-        return getExecutor(DEFAULT_THREAD_POOL);
-    }
-
-    private ThreadPoolExecutor getExecutor(final ThreadPool threadPool) {
+    private Executor getExecutor(final ThreadPool threadPool) {
         ThreadPoolExecutor executor = threadPoolMap.get(threadPool);
         if (executor == null) {
             poolCreationLock.lock();
@@ -128,14 +120,13 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
         poolCreationLock.lock();
         try {
             final Iterator<ThreadPool> iter = threadPoolMap.keySet().iterator();
-            while (iter.hasNext()) {
-                final ThreadPool threadPool = iter.next();
+            iter.forEachRemaining(threadPool -> {
                 final ThreadPoolExecutor executor = threadPoolMap.get(threadPool);
                 if (executor != null) {
                     executor.shutdown();
                     threadPoolMap.remove(threadPool);
                 }
-            }
+            });
         } finally {
             poolCreationLock.unlock();
         }
@@ -297,11 +288,11 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
                 @Override
                 protected void exec() {
                     try {
-                        LOGGER.debug("execAsync()->exec() - {} {} took {}", new Object[]{
+                        LOGGER.debug("execAsync()->exec() - {} {} took {}",
                                 task.getClass().getSimpleName(),
                                 task.getTaskName(),
                                 logExecutionTime.toString()
-                        });
+                        );
 
                         taskThread.setThread(Thread.currentThread());
 
@@ -336,7 +327,7 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
 
             // Now we have a task scoped runnable we will execute it in a new
             // thread.
-            final ThreadPoolExecutor executor = getExecutor(threadPool);
+            final Executor executor = getExecutor(threadPool);
             if (executor != null) {
                 currentAsyncTaskCount.incrementAndGet();
                 currentTasks.put(task.getId(), taskThread);
@@ -392,12 +383,18 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
                     taskMonitor.setMonitor(hasMonitor.getMonitor());
                 }
 
-                // Get the task handler that will deal with this task.
-                final TaskHandler<Task<R>, R> taskHandler = taskHandlerBeanRegistry.findHandler(task);
+                CurrentTaskState.pushState(task, taskMonitor);
+                try {
+                    // Get the task handler that will deal with this task.
+                    final TaskHandler<Task<R>, R> taskHandler = taskHandlerBeanRegistry.findHandler(task);
 
-                LOGGER.debug("doExec() - exec >> '{}' {}", task.getClass().getName(), task);
-                taskHandler.exec(task, callback);
-                LOGGER.debug("doExec() - exec << '{}' {}", task.getClass().getName(), task);
+                    LOGGER.debug("doExec() - exec >> '{}' {}", task.getClass().getName(), task);
+                    taskHandler.exec(task, callback);
+                    LOGGER.debug("doExec() - exec << '{}' {}", task.getClass().getName(), task);
+
+                } finally {
+                    CurrentTaskState.popState();
+                }
 
             } finally {
                 securityContext.popUser();
@@ -422,8 +419,7 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
 
             // Loop over all of the tasks that this node knows about and see if
             // it should be terminated.
-            while (iter.hasNext()) {
-                final TaskThread<?> taskThread = iter.next();
+            iter.forEachRemaining(taskThread -> {
                 final Task<?> task = taskThread.getTask();
 
                 // Terminate it?
@@ -432,7 +428,7 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
                         terminateList.add(taskThread);
                     }
                 }
-            }
+            });
 
             // Now terminate the relevant tasks.
             doTerminated(kill, timeNowMs, taskProgressList, terminateList);
@@ -474,8 +470,7 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
         final List<TaskProgress> taskProgressList = new ArrayList<>();
 
         final Iterator<TaskThread<?>> iter = currentTasks.values().iterator();
-        while (iter.hasNext()) {
-            final TaskThread<?> taskThread = iter.next();
+        iter.forEachRemaining(taskThread -> {
             final Task<?> task = taskThread.getTask();
 
             final TaskProgress taskProgress = buildTaskProgress(timeNowMs, taskThread, task);
@@ -484,7 +479,7 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
             if (findTaskProgressCriteria == null || findTaskProgressCriteria.matches(taskProgress)) {
                 taskProgressList.add(taskProgress);
             }
-        }
+        });
 
         return BaseResultList.createUnboundedList(taskProgressList);
     }
@@ -492,11 +487,7 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
     private TaskProgress buildTaskProgress(final long timeNowMs, final TaskThread<?> taskThread, final Task<?> task) {
         final TaskProgress taskProgress = new TaskProgress();
         taskProgress.setId(task.getId());
-        if (task.isTerminated()) {
-            taskProgress.setTaskName("<<terminated>> " + task.getTaskName());
-        } else {
-            taskProgress.setTaskName(task.getTaskName());
-        }
+        taskProgress.setTaskName(taskThread.getName());
         taskProgress.setSessionId(UserTokenUtil.getSessionId(task.getUserToken()));
         taskProgress.setUserName(UserTokenUtil.getUserId(task.getUserToken()));
         taskProgress.setThreadName(taskThread.getThreadName());
@@ -521,8 +512,7 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
         final StringBuilder nonServerTasksSb = new StringBuilder();
         final List<Monitor> monitorList = new ArrayList<>();
         final Iterator<TaskThread<?>> iter = currentTasks.values().iterator();
-        while (iter.hasNext()) {
-            final TaskThread<?> taskThread = iter.next();
+        iter.forEachRemaining(taskThread -> {
             final Task<?> task = taskThread.getTask();
 
             if (task instanceof HasMonitor) {
@@ -534,19 +524,19 @@ public class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<Fin
                 nonServerTasksSb.append(task.getId().toString());
                 nonServerTasksSb.append("\n");
             }
-        }
+        });
 
         final String nonServerTasks = nonServerTasksSb.toString();
         final String serverTasks = MonitorInfoUtil.getInfo(monitorList);
 
         final StringBuilder sb = new StringBuilder();
-        if (serverTasks != null && serverTasks.length() > 0) {
+        if (serverTasks.length() > 0) {
             sb.append("Server Tasks:\n");
             sb.append(serverTasks);
             sb.append("\n");
         }
 
-        if (nonServerTasks != null && nonServerTasks.length() > 0) {
+        if (nonServerTasks.length() > 0) {
             sb.append("Non server Tasks:\n");
             sb.append(nonServerTasks);
             sb.append("\n");

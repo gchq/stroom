@@ -30,9 +30,9 @@ import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.SearchResponse;
 import stroom.datasource.DataSourceProvider;
 import stroom.datasource.DataSourceProviderRegistry;
-import stroom.query.api.v1.DocRef;
-import stroom.query.api.v1.Param;
-import stroom.query.api.v1.Query;
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.Param;
+import stroom.query.api.v2.Query;
 import stroom.security.SecurityContext;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
@@ -163,8 +163,8 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
                     .orElseThrow(() ->
                             new RuntimeException("No search provider found for '" + dataSourceRef.getType() + "' data source"));
 
-            stroom.query.api.v1.SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey, searchRequest);
-            stroom.query.api.v1.SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);
+            stroom.query.api.v2.SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey, searchRequest);
+            stroom.query.api.v2.SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);
             result = new SearchResponseMapper().mapResponse(searchResponse);
 
             if (newSearch) {

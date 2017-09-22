@@ -23,7 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
-import stroom.dashboard.expression.FieldIndexMap;
+import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dictionary.server.DictionaryService;
 import stroom.index.server.IndexService;
 import stroom.index.shared.Index;
@@ -32,12 +32,12 @@ import stroom.index.shared.IndexFieldsMap;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.MessageUtil;
 import stroom.pipeline.server.errorhandler.TerminatedException;
-import stroom.query.Coprocessor;
-import stroom.query.CoprocessorSettings;
-import stroom.query.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.query.api.v1.DocRef;
-import stroom.query.api.v1.ExpressionOperator;
-import stroom.query.api.v1.Param;
+import stroom.query.common.v2.Coprocessor;
+import stroom.query.common.v2.CoprocessorSettings;
+import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.Param;
 import stroom.search.server.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.search.server.extraction.ExtractionTaskExecutor;
 import stroom.search.server.extraction.ExtractionTaskProducer;
@@ -76,6 +76,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 @TaskHandlerBean(task = ClusterSearchTask.class)
 @Scope(StroomScope.TASK)
@@ -152,7 +153,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                 taskMonitor.info("Initialising...");
 
                 this.task = task;
-                final stroom.query.api.v1.Query query = task.getQuery();
+                final stroom.query.api.v2.Query query = task.getQuery();
 
                 try {
                     final long frequency = task.getResultSendFrequency();
@@ -213,11 +214,12 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                             }
 
                             // Create a parameter map.
-                            final Map<String, String> paramMap = Collections.emptyMap();
+                            final Map<String, String> paramMap;
                             if (query.getParams() != null) {
-                                for (final Param param : query.getParams()) {
-                                    paramMap.put(param.getKey(), param.getValue());
-                                }
+                                paramMap = query.getParams().stream()
+                                        .collect(Collectors.toMap(Param::getKey, Param::getValue));
+                            } else {
+                                paramMap = Collections.emptyMap();
                             }
                             final Coprocessor coprocessor = coprocessorFactory.create(
                                     coprocessorSettings, fieldIndexMap, paramMap, taskMonitor);
@@ -274,7 +276,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
         }
     }
 
-    private void search(final ClusterSearchTask task, final stroom.query.api.v1.Query query, final String[] storedFieldNames,
+    private void search(final ClusterSearchTask task, final stroom.query.api.v2.Query query, final String[] storedFieldNames,
                         final boolean filterStreams, final IndexFieldsMap indexFieldsMap,
                         final FieldIndexMap extractionFieldIndexMap,
                         final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap) {

@@ -25,13 +25,13 @@ import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.Node;
-import stroom.query.api.v1.Query;
+import stroom.query.api.v2.Query;
 import stroom.search.server.EventRef;
 import stroom.search.server.EventRefs;
 import stroom.search.server.EventSearchTask;
 import stroom.security.SecurityContext;
 import stroom.statistics.internal.InternalStatisticEvent;
-import stroom.statistics.internal.InternalStatisticsFacadeFactory;
+import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Limits;
@@ -100,7 +100,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     private final StreamTaskService streamTaskService;
     private final StreamTaskHelper streamTaskHelper;
     private final StroomPropertyService propertyService;
-    private final InternalStatisticsFacadeFactory internalStatisticsFacadeFactory;
+    private final InternalStatisticsReceiver internalStatisticsReceiver;
     private final StreamStore streamStore;
     private final SecurityContext securityContext;
 
@@ -151,7 +151,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                           final StreamTaskService streamTaskService,
                           final StreamTaskHelper streamTaskHelper,
                           final StroomPropertyService propertyService,
-                          final InternalStatisticsFacadeFactory internalStatisticsFacadeFactory,
+                          final InternalStatisticsReceiver internalStatisticsReceiver,
                           final StreamStore streamStore,
                           final SecurityContext securityContext) {
 
@@ -162,7 +162,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         this.streamTaskService = streamTaskService;
         this.streamTaskHelper = streamTaskHelper;
         this.propertyService = propertyService;
-        this.internalStatisticsFacadeFactory = internalStatisticsFacadeFactory;
+        this.internalStatisticsReceiver = internalStatisticsReceiver;
         this.streamStore = streamStore;
         this.securityContext = securityContext;
     }
@@ -909,12 +909,11 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
             if (queueSize != lastQueueSizeForStats) {
                 try {
                     // Value type event as the queue size is not additive
-                    internalStatisticsFacadeFactory.create()
-                            .putEvent(InternalStatisticEvent.createValueStat(
-                                    INTERNAL_STAT_KEY_STREAM_TASK_QUEUE_SIZE,
-                                    System.currentTimeMillis(),
-                                    null,
-                                    queueSize));
+                    internalStatisticsReceiver.putEvent(InternalStatisticEvent.createValueStat(
+                            INTERNAL_STAT_KEY_STREAM_TASK_QUEUE_SIZE,
+                            System.currentTimeMillis(),
+                            null,
+                            queueSize));
                 } catch (final Throwable t) {
                     LOGGER.error(t.getMessage(), t);
                 }

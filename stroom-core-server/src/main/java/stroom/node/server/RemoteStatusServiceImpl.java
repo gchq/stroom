@@ -16,16 +16,14 @@
 
 package stroom.node.server;
 
+import com.caucho.hessian.server.HessianServlet;
 import org.springframework.stereotype.Component;
-import stroom.status.remote.GetStatusRequest;
-import stroom.status.remote.GetStatusResponse;
-import stroom.status.remote.RemoteStatusService;
 
 @Component("remoteStatusService")
-public class RemoteStatusServiceImpl implements RemoteStatusService {
+public class RemoteStatusServiceImpl extends HessianServlet implements RemoteStatusService {
     @Override
-    public GetStatusResponse getStatus(GetStatusRequest request) {
-        GetStatusResponse response = new GetStatusResponse();
+    public GetStatusResponse getStatus(final GetStatusRequest request) {
+        final GetStatusResponse response = new GetStatusResponse();
         response.getStatusEntryList().add(new GetStatusResponse.StatusEntry(GetStatusResponse.Status.Info, "SYSTEM", "All Ok"));
         return response;
     }

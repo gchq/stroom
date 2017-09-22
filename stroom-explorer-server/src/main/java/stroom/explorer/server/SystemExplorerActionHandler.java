@@ -4,7 +4,7 @@ import org.springframework.stereotype.Component;
 import stroom.entity.server.NameValidationUtil;
 import stroom.entity.shared.PermissionException;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 

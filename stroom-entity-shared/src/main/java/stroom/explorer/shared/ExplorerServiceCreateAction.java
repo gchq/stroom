@@ -20,7 +20,7 @@ package stroom.explorer.shared;
 import stroom.entity.shared.Action;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.entity.shared.SharedDocRef;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 public class ExplorerServiceCreateAction extends Action<SharedDocRef> {
     private static final long serialVersionUID = 800905016214418723L;

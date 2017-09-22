@@ -25,7 +25,7 @@ import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -66,7 +66,7 @@ public class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
 
         final List<IndexShard> shards = indexShardService.find(criteria);
         shards.forEach(shard -> {
-            final IndexShardWriter indexShardWriter = indexShardWriterCache.getQuiet(shard.getId());
+            final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardId(shard.getId());
             if (indexShardWriter != null) {
                 final IndexConfig indexConfig = indexConfigCache.getOrCreate(indexRef);
                 indexShardWriter.updateIndexConfig(indexConfig);

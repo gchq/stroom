@@ -36,7 +36,7 @@ import stroom.streamstore.server.fs.serializable.NestedStreamTarget;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.CloseableUtil;
-import stroom.util.zip.StroomHeaderArguments;
+import stroom.feed.StroomHeaderArguments;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;

@@ -1,10 +1,10 @@
 package stroom.statistics.server.sql;
 
-import stroom.datasource.api.v1.DataSource;
-import stroom.query.api.v1.DocRef;
-import stroom.query.api.v1.QueryKey;
-import stroom.query.api.v1.SearchRequest;
-import stroom.query.api.v1.SearchResponse;
+import stroom.datasource.api.v2.DataSource;
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchResponse;
 
 public interface StatisticsQueryService {
 

@@ -26,7 +26,7 @@ import stroom.entity.server.ObjectMarshaller;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.importexport.server.ImportExportHelper;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.visualisation.shared.FindVisualisationCriteria;

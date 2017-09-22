@@ -18,7 +18,7 @@
 package stroom.document.server;
 
 import stroom.entity.shared.PermissionInheritance;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 interface DocumentService {
     Object readDocument(DocRef docRef);

@@ -17,6 +17,7 @@
 package stroom.startup;
 
 import io.dropwizard.setup.Environment;
+import org.springframework.context.annotation.CommonAnnotationBeanPostProcessor;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 import stroom.Config;
 
@@ -31,7 +32,7 @@ public class SpringContexts {
         applicationContext = new AnnotationConfigWebApplicationContext();
         applicationContext.setParent(rootContext);
         applicationContext.registerShutdownHook();
-
+        applicationContext.register(CommonAnnotationBeanPostProcessor.class);
         // We don't need to register @Configuration classes here because they're loaded in SpringContexts.newUpgradeDispatcherServlet(...)
     }
 

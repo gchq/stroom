@@ -358,6 +358,44 @@
             <property name="editable" value="true"/>
         </bean>
 
+
+        <!-- INDEX WRITER CACHE PROPERTIES -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.index.writer.cache.timeToLive"/>
+            <property name="value" value=""/>
+            <property name="description"
+                      value="How long a cache item can live before it is removed from the cache during a sweep"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.index.writer.cache.timeToIdle"/>
+            <property name="value" value="10m"/>
+            <property name="description"
+                      value="How long a cache item can idle before it is removed from the cache during a sweep"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.index.writer.cache.minItems"/>
+            <property name="value" value="0"/>
+            <property name="description"
+                      value="The minimum number of items that will be left in the cache after a sweep"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.index.writer.cache.coreItems"/>
+            <property name="value" value="50"/>
+            <property name="description"
+                      value="The number of items that we hope to keep in the cache if items aren't removed due to TTL or TTI constraints"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.index.writer.cache.maxItems"/>
+            <property name="value" value="100"/>
+            <property name="description"
+                      value="The maximum number of items that can be kept in the cache. LRU items are removed to ensure we do not exceed this amount"/>
+            <property name="editable" value="true"/>
+        </bean>
+
         <!-- QUERY HISTORY PROPERTIES -->
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.query.history.itemsRetention"/>
@@ -437,10 +475,17 @@
             <property name="editable" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.search.maxResults"/>
+            <property name="name" value="stroom.search.storeSize"/>
             <property name="value" value="1000000,100,10,1"/>
             <property name="description"
                       value="The maximum number of search results to keep in memory at each level."/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.dashboard.defaultMaxResults"/>
+            <property name="value" value="1000000,100,10,1"/>
+            <property name="description"
+                      value="The default maximum number of search results to return to the dashboard, unless the user requests lower values"/>
             <property name="editable" value="true"/>
         </bean>
 
@@ -928,7 +973,7 @@
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.services.stroomStats.version"/>
-            <property name="value" value="1"/>
+            <property name="value" value="2"/>
             <property name="description"
                       value="The version of the stroom-stats service" />
             <property name="editable" value="true"/>
@@ -992,7 +1037,7 @@
 
 
 
-        <!-- Service discovery properties -->
+        <!-- Kafka properties -->
         <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~START~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.kafka.bootstrap.servers"/>
@@ -1003,16 +1048,36 @@
             <property name="requireUiRestart" value="true"/>
         </bean>
 
+
         <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
         <!-- Service discovery properties -->
         <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~START~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
         <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.serviceDiscovery.enabled"/>
+            <property name="value" value="true"/>
+            <property name="description"
+                      value="Set this to true to use Zookeeper for service discovery. Set this to false to use resolve all services locally, i.e. 127.0.0.1"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
+        </bean>
+
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.serviceDiscovery.simpleLookup.basePath"/>
+            <property name="value" value="http://127.0.0.1:8080"/>
+            <property name="description"
+                      value="The base path to connect to local services on, when not using service discovery"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
+        </bean>
+
+
+        <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.serviceDiscovery.zookeeperUrl"/>
             <property name="value"
                       value="localhost:2181"/>
             <property name="description"
-                      value="The Zookeeper quorum connection string, required for service discovery" />
+                      value="The Zookeeper quorum connection string, required for service discovery, in the form 'host1:port1,host2:port2,host3:port3'. The root znode to use in Zookeeper is defined in the property stroom.serviceDiscovery.zookeeperBasePath" />
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -1084,7 +1149,7 @@
         <!-- Internal statistics definitions
              Each internal statistic can have multiple docRef definitions, one for each statistics engine,
              currently 'sql_statistics' and 'stroom-stats'
-             Valid values for docRef.type are 'StatisticsStore' and 'StroomStatsStore'
+             Valid values for docRef.type are 'StatisticStore' and 'StroomStatsStore'
              The name and uuid so match those defined for the statistic in stroom-content
              If an internal statistic docRefs property has an empty value then the statistic events will be silently
              ignored.
@@ -1093,7 +1158,7 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.internalstatistics.benchmarkCluster.docRefs"/>
             <property name="value"
-                      value="docRef(StatisticsStore,946a88c6-a59a-11e6-bdc4-0242ac110002,Benchmark-Cluster Test),docRef(StroomStatsStore,2503f703-5ce0-4432-b9d4-e3272178f47e,Benchmark-Cluster Test)"/>
+                      value="docRef(StatisticStore,946a88c6-a59a-11e6-bdc4-0242ac110002,Benchmark-Cluster Test),docRef(StroomStatsStore,2503f703-5ce0-4432-b9d4-e3272178f47e,Benchmark-Cluster Test)"/>
             <property name="description"
                       value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
             <property name="editable" value="true"/>
@@ -1103,7 +1168,7 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.internalstatistics.pipelineStreamProcessor.docRefs"/>
             <property name="value"
-                      value="docRef(StatisticsStore,946a80fc-a59a-11e6-bdc4-0242ac110002,PipelineStreamProcessor),docRef(StroomStatsStore,efd9bad4-0bab-460f-ae98-79e9717deeaf,PipelineStreamProcessor)"/>
+                      value="docRef(StatisticStore,946a80fc-a59a-11e6-bdc4-0242ac110002,PipelineStreamProcessor),docRef(StroomStatsStore,efd9bad4-0bab-460f-ae98-79e9717deeaf,PipelineStreamProcessor)"/>
             <property name="description"
                       value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
             <property name="editable" value="true"/>
@@ -1113,7 +1178,7 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.internalstatistics.metaDataStreamSize.docRefs"/>
             <property name="value"
-                      value="docRef(StatisticsStore,946a8814-a59a-11e6-bdc4-0242ac110002,Meta Data-Stream Size),docRef(StroomStatsStore,3b25d63b-5472-44d0-80e8-8eea94f40f14,Meta Data-Stream Size)"/>
+                      value="docRef(StatisticStore,946a8814-a59a-11e6-bdc4-0242ac110002,Meta Data-Stream Size),docRef(StroomStatsStore,3b25d63b-5472-44d0-80e8-8eea94f40f14,Meta Data-Stream Size)"/>
             <property name="description"
                       value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
             <property name="editable" value="true"/>
@@ -1123,7 +1188,7 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.internalstatistics.eventsPerSecond.docRefs"/>
             <property name="value"
-                      value="docRef(StatisticsStore,a9936548-2572-448b-9d5b-8543052c4d92,EPS),docRef(StroomStatsStore,cde67df0-0f77-45d3-b2c0-ee8bb7b3c9c6,EPS)"/>
+                      value="docRef(StatisticStore,a9936548-2572-448b-9d5b-8543052c4d92,EPS),docRef(StroomStatsStore,cde67df0-0f77-45d3-b2c0-ee8bb7b3c9c6,EPS)"/>
             <property name="description"
                       value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
             <property name="editable" value="true"/>
@@ -1133,7 +1198,7 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.internalstatistics.cpu.docRefs"/>
             <property name="value"
-                      value="docRef(StatisticsStore,af08c4a7-ee7c-44e4-8f5e-e9c6be280434,CPU),docRef(StroomStatsStore,1edfd582-5e60-413a-b91c-151bd544da47,CPU)"/>
+                      value="docRef(StatisticStore,af08c4a7-ee7c-44e4-8f5e-e9c6be280434,CPU),docRef(StroomStatsStore,1edfd582-5e60-413a-b91c-151bd544da47,CPU)"/>
             <property name="description"
                       value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
             <property name="editable" value="true"/>
@@ -1143,7 +1208,7 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.internalstatistics.metaDataStreamsReceived.docRefs"/>
             <property name="value"
-                      value="docRef(StatisticsStore,946a87bc-a59a-11e6-bdc4-0242ac110002,Meta Data-Streams Received),docRef(StroomStatsStore,5535f493-29ae-4ee6-bba6-735aa3104136,Meta Data-Streams Received)"/>
+                      value="docRef(StatisticStore,946a87bc-a59a-11e6-bdc4-0242ac110002,Meta Data-Streams Received),docRef(StroomStatsStore,5535f493-29ae-4ee6-bba6-735aa3104136,Meta Data-Streams Received)"/>
             <property name="description"
                       value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
             <property name="editable" value="true"/>
@@ -1153,7 +1218,7 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.internalstatistics.streamTaskQueueSize.docRefs"/>
             <property name="value"
-                      value="docRef(StatisticsStore,946a7f0f-a59a-11e6-bdc4-0242ac110002,Stream Task Queue Size),docRef(StroomStatsStore,4ce8d6e7-94be-40e1-8294-bf29dd089962,Stream Task Queue Size)"/>
+                      value="docRef(StatisticStore,946a7f0f-a59a-11e6-bdc4-0242ac110002,Stream Task Queue Size),docRef(StroomStatsStore,4ce8d6e7-94be-40e1-8294-bf29dd089962,Stream Task Queue Size)"/>
             <property name="description"
                       value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
             <property name="editable" value="true"/>
@@ -1163,7 +1228,7 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.internalstatistics.volumes.docRefs"/>
             <property name="value"
-                      value="docRef(StatisticsStore,ac4d8d10-6f75-4946-9708-18b8cb42a5a3,Volumes),docRef(StroomStatsStore,60f4f5f0-4cc3-42d6-8fe7-21a7cec30f8e,Volumes)"/>
+                      value="docRef(StatisticStore,ac4d8d10-6f75-4946-9708-18b8cb42a5a3,Volumes),docRef(StroomStatsStore,60f4f5f0-4cc3-42d6-8fe7-21a7cec30f8e,Volumes)"/>
             <property name="description"
                       value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
             <property name="editable" value="true"/>
@@ -1173,7 +1238,7 @@
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.internalstatistics.memory.docRefs"/>
             <property name="value"
-                      value="docRef(StatisticsStore,77c09ccb-e251-4ca5-bca0-56a842654397,Memory),docRef(StroomStatsStore,d8a7da4f-ef6d-47e0-b16a-af26367a2798,Memory)"/>
+                      value="docRef(StatisticStore,77c09ccb-e251-4ca5-bca0-56a842654397,Memory),docRef(StroomStatsStore,d8a7da4f-ef6d-47e0-b16a-af26367a2798,Memory)"/>
             <property name="description"
                       value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),...'" />
             <property name="editable" value="true"/>

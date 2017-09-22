@@ -33,8 +33,8 @@ import stroom.datasource.DataSourceProviderRegistry;
 import stroom.dictionary.server.DictionaryService;
 import stroom.entity.server.QueryDataLogUtil;
 import stroom.logging.StroomEventLoggingService;
-import stroom.query.api.v1.DocRef;
-import stroom.query.api.v1.ExpressionOperator;
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.Insecure;
 
 import javax.annotation.Resource;

@@ -17,7 +17,6 @@
 
 package stroom.pipeline.server.util;
 
-import stroom.cache.server.ParserFactoryPool;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.TextConverterService;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
@@ -27,21 +26,20 @@ import stroom.pipeline.server.factory.SimpleProcessorFactory;
 import stroom.pipeline.server.factory.Target;
 import stroom.pipeline.server.filter.XMLFilter;
 import stroom.pipeline.server.parser.AbstractParser;
-import stroom.pipeline.server.parser.CombinedParser;
 import stroom.pipeline.server.parser.XMLParser;
 
 import java.io.InputStream;
 import java.util.List;
 
 public class ProcessorUtil {
-    public static void processCombined(final InputStream inputStream, final ErrorReceiverProxy errorReceiverProxy,
-                                       final XMLFilter filter, final LocationFactoryProxy locationFactory,
-                                       final ParserFactoryPool parserFactoryPool, final TextConverterService textConverterService) {
-        final CombinedParser parser = new CombinedParser(errorReceiverProxy, locationFactory, parserFactoryPool,
-                textConverterService);
-        doProcess(filter, inputStream, errorReceiverProxy, parser);
-
-    }
+//    public static void processCombined(final InputStream inputStream, final ErrorReceiverProxy errorReceiverProxy,
+//            final XMLFilter filter, final LocationFactoryProxy locationFactory,
+//            final ParserFactoryPool parserFactoryPool, final TextConverterService textConverterService) {
+//        final CombinedParser parser = new CombinedParser(errorReceiverProxy, locationFactory, parserFactoryPool,
+//                textConverterService);
+//        doProcess(filter, inputStream, errorReceiverProxy, parser);
+//
+//    }
 
     public static void processXml(final InputStream inputStream, final ErrorReceiverProxy errorReceiverProxy,
                                   final XMLFilter filter, final LocationFactoryProxy locationFactory) {

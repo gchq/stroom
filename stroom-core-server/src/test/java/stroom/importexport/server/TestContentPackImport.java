@@ -37,7 +37,6 @@ import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 import stroom.util.test.StroomExpectedException;
 import stroom.util.test.StroomJUnit4ClassRunner;
-import stroom.util.test.StroomTestUtil;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -75,10 +74,24 @@ public class TestContentPackImport {
         String userHome = System.getProperty("user.home");
         Path contentPackDir = Paths.get(userHome, StroomProperties.USER_CONF_DIR).resolve(ContentPackImport.CONTENT_PACK_IMPORT_DIR);
         Files.createDirectories(contentPackDir);
+        Files.list(contentPackDir)
+                .filter(Files::isRegularFile)
+                .forEach(path -> {
+                    try {
+                        Files.deleteIfExists(path);
+                    } catch (IOException e) {
+                        throw new RuntimeException(String.format("Error deleting files from {}",
+                                contentPackDir.toAbsolutePath().toString()), e);
+                    }
+                });
     }
 
     @After
     public void teardown() throws IOException {
+        deleteTestFiles();
+    }
+
+    private void deleteTestFiles() throws IOException {
         Files.deleteIfExists(testPack1);
         Files.deleteIfExists(testPack2);
         Files.deleteIfExists(testPack3);

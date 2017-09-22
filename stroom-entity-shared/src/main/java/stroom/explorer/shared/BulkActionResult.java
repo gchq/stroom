@@ -17,7 +17,7 @@
 
 package stroom.explorer.shared;
 
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.util.shared.SharedObject;
 
 import java.util.List;

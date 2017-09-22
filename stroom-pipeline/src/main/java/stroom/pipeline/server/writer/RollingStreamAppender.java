@@ -28,7 +28,6 @@ import stroom.pipeline.destination.RollingStreamDestination;
 import stroom.pipeline.destination.StreamKey;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.PipelineFactoryException;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -39,7 +38,6 @@ import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.StreamTypeService;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
@@ -54,12 +52,6 @@ import java.io.IOException;
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_DESTINATION,
         PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
 public class RollingStreamAppender extends AbstractRollingAppender implements RollingDestinationFactory {
-    private static final int MB = 1024 * 1024;
-    private static final int DEFAULT_MAX_SIZE = 100 * MB;
-
-    private static final int SECOND = 1000;
-    private static final int MINUTE = 60 * SECOND;
-    private static final int HOUR = 60 * MINUTE;
 
     private final StreamStore streamStore;
     private final StreamHolder streamHolder;
@@ -70,10 +62,6 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     private Feed feed;
     private String streamType;
     private boolean segmentOutput = true;
-    private long frequency = HOUR;
-    private long maxSize = DEFAULT_MAX_SIZE;
-
-    private boolean validatedSettings;
 
     private StreamKey key;
 
@@ -103,8 +91,13 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
 
         final String nodeName = nodeCache.getDefaultNode().getName();
         final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
-        return new RollingStreamDestination(key, frequency, maxSize, streamStore,
-                streamTarget, nodeName, System.currentTimeMillis());
+        return new RollingStreamDestination(key,
+                getFrequency(),
+                getMaxSize(),
+                System.currentTimeMillis(),
+                streamStore,
+                streamTarget,
+                nodeName);
     }
 
     @Override
@@ -117,26 +110,14 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     }
 
     @Override
-    void validateSettings() {
-        if (!validatedSettings) {
-            validatedSettings = true;
+    void validateSpecificSettings() {
+        if (feed == null) {
+            // Use current feed if none other has been specified.
+            feed = feedService.load(streamHolder.getStream().getFeed());
+        }
 
-            if (feed == null) {
-                // Use current feed if none other has been specified.
-                feed = feedService.load(streamHolder.getStream().getFeed());
-            }
-
-            if (streamType == null) {
-                throw new ProcessException("Stream type not specified");
-            }
-
-            if (frequency <= 0) {
-                throw new ProcessException("Rolling frequency must be greater than 0");
-            }
-
-            if (maxSize <= 0) {
-                throw new ProcessException("Max size must be greater than 0");
-            }
+        if (streamType == null) {
+            throw new ProcessException("Stream type not specified");
         }
     }
 
@@ -153,37 +134,5 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     @PipelineProperty(description = "Shoud the output stream be marked with indexed segments to allow fast access to individual records?", defaultValue = "true")
     public void setSegmentOutput(final boolean segmentOutput) {
         this.segmentOutput = segmentOutput;
-    }
-
-    @PipelineProperty(description = "Choose how frequently streams are rolled.", defaultValue = "1h")
-    public void setFrequency(final String frequency) {
-        if (frequency != null && frequency.trim().length() > 0) {
-            try {
-                final Long value = ModelStringUtil.parseDurationString(frequency);
-                if (value == null) {
-                    throw new PipelineFactoryException("Incorrect value for frequency: " + frequency);
-                }
-
-                this.frequency = value;
-            } catch (final NumberFormatException e) {
-                throw new PipelineFactoryException("Incorrect value for frequency: " + frequency);
-            }
-        }
-    }
-
-    @PipelineProperty(description = "Choose the maximum size that a stream can be before it is rolled.", defaultValue = "100M")
-    public void setMaxSize(final String maxSize) {
-        if (maxSize != null && maxSize.trim().length() > 0) {
-            try {
-                final Long value = ModelStringUtil.parseIECByteSizeString(maxSize);
-                if (value == null) {
-                    throw new PipelineFactoryException("Incorrect value for max size: " + maxSize);
-                }
-
-                this.maxSize = value;
-            } catch (final NumberFormatException e) {
-                throw new PipelineFactoryException("Incorrect value for max size: " + maxSize);
-            }
-        }
     }
 }

@@ -38,12 +38,7 @@ public class MonitorInfoUtil {
         // Build a tree map.
         final Map<Monitor, List<Monitor>> map = new HashMap<>();
         for (final Monitor monitor : monitors) {
-            List<Monitor> children = map.get(monitor.getParent());
-            if (children == null) {
-                children = new ArrayList<>();
-                map.put(monitor.getParent(), children);
-            }
-            children.add(monitor);
+            map.computeIfAbsent(monitor.getParent(), k -> new ArrayList<>()).add(monitor);
             allMonitors.add(monitor);
         }
 

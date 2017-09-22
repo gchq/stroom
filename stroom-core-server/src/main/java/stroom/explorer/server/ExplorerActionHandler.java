@@ -17,7 +17,7 @@
 
 package stroom.explorer.server;
 
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 /**
  * This interface is intended to be used by the explorer for document store operations that need not know much about the

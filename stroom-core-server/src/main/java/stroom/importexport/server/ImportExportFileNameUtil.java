@@ -1,6 +1,6 @@
 package stroom.importexport.server;
 
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 public final class ImportExportFileNameUtil {
     private ImportExportFileNameUtil() {

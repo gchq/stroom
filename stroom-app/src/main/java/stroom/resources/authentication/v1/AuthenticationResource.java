@@ -68,6 +68,8 @@ public class AuthenticationResource implements NamedResource {
 
                 String token = jwtService.getTokenFor(credentials.get().getUsername());
 
+
+
                 return Response
                         .ok(token, MediaType.TEXT_PLAIN)
                         .build();

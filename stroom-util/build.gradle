@@ -6,7 +6,11 @@ dependencies {
     compile libs.commons_lang
     compile libs.ehcache_core
     compile libs.guava
+    compile libs.jackson_annotations
+    compile libs.jackson_core
+    compile libs.jackson_databind
     compile libs.javax_servlet_api
+    compile libs.javax_inject
     compile libs.slf4j_api
     compile libs.spring_aop
     compile libs.spring_beans

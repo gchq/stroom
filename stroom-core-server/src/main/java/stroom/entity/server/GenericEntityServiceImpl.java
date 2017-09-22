@@ -25,7 +25,7 @@ import stroom.entity.shared.Entity;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.HasLoadById;
 import stroom.entity.shared.HasLoadByUuid;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 import javax.inject.Inject;
 import java.util.HashSet;

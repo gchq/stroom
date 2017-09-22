@@ -10,6 +10,11 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+/**
+ * Class to present all the defined log levels as a health check so you can view all log levels as
+ * they are at run time. Log levels can be changed using 'httpie' like this:
+ * http -f POST http://127.0.0.1:8080/admin/tasks/log-level logger=stroom.statistics.internal.MultiServiceInternalStatisticsReceiver level=TRACE
+ */
 public enum LogLevelInspector implements HasHealthCheck {
 
     INSTANCE;

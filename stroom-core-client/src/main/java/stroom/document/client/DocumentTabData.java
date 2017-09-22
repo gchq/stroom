@@ -17,7 +17,7 @@
 
 package stroom.document.client;
 
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.util.shared.HasType;
 import stroom.widget.tab.client.presenter.TabData;
 

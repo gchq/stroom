@@ -2,7 +2,7 @@ package stroom.importexport.server;
 
 import stroom.entity.shared.ImportState;
 import stroom.entity.shared.ImportState.ImportMode;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.util.shared.Message;
 
 import java.util.List;

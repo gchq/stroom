@@ -19,12 +19,12 @@ package stroom.ruleset.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.datasource.api.v1.DataSourceField;
+import stroom.datasource.api.v2.DataSourceField;
 import stroom.dictionary.server.DictionaryService;
 import stroom.feed.MetaMap;
-import stroom.query.api.v1.ExpressionItem;
-import stroom.query.api.v1.ExpressionOperator;
-import stroom.query.api.v1.ExpressionTerm;
+import stroom.query.api.v2.ExpressionItem;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.ruleset.shared.DataReceiptAction;
 import stroom.ruleset.shared.Rule;
 import stroom.ruleset.shared.RuleSet;

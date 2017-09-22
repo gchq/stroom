@@ -19,10 +19,10 @@ package stroom.streamstore.server;
 
 import org.junit.Test;
 import stroom.entity.server.util.XMLMarshallerUtil;
-import stroom.query.api.v1.ExpressionBuilder;
-import stroom.query.api.v1.ExpressionOperator;
-import stroom.query.api.v1.ExpressionOperator.Op;
-import stroom.query.api.v1.ExpressionTerm.Condition;
+import stroom.query.api.v2.ExpressionBuilder;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.streamstore.shared.TimeUnit;

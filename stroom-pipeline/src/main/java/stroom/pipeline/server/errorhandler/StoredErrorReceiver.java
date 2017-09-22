@@ -89,4 +89,8 @@ public class StoredErrorReceiver implements ErrorReceiver {
     public long getTotalErrors() {
         return totalErrors;
     }
+
+    public List<StoredError> getList() {
+        return list;
+    }
 }

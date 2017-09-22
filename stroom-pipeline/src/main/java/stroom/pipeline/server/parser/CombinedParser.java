@@ -42,6 +42,7 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pool.PoolItem;
 import stroom.resource.server.BOMRemovalInputStream;
+import stroom.security.SecurityContext;
 import stroom.util.io.StreamUtil;
 import stroom.util.spring.StroomScope;
 import stroom.util.xml.SAXParserFactoryFactory;
@@ -74,6 +75,8 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
 
     private final ParserFactoryPool parserFactoryPool;
     private final TextConverterService textConverterService;
+    private final SecurityContext securityContext;
+
     private String type;
     private boolean fixInvalidChars = false;
     private String injectedCode;
@@ -82,11 +85,15 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
     private PoolItem<VersionedEntityDecorator<TextConverter>, StoredParserFactory> poolItem;
 
     @Inject
-    public CombinedParser(final ErrorReceiverProxy errorReceiverProxy, final LocationFactoryProxy locationFactory,
-                          final ParserFactoryPool parserFactoryPool, final TextConverterService textConverterService) {
+    public CombinedParser(final ErrorReceiverProxy errorReceiverProxy,
+                          final LocationFactoryProxy locationFactory,
+                          final ParserFactoryPool parserFactoryPool,
+                          final TextConverterService textConverterService,
+                          final SecurityContext securityContext) {
         super(errorReceiverProxy, locationFactory);
         this.parserFactoryPool = parserFactoryPool;
         this.textConverterService = textConverterService;
+        this.securityContext = securityContext;
     }
 
     @Override
@@ -163,7 +170,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
         }
 
         /// Get a text converter generated parser from the pool.
-        poolItem = parserFactoryPool.borrowObject(new VersionedEntityDecorator<>(tc), usePool);
+        poolItem = parserFactoryPool.borrowObject(new VersionedEntityDecorator<>(tc, getUser()), usePool);
         final StoredParserFactory storedParserFactory = poolItem.getValue();
         final StoredErrorReceiver storedErrorReceiver = storedParserFactory.getErrorReceiver();
         final ParserFactory parserFactory = storedParserFactory.getParserFactory();
@@ -175,6 +182,13 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
         }
 
         return null;
+    }
+
+    private String getUser() {
+        if (securityContext == null) {
+            return null;
+        }
+        return securityContext.getUserId();
     }
 
     @Override

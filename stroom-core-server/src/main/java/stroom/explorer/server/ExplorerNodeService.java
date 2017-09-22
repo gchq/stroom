@@ -19,7 +19,7 @@ package stroom.explorer.server;
 
 import stroom.entity.shared.PermissionInheritance;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 import java.util.List;
 

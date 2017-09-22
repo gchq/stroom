@@ -17,7 +17,7 @@
 package stroom.explorer.shared;
 
 import stroom.entity.shared.HasUuid;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.util.shared.HasDisplayValue;
 import stroom.util.shared.HasNodeState;
 import stroom.util.shared.HasType;

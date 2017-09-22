@@ -19,7 +19,7 @@ package stroom.explorer.server;
 import org.springframework.stereotype.Component;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.security.Insecure;
 import stroom.util.task.TaskScopeRunnable;
 

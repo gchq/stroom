@@ -28,7 +28,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionException;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.security.server.exception.AuthenticationServiceException;

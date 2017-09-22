@@ -17,7 +17,7 @@
 
 package stroom.ruleset.shared;
 
-import stroom.query.api.v1.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;

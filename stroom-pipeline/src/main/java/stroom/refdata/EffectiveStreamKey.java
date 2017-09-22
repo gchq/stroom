@@ -16,7 +16,7 @@
 
 package stroom.refdata;
 
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 
@@ -24,17 +24,21 @@ public class EffectiveStreamKey {
     private final DocRef feed;
     private final String streamType;
     private final long effectiveMs;
+    private final String user;
+
     private final int hashCode;
 
-    public EffectiveStreamKey(final DocRef feed, final String streamType, final long effectiveMs) {
+    public EffectiveStreamKey(final DocRef feed, final String streamType, final long effectiveMs, final String user) {
         this.feed = feed;
         this.streamType = streamType;
         this.effectiveMs = effectiveMs;
+        this.user = user;
 
         final HashCodeBuilder builder = new HashCodeBuilder();
         builder.append(feed);
         builder.append(streamType);
         builder.append(effectiveMs);
+        builder.append(user);
         hashCode = builder.toHashCode();
     }
 
@@ -64,11 +68,12 @@ public class EffectiveStreamKey {
             return false;
         }
 
-        final EffectiveStreamKey effectiveTimeKey = (EffectiveStreamKey) o;
+        final EffectiveStreamKey effectiveStreamKey = (EffectiveStreamKey) o;
         final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(feed, effectiveTimeKey.feed);
-        builder.append(streamType, effectiveTimeKey.streamType);
-        builder.append(effectiveMs, effectiveTimeKey.effectiveMs);
+        builder.append(feed, effectiveStreamKey.feed);
+        builder.append(streamType, effectiveStreamKey.streamType);
+        builder.append(effectiveMs, effectiveStreamKey.effectiveMs);
+        builder.append(user, effectiveStreamKey.user);
         return builder.isEquals();
     }
 

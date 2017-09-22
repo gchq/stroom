@@ -47,15 +47,9 @@ import java.util.concurrent.atomic.AtomicLong;
 @RunWith(MockitoJUnitRunner.class)
 public class TestIndexShardPoolImpl extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestIndexShardPoolImpl.class);
-    static AtomicLong indexShardId = new AtomicLong(0);
-    AtomicInteger indexShardsCreated = new AtomicInteger(0);
-    AtomicInteger failedThreads = new AtomicInteger(0);
+
     @Mock
     private NodeCache nodeCache;
-
-    public static int getRandomNumber(final int size) {
-        return (int) Math.floor((Math.random() * size));
-    }
 
     @Before
     public void init() {
@@ -91,6 +85,14 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
         final int size = indexShardsCreated.get();
 
         Assert.assertTrue("Expected 20 to 22 but was " + size, size >= 20 && size <= 22);
+    }
+
+    static AtomicLong indexShardId = new AtomicLong(0);
+    AtomicInteger indexShardsCreated = new AtomicInteger(0);
+    AtomicInteger failedThreads = new AtomicInteger(0);
+
+    public static int getRandomNumber(final int size) {
+        return (int) Math.floor((Math.random() * size));
     }
 
     private void doTest(final int threadSize, final int jobSize, final int numberOfIndexes,
@@ -136,37 +138,58 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
         // }
         // });
 
-        try {
-            final IndexShardKeyCache indexShardKeyCache = new MockIndexShardKeyCache(mockIndexShardService);
-            final IndexShardWriterCache indexShardWriterCache = new MockIndexShardWriterCache(maxDocumentsPerIndexShard);
-            final Indexer indexer = new IndexerImpl(indexShardKeyCache, indexShardWriterCache, null);
+//        try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
+//            final IndexShardManagerImpl indexShardManager = new IndexShardManagerImpl(mockIndexShardService, cacheManager, null, null,
+//                    mockIndexShardService, nodeCache, null) {
+//                @Override
+//                protected void destroy(final IndexShardKey key, final IndexShardWriter writer) {
+//                    // // checkedLimit.decrement();
+//                    // synchronized (closedSet) {
+//                    // if (writer != null) {
+//                    // if (closedSet.contains(writer.getIndexShard())) {
+//                    // throw new RuntimeException("Closed already called on this
+//                    // item?");
+//                    // }
+//                    // closedSet.add(writer.getIndexShard());
+//                    // }
+//                    // }
+//                    super.destroy(key, writer);
+//                    if (writer != null && IndexShardStatus.OPEN.equals(writer.getStatus())) {
+//                        throw new RuntimeException("Writer should have been closed on destroy!");
+//                    }
+//                }
+//            };
 
-            indexShardsCreated.set(0);
-            failedThreads.set(0);
+        final IndexShardWriterCache indexShardWriterCache = new MockIndexShardWriterCache(mockIndexShardService, maxDocumentsPerIndexShard);
+        final Indexer indexer = new IndexerImpl(indexShardWriterCache, null);
 
-            final SimpleExecutor simpleExecutor = new SimpleExecutor(threadSize);
+        indexShardsCreated.set(0);
+        failedThreads.set(0);
 
-            for (int i = 0; i < numberOfIndexes; i++) {
-                final Index index = new Index();
-                index.setName("Index " + i);
-                index.setIndexFieldsObject(indexFields);
-                index.setMaxDocsPerShard(maxDocumentsPerIndexShard);
-                index.setShardsPerPartition(shardsPerPartition);
+        final SimpleExecutor simpleExecutor = new SimpleExecutor(threadSize);
 
-                for (int j = 0; j < jobSize; j++) {
-                    final int testNumber = i;
-                    final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
-                    simpleExecutor.execute(new IndexThread(indexer, indexShardKey, indexField, testNumber));
-                }
+        for (int i = 0; i < numberOfIndexes; i++) {
+            final Index index = new Index();
+            index.setName("Index " + i);
+            index.setIndexFieldsObject(indexFields);
+            index.setMaxDocsPerShard(maxDocumentsPerIndexShard);
+            index.setShardsPerPartition(shardsPerPartition);
+
+            for (int j = 0; j < jobSize; j++) {
+                final int testNumber = i;
+                final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
+                simpleExecutor.execute(new IndexThread(indexer, indexShardKey, indexField, testNumber));
             }
-
-            simpleExecutor.waitForComplete();
-            simpleExecutor.stop(false);
-
-            Assert.assertEquals("Not expecting any errored threads", 0, failedThreads.get());
-        } catch (final Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
         }
+
+        simpleExecutor.waitForComplete();
+        simpleExecutor.stop(false);
+//            indexShardManager.shutdown();
+
+        Assert.assertEquals("Not expecting any errored threads", 0, failedThreads.get());
+//        } catch (final Exception e) {
+//            throw new RuntimeException(e.getMessage(), e);
+//        }
     }
 
     class IndexThread extends Thread {
@@ -192,6 +215,12 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
                 document.add(field);
 
                 indexer.addDocument(indexShardKey, document);
+
+//                // Delay returning the writer to the pool.
+//                ThreadUtil.sleep(1);
+
+                // // Return the writer to the pool.
+                // indexShardManager.returnObject(poolItem, true);
 
             } catch (final Throwable th) {
                 LOGGER.error("TEST ERROR " + testNumber, th);

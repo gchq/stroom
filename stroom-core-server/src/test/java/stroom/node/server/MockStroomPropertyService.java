@@ -26,6 +26,7 @@ import java.util.Map;
 
 public class MockStroomPropertyService extends PropertyPlaceholderConfigurer
         implements StroomPropertyService, PropertyProvider {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(MockStroomPropertyService.class);
 
     private final Map<String, String> properties = new HashMap<>();

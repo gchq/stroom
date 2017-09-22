@@ -16,9 +16,10 @@
 
 package stroom.search.server.shard;
 
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.SearcherFactory;
+import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
 import org.apache.lucene.store.NoLockFactory;
@@ -33,8 +34,6 @@ import stroom.util.io.FileUtil;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class IndexShardSearcherImpl implements IndexShardSearcher {
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardSearcherImpl.class);
@@ -46,10 +45,7 @@ public class IndexShardSearcherImpl implements IndexShardSearcher {
      */
     private final Directory directory;
     private final IndexWriter indexWriter;
-    private final IndexReader indexReader;
-
-    private final AtomicInteger inUse = new AtomicInteger();
-    private final AtomicBoolean destroy = new AtomicBoolean();
+    private final SearcherManager searcherManager;
 
     public IndexShardSearcherImpl(final IndexShard indexShard) {
         this(indexShard, null);
@@ -60,7 +56,7 @@ public class IndexShardSearcherImpl implements IndexShardSearcher {
         this.indexWriter = indexWriter;
 
         Directory directory = null;
-        IndexReader indexReader = null;
+        SearcherManager searcherManager = null;
 
         try {
             // First try and open the reader with the current writer if one is in
@@ -68,7 +64,7 @@ public class IndexShardSearcherImpl implements IndexShardSearcher {
             // able to search documents that have not yet been flushed to disk.
             if (indexWriter != null) {
                 try {
-                    indexReader = openWithWriter(indexWriter);
+                    searcherManager = openWithWriter(indexWriter);
                 } catch (final Exception e) {
                     LOGGER.error(e.getMessage());
                 }
@@ -76,7 +72,7 @@ public class IndexShardSearcherImpl implements IndexShardSearcher {
 
             // If we failed to open a reader with an existing writer then just try
             // and use the index shard directory.
-            if (indexReader == null) {
+            if (searcherManager == null) {
                 final Path dir = IndexShardUtil.getIndexPath(indexShard);
 
                 if (!Files.isDirectory(dir)) {
@@ -84,22 +80,28 @@ public class IndexShardSearcherImpl implements IndexShardSearcher {
                 }
 
                 directory = new NIOFSDirectory(dir, NoLockFactory.INSTANCE);
-                indexReader = DirectoryReader.open(directory);
+//                indexReader = DirectoryReader.open(directory);
+                searcherManager = new SearcherManager(directory, new SearcherFactory());
 
                 // Check the document count in the index matches the DB.
-                final int actualDocumentCount = indexReader.numDocs();
-                if (indexShard.getDocumentCount() != actualDocumentCount) {
-                    // We should only worry about document mismatch if the shard
-                    // is closed. However the shard
-                    // may still have been written to since we got this
-                    // reference.
-                    if (IndexShardStatus.CLOSED.equals(indexShard.getStatus())) {
-                        LOGGER.warn("open() - Mismatch document count.  Index says " + actualDocumentCount + " DB says "
-                                + indexShard.getDocumentCount());
-                    } else if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("open() - Mismatch document count.  Index says " + actualDocumentCount
-                                + " DB says " + indexShard.getDocumentCount());
+                IndexSearcher indexSearcher = searcherManager.acquire();
+                try {
+                    final int actualDocumentCount = indexSearcher.getIndexReader().numDocs();
+                    if (indexShard.getDocumentCount() != actualDocumentCount) {
+                        // We should only worry about document mismatch if the shard
+                        // is closed. However the shard
+                        // may still have been written to since we got this
+                        // reference.
+                        if (IndexShardStatus.CLOSED.equals(indexShard.getStatus())) {
+                            LOGGER.warn("open() - Mismatch document count.  Index says " + actualDocumentCount + " DB says "
+                                    + indexShard.getDocumentCount());
+                        } else if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("open() - Mismatch document count.  Index says " + actualDocumentCount
+                                    + " DB says " + indexShard.getDocumentCount());
+                        }
                     }
+                } finally {
+                    searcherManager.release(indexSearcher);
                 }
             }
         } catch (final IOException e) {
@@ -107,56 +109,49 @@ public class IndexShardSearcherImpl implements IndexShardSearcher {
         }
 
         this.directory = directory;
-        this.indexReader = indexReader;
+        this.searcherManager = searcherManager;
     }
 
     @Override
-    public IndexReader getReader() {
-        if (indexReader == null) {
-            throw new SearchException("Index is not open for searching");
-        }
-        return indexReader;
+    public SearcherManager getSearcherManager() {
+        return searcherManager;
     }
 
-    private IndexReader openWithWriter(final IndexWriter indexWriter) throws IOException {
-        final IndexReader indexReader = DirectoryReader.open(indexWriter, false);
+    private SearcherManager openWithWriter(final IndexWriter indexWriter) throws IOException {
+        final SearcherManager searcherManager = new SearcherManager(indexWriter, false, new SearcherFactory());
 
         // Check the document count in the index matches the DB. We are using
         // the writer so chances are there is a mismatch.
-        final int actualDocumentCount = indexReader.numDocs();
-        if (indexShard.getDocumentCount() != actualDocumentCount) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("openWithWriter() - Mismatch document count.  Index says " + actualDocumentCount
-                        + " DB says " + indexShard.getDocumentCount());
+        if (LOGGER.isDebugEnabled()) {
+            IndexSearcher indexSearcher = searcherManager.acquire();
+            try {
+                final int actualDocumentCount = indexSearcher.getIndexReader().numDocs();
+                if (indexShard.getDocumentCount() != actualDocumentCount) {
+                    LOGGER.debug("openWithWriter() - Mismatch document count.  Index says " + actualDocumentCount
+                            + " DB says " + indexShard.getDocumentCount());
+                }
+            } finally {
+                searcherManager.release(indexSearcher);
             }
         }
 
-        return indexReader;
+        return searcherManager;
     }
 
     @Override
     public synchronized void destroy() {
-        destroy.set(true);
-        if (inUse.compareAndSet(0, 0)) {
+        try {
             try {
-                try {
-                    if (indexReader != null) {
-                        indexReader.close();
-                    }
-                } finally {
-                    if (directory != null) {
-                        directory.close();
-                    }
+                searcherManager.close();
+            } finally {
+                if (directory != null) {
+                    directory.close();
                 }
-            } catch (final IOException e) {
-                LOGGER.error(e.getMessage(), e);
-                throw SearchException.wrap(e);
             }
+        } catch (final IOException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw SearchException.wrap(e);
         }
-    }
-
-    public boolean destroyed() {
-        return destroy.get();
     }
 
     @Override
@@ -174,21 +169,5 @@ public class IndexShardSearcherImpl implements IndexShardSearcher {
 
     public IndexWriter getWriter() {
         return indexWriter;
-    }
-
-    synchronized boolean incrementInUse() {
-        if (destroy.get()) {
-            return false;
-        }
-
-        inUse.incrementAndGet();
-        return true;
-    }
-
-    synchronized void decrementInUse() {
-        inUse.decrementAndGet();
-        if (destroy.get()) {
-            destroy();
-        }
     }
 }

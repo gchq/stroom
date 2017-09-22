@@ -6,17 +6,22 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath group: 'gchq', name: 'urlDependencyPlugin', version: 'v0.1'
+        classpath group: 'gchq', name: 'urlDependencyPlugin', version: 'v0.2.0'
         classpath group: 'ca.cutterslade.gradle', name: 'gradle-dependency-analyze', version: '1.1.0'
     }
 }
 
 plugins {
+    //plugin for downloading content from the 'net
     id "de.undercouch.download" version "3.2.0"
+
+    //plugin for producing a tree of task dependencies, run task 'taskTree'
+    id "com.dorongold.task-tree" version "1.3"
 }
 
 apply plugin: 'gchq.urldependencies'
 
+ext.stroomPluginsDir = System.getProperty("user.home") + "/.stroom/plugins"
 
 //if the project has a value for the passed property (i.e from the cmd line via -PpropName=xxx)
 //use that, else use a default value
@@ -37,8 +42,8 @@ ext.gwtCompilerProps = [
     minHeap: getPropertyOrDefault('gwtCompilerMinHeap', '50M'),
     maxHeap: getPropertyOrDefault('gwtCompilerMaxHeap', '500M'),
     workers: getPropertyOrDefault('gwtCompilerWorkers', '5'),
-    devModeMinHeap: '50M',
-    devModeMaxHeap: '1G'
+    devModeMinHeap: '1G',
+    devModeMaxHeap: '4G'
 ]
 
 //version numbers for libs that share version numbers, e.g. dropwizard-*, or for github repo release versions
@@ -47,28 +52,28 @@ ext.versions = [
     stroom: getPropertyOrDefault('version', 'SNAPSHOT'),
 
     //------Stroom-repos---------------
-    stroomProxyRepo: 'v5.1-beta.8',
     eventLogging: 'v3.1.0',
     hadoopCommonShaded: 'v2.6.4-3',
     hadoopHdfsShaded: 'v2.6.4',
-    stroomExpression: 'v0.1.0', //same version for both stroom-query-api and stroom-query-common
-    stroomQuery: 'v1.0.2', //same version for both stroom-query-api and stroom-query-common
-    stroomStats: 'v0.4.0-alpha',
+    stroomExpression: 'v1.0.0', 
+    stroomQuery: 'v2.0.0-alpha.3', //same version for both stroom-query-api and stroom-query-common
+    stroomStats: 'v0.5.0-alpha',
 
     //------------3rd-party------------
     curator: '2.12.0', //must be chosen to be compatible with the ZK version in CDH 5.10
-    dropwizard: '1.1.0', 
+    dropwizard: '1.1.0', //if you change this version you should check the versions below that need to move in sync with it
     dropwizard_metrics: '3.1.2', //should be kept in step with dropwizard
     gwt: '2.8.0',
     hibernate: '4.3.8.Final', //dropwiz 1.1.0 uses -validator 5.3.4.Final and -core 5.2.8.Final
     jackson: '2.8.6',
     jersey: '2.25.1',
-    jetty: '9.3.9.v20160517',
+    jetty: '9.4.2.v20170220', //in line with dropwizard 1.1.0
     logback: '1.2.1', //in line with dropwizard 1.1.0
     lucene: '5.5.3',
     shiro: '1.3.2',
     slf4j: '1.7.24', //in line with dropwizard 1.1.0
     spring: '4.3.4.RELEASE',
+    swagger: '1.5.16',
     zzDUMMYzz: 'makes sorting easier'
 ]
 
@@ -77,9 +82,9 @@ ext.urlLibs = [
     stroomQueryApi: "stroom-query-api-$versions.stroomQuery",
     stroomQueryApiSources: "stroom-query-api-$versions.stroomQuery-sources",
     stroomQueryCommon: "stroom-query-common-$versions.stroomQuery",
+    stroomQueryCommonSources: "stroom-query-common-$versions.stroomQuery-sources",
     stroomExpression: "stroom-expression-$versions.stroomExpression",
-    stroomStatsApi: "stroom-stats-api-$versions.stroomStats",
-    stroomProxyRepo: "stroom-proxy-repo-$versions.stroomProxyRepo",
+    stroomStatsSchema: "stroom-stats-schema-$versions.stroomStats",
     eventLogging: "event-logging-$versions.eventLogging",
     hadoopCommonShaded: "hadoop-common-shaded-$versions.hadoopCommonShaded-all",
     hadoopHdfsShaded: "hadoop-hdfs-shaded-$versions.hadoopHdfsShaded-all",
@@ -90,7 +95,6 @@ ext.urlLibs = [
 ext.libs = [
     aopalliance: "aopalliance:aopalliance:1.0",
     aspectjrt: "org.aspectj:aspectjrt:1.8.10",
-    aspectjweaver: "org.aspectj:aspectjweaver:1.8.10",
     assertj_core: "org.assertj:assertj-core:3.6.2",
     c3p0: "com.mchange:c3p0:0.9.5.2",
     commons_compress: "org.apache.commons:commons-compress:1.12",
@@ -123,7 +127,6 @@ ext.libs = [
     hamcrest_core: "org.hamcrest:hamcrest-core:1.3",
     hbase: "org.apache.hbase:hbase-common:1.2.1", //should be set to be consistent with CDH version
     hessian: "com.caucho:hessian:4.0.38",
-    hibernate_annotations: "org.hibernate:hibernate-annotations:3.5.6-Final" /* LATEST 5.2.5.Final */,
     hibernate_core: "org.hibernate:hibernate-core:$versions.hibernate" /* LATEST 5.2.5.Final */,
     hibernate_entitymanager: "org.hibernate:hibernate-entitymanager:$versions.hibernate" /* LATEST 5.2.5.Final */,
     hibernate_jpa_api: "org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final",
@@ -146,11 +149,11 @@ ext.libs = [
     jersey_server: "org.glassfish.jersey.core:jersey-server:$versions.jersey", //was 2.25 now 2.25.1
     jetty_server: "org.eclipse.jetty:jetty-server:$versions.jetty",
     jetty_servlet: "org.eclipse.jetty:jetty-servlet:$versions.jetty",
+    jetty_servlets: "org.eclipse.jetty:jetty-servlets:$versions.jetty",
     jose4j: "org.bitbucket.b_c:jose4j:0.5.5",
     jsinterop_annotations: "com.google.jsinterop:jsinterop-annotations:1.0.1",
     jul_to_slf4j: "org.slf4j:jul-to-slf4j:$versions.slf4j",
     junit: "junit:junit:4.12",
-    kafka_clients: "org.apache.kafka:kafka-clients:0.10.0.1", //CDH5.10 uses kafka 10.0, Kafka <10.2 is picky about client and server versions. 
     log4j_over_slf4j: "org.slf4j:log4j-over-slf4j:$versions.slf4j",
     logback_classic: "ch.qos.logback:logback-classic:$versions.logback",
     logback_core: "ch.qos.logback:logback-core:$versions.logback",
@@ -176,10 +179,10 @@ ext.libs = [
     spring_orm: "org.springframework:spring-orm:$versions.spring",
     spring_test: "org.springframework:spring-test:$versions.spring",
     spring_tx: "org.springframework:spring-tx:$versions.spring",
-    spring_web: "org.springframework:spring-web:$versions.spring",
     spring_web: "org.springframework:spring-web:$versions.spring", //was 4.2.1.RELEASE now 4.3.4.RELEASE
     spring_webmvc: "org.springframework:spring-webmvc:$versions.spring",
     stax_api: "stax:stax-api:1.0.1",
+    swagger_annotations: "io.swagger:swagger-annotations:$versions.swagger",
     validation_api: "javax.validation:validation-api:1.0.0.GA", //GWT 2.8.0 throws errors on gwtCompile if validation-api 1.1.0.Final is used
     vavr: "io.vavr:vavr:0.9.0",
     ws_rs_api: "javax.ws.rs:javax.ws.rs-api:2.0.1",
@@ -187,14 +190,14 @@ ext.libs = [
     zzDUMMYzz: "makes sorting easier"
 ]
 
-def contentPackImportDir = new File( "${System.properties['user.home']}/.stroom/contentPackImport/")
+def contentPackImportDir = "${System.properties['user.home']}/.stroom/contentPackImport/"
 def contentReleasesUrl = "http://github.com/gchq/stroom-content/releases/download/"
 def visualisationsContentPackVer = "v3.0.4"
 def visualisationsContentPackUrl = "http://github.com/gchq/stroom-visualisations-dev/releases/download/${visualisationsContentPackVer}/visualisations-production-${visualisationsContentPackVer}.zip"
 
 //A set of content packs to download in the task downloadStroomContent
 ext.contentPacks = [
-    'core-xml-schemas': 'v1.0',
+    'core-xml-schemas': 'v1.1',
     'internal-statistics-stroom-stats': 'v2.0',
     'internal-statistics-sql': 'v2.0',
     'internal-dashboards': 'v1.1',
@@ -203,7 +206,7 @@ ext.contentPacks = [
 ]
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '3.5'
+    gradleVersion = '4.1'
 }
 
 allprojects {
@@ -211,13 +214,12 @@ allprojects {
     apply plugin: 'maven-publish'
 
     group = 'stroom'
-    //version = getPropertyOrDefault('version', 'SNAPSHOT')
     version = versions.stroom
 }
 
 subprojects {
     apply plugin: 'java'
-    
+
     //analyze missing dependencies for the code base
     apply plugin: 'ca.cutterslade.analyze'
     apply plugin: 'idea'
@@ -225,12 +227,32 @@ subprojects {
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
 
+    sourceSets {
+        // This lets us use different directories for our integration tests.
+        integrationTest {
+            java {
+                compileClasspath += main.output + test.output
+                runtimeClasspath += main.output + test.output
+                srcDir file('src/integrationTest/java')
+            }
+            resources.srcDir file('src/integrationTest/resources')
+        }
+    }
+
     configurations {
+        testArtifacts
+        sourceArtifacts
+
         all {
             exclude group: "org.slf4j", module: "slf4j-log4j12"
             exclude group: "log4j", module: "log4j"
             exclude module: 'xercesImpl'
 
+            resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+                if (details.requested.name == 'log4j') {
+                    details.useTarget "org.slf4j:log4j-over-slf4j:1.7.5"
+                }
+            }
             resolutionStrategy {
                 forcedModules = [
                     //>=v21 removes MoreExecutors.sameThreadExecutor() which is needed by curator 2.11
@@ -238,12 +260,12 @@ subprojects {
                 ]
             }
         }
+        
+        // This means our integration tests get all the dependencies from our tests and we don't need to specify them twice.
+        integrationTestCompile.extendsFrom testCompile
+        integrationTestRuntime.extendsFrom testRuntime
     }
 
-    configurations {
-        testArtifacts
-        sourceArtifacts
-    }
     task testJar(type: Jar) {
         baseName = "${project.name}-test"
         from sourceSets.test.output
@@ -265,22 +287,71 @@ subprojects {
 
     repositories {
         mavenLocal()
-
         maven { url "http://repo.maven.apache.org/maven2" }
     }
+
+    // This means the reports from our integration tests won't over-write the reports from our unit tests.
+    tasks.withType(Test) {
+        reports.html.destination = file("${reporting.baseDir}/${name}")
+
+        //Use full logging for test exceptions so we can see where the failure occurred 
+        testLogging {
+            events "failed"
+            exceptionFormat = 'full'
+            showStackTraces = true
+        }
+    }
+
+    // This task lets us run the actual integration tests.
+    task integrationTest(type: Test) {
+        testClassesDirs = sourceSets.integrationTest.output.classesDirs
+        classpath = sourceSets.integrationTest.runtimeClasspath
+
+        // Integration tests are quite slow so output progress for each test to keep travis alive
+        afterTest { desc, result -> 
+            println "Executed test ${desc.name} [${desc.className}] with result: ${result.resultType}"
+        }
+
+        //Use full logging for test exceptions so we can see where the failure occurred 
+        testLogging {
+            events "failed"
+            exceptionFormat = 'full'
+            showStackTraces = true
+        }
+    }
+
+    //ensure we download our libs before compiling java
+    tasks.compileJava.dependsOn downloadUrlDependencies
+
+    // These lines pull the integration test task into our build process.
+    tasks.check.dependsOn integrationTest
+    tasks.integrationTest.mustRunAfter test
+}
+
+configure(subprojects.findAll {it.name != 'stroom-app' && it.name != 'stroom-integrationtest'}) {
+    //swagger has to generate the spec from code so all modules except for stroom-app (which is the module the 
+    //swagger task is in) and stroom-integrationtest (which depends on stroom-app) must be compiled to jars first
+    //so stroom-app can access thier code
+    //However, generateSwaggerDocumentation must run before stroom-app:jar as its artefacts (the json/yaml spec files) 
+    // need to go into that jar 
+    tasks.getByPath(':stroom-app:generateSwaggerDocumentation').mustRunAfter jar
 }
 
 
 task clearContentPackImportDir(type: Delete) {
-    doLast {
-        //cleans out any zip files in the contentPackImportDir
-        delete fileTree(contentPackImportDir) {
-            include '**/*.zip'
-         }
-     }
+    //ensure the import directory exists
+    new File(contentPackImportDir).mkdirs()
+
+    //cleans out any zip files in the contentPackImportDir
+    delete fileTree(new File(contentPackImportDir)) {
+        include '**/*.zip'
+    }
 }
 
 task downloadStroomContent() {
+
+    dependsOn clearContentPackImportDir
+
     doLast {
         //download each content pack to the contentPackImportDir ready for stroom to import on startup
         for (pack in contentPacks) {
@@ -289,14 +360,14 @@ task downloadStroomContent() {
             def packUrl = "${contentReleasesUrl}${packName}-${packVer}/${packName}-${packVer}.zip"
             download {
                 src packUrl
-                dest contentPackImportDir
+                dest new File(contentPackImportDir)
                 overwrite true
             }
         }
         //now get the visualisations pack from a different repo
         download {
             src visualisationsContentPackUrl
-            dest contentPackImportDir
+            dest new File(contentPackImportDir)
             overwrite true
         }
     }
@@ -308,31 +379,25 @@ task setupSampleData() {
 }
 
 project(':stroom-util') {
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                from components.java
-            }
+    publishing.publications {
+        mavenJava(MavenPublication) {
+            from components.java
         }
     }
 }
 
 project(':stroom-util-shared') {
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                from components.java
-            }
+    publishing.publications {
+        mavenJava(MavenPublication) {
+            from components.java
         }
     }
 }
 
 project(':stroom-entity-shared') {
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                from components.java
-            }
+    publishing.publications {
+        mavenJava(MavenPublication) {
+            from components.java
         }
     }
 }
@@ -348,14 +413,14 @@ urlDependencies {
     compile(urlLibs.stroomQueryCommon,
             "https://github.com/gchq/stroom-query/releases/download/$versions.stroomQuery/${urlLibs.stroomQueryCommon}.jar")
 
+    compile(urlLibs.stroomQueryCommonSources,
+            "https://github.com/gchq/stroom-query/releases/download/$versions.stroomQuery/${urlLibs.stroomQueryCommonSources}.jar")
+
     compile(urlLibs.stroomExpression,
             "https://github.com/gchq/stroom-expression/releases/download/$versions.stroomExpression/${urlLibs.stroomExpression}.jar")
 
-    compile(urlLibs.stroomStatsApi,
-            "https://github.com/gchq/stroom-stats/releases/download/$versions.stroomStats/${urlLibs.stroomStatsApi}.jar")
-
-    compile(urlLibs.stroomProxyRepo,
-            "https://github.com/gchq/stroom-proxy/releases/download/$versions.stroomProxyRepo/${urlLibs.stroomProxyRepo}.jar")
+    compile(urlLibs.stroomStatsSchema,
+            "https://github.com/gchq/stroom-stats/releases/download/$versions.stroomStats/${urlLibs.stroomStatsSchema}.jar")
 
     compile(urlLibs.eventLogging,
             "https://github.com/gchq/event-logging/releases/download/$versions.eventLogging/${urlLibs.eventLogging}.jar")
@@ -366,3 +431,5 @@ urlDependencies {
     compile(urlLibs.hadoopCommonShaded,
             "https://github.com/gchq/hadoop-common-shaded/releases/download/$versions.hadoopCommonShaded/${urlLibs.hadoopCommonShaded}.jar")
 }
+
+

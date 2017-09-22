@@ -26,25 +26,27 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import stroom.datasource.api.v1.DataSourceField;
+import stroom.datasource.api.v2.DataSourceField;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
 import stroom.node.server.StroomPropertyService;
-import stroom.query.DateExpressionParser;
-import stroom.query.api.v1.ExpressionItem;
-import stroom.query.api.v1.ExpressionOperator;
-import stroom.query.api.v1.ExpressionTerm;
-import stroom.query.api.v1.SearchRequest;
+import stroom.query.common.v2.DateExpressionParser;
+import stroom.query.api.v2.ExpressionItem;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.v2.SearchRequest;
 import stroom.statistics.server.sql.datasource.StatisticStoreCache;
 import stroom.statistics.server.sql.datasource.StatisticStoreValidator;
 import stroom.statistics.server.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.server.sql.rollup.RollUpBitMask;
 import stroom.statistics.server.sql.rollup.RolledUpStatisticEvent;
+import stroom.statistics.server.sql.search.CountStatisticDataPoint;
 import stroom.statistics.server.sql.search.FilterTermsTree;
 import stroom.statistics.server.sql.search.FilterTermsTreeBuilder;
 import stroom.statistics.server.sql.search.FindEventCriteria;
 import stroom.statistics.server.sql.search.StatisticDataPoint;
 import stroom.statistics.server.sql.search.StatisticDataSet;
+import stroom.statistics.server.sql.search.ValueStatisticDataPoint;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
@@ -81,8 +83,7 @@ public class SQLStatisticEventStore implements Statistics {
 
     private static final int DEFAULT_POOL_SIZE = 10;
     private static final long DEFAULT_SIZE_THRESHOLD = 1000000L;
-    private static final Set<String> BLACK_LISTED_INDEX_FIELDS = new HashSet<>(
-            Arrays.asList(StatisticStoreEntity.FIELD_NAME_MIN_VALUE, StatisticStoreEntity.FIELD_NAME_MAX_VALUE));
+    private static final Set<String> BLACK_LISTED_INDEX_FIELDS = Collections.emptySet();
     /**
      * Keep half the time out our SQL insert threshold
      */
@@ -678,7 +679,7 @@ public class SQLStatisticEventStore implements Statistics {
                         StatisticDataPoint statisticDataPoint;
 
                         if (StatisticType.COUNT.equals(statisticType)) {
-                            statisticDataPoint = StatisticDataPoint.countInstance(timeMs, precisionMs, statisticTags,
+                            statisticDataPoint = new CountStatisticDataPoint(timeMs, precisionMs, statisticTags,
                                     rs.getLong(SQLStatisticNames.COUNT));
                         } else {
                             final double aggregatedValue = rs.getDouble(SQLStatisticNames.VALUE);
@@ -690,8 +691,8 @@ public class SQLStatisticEventStore implements Statistics {
                             final double averagedValue = count != 0 ? (aggregatedValue / count) : 0;
 
                             // min/max are not supported by SQL stats so use -1
-                            statisticDataPoint = StatisticDataPoint.valueInstance(timeMs, precisionMs, statisticTags,
-                                    averagedValue, count, -1, -1);
+                            statisticDataPoint = new ValueStatisticDataPoint(timeMs, precisionMs, statisticTags,
+                                    count, averagedValue);
                         }
 
                         statisticDataSet.addDataPoint(statisticDataPoint);

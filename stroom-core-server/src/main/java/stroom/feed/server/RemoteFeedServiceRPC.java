@@ -2,7 +2,6 @@ package stroom.feed.server;
 
 import org.springframework.remoting.caucho.HessianServiceExporter;
 import org.springframework.stereotype.Component;
-import stroom.feed.remote.RemoteFeedService;
 
 import javax.inject.Inject;
 import javax.inject.Named;

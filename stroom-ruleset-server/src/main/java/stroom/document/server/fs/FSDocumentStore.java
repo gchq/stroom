@@ -29,7 +29,7 @@ import stroom.entity.shared.PermissionException;
 import stroom.explorer.server.ExplorerActionHandler;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.server.ImportExportActionHandler;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.Message;

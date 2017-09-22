@@ -22,7 +22,7 @@ import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 import java.util.List;
 

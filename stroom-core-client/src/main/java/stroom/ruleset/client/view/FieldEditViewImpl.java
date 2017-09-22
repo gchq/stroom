@@ -23,7 +23,7 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.datasource.api.v1.DataSourceField.DataSourceFieldType;
+import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
 import stroom.item.client.ItemListBox;
 import stroom.ruleset.client.presenter.FieldEditPresenter.FieldEditView;
 

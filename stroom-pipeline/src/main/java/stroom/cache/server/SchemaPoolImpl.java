@@ -43,7 +43,7 @@ public class SchemaPoolImpl extends AbstractPoolCacheBean<SchemaKey, StoredSchem
 
     @Override
     protected StoredSchema createValue(final SchemaKey key) {
-        return schemaLoader.load(key.getSchemaLanguage(), key.getData());
+        return schemaLoader.load(key.getSchemaLanguage(), key.getData(), key.getFindXMLSchemaCriteria());
     }
 
     /**

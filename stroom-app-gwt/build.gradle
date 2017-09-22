@@ -7,20 +7,6 @@ def workDir = "${gwtBuildDir}/work"
 def deployDir = "${gwtBuildDir}/deploy"
 def extraDir = "${gwtBuildDir}/extra"
 
-def gwtSourceDirs = []
-parent.subprojects.each { p ->
-    if (p.name != 'stroom-dashboard-gwt') {
-        gwtSourceDirs << p.sourceSets.main.output.classesDir
-        gwtSourceDirs << p.sourceSets.main.java.srcDirs
-        gwtSourceDirs << p.sourceSets.main.resources.srcDirs
-    }
-}
-gwtSourceDirs << sourceSets.main.compileClasspath
-
-// We need to add the sources of GitHub dependencies.
-gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(urlLibs.stroomQueryApiSources))).getAsPath())
-gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(urlLibs.stroomQueryApi))).getAsPath())
-
 dependencies {
     compile project(':stroom-index-client')
     compile project(':stroom-statistics-client')
@@ -32,15 +18,43 @@ dependencies {
     compile project(':stroom-core-client-widget')
     compile project(':stroom-security-client')
 
-
     compile libs.gin
     compile libs.guice
     compile libs.gwt_dev
     permitUnusedDeclared libs.gwt_dev
     compile libs.gwt_user
     compile libs.gwtp_mvp_client
+
+    //needed so gwt can compile the stroom-query code that contains swagger annotations
+    compile "${libs.swagger_annotations}"
+    permitUnusedDeclared "${libs.swagger_annotations}"
+    compile "${libs.swagger_annotations}:sources"
+    permitUnusedDeclared "${libs.swagger_annotations}:sources"
 }
 
+def gwtSourceDirs = []
+parent.subprojects.each { p ->
+    if (p.name != 'stroom-dashboard-gwt') {
+        gwtSourceDirs.addAll(p.sourceSets.main.output.classesDirs)
+        gwtSourceDirs.addAll(p.sourceSets.main.java.srcDirs)
+        gwtSourceDirs.addAll(p.sourceSets.main.resources.srcDirs)
+    }
+}
+gwtSourceDirs.addAll(sourceSets.main.compileClasspath)
+
+// We need to add the sources of GitHub dependencies.
+gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(urlLibs.stroomQueryApiSources))).getAsPath())
+gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(urlLibs.stroomQueryApi))).getAsPath())
+gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(urlLibs.stroomQueryCommon))).getAsPath())
+gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(urlLibs.stroomQueryCommonSources))).getAsPath())
+
+
+//println "Dumping gwtSourceDirs contents"
+//gwtSourceDirs.each { dir -> 
+    //println dir
+//}
+
+//task gwtCompile(dependsOn: [classes, addGwtDeps], type: JavaExec) {
 task gwtCompile(dependsOn: classes, type: JavaExec) {
     def module = 'stroom.app.App'
 
@@ -50,15 +64,25 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
         println 'Deleting GWT build dir: ' + gwtBuildDir.toString()
         delete gwtBuildDir
 
-        println 'Making GWT output directories'
+        println "Making directory gwtBuildDir $gwtBuildDir"
         file(gwtBuildDir).mkdirs()
+        println "Making directory tmpDir $tmpDir"
         file(tmpDir).mkdirs()
+        println "Making directory workDir $workDir"
         file(workDir).mkdirs()
+        println "Making directory deployDir $deployDir"
         file(deployDir).mkdirs()
+        println "Making directory extraDir $extraDir"
         file(extraDir).mkdirs()
+
+        //println "Dumping gwtSourceDirs"
+        //gwtSourceDirs.each {
+            //println "${it.toString()}"
+        //}
     }
 
     main = gwtCompilerProps.mainClass
+
 
     classpath {
         gwtSourceDirs
@@ -136,11 +160,15 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
 //    println dirs
 
     doFirst {
-        println 'Making GWT output directories'
+        println "Making directory gwtBuildDir $gwtBuildDir"
         file(gwtBuildDir).mkdirs()
+        println "Making directory tmpDir $tmpDir"
         file(tmpDir).mkdirs()
+        println "Making directory workDir $workDir"
         file(workDir).mkdirs()
+        println "Making directory deployDir $deployDir"
         file(deployDir).mkdirs()
+        println "Making directory extraDir $extraDir"
         file(extraDir).mkdirs()
     }
 
@@ -174,10 +202,12 @@ task gwtClean {
         delete outputDir
         println 'Deleting GWT build dir: ' + gwtBuildDir.toString()
         delete gwtBuildDir
+        println "Making directory gwtBuildDir $gwtBuildDir"
         file(gwtBuildDir).mkdirs()
+        println "Making directory tmpDir $tmpDir"
         file(tmpDir).mkdirs()
     }
 }
 
 gwtCompile.onlyIf { !project.hasProperty('skipGWT') }
-build.dependsOn('gwtCompile')
+build.dependsOn gwtCompile

@@ -22,7 +22,6 @@ import stroom.pipeline.destination.RollingDestination;
 import stroom.pipeline.destination.RollingFileDestination;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.PipelineFactoryException;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -46,22 +45,12 @@ import java.nio.file.Paths;
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_DESTINATION,
         PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
 class RollingFileAppender extends AbstractRollingAppender {
-    private static final int MB = 1024 * 1024;
-    private static final int DEFAULT_MAX_SIZE = 100 * MB;
-
-    private static final int SECOND = 1000;
-    private static final int MINUTE = 60 * SECOND;
-    private static final int HOUR = 60 * MINUTE;
 
     private final PathCreator pathCreator;
 
     private String[] outputPaths;
     private String fileNamePattern;
     private String rolledFileNamePattern;
-    private long frequency = HOUR;
-    private long maxSize = DEFAULT_MAX_SIZE;
-
-    private boolean validatedSettings;
 
     private String dir;
     private String fileName;
@@ -97,8 +86,14 @@ class RollingFileAppender extends AbstractRollingAppender {
             }
         }
 
-        return new RollingFileDestination(key, fileName, rolledFileName, frequency,
-                maxSize, parentDir, file, System.currentTimeMillis());
+        return new RollingFileDestination(key,
+                getFrequency(),
+                getMaxSize(),
+                System.currentTimeMillis(),
+                fileName,
+                rolledFileName,
+                parentDir,
+                file);
     }
 
     @Override
@@ -147,33 +142,21 @@ class RollingFileAppender extends AbstractRollingAppender {
     }
 
     @Override
-    void validateSettings() {
-        if (!validatedSettings) {
-            validatedSettings = true;
+    void validateSpecificSettings() {
+        if (outputPaths == null || outputPaths.length == 0) {
+            throw new ProcessException("No output paths have been specified");
+        }
 
-            if (outputPaths == null || outputPaths.length == 0) {
-                throw new ProcessException("No output paths have been specified");
-            }
+        if (fileNamePattern == null || fileNamePattern.length() == 0) {
+            throw new ProcessException("No file name has been specified");
+        }
 
-            if (fileNamePattern == null || fileNamePattern.length() == 0) {
-                throw new ProcessException("No file name has been specified");
-            }
+        if (rolledFileNamePattern == null || rolledFileNamePattern.length() == 0) {
+            throw new ProcessException("No rolled file name has been specified");
+        }
 
-            if (rolledFileNamePattern == null || rolledFileNamePattern.length() == 0) {
-                throw new ProcessException("No rolled file name has been specified");
-            }
-
-            if (fileNamePattern.equals(rolledFileNamePattern)) {
-                throw new ProcessException("File name and rolled file name cannot be the same");
-            }
-
-            if (frequency <= 0) {
-                throw new ProcessException("Rolling frequency must be greater than 0");
-            }
-
-            if (maxSize <= 0) {
-                throw new ProcessException("Max size must be greater than 0");
-            }
+        if (fileNamePattern.equals(rolledFileNamePattern)) {
+            throw new ProcessException("File name and rolled file name cannot be the same");
         }
     }
 
@@ -190,37 +173,5 @@ class RollingFileAppender extends AbstractRollingAppender {
     @PipelineProperty(description = "Choose the name that files will be renamed to when they are rolled.")
     public void setRolledFileName(final String rolledFileNamePattern) {
         this.rolledFileNamePattern = rolledFileNamePattern;
-    }
-
-    @PipelineProperty(description = "Choose how frequently files are rolled.", defaultValue = "1h")
-    public void setFrequency(final String frequency) {
-        if (frequency != null && frequency.trim().length() > 0) {
-            try {
-                final Long value = ModelStringUtil.parseDurationString(frequency);
-                if (value == null) {
-                    throw new PipelineFactoryException("Incorrect value for frequency: " + frequency);
-                }
-
-                this.frequency = value;
-            } catch (final NumberFormatException e) {
-                throw new PipelineFactoryException("Incorrect value for frequency: " + frequency);
-            }
-        }
-    }
-
-    @PipelineProperty(description = "Choose the maximum size that a file can be before it is rolled, e.g. 10M, 1G.", defaultValue = "100M")
-    public void setMaxSize(final String maxSize) {
-        if (maxSize != null && maxSize.trim().length() > 0) {
-            try {
-                final Long value = ModelStringUtil.parseIECByteSizeString(maxSize);
-                if (value == null) {
-                    throw new PipelineFactoryException("Incorrect value for max size: " + maxSize);
-                }
-
-                this.maxSize = value;
-            } catch (final NumberFormatException e) {
-                throw new PipelineFactoryException("Incorrect value for max size: " + maxSize);
-            }
-        }
     }
 }

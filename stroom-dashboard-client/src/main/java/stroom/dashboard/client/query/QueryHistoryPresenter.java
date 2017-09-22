@@ -27,7 +27,7 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.Sort.Direction;
-import stroom.query.api.v1.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;

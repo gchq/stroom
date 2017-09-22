@@ -17,7 +17,7 @@
 
 package stroom.document.server;
 
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 public interface DocumentActionHandler<D> {
     D readDocument(DocRef docRef);

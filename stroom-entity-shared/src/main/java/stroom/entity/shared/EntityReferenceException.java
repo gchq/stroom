@@ -16,7 +16,7 @@
 
 package stroom.entity.shared;
 
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 public class EntityReferenceException extends EntityDependencyServiceException {
     private static final long serialVersionUID = 5320448581849715633L;

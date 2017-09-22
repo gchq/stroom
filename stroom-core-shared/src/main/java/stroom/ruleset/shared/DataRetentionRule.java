@@ -17,7 +17,7 @@
 
 package stroom.ruleset.shared;
 
-import stroom.query.api.v1.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.streamstore.shared.TimeUnit;
 import stroom.util.shared.SharedObject;
 

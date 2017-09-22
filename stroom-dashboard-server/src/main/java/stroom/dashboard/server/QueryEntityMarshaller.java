@@ -18,7 +18,7 @@ package stroom.dashboard.server;
 
 import stroom.dashboard.shared.QueryEntity;
 import stroom.entity.server.EntityMarshaller;
-import stroom.query.api.v1.Query;
+import stroom.query.api.v2.Query;
 
 class QueryEntityMarshaller extends EntityMarshaller<QueryEntity, Query> {
     QueryEntityMarshaller() {

@@ -38,15 +38,35 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.LongSupplier;
+import java.util.function.Supplier;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
 public class PathCreator {
-    private static final String[] NON_ENV_VARS = {"feed", "pipeline", "streamId", "searchId", "node", "year", "month",
-            "day", "hour", "minute", "second", "millis", "ms", "uuid", "fileName", "fileStem", "fileExtension",
+    private static final String[] NON_ENV_VARS = {
+            "feed",
+            "pipeline",
+            "streamId",
+            "searchId",
+            "node",
+            "year",
+            "month",
+            "day",
+            "hour",
+            "minute",
+            "second",
+            "millis",
+            "ms",
+            "uuid",
+            "fileName",
+            "fileStem",
+            "fileExtension",
             StroomProperties.STROOM_TEMP};
+
     private static final Set<String> NON_ENV_VARS_SET = Collections
             .unmodifiableSet(new HashSet<>(Arrays.asList(NON_ENV_VARS)));
+
     @Resource
     private FeedHolder feedHolder;
     @Resource
@@ -61,44 +81,54 @@ public class PathCreator {
     public static String replaceTimeVars(String path) {
         // Replace some of the path elements with system variables.
         final ZonedDateTime dateTime = ZonedDateTime.now(ZoneOffset.UTC);
-        path = replace(path, "year", dateTime.getYear(), 4);
-        path = replace(path, "month", dateTime.getMonthValue(), 2);
-        path = replace(path, "day", dateTime.getDayOfMonth(), 2);
-        path = replace(path, "hour", dateTime.getHour(), 2);
-        path = replace(path, "minute", dateTime.getMinute(), 2);
-        path = replace(path, "second", dateTime.getSecond(), 2);
-        path = replace(path, "millis", dateTime.toInstant().toEpochMilli(), 3);
-        path = replace(path, "ms", dateTime.toInstant().toEpochMilli(), 0);
+        path = replace(path, "year", dateTime::getYear, 4);
+        path = replace(path, "month", dateTime::getMonthValue, 2);
+        path = replace(path, "day", dateTime::getDayOfMonth, 2);
+        path = replace(path, "hour", dateTime::getHour, 2);
+        path = replace(path, "minute", dateTime::getMinute, 2);
+        path = replace(path, "second", dateTime::getSecond, 2);
+        path = replace(path, "millis", () -> dateTime.toInstant().toEpochMilli(), 3);
+        path = replace(path, "ms", () -> dateTime.toInstant().toEpochMilli(), 0);
 
         return path;
     }
 
     public static String replaceSystemProperties(String path) {
         // Replace stroom.temp
-        path = replace(path, StroomProperties.STROOM_TEMP, StroomProperties.getProperty(StroomProperties.STROOM_TEMP));
+        path = replace(
+                path,
+                StroomProperties.STROOM_TEMP,
+                () -> StroomProperties.getProperty(StroomProperties.STROOM_TEMP));
 
         return SystemPropertyUtil.replaceSystemProperty(path, NON_ENV_VARS_SET);
     }
 
     public static String replaceUUIDVars(String path) {
-        // Guard for UUID as creation is expensive.
-        if (path.indexOf("${uuid}") != -1) {
-            path = replace(path, "uuid", UUID.randomUUID().toString());
-        }
+        path = replace(path, "uuid", () -> UUID.randomUUID().toString());
         return path;
     }
 
     public static String replaceFileName(String path, final String fileName) {
-        String fileStem = fileName;
-        String fileExtension = "";
-        final int index = fileName.lastIndexOf(".");
-        if (index != -1) {
-            fileStem = fileName.substring(0, index);
-            fileExtension = fileName.substring(index + 1);
-        }
-        path = replace(path, "fileName", fileName);
-        path = replace(path, "fileStem", fileStem);
-        path = replace(path, "fileExtension", fileExtension);
+
+        path = replace(path, "fileName", () -> fileName);
+
+        path = replace(path, "fileStem", () -> {
+            String fileStem = fileName;
+            final int index = fileName.lastIndexOf(".");
+            if (index != -1) {
+                fileStem = fileName.substring(0, index);
+            }
+            return fileStem;
+        });
+
+        path = replace(path, "fileExtension", () -> {
+            String fileExtension = "";
+            final int index = fileName.lastIndexOf(".");
+            if (index != -1) {
+                fileExtension = fileName.substring(index + 1);
+            }
+            return fileExtension;
+        });
         return path;
     }
 
@@ -124,21 +154,32 @@ public class PathCreator {
         return varsArr;
     }
 
-    private static String replace(final String path, final String type, final long replacement, final int pad) {
-        String value = String.valueOf(replacement);
-        if (pad > 0) {
-            value = StringUtils.leftPad(value, pad, '0');
-        }
-        return replace(path, type, value);
+    private static String replace(final String path,
+                                  final String type,
+                                  final LongSupplier replacementSupplier,
+                                  final int pad) {
+
+        //convert the long supplier into a string supplier to prevent the
+        //evaluation of the long supplier
+        Supplier<String> stringReplacementSupplier = () -> {
+            String value = String.valueOf(replacementSupplier.getAsLong());
+            if (pad > 0) {
+                value = StringUtils.leftPad(value, pad, '0');
+            }
+            return value;
+        };
+        return replace(path, type, stringReplacementSupplier);
     }
 
-    private static String replace(final String path, final String type, final String replacement) {
+    private static String replace(final String path,
+                                  final String type,
+                                  final Supplier<String> replacementSupplier) {
         String newPath = path;
         final String param = "${" + type + "}";
         int start = newPath.indexOf(param);
         while (start != -1) {
             final int end = start + param.length();
-            newPath = newPath.substring(0, start) + replacement + newPath.substring(end);
+            newPath = newPath.substring(0, start) + replacementSupplier.get() + newPath.substring(end);
             start = newPath.indexOf(param, end);
         }
 
@@ -155,19 +196,19 @@ public class PathCreator {
 
     public String replaceContextVars(String path) {
         if (feedHolder != null && feedHolder.getFeed() != null) {
-            path = replace(path, "feed", feedHolder.getFeed().getName());
+            path = replace(path, "feed", () -> feedHolder.getFeed().getName());
         }
         if (pipelineHolder != null && pipelineHolder.getPipeline() != null) {
-            path = replace(path, "pipeline", pipelineHolder.getPipeline().getName());
+            path = replace(path, "pipeline", () -> pipelineHolder.getPipeline().getName());
         }
         if (streamHolder != null && streamHolder.getStream() != null) {
-            path = replace(path, "streamId", String.valueOf(streamHolder.getStream().getId()));
+            path = replace(path, "streamId", () -> streamHolder.getStream().getId(), 0);
         }
         if (searchIdHolder != null && searchIdHolder.getSearchId() != null) {
-            path = replace(path, "searchId", String.valueOf(searchIdHolder.getSearchId()));
+            path = replace(path, "searchId", () -> searchIdHolder.getSearchId());
         }
         if (nodeCache != null) {
-            path = replace(path, "node", String.valueOf(nodeCache.getDefaultNode().getName()));
+            path = replace(path, "node", () -> nodeCache.getDefaultNode().getName());
         }
 
         return path;

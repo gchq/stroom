@@ -17,8 +17,6 @@
 package stroom.jobsystem.server;
 
 import net.sf.ehcache.CacheManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.cache.AbstractCacheBean;
 import stroom.util.shared.Task;
@@ -34,8 +32,6 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 public class TaskCache extends AbstractCacheBean<String, Queue<Task<?>>> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TaskCache.class);
-
     private static final int MAX_CACHE_ENTRIES = 1000000;
 
     private final Map<String, TaskDestructionHandler> destructionHandlers = new HashMap<>();
@@ -67,15 +63,17 @@ public class TaskCache extends AbstractCacheBean<String, Queue<Task<?>>> {
         return queue;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    protected void destroy(final String job, final Queue<Task<?>> queue) {
-        if (job != null && queue != null) {
+    protected void destroy(final String job, final Object object) {
+        if (job != null && object != null && object instanceof Queue<?>) {
+            final Queue<Task<?>> queue = (Queue<Task<?>>) object;
             final TaskDestructionHandler handler = destructionHandlers.get(job);
             if (handler != null) {
                 handler.onDestroy(queue);
             }
         }
-        super.destroy(job, queue);
+        super.destroy(job, object);
     }
 
     public Integer taskCount(final String job) {

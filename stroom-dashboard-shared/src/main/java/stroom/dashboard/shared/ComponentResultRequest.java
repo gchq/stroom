@@ -16,7 +16,7 @@
 
 package stroom.dashboard.shared;
 
-import stroom.query.api.v1.ResultRequest.Fetch;
+import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.util.shared.SharedObject;
 
 public abstract class ComponentResultRequest implements SharedObject {

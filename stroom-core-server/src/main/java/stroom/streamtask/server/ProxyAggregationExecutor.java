@@ -45,7 +45,7 @@ import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.task.TaskMonitor;
 import stroom.util.thread.ThreadLocalBuffer;
-import stroom.util.zip.StroomHeaderArguments;
+import stroom.feed.StroomHeaderArguments;
 
 import javax.inject.Inject;
 import javax.inject.Named;

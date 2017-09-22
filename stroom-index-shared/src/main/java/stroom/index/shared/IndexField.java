@@ -16,7 +16,7 @@
 
 package stroom.index.shared;
 
-import stroom.query.api.v1.ExpressionTerm.Condition;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.shared.HasDisplayValue;
 
 import javax.xml.bind.annotation.XmlAccessType;

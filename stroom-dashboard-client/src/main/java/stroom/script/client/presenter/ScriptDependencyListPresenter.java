@@ -32,7 +32,7 @@ import stroom.entity.shared.DocRefs;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.node.client.view.WrapperView;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.script.shared.Script;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.SvgPresets;

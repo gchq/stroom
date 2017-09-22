@@ -1,6 +1,6 @@
 package stroom.explorer.shared;
 
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 public final class ExplorerConstants {
     public static final String SYSTEM = "System";

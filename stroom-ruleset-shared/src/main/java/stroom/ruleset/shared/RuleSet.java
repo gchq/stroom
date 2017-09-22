@@ -18,7 +18,7 @@
 package stroom.ruleset.shared;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.datasource.api.v1.DataSourceField;
+import stroom.datasource.api.v2.DataSourceField;
 import stroom.document.shared.Document;
 import stroom.util.shared.SharedObject;
 

@@ -29,7 +29,7 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.importexport.server.ImportExportHelper;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.config.StroomProperties;

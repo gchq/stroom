@@ -1,20 +1,38 @@
 package stroom.resources.authentication.v1;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientResponse;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import stroom.Config;
 import stroom.resources.authorisation.v1.AuthorizationHelper;
+import stroom.startup.App;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Response;
 
 public class TestAuthenticationResource {
+
+
+    private static App app;
+
+    @ClassRule
+    public static final DropwizardAppRule<Config> RULE = new DropwizardAppRule<>(App.class, "dev.yml");
+
+    @BeforeClass
+    public static void setupClass() {
+        app = RULE.getApplication();
+    }
+
     @Test
-    public void testValidCredentials() throws JsonProcessingException {
+    public void testValidCredentials() throws JsonProcessingException, InterruptedException {
+        app.waitForApplicationStart();
         // Given
         Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
 
@@ -32,7 +50,9 @@ public class TestAuthenticationResource {
     }
 
     @Test
-    public void testInvalidCredentials() throws JsonProcessingException {
+    public void testInvalidCredentials() throws JsonProcessingException, InterruptedException {
+
+        app.waitForApplicationStart();
         // Given
         Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
 

@@ -31,9 +31,9 @@ import stroom.util.io.InitialByteArrayOutputStream;
 import stroom.util.io.InitialByteArrayOutputStream.BufferPos;
 import stroom.util.io.StreamProgressMonitor;
 import stroom.util.io.StreamUtil;
-import stroom.util.zip.StroomHeaderArguments;
-import stroom.util.zip.StroomStatusCode;
-import stroom.util.zip.StroomStreamException;
+import stroom.feed.StroomHeaderArguments;
+import stroom.feed.StroomStatusCode;
+import stroom.feed.StroomStreamException;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.Closeable;

@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.logging.StroomEventLoggingService;
 import stroom.entity.shared.PermissionInheritance;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.security.Insecure;
 
 import javax.inject.Inject;

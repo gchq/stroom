@@ -39,7 +39,7 @@ import stroom.pipeline.state.CurrentUserHolder;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.search.server.SearchException;
 import stroom.security.SecurityContext;
 import stroom.streamstore.server.StreamSource;

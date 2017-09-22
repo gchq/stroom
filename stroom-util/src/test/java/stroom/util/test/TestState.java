@@ -19,6 +19,7 @@ package stroom.util.test;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class TestState {
@@ -47,9 +48,9 @@ public class TestState {
         public void create() {
             try {
                 if (testDir == null) {
-                    final Path initialTempPath = FileUtil.getInitialTempDir();
-                    final Path rootTestDir = StroomTestUtil.createRootTestDir(initialTempPath);
-                    testDir = StroomTestUtil.createPerThreadTestDir(rootTestDir);
+                    final Path testDir = Files.createTempDirectory("stroom");
+//                    final Path rootTestDir = StroomTestUtil.createRootTestDir(initialTempPath);
+//                    testDir = StroomTestUtil.createPerThreadTestDir(rootTestDir);
 
                     // Redirect the temp dir for the tests.
                     StroomProperties.setOverrideProperty(StroomProperties.STROOM_TEMP, FileUtil.getCanonicalPath(testDir), StroomProperties.Source.TEST);

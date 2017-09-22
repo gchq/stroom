@@ -20,8 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.util.spring.StroomBeanStore;
-import stroom.util.zip.StroomStatusCode;
-import stroom.util.zip.StroomStreamException;
+import stroom.feed.StroomStatusCode;
+import stroom.feed.StroomStreamException;
 
 import javax.annotation.Resource;
 import javax.servlet.ServletException;

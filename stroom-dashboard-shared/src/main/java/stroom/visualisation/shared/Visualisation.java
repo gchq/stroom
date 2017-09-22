@@ -20,7 +20,7 @@ import stroom.entity.shared.Copyable;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.ExternalFile;
 import stroom.entity.shared.SQLNameConstants;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

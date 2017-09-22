@@ -6,7 +6,7 @@ dependencies {
 
     compile libs.hibernate_jpa_api
     compile libs.validation_api
-    compile libs.hibernate_annotations
+    compile libs.hibernate_core
 
 //    testCompile libs.junit
 

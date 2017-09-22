@@ -23,7 +23,7 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.PresenterWidget;
 import stroom.document.client.DocumentTabData;
 import stroom.entity.shared.PermissionInheritance;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 public class ForkDocumentEvent extends GwtEvent<ForkDocumentEvent.Handler> {
     private static Type<Handler> TYPE;

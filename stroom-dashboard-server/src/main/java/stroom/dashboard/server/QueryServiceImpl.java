@@ -32,6 +32,7 @@ import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.importexport.server.ImportExportHelper;
+import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.util.spring.StroomSpringProfiles;
 

@@ -52,7 +52,6 @@ public class Servlets {
                 "/datafeed",
                 "/datafeed/*",
                 "/resourcestore/*",
-                "/importfile.rpc",
                 "/export/*",
                 "/echo",
                 "/debug",

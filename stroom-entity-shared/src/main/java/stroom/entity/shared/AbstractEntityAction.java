@@ -17,7 +17,7 @@
 
 package stroom.entity.shared;
 
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.util.shared.SharedObject;
 
 public abstract class AbstractEntityAction<R extends SharedObject> extends Action<R> {

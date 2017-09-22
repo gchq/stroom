@@ -17,7 +17,7 @@
 package stroom.explorer.server;
 
 import fri.util.database.jpa.tree.closuretable.ClosureTableTreeNode;
-import stroom.query.api.v1.DocRef;
+import stroom.query.api.v2.DocRef;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
