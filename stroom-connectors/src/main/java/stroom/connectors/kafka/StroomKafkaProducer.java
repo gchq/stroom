@@ -2,6 +2,7 @@ package stroom.connectors.kafka;
 
 import stroom.connectors.StroomConnector;
 
+import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 /**
@@ -18,12 +19,10 @@ public interface  StroomKafkaProducer extends StroomConnector {
     /**
      * Given a Record, sends to the Kafka broker.
      * @param stroomRecord The record, contains the data and partition information.
-     * @param flushOnSend Flush the producer on send
-     * @param exceptionHandler A handler function if the exceptions are thrown. Allows custom exceptions (Runtime only)
+     * @param callback A handler function if the exceptions are thrown. Allows custom exceptions (Runtime only)
      */
-    void send(StroomKafkaProducerRecord<String, byte[]> stroomRecord,
-              boolean flushOnSend,
-              Consumer<Exception> exceptionHandler);
+    Future<StroomKafkaRecordMetadata> send(StroomKafkaProducerRecord<String, byte[]> stroomRecord,
+                                           StroomKafkaCallback callback);
 
     /**
      * Allow manual flushing of the producer by the client. Be aware that the producer

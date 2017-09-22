@@ -9,12 +9,12 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.connectors.ConnectorProperties;
+import stroom.connectors.FutureConverter;
 
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Properties;
 import java.util.concurrent.Future;
-import java.util.function.Consumer;
 
 /**
  * A singleton responsible for sending records to Kafka.
@@ -56,9 +56,8 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
         }
     }
 
-    public void send(final StroomKafkaProducerRecord<String, byte[]> stroomRecord,
-                     final boolean flushOnSend,
-                     final Consumer<Exception> exceptionHandler) {
+    public Future<StroomKafkaRecordMetadata> send(final StroomKafkaProducerRecord<String, byte[]> stroomRecord,
+                                                  final StroomKafkaCallback callback) {
 
         //kafka may not have been up on startup so ensure we have a producer instance now
         try {
@@ -68,8 +67,8 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
                     this.bootstrapServers,
                     e.getMessage());
             LOGGER.error(msg);
-            exceptionHandler.accept(e);
-            return;
+            callback.onCompletion(null, e);
+            return null;
         }
 
         if (producer != null) {
@@ -82,30 +81,34 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
                                 stroomRecord.key(),
                                 stroomRecord.value());
 
-                Future<RecordMetadata> future = producer.send(record, (recordMetadata, exception) -> {
-                    if (exception != null) {
-                        exceptionHandler.accept(exception);
-                    }
-                    LOGGER.trace("Record sent to Kafka");
-                });
-
-                if (flushOnSend) {
-                    future.get();
-                }
+                return FutureConverter.build(producer.send(record, (recordMetadata, exception) ->
+                    callback.onCompletion(convertMeta(recordMetadata), exception)
+                ));
 
             } catch (Exception e) {
                 final String msg = String.format("Error initialising kafka producer to %s, (%s)",
                         this.bootstrapServers,
                         e.getMessage());
                 LOGGER.error(msg);
-                exceptionHandler.accept(e);
+                callback.onCompletion(null, e);
             }
         } else {
             final String msg = String.format("Kafka producer is currently not initialised, " +
                             "it may be down or the connection details incorrect, bootstrapServers: [%s]",
                     this.bootstrapServers);
-            exceptionHandler.accept(new IOException(msg));
+            callback.onCompletion(null, new IOException(msg));
         }
+        return null;
+    }
+
+    private StroomKafkaRecordMetadata convertMeta(final RecordMetadata meta) {
+        return new StroomKafkaRecordMetadata(meta.topic(),
+                meta.partition(),
+                meta.offset(),
+                meta.timestamp(),
+                meta.checksum(),
+                meta.serializedKeySize(),
+                meta.serializedValueSize());
     }
 
     public void flush() {
