@@ -53,11 +53,11 @@ if [ "$doDockerBuild" = true ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then
     echo "Building a docker image with tags: ${SPECIFIC_TAG} ${FLOATING_TAG}"
 
     echo "Copying kafka clinet jar into stroom-app so the docker build can access it"
-    cp $TRAVIS_BUILD_DIR/stroom-kafka-client-impl_0_10_0_1/build/libs/stroom-kafka-client-impl_0_10_0_1-all.jar $TRAVIS_BUILD_DIR/stroom-app/build/libs/stroom-kafka-client-impl_0_10_0_1-all.jar
+    #cp $TRAVIS_BUILD_DIR/stroom-kafka-client-impl_0_10_0_1/build/libs/stroom-kafka-client-impl_0_10_0_1-all.jar $TRAVIS_BUILD_DIR/stroom-app/build/libs/stroom-kafka-client-impl_0_10_0_1-all.jar
 
     #The username and password are configured in the travis gui
     docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-    docker build ${SPECIFIC_TAG} ${FLOATING_TAG} stroom-app/. 
+    docker build ${SPECIFIC_TAG} ${FLOATING_TAG} stroom-app/docker/.
     docker push gchq/stroom
 fi
 

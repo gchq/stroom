@@ -22,7 +22,6 @@ shadowJar {
     archiveName fatJarName
 }
 
-//Copy the fat jar continaing the kafka implementation into stroom's plugin dir
 task copyPluginJar(type: Copy) {
     dependsOn shadowJar
 

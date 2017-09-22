@@ -37,10 +37,10 @@ RUN echo "http_proxy: $http_proxy" && \
 WORKDIR /stroom
 
 #Copy the content packs in so they get imported on first run of Stroom
-ADD ./build/libs/stroom-app-all.jar /stroom/stroom-app-all.jar
-ADD ./build/libs/stroom-kafka-client-impl_0_10_0_1-all.jar /stroom/plugins/stroom-kafka-client-impl_0_10_0_1-all.jar
-ADD ./prod.yml /stroom/config.yml
-ADD ./docker-entrypoint.sh /usr/local/bin/
+ADD ./build/stroom-app-all.jar /stroom/stroom-app-all.jar
+ADD ./build/stroom-kafka-client-impl_0_10_0_1-all.jar /stroom/plugins/stroom-kafka-client-impl_0_10_0_1-all.jar
+ADD ./build/prod.yml /stroom/config.yml
+ADD docker-entrypoint.sh /usr/local/bin/
 
 #Add in all the content packs so stroom imports them on startup
 ADD https://github.com/gchq/stroom-content/releases/download/core-xml-schemas-v2.0/core-xml-schemas-v2.0.zip /stroom/contentPackImport/

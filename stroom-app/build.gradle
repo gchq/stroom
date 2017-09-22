@@ -4,6 +4,8 @@ plugins {
 }
 
 def swaggerDir = "${projectDir}/src/main/resources/swagger"
+def jarName = 'stroom-app.jar'
+def fatJarName = 'stroom-app-all.jar'
 
 apply plugin: 'application'
 apply plugin: 'java'
@@ -20,7 +22,7 @@ jar {
                 "Main-Class" : "stroom.startup.App"
         )
     }
-    archiveName 'stroom-app.jar'
+    archiveName jarName
 
     //explicitly add in the swagger spec files as they won't be in the source set as they
     //were generated after processResources
@@ -42,7 +44,7 @@ shadowJar {
     transform(ServiceFileTransformer) {
         include 'META-INF/spring.*'
     }
-    archiveName 'stroom-app-all.jar'
+    archiveName fatJarName
 
     //explicitly add in the swagger spec files as they won't be in the source set as they
     //were generated after processResources
@@ -167,6 +169,55 @@ swagger {
         swaggerDirectory = "${project.buildDir}/swagger"
     }
 }
+
+//copy the plugin jar into stroom-app so docker can use it in the build
+//task copyPluginJar(type: Copy) {
+    //dependsOn ':stroom-kafka-client-impl_0_10_0_1:shadowJar'
+
+    //doFirst {
+        //println "Copying plugin jar to ${project.buildDir}"
+    //}
+
+    //from "${project.buildDir}../../stroom-kafka-client-impl_0_10_0_1/build/libs/"
+    //include "*-all.jar"
+    //into "${project.buildDir}"
+//}
+
+def dockerBuildDir = "${projectDir}/docker/build"
+
+clean{
+    delete dockerBuildDir
+}
+
+//Copy all the files needed by the docker build into stroom-app/docker/build
+task copyFilesForDockerBuild() {
+    dependsOn shadowJar
+    dependsOn tasks.getByPath(':stroom-kafka-client-impl_0_10_0_1:shadowJar')
+    doFirst {
+        new File(stroomPluginsDir).mkdirs()
+
+        //Copy the stroom app fat jar
+        copy {
+            from "${project.buildDir}/libs/${fatJarName}"
+            into dockerBuildDir
+        }
+
+        //Copy the kafka client fat jar
+        copy {
+            from project(':stroom-kafka-client-impl_0_10_0_1').file('build/libs/stroom-kafka-client-impl_0_10_0_1-all.jar')
+            into dockerBuildDir
+        }
+
+        //Copy the dropwizard yml configuration
+        copy {
+            from "${projectDir}/prod.yml"
+            into dockerBuildDir
+        }
+    }
+}
+
+//if we are running the app in an IDE we want this jar in place for stroom to pick up
+tasks.build.dependsOn copyFilesForDockerBuild
 
 //make generateSwaggerDocumentation and shadowJar happen as part of a build
 tasks.build.dependsOn generateSwaggerDocumentation

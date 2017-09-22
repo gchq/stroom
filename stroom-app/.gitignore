@@ -9,3 +9,4 @@
 /build/
 /bin/
 /war/WEB-INF/lib
+/docker/build/
