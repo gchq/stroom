@@ -35,9 +35,8 @@ import java.util.UUID;
  * Wrapper for the ResourceStore that makes sure the user can only access stuff
  * in the session.
  */
-@Component(SessionResourceStoreImpl.BEAN_NAME)
+@Component
 public class SessionResourceStoreImpl extends HttpServlet implements SessionResourceStore {
-    public static final String BEAN_NAME = "sessionResourceStore";
     private static final long serialVersionUID = -4533441835216235920L;
     private static final String UUID_ARG = "UUID";
 

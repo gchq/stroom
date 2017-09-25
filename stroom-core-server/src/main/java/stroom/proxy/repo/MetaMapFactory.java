@@ -16,8 +16,6 @@
 
 package stroom.proxy.repo;
 
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
 
@@ -44,9 +42,11 @@ public class MetaMapFactory {
     }
 
     protected HttpServletRequest getHttpServletRequest() {
-        HttpServletRequest httpServletRequest = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
-                .getRequest();
-        return httpServletRequest;
+//        HttpServletRequest httpServletRequest = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
+//                .getRequest();
+//        return httpServletRequest;
+//
+        return null;
     }
 
     @SuppressWarnings("unchecked")

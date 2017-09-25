@@ -46,6 +46,11 @@ dependencies {
     compile libs.spring_tx
     compile libs.vavr
     compile libs.xml_apis
+    compile libs.swagger_annotations
+
+    compile libs.dropwizard_core
+    compile libs.dropwizard_metrics_annotation
+    compile libs.dropwizard_metrics_healthchecks
 
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')

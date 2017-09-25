@@ -163,8 +163,6 @@ The table below includes licences for all Maven dependencies. Not included in th
 | org.springframework                       | spring-orm                                   | 4.2.4.RELEASE    | APL 2.0       |         |               |
 | org.springframework                       | spring-test                                  | 4.2.4.RELEASE    | APL 2.0       |         |               |
 | org.springframework                       | spring-tx                                    | 4.2.4.RELEASE    | APL 2.0       |         |               |
-| org.springframework                       | spring-web                                   | 4.2.4.RELEASE    | APL 2.0       |         |               |
-| org.springframework                       | spring-webmvc                                | 4.2.4.RELEASE    | APL 2.0       |         |               |
 | stax                                      | stax-api                                     | 1.0.1            | APL 2.0       |         |               |
 | javax.validation                          | validation-api                               | 1.1.0.Final      | APL 2.0       |         |               |
 | javax.validation                          | validation-api                               | sources          | APL 2.0       |         |               |

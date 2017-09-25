@@ -17,6 +17,7 @@
 package stroom.statistics.spring;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
+import io.dropwizard.setup.Environment;
 import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,8 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import stroom.node.server.GlobalProperties;
+import stroom.statistics.server.sql.StatisticsQueryService;
+import stroom.statistics.server.sql.search.SqlStatisticsQueryResource;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.Version;
 

@@ -147,8 +147,8 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
         ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
-    minHeapSize = gwtCompilerProps.minHeap
-    maxHeapSize = gwtCompilerProps.maxHeap
+    minHeapSize = gwtCompilerProps.devModeMinHeap
+    maxHeapSize = gwtCompilerProps.devModeMaxHeap
 }
 
 task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {

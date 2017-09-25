@@ -31,6 +31,7 @@ import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamtask.server.StreamTargetStroomStreamHandler;
+import stroom.util.spring.StroomScope;
 import stroom.util.task.ServerTask;
 import stroom.util.thread.ThreadLocalBuffer;
 import stroom.feed.StroomHeaderArguments;
@@ -51,7 +52,7 @@ import java.util.stream.Collectors;
  * </p>
  */
 @Component("dataFeedRequest")
-@Scope("request")
+@Scope(StroomScope.REQUEST)
 public class DefaultDataFeedRequest implements DataFeedRequest {
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultDataFeedRequest.class);
 

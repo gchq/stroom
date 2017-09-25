@@ -17,65 +17,54 @@
 package stroom.startup;
 
 import io.dropwizard.Application;
+import io.dropwizard.Configuration;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.setup.Bootstrap;
+import io.dropwizard.setup.Environment;
+import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.Config;
+import stroom.dashboard.server.logging.LogLevelInspector;
+import stroom.servicediscovery.ResourcePaths;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import java.util.EnumSet;
-import java.util.concurrent.CountDownLatch;
+import java.util.ServiceLoader;
 
-public class App extends Application<Config> {
-    private final Logger LOGGER = LoggerFactory.getLogger(App.class);
-
-    private final CountDownLatch applicationContextReadyLatch = new CountDownLatch(1);
-
-    public static void main(String[] args) throws Exception {
+public class App extends Application<Configuration> {
+    public static void main(final String[] args) throws Exception {
         // Hibernate requires JBoss Logging. The SLF4J API jar wasn't being detected so this sets it manually.
         System.setProperty("org.jboss.logging.provider", "slf4j");
         new App().run(args);
     }
 
     @Override
-    public void initialize(Bootstrap<Config> bootstrap) {
+    public void initialize(final Bootstrap<Configuration> bootstrap) {
         bootstrap.addBundle(new AssetsBundle("/ui", "/", "stroom.jsp", "ui"));
     }
 
     @Override
-    public void run(Config configuration, io.dropwizard.setup.Environment environment) throws Exception {
+    public void run(final Configuration configuration, final Environment environment) throws Exception {
+        final ServiceLoader<AppAware> serviceLoader = ServiceLoader.load(AppAware.class);
+        serviceLoader.forEach(appAware -> appAware.initialize(configuration, environment));
+
         // The order in which the following are run is important.
-        Environment.configure(environment);
-        SpringContexts springContexts = new SpringContexts();
-        Servlets servlets = new Servlets(environment.getApplicationContext());
-        Filters filters = new Filters(environment.getApplicationContext());
-        Listeners listeners = new Listeners(environment.servlets(), springContexts.rootContext);
-        springContexts.start(environment, configuration);
-        ServletMonitor servletMonitor = new ServletMonitor((servlets.upgradeDispatcherServletHolder));
-        Resources resources = new Resources(environment.jersey(), servletMonitor);
-        HealthChecks.registerHealthChecks(environment.healthChecks(), resources, servletMonitor);
-        AdminTasks.registerAdminTasks(environment);
+        // Set up a session manager for Jetty
+        SessionHandler sessions = new SessionHandler();
+        environment.servlets().setSessionHandler(sessions);
+
+        // We want Stroom to use the root path so we need to move Dropwizard's path.
+        environment.jersey().setUrlPattern(ResourcePaths.ROOT_PATH + "/*");
+
+
+        environment.healthChecks().register(LogLevelInspector.class.getName(), new LogLevelInspector());
+
+
         configureCors(environment);
-        //Allows us to expose a method so other threads can block until the application has fully started
-        servletMonitor.registerApplicationContextListener(
-                applicationContext -> {
-                    applicationContextReadyLatch.countDown();
-                    LOGGER.debug("applicationContextReadyLatch counted down - application started");
-                });
     }
 
-    /**
-     * @return Will block until the application has fully started
-     */
-    public void waitForApplicationStart() throws InterruptedException {
-        LOGGER.debug("Waiting for the application to start");
-        applicationContextReadyLatch.await();
-    }
 
-    private static final void configureCors(io.dropwizard.setup.Environment environment) {
+    private static void configureCors(final Environment environment) {
         FilterRegistration.Dynamic cors = environment.servlets().
                 addFilter("CORS", CrossOriginFilter.class);
         cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");

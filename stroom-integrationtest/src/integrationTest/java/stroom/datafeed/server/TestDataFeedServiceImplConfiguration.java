@@ -43,7 +43,7 @@ public class TestDataFeedServiceImplConfiguration {
     }
 
     @Bean
-    @Scope("request")
+    @Scope(StroomScope.REQUEST)
     public ThreadLocalBuffer requestThreadLocalBuffer() {
         return new ThreadLocalBuffer();
     }

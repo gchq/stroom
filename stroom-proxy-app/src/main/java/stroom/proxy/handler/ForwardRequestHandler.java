@@ -4,11 +4,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 import stroom.feed.MetaMap;
+import stroom.feed.StroomHeaderArguments;
+import stroom.feed.StroomStreamException;
+import stroom.proxy.repo.MetaMapFactory;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.thread.ThreadUtil;
-import stroom.feed.StroomHeaderArguments;
-import stroom.feed.StroomStreamException;
 
 import javax.annotation.Resource;
 import javax.net.ssl.HostnameVerifier;

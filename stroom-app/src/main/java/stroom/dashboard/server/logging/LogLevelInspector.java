@@ -4,7 +4,6 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import com.codahale.metrics.health.HealthCheck;
 import org.slf4j.LoggerFactory;
-import stroom.resources.HasHealthCheck;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -15,12 +14,9 @@ import java.util.stream.Collectors;
  * they are at run time. Log levels can be changed using 'httpie' like this:
  * http -f POST http://127.0.0.1:8080/admin/tasks/log-level logger=stroom.statistics.internal.MultiServiceInternalStatisticsReceiver level=TRACE
  */
-public enum LogLevelInspector implements HasHealthCheck {
-
-    INSTANCE;
-
-    public HealthCheck.Result getHealth() {
-
+public class LogLevelInspector extends HealthCheck {
+    @Override
+    protected Result check() throws Exception {
         LoggerContext loggerContext = ((LoggerContext) LoggerFactory.getILoggerFactory());
 
         if (loggerContext != null) {

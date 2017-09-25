@@ -16,99 +16,62 @@
 
 package stroom.spring;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.aop.framework.ProxyFactoryBean;
+import io.dropwizard.setup.Environment;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
-import stroom.cluster.server.ClusterCallServiceRPC;
-import stroom.datafeed.server.DataFeedServiceImpl;
-import stroom.dispatch.server.DispatchServiceImpl;
-import stroom.dispatch.shared.DispatchService;
-import stroom.entity.server.SpringRequestFactoryServlet;
 import stroom.feed.MetaMap;
-import stroom.feed.server.RemoteFeedServiceRPC;
+import stroom.node.server.StroomPropertyService;
 import stroom.proxy.repo.MetaMapFactory;
-import stroom.servlet.DebugServlet;
-import stroom.servlet.DynamicCSSServlet;
-import stroom.servlet.EchoServlet;
-import stroom.servlet.ExportConfigServlet;
-import stroom.servlet.ImportFileServlet;
-import stroom.servlet.SessionListServlet;
-import stroom.servlet.SessionResourceStoreImpl;
-import stroom.servlet.StatusServlet;
+import stroom.servicediscovery.ServiceDiscoverer;
+import stroom.servicediscovery.ServiceDiscovererImpl;
+import stroom.servicediscovery.ServiceDiscoveryManager;
+import stroom.servicediscovery.ServiceDiscoveryRegistrar;
+import stroom.statistics.server.sql.StatisticsQueryService;
 import stroom.util.config.StroomProperties;
+import stroom.util.spring.StroomScope;
 import stroom.util.thread.ThreadLocalBuffer;
-
-import java.util.Properties;
 
 /**
  * Exclude other configurations that might be found accidentally during a
  * component scan as configurations should be specified explicitly.
  */
 @Configuration
-@EnableWebMvc
-//@ComponentScan(basePackages = {"stroom"}, excludeFilters = {
-//        @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
 public class CoreClientConfiguration {
     @Bean
-    @Scope("request")
+    @Scope(StroomScope.REQUEST)
     public MetaMap metaMap() {
         return new MetaMapFactory().create();
     }
 
     @Bean
-    @Scope("request")
+    @Scope(StroomScope.REQUEST)
     public ThreadLocalBuffer requestThreadLocalBuffer() {
         final ThreadLocalBuffer threadLocalBuffer = new ThreadLocalBuffer();
         threadLocalBuffer.setBufferSize(StroomProperties.getProperty("stroom.buffersize"));
         return threadLocalBuffer;
     }
 
-
     @Bean
-    public SimpleUrlHandlerMapping urlMapping() {
-        final SimpleUrlHandlerMapping mapping = new SimpleUrlHandlerMapping();
-        mapping.setLazyInitHandlers(true);
-        mapping.setAlwaysUseFullPath(true);
+    public ServiceDiscoveryRegistrar serviceDiscoveryRegistrar(final Environment environment,
+                                                               final ServiceDiscoveryManager serviceDiscoveryManager,
+                                                               final StroomPropertyService stroomPropertyService) {
+        final ServiceDiscoveryRegistrar serviceDiscoveryRegistrar = new ServiceDiscoveryRegistrar(serviceDiscoveryManager, stroomPropertyService);
 
-        final Properties mappings = new Properties();
-        mappings.setProperty("/dynamic.css", DynamicCSSServlet.BEAN_NAME);
-        mappings.setProperty("/dispatch.rpc", "dispatchServiceRPC");
-        mappings.setProperty("/importfile.rpc", ImportFileServlet.BEAN_NAME);
-        mappings.setProperty("/script", "scriptServlet");
-        mappings.setProperty("/clustercall.rpc", ClusterCallServiceRPC.BEAN_NAME);
-        mappings.setProperty("/export", ExportConfigServlet.BEAN_NAME);
-        mappings.setProperty("/status", StatusServlet.BEAN_NAME);
-        mappings.setProperty("/echo", EchoServlet.BEAN_NAME);
-        mappings.setProperty("/debug", DebugServlet.BEAN_NAME);
-        mappings.setProperty("/sessionList", SessionListServlet.BEAN_NAME);
-        mappings.setProperty("/resourcestore/*", SessionResourceStoreImpl.BEAN_NAME);
-        mappings.setProperty("/gwtRequest", SpringRequestFactoryServlet.BEAN_NAME);
+        // Add health check
+        environment.healthChecks().register(serviceDiscoveryRegistrar.getClass().getSimpleName() + "HealthCheck", serviceDiscoveryRegistrar.getHealthCheck());
 
-        // Normally Stroom Proxy Serves This
-        mappings.setProperty("/remoting/remotefeedservice.rpc", RemoteFeedServiceRPC.BEAN_NAME);
-        mappings.setProperty("/datafeed", DataFeedServiceImpl.BEAN_NAME);
-        mappings.setProperty("/datafeed/*", DataFeedServiceImpl.BEAN_NAME);
-        mapping.setMappings(mappings);
-
-        return mapping;
+        return serviceDiscoveryRegistrar;
     }
 
     @Bean
-    public ProxyFactoryBean dispatchServiceRPC() throws ClassNotFoundException {
-        return getProxyFactoryBean(DispatchService.class, DispatchServiceImpl.BEAN_NAME, "jpaDeProxyMethodInterceptor");
-    }
+    public ServiceDiscovererImpl serviceDiscoverer(final Environment environment, final ServiceDiscoveryManager serviceDiscoveryManager) {
+        final ServiceDiscovererImpl serviceDiscoverer = new ServiceDiscovererImpl(serviceDiscoveryManager);
 
-    private ProxyFactoryBean getProxyFactoryBean(final Class<?> clazz, final String targetName,
-                                                 final String interceptorName) throws ClassNotFoundException {
-        final ProxyFactoryBean proxyFactoryBean = new ProxyFactoryBean();
-        proxyFactoryBean.setProxyInterfaces(new Class<?>[]{clazz});
-        proxyFactoryBean.setTargetName(targetName);
-        proxyFactoryBean.setInterceptorNames(interceptorName);
-        return proxyFactoryBean;
+        // Add health check
+        environment.healthChecks().register(serviceDiscoverer.getClass().getSimpleName() + "HealthCheck", serviceDiscoverer.getHealthCheck());
+
+
+        return serviceDiscoverer;
     }
 }

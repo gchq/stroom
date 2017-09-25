@@ -43,6 +43,11 @@ dependencies {
     compile libs.spring_context_support
     compile libs.spring_core
     compile libs.spring_tx
+    compile libs.swagger_annotations
+
+    compile libs.dropwizard_core
+    compile libs.dropwizard_metrics_annotation
+    compile libs.dropwizard_metrics_healthchecks
 
     runtime libs.shiro_aspectj
 

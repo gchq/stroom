@@ -13,6 +13,11 @@ dependencies {
     compile urlDependencies.get(urlLibs.stroomQueryCommon)
     compile urlDependencies.get(urlLibs.stroomStatsSchema)
 
+    compile libs.dropwizard_lifecycle
+    compile libs.dropwizard_core
+    compile libs.dropwizard_metrics_annotation
+    compile libs.dropwizard_metrics_healthchecks
+
     compile libs.hessian
     compile libs.guava
     compile libs.gwt_servlet
@@ -37,8 +42,6 @@ dependencies {
     compile libs.spring_beans
     compile libs.spring_context
     compile libs.spring_core
-    compile libs.spring_web
-    compile libs.spring_webmvc
     compile libs.xml_apis
     compile (libs.ehcache_spring_annotations) {
         exclude(module: 'guava')

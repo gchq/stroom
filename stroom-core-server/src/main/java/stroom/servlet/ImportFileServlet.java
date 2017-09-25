@@ -46,10 +46,8 @@ import java.util.Map;
 /**
  * Generic Import Service
  */
-@Component(ImportFileServlet.BEAN_NAME)
+@Component
 public final class ImportFileServlet extends HttpServlet {
-    public static final String BEAN_NAME = "importFileServlet";
-
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportFileServlet.class);
 
     private static final long serialVersionUID = 487567988479000995L;
