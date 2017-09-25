@@ -15,9 +15,9 @@ import java.util.function.Consumer;
 public class ClickableSafeHtmlCell extends AbstractCell<ClickableSafeHtml> {
     private static final Set<String> ENABLED_EVENTS = new HashSet<>(Arrays.asList("click"));
 
-    private Consumer<UrlDetector.Hyperlink> urlClickHandler;
+    private Consumer<Hyperlink> urlClickHandler;
 
-    public ClickableSafeHtmlCell(final Consumer<UrlDetector.Hyperlink> urlClickHandler) {
+    public ClickableSafeHtmlCell(final Consumer<Hyperlink> urlClickHandler) {
         super(ENABLED_EVENTS);
 
         this.urlClickHandler = urlClickHandler;
@@ -28,7 +28,7 @@ public class ClickableSafeHtmlCell extends AbstractCell<ClickableSafeHtml> {
                                final NativeEvent event, final ValueUpdater<ClickableSafeHtml> valueUpdater) {
         super.onBrowserEvent(context, parent, value, event, valueUpdater);
 
-        if (null == value.getUrl()) {
+        if (null == value.getHyperlink()) {
             return;
         }
 
@@ -39,7 +39,7 @@ public class ClickableSafeHtmlCell extends AbstractCell<ClickableSafeHtml> {
             }
             if (parent.getFirstChildElement().isOrHasChild(Element.as(eventTarget))) {
                 // Ignore clicks that occur outside of the main element.
-                urlClickHandler.accept(value.getUrl());
+                urlClickHandler.accept(value.getHyperlink());
             }
         }
     }

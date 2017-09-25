@@ -9,25 +9,25 @@ import java.io.Serializable;
  */
 public class ClickableSafeHtml implements Serializable {
     private final SafeHtml safeHtml;
-    private final UrlDetector.Hyperlink url;
+    private final Hyperlink hyperlink;
 
     public ClickableSafeHtml(final SafeHtml safeHtml,
-                             final UrlDetector.Hyperlink url) {
+                             final Hyperlink hyperlink) {
         this.safeHtml = safeHtml;
-        this.url = url;
+        this.hyperlink = hyperlink;
     }
 
     public SafeHtml getSafeHtml() {
         return safeHtml;
     }
 
-    public UrlDetector.Hyperlink getUrl() {
-        return url;
+    public Hyperlink getHyperlink() {
+        return hyperlink;
     }
 
     public static class Builder {
         private SafeHtml safeHtml;
-        private UrlDetector.Hyperlink url;
+        private Hyperlink hyperlink;
 
         public Builder() {
 
@@ -38,13 +38,13 @@ public class ClickableSafeHtml implements Serializable {
             return this;
         }
 
-        public Builder url(final UrlDetector.Hyperlink url) {
-            this.url = url;
+        public Builder hyperlink(final Hyperlink hyperlink) {
+            this.hyperlink = hyperlink;
             return this;
         }
 
         public ClickableSafeHtml build() {
-            return new ClickableSafeHtml(this.safeHtml, this.url);
+            return new ClickableSafeHtml(this.safeHtml, this.hyperlink);
         }
     }
 

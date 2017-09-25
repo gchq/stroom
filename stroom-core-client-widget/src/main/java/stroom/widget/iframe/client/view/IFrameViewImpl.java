@@ -22,6 +22,7 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewImpl;
+import stroom.cell.clickable.client.Hyperlink;
 import stroom.widget.iframe.client.presenter.IFramePresenter.IFrameView;
 
 public class IFrameViewImpl extends ViewImpl implements IFrameView {
@@ -44,8 +45,8 @@ public class IFrameViewImpl extends ViewImpl implements IFrameView {
     }
 
     @Override
-    public void setURL(final String url) {
-        content.setUrl(url);
+    public void setHyperlink(final Hyperlink hyperlink) {
+        this.content.setUrl(hyperlink.getHref());
     }
 
     public interface Style extends CssResource {
