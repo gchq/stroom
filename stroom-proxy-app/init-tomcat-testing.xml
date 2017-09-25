@@ -1,0 +1,16 @@
+<project name="init-tomcat-testing" default="init">
+
+	
+	<!-- Testing Stroom Proxy -->
+	<!-- 1) Right Mouse Click "Run As" -> "Maven Install" -->
+	<!-- 2) Run the ant script to copy in teh dependency jars to the WEB-INF/lib dir -->
+	
+	<!-- If maven build fails it's worth running build on file system from the root -->
+	<target name="init">
+		<copy flatten="true" todir="src/main/webapp/WEB-INF/lib" verbose="true">
+			<fileset dir="target">
+				<include name="**/*.jar" />
+			</fileset>
+		</copy>
+	</target>
+</project>

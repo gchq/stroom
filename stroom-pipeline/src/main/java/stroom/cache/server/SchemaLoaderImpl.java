@@ -29,6 +29,7 @@ import stroom.pipeline.server.filter.LSResourceResolverImpl;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 import stroom.xmlschema.server.XMLSchemaCache;
+import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 
 import javax.inject.Inject;
 import javax.xml.transform.stream.StreamSource;
@@ -49,7 +50,9 @@ public class SchemaLoaderImpl implements SchemaLoader {
     }
 
     @Override
-    public StoredSchema load(final String schemaLanguage, final String data) {
+    public StoredSchema load(final String schemaLanguage,
+                             final String data,
+                             final FindXMLSchemaCriteria findXMLSchemaCriteria) {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Creating schema: " + data);
         }
@@ -70,7 +73,7 @@ public class SchemaLoaderImpl implements SchemaLoader {
             }
 
             schemaFactory.setErrorHandler(errorHandler);
-            schemaFactory.setResourceResolver(new LSResourceResolverImpl(xmlSchemaCache));
+            schemaFactory.setResourceResolver(new LSResourceResolverImpl(xmlSchemaCache, findXMLSchemaCriteria));
 
             schema = schemaFactory.newSchema(new StreamSource(inputStream));
 

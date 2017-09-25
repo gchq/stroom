@@ -91,7 +91,7 @@ public class DefaultErrorWriter implements ErrorWriter {
                     final Destination destination = destinationProvider.borrowDestination();
                     if (destination != null) {
                         try {
-                            final OutputStream outputStream = destination.getOutputStream();
+                            final OutputStream outputStream = destination.getByteArrayOutputStream();
                             if (outputStream != null) {
                                 outputStream.write(sb.toString().getBytes());
                             }

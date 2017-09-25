@@ -18,9 +18,6 @@ package stroom.feed.server;
 
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.FolderService;
-import stroom.feed.remote.GetFeedStatusRequest;
-import stroom.feed.remote.GetFeedStatusResponse;
-import stroom.feed.remote.RemoteFeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
 import stroom.feed.shared.FeedService;

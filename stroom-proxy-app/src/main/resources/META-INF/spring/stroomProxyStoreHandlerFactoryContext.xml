@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+    <bean name="proxyRepositoryRequestHandler" class="stroom.proxy.handler.ProxyRepositoryRequestHandler"
+          scope="thread">
+    </bean>
+
+    <bean name="proxyRepositoryReader" class="stroom.proxy.repo.ProxyRepositoryReader">
+        <property name="simpleCron" value="${readCron}"/>
+        <lookup-method name="createOutgoingRequestHandlerList"
+                       bean="outgoingRequestHandlerList"/>
+    </bean>
+
+
+    <bean name="proxyRepositoryManager" class="stroom.proxy.repo.ProxyRepositoryManager">
+        <property name="repoDir" value="${repoDir}"/>
+        <property name="repositoryFormat" value="${repositoryFormat}"/>
+        <property name="simpleCron" value="${rollCron}"/>
+    </bean>
+
+    <bean class="stroom.util.spring.ListMerge">
+        <property name="target" ref="incomingRequestHandlerNameList"/>
+        <property name="source">
+            <list>
+                <value>proxyRepositoryRequestHandler</value>
+            </list>
+        </property>
+    </bean>
+
+</beans>

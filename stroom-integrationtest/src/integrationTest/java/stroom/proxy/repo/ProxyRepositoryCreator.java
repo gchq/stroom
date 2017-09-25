@@ -26,7 +26,7 @@ import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.zip.StroomHeaderArguments;
+import stroom.feed.StroomHeaderArguments;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;

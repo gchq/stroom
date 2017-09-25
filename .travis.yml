@@ -61,7 +61,7 @@ before_script:
   - echo "stroom.plugins.lib.dir=$HOME/.stroom/plugins" >> ~/.stroom/stroom.conf
 
 # Use 1 local worker to avoid using too much memory as each worker will chew up ~500Mb ram
-script: ./gradlew -Pversion=$TRAVIS_TAG -PgwtCompilerWorkers=1 downloadUrlDependencies clean build shadowJar
+script: ./gradlew -Pversion=$TRAVIS_TAG -PgwtCompilerWorkers=1 clean build
 
 # Conditionally tag git and build docker image.
 after_success:  "./travis.after_success.sh"
@@ -85,7 +85,7 @@ deploy:
       - stroom-app/build/swagger/swagger.yaml
     skip_cleanup: true
     on:
-    tags: true
+      tags: true
 
 #clean out gradle caches as per travis docs
 before_cache:

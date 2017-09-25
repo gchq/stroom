@@ -28,6 +28,36 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 
 
+## [v5.0-beta.47] - 2017-09-11
+
+* Issue **385** : Individual index shards can now be deleted without deleting all shards.
+
+* Issue **391** : Users needed `Manage Processors` permission to initiate pipeline stepping. This is no longer required as the 'best fit' pipeline is now discovered as the internal processing user.
+
+* Issue **392** : Inherited pipelines now only require 'Use' permission to be used instead of requiring 'Read' permission.
+
+* Issue **394** : Pipeline stepping will now show errors with an alert popup.
+
+* Issue **396** : All queries associated with a dashboard should now be correctly deleted when a dashboard is deleted.
+
+* Issue **393** : All caches now cache items within the context of the current user so that different users do not have the possibility of having problems caused by others users not having read permissions on items.
+
+* Issue **358** : Schemas are now selected from a subset matching the criteria set on SchemaFilter by the user.
+
+* Issue **369** : Translation stepping wasn't showing any errors during stepping if a schema had an error in it.
+
+## [v5.0-beta.46] - 2017-08-15
+
+* Issue **#364** : Switched index writer lock factory to a SingleInstanceLockFactory as index shards are accessed by a single process.
+
+* Issue **#363** : IndexShardWriterCacheImpl now closes and flushes writers using an executor provided by the TaskManager. Writers are now also closed in LRU order when sweeping up writers that exceed TTL and TTI constraints.
+
+* Issue **#361** : Information has been added to threads executing index writer and index searcher maintenance tasks.
+
+## [v5.0-beta.45] - 2017-08-08
+
+* Issue **#356** : Changed the way index shard writers are cached to improve indexing performance and reduce blocking.
+
 ## [v5.0-beta.44] - 2017-07-28
 
 * Issue **#353** : Reduced expected error logging to debug.
@@ -548,6 +578,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
 [v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
 
+[v5.0-beta.47]: https://github.com/gchq/stroom/compare/v5.0-beta.46...v5.0-beta.47
+[v5.0-beta.46]: https://github.com/gchq/stroom/compare/v5.0-beta.45...v5.0-beta.46
+[v5.0-beta.45]: https://github.com/gchq/stroom/compare/v5.0-beta.44...v5.0-beta.45
 [v5.0-beta.44]: https://github.com/gchq/stroom/compare/v5.0-beta.43...v5.0-beta.44
 [v5.0-beta.43]: https://github.com/gchq/stroom/compare/v5.0-beta.42...v5.0-beta.43
 [v5.0-beta.42]: https://github.com/gchq/stroom/compare/v5.0-beta.41...v5.0-beta.42

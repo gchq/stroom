@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,18 +97,24 @@ public class TestBasicSearch extends AbstractCoreIntegrationTest {
         final List<IndexShard> shards = indexShardService.find(criteria);
 
         // Open readers and add reader searcher to the multi searcher.
-        final IndexShardSearcher[] readers = new IndexShardSearcherImpl[shards.size()];
+        final IndexShardSearcher[] indexShardSearchers = new IndexShardSearcherImpl[shards.size()];
         int i = 0;
         for (final IndexShard indexShard : shards) {
             final IndexShardSearcher indexShardSearcher = new IndexShardSearcherImpl(indexShard);
-            readers[i++] = indexShardSearcher;
+            indexShardSearchers[i++] = indexShardSearcher;
         }
 
-        final IndexReader[] searchables = new IndexReader[readers.length];
-        for (i = 0; i < readers.length; i++) {
-            searchables[i] = readers[i].getReader();
+        final IndexSearcher[] indexSearchers = new IndexSearcher[indexShardSearchers.length];
+        for (i = 0; i < indexShardSearchers.length; i++) {
+            indexSearchers[i] = indexShardSearchers[i].getSearcherManager().acquire();
         }
-        final MultiReader multiReader = new MultiReader(searchables);
+
+        final IndexReader[] indexReaders = new IndexReader[indexSearchers.length];
+        for (i = 0; i < indexSearchers.length; i++) {
+            indexReaders[i] = indexSearchers[i].getIndexReader();
+        }
+
+        final MultiReader multiReader = new MultiReader(indexReaders);
         final IndexSearcher indexSearcher = new IndexSearcher(multiReader);
 
         final TermQuery termQuery = new TermQuery(new Term("test", "test"));
@@ -137,9 +143,15 @@ public class TestBasicSearch extends AbstractCoreIntegrationTest {
             Assert.assertNull(nonstoreField);
         }
 
+        // Release searchers
+        for (i = 0; i < indexShardSearchers.length; i++) {
+            final IndexSearcher searcher = indexSearchers[i];
+            indexShardSearchers[i].getSearcherManager().release(searcher);
+        }
+
         // Close readers.
-        for (final IndexShardSearcher reader : readers) {
-            reader.destroy();
+        for (final IndexShardSearcher indexShardSearcher : indexShardSearchers) {
+            indexShardSearcher.destroy();
         }
     }
 }

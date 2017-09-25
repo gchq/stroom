@@ -17,9 +17,6 @@
 package stroom.node.server;
 
 import org.springframework.stereotype.Component;
-import stroom.status.remote.GetStatusRequest;
-import stroom.status.remote.GetStatusResponse;
-import stroom.status.remote.RemoteStatusService;
 
 @Component("remoteStatusService")
 public class RemoteStatusServiceImpl implements RemoteStatusService {

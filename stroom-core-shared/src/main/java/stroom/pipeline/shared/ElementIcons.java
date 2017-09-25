@@ -18,10 +18,13 @@ package stroom.pipeline.shared;
 
 public final class ElementIcons {
     public static final String ANALYTIC_OUTPUT = "analyticOutput.png";
+    public static final String FILE = "file.svg";
+    public static final String FILES = "files.svg";
+    public static final String HADOOP = "hadoop-elephant-logo.svg";
     public static final String ID = "id.svg";
     public static final String INDEX = "index.svg";
     public static final String JSON = "json.svg";
-    public static final String KAFKA = "kafka.png";
+    public static final String KAFKA = "apache_kafka-icon.svg";
     public static final String RECORD_COUNT = "recordCount.svg";
     public static final String RECORD_OUTPUT = "recordOutput.svg";
     public static final String REFERENCE_DATA = "referenceData.svg";
@@ -29,7 +32,7 @@ public final class ElementIcons {
     public static final String SPLIT = "split.svg";
     public static final String STATISTICS = "statistics.svg";
     public static final String STREAM = "stream.svg";
-    public static final String STROOM_STATS = "stroomStats.png";
+    public static final String STROOM_STATS = "StroomStatsStore.svg";
     public static final String TEXT = "text.svg";
     public static final String XML = "xml.svg";
     public static final String XSD = "xsd.svg";

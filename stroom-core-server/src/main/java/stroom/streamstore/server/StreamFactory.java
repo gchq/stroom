@@ -17,7 +17,7 @@
 package stroom.streamstore.server;
 
 import stroom.util.date.DateUtil;
-import stroom.util.zip.StroomHeaderArguments;
+import stroom.feed.StroomHeaderArguments;
 
 import java.util.Map;
 

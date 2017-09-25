@@ -2,7 +2,6 @@ package stroom.node.server;
 
 import org.springframework.remoting.caucho.HessianServiceExporter;
 import org.springframework.stereotype.Component;
-import stroom.status.remote.RemoteStatusService;
 
 import javax.inject.Inject;
 import javax.inject.Named;

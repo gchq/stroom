@@ -1,7 +1,6 @@
 dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-entity-shared')
-    compile project(':stroom-remote')
     compile project(':stroom-security-api')
     compile project(':stroom-statistics-api')
     permitUnusedDeclared project(':stroom-statistics-api') //not clear why it thinks this is unused
@@ -9,7 +8,7 @@ dependencies {
     compile project(':stroom-util-shared')
     compile project(':stroom-connectors')
 
-    compile urlDependencies.get(urlLibs.stroomProxyRepo)
+//    compile urlDependencies.get(urlLibs.stroomProxyRepo)
     compile urlDependencies.get(urlLibs.eventLogging)
     compile urlDependencies.get(urlLibs.stroomQueryCommon)
     compile urlDependencies.get(urlLibs.stroomStatsSchema)

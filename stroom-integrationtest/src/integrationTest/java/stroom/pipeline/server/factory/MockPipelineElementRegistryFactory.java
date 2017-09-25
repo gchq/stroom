@@ -76,16 +76,16 @@ public class MockPipelineElementRegistryFactory implements ElementRegistryFactor
     public <T extends Element> T getElementInstance(final Class<T> elementClass) {
         try {
             if (elementClass.equals(CombinedParser.class)) {
-                return (T) new CombinedParser(null, null, null, null);
+                return (T) new CombinedParser(null, null, null, null, null);
             }
             if (elementClass.equals(DSParser.class)) {
-                return (T) new DSParser(null, null, null, null);
+                return (T) new DSParser(null, null, null, null, null);
             }
             if (elementClass.equals(JSONParser.class)) {
                 return (T) new JSONParser(null, null);
             }
             if (elementClass.equals(XMLFragmentParser.class)) {
-                return (T) new XMLFragmentParser(null, null, null, null);
+                return (T) new XMLFragmentParser(null, null, null, null, null);
             }
             if (elementClass.equals(XMLParser.class)) {
                 return (T) new XMLParser(null, null);
@@ -97,11 +97,11 @@ public class MockPipelineElementRegistryFactory implements ElementRegistryFactor
                 return (T) new SplitFilter();
             }
             if (elementClass.equals(XSLTFilter.class)) {
-                return (T) new XSLTFilter(null, null, null, null, null, null, null);
+                return (T) new XSLTFilter(null, null, null, null, null, null, null, null);
             }
             if (elementClass.equals(SchemaFilterSplit.class)) {
                 return (T) new SchemaFilterSplit(
-                        new SchemaFilter(null, null, null, new LocationFactoryProxy(), new PipelineContext()));
+                        new SchemaFilter(null, null, null, new LocationFactoryProxy(), new PipelineContext()), null);
             }
             if (elementClass.equals(RecordOutputFilter.class)) {
                 return (T) new RecordOutputFilter();

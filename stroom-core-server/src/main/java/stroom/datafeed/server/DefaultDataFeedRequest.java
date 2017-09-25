@@ -33,9 +33,9 @@ import stroom.streamstore.server.StreamStore;
 import stroom.streamtask.server.StreamTargetStroomStreamHandler;
 import stroom.util.task.ServerTask;
 import stroom.util.thread.ThreadLocalBuffer;
-import stroom.util.zip.StroomHeaderArguments;
-import stroom.util.zip.StroomStatusCode;
-import stroom.util.zip.StroomStreamException;
+import stroom.feed.StroomHeaderArguments;
+import stroom.feed.StroomStatusCode;
+import stroom.feed.StroomStreamException;
 
 import javax.inject.Inject;
 import javax.inject.Named;

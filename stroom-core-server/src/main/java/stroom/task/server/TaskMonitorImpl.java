@@ -35,7 +35,25 @@ public final class TaskMonitorImpl implements TaskMonitor {
     }
 
     @Override
+    public String getName() {
+        final Monitor monitor = this.monitor;
+        if (monitor != null) {
+            return monitor.getName();
+        }
+        return null;
+    }
+
+    @Override
+    public void setName(final String name) {
+        final Monitor monitor = this.monitor;
+        if (monitor != null) {
+            monitor.setName(name);
+        }
+    }
+
+    @Override
     public String getInfo() {
+        final Monitor monitor = this.monitor;
         if (monitor != null) {
             return monitor.getInfo();
         }
@@ -44,6 +62,7 @@ public final class TaskMonitorImpl implements TaskMonitor {
 
     @Override
     public void info(final Object... args) {
+        final Monitor monitor = this.monitor;
         if (monitor != null) {
             monitor.info(args);
         }
@@ -51,6 +70,7 @@ public final class TaskMonitorImpl implements TaskMonitor {
 
     @Override
     public boolean isTerminated() {
+        final Monitor monitor = this.monitor;
         if (monitor != null) {
             return monitor.isTerminated();
         }
@@ -59,6 +79,7 @@ public final class TaskMonitorImpl implements TaskMonitor {
 
     @Override
     public void terminate() {
+        final Monitor monitor = this.monitor;
         if (monitor != null) {
             monitor.terminate();
         }
@@ -66,6 +87,7 @@ public final class TaskMonitorImpl implements TaskMonitor {
 
     @Override
     public void addTerminateHandler(final TerminateHandler handler) {
+        final Monitor monitor = this.monitor;
         if (monitor != null) {
             monitor.addTerminateHandler(handler);
         }
@@ -73,6 +95,7 @@ public final class TaskMonitorImpl implements TaskMonitor {
 
     @Override
     public Monitor getParent() {
+        final Monitor monitor = this.monitor;
         if (monitor != null) {
             return monitor.getParent();
         }

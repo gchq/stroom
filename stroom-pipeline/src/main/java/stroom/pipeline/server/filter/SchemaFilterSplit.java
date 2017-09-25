@@ -23,6 +23,7 @@ import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.security.SecurityContext;
 import stroom.util.spring.StroomScope;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 
@@ -44,9 +45,15 @@ public class SchemaFilterSplit extends AbstractXMLFilter {
     private boolean schemaValidation = true;
     private boolean addedSchemaFilter;
 
+
     @Inject
-    public SchemaFilterSplit(final SchemaFilter schemaFilter) {
+    public SchemaFilterSplit(final SchemaFilter schemaFilter,
+                             final SecurityContext securityContext) {
         this.schemaFilter = schemaFilter;
+
+        if (securityContext != null) {
+            schemaConstraint.setUser(securityContext.getUserId());
+        }
     }
 
     private AbstractXMLFilter getSchemaFilter() {

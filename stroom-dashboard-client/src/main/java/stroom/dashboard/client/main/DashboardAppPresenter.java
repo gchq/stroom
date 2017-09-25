@@ -40,10 +40,14 @@ import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 
 import javax.inject.Inject;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class DashboardAppPresenter
         extends MyPresenter<DashboardAppPresenter.DashboardAppView, DashboardAppPresenter.DashboardAppProxy>
         implements TaskStartEvent.TaskStartHandler, TaskEndEvent.TaskEndHandler {
+    private static final Logger logger = Logger.getLogger(DashboardAppPresenter.class.getName());
+
     @ContentSlot
     public static final GwtEvent.Type<RevealContentHandler<?>> CONTENT = new GwtEvent.Type<>();
 

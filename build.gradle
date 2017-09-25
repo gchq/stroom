@@ -42,8 +42,8 @@ ext.gwtCompilerProps = [
     minHeap: getPropertyOrDefault('gwtCompilerMinHeap', '50M'),
     maxHeap: getPropertyOrDefault('gwtCompilerMaxHeap', '500M'),
     workers: getPropertyOrDefault('gwtCompilerWorkers', '5'),
-    devModeMinHeap: '50M',
-    devModeMaxHeap: '1G'
+    devModeMinHeap: '1G',
+    devModeMaxHeap: '4G'
 ]
 
 //version numbers for libs that share version numbers, e.g. dropwizard-*, or for github repo release versions
@@ -52,13 +52,13 @@ ext.versions = [
     stroom: getPropertyOrDefault('version', 'SNAPSHOT'),
 
     //------Stroom-repos---------------
-    stroomProxyRepo: 'v5.1-beta.8',
+//    stroomProxyRepo: 'v5.1-beta.8',
     eventLogging: 'v3.1.0',
     hadoopCommonShaded: 'v2.6.4-3',
     hadoopHdfsShaded: 'v2.6.4',
     stroomExpression: 'v1.0.0', 
     stroomQuery: 'v2.0.0-alpha.3', //same version for both stroom-query-api and stroom-query-common
-    stroomStats: 'v0.5.0-alpha',
+    stroomStats: 'v0.6.0-alpha',
 
     //------------3rd-party------------
     curator: '2.12.0', //must be chosen to be compatible with the ZK version in CDH 5.10
@@ -86,7 +86,7 @@ ext.urlLibs = [
     stroomQueryCommonSources: "stroom-query-common-$versions.stroomQuery-sources",
     stroomExpression: "stroom-expression-$versions.stroomExpression",
     stroomStatsSchema: "stroom-stats-schema-$versions.stroomStats",
-    stroomProxyRepo: "stroom-proxy-repo-$versions.stroomProxyRepo",
+//    stroomProxyRepo: "stroom-proxy-repo-$versions.stroomProxyRepo",
     eventLogging: "event-logging-$versions.eventLogging",
     hadoopCommonShaded: "hadoop-common-shaded-$versions.hadoopCommonShaded-all",
     hadoopHdfsShaded: "hadoop-hdfs-shaded-$versions.hadoopHdfsShaded-all",
@@ -203,7 +203,7 @@ def visualisationsContentPackUrl = "http://github.com/gchq/stroom-visualisations
 
 //A set of content packs to download in the task downloadStroomContent
 ext.contentPacks = [
-    'core-xml-schemas': 'v1.1',
+    'core-xml-schemas': 'v2.0',
     'internal-statistics-stroom-stats': 'v2.0',
     'internal-statistics-sql': 'v2.0',
     'internal-dashboards': 'v1.1',
@@ -428,8 +428,8 @@ urlDependencies {
     compile(urlLibs.stroomStatsSchema,
             "https://github.com/gchq/stroom-stats/releases/download/$versions.stroomStats/${urlLibs.stroomStatsSchema}.jar")
 
-    compile(urlLibs.stroomProxyRepo,
-            "https://github.com/gchq/stroom-proxy/releases/download/$versions.stroomProxyRepo/${urlLibs.stroomProxyRepo}.jar")
+//    compile(urlLibs.stroomProxyRepo,
+//            "https://github.com/gchq/stroom-proxy/releases/download/$versions.stroomProxyRepo/${urlLibs.stroomProxyRepo}.jar")
 
     compile(urlLibs.eventLogging,
             "https://github.com/gchq/event-logging/releases/download/$versions.eventLogging/${urlLibs.eventLogging}.jar")

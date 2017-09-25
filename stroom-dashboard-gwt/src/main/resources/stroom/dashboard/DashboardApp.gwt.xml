@@ -9,6 +9,7 @@
     <inherits name="com.google.gwt.inject.Inject"/>
 
     <inherits name="com.google.gwt.xml.XML"/>
+    <inherits name="com.google.gwt.logging.Logging"/>
 
     <inherits name="javax.xml.bind.annotation.Adapters"/>
 

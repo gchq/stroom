@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -33,11 +33,9 @@ import stroom.statistics.server.sql.search.StatisticDataPoint;
 import stroom.statistics.server.sql.search.StatisticDataSet;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.common.StatisticRollUpType;
+import stroom.task.server.TaskMonitorImpl;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
-import stroom.util.shared.Monitor;
-import stroom.util.shared.TerminateHandler;
-import stroom.util.task.TaskMonitor;
 
 import javax.annotation.Resource;
 import javax.sql.DataSource;
@@ -60,6 +58,7 @@ public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTes
     private static final String TAG2_OTHER_VALUE_1 = "Tag2OtherValue1";
     private static final String TAG2_OTHER_VALUE_2 = "Tag2OtherValue2";
     private static final String DATE_RANGE = "2000-01-01T00:00:00.000Z,3000-01-01T00:00:00.000Z";
+
     @Resource
     private CommonTestControl commonTestControl;
     @Resource
@@ -254,7 +253,7 @@ public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTes
         }
 
         final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                sqlStatisticValueBatchSaveService, new MockTaskMonitor());
+                sqlStatisticValueBatchSaveService, new TaskMonitorImpl());
 
         final SQLStatisticFlushTask flushTask = new SQLStatisticFlushTask(sqlStatisticAggregateMap);
 
@@ -293,43 +292,45 @@ public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTes
         return statisticsDataSource.getConnection();
     }
 
-    private static class MockTaskMonitor implements TaskMonitor {
-        private static final long serialVersionUID = -8415095958756818805L;
-
-        @Override
-        public Monitor getParent() {
-            // TODO Auto-generated method stub
-            return null;
-        }
-
-        @Override
-        public void addTerminateHandler(final TerminateHandler handler) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void terminate() {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public boolean isTerminated() {
-
-            return false;
-        }
-
-        @Override
-        public String getInfo() {
-            // TODO Auto-generated method stub
-            return null;
-        }
-
-        @Override
-        public void info(final Object... args) {
-            // do nothing
-
-        }
-    }
+//    private static class MockTaskMonitor implements TaskMonitor {
+//        private static final long serialVersionUID = -8415095958756818805L;
+//
+//        @Override
+//        public Monitor getParent() {
+//            // TODO Auto-generated method stub
+//            return null;
+//        }
+//
+//        @Override
+//        public void addTerminateHandler(final TerminateHandler handler) {
+//            // TODO Auto-generated method stub
+//
+//        }
+//
+//        @Override
+//        public void terminate() {
+//            // TODO Auto-generated method stub
+//
+//        }
+//
+//        @Override
+//        public boolean isTerminated() {
+//
+//            return false;
+//        }
+//
+//
+//
+//        @Override
+//        public String getInfo() {
+//            // TODO Auto-generated method stub
+//            return null;
+//        }
+//
+//        @Override
+//        public void info(final Object... args) {
+//            // do nothing
+//
+//        }
+//    }
 }

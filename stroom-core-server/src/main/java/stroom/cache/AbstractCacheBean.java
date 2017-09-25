@@ -79,7 +79,17 @@ public abstract class AbstractCacheBean<K, V> implements CacheBean<K, V> {
 
     @SuppressWarnings("unchecked")
     protected List<K> getKeys() {
-        final List list = selfPopulatingCache.getKeys();
+        final List list = ehcache.getKeys();
+        final List<K> keys = new ArrayList<>(list.size());
+        for (final Object item : list) {
+            keys.add((K) ((Mapping) item).key);
+        }
+        return keys;
+    }
+
+    @SuppressWarnings("unchecked")
+    protected List<K> getKeysWithExpiryCheck() {
+        final List list = ehcache.getKeysWithExpiryCheck();
         final List<K> keys = new ArrayList<>(list.size());
         for (final Object item : list) {
             keys.add((K) ((Mapping) item).key);
@@ -155,11 +165,12 @@ public abstract class AbstractCacheBean<K, V> implements CacheBean<K, V> {
     @SuppressWarnings("unchecked")
     private void destroy(final Element element) {
         if (element != null) {
-            destroy((K) ((Mapping) element.getObjectKey()).key, (V) element.getObjectValue());
+            final Mapping<K, V> mapping = (Mapping<K, V>) element.getObjectKey();
+            destroy(mapping.key, element.getObjectValue());
         }
     }
 
-    protected void destroy(final K key, final V value) {
+    protected void destroy(final K key, final Object value) {
         if (value != null && value instanceof Destroyable) {
             final Destroyable destroyable = (Destroyable) value;
             destroyable.destroy();
