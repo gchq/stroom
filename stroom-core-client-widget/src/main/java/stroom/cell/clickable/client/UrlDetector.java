@@ -1,4 +1,4 @@
-package stroom.dashboard.client.table;
+package stroom.cell.clickable.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
@@ -14,9 +14,12 @@ import com.google.gwt.safehtml.shared.UriUtils;
  *
  * \[([^]]+)]\(([^)]+)\)
  */
-public class UrlDetector {
+public final class UrlDetector {
+    private UrlDetector() {
 
-    public Hyperlink detect(final String value) {
+    }
+
+    public static Hyperlink detect(final String value) {
         Hyperlink result = null;
 
         if (value.startsWith("[") && value.endsWith(")")) {

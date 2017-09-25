@@ -1,6 +1,7 @@
 package stroom.dashboard.client.table;
 
 import org.junit.Test;
+import stroom.cell.clickable.client.UrlDetector;
 
 import java.util.*;
 import java.util.stream.Collectors;
