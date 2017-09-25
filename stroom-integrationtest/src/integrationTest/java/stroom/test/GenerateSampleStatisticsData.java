@@ -16,6 +16,9 @@
 
 package stroom.test;
 
+import io.vavr.Tuple2;
+import io.vavr.Tuple3;
+import io.vavr.Tuple4;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.statistics.shared.StatisticType;
@@ -26,6 +29,8 @@ import java.io.FileWriter;
 import java.io.Writer;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.LongStream;
 
 public class GenerateSampleStatisticsData {
     private static final Logger LOGGER = LoggerFactory.getLogger(GenerateSampleStatisticsData.class);
@@ -45,7 +50,7 @@ public class GenerateSampleStatisticsData {
 
     private static final List<String> STATES = Arrays.asList("IN", "OUT");
 
-    private static final String[] users = new String[]{USER1, USER2};
+    private static final List<String> USERS = Arrays.asList(USER1, USER2);
 
     public static void main(final String[] args) throws Exception {
         System.out.println("Writing value data...");
@@ -98,46 +103,86 @@ public class GenerateSampleStatisticsData {
     private static void buildEvents(final StringBuilder stringBuilder,
                                     final long initialEventTime,
                                     final StatisticType statisticType) {
-        long eventTime = initialEventTime;
-
         stringBuilder.append("<data>\n");
 
-        long eventCount = 0;
+        final AtomicLong eventCount = new AtomicLong(0);
 
         LOGGER.info("Building statistic test data of type {} with {} iterations",
                 statisticType, ITERATION_COUNT);
-        for (int i = 0; i <= ITERATION_COUNT; i++) {
-            String eventTimeStr = DateUtil.createNormalDateTimeString(eventTime);
-            for (final String user : users) {
-                for (final String colour : COLOURS) {
-                    for (final String state : STATES) {
-                        stringBuilder
+
+        LongStream.range(0, ITERATION_COUNT)
+                .parallel()
+                .boxed()
+                .map(i ->
+                        DateUtil.createNormalDateTimeString(
+                                initialEventTime + (ITERATION_COUNT * EVENT_TIME_DELTA_MS)))
+                .flatMap(timeStr ->
+                        USERS.stream()
+                            .map(user -> new Tuple2<>(timeStr, user)))
+                .flatMap(tuple2 ->
+                        COLOURS.stream()
+                                .map(colour -> new Tuple3<>(tuple2._1(), tuple2._2(), colour)))
+                .flatMap(tuple3 ->
+                        STATES.stream()
+                                .map(state -> new Tuple4<>(tuple3._1(), tuple3._2(), tuple3._3(), state)))
+                .forEach(tuple4 -> {
+                    stringBuilder
                             .append("<event>")
                             .append("<time>")
-                            .append(eventTimeStr)
+                            .append(tuple4._1()) //time
                             .append("</time>")
                             .append("<user>")
-                            .append(user)
+                            .append(tuple4._2()) //user
                             .append("</user>")
                             .append("<colour>")
-                            .append(colour)
+                            .append(tuple4._3()) //colour
                             .append("</colour>")
                             .append("<state>")
-                            .append(state)
+                            .append(tuple4._4()) //state
                             .append("</state>")
                             .append("<value>")
-                            .append(getStatValue(statisticType, colour))
+                            .append(getStatValue(statisticType, tuple4._3()))
                             .append("</value>")
                             .append("</event>\n");
-                        eventCount++;
-                    }
-                }
-            }
-            eventTime += EVENT_TIME_DELTA_MS;
-        }
+                    eventCount.incrementAndGet();
+
+                });
+
+
+//        for (int i = 0; i <= ITERATION_COUNT; i++) {
+//            String eventTimeStr = DateUtil.createNormalDateTimeString(eventTime);
+//
+//            for (final String user : USERS) {
+//                for (final String colour : COLOURS) {
+//                    for (final String state : STATES) {
+//                        stringBuilder
+//                            .append("<event>")
+//                            .append("<time>")
+//                            .append(eventTimeStr)
+//                            .append("</time>")
+//                            .append("<user>")
+//                            .append(user)
+//                            .append("</user>")
+//                            .append("<colour>")
+//                            .append(colour)
+//                            .append("</colour>")
+//                            .append("<state>")
+//                            .append(state)
+//                            .append("</state>")
+//                            .append("<value>")
+//                            .append(getStatValue(statisticType, colour))
+//                            .append("</value>")
+//                            .append("</event>\n");
+//                        eventCount++;
+//                    }
+//                }
+//            }
+//            eventTime += EVENT_TIME_DELTA_MS;
+//        }
+
         stringBuilder.append("</data>\n");
         LOGGER.info("Created {} {} statistic events",
-                String.format("%,d", eventCount),
+                String.format("%,d", eventCount.get()),
                 statisticType);
     }
 
