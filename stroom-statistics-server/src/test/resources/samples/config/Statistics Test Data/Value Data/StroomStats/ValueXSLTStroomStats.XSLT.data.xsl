@@ -16,9 +16,9 @@
       <time>
         <xsl:value-of select="./time" />
       </time>
-      <count>
+      <value>
         <xsl:value-of select="./value" />
-      </count>
+      </value>
       <tags>
         <tag>
           <xsl:attribute name="name">user</xsl:attribute>

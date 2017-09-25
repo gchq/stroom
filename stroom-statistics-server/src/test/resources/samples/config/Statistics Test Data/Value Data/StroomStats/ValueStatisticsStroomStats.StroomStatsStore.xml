@@ -1,14 +1,14 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <stroomStatsStore>
-   <createTime>1506327103472</createTime>
+   <createTime>1506333357918</createTime>
    <createUser>admin</createUser>
    <description/>
    <enabled>true</enabled>
-   <name>CountStatisticsStroomStats</name>
+   <name>ValueStatisticsStroomStats</name>
    <precision>MINUTE</precision>
    <rollUpType>ALL</rollUpType>
-   <statisticType>COUNT</statisticType>
-   <updateTime>1506330765847</updateTime>
+   <statisticType>VALUE</statisticType>
+   <updateTime>1506333365676</updateTime>
    <updateUser>admin</updateUser>
-   <uuid>c5dd1e72-5484-41c9-8e7a-f9429f648f3e</uuid>
+   <uuid>063f820b-8795-478f-a721-de724f9b4dc3</uuid>
 </stroomStatsStore>

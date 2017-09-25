@@ -2,15 +2,15 @@
 <feed>
    <classification/>
    <contextEncoding/>
-   <createTime>1506327103343</createTime>
+   <createTime>1506327103368</createTime>
    <createUser>admin</createUser>
    <description/>
    <encoding/>
-   <name>COUNT_OUTPUT_FEED_SQL</name>
+   <name>VALUE_OUTPUT_FEED_SQL</name>
    <reference>false</reference>
    <status>RECEIVE</status>
    <streamType>Raw Events</streamType>
-   <updateTime>1506327103343</updateTime>
+   <updateTime>1506327103368</updateTime>
    <updateUser>admin</updateUser>
-   <uuid>28175ad7-d86d-407d-bba8-4417ff19573a</uuid>
+   <uuid>2291a856-17cc-4715-a373-7ffee867ec80</uuid>
 </feed>

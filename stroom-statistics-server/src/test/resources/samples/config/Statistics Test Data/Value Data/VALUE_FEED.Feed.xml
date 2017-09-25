@@ -6,7 +6,6 @@
    <encoding/>
    <name>VALUE_FEED</name>
    <reference>false</reference>
-   <retentionDayAge/>
    <status>RECEIVE</status>
    <streamType>Raw Events</streamType>
    <uuid>28175ad7-d86d-407d-bba8-4417ff19592a</uuid>

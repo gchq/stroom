@@ -6,7 +6,6 @@
    <encoding/>
    <name>COUNT_FEED</name>
    <reference>false</reference>
-   <retentionDayAge/>
    <status>RECEIVE</status>
    <streamType>Raw Events</streamType>
    <uuid>74330bde-59b9-41fd-86e0-dd521351c571</uuid>

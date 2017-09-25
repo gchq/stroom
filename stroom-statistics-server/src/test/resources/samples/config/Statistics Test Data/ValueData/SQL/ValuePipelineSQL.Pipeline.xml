@@ -1,7 +1,0 @@
-<?xml version="1.1" encoding="UTF-8"?>
-<pipeline>
-    <name>ValuePipelineSQL</name>
-    <parentPipeline/>
-    <pipelineType>Event Data</pipelineType>
-    <uuid>a5b76a2e-7689-4f5d-9316-e994710423f9</uuid>
-</pipeline>

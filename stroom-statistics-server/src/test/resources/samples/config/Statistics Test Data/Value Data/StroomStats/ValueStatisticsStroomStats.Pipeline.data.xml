@@ -36,21 +36,9 @@
             <value>
                <entity>
                   <type>XSLT</type>
-                  <id>18</id>
-                  <uuid>9ad1ef02-a474-4832-879e-563e5c8475ef</uuid>
-                  <name>CountXSLTStroomStats</name>
-               </entity>
-            </value>
-         </property>
-         <property>
-            <element>stroomStatsAppender</element>
-            <name>statisticsDataSource</name>
-            <value>
-               <entity>
-                  <type>StroomStatsStore</type>
-                  <id>10</id>
-                  <uuid>c5dd1e72-5484-41c9-8e7a-f9429f648f3e</uuid>
-                  <name>CountStatisticsStroomStats</name>
+                  <id>19</id>
+                  <uuid>5ef82330-f244-476c-a198-a8d0b2aa142d</uuid>
+                  <name>ValueXSLTStroomStats</name>
                </entity>
             </value>
          </property>
@@ -59,6 +47,18 @@
             <name>maxRecordCount</name>
             <value>
                <string>500</string>
+            </value>
+         </property>
+         <property>
+            <element>stroomStatsAppender</element>
+            <name>statisticsDataSource</name>
+            <value>
+               <entity>
+                  <type>StroomStatsStore</type>
+                  <id>11</id>
+                  <uuid>063f820b-8795-478f-a721-de724f9b4dc3</uuid>
+                  <name>ValueStatisticsStroomStats</name>
+               </entity>
             </value>
          </property>
       </add>
