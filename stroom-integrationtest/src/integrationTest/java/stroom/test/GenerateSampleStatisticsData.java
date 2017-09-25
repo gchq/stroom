@@ -16,6 +16,8 @@
 
 package stroom.test;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.statistics.shared.StatisticType;
 import stroom.util.date.DateUtil;
 
@@ -26,6 +28,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class GenerateSampleStatisticsData {
+    private static final Logger LOGGER = LoggerFactory.getLogger(GenerateSampleStatisticsData.class);
+
     private static final String USER1 = "user1";
     private static final String USER2 = "user2";
 
@@ -91,41 +95,73 @@ public class GenerateSampleStatisticsData {
         return stringBuilder.toString();
     }
 
-    private static void buildEvents(final StringBuilder stringBuilder, final long initialEventTime,
+    private static void buildEvents(final StringBuilder stringBuilder,
+                                    final long initialEventTime,
                                     final StatisticType statisticType) {
         long eventTime = initialEventTime;
 
         stringBuilder.append("<data>\n");
 
+        long eventCount = 0;
+
+        LOGGER.info("Building statistic test data of type {} with {} iterations",
+                statisticType, ITERATION_COUNT);
         for (int i = 0; i <= ITERATION_COUNT; i++) {
+            String eventTimeStr = DateUtil.createNormalDateTimeString(eventTime);
             for (final String user : users) {
                 for (final String colour : COLOURS) {
                     for (final String state : STATES) {
-                        stringBuilder.append("<event>");
-                        stringBuilder.append("<time>" + DateUtil.createNormalDateTimeString(eventTime) + "</time>");
-                        stringBuilder.append("<user>" + user + "</user>");
-                        stringBuilder.append("<colour>" + colour + "</colour>");
-                        stringBuilder.append("<state>" + state + "</state>");
-
-                        if (statisticType.equals(StatisticType.COUNT)) {
-                            stringBuilder.append("<value>" + 1 + "</value>");
-                        } else {
-                            String val = "";
-                            if (colour.equals(COLOUR_RED)) {
-                                val = "10.1";
-                            } else if (colour.equals(COLOUR_GREEN)) {
-                                val = "20.2";
-                            } else if (colour.equals(COLOUR_BLUE)) {
-                                val = "69.7";
-                            }
-                            stringBuilder.append("<value>" + val + "</value>");
-                        }
-                        stringBuilder.append("</event>\n");
+                        stringBuilder
+                            .append("<event>")
+                            .append("<time>")
+                            .append(eventTimeStr)
+                            .append("</time>")
+                            .append("<user>")
+                            .append(user)
+                            .append("</user>")
+                            .append("<colour>")
+                            .append(colour)
+                            .append("</colour>")
+                            .append("<state>")
+                            .append(state)
+                            .append("</state>")
+                            .append("<value>")
+                            .append(getStatValue(statisticType, colour))
+                            .append("</value>")
+                            .append("</event>\n");
+                        eventCount++;
                     }
                 }
             }
             eventTime += EVENT_TIME_DELTA_MS;
         }
         stringBuilder.append("</data>\n");
+        LOGGER.info("Created {} {} statistic events",
+                String.format("%,d", eventCount),
+                statisticType);
     }
+
+    private static String getStatValue(final StatisticType statisticType, final String colour) {
+        String val;
+        switch (statisticType) {
+            case COUNT:
+                val = "1";
+                break;
+            case VALUE:
+                if (colour.equals(COLOUR_RED)) {
+                    val = "10.1";
+                } else if (colour.equals(COLOUR_GREEN)) {
+                    val = "20.2";
+                } else if (colour.equals(COLOUR_BLUE)) {
+                    val = "69.7";
+                } else {
+                    throw new RuntimeException("Unexpected colour " + colour);
+                }
+                break;
+            default:
+                throw new RuntimeException("Unexpected statisticType " + statisticType);
+        }
+        return val;
+    }
+
 }
