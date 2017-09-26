@@ -23,7 +23,7 @@ logging:
         - type: file
           logFormat: "%msg%n"
           currentLogFilename: event.log
-          archivedLogFilenamePattern: event-%d{yyyy-MM-dd-mm}.log
+          archivedLogFilenamePattern: event-%d{yyyy-MM-dd}.log
           timeZone: UTC
   appenders:
     - type: console
@@ -32,6 +32,6 @@ logging:
     - type: file
       logFormat: "%-6level [%d{HH:mm:ss.SSS}] [%t] %logger{35} - %X{code} %msg %n"
       currentLogFilename: stroom.log
-      archivedLogFilenamePattern: stroom-%d{yyyy-MM-dd-mm}.log
+      archivedLogFilenamePattern: stroom-%d{yyyy-MM-dd}.log
       archivedFileCount: 10
       timeZone: UTC

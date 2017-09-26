@@ -1,14 +1,14 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <statisticStore>
-   <createTime>1506327103409</createTime>
+   <createTime>1506327103437</createTime>
    <createUser>admin</createUser>
    <description>This is my description</description>
    <enabled>true</enabled>
-   <name>CountStatisticSQL</name>
+   <name>ValueStatisticSQL</name>
    <precision>60000</precision>
    <rollUpType>ALL</rollUpType>
-   <statisticType>COUNT</statisticType>
-   <updateTime>1506327103409</updateTime>
+   <statisticType>VALUE</statisticType>
+   <updateTime>1506327103437</updateTime>
    <updateUser>admin</updateUser>
-   <uuid>e2528c85-722e-46e0-91b6-742149691047</uuid>
+   <uuid>a5b76a2e-7689-4f5d-9316-e948140423f9</uuid>
 </statisticStore>
