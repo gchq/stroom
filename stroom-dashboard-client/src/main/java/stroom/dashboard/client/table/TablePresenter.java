@@ -120,6 +120,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private int currentExpanderColumnWidth;
     private SearchModel currentSearchModel;
     private FieldAddPresenter fieldAddPresenter;
+    private Map<String, String> namedUrls;
 
     // TODO : Temporary action mechanism.
     private int streamIdIndex = -1;
@@ -174,6 +175,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         clientPropertyCache.get()
                 .onSuccess(result -> {
+                    namedUrls = result.getLookupTable(ClientProperties.URL_LIST, ClientProperties.URL_BASE);
                     final String value = result.get(ClientProperties.DEFAULT_MAX_RESULTS);
                     if (value != null) {
                         final String[] parts = value.split(",");
@@ -449,7 +451,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 if (values != null) {
                     final String value = values[pos];
                     if (value != null) {
-                        final Hyperlink hyperlink = Hyperlink.detect(value);
+                        final Hyperlink hyperlink = Hyperlink.detect(value, namedUrls);
 
                         if (null != hyperlink) {
                             return ClickableSafeHtml

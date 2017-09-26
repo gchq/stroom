@@ -18,7 +18,10 @@ package stroom.node.shared;
 
 import stroom.util.shared.SharedObject;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.StreamSupport;
 
 public class ClientProperties implements SharedObject {
     public static final String LOGIN_HTML = "stroom.loginHTML";
@@ -37,6 +40,12 @@ public class ClientProperties implements SharedObject {
     public static final String NAME_PATTERN = "stroom.namePattern";
     public static final String LABEL_COLOURS = "stroom.theme.labelColours";
     public static final String HELP_URL = "stroom.helpUrl";
+    public static final String URL_LIST = "stroom.url.list";
+    public static final String URL_BASE = "stroom.url.";
+    public static final String URL_ANNOTATIONS_UI = URL_BASE + "annotations-ui";
+    public static final String URL_ANNOTATIONS_SERVICE = URL_BASE + "annotations-service";
+    public static final String URL_DASHBOARD = URL_BASE + "annotations-dashboard";
+
     private static final long serialVersionUID = 8717922468620533698L;
     private HashMap<String, String> map;
 
@@ -62,6 +71,21 @@ public class ClientProperties implements SharedObject {
         }
 
         return defaultValue;
+    }
+
+    public Map<String, String> getLookupTable(final String listProp, final String base) {
+        final Map<String, String> result = new HashMap<>();
+
+        final String keyList = get(listProp);
+        if (null != keyList) {
+            final String[] keys = keyList.split(",");
+            for (final String key : keys) {
+                final String value = get(base + key);
+                result.put(key, value);
+            }
+        }
+
+        return result;
     }
 
     /**

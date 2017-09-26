@@ -7,6 +7,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.safehtml.shared.UriUtils;
 
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**
@@ -23,7 +24,7 @@ public class Hyperlink {
     private String href;
     private HyperlinkTarget target;
 
-    public static Hyperlink detect(final String value) {
+    public static Hyperlink detect(final String value, final Map<String, String> namedUrlLookups) {
         Hyperlink result = null;
 
         if (value.startsWith("[") && value.endsWith("}")) {
@@ -32,8 +33,12 @@ public class Hyperlink {
 
             if ((firstDividerPosition > 0) && (secondDividerPosition > 0)) {
                 final String title = value.substring(1, firstDividerPosition);
-                final String href = value.substring(firstDividerPosition + 2, secondDividerPosition);
+                String href = value.substring(firstDividerPosition + 2, secondDividerPosition);
                 final String openTypeStr = value.substring(secondDividerPosition + 2, value.length() - 1);
+
+                for (final Map.Entry<String, String> namedUrlLookupEntry : namedUrlLookups.entrySet()) {
+                    href = href.replaceAll("__" + namedUrlLookupEntry.getKey() + "__", namedUrlLookupEntry.getValue());
+                }
 
                 try {
                     final HyperlinkTarget target = HyperlinkTarget.valueOf(openTypeStr);
