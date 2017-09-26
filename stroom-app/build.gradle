@@ -53,13 +53,6 @@ shadowJar {
 
 
 dependencies {
-
-    //Deps on -app-gwt and -
-    //compile project(':stroom-app-gwt')
-    //permitUnusedDeclared project(':stroom-app-gwt')
-    //compile project(':stroom-dashboard-gwt')
-    //permitUnusedDeclared project(':stroom-dashboard-gwt')
-
     compile project(':stroom-module')
 
     compile project(':stroom-core-module')
@@ -87,12 +80,6 @@ dependencies {
     runtime libs.shiro_web
     runtime libs.javax_el
     runtime libs.javax_el_api
-
-    integrationTestCompile libs.junit
-    integrationTestCompile libs.mockito_core
-    integrationTestCompile libs.assertj_core
-    integrationTestCompile libs.dropwizard_testing
-    integrationTestCompile libs.dropwizard_client
 }
 
 run {
