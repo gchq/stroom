@@ -1,3 +1,10 @@
+plugins {
+    id "com.benjaminsproule.swagger" version "0.1.4"
+}
+
+def warDir = project(':stroom-app').file('src/main/resources/ui')
+def outputDir = "${warDir}/swagger"
+
 dependencies {
     compile project(':stroom-module')
 
@@ -32,3 +39,36 @@ dependencies {
     compile libs.spring_beans
     compile libs.spring_context
 }
+
+swagger {
+    apiSource {
+        springmvc = false //makes it search for jersey annotations
+        outputFormats = 'json,yaml'
+        locations = [
+                'stroom.statistics.server.sql.search.SqlStatisticsQueryResource',
+                'stroom.index.server.StroomIndexQueryResource',
+                'stroom.security.server.AuthorisationResource' ]
+        schemes = [
+                'http',
+                'https' ]
+        host = 'localhost:8080'
+        basePath = '/api'
+        info {
+            title = 'stroom API'
+            version = 'v1'
+            description = 'Various APIs for interacting with stroom and its data'
+            contact {
+                name = 'GCHQ'
+                url = 'https://github.com/gchq/stroom'
+            }
+            license {
+                url = 'http://www.apache.org/licenses/LICENSE-2.0.html'
+                name = 'Apache 2.0'
+            }
+        }
+        outputPath = "${project.buildDir}/generated/document.html"
+        swaggerDirectory = "${outputDir}"
+    }
+}
+
+tasks.build.dependsOn generateSwaggerDocumentation

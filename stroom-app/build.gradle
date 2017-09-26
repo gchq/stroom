@@ -1,18 +1,12 @@
 plugins {
     id 'com.github.johnrengelman.shadow' version '1.2.4'
-    id "com.benjaminsproule.swagger" version "0.1.4"
 }
-
-def swaggerDir = "${projectDir}/src/main/resources/swagger"
 
 apply plugin: 'application'
 apply plugin: 'java'
 mainClassName = 'stroom.startup.App'
 
 jar {
-    //we need to first generate the swagger spec files so they can be added in to the jar
-    mustRunAfter generateSwaggerDocumentation
-
     manifest {
         attributes(
                 "Implementation-Title": "Stroom",
@@ -21,12 +15,6 @@ jar {
         )
     }
     archiveName 'stroom-app.jar'
-
-    //explicitly add in the swagger spec files as they won't be in the source set as they
-    //were generated after processResources
-    from ("${project.buildDir}/swagger") {
-        into ("ui")
-    }
 }
 
 import com.github.jengelman.gradle.plugins.shadow.transformers.ServiceFileTransformer
@@ -43,12 +31,6 @@ shadowJar {
         include 'META-INF/spring.*'
     }
     archiveName 'stroom-app-all.jar'
-
-    //explicitly add in the swagger spec files as they won't be in the source set as they
-    //were generated after processResources
-    from ("${project.buildDir}/swagger") {
-        into ("ui")
-    }
 }
 
 
@@ -99,38 +81,6 @@ runShadow {
 //the fat jar will be missing all the GWT generated files and the UI will fail to start
 processResources.mustRunAfter(':stroom-app-gwt:gwtCompile')
 processResources.mustRunAfter(':stroom-dashboard-gwt:gwtCompile')
+processResources.mustRunAfter(':stroom-core-module:generateSwaggerDocumentation')
 
-swagger {
-    apiSource {
-        springmvc = false //makes it search for jersey annotations
-        outputFormats = 'json,yaml'
-        locations = [ 
-            'stroom.resources.query.v2.SqlStatisticsQueryResource',
-            'stroom.resources.query.v2.StroomIndexQueryResource',
-            'stroom.resources.authorisation.v1.AuthorisationResource' ]
-        schemes = [ 
-            'http',
-            'https' ]
-        host = 'localhost:8080'
-        basePath = '/api'
-        info {
-            title = 'stroom API'
-            version = 'v1'
-            description = 'Various APIs for interacting with stroom and its data'
-            contact {
-                name = 'GCHQ'
-                url = 'https://github.com/gchq/stroom'
-            }
-            license {
-                url = 'http://www.apache.org/licenses/LICENSE-2.0.html'
-                name = 'Apache 2.0'
-            }
-        }
-        outputPath = "${project.buildDir}/generated/document.html"
-        swaggerDirectory = "${project.buildDir}/swagger"
-    }
-}
-
-//make generateSwaggerDocumentation and shadowJar happen as part of a build
-tasks.build.dependsOn generateSwaggerDocumentation
 tasks.build.dependsOn shadowJar

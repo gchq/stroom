@@ -330,14 +330,15 @@ subprojects {
     tasks.integrationTest.mustRunAfter test
 }
 
-configure(subprojects.findAll {it.name != 'stroom-app' && it.name != 'stroom-integrationtest'}) {
-    //swagger has to generate the spec from code so all modules except for stroom-app (which is the module the 
-    //swagger task is in) and stroom-integrationtest (which depends on stroom-app) must be compiled to jars first
-    //so stroom-app can access thier code
-    //However, generateSwaggerDocumentation must run before stroom-app:jar as its artefacts (the json/yaml spec files) 
-    // need to go into that jar 
-    tasks.getByPath(':stroom-app:generateSwaggerDocumentation').mustRunAfter jar
-}
+// NOT SURE IF WE NEED THIS NOW
+//configure(subprojects.findAll {it.name != 'stroom-app' && it.name != 'stroom-integrationtest'}) {
+//    //swagger has to generate the spec from code so all modules except for stroom-app (which is the module the
+//    //swagger task is in) and stroom-integrationtest (which depends on stroom-app) must be compiled to jars first
+//    //so stroom-app can access their code
+//    //However, generateSwaggerDocumentation must run before stroom-app:jar as its artefacts (the json/yaml spec files)
+//    // need to go into that jar
+//    tasks.getByPath(':stroom-core-module:generateSwaggerDocumentation').mustRunAfter jar
+//}
 
 
 task clearContentPackImportDir(type: Delete) {
