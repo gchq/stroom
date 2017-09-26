@@ -81,7 +81,7 @@ public class GenerateSampleStatisticsData {
 
     public static String generateValueData(final int iterations, final Instant startTime) {
 
-        final StringBuilder stringBuilder = new StringBuilder();
+        final StringBuffer stringBuilder = new StringBuffer();
 
         buildEvents(iterations, stringBuilder, startTime, StatisticType.VALUE);
 
@@ -90,7 +90,7 @@ public class GenerateSampleStatisticsData {
 
     public static String generateCountData(final int iterations, final Instant startTime) {
 
-        final StringBuilder stringBuilder = new StringBuilder();
+        final StringBuffer stringBuilder = new StringBuffer();
 
         buildEvents(iterations, stringBuilder, startTime, StatisticType.COUNT);
 
@@ -110,10 +110,10 @@ public class GenerateSampleStatisticsData {
     }
 
     private static void buildEvents(final int iterations,
-                                    final StringBuilder stringBuilder,
+                                    final StringBuffer stringBuffer,
                                     final Instant initialEventTime,
                                     final StatisticType statisticType) {
-        stringBuilder.append("<data>\n");
+        stringBuffer.append("<data>\n");
 
         final AtomicLong eventCount = new AtomicLong(0);
 
@@ -135,7 +135,8 @@ public class GenerateSampleStatisticsData {
                                 .map(userColourState -> new Tuple4<>(
                                         timeStr, userColourState._1(), userColourState._2(), userColourState._3())))
                 .forEach(tuple4 -> {
-                    stringBuilder
+                    //build the event xml
+                    StringBuilder stringBuilder = new StringBuilder()
                             .append("<event>")
                             .append("<time>")
                             .append(tuple4._1()) //time
@@ -154,45 +155,11 @@ public class GenerateSampleStatisticsData {
                             .append("</value>")
                             .append("</event>\n");
                     eventCount.incrementAndGet();
-
+                    stringBuffer.append(stringBuilder.toString());
                 });
 
-
-//        for (int i = 0; i <= ITERATION_COUNT; i++) {
-//            String eventTimeStr = DateUtil.createNormalDateTimeString(eventTime);
-//
-//            for (final String user : USERS) {
-//                for (final String colour : COLOURS) {
-//                    for (final String state : STATES) {
-//                        stringBuilder
-//                            .append("<event>")
-//                            .append("<time>")
-//                            .append(eventTimeStr)
-//                            .append("</time>")
-//                            .append("<user>")
-//                            .append(user)
-//                            .append("</user>")
-//                            .append("<colour>")
-//                            .append(colour)
-//                            .append("</colour>")
-//                            .append("<state>")
-//                            .append(state)
-//                            .append("</state>")
-//                            .append("<value>")
-//                            .append(getStatValue(statisticType, colour))
-//                            .append("</value>")
-//                            .append("</event>\n");
-//                        eventCount++;
-//                    }
-//                }
-//            }
-//            eventTime += EVENT_TIME_DELTA_MS;
-//        }
-
-        stringBuilder.append("</data>\n");
-        LOGGER.info("Created {} {} statistic events",
-                String.format("%,d", eventCount.get()),
-                statisticType);
+        stringBuffer.append("</data>\n");
+        LOGGER.info("Created {} {} statistic events", String.format("%,d", eventCount.get()), statisticType);
     }
 
     private static String getStatValue(final StatisticType statisticType, final String colour) {
