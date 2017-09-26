@@ -4,7 +4,9 @@ import com.codahale.metrics.annotation.Timed;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -17,9 +19,11 @@ import javax.ws.rs.core.Response;
         description = "Stroom Authorisation API")
 @Path("/authorisation/v1")
 @Produces(MediaType.APPLICATION_JSON)
+@Component
 public class AuthorisationResource {
     private final AuthorisationService authorisationService;
 
+    @Inject
     public AuthorisationResource(final AuthorisationService authorisationService) {
         this.authorisationService = authorisationService;
     }

@@ -63,7 +63,7 @@ ext.versions = [
     //------------3rd-party------------
     curator: '2.12.0', //must be chosen to be compatible with the ZK version in CDH 5.10
     dropwizard: '1.1.0', //if you change this version you should check the versions below that need to move in sync with it
-    dropwizard_metrics: '3.1.2', //should be kept in step with dropwizard
+    dropwizard_metrics: '3.2.2', //should be kept in step with dropwizard
     gwt: '2.8.0',
     hibernate: '4.3.8.Final', //dropwiz 1.1.0 uses -validator 5.3.4.Final and -core 5.2.8.Final
     jackson: '2.8.6',

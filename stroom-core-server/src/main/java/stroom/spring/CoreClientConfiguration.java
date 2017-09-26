@@ -16,18 +16,11 @@
 
 package stroom.spring;
 
-import io.dropwizard.setup.Environment;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import stroom.feed.MetaMap;
-import stroom.node.server.StroomPropertyService;
 import stroom.proxy.repo.MetaMapFactory;
-import stroom.servicediscovery.ServiceDiscoverer;
-import stroom.servicediscovery.ServiceDiscovererImpl;
-import stroom.servicediscovery.ServiceDiscoveryManager;
-import stroom.servicediscovery.ServiceDiscoveryRegistrar;
-import stroom.statistics.server.sql.StatisticsQueryService;
 import stroom.util.config.StroomProperties;
 import stroom.util.spring.StroomScope;
 import stroom.util.thread.ThreadLocalBuffer;
@@ -52,26 +45,26 @@ public class CoreClientConfiguration {
         return threadLocalBuffer;
     }
 
-    @Bean
-    public ServiceDiscoveryRegistrar serviceDiscoveryRegistrar(final Environment environment,
-                                                               final ServiceDiscoveryManager serviceDiscoveryManager,
-                                                               final StroomPropertyService stroomPropertyService) {
-        final ServiceDiscoveryRegistrar serviceDiscoveryRegistrar = new ServiceDiscoveryRegistrar(serviceDiscoveryManager, stroomPropertyService);
-
-        // Add health check
-        environment.healthChecks().register(serviceDiscoveryRegistrar.getClass().getSimpleName() + "HealthCheck", serviceDiscoveryRegistrar.getHealthCheck());
-
-        return serviceDiscoveryRegistrar;
-    }
-
-    @Bean
-    public ServiceDiscovererImpl serviceDiscoverer(final Environment environment, final ServiceDiscoveryManager serviceDiscoveryManager) {
-        final ServiceDiscovererImpl serviceDiscoverer = new ServiceDiscovererImpl(serviceDiscoveryManager);
-
-        // Add health check
-        environment.healthChecks().register(serviceDiscoverer.getClass().getSimpleName() + "HealthCheck", serviceDiscoverer.getHealthCheck());
-
-
-        return serviceDiscoverer;
-    }
+//    @Bean
+//    public ServiceDiscoveryRegistrar serviceDiscoveryRegistrar(final Environment environment,
+//                                                               final ServiceDiscoveryManager serviceDiscoveryManager,
+//                                                               final StroomPropertyService stroomPropertyService) {
+//        final ServiceDiscoveryRegistrar serviceDiscoveryRegistrar = new ServiceDiscoveryRegistrar(serviceDiscoveryManager, stroomPropertyService);
+//
+//        // Add health check
+//        environment.healthChecks().register(serviceDiscoveryRegistrar.getClass().getSimpleName() + "HealthCheck", serviceDiscoveryRegistrar.getHealthCheck());
+//
+//        return serviceDiscoveryRegistrar;
+//    }
+//
+//    @Bean
+//    public ServiceDiscovererImpl serviceDiscoverer(final Environment environment, final ServiceDiscoveryManager serviceDiscoveryManager) {
+//        final ServiceDiscovererImpl serviceDiscoverer = new ServiceDiscovererImpl(serviceDiscoveryManager);
+//
+//        // Add health check
+//        environment.healthChecks().register(serviceDiscoverer.getClass().getSimpleName() + "HealthCheck", serviceDiscoverer.getHealthCheck());
+//
+//
+//        return serviceDiscoverer;
+//    }
 }

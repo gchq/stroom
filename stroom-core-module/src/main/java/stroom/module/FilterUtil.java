@@ -1,4 +1,4 @@
-package stroom;
+package stroom.module;
 
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -8,17 +8,17 @@ import javax.servlet.Filter;
 import java.util.EnumSet;
 import java.util.Map;
 
-final class FilterUtil {
+public final class FilterUtil {
     private static final String MATCH_ALL_PATHS = "/*";
 
     private FilterUtil() {
     }
 
-    static void addFilter(final ServletContextHandler servletContextHandler, Class<? extends Filter> clazz, String name, Map<String, String> initParams) {
+    public static void addFilter(final ServletContextHandler servletContextHandler, Class<? extends Filter> clazz, String name, Map<String, String> initParams) {
         addFilter(servletContextHandler, clazz, name, initParams, MATCH_ALL_PATHS);
     }
 
-    static void addFilter(final ServletContextHandler servletContextHandler, Class<? extends Filter> clazz, String name, Map<String, String> initParams, final String urlPattern) {
+    public static void addFilter(final ServletContextHandler servletContextHandler, Class<? extends Filter> clazz, String name, Map<String, String> initParams, final String urlPattern) {
         FilterHolder filterHolder = new FilterHolder(clazz);
         filterHolder.setName(name);
 

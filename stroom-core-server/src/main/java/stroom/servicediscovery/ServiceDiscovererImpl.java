@@ -1,14 +1,17 @@
 package stroom.servicediscovery;
 
 import com.codahale.metrics.health.HealthCheck;
+import com.codahale.metrics.health.HealthCheck.Result;
 import io.vavr.Tuple2;
 import org.apache.curator.x.discovery.ServiceDiscovery;
 import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.curator.x.discovery.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 import stroom.util.spring.StroomShutdown;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -19,6 +22,7 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+@Component
 public class ServiceDiscovererImpl implements ServiceDiscoverer {
     private final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscovererImpl.class);
 
@@ -30,6 +34,7 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
      */
     private Map<ExternalService, ServiceProvider<String>> serviceProviders = new HashMap<>();
 
+    @Inject
     public ServiceDiscovererImpl(final ServiceDiscoveryManager serviceDiscoveryManager) {
         //create the service providers once service discovery has started up
         serviceDiscoveryManager.registerStartupListener(this::initProviders);
@@ -92,54 +97,50 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
         });
     }
 
-    public HealthCheck getHealthCheck() {
-        return new HealthCheck() {
-            @Override
-            protected Result check() throws Exception {
-                if (serviceProviders.isEmpty()) {
-                    return HealthCheck.Result.unhealthy("No service providers found");
+    @Override
+    public Result getHealth() {
+        if (serviceProviders.isEmpty()) {
+            return HealthCheck.Result.unhealthy("No service providers found");
+        } else {
+            try {
+                Map<String, List<String>> serviceInstanceMap = serviceProviders.entrySet().stream()
+                        .flatMap(entry -> {
+                            try {
+                                return entry.getValue().getAllInstances().stream();
+                            } catch (Exception e) {
+                                throw new RuntimeException(String.format("Error querying instances for service %s",
+                                        entry.getKey().getVersionedServiceName()), e);
+                            }
+                        })
+                        .map(serviceInstance -> new Tuple2<>(serviceInstance.getName(), serviceInstance.buildUriSpec()))
+                        .collect(Collectors.groupingBy(
+                                Tuple2::_1,
+                                TreeMap::new,
+                                Collectors.mapping(Tuple2::_2, Collectors.toList())));
+
+                //ensure the instances are sorted in a sensible way
+                serviceInstanceMap.values().forEach(Collections::sort);
+
+                long deadServiceCount = serviceInstanceMap.entrySet().stream()
+                        .filter(entry -> entry.getValue().isEmpty())
+                        .count();
+
+                HealthCheck.ResultBuilder builder = HealthCheck.Result.builder();
+
+                if (deadServiceCount > 0) {
+                    builder.unhealthy()
+                            .withMessage("%s service(s) have no registered instances");
                 } else {
-                    try {
-                        Map<String, List<String>> serviceInstanceMap = serviceProviders.entrySet().stream()
-                                .flatMap(entry -> {
-                                    try {
-                                        return entry.getValue().getAllInstances().stream();
-                                    } catch (Exception e) {
-                                        throw new RuntimeException(String.format("Error querying instances for service %s",
-                                                entry.getKey().getVersionedServiceName()), e);
-                                    }
-                                })
-                                .map(serviceInstance -> new Tuple2<>(serviceInstance.getName(), serviceInstance.buildUriSpec()))
-                                .collect(Collectors.groupingBy(
-                                        Tuple2::_1,
-                                        TreeMap::new,
-                                        Collectors.mapping(Tuple2::_2, Collectors.toList())));
-
-                        //ensure the instances are sorted in a sensible way
-                        serviceInstanceMap.values().forEach(Collections::sort);
-
-                        long deadServiceCount = serviceInstanceMap.entrySet().stream()
-                                .filter(entry -> entry.getValue().isEmpty())
-                                .count();
-
-                        HealthCheck.ResultBuilder builder = HealthCheck.Result.builder();
-
-                        if (deadServiceCount > 0) {
-                            builder.unhealthy()
-                                    .withMessage("%s service(s) have no registered instances");
-                        } else {
-                            builder.healthy()
-                                    .withMessage("All services (local and remote) available");
-                        }
-                        return builder.withDetail("discovered-service-instances", serviceInstanceMap)
-                                .build();
-
-                    } catch (Exception e) {
-                        return HealthCheck.Result.unhealthy("Error getting service provider details, error: " +
-                                e.getCause().getMessage());
-                    }
+                    builder.healthy()
+                            .withMessage("All services (local and remote) available");
                 }
+                return builder.withDetail("discovered-service-instances", serviceInstanceMap)
+                        .build();
+
+            } catch (Exception e) {
+                return HealthCheck.Result.unhealthy("Error getting service provider details, error: " +
+                        e.getCause().getMessage());
             }
-        };
+        }
     }
 }

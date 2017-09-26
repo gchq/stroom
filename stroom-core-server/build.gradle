@@ -13,9 +13,10 @@ dependencies {
     compile urlDependencies.get(urlLibs.stroomQueryCommon)
     compile urlDependencies.get(urlLibs.stroomStatsSchema)
 
+    compile libs.curator_client
+    compile libs.curator_framework
+    compile libs.curator_x_discovery
     compile libs.dropwizard_lifecycle
-    compile libs.dropwizard_core
-    compile libs.dropwizard_metrics_annotation
     compile libs.dropwizard_metrics_healthchecks
 
     compile libs.hessian

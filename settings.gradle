@@ -64,6 +64,8 @@ include 'stroom-connectors'
 include 'stroom-kafka-client-impl_0_10_0_1'
 
 // Package it all together.
+include 'stroom-module'
+include 'stroom-core-module'
 include 'stroom-app'
 
 // Integration tests.

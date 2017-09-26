@@ -1,0 +1,5 @@
+dependencies {
+    compile (libs.dropwizard_core) {
+        exclude ( group: "org.glassfish.web", module: "javax.el" )
+    }
+}

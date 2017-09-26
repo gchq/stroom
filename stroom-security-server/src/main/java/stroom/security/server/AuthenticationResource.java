@@ -5,8 +5,10 @@ import com.google.common.base.Strings;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.codec.Base64;
 import org.glassfish.jersey.server.ContainerRequest;
+import org.springframework.stereotype.Component;
 import stroom.entity.shared.EntityServiceException;
 
+import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -22,10 +24,12 @@ import java.util.Optional;
  */
 @Path("/authentication/v1")
 @Produces(MediaType.APPLICATION_JSON)
+@Component
 public class AuthenticationResource {
     private final AuthenticationService authenticationService;
     private final JWTService jwtService;
 
+    @Inject
     public AuthenticationResource(final AuthenticationService authenticationService, final JWTService jwtService) {
         this.authenticationService = authenticationService;
         this.jwtService = jwtService;

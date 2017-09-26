@@ -18,12 +18,15 @@ package stroom.statistics.server.sql.search;
 
 import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.health.HealthCheck;
+import com.codahale.metrics.health.HealthCheck.Result;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 import stroom.datasource.api.v2.DataSource;
+import stroom.util.HasHealthCheck;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
@@ -31,6 +34,7 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.statistics.server.sql.StatisticsQueryService;
 import stroom.util.json.JsonUtil;
 
+import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -42,11 +46,13 @@ import javax.ws.rs.core.MediaType;
         description = "Stroom SQL Statistics Query API")
 @Path("/sqlstatistics/v2")
 @Produces(MediaType.APPLICATION_JSON)
-public class SqlStatisticsQueryResource {
+@Component
+public class SqlStatisticsQueryResource implements HasHealthCheck {
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticsQueryResource.class);
 
     private final StatisticsQueryService statisticsQueryService;
 
+    @Inject
     public SqlStatisticsQueryResource(final StatisticsQueryService statisticsQueryService) {
         this.statisticsQueryService = statisticsQueryService;
     }
@@ -101,12 +107,8 @@ public class SqlStatisticsQueryResource {
         return statisticsQueryService.destroy(queryKey);
     }
 
-    public HealthCheck getHealthCheck() {
-        return new HealthCheck() {
-            @Override
-            protected Result check() throws Exception {
-                return HealthCheck.Result.healthy();
-            }
-        };
+    @Override
+    public Result getHealth() {
+        return HealthCheck.Result.healthy();
     }
 }

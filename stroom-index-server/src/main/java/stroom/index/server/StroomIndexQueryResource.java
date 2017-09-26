@@ -18,12 +18,15 @@ package stroom.index.server;
 
 import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.health.HealthCheck;
+import com.codahale.metrics.health.HealthCheck.Result;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import org.springframework.stereotype.Component;
 import stroom.datasource.api.v2.DataSource;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
+import stroom.util.HasHealthCheck;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
@@ -33,6 +36,7 @@ import stroom.search.server.IndexDataSourceFieldUtil;
 import stroom.search.server.SearchResultCreatorManager;
 import stroom.search.server.SearchResultCreatorManager.Key;
 
+import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -44,10 +48,12 @@ import javax.ws.rs.core.MediaType;
         description = "Stroom Index Query API")
 @Path("/stroom-index/v2")
 @Produces(MediaType.APPLICATION_JSON)
-public class StroomIndexQueryResource {
+@Component
+public class StroomIndexQueryResource implements HasHealthCheck {
     private final SearchResultCreatorManager searchResultCreatorManager;
     private final IndexService indexService;
 
+    @Inject
     public StroomIndexQueryResource(final SearchResultCreatorManager searchResultCreatorManager, final IndexService indexService) {
         this.searchResultCreatorManager = searchResultCreatorManager;
         this.indexService = indexService;
@@ -92,12 +98,8 @@ public class StroomIndexQueryResource {
         return Boolean.TRUE;
     }
 
-    public HealthCheck getHealthCheck() {
-        return new HealthCheck() {
-            @Override
-            protected Result check() throws Exception {
-                return HealthCheck.Result.healthy();
-            }
-        };
+    @Override
+    public Result getHealth() {
+        return HealthCheck.Result.healthy();
     }
 }

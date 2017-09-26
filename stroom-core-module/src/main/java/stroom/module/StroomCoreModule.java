@@ -1,4 +1,4 @@
-package stroom;
+package stroom.module;
 
 import com.google.common.collect.ImmutableMap;
 import io.dropwizard.Configuration;
@@ -16,14 +16,18 @@ import stroom.datafeed.server.DataFeedServiceImpl;
 import stroom.dispatch.shared.DispatchService;
 import stroom.entity.server.SpringRequestFactoryServlet;
 import stroom.feed.server.RemoteFeedServiceRPC;
+import stroom.index.server.StroomIndexQueryResource;
 import stroom.index.spring.IndexConfiguration;
-import stroom.index.spring.IndexResourceConfiguration;
 import stroom.lifecycle.LifecycleService;
 import stroom.pipeline.spring.PipelineConfiguration;
 import stroom.script.server.ScriptServlet;
 import stroom.script.spring.ScriptConfiguration;
 import stroom.search.spring.SearchConfiguration;
+import stroom.security.server.AuthenticationResource;
+import stroom.security.server.AuthorisationResource;
 import stroom.security.spring.SecurityConfiguration;
+import stroom.servicediscovery.ServiceDiscovererImpl;
+import stroom.servicediscovery.ServiceDiscoveryRegistrar;
 import stroom.servlet.DebugServlet;
 import stroom.servlet.DynamicCSSServlet;
 import stroom.servlet.EchoServlet;
@@ -40,15 +44,14 @@ import stroom.spring.PersistenceConfiguration;
 import stroom.spring.ScopeConfiguration;
 import stroom.spring.ServerComponentScanConfiguration;
 import stroom.spring.ServerConfiguration;
-import stroom.startup.AppAware;
+import stroom.statistics.server.sql.search.SqlStatisticsQueryResource;
 import stroom.statistics.spring.StatisticsConfiguration;
-import stroom.statistics.spring.StatisticsResourceConfiguration;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.thread.ThreadScopeContextFilter;
 import stroom.visualisation.spring.VisualisationConfiguration;
 
-public class StroomCore implements AppAware {
-    private final Logger LOGGER = LoggerFactory.getLogger(StroomCore.class);
+public class StroomCoreModule implements StroomModule {
+    private final Logger LOGGER = LoggerFactory.getLogger(StroomCoreModule.class);
 
     @Override
     public void initialize(final Configuration configuration, final Environment environment) {
@@ -60,10 +63,10 @@ public class StroomCore implements AppAware {
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
 
         // Add health checks
-//        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, ServiceDiscoveryRegistrar.class);
-//        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, ServiceDiscovererImpl.class);
-//        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, SqlStatisticsQueryResource.class);
-//        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, StroomIndexQueryResource.class);
+        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, ServiceDiscoveryRegistrar.class);
+        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, ServiceDiscovererImpl.class);
+        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, SqlStatisticsQueryResource.class);
+        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, StroomIndexQueryResource.class);
 
         // Add filters
         FilterUtil.addFilter(servletContextHandler, ThreadScopeContextFilter.class, "threadScopeContextFilter", null);
@@ -94,13 +97,10 @@ public class StroomCore implements AppAware {
         SpringUtil.addServletListener(environment.servlets(), applicationContext, SessionListListener.class);
 
         // Add resources.
-//        SpringUtil.addResource(environment.jersey(), applicationContext, StroomIndexQueryResource.class);
-//        SpringUtil.addResource(environment.jersey(), applicationContext, SqlStatisticsQueryResource.class);
-//        SpringUtil.addResource(environment.jersey(), applicationContext, AuthenticationResource.class);
-//        SpringUtil.addResource(environment.jersey(), applicationContext, AuthorisationResource.class);
-
-        AdminTasks.registerAdminTasks(environment);
-
+        SpringUtil.addResource(environment.jersey(), applicationContext, StroomIndexQueryResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, SqlStatisticsQueryResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, AuthenticationResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, AuthorisationResource.class);
 
         // Listen to the lifecycle of the Dropwizard app.
         SpringUtil.manage(environment.lifecycle(), applicationContext, LifecycleService.class);
@@ -119,7 +119,6 @@ public class StroomCore implements AppAware {
                 EventLoggingConfiguration.class,
                 PipelineConfiguration.class,
                 IndexConfiguration.class,
-                IndexResourceConfiguration.class,
                 SearchConfiguration.class,
                 ScriptConfiguration.class,
                 VisualisationConfiguration.class,
@@ -127,7 +126,6 @@ public class StroomCore implements AppAware {
                 CoreClientConfiguration.class,
                 MetaDataStatisticConfiguration.class,
                 StatisticsConfiguration.class,
-                StatisticsResourceConfiguration.class,
                 SecurityConfiguration.class
         );
         applicationContext.refresh();

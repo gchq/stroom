@@ -1,4 +1,4 @@
-package stroom.dashboard.server.logging;
+package stroom.startup;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
  * they are at run time. Log levels can be changed using 'httpie' like this:
  * http -f POST http://127.0.0.1:8080/admin/tasks/log-level logger=stroom.statistics.internal.MultiServiceInternalStatisticsReceiver level=TRACE
  */
-public class LogLevelInspector extends HealthCheck {
+class LogLevelInspector extends HealthCheck {
     @Override
     protected Result check() throws Exception {
         LoggerContext loggerContext = ((LoggerContext) LoggerFactory.getILoggerFactory());

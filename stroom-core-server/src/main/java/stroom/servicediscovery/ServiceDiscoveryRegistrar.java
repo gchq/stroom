@@ -1,6 +1,7 @@
 package stroom.servicediscovery;
 
 import com.codahale.metrics.health.HealthCheck;
+import com.codahale.metrics.health.HealthCheck.Result;
 import com.google.common.base.Preconditions;
 import org.apache.curator.x.discovery.ServiceDiscovery;
 import org.apache.curator.x.discovery.ServiceInstance;
@@ -8,8 +9,11 @@ import org.apache.curator.x.discovery.ServiceType;
 import org.apache.curator.x.discovery.UriSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+import stroom.util.HasHealthCheck;
 import stroom.node.server.StroomPropertyService;
 
+import javax.inject.Inject;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -19,7 +23,8 @@ import java.util.TreeMap;
 /**
  * Responsible for registering stroom's various externally exposed services with service discovery
  */
-public class ServiceDiscoveryRegistrar {
+@Component
+public class ServiceDiscoveryRegistrar implements HasHealthCheck {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryRegistrar.class);
 
     private static final String PROP_KEY_SERVICE_HOST_OR_IP = "stroom.serviceDiscovery.servicesHostNameOrIpAddress";
@@ -30,6 +35,7 @@ public class ServiceDiscoveryRegistrar {
     private final int servicePort;
     private HealthCheck.Result health;
 
+    @Inject
     public ServiceDiscoveryRegistrar(final ServiceDiscoveryManager serviceDiscoveryManager,
                                      final StroomPropertyService stroomPropertyService) {
         this.serviceDiscoveryManager = serviceDiscoveryManager;
@@ -112,12 +118,8 @@ public class ServiceDiscoveryRegistrar {
         }
     }
 
-    public HealthCheck getHealthCheck() {
-        return new HealthCheck() {
-            @Override
-            protected Result check() throws Exception {
-                return health;
-            }
-        };
+    @Override
+    public Result getHealth() {
+        return health;
     }
 }

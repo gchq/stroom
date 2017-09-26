@@ -16,7 +16,6 @@
 
 package stroom.security.spring;
 
-import io.dropwizard.setup.Environment;
 import org.apache.commons.lang.StringUtils;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
@@ -31,10 +30,6 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
-import stroom.security.server.AuthenticationResource;
-import stroom.security.server.AuthenticationService;
-import stroom.security.server.AuthorisationResource;
-import stroom.security.server.AuthorisationService;
 import stroom.security.server.CertificateAuthenticationFilter;
 import stroom.security.server.JWTAuthenticationFilter;
 import stroom.security.server.JWTService;
@@ -157,23 +152,23 @@ public class SecurityConfiguration {
         return simpleMailMessage;
     }
 
-    @Bean
-    public AuthenticationResource authenticationResource(final Environment environment, final AuthenticationService authenticationService, final JWTService jwtService) {
-        final AuthenticationResource authenticationResource = new AuthenticationResource(authenticationService, jwtService);
-
-        // Add resource.
-        environment.jersey().register(authenticationResource);
-
-        return authenticationResource;
-    }
-
-    @Bean
-    public AuthorisationResource authorisationResource(final Environment environment, final AuthorisationService authorisationService) {
-        final AuthorisationResource authorisationResource = new AuthorisationResource(authorisationService);
-
-        // Add resource.
-        environment.jersey().register(authorisationResource);
-
-        return authorisationResource;
-    }
+//    @Bean
+//    public AuthenticationResource authenticationResource(final Environment environment, final AuthenticationService authenticationService, final JWTService jwtService) {
+//        final AuthenticationResource authenticationResource = new AuthenticationResource(authenticationService, jwtService);
+//
+//        // Add resource.
+//        environment.jersey().register(authenticationResource);
+//
+//        return authenticationResource;
+//    }
+//
+//    @Bean
+//    public AuthorisationResource authorisationResource(final Environment environment, final AuthorisationService authorisationService) {
+//        final AuthorisationResource authorisationResource = new AuthorisationResource(authorisationService);
+//
+//        // Add resource.
+//        environment.jersey().register(authorisationResource);
+//
+//        return authorisationResource;
+//    }
 }
