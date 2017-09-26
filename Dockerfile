@@ -41,7 +41,7 @@ WORKDIR /stroom
 ADD ./stroom-app/build/libs/stroom-app-all.jar /stroom/stroom-app-all.jar
 ADD ./stroom-kafka-client-impl_0_10_0_1/build/libs/stroom-kafka-client-impl_0_10_0_1-all.jar /stroom/plugins/stroom-kafka-client-impl_0_10_0_1-all.jar
 ADD ./stroom-app/prod.yml /stroom/config.yml
-ADD ./stroom-app/docker-entrypoint.sh /usr/local/bin/
+ADD ./stroom-app/docker/docker-entrypoint.sh /usr/local/bin/
 
 #TODO ContentPackImport is finding the contentPackImport dir but not importing anything. Not sure why yet.
 ADD https://github.com/gchq/stroom-content/releases/download/core-xml-schemas-v1.1/core-xml-schemas-v1.1.zip /stroom/contentPackImport/
