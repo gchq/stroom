@@ -2,6 +2,9 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '1.2.4'
 }
 
+def jarName = 'stroom-app.jar'
+def fatJarName = 'stroom-app-all.jar'
+
 apply plugin: 'application'
 apply plugin: 'java'
 mainClassName = 'stroom.startup.App'
@@ -14,7 +17,7 @@ jar {
                 "Main-Class" : "stroom.startup.App"
         )
     }
-    archiveName 'stroom-app.jar'
+    archiveName jarName
 }
 
 import com.github.jengelman.gradle.plugins.shadow.transformers.ServiceFileTransformer
@@ -30,7 +33,7 @@ shadowJar {
     transform(ServiceFileTransformer) {
         include 'META-INF/spring.*'
     }
-    archiveName 'stroom-app-all.jar'
+    archiveName fatJarName
 }
 
 
@@ -83,4 +86,38 @@ processResources.mustRunAfter(':stroom-app-gwt:gwtCompile')
 processResources.mustRunAfter(':stroom-dashboard-gwt:gwtCompile')
 processResources.mustRunAfter(':stroom-core-module:generateSwaggerDocumentation')
 
+def dockerBuildDir = "${projectDir}/docker/build"
+
+clean{
+    delete dockerBuildDir
+}
+
+//Copy all the files needed by the docker build into stroom-app/docker/build
+task copyFilesForDockerBuild() {
+    dependsOn shadowJar
+    dependsOn tasks.getByPath(':stroom-kafka-client-impl_0_10_0_1:shadowJar')
+    doFirst {
+        new File(stroomPluginsDir).mkdirs()
+
+        //Copy the stroom app fat jar
+        copy {
+            from "${project.buildDir}/libs/${fatJarName}"
+            into dockerBuildDir
+        }
+
+        //Copy the kafka client fat jar
+        copy {
+            from project(':stroom-kafka-client-impl_0_10_0_1').file('build/libs/stroom-kafka-client-impl_0_10_0_1-all.jar')
+            into dockerBuildDir
+        }
+
+        //Copy the dropwizard yml configuration
+        copy {
+            from "${projectDir}/prod.yml"
+            into dockerBuildDir
+        }
+    }
+}
+
+tasks.build.dependsOn copyFilesForDockerBuild
 tasks.build.dependsOn shadowJar
