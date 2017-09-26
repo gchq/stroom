@@ -31,7 +31,12 @@ public final class UserTokenUtil {
     }
 
     public static String create(final String userId, final String sessionId) {
-        return create(USER, userId, sessionId);
+        if(INTERNAL.equals(userId)){
+            return create(SYSTEM, userId, sessionId);
+        }
+        else {
+            return create(USER, userId, sessionId);
+        }
     }
 
     private static String create(final String type, final String userId, final String sessionId) {

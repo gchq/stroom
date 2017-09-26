@@ -182,7 +182,7 @@ class SecurityContextImpl implements SecurityContext {
 
     @Override
     public String getToken() {
-        return jwtService.getTokenFor(getUserId());
+        return getUserRef().getToken();
     }
 
     @Override

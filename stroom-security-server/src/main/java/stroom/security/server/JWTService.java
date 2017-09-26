@@ -1,17 +1,9 @@
 package stroom.security.server;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.JWTVerifier;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
-import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.web.util.WebUtils;
-import org.jose4j.jws.JsonWebSignature;
-import org.jose4j.jwt.JwtClaims;
-import org.jose4j.keys.HmacKey;
-import org.jose4j.lang.JoseException;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,9 +11,10 @@ import org.springframework.stereotype.Component;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.Response;
 import java.util.Optional;
-
-import static org.jose4j.jws.AlgorithmIdentifiers.HMAC_SHA256;
 
 @Component
 public class JWTService {
@@ -30,20 +23,14 @@ public class JWTService {
     private static final String BEARER = "Bearer ";
     private static final String AUTHORIZATION_HEADER = "Authorization";
 
-    private final String jwtSecret;
-    private final String jwtIssuer;
+    private final String authenticationServiceUrl;
 
     public JWTService(
-        @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.secret')}") final String jwtSecret,
-        @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.issuer')}") final String jwtIssuer){
-        this.jwtSecret = jwtSecret;
-        this.jwtIssuer = jwtIssuer;
+        @Value("#{propertyConfigurer.getProperty('stroom.security.authentication.url')}") final String authenticationServiceUrl){
+        this.authenticationServiceUrl = authenticationServiceUrl;
 
-        if (jwtSecret == null) {
-            throw new SecurityException("No JWT secret defined");
-        }
-        if (jwtIssuer == null) {
-            throw new SecurityException("No JWT issuer defined");
+        if (authenticationServiceUrl == null) {
+            throw new SecurityException("No authentication service URL is defined");
         }
     }
 
@@ -83,27 +70,14 @@ public class JWTService {
         }
     }
 
-    public String getTokenFor(String username){
-        return toToken(jwtSecret.getBytes(), getClaimsForUser(username));
-    }
-
     private JWTAuthenticationToken verifyToken(String token) {
-        try {
-            String subject = null;
-            if (token != null) {
-                JWTVerifier verifier = JWT
-                    .require(Algorithm.HMAC256(jwtSecret))
-                    .withIssuer(jwtIssuer)
-                    .build();
-                DecodedJWT jwt = verifier.verify(token);
-                subject = jwt.getSubject();
-            }
-
-            return new JWTAuthenticationToken(subject, token);
-
-        } catch (final Exception e) {
-            throw new AuthenticationException(e);
-        }
+        Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
+        Response response = client
+            .target(this.authenticationServiceUrl + "/verify/" + token)
+            .request()
+            .get();
+        String usersEmail = response.readEntity(String.class);
+        return new JWTAuthenticationToken(usersEmail, token);
     }
 
     public static Optional<String> getAuthParam(ServletRequest request){
@@ -120,26 +94,5 @@ public class JWTService {
     public static Optional<String> getAuthHeader(HttpServletRequest httpServletRequest){
         String authHeader = httpServletRequest.getHeader(AUTHORIZATION_HEADER);
         return Strings.isNullOrEmpty(authHeader) ? Optional.empty() : Optional.of(authHeader);
-    }
-
-    private static String toToken(byte[] key, JwtClaims claims) {
-        final JsonWebSignature jws = new JsonWebSignature();
-        jws.setPayload(claims.toJson());
-        jws.setAlgorithmHeaderValue(HMAC_SHA256);
-        jws.setKey(new HmacKey(key));
-        jws.setDoKeyValidation(false);
-
-        try {
-            return jws.getCompactSerialization();
-        }
-        catch (JoseException e) { throw Throwables.propagate(e); }
-    }
-
-    private JwtClaims getClaimsForUser(String user) {
-        final JwtClaims claims = new JwtClaims();
-        claims.setExpirationTimeMinutesInTheFuture(5);
-        claims.setSubject(user);
-        claims.setIssuer(jwtIssuer);
-        return claims;
     }
 }

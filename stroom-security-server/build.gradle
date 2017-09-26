@@ -28,12 +28,11 @@ dependencies {
     compile libs.guava
     compile libs.hibernate_jpa_api
     compile libs.jBCrypt
-    compile libs.java_jwt
     compile libs.javax_annotation_api
     compile libs.javax_annotation_api
     compile libs.javax_inject
     compile libs.javax_servlet_api
-    compile libs.jose4j
+    compile libs.jersey_client
     compile libs.shiro_core
     compile libs.shiro_spring
     compile libs.shiro_web
@@ -44,6 +43,7 @@ dependencies {
     compile libs.spring_core
     compile libs.spring_tx
     compile libs.spring_web
+    compile libs.ws_rs_api
 
     runtime libs.shiro_aspectj
 

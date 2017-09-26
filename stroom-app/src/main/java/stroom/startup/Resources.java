@@ -21,15 +21,11 @@ import io.dropwizard.jersey.setup.JerseyEnvironment;
 import org.springframework.context.ApplicationContext;
 import stroom.index.shared.IndexService;
 import stroom.resources.NamedResource;
-import stroom.resources.authentication.v1.AuthenticationResource;
 import stroom.resources.authorisation.v1.AuthorisationResource;
 import stroom.resources.query.v2.SqlStatisticsQueryResource;
 import stroom.resources.query.v2.StroomIndexQueryResource;
 import stroom.search.server.SearchResultCreatorManager;
 import stroom.security.SecurityContext;
-import stroom.security.server.AuthenticationService;
-import stroom.security.server.AuthorisationService;
-import stroom.security.server.JWTService;
 import stroom.statistics.server.sql.StatisticsQueryService;
 
 import java.util.ArrayList;
@@ -39,7 +35,6 @@ public class Resources {
 
     private final StroomIndexQueryResource stroomIndexQueryResource;
     private final SqlStatisticsQueryResource sqlStatisticsQueryResource;
-    private final AuthenticationResource authenticationResource;
     private final AuthorisationResource authorisationResource;
     private final List<NamedResource> resources = new ArrayList<>();
 
@@ -51,15 +46,11 @@ public class Resources {
         sqlStatisticsQueryResource = new SqlStatisticsQueryResource();
         registerResource(jersey, sqlStatisticsQueryResource);
 
-        authenticationResource = new AuthenticationResource();
-        registerResource(jersey, authenticationResource);
-
         authorisationResource = new AuthorisationResource();
         registerResource(jersey, authorisationResource);
 
         servletMonitor.registerApplicationContextListener(this::configureLuceneQueryResource);
         servletMonitor.registerApplicationContextListener(this::configureSqlStatisticsQueryResource);
-        servletMonitor.registerApplicationContextListener(this::configureAuthenticationResource);
         servletMonitor.registerApplicationContextListener(this::configureAuthorisationResource);
     }
 
@@ -84,13 +75,6 @@ public class Resources {
     private void configureSqlStatisticsQueryResource(ApplicationContext applicationContext) {
         StatisticsQueryService statisticsQueryService = applicationContext.getBean(StatisticsQueryService.class);
         sqlStatisticsQueryResource.setStatisticsQueryService(statisticsQueryService);
-    }
-
-    private void configureAuthenticationResource(ApplicationContext applicationContext) {
-        AuthenticationService authenticationService = applicationContext.getBean(AuthenticationService.class);
-        JWTService jwtService = applicationContext.getBean(JWTService.class);
-        authenticationResource.setAuthenticationService(authenticationService);
-        authenticationResource.setJwtService(jwtService);
     }
 
     private void configureAuthorisationResource(ApplicationContext applicationContext){
