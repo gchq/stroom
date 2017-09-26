@@ -4,9 +4,9 @@
    <contextEncoding/>
    <description/>
    <encoding/>
-   <name>VALUE_FEED</name>
+   <name>COUNT_FEED_LARGE</name>
    <reference>false</reference>
    <status>RECEIVE</status>
    <streamType>Raw Events</streamType>
-   <uuid>28175ad7-d86d-407d-bba8-4417ff19592a</uuid>
+   <uuid>74330bde-59b9-41fd-86e0-dd521351c571</uuid>
 </feed>
