@@ -22,12 +22,9 @@ import stroom.entity.client.presenter.ManageEntityPresenter.ManageEntityView;
 import stroom.entity.client.view.ManageEntityViewImpl;
 import stroom.login.client.LoginManager;
 import stroom.login.client.presenter.LoginPresenter;
-import stroom.login.client.presenter.LogoutPlugin;
 import stroom.login.client.view.LoginViewImpl;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.client.CurrentUser;
-import stroom.security.client.ManageUserPlugin;
-import stroom.security.client.presenter.ChangePasswordPlugin;
 import stroom.security.client.presenter.ChangePasswordPresenter;
 import stroom.security.client.presenter.ChangePasswordPresenter.ChangePasswordProxy;
 import stroom.security.client.presenter.ChangePasswordPresenter.ChangePasswordView;
@@ -59,8 +56,6 @@ public class SecurityModule extends PluginModule {
         bindPresenter(LoginPresenter.class, LoginPresenter.LoginView.class, LoginViewImpl.class,
                 LoginPresenter.LoginProxy.class);
 
-        bindPlugin(LogoutPlugin.class);
-        bindPlugin(ChangePasswordPlugin.class);
 
         bindPresenter(ChangePasswordPresenter.class, ChangePasswordView.class, ChangePasswordViewImpl.class,
                 ChangePasswordProxy.class);
@@ -70,7 +65,6 @@ public class SecurityModule extends PluginModule {
         bindSharedView(ManageEntityView.class, ManageEntityViewImpl.class);
 
         // Users
-        bindPlugin(ManageUserPlugin.class);
         bindSharedView(UserListView.class, UserListViewImpl.class);
         bindSharedView(UserEditPresenter.UserEditView.class, UserEditViewImpl.class);
         bindSharedView(GroupEditPresenter.UserGroupEditView.class, UserGroupEditViewImpl.class);

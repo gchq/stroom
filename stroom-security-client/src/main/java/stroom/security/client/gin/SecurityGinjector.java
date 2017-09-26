@@ -21,10 +21,7 @@ import com.google.gwt.inject.client.Ginjector;
 import com.google.inject.Provider;
 import stroom.login.client.LoginManager;
 import stroom.login.client.presenter.LoginPresenter;
-import stroom.login.client.presenter.LogoutPlugin;
 import stroom.security.client.ClientSecurityContext;
-import stroom.security.client.ManageUserPlugin;
-import stroom.security.client.presenter.ChangePasswordPlugin;
 import stroom.security.client.presenter.ChangePasswordPresenter;
 import stroom.security.client.presenter.DocumentPermissionsPresenter;
 import stroom.security.client.presenter.ResetPasswordPresenter;
@@ -35,15 +32,9 @@ public interface SecurityGinjector extends Ginjector {
 
     AsyncProvider<LoginPresenter> getLoginPresenter();
 
-    AsyncProvider<LogoutPlugin> getLogoutPlugin();
-
-    AsyncProvider<ChangePasswordPlugin> getChangePasswordPlugin();
-
     AsyncProvider<ChangePasswordPresenter> getChangePasswordPresenter();
 
     AsyncProvider<ResetPasswordPresenter> getResetPasswordPresenter();
-
-    AsyncProvider<ManageUserPlugin> getManageUserPlugin();
 
     AsyncProvider<UsersAndGroupsPresenter> getUsersAndGroupsPresenter();
 
