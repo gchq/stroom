@@ -1,10 +1,6 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <xslt>
-   <createTime>1484142215435</createTime>
-   <createUser>INTERNAL_PROCESSING_USER</createUser>
    <description/>
    <name>Count to statistics schema v3.0</name>
-   <updateTime>1484294419663</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>def78501-c5a4-4e0a-aafe-3ee97f45bd9a</uuid>
 </xslt>

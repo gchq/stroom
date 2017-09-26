@@ -16,7 +16,6 @@
 
 package stroom.test;
 
-import io.vavr.Tuple2;
 import io.vavr.Tuple3;
 import io.vavr.Tuple4;
 import org.slf4j.Logger;
@@ -27,9 +26,13 @@ import stroom.util.date.DateUtil;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.Writer;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
 public class GenerateSampleStatisticsData {
@@ -39,7 +42,7 @@ public class GenerateSampleStatisticsData {
     private static final String USER2 = "user2";
 
     // 52,000 is just over 3 days at 5000ms intervals
-    private static final int ITERATION_COUNT = 52_000;
+    private static final int DEFAULT_ITERATION_COUNT = 52_000;
     private static final int EVENT_TIME_DELTA_MS = 5000;
 
     private static final String COLOUR_RED = "Red";
@@ -57,14 +60,14 @@ public class GenerateSampleStatisticsData {
 
         Writer writer = new FileWriter(new File("StatsTestData_Values.xml"));
 
-        writer.write(generateValueData());
+        writer.write(generateValueData(DEFAULT_ITERATION_COUNT, getStartTime()));
         writer.close();
 
         System.out.println("Writing count data...");
 
         writer = new FileWriter(new File("StatsTestData_Counts.xml"));
 
-        writer.write(generateCountData());
+        writer.write(generateCountData(DEFAULT_ITERATION_COUNT, getStartTime()));
 
         writer.close();
 
@@ -72,61 +75,61 @@ public class GenerateSampleStatisticsData {
 
     }
 
-    private static long getStartTime() {
-        final long now = System.currentTimeMillis();
-
-        final long daysSinceEpoch = now / DateUtil.DAY_MS;
-
-        return daysSinceEpoch * DateUtil.DAY_MS;
+    private static Instant getStartTime() {
+        //get the start of today
+        return Instant.now().truncatedTo(ChronoUnit.DAYS);
     }
 
-    public static String generateValueData() {
-        final long eventTime = getStartTime();
+    public static String generateValueData(final int iterations, final Instant startTime) {
 
-        final StringBuilder stringBuilder = new StringBuilder();
-
-        buildEvents(stringBuilder, eventTime, StatisticType.VALUE);
-
-        return stringBuilder.toString();
+        return buildEvents(iterations, startTime, StatisticType.VALUE);
     }
 
-    public static String generateCountData() {
-        final long eventTime = getStartTime();
+    public static String generateCountData(final int iterations, final Instant startTime) {
 
-        final StringBuilder stringBuilder = new StringBuilder();
-
-        buildEvents(stringBuilder, eventTime, StatisticType.COUNT);
-
-        return stringBuilder.toString();
+        return buildEvents(iterations, startTime, StatisticType.COUNT);
     }
 
-    private static void buildEvents(final StringBuilder stringBuilder,
-                                    final long initialEventTime,
-                                    final StatisticType statisticType) {
-        stringBuilder.append("<data>\n");
+    private static List<Tuple3<String, String, String>> buildUserColourStateCombinations() {
+        List<Tuple3<String, String, String>> combinations = new ArrayList<>();
+        for (final String user : USERS) {
+            for (final String colour : COLOURS) {
+                for (final String state : STATES) {
+                    combinations.add(new Tuple3<>(user, colour, state));
+                }
+            }
+        }
+        return combinations;
+    }
+
+    private static String buildEvents(final int iterations,
+                                      final Instant initialEventTime,
+                                      final StatisticType statisticType) {
+        final StringBuffer stringBuffer = new StringBuffer();
+        stringBuffer.append("<data>\n");
 
         final AtomicLong eventCount = new AtomicLong(0);
 
         LOGGER.info("Building statistic test data of type {} with {} iterations",
-                statisticType, ITERATION_COUNT);
+                statisticType, iterations);
 
-        LongStream.range(0, ITERATION_COUNT)
+        //each time iteration will have a combination of each of users|colours|states
+        final List<Tuple3<String, String, String>> combinations = buildUserColourStateCombinations();
+
+        //parallel stream so data will be in a random order
+        String data = LongStream.range(0, iterations)
                 .parallel()
                 .boxed()
                 .map(i ->
                         DateUtil.createNormalDateTimeString(
-                                initialEventTime + (ITERATION_COUNT * EVENT_TIME_DELTA_MS)))
+                                initialEventTime.plusMillis(i * EVENT_TIME_DELTA_MS).toEpochMilli()))
                 .flatMap(timeStr ->
-                        USERS.stream()
-                            .map(user -> new Tuple2<>(timeStr, user)))
-                .flatMap(tuple2 ->
-                        COLOURS.stream()
-                                .map(colour -> new Tuple3<>(tuple2._1(), tuple2._2(), colour)))
-                .flatMap(tuple3 ->
-                        STATES.stream()
-                                .map(state -> new Tuple4<>(tuple3._1(), tuple3._2(), tuple3._3(), state)))
-                .forEach(tuple4 -> {
-                    stringBuilder
+                        combinations.stream()
+                                .map(userColourState -> new Tuple4<>(
+                                        timeStr, userColourState._1(), userColourState._2(), userColourState._3())))
+                .map(tuple4 -> {
+                    //build the event xml
+                    StringBuilder stringBuilder = new StringBuilder()
                             .append("<event>")
                             .append("<time>")
                             .append(tuple4._1()) //time
@@ -145,45 +148,14 @@ public class GenerateSampleStatisticsData {
                             .append("</value>")
                             .append("</event>\n");
                     eventCount.incrementAndGet();
+                    return stringBuilder.toString();
+                })
+                .collect(Collectors.joining("\n"));
 
-                });
-
-
-//        for (int i = 0; i <= ITERATION_COUNT; i++) {
-//            String eventTimeStr = DateUtil.createNormalDateTimeString(eventTime);
-//
-//            for (final String user : USERS) {
-//                for (final String colour : COLOURS) {
-//                    for (final String state : STATES) {
-//                        stringBuilder
-//                            .append("<event>")
-//                            .append("<time>")
-//                            .append(eventTimeStr)
-//                            .append("</time>")
-//                            .append("<user>")
-//                            .append(user)
-//                            .append("</user>")
-//                            .append("<colour>")
-//                            .append(colour)
-//                            .append("</colour>")
-//                            .append("<state>")
-//                            .append(state)
-//                            .append("</state>")
-//                            .append("<value>")
-//                            .append(getStatValue(statisticType, colour))
-//                            .append("</value>")
-//                            .append("</event>\n");
-//                        eventCount++;
-//                    }
-//                }
-//            }
-//            eventTime += EVENT_TIME_DELTA_MS;
-//        }
-
-        stringBuilder.append("</data>\n");
-        LOGGER.info("Created {} {} statistic events",
-                String.format("%,d", eventCount.get()),
-                statisticType);
+        stringBuffer.append(data);
+        stringBuffer.append("</data>\n");
+        LOGGER.info("Created {} {} statistic events", String.format("%,d", eventCount.get()), statisticType);
+        return stringBuffer.toString();
     }
 
     private static String getStatValue(final StatisticType statisticType, final String colour) {

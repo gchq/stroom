@@ -1,0 +1,10 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<pipeline>
+   <createTime>1506327103672</createTime>
+   <createUser>admin</createUser>
+   <name>ValuePipelineSQL</name>
+   <pipelineType>Event Data</pipelineType>
+   <updateTime>1506327103672</updateTime>
+   <updateUser>admin</updateUser>
+   <uuid>a5b76a2e-7689-4f5d-9316-e994710423f9</uuid>
+</pipeline>

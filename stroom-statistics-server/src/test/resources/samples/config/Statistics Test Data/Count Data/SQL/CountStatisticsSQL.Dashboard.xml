@@ -1,5 +1,9 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <dashboard>
-    <name>CountStatisticsSQL</name>
-    <uuid>9a1a9732-df96-415f-8f5a-67973c60d73d</uuid>
+   <createTime>1506327103228</createTime>
+   <createUser>admin</createUser>
+   <name>CountStatisticsSQL</name>
+   <updateTime>1506327103228</updateTime>
+   <updateUser>admin</updateUser>
+   <uuid>9a1a9732-df96-415f-8f5a-67973c60d73d</uuid>
 </dashboard>
