@@ -21,8 +21,7 @@ public class AnnotationsPlugin extends Plugin {
 
     private final Provider<IFramePresenter> iFramePresenterProvider;
     private final ContentManager contentManager;
-
-    private String annotationsURL;
+    private final ClientPropertyCache clientPropertyCache;
 
     @Inject
     public AnnotationsPlugin(final EventBus eventBus,
@@ -32,9 +31,7 @@ public class AnnotationsPlugin extends Plugin {
         super(eventBus);
         this.iFramePresenterProvider = iFramePresenterProvider;
         this.contentManager = contentManager;
-        clientPropertyCache.get()
-                .onSuccess(result -> annotationsURL = result.get(ClientProperties.URL_ANNOTATIONS_UI))
-                .onFailure(caught -> AlertEvent.fireError(AnnotationsPlugin.this, caught.getMessage(), null));
+        this.clientPropertyCache = clientPropertyCache;
     }
 
     @Override
@@ -46,20 +43,33 @@ public class AnnotationsPlugin extends Plugin {
 
     @Override
     public void onReveal(final BeforeRevealMenubarEvent event) {
-        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
-                new IconMenuItem(5, SvgPresets.EXPLORER, null, "Annotations", null, true, () -> {
-                    final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()
-                            .title("Annotations")
-                            .href(annotationsURL)
-                            .target(HyperlinkTarget.STROOM_TAB)
-                            .build();
-                    final IFramePresenter iFramePresenter = iFramePresenterProvider.get();
-                    iFramePresenter.setHyperlink(hyperlink);
-                    contentManager.open(callback ->
-                                    ConfirmEvent.fire(AnnotationsPlugin.this,
-                                            "Are you sure you want to close " + hyperlink.getTitle() + "?",
-                                            callback::closeTab)
-                            , iFramePresenter, iFramePresenter);
-                }));
+        clientPropertyCache.get()
+                .onSuccess(result -> {
+                    final IconMenuItem annotationsMenuItem;
+                    final String annotationsURL = result.get(ClientProperties.URL_ANNOTATIONS_UI);
+                    if (annotationsURL != null && annotationsURL.trim().length() > 0) {
+                        annotationsMenuItem = new IconMenuItem(5, SvgPresets.EXPLORER, null, "Annotations", null, true, () -> {
+                            final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()
+                                    .title("Annotations")
+                                    .href(annotationsURL)
+                                    .target(HyperlinkTarget.STROOM_TAB)
+                                    .build();
+                            final IFramePresenter iFramePresenter = iFramePresenterProvider.get();
+                            iFramePresenter.setHyperlink(hyperlink);
+                            contentManager.open(callback ->
+                                            ConfirmEvent.fire(AnnotationsPlugin.this,
+                                                    "Are you sure you want to close " + hyperlink.getTitle() + "?",
+                                                    callback::closeTab)
+                                    , iFramePresenter, iFramePresenter);
+                        });
+                    } else {
+                        annotationsMenuItem = new IconMenuItem(5, SvgPresets.EXPLORER, SvgPresets.EXPLORER, "Annotations is not configured!", null, false, null);
+                    }
+
+                    event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, annotationsMenuItem);
+                })
+                .onFailure(caught -> AlertEvent.fireError(AnnotationsPlugin.this, caught.getMessage(), null));
+
+
     }
 }
