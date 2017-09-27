@@ -31,6 +31,10 @@ stroom.statistics.sql.jdbcDriverPassword=stroompassword1
 #Authentication properties
 stroom.auth.jwt.secret=CHANGE_ME
 stroom.auth.jwt.issuer=stroom
+#STROOM_RESOURCES_ADVERTISED_HOST is the public facing IP of this machine, e.g. the value of
+#ip route get 1 | awk '{print $NF;exit}'
+stroom.security.login.url=http://_____STROOM_RESOURCES_ADVERTISED_HOST_____/authenticationService/v1/checkCertificate
+stroom.security.authentication.url=http://_____STROOM_RESOURCES_ADVERTISED_HOST_____/authenticationService/v1
 
 #Service discovery
 #Set this to false to local service lookup when you do not have Zookeeper
@@ -40,3 +44,4 @@ stroom.serviceDiscovery.enabled=true
 #Set this to blank to prevent stroom from trying to establish a connection
 stroom.connectors.kafka.default.bootstrap.servers=localhost:9092
 stroom.connectors.kafka.default.connector.version=0.10.0.1
+
