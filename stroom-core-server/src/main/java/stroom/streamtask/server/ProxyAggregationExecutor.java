@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.feed.MetaMap;
+import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.internalstatistics.MetaDataStatistic;
@@ -43,8 +44,6 @@ import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.task.TaskMonitor;
-import stroom.util.thread.ThreadLocalBuffer;
-import stroom.feed.StroomHeaderArguments;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -68,7 +67,6 @@ public class ProxyAggregationExecutor {
     private final MetaDataStatistic metaDataStatistic;
     private final TaskMonitor taskMonitor;
     private final TaskManager taskManager;
-    private final ThreadLocalBuffer proxyAggregationThreadLocalBuffer;
     private final int threadCount;
     private final StroomZipRepositoryProcessor stroomZipRepositoryProcessor;
 
@@ -85,7 +83,6 @@ public class ProxyAggregationExecutor {
                                     final MetaDataStatistic metaDataStatistic,
                                     final TaskMonitor taskMonitor,
                                     final TaskManager taskManager,
-                                    @Named("prototypeThreadLocalBuffer") final ThreadLocalBuffer proxyAggregationThreadLocalBuffer,
                                     @Value("#{propertyConfigurer.getProperty('stroom.proxyDir')}") final String proxyDir,
                                     @Value("#{propertyConfigurer.getProperty('stroom.proxyThreads')}") final String threadCount,
                                     @Value("#{propertyConfigurer.getProperty('stroom.maxAggregation')}") final String maxAggregation,
@@ -96,7 +93,6 @@ public class ProxyAggregationExecutor {
         this.metaDataStatistic = metaDataStatistic;
         this.taskMonitor = taskMonitor;
         this.taskManager = taskManager;
-        this.proxyAggregationThreadLocalBuffer = proxyAggregationThreadLocalBuffer;
         this.proxyDir = proxyDir;
         this.threadCount = PropertyUtil.toInt(threadCount, 10);
 
@@ -271,11 +267,6 @@ public class ProxyAggregationExecutor {
                 closeStreamHandlers(handlers);
                 deleteFiles(stroomZipRepository, deleteFileList);
                 LOGGER.info("processFeedFiles() - Completed {} in {}", feedName, logExecutionTime);
-            }
-
-            @Override
-            public byte[] getReadBuffer() {
-                return proxyAggregationThreadLocalBuffer.getBuffer();
             }
 
             @Override

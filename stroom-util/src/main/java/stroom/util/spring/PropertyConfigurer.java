@@ -24,7 +24,6 @@ import org.springframework.context.ResourceLoaderAware;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.WebApplicationContext;
 import stroom.util.web.ServletContextUtil;
 
 import java.io.IOException;
@@ -36,7 +35,7 @@ import java.util.Properties;
  */
 @Component("propertyFileProvider")
 public class PropertyConfigurer extends PropertyPlaceholderConfigurer
-        implements PropertyProvider, ApplicationContextAware, ResourceLoaderAware {
+        implements PropertyProvider, ResourceLoaderAware {
     private static Properties overrideProperties;
     private static volatile String webAppPropertiesName = null;
     private Properties properties;
@@ -92,21 +91,21 @@ public class PropertyConfigurer extends PropertyPlaceholderConfigurer
         return getProperties().getProperty(name);
     }
 
-    @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        if (applicationContext instanceof WebApplicationContext
-                || webAppPropertiesName != null && resourceLoader != null) {
-            if (webAppPropertiesName == null) {
-                setWebAppPropertiesName(ServletContextUtil
-                        .getWARName(((WebApplicationContext) applicationContext).getServletContext()));
-            }
-            // Use the WAR name in preference to the default properties
-            Resource warResource = resourceLoader.getResource("classpath:/" + webAppPropertiesName + ".properties");
-            if (warResource.exists() && warResource.isReadable()) {
-                setLocations(new Resource[]{warResource});
-            }
-        }
-    }
+//    @Override
+//    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+//        if (applicationContext instanceof WebApplicationContext
+//                || webAppPropertiesName != null && resourceLoader != null) {
+//            if (webAppPropertiesName == null) {
+//                setWebAppPropertiesName(ServletContextUtil
+//                        .getWARName(((WebApplicationContext) applicationContext).getServletContext()));
+//            }
+//            // Use the WAR name in preference to the default properties
+//            Resource warResource = resourceLoader.getResource("classpath:/" + webAppPropertiesName + ".properties");
+//            if (warResource.exists() && warResource.isReadable()) {
+//                setLocations(new Resource[]{warResource});
+//            }
+//        }
+//    }
 
     @Override
     public void setLocation(Resource location) {

@@ -21,7 +21,6 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 public interface StroomScope {
     String THREAD = "thread";
     String TASK = "task";
-    String SESSION = "session";
     String SINGLETON = ConfigurableBeanFactory.SCOPE_SINGLETON;
     String PROTOTYPE = ConfigurableBeanFactory.SCOPE_PROTOTYPE;
 }

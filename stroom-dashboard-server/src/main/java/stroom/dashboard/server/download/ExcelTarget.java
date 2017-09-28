@@ -18,6 +18,7 @@ package stroom.dashboard.server.download;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DataFormat;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Row;
@@ -93,7 +94,7 @@ public class ExcelTarget implements SearchResultWriter.Target {
         headingStyle.setFont(headingFont);
 
         final Cell cell = row.createCell(colNum++);
-        cell.setCellType(Cell.CELL_TYPE_STRING);
+        cell.setCellType(CellType.STRING);
         cell.setCellValue(heading);
         cell.setCellStyle(headingStyle);
     }
@@ -124,7 +125,7 @@ public class ExcelTarget implements SearchResultWriter.Target {
                 switch (type) {
                     case TEXT:
                         cell.setCellValue(getText(value));
-                        cell.setCellType(Cell.CELL_TYPE_STRING);
+                        cell.setCellType(CellType.STRING);
                         break;
                     case NUMBER:
                         number(wb, cell, value, settings);
@@ -143,7 +144,7 @@ public class ExcelTarget implements SearchResultWriter.Target {
     private void general(final SXSSFWorkbook wb, final Cell cell, final Object value) {
         if (value instanceof Double) {
             final Double dbl = (Double) value;
-            cell.setCellValue(dbl.doubleValue());
+            cell.setCellValue(dbl);
         } else {
             cell.setCellValue(getText(value));
         }
@@ -155,7 +156,7 @@ public class ExcelTarget implements SearchResultWriter.Target {
 
             final Date date = new Date(ms);
             cell.setCellValue(date);
-            cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+            cell.setCellType(CellType.NUMERIC);
 
             String pattern = "dd/mm/yyyy hh:mm:ss";
 
@@ -181,10 +182,10 @@ public class ExcelTarget implements SearchResultWriter.Target {
 
     private void number(final SXSSFWorkbook wb, final Cell cell, final Object value, final FormatSettings settings) {
         if (value instanceof Double) {
-            final double dbl = ((Double) value).doubleValue();
+            final double dbl = (Double) value;
 
             cell.setCellValue(dbl);
-            cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+            cell.setCellType(CellType.NUMERIC);
 
             if (settings != null && settings instanceof NumberFormatSettings) {
                 final NumberFormatSettings numberFormatSettings = (NumberFormatSettings) settings;

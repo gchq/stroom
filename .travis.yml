@@ -61,7 +61,7 @@ before_script:
   - echo "stroom.plugins.lib.dir=$HOME/.stroom/plugins" >> ~/.stroom/stroom.conf
 
 # Use 1 local worker to avoid using too much memory as each worker will chew up ~500Mb ram
-script: ./gradlew -Pversion=$TRAVIS_TAG -PgwtCompilerWorkers=1 clean build
+script: ./gradlew -Pversion=$TRAVIS_TAG -PgwtCompilerWorkers=1 -PgwtCompilerMinHeap=50M -PgwtCompilerMaxHeap=500M clean build
 
 # Conditionally tag git and build docker image. 
 after_success:  "./travis.after_success.sh"
@@ -81,8 +81,8 @@ deploy:
       secure: xUPJboaSjxs3lKCqXu5zYzdV75S+lu5EZ6RD+RigmQ5MSjeuFBhoBKYaJUz+ejaoFLfF8WSUbmlgTeRMK7QI4MtCqjy08uREext8sm0behMREz4mmPEb9eTLu+WfIXFbnOPG4pKzkAtHA3x+hNQN3EWga1Xa2WXGYdOuK1B7vnrYOPo9D2zI12JCaoXt0KUQ70LwE07uwBIuDn+0EbVsAftFatJh7jZXeMsE8GmdcwsM/DObKjtTLBH3bpE8pPPJ8H0ssuIsQk2jHg91cTgrlB0q0K1a5TjeKKMGPMY6S6UR9cB7l7FqCVEsOd7T/ExdKp1TflMRyuuKG9ACBXTaegfBt7pP7KYEpYtidC5p/b1J4cYvazVTIfo6m93wnOJAdcD1XeMqNIQZVSxNuflmgM8xZz+UuqPBF4dk3Z5Eoh4sTH+t6WmZY6YoIt6tRMQ8xRyvkTfzsfYUtsV4csyeB2oy5s/GJmYGtR5GjjK6T+mh8RmI/DVWW50ubdFaAYYdz+LSgfpGhBXEBkYPghMSjYiPDsJStXsOwRSQbR9LmRO7jk08PxxT33pLr8Ct0HoQPpSP8Fom4q1ntrZBDjeHL8/2cQtRKqUg3X9G0sU7aW5i0G4U7BE42Xkcc/VVJhFrVbRj5+xQq70uMyUmHi2Wh+mBQSY+ZlBrvr6FRcKj42E=
     file: 
       - stroom-app/build/libs/stroom-app-all.jar
-      - stroom-app/build/swagger/swagger.json
-      - stroom-app/build/swagger/swagger.yaml
+      - stroom-app/src/main/resources/ui/swagger/swagger.json
+      - stroom-app/src/main/resources/ui/swagger/swagger.yaml
     skip_cleanup: true
     on:
       tags: true

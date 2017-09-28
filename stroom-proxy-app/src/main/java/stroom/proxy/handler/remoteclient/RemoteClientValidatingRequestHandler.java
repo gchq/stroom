@@ -20,11 +20,13 @@ import java.io.IOException;
 public class RemoteClientValidatingRequestHandler implements RequestHandler {
     private static Logger LOGGER = LoggerFactory.getLogger(RemoteClientValidatingRequestHandler.class);
 
-    @Resource
-    LocalFeedService localFeedService;
+    private final LocalFeedService localFeedService;
+    private final MetaMap metaMap;
 
-    @Resource
-    MetaMap metaMap;
+    public RemoteClientValidatingRequestHandler(final LocalFeedService localFeedService, final MetaMap metaMap) {
+        this.localFeedService = localFeedService;
+        this.metaMap = metaMap;
+    }
 
     @Override
     public void handleHeader() throws IOException {

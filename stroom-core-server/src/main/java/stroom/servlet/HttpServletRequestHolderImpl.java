@@ -16,29 +16,23 @@
 
 package stroom.servlet;
 
-import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Scope;
-import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Component;
-import stroom.util.spring.StroomScope;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 @Component
-@Lazy
-@Scope(value = StroomScope.THREAD, proxyMode = ScopedProxyMode.INTERFACES)
 public class HttpServletRequestHolderImpl implements HttpServletRequestHolder {
-    private static final ThreadLocal<HttpServletRequest> THREAD_LOCAL_CONTEXT = new InheritableThreadLocal<>();
+    private final ThreadLocal<HttpServletRequest> threadLocal = new InheritableThreadLocal<>();
 
     @Override
     public HttpServletRequest get() {
-        return THREAD_LOCAL_CONTEXT.get();
+        return threadLocal.get();
     }
 
     @Override
     public void set(final HttpServletRequest httpServletRequest) {
-        THREAD_LOCAL_CONTEXT.set(httpServletRequest);
+        threadLocal.set(httpServletRequest);
     }
 
     @Override

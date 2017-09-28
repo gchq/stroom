@@ -28,9 +28,9 @@ public class StreamAttributeMap implements SharedObject {
 
     private Stream stream;
     private List<String> fileNameList;
-    private Map<StreamAttributeKey, String> attributeMap = new HashMap();
-    private Map<String, String> nameValueMap = new HashMap();
-    private Map<String, StreamAttributeKey> nameKeyMap = new HashMap();
+    private Map<StreamAttributeKey, String> attributeMap = new HashMap<>();
+    private Map<String, String> nameValueMap = new HashMap<>();
+    private Map<String, StreamAttributeKey> nameKeyMap = new HashMap<>();
 
     public StreamAttributeMap() {
         // Default constructor necessary for GWT serialisation.
@@ -92,17 +92,17 @@ public class StreamAttributeMap implements SharedObject {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof StreamAttributeMap)) {
-            return false;
-        }
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (!(o instanceof StreamAttributeMap)) return false;
 
-        return ((StreamAttributeMap) other).stream.equals(this.stream);
+        final StreamAttributeMap that = (StreamAttributeMap) o;
+
+        return stream.equals(that.stream);
     }
 
     @Override
     public int hashCode() {
         return stream.hashCode();
     }
-
 }

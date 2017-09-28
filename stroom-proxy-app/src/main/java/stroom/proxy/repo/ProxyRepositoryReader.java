@@ -14,11 +14,8 @@ import stroom.util.shared.Monitor;
 import stroom.util.shared.TerminateHandler;
 import stroom.util.spring.StroomShutdown;
 import stroom.util.spring.StroomStartup;
-import stroom.util.thread.ThreadLocalBuffer;
-import stroom.util.thread.ThreadScopeContextHolder;
 import stroom.util.thread.ThreadUtil;
 
-import javax.annotation.Resource;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.file.Path;
@@ -38,10 +35,7 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
 
     public static final String PROXY_FORWARD_ID = "ProxyForwardId";
 
-    @Resource
-    private ProxyRepositoryManager proxyRepositoryManager;
-    @Resource(name = "proxyRequestThreadLocalBuffer")
-    private ThreadLocalBuffer proxyRequestThreadLocalBuffer;
+    private final ProxyRepositoryManager proxyRepositoryManager;
 
     private final ReentrantLock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
@@ -111,12 +105,9 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
         }
     }
 
-    public ProxyRepositoryReader() {
-        this(new MonitorImpl());
-    }
-
-    public ProxyRepositoryReader(final Monitor monitor) {
+    public ProxyRepositoryReader(final Monitor monitor, final ProxyRepositoryManager proxyRepositoryManager) {
         super(monitor);
+        this.proxyRepositoryManager = proxyRepositoryManager;
     }
 
     public String getHostName() {
@@ -220,11 +211,6 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
         return new ArrayList<>();
     }
 
-    @Override
-    public byte[] getReadBuffer() {
-        return proxyRequestThreadLocalBuffer.getBuffer();
-    }
-
     /**
      * Send a load of files for the same feed
      */
@@ -244,8 +230,6 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
         if (LOGGER.isDebugEnabled()) {
             metaMap.put(PROXY_FORWARD_ID, String.valueOf(thisPostId));
         }
-
-        ThreadScopeContextHolder.getContext().put(MetaMap.NAME, metaMap);
 
         final List<RequestHandler> requestHandlerList = createOutgoingRequestHandlerList();
 
@@ -357,13 +341,5 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
         } else {
             scheduler = null;
         }
-    }
-
-    public void setProxyRequestThreadLocalBuffer(final ThreadLocalBuffer proxyRequestThreadLocalBuffer) {
-        this.proxyRequestThreadLocalBuffer = proxyRequestThreadLocalBuffer;
-    }
-
-    public void setProxyRepositoryManager(final ProxyRepositoryManager proxyRepositoryManager) {
-        this.proxyRepositoryManager = proxyRepositoryManager;
     }
 }

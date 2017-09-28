@@ -19,10 +19,11 @@ package stroom.streamtask.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
+import stroom.feed.MetaMapFactory;
+import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.internalstatistics.MetaDataStatistic;
-import stroom.proxy.repo.MetaMapFactory;
 import stroom.proxy.repo.StroomHeaderStreamHandler;
 import stroom.proxy.repo.StroomStreamHandler;
 import stroom.proxy.repo.StroomZipEntry;
@@ -35,7 +36,6 @@ import stroom.streamstore.server.fs.serializable.NestedStreamTarget;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.CloseableUtil;
-import stroom.feed.StroomHeaderArguments;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
@@ -97,7 +97,9 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     }
 
     public static List<StreamTargetStroomStreamHandler> buildSingleHandlerList(final StreamStore streamStore,
-                                                                               final FeedService feedService, final MetaDataStatistic metaDataStatistics, final Feed feed,
+                                                                               final FeedService feedService,
+                                                                               final MetaDataStatistic metaDataStatistics,
+                                                                               final Feed feed,
                                                                                final StreamType streamType) {
         final ArrayList<StreamTargetStroomStreamHandler> list = new ArrayList<>();
         list.add(new StreamTargetStroomStreamHandler(streamStore, feedService, metaDataStatistics, feed, streamType));

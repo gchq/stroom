@@ -29,6 +29,7 @@ dependencies {
     compile libs.hibernate_jpa_api
     compile libs.jBCrypt
     compile libs.java_jwt
+    compile libs.jackson_annotations
     compile libs.javax_annotation_api
     compile libs.javax_annotation_api
     compile libs.javax_inject
@@ -43,6 +44,11 @@ dependencies {
     compile libs.spring_context_support
     compile libs.spring_core
     compile libs.spring_tx
+    compile libs.swagger_annotations
+    compile libs.jersey_server
+    compile libs.ws_rs_api
+
+    compile libs.dropwizard_metrics_annotation
 
     runtime libs.shiro_aspectj
 

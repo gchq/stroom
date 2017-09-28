@@ -22,10 +22,8 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Scope;
 import stroom.node.shared.Node;
-import stroom.util.config.StroomProperties;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomScope;
-import stroom.util.thread.ThreadLocalBuffer;
 
 /**
  * Defines the application context configuration for the server module.
@@ -33,14 +31,6 @@ import stroom.util.thread.ThreadLocalBuffer;
 @Configuration
 @EnableAspectJAutoProxy
 public class ServerConfiguration {
-    @Bean
-    @Scope(StroomScope.PROTOTYPE)
-    public ThreadLocalBuffer prototypeThreadLocalBuffer() {
-        final ThreadLocalBuffer threadLocalBuffer = new ThreadLocalBuffer();
-        threadLocalBuffer.setBufferSize(StroomProperties.getProperty("stroom.buffersize"));
-        return threadLocalBuffer;
-    }
-
     @Bean
     @Lazy
     @Scope(StroomScope.THREAD)
