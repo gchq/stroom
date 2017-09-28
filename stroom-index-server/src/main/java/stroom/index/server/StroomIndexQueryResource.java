@@ -25,10 +25,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.stereotype.Component;
 import stroom.datasource.api.v2.DataSource;
-import stroom.index.server.IndexService;
 import stroom.index.shared.Index;
-import stroom.index.shared.IndexService;
-import stroom.util.HasHealthCheck;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
@@ -37,6 +34,7 @@ import stroom.query.common.v2.SearchResponseCreator;
 import stroom.search.server.IndexDataSourceFieldUtil;
 import stroom.search.server.SearchResultCreatorManager;
 import stroom.search.server.SearchResultCreatorManager.Key;
+import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;

@@ -11,7 +11,6 @@ import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.util.io.CloseableUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.thread.BufferFactory;
-import stroom.util.thread.ThreadScopeRunnable;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -43,81 +42,75 @@ public class DataFeedRequestHandler extends HttpServlet {
 
     @Override
     protected void doPost(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
-        new ThreadScopeRunnable() {
-            @Override
-            protected void exec() {
-                final MetaMap metaMap = MetaMapFactory.create(req);
+        final MetaMap metaMap = MetaMapFactory.create(req);
 
-                // Send the data
-                final List<RequestHandler> handlers = proxyHandlerFactory.getIncomingRequestHandlerList();
+        // Send the data
+        final List<RequestHandler> handlers = proxyHandlerFactory.getIncomingRequestHandlerList();
 
-                concurrentRequestCount.incrementAndGet();
-                final long startTime = System.currentTimeMillis();
+        concurrentRequestCount.incrementAndGet();
+        final long startTime = System.currentTimeMillis();
 
-                try {
-                    final byte[] buffer = BufferFactory.create();
-                    final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlers,
-                            buffer, "DataFeedRequestHandler");
+        try {
+            final byte[] buffer = BufferFactory.create();
+            final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlers,
+                    buffer, "DataFeedRequestHandler");
 
-                    stroomStreamProcessor.processRequestHeader(req);
+            stroomStreamProcessor.processRequestHeader(req);
 
-                    for (final RequestHandler requestHandler : handlers) {
-                        requestHandler.handleHeader();
-                    }
-
-                    stroomStreamProcessor.process(req.getInputStream(), "");
-
-                    for (final RequestHandler requestHandler : handlers) {
-                        requestHandler.handleFooter();
-                    }
-                    resp.setStatus(HttpServletResponse.SC_OK);
-                } catch (final Exception ex) {
-                    try {
-                        boolean error = true;
-                        if (ex instanceof DropStreamException) {
-                            // Just read the stream in and ignore it
-                            final InputStream inputStream = req.getInputStream();
-                            final byte[] buffer = BufferFactory.create();
-                            while (inputStream.read(buffer) >= 0);
-                            CloseableUtil.close(inputStream);
-                            resp.setStatus(HttpServletResponse.SC_OK);
-                            LOGGER.warn("\"handleException() - Dropped stream\",%s", CSVFormatter.format(metaMap));
-                            error = false;
-                        } else {
-                            if (ex instanceof StroomStreamException) {
-                                LOGGER.warn("\"handleException()\",%s,\"%s\"", CSVFormatter.format(metaMap),
-                                        CSVFormatter.escape(ex.getMessage()));
-                            } else {
-                                LOGGER.error("\"handleException()\",%s", CSVFormatter.format(metaMap), ex);
-                            }
-                        }
-                        for (final RequestHandler requestHandler : handlers) {
-                            try {
-                                requestHandler.handleError();
-                            } catch (final Exception ex1) {
-                                LOGGER.error("\"handleException\"", ex1);
-                            }
-                        }
-                        // Dropped stream errors are handled like all OK
-                        if (error) {
-                            returnCode = StroomStreamException.sendErrorResponse(resp, ex);
-                        } else {
-                            resp.setStatus(HttpServletResponse.SC_OK);
-                        }
-                    } catch (final IOException ioEx) {
-                        throw new RuntimeException(ioEx);
-                    }
-                }
-
-                if (LOGGER.isInfoEnabled()) {
-                    final long time = System.currentTimeMillis() - startTime;
-                    LOGGER.info("\"doPost() - Took %s to process (concurrentRequestCount=%s) %s\",%s",
-                            ModelStringUtil.formatDurationString(time), concurrentRequestCount, returnCode,
-                            CSVFormatter.format(metaMap));
-                }
-                concurrentRequestCount.decrementAndGet();
-
+            for (final RequestHandler requestHandler : handlers) {
+                requestHandler.handleHeader();
             }
-        }.run();
+
+            stroomStreamProcessor.process(req.getInputStream(), "");
+
+            for (final RequestHandler requestHandler : handlers) {
+                requestHandler.handleFooter();
+            }
+            resp.setStatus(HttpServletResponse.SC_OK);
+        } catch (final Exception ex) {
+            try {
+                boolean error = true;
+                if (ex instanceof DropStreamException) {
+                    // Just read the stream in and ignore it
+                    final InputStream inputStream = req.getInputStream();
+                    final byte[] buffer = BufferFactory.create();
+                    while (inputStream.read(buffer) >= 0) ;
+                    CloseableUtil.close(inputStream);
+                    resp.setStatus(HttpServletResponse.SC_OK);
+                    LOGGER.warn("\"handleException() - Dropped stream\",%s", CSVFormatter.format(metaMap));
+                    error = false;
+                } else {
+                    if (ex instanceof StroomStreamException) {
+                        LOGGER.warn("\"handleException()\",%s,\"%s\"", CSVFormatter.format(metaMap),
+                                CSVFormatter.escape(ex.getMessage()));
+                    } else {
+                        LOGGER.error("\"handleException()\",%s", CSVFormatter.format(metaMap), ex);
+                    }
+                }
+                for (final RequestHandler requestHandler : handlers) {
+                    try {
+                        requestHandler.handleError();
+                    } catch (final Exception ex1) {
+                        LOGGER.error("\"handleException\"", ex1);
+                    }
+                }
+                // Dropped stream errors are handled like all OK
+                if (error) {
+                    returnCode = StroomStreamException.sendErrorResponse(resp, ex);
+                } else {
+                    resp.setStatus(HttpServletResponse.SC_OK);
+                }
+            } catch (final IOException ioEx) {
+                throw new RuntimeException(ioEx);
+            }
+        }
+
+        if (LOGGER.isInfoEnabled()) {
+            final long time = System.currentTimeMillis() - startTime;
+            LOGGER.info("\"doPost() - Took %s to process (concurrentRequestCount=%s) %s\",%s",
+                    ModelStringUtil.formatDurationString(time), concurrentRequestCount, returnCode,
+                    CSVFormatter.format(metaMap));
+        }
+        concurrentRequestCount.decrementAndGet();
     }
 }

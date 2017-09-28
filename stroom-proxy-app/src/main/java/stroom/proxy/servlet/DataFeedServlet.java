@@ -2,8 +2,6 @@ package stroom.proxy.servlet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.web.HttpRequestHandler;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomStreamException;
 import stroom.proxy.datafeed.CSVFormatter;
@@ -11,10 +9,9 @@ import stroom.proxy.datafeed.ProxyHandlerFactory;
 import stroom.proxy.handler.DropStreamException;
 import stroom.proxy.handler.RequestHandler;
 import stroom.proxy.repo.StroomStreamProcessor;
-import stroom.proxy.util.ProxyProperties;
 import stroom.util.io.CloseableUtil;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.thread.ThreadLocalBuffer;
+import stroom.util.thread.BufferFactory;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;
@@ -33,31 +30,21 @@ import java.util.concurrent.atomic.AtomicInteger;
  * dynamic mini proxy.
  */
 public class DataFeedServlet extends HttpServlet {
-//    private static final String POST = "POST";
-
     private static Logger LOGGER = LoggerFactory.getLogger(DataFeedServlet.class);
 
     private final ProxyHandlerFactory proxyHandlerFactory;
-
-    private final ThreadLocalBuffer proxyRequestThreadLocalBuffer;
 
     private static AtomicInteger concurrentRequestCount = new AtomicInteger(0);
 
     private int returnCode = HttpServletResponse.SC_OK;
 
     @Inject
-    public DataFeedServlet(final ProxyHandlerFactory proxyHandlerFactory, final ThreadLocalBuffer proxyRequestThreadLocalBuffer) {
+    public DataFeedServlet(final ProxyHandlerFactory proxyHandlerFactory) {
         this.proxyHandlerFactory = proxyHandlerFactory;
-        this.proxyRequestThreadLocalBuffer = proxyRequestThreadLocalBuffer;
     }
 
     @Override
     protected void doPost(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
-//        if (!POST.equals(req.getMethod())) {
-//            resp.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, "Only post supported");
-//            return;
-//        }
-
         // Send the data
         final List<RequestHandler> handlers = proxyHandlerFactory.getIncomingRequestHandlerList();
 
@@ -67,7 +54,7 @@ public class DataFeedServlet extends HttpServlet {
         final MetaMap metaMap = new MetaMap();
         try {
             final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlers,
-                    proxyRequestThreadLocalBuffer.getBuffer(), "DataFeedRequestHandler");
+                    BufferFactory.create(), "DataFeedRequestHandler");
 
             stroomStreamProcessor.processRequestHeader(req);
 
@@ -87,7 +74,8 @@ public class DataFeedServlet extends HttpServlet {
                 if (ex instanceof DropStreamException) {
                     // Just read the stream in and ignore it
                     final InputStream inputStream = req.getInputStream();
-                    while (inputStream.read(proxyRequestThreadLocalBuffer.getBuffer()) >= 0);
+                    final byte[] buffer = BufferFactory.create();
+                    while (inputStream.read(buffer) >= 0) ;
                     CloseableUtil.close(inputStream);
                     resp.setStatus(HttpServletResponse.SC_OK);
                     LOGGER.warn("\"handleException() - Dropped stream\",%s", CSVFormatter.format(metaMap));

@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import stroom.cluster.server.ClusterCallServiceRPC;
-import stroom.dashboard.server.logging.spring.EventLoggingConfiguration;
 import stroom.dashboard.spring.DashboardConfiguration;
 import stroom.datafeed.server.DataFeedServiceImpl;
 import stroom.dispatch.shared.DispatchService;
@@ -41,6 +40,7 @@ import stroom.feed.server.RemoteFeedServiceRPC;
 import stroom.index.server.StroomIndexQueryResource;
 import stroom.index.spring.IndexConfiguration;
 import stroom.lifecycle.LifecycleService;
+import stroom.logging.spring.EventLoggingConfiguration;
 import stroom.pipeline.spring.PipelineConfiguration;
 import stroom.script.server.ScriptServlet;
 import stroom.script.spring.ScriptConfiguration;
@@ -69,7 +69,6 @@ import stroom.spring.ServerConfiguration;
 import stroom.statistics.server.sql.search.SqlStatisticsQueryResource;
 import stroom.statistics.spring.StatisticsConfiguration;
 import stroom.util.spring.StroomSpringProfiles;
-import stroom.util.thread.ThreadScopeContextFilter;
 import stroom.visualisation.spring.VisualisationConfiguration;
 
 import javax.servlet.DispatcherType;
@@ -120,8 +119,6 @@ public class App extends Application<Configuration> {
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, StroomIndexQueryResource.class);
 
         // Add filters
-        FilterUtil.addFilter(servletContextHandler, ThreadScopeContextFilter.class, "threadScopeContextFilter", null);
-
         FilterUtil.addFilter(servletContextHandler, RejectPostFilter.class, "rejectPostFilter",
                 ImmutableMap.<String, String>builder().put("rejectUri", "/").build());
 
