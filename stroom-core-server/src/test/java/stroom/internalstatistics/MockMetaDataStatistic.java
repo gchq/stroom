@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.statistic.server;
+package stroom.internalstatistics;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
