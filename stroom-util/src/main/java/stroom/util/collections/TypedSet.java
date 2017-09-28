@@ -47,10 +47,6 @@ public class TypedSet<E> {
         return set.iterator();
     }
 
-    public E[] toArray() {
-        return (E[]) set.toArray();
-    }
-
     public E[] toArray(final E[] a) {
         return set.toArray(a);
     }
