@@ -50,13 +50,8 @@ dependencies {
     compile project(':stroom-index-server')
     compile project(':stroom-statistics-api')
     permitUnusedDeclared project(':stroom-statistics-api') // not clear why it thinks this is unused
-    compile project(':stroom-util')
-    compile project(':stroom-security-api')
-
-    compile project(':stroom-explorer-server')
     compile project(':stroom-dashboard-server')
     compile project(':stroom-statistics-server')
-    compile project(':stroom-ruleset-server')
 
     compile urlDependencies.get(urlLibs.stroomQueryApi)
     compile urlDependencies.get(urlLibs.stroomQueryCommon)
@@ -80,11 +75,13 @@ dependencies {
     compile libs.dropwizard_jetty
     compile libs.dropwizard_metrics_healthchecks
     compile libs.dropwizard_servlets
+    compile libs.dropwizard_metrics_annotation
     compile libs.javax_servlet_api
     compile libs.jetty_server
     compile libs.jetty_servlets
     compile libs.logback_classic
     compile libs.slf4j_api
+    compile libs.ws_rs_api
 
     runtime libs.shiro_web
     runtime libs.javax_el

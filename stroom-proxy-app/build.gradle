@@ -5,16 +5,12 @@ dependencies {
     compile project(':stroom-util-shared')
     compile project(':stroom-util')
 
-    compile libs.javax_annotation_api
     compile libs.slf4j_api
     compile libs.spring_beans
     compile libs.spring_context
     compile libs.spring_core
     compile libs.guice
-
-    compile (libs.ehcache_spring_annotations) {
-        exclude(module: 'guava')
-    }
+    compile libs.javax_inject
 
     compile libs.javax_servlet_api
 
