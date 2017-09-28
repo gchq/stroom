@@ -1,4 +1,4 @@
-package stroom.module;
+package stroom.startup;
 
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;

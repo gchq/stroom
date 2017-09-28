@@ -1,4 +1,4 @@
-package stroom.module;
+package stroom.startup;
 
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.common.base.Preconditions;

@@ -1,7 +1,10 @@
 plugins {
     id 'com.github.johnrengelman.shadow' version '1.2.4'
+    id "com.benjaminsproule.swagger" version "0.1.4"
 }
 
+def uiDir = project.file('src/main/resources/ui')
+def swaggerDir = "${uiDir}/swagger"
 def jarName = 'stroom-app.jar'
 def fatJarName = 'stroom-app-all.jar'
 
@@ -10,6 +13,9 @@ apply plugin: 'java'
 mainClassName = 'stroom.startup.App'
 
 jar {
+    //we need to first generate the swagger spec files so they can be added in to the jar
+    mustRunAfter generateSwaggerDocumentation
+
     manifest {
         attributes(
                 "Implementation-Title": "Stroom",
@@ -36,15 +42,63 @@ shadowJar {
     archiveName fatJarName
 }
 
-
 dependencies {
-    compile project(':stroom-module')
-
-    compile project(':stroom-core-module')
-    permitUnusedDeclared project(':stroom-core-module') // This is a runtime dependency but included as compile time to ensure packaging.
+    compile project(':stroom-core-shared')
+    compile project(':stroom-core-server')
+    compile project(':stroom-security-server')
+    compile project(':stroom-index-server')
+    compile project(':stroom-statistics-api')
+    permitUnusedDeclared project(':stroom-statistics-api') // not clear why it thinks this is unused
+    compile project(':stroom-util')
+    compile project(':stroom-pipeline')
+    compile project(':stroom-dashboard-server')
+    compile project(':stroom-statistics-server')
 
     compile urlDependencies.get(urlLibs.stroomQueryApi)
     compile urlDependencies.get(urlLibs.stroomQueryCommon)
+
+
+
+
+
+
+    //    compile project(':stroom-module')
+//
+//    compile project(':stroom-core-shared')
+//    compile project(':stroom-core-server')
+//    compile project(':stroom-security-server')
+//    compile project(':stroom-index-server')
+//    compile project(':stroom-statistics-api')
+//    permitUnusedDeclared project(':stroom-statistics-api') // not clear why it thinks this is unused
+//    compile project(':stroom-util')
+//    compile project(':stroom-pipeline')
+//    compile project(':stroom-dashboard-server')
+//    compile project(':stroom-statistics-server')
+//
+//    compile urlDependencies.get(urlLibs.stroomQueryApi)
+//    compile urlDependencies.get(urlLibs.stroomQueryCommon)
+//
+//    compile(libs.dropwizard_core) {
+//        exclude(group: "org.glassfish.web", module: "javax.el")
+//    }
+    compile libs.dropwizard_lifecycle
+//    compile libs.dropwizard_jersey
+//    compile libs.dropwizard_jetty
+//    compile libs.dropwizard_metrics_healthchecks
+    compile libs.guava
+    compile libs.javax_inject
+//    compile libs.javax_servlet_api
+    compile libs.jetty_servlet
+    compile libs.shiro_web
+//    compile libs.slf4j_api
+    compile libs.spring_core
+    compile libs.spring_beans
+    compile libs.spring_context
+
+
+
+
+
 
     compile (libs.dropwizard_assets) {
         exclude ( group: "org.glassfish.web", module: "javax.el" )
@@ -84,7 +138,6 @@ runShadow {
 //the fat jar will be missing all the GWT generated files and the UI will fail to start
 processResources.mustRunAfter(':stroom-app-gwt:gwtCompile')
 processResources.mustRunAfter(':stroom-dashboard-gwt:gwtCompile')
-processResources.mustRunAfter(':stroom-core-module:generateSwaggerDocumentation')
 
 def dockerBuildDir = "${projectDir}/docker/build"
 
@@ -119,5 +172,37 @@ task copyFilesForDockerBuild() {
     }
 }
 
+swagger {
+    apiSource {
+        springmvc = false //makes it search for jersey annotations
+        outputFormats = 'json,yaml'
+        locations = [
+                'stroom.statistics.server.sql.search.SqlStatisticsQueryResource',
+                'stroom.index.server.StroomIndexQueryResource',
+                'stroom.security.server.AuthorisationResource' ]
+        schemes = [
+                'http',
+                'https' ]
+        host = 'localhost:8080'
+        basePath = '/api'
+        info {
+            title = 'stroom API'
+            version = 'v1'
+            description = 'Various APIs for interacting with stroom and its data'
+            contact {
+                name = 'GCHQ'
+                url = 'https://github.com/gchq/stroom'
+            }
+            license {
+                url = 'http://www.apache.org/licenses/LICENSE-2.0.html'
+                name = 'Apache 2.0'
+            }
+        }
+        outputPath = "${swaggerDir}/document.html"
+        swaggerDirectory = "${swaggerDir}"
+    }
+}
+
+tasks.build.dependsOn generateSwaggerDocumentation
 tasks.build.dependsOn copyFilesForDockerBuild
 tasks.build.dependsOn shadowJar
