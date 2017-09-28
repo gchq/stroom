@@ -21,11 +21,11 @@ import stroom.resource.server.ResourceStore;
 import stroom.util.shared.ResourceKey;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,12 +41,12 @@ public class SessionResourceStoreImpl extends HttpServlet implements SessionReso
     private static final String UUID_ARG = "UUID";
 
     private final ResourceStore resourceStore;
-    private final Provider<SessionResourceMap> sessionResourceMapProvider;
+    private final HttpServletRequestHolder httpServletRequestHolder;
 
     @Inject
-    SessionResourceStoreImpl(final ResourceStore resourceStore, final Provider<SessionResourceMap> sessionResourceMapProvider) {
+    SessionResourceStoreImpl(final ResourceStore resourceStore, final HttpServletRequestHolder httpServletRequestHolder) {
         this.resourceStore = resourceStore;
-        this.sessionResourceMapProvider = sessionResourceMapProvider;
+        this.httpServletRequestHolder = httpServletRequestHolder;
     }
 
     @Override
@@ -77,39 +77,62 @@ public class SessionResourceStoreImpl extends HttpServlet implements SessionReso
         return resourceStore.getTempFile(getMap().get(key));
     }
 
-    private SessionResourceMap getMap() {
-        final SessionResourceMap sessionResourceMap = sessionResourceMapProvider.get();
-        if (sessionResourceMap == null) {
-            throw new NullPointerException("Null session resource map");
+    private ResourceMap getMap() {
+        ResourceMap resourceMap;
+
+        final HttpServletRequest request = httpServletRequestHolder.get();
+        if (request == null) {
+            throw new NullPointerException("Request holder has no current request");
         }
-        return sessionResourceMap;
+
+        final String name = "SESSION_RESOURCE_STORE";
+        final HttpSession session = request.getSession();
+        final Object object = session.getAttribute(name);
+        if (object == null) {
+            resourceMap = new ResourceMap();
+            session.setAttribute(name, resourceMap);
+        } else {
+            resourceMap = (ResourceMap) object;
+        }
+
+        return resourceMap;
     }
 
     @Override
     protected void doGet(final HttpServletRequest req, final HttpServletResponse resp)
             throws ServletException, IOException {
-        final String uuid = req.getParameter(UUID_ARG);
-        boolean found = false;
-        if (uuid != null) {
-            final ResourceKey resourceKey = new ResourceKey(null, uuid);
-            try {
-                final Path file = getTempFile(resourceKey);
-                if (file != null && Files.isRegularFile(file)) {
-                    if (file.toAbsolutePath().toString().toLowerCase().endsWith(".zip")) {
-                        resp.setContentType("application/zip");
-                    } else {
-                        resp.setContentType("application/octet-stream");
-                    }
-                    resp.getOutputStream().write(Files.readAllBytes(file));
-                    found = true;
-                }
-            } finally {
-                deleteTempFile(resourceKey);
-            }
-        }
+        // Get the current request.
+        final HttpServletRequest originalRequest = httpServletRequestHolder.get();
+        // Set this request.
+        httpServletRequestHolder.set(req);
 
-        if (!found) {
-            resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Resource not found");
+        try {
+            final String uuid = req.getParameter(UUID_ARG);
+            boolean found = false;
+            if (uuid != null) {
+                final ResourceKey resourceKey = new ResourceKey(null, uuid);
+                try {
+                    final Path file = getTempFile(resourceKey);
+                    if (file != null && Files.isRegularFile(file)) {
+                        if (file.toAbsolutePath().toString().toLowerCase().endsWith(".zip")) {
+                            resp.setContentType("application/zip");
+                        } else {
+                            resp.setContentType("application/octet-stream");
+                        }
+                        resp.getOutputStream().write(Files.readAllBytes(file));
+                        found = true;
+                    }
+                } finally {
+                    deleteTempFile(resourceKey);
+                }
+            }
+
+            if (!found) {
+                resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Resource not found");
+            }
+        } finally {
+            // Reset current request.
+            httpServletRequestHolder.set(originalRequest);
         }
     }
 }

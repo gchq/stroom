@@ -16,28 +16,23 @@
 
 package stroom.servlet;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import stroom.util.shared.ResourceKey;
-import stroom.util.spring.StroomScope;
 
 import java.util.HashMap;
 
-@Component
-@Scope(value = StroomScope.SESSION)
-public class SessionResourceMap {
-    private final HashMap<ResourceKey, ResourceKey> sessionResourceMap = new HashMap<>();
+public class ResourceMap {
+    private final HashMap<ResourceKey, ResourceKey> map = new HashMap<>();
 
     public void put(final ResourceKey key, final ResourceKey value) {
-        sessionResourceMap.put(key, value);
+        map.put(key, value);
     }
 
     public ResourceKey get(final ResourceKey key) {
-        return sessionResourceMap.get(key);
+        return map.get(key);
     }
 
     public ResourceKey remove(final ResourceKey key) {
-        return sessionResourceMap.remove(key);
+        return map.remove(key);
     }
 }
 
