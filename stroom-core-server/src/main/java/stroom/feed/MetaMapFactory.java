@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.proxy.repo;
-
-import stroom.feed.MetaMap;
-import stroom.feed.StroomHeaderArguments;
+package stroom.feed;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Enumeration;
@@ -31,26 +28,16 @@ public class MetaMapFactory {
         return metaMap;
     }
 
-    public MetaMap create() {
+    public static MetaMap create(final HttpServletRequest httpServletRequest) {
         MetaMap metaMap = new MetaMap();
-
-        HttpServletRequest httpServletRequest = getHttpServletRequest();
         addAllHeaders(httpServletRequest, metaMap);
         addAllQueryString(httpServletRequest, metaMap);
 
         return metaMap;
     }
 
-    protected HttpServletRequest getHttpServletRequest() {
-//        HttpServletRequest httpServletRequest = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
-//                .getRequest();
-//        return httpServletRequest;
-//
-        return null;
-    }
-
     @SuppressWarnings("unchecked")
-    private void addAllHeaders(HttpServletRequest httpServletRequest, MetaMap metaMap) {
+    private static void addAllHeaders(HttpServletRequest httpServletRequest, MetaMap metaMap) {
         Enumeration<String> headerNames = httpServletRequest.getHeaderNames();
         while (headerNames.hasMoreElements()) {
             String header = headerNames.nextElement();
@@ -58,7 +45,7 @@ public class MetaMapFactory {
         }
     }
 
-    private void addAllQueryString(HttpServletRequest httpServletRequest, MetaMap metaMap) {
+    private static void addAllQueryString(HttpServletRequest httpServletRequest, MetaMap metaMap) {
         String queryString = httpServletRequest.getQueryString();
         if (queryString != null) {
             StringTokenizer st = new StringTokenizer(httpServletRequest.getQueryString(), "&");

@@ -81,11 +81,6 @@
         </property>
     </bean>
 
-    <bean id="proxyRequestThreadLocalBuffer" class=" stroom.util.thread.ThreadLocalBuffer">
-        <property name="bufferSize" value="${bufferSize}"/>
-    </bean>
-
-
     <util:list id="incomingRequestHandlerNameList">
         <!--  Populated During List Merge -->
     </util:list>

@@ -28,5 +28,4 @@ public class MockMetaDataStatistic implements MetaDataStatistic {
     @Override
     public void recordStatistics(MetaMap metaData) {
     }
-
 }

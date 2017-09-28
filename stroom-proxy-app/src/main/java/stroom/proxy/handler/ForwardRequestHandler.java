@@ -6,7 +6,7 @@ import org.springframework.util.StringUtils;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.StroomStreamException;
-import stroom.proxy.repo.MetaMapFactory;
+import stroom.feed.MetaMapFactory;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.thread.ThreadUtil;
@@ -39,15 +39,14 @@ public class ForwardRequestHandler implements RequestHandler, HostnameVerifier {
     private long startTimeMs;
     private long bytesSent = 0;
 
-    @Resource
-    private MetaMap metaMap;
-
-    @Resource
-    private ForwardRequestHandlerUrlFactory forwardRequestHandlerUrlFactory;
+    private final MetaMap metaMap;
+    private final ForwardRequestHandlerUrlFactory forwardRequestHandlerUrlFactory;
 
     private String forwardUrl;
 
-    public ForwardRequestHandler() {
+    public ForwardRequestHandler(final MetaMap metaMap, final ForwardRequestHandlerUrlFactory forwardRequestHandlerUrlFactory) {
+        this.metaMap = metaMap;
+        this.forwardRequestHandlerUrlFactory = forwardRequestHandlerUrlFactory;
     }
 
     @Override

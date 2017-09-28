@@ -18,10 +18,13 @@ package stroom.datafeed.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import stroom.feed.MetaMap;
+import stroom.feed.MetaMapFactory;
+import stroom.feed.StroomHeaderArguments;
+import stroom.feed.StroomStatusCode;
+import stroom.feed.StroomStreamException;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.internalstatistics.MetaDataStatistic;
@@ -31,12 +34,8 @@ import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamtask.server.StreamTargetStroomStreamHandler;
-import stroom.util.spring.StroomScope;
 import stroom.util.task.ServerTask;
-import stroom.util.thread.ThreadLocalBuffer;
-import stroom.feed.StroomHeaderArguments;
-import stroom.feed.StroomStatusCode;
-import stroom.feed.StroomStreamException;
+import stroom.util.thread.BufferFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -52,7 +51,6 @@ import java.util.stream.Collectors;
  * </p>
  */
 @Component("dataFeedRequest")
-@Scope(StroomScope.REQUEST)
 public class DefaultDataFeedRequest implements DataFeedRequest {
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultDataFeedRequest.class);
 
@@ -60,9 +58,7 @@ public class DefaultDataFeedRequest implements DataFeedRequest {
     private final HttpServletRequest request;
     private final StreamStore streamStore;
     private final FeedService feedService;
-    private final ThreadLocalBuffer requestThreadLocalBuffer;
     private final MetaDataStatistic metaDataStatistics;
-    private final MetaMap metaMap;
     private final DataReceiptPolicyChecker dataReceiptPolicyChecker;
 
     @Inject
@@ -70,17 +66,13 @@ public class DefaultDataFeedRequest implements DataFeedRequest {
                            final HttpServletRequest request,
                            final StreamStore streamStore,
                            @Named("cachedFeedService") final FeedService feedService,
-                           @Named("requestThreadLocalBuffer") final ThreadLocalBuffer requestThreadLocalBuffer,
                            final MetaDataStatistic metaDataStatistics,
-                           final MetaMap metaMap,
                            final DataReceiptPolicyChecker dataReceiptPolicyChecker) {
         this.securityContext = securityContext;
         this.request = request;
         this.streamStore = streamStore;
         this.feedService = feedService;
-        this.requestThreadLocalBuffer = requestThreadLocalBuffer;
         this.metaDataStatistics = metaDataStatistics;
-        this.metaMap = metaMap;
         this.dataReceiptPolicyChecker = dataReceiptPolicyChecker;
     }
 
@@ -89,6 +81,8 @@ public class DefaultDataFeedRequest implements DataFeedRequest {
     public void processRequest() {
         securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
         try {
+            final MetaMap metaMap = MetaMapFactory.create(request);
+
             // We need to examine the meta map and ensure we aren't dropping or rejecting this data.
             final DataReceiptAction dataReceiptAction = dataReceiptPolicyChecker.check(metaMap);
 
@@ -117,9 +111,8 @@ public class DefaultDataFeedRequest implements DataFeedRequest {
                 List<StreamTargetStroomStreamHandler> handlers = StreamTargetStroomStreamHandler.buildSingleHandlerList(streamStore,
                         feedService, metaDataStatistics, feed, feed.getStreamType());
 
-                final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlers,
-                        requestThreadLocalBuffer.getBuffer(),
-                        "DefaultDataFeedRequest-" + metaMap.get(StroomHeaderArguments.GUID));
+                final byte[] buffer = BufferFactory.create();
+                final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlers, buffer, "DefaultDataFeedRequest-" + metaMap.get(StroomHeaderArguments.GUID));
 
                 try {
                     stroomStreamProcessor.processRequestHeader(request);

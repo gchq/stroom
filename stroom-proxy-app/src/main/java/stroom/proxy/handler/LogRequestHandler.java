@@ -12,11 +12,13 @@ import java.util.List;
 public class LogRequestHandler implements RequestHandler {
     private static Logger LOGGER = LoggerFactory.getLogger(LogRequestHandler.class);
 
-    @Resource
-    MetaMap metaMap;
+    private final LogRequestConfig logRequestConfig;
+    private final MetaMap metaMap;
 
-    @Resource
-    LogRequestConfig logRequestConfig;
+    public LogRequestHandler(final LogRequestConfig logRequestConfig, final MetaMap metaMap) {
+        this.logRequestConfig = logRequestConfig;
+        this.metaMap = metaMap;
+    }
 
     @Override
     public void handleHeader() throws IOException {

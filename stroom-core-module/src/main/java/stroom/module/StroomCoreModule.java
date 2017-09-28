@@ -38,7 +38,6 @@ import stroom.servlet.SessionListListener;
 import stroom.servlet.SessionListServlet;
 import stroom.servlet.SessionResourceStoreImpl;
 import stroom.servlet.StatusServlet;
-import stroom.spring.CoreClientConfiguration;
 import stroom.spring.MetaDataStatisticConfiguration;
 import stroom.spring.PersistenceConfiguration;
 import stroom.spring.ScopeConfiguration;
@@ -123,7 +122,6 @@ public class StroomCoreModule implements StroomModule {
                 ScriptConfiguration.class,
                 VisualisationConfiguration.class,
                 DashboardConfiguration.class,
-                CoreClientConfiguration.class,
                 MetaDataStatisticConfiguration.class,
                 StatisticsConfiguration.class,
                 SecurityConfiguration.class

@@ -11,7 +11,6 @@ import stroom.util.io.StreamUtil;
 import stroom.util.test.StroomExpectedException;
 import stroom.util.test.StroomTestUtil;
 import stroom.util.test.StroomUnitTest;
-import stroom.util.thread.ThreadLocalBuffer;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -30,17 +29,12 @@ public class TestProxyRepositoryReader extends StroomUnitTest {
     private MockRequestHandler mockRequestHandler;
     private ProxyRepositoryReader proxyRepositoryReader;
 
-//    @Before
-//    public void setup() {
-//        clearTestDir();
-//    }
-
     private void init() throws IOException {
         proxyRepositoryManager = new ProxyRepositoryManager();
         proxyRepositoryManager.setRepoDir(FileUtil.getCanonicalPath(StroomTestUtil.createUniqueTestDir(getCurrentTestDir())));
 
         mockRequestHandler = new MockRequestHandler();
-        proxyRepositoryReader = new ProxyRepositoryReader() {
+        proxyRepositoryReader = new ProxyRepositoryReader(new stroom.util.task.MonitorImpl(), proxyRepositoryManager) {
             @Override
             public List<RequestHandler> createOutgoingRequestHandlerList() {
                 final List<RequestHandler> list = new ArrayList<>();
@@ -49,8 +43,6 @@ public class TestProxyRepositoryReader extends StroomUnitTest {
             }
 
         };
-        proxyRepositoryReader.setProxyRequestThreadLocalBuffer(new ThreadLocalBuffer());
-        proxyRepositoryReader.setProxyRepositoryManager(proxyRepositoryManager);
     }
 
     @Test

@@ -12,5 +12,4 @@ public interface RequestHandler extends StroomStreamHandler {
     void handleFooter() throws IOException;
 
     void handleError() throws IOException;
-
 }

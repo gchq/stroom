@@ -18,15 +18,9 @@ package stroom.datafeed.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-import stroom.feed.MetaMap;
-import stroom.proxy.repo.MetaMapFactory;
 import stroom.streamstore.server.MockStreamStore;
-import stroom.util.spring.StroomScope;
-import stroom.util.thread.ThreadLocalBuffer;
 
 /**
  * @Configuration specific to TesetDataFeedServiceImpl.
@@ -40,24 +34,6 @@ public class TestDataFeedServiceImplConfiguration {
 
     public TestDataFeedServiceImplConfiguration() {
         LOGGER.info("TestDataFeedServiceImplConfiguration loading...");
-    }
-
-    @Bean
-    @Scope(StroomScope.REQUEST)
-    public ThreadLocalBuffer requestThreadLocalBuffer() {
-        return new ThreadLocalBuffer();
-    }
-
-    @Bean
-    @Scope(StroomScope.PROTOTYPE)
-    public MockMetaMapFactory metaMapFactory() {
-        return new MockMetaMapFactory();
-    }
-
-    @Bean
-    @Scope(StroomScope.PROTOTYPE)
-    public MetaMap metaMap(MetaMapFactory metaMapFactory) {
-        return metaMapFactory.create();
     }
 
     @Bean
