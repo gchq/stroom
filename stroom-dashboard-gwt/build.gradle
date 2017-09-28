@@ -132,8 +132,8 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
             ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
-    minHeapSize = gwtCompilerProps.devModeMinHeap
-    maxHeapSize = gwtCompilerProps.devModeMaxHeap
+    minHeapSize = gwtCompilerProps.minHeap
+    maxHeapSize = gwtCompilerProps.maxHeap
 }
 
 task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
@@ -173,8 +173,8 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
             ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
-    minHeapSize = gwtCompilerProps.devModeMinHeap
-    maxHeapSize = gwtCompilerProps.devModeMaxHeap
+    minHeapSize = gwtCompilerProps.minHeap
+    maxHeapSize = gwtCompilerProps.maxHeap
 }
 
 task gwtClean {
