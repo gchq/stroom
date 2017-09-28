@@ -17,7 +17,7 @@
         </g:customCell>
       </g:row>
       <g:row>
-        <g:cell>Precision:</g:cell>
+        <g:cell>Finest Precision:</g:cell>
         <g:customCell>
           <l:ItemListBox ui:field="precision" />
         </g:customCell>
