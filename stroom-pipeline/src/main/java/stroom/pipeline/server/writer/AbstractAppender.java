@@ -70,7 +70,7 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
     }
 
     @Override
-    public final OutputStream getOutputStream() throws IOException {
+    public final OutputStream getByteArrayOutputStream() throws IOException {
         return getOutputStream(null, null);
     }
 

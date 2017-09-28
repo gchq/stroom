@@ -12,9 +12,10 @@ import stroom.node.server.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsService;
-import stroom.stats.schema.v3.ObjectFactory;
-import stroom.stats.schema.v3.Statistics;
-import stroom.stats.schema.v3.TagType;
+import stroom.statistics.util.NoCopyByteArrayOutputStream;
+import stroom.stats.schema.v4.ObjectFactory;
+import stroom.stats.schema.v4.Statistics;
+import stroom.stats.schema.v4.TagType;
 
 import javax.inject.Inject;
 import javax.xml.bind.JAXBContext;
@@ -23,7 +24,8 @@ import javax.xml.bind.Marshaller;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
-import java.io.StringWriter;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.GregorianCalendar;
@@ -37,6 +39,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
 
     static final String PROP_KEY_DOC_REF_TYPE = "stroom.services.stroomStats.docRefType";
     static final String PROP_KEY_PREFIX_KAFKA_TOPICS = "stroom.services.stroomStats.kafkaTopics.";
+    public static final String STATISTICS_SCHEMA_VERSION = "4.0.0";
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomStatsInternalStatisticsService.class);
     private static final Class<Statistics> STATISTICS_CLASS = Statistics.class;
     private static final TimeZone TIME_ZONE_UTC = TimeZone.getTimeZone(ZoneId.from(ZoneOffset.UTC));
@@ -92,9 +95,9 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
                         String statName = docRef.getName();
                         //all have same name so have same type
                         String topic = getTopic(events.get(0).getType());
-                        String message = buildMessage(docRef, events);
-                        StroomKafkaProducerRecord<String, String> producerRecord =
-                                new StroomKafkaProducerRecord.Builder<String, String>()
+                        byte[] message = buildMessage(docRef, events);
+                        StroomKafkaProducerRecord<String, byte[]> producerRecord =
+                                new StroomKafkaProducerRecord.Builder<String, byte[]>()
                                         .topic(topic)
                                         .key(docRef.getUuid())
                                         .value(message)
@@ -111,9 +114,10 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
         }
     }
 
-    private String buildMessage(final DocRef docRef, final List<InternalStatisticEvent> events) {
+    private byte[] buildMessage(final DocRef docRef, final List<InternalStatisticEvent> events) {
 
-        Statistics statistics = new Statistics();
+        Statistics statistics = new ObjectFactory().createStatistics();
+        statistics.setVersion(STATISTICS_SCHEMA_VERSION);
         Preconditions.checkNotNull(events).stream()
                 .map(event -> internalStatisticMapper(docRef, event))
                 .forEach(statistic -> statistics.getStatistic().add(statistic));
@@ -126,10 +130,6 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
         Preconditions.checkNotNull(internalStatisticEvent);
         ObjectFactory objectFactory = new ObjectFactory();
         Statistics.Statistic statistic = objectFactory.createStatisticsStatistic();
-        Statistics.Statistic.Key key = objectFactory.createStatisticsStatisticKey();
-        key.setValue(docRef.getUuid());
-        key.setStatisticName(docRef.getName());
-        statistic.setKey(key);
         statistic.setTime(toXMLGregorianCalendar(internalStatisticEvent.getTimeMs()));
         InternalStatisticEvent.Type type = internalStatisticEvent.getType();
 
@@ -176,26 +176,27 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
         GregorianCalendar gregorianCalendar = new GregorianCalendar(TIME_ZONE_UTC);
         gregorianCalendar.setTimeInMillis(timeMs);
         return datatypeFactory.newXMLGregorianCalendar(gregorianCalendar);
-
     }
 
-    private String marshall(final Statistics statistics) {
-        StringWriter stringWriter = new StringWriter();
+    private byte[] marshall(final Statistics statistics) {
+        NoCopyByteArrayOutputStream byteArrayOutputStream = new NoCopyByteArrayOutputStream();
+        OutputStreamWriter writer = new OutputStreamWriter(byteArrayOutputStream, StandardCharsets.UTF_8);
         try {
-            getMarshaller().marshal(statistics, stringWriter);
+            getMarshaller().marshal(statistics, writer);
         } catch (JAXBException e) {
             throw new RuntimeException("Error marshalling Statistics object", e);
         }
-        return stringWriter.toString();
+        return byteArrayOutputStream.toByteArray();
     }
 
     private Marshaller getMarshaller() {
         try {
             Marshaller marshaller = jaxbContext.createMarshaller();
-            marshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
+            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.FALSE);
+            marshaller.setProperty(Marshaller.JAXB_ENCODING, StandardCharsets.UTF_8.name());
             return marshaller;
         } catch (JAXBException e) {
-            throw new RuntimeException("Error creating marshaller for class " + STATISTICS_CLASS.getCanonicalName());
+            throw new RuntimeException("Error creating marshaller for class " + STATISTICS_CLASS.getCanonicalName(), e);
         }
     }
 

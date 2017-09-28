@@ -2,11 +2,8 @@ package stroom.proxy.datafeed;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-import org.springframework.web.context.WebApplicationContext;
 import stroom.proxy.handler.LocalFeedService;
 import stroom.proxy.handler.RequestHandler;
 import stroom.proxy.util.ProxyProperties;
@@ -14,9 +11,7 @@ import stroom.util.spring.PropertyConfigurer;
 import stroom.util.spring.StroomShutdown;
 import stroom.util.spring.StroomStartup;
 import stroom.util.thread.ThreadUtil;
-import stroom.util.web.ServletContextUtil;
 
-import javax.servlet.ServletContext;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -28,7 +23,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * Singleton bean that re-reads the proxy.properties and re-creates the app
  * context if the config has changed.
  */
-public class ProxyHandlerFactory implements ApplicationContextAware {
+public class ProxyHandlerFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyHandlerFactory.class);
 
     private static final String COMMON_HANDLER_CONTEXT = "/META-INF/spring/stroomProxyCommonHandlerFactoryContext.xml";
@@ -199,14 +194,14 @@ public class ProxyHandlerFactory implements ApplicationContextAware {
         }
     }
 
-    @Override
-    public void setApplicationContext(final ApplicationContext applicationContext) throws BeansException {
-        if (applicationContext instanceof WebApplicationContext) {
-            final WebApplicationContext webApplicationContext = (WebApplicationContext) applicationContext;
-            final ServletContext servletContext = webApplicationContext.getServletContext();
-            final String warName = ServletContextUtil.getWARName(servletContext);
-            ProxyProperties.setWebAppPropertiesName(warName);
-            PropertyConfigurer.setWebAppPropertiesName(warName);
-        }
-    }
+//    @Override
+//    public void setApplicationContext(final ApplicationContext applicationContext) throws BeansException {
+//        if (applicationContext instanceof WebApplicationContext) {
+//            final WebApplicationContext webApplicationContext = (WebApplicationContext) applicationContext;
+//            final ServletContext servletContext = webApplicationContext.getServletContext();
+//            final String warName = ServletContextUtil.getWARName(servletContext);
+//            ProxyProperties.setWebAppPropertiesName(warName);
+//            PropertyConfigurer.setWebAppPropertiesName(warName);
+//        }
+//    }
 }

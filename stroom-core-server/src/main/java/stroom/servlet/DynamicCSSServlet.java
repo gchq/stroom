@@ -35,9 +35,8 @@ import java.io.PrintWriter;
  * SERVLET that reports status of Stroom for scripting purposes.
  * </p>
  */
-@Component(DynamicCSSServlet.BEAN_NAME)
+@Component
 public class DynamicCSSServlet extends HttpServlet {
-    public static final String BEAN_NAME = "dynamicCSSServlet";
     public static final String THEME_BACKGROUND_ATTACHMENT = "@THEME_BACKGROUND_ATTACHMENT@";
     public static final String THEME_BACKGROUND_COLOR = "@THEME_BACKGROUND_COLOR@";
     public static final String THEME_BACKGROUND_IMAGE = "@THEME_BACKGROUND_IMAGE@";

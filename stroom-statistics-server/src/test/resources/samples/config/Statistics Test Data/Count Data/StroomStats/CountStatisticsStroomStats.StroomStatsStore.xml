@@ -1,0 +1,14 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<stroomStatsStore>
+   <createTime>1506327103472</createTime>
+   <createUser>admin</createUser>
+   <description/>
+   <enabled>true</enabled>
+   <name>CountStatisticsStroomStats</name>
+   <precision>MINUTE</precision>
+   <rollUpType>ALL</rollUpType>
+   <statisticType>COUNT</statisticType>
+   <updateTime>1506330765847</updateTime>
+   <updateUser>admin</updateUser>
+   <uuid>c5dd1e72-5484-41c9-8e7a-f9429f648f3e</uuid>
+</stroomStatsStore>

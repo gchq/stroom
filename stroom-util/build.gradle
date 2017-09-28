@@ -18,8 +18,6 @@ dependencies {
     compile libs.spring_core
     compile libs.spring_test
     permitUnusedDeclared libs.spring_test
-    compile libs.spring_web
-    compile libs.spring_webmvc
 
     testCompile libs.junit
 

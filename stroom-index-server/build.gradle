@@ -36,6 +36,11 @@ dependencies {
     compile libs.spring_context
     compile libs.spring_tx
     compile libs.xml_apis
+    compile libs.swagger_annotations
+    compile libs.ws_rs_api
+
+    compile libs.dropwizard_metrics_annotation
+    compile libs.dropwizard_metrics_healthchecks
 
     // Jackson
     runtime libs.jackson_annotations

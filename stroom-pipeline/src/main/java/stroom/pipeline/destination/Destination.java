@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 public interface Destination {
-    OutputStream getOutputStream() throws IOException;
+    OutputStream getByteArrayOutputStream() throws IOException;
 
     OutputStream getOutputStream(byte[] header, byte[] footer) throws IOException;
 }

@@ -3,7 +3,10 @@ plugins {
     id "com.benjaminsproule.swagger" version "0.1.4"
 }
 
-def swaggerDir = "${projectDir}/src/main/resources/swagger"
+def uiDir = project.file('src/main/resources/ui')
+def swaggerDir = "${uiDir}/swagger"
+def jarName = 'stroom-app.jar'
+def fatJarName = 'stroom-app-all.jar'
 
 apply plugin: 'application'
 apply plugin: 'java'
@@ -20,13 +23,7 @@ jar {
                 "Main-Class" : "stroom.startup.App"
         )
     }
-    archiveName 'stroom-app.jar'
-
-    //explicitly add in the swagger spec files as they won't be in the source set as they
-    //were generated after processResources
-    from ("${project.buildDir}/swagger") {
-        into ("ui")
-    }
+    archiveName jarName
 }
 
 import com.github.jengelman.gradle.plugins.shadow.transformers.ServiceFileTransformer
@@ -42,32 +39,17 @@ shadowJar {
     transform(ServiceFileTransformer) {
         include 'META-INF/spring.*'
     }
-    archiveName 'stroom-app-all.jar'
-
-    //explicitly add in the swagger spec files as they won't be in the source set as they
-    //were generated after processResources
-    from ("${project.buildDir}/swagger") {
-        into ("ui")
-    }
+    archiveName fatJarName
 }
 
-
 dependencies {
-
-    //Deps on -app-gwt and -
-    //compile project(':stroom-app-gwt')
-    //permitUnusedDeclared project(':stroom-app-gwt')
-    //compile project(':stroom-dashboard-gwt')
-    //permitUnusedDeclared project(':stroom-dashboard-gwt')
-
+    compile project(':stroom-core-shared')
     compile project(':stroom-core-server')
     compile project(':stroom-pipeline')
     compile project(':stroom-security-server')
     compile project(':stroom-index-server')
     compile project(':stroom-statistics-api')
-    permitUnusedDeclared project(':stroom-statistics-api') //not clear why it thinks this is unused
-    compile project(':stroom-entity-shared')
-    compile project(':stroom-index-shared')
+    permitUnusedDeclared project(':stroom-statistics-api') // not clear why it thinks this is unused
     compile project(':stroom-util')
     compile project(':stroom-security-api')
 
@@ -79,9 +61,15 @@ dependencies {
     compile urlDependencies.get(urlLibs.stroomQueryApi)
     compile urlDependencies.get(urlLibs.stroomQueryCommon)
 
-    compile libs.curator_client
-    compile libs.curator_framework
-    compile libs.curator_x_discovery
+    compile libs.dropwizard_lifecycle
+    compile libs.guava
+    compile libs.javax_inject
+    compile libs.jetty_servlet
+    compile libs.shiro_web
+    compile libs.spring_core
+    compile libs.spring_beans
+    compile libs.spring_context
+
     compile (libs.dropwizard_assets) {
         exclude ( group: "org.glassfish.web", module: "javax.el" )
     }
@@ -90,36 +78,17 @@ dependencies {
     }
     compile libs.dropwizard_jersey
     compile libs.dropwizard_jetty
-    compile libs.dropwizard_metrics_annotation
     compile libs.dropwizard_metrics_healthchecks
     compile libs.dropwizard_servlets
-    compile libs.guava
-    compile libs.jackson_annotations
-    compile libs.javax_inject
     compile libs.javax_servlet_api
-    compile libs.jersey_server
     compile libs.jetty_server
-    compile libs.jetty_servlet
     compile libs.jetty_servlets
     compile libs.logback_classic
-    compile libs.shiro_core
     compile libs.slf4j_api
-    compile libs.spring_beans
-    compile libs.spring_context
-    compile libs.spring_web
-    compile libs.swagger_annotations
-    compile libs.vavr
-    compile libs.ws_rs_api
 
     runtime libs.shiro_web
     runtime libs.javax_el
     runtime libs.javax_el_api
-
-    integrationTestCompile libs.junit
-    integrationTestCompile libs.mockito_core
-    integrationTestCompile libs.assertj_core
-    integrationTestCompile libs.dropwizard_testing
-    integrationTestCompile libs.dropwizard_client
 }
 
 run {
@@ -140,17 +109,50 @@ runShadow {
 processResources.mustRunAfter(':stroom-app-gwt:gwtCompile')
 processResources.mustRunAfter(':stroom-dashboard-gwt:gwtCompile')
 
+def dockerBuildDir = "${projectDir}/docker/build"
+
+clean{
+    delete dockerBuildDir
+}
+
+//Copy all the files needed by the docker build into stroom-app/docker/build
+task copyFilesForDockerBuild() {
+    dependsOn shadowJar
+    dependsOn tasks.getByPath(':stroom-kafka-client-impl_0_10_0_1:shadowJar')
+    doFirst {
+        new File(stroomPluginsDir).mkdirs()
+
+        //Copy the stroom app fat jar
+        copy {
+            from "${project.buildDir}/libs/${fatJarName}"
+            into dockerBuildDir
+        }
+
+        //Copy the kafka client fat jar
+        copy {
+            from project(':stroom-kafka-client-impl_0_10_0_1').file('build/libs/stroom-kafka-client-impl_0_10_0_1-all.jar')
+            into dockerBuildDir
+        }
+
+        //Copy the dropwizard yml configuration
+        copy {
+            from "${projectDir}/prod.yml"
+            into dockerBuildDir
+        }
+    }
+}
+
 swagger {
     apiSource {
         springmvc = false //makes it search for jersey annotations
         outputFormats = 'json,yaml'
-        locations = [ 
-            'stroom.resources.query.v2.SqlStatisticsQueryResource',
-            'stroom.resources.query.v2.StroomIndexQueryResource',
-            'stroom.resources.authorisation.v1.AuthorisationResource' ]
-        schemes = [ 
-            'http',
-            'https' ]
+        locations = [
+                'stroom.statistics.server.sql.search.SqlStatisticsQueryResource',
+                'stroom.index.server.StroomIndexQueryResource',
+                'stroom.security.server.AuthorisationResource' ]
+        schemes = [
+                'http',
+                'https' ]
         host = 'localhost:8080'
         basePath = '/api'
         info {
@@ -166,11 +168,11 @@ swagger {
                 name = 'Apache 2.0'
             }
         }
-        outputPath = "${project.buildDir}/generated/document.html"
-        swaggerDirectory = "${project.buildDir}/swagger"
+        outputPath = "${swaggerDir}/document.html"
+        swaggerDirectory = "${swaggerDir}"
     }
 }
 
-//make generateSwaggerDocumentation and shadowJar happen as part of a build
 tasks.build.dependsOn generateSwaggerDocumentation
+tasks.build.dependsOn copyFilesForDockerBuild
 tasks.build.dependsOn shadowJar

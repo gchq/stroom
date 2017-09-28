@@ -19,9 +19,14 @@ import java.io.IOException;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
-@ConfigurableElement(type = "RollingKafkaAppender", category = PipelineElementType.Category.DESTINATION, roles = {
-        PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_DESTINATION,
-        PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
+@ConfigurableElement(
+        type = "RollingKafkaAppender",
+        category = PipelineElementType.Category.DESTINATION,
+        roles = {
+                PipelineElementType.ROLE_TARGET,
+                PipelineElementType.ROLE_DESTINATION,
+                PipelineElementType.VISABILITY_STEPPING},
+        icon = ElementIcons.KAFKA)
 public class RollingKafkaAppender extends AbstractRollingAppender {
 
     @Resource
@@ -83,7 +88,7 @@ public class RollingKafkaAppender extends AbstractRollingAppender {
         this.topic = pathCreator.replaceAll(topic);
     }
 
-    @PipelineProperty(description="Flush the producer each time a message is sent")
+    @PipelineProperty(description = "Flush the producer each time a message is sent")
     public void setFlushOnSend(final boolean flushOnSend) {
         this.flushOnSend = flushOnSend;
     }

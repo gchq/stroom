@@ -21,7 +21,6 @@ import java.util.List;
 public class MetaMap extends CIStringHashMap {
     private static final long serialVersionUID = 4877407570072403322L;
 
-    public final static String NAME = "metaMap";
     private static final String HEADER_DELIMITER = ":";
     private static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
 

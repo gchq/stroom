@@ -3,6 +3,9 @@ package stroom.dashboard.client.table;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.UriUtils;
 
 /**
  * This class is used to detect table cell values that contain URL's to be turned into hyperlinks.
@@ -35,7 +38,7 @@ public class UrlDetector {
 
     public interface DetectedUrlTemplate extends SafeHtmlTemplates {
         @Template("<a target='_blank' href=\"{1}\">{0}</a>")
-        SafeHtml messageWithLink(String title, String href);
+        SafeHtml messageWithLink(SafeHtml title, SafeUri href);
     }
 
     private static DetectedUrlTemplate TEMPLATE;
@@ -61,7 +64,12 @@ public class UrlDetector {
                 TEMPLATE = GWT.create(DetectedUrlTemplate.class);
             }
 
-            return TEMPLATE.messageWithLink(this.title, this.href);
+            SafeUri href = UriUtils.fromString(this.href);
+            SafeHtml title = new SafeHtmlBuilder()
+                    .appendHtmlConstant(this.title)
+                    .toSafeHtml();
+
+            return TEMPLATE.messageWithLink(title, href);
         }
 
         @Override

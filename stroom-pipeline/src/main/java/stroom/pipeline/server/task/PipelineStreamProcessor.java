@@ -598,7 +598,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         }
 
         @Override
-        public OutputStream getOutputStream() throws IOException {
+        public OutputStream getByteArrayOutputStream() throws IOException {
             return getOutputStream(null, null);
         }
 

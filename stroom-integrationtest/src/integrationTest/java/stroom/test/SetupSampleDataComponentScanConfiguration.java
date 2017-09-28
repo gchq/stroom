@@ -30,7 +30,6 @@ import stroom.dashboard.server.MockQueryService;
 import stroom.dashboard.server.MockVisualisationService;
 import stroom.datafeed.server.MockHttpServletRequest;
 import stroom.datafeed.server.MockHttpServletResponse;
-import stroom.datafeed.server.MockMetaMapFactory;
 import stroom.dictionary.MockDictionaryService;
 import stroom.entity.server.MockEntityService;
 import stroom.entity.server.util.StroomEntityManager;
@@ -38,6 +37,7 @@ import stroom.feed.server.MockFeedService;
 import stroom.index.server.MockIndexService;
 import stroom.index.server.MockIndexShardService;
 import stroom.index.server.MockIndexShardWriter;
+import stroom.internalstatistics.MockMetaDataStatistic;
 import stroom.jobsystem.server.MockClusterLockService;
 import stroom.jobsystem.server.MockJobManager;
 import stroom.jobsystem.server.MockJobNodeService;
@@ -59,7 +59,6 @@ import stroom.pipeline.server.MockXSLTService;
 import stroom.pipeline.server.factory.MockPipelineElementRegistryFactory;
 import stroom.resource.server.MockResourceStore;
 import stroom.security.server.MockUserService;
-import stroom.statistic.server.MockMetaDataStatistic;
 import stroom.streamstore.server.MockStreamStore;
 import stroom.streamstore.server.MockStreamTypeService;
 import stroom.streamtask.server.MockStreamProcessorFilterService;
@@ -133,7 +132,6 @@ import stroom.xmlschema.server.MockXMLSchemaService;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockEntityService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockFeedService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockGlobalPropertyService.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockMetaMapFactory.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockHttpServletRequest.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockHttpServletResponse.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockIndexService.class),

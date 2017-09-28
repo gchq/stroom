@@ -1,6 +1,7 @@
 package stroom.proxy.datafeed;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import stroom.proxy.handler.ForwardRequestHandler;
 import stroom.proxy.handler.ProxyRepositoryRequestHandler;
@@ -12,6 +13,7 @@ import stroom.util.test.StroomUnitTest;
 import java.util.List;
 import java.util.Properties;
 
+@Ignore
 public class TestProxyHandlerFactory extends StroomUnitTest {
     @SuppressWarnings("unchecked")
     @Test

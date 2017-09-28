@@ -1,0 +1,11 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<pipeline>
+   <createTime>1506333418339</createTime>
+   <createUser>admin</createUser>
+   <description/>
+   <name>ValueStatisticsStroomStats</name>
+   <pipelineType>Event Data</pipelineType>
+   <updateTime>1506333487021</updateTime>
+   <updateUser>admin</updateUser>
+   <uuid>9c8d9b1b-c1e4-4615-90ae-b85db8227543</uuid>
+</pipeline>

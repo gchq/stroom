@@ -25,8 +25,6 @@ import org.springframework.core.io.Resource;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.spring.StroomResourceLoaderUtil;
-import stroom.util.upgrade.UpgradeDispatcherSingleton;
-import stroom.util.web.ServletContextUtil;
 
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -67,12 +65,12 @@ public class StroomProperties {
             final DefaultResourceLoader resourceLoader = new DefaultResourceLoader(
                     StroomProperties.class.getClassLoader());
 
-            // Started up as a WAR file?
-            final String warName = ServletContextUtil
-                    .getWARName(UpgradeDispatcherSingleton.instance().getServletConfig());
-            if (warName != null) {
-                loadResource(resourceLoader, "classpath:/" + warName + ".properties", Source.WAR);
-            }
+//            // Started up as a WAR file?
+//            final String warName = ServletContextUtil
+//                    .getWARName(UpgradeDispatcherSingleton.instance().getServletConfig());
+//            if (warName != null) {
+//                loadResource(resourceLoader, "classpath:/" + warName + ".properties", Source.WAR);
+//            }
 
             // Get properties for the current user if there are any.
             loadResource(resourceLoader, "file:" + System.getProperty("user.home") + "/" + USER_CONF_PATH, Source.USER_CONF);

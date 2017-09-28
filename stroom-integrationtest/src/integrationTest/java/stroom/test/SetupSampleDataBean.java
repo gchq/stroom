@@ -25,6 +25,7 @@ import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ImportState.ImportMode;
 import stroom.feed.server.FeedService;
+import stroom.entity.shared.NamedEntity;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
 import stroom.feed.shared.FindFeedCriteria;
@@ -44,8 +45,11 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.security.server.DBRealm;
 import stroom.statistics.server.sql.datasource.FindStatisticsEntityCriteria;
 import stroom.statistics.server.sql.datasource.StatisticStoreEntityService;
+import stroom.statistics.server.stroomstats.entity.FindStroomStatsStoreEntityCriteria;
+import stroom.statistics.server.stroomstats.entity.StroomStatsStoreEntityService;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.streamstore.server.StreamAttributeKeyService;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
@@ -64,12 +68,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
+import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 /**
  * Script to create some base data for testing.
@@ -79,8 +86,14 @@ public final class SetupSampleDataBean {
 
     private static final String ROOT_DIR_NAME = "samples";
 
-    private static final String STATS_COUNT_FEED_NAME = "COUNT_FEED";
-    private static final String STATS_VALUE_FEED_NAME = "VALUE_FEED";
+    private static final String STATS_COUNT_FEED_LARGE_NAME = "COUNT_FEED_LARGE";
+    private static final String STATS_COUNT_FEED_SMALL_NAME = "COUNT_FEED_SMALL";
+    private static final String STATS_VALUE_FEED_LARGE_NAME = "VALUE_FEED_LARGE";
+    private static final String STATS_VALUE_FEED_SMALL_NAME = "VALUE_FEED_SMALL";
+    // 52,000 is just over 3 days at 5000ms intervals
+    private static final int STATS_ITERATIONS_LARGE = 52_000;
+    // 1,000 is just over 1hr at 5000ms intervals
+    private static final int STATS_ITERATIONS_SMALL = 1_000;
     private static final String STATS_COUNT_API_FEED_NAME = "COUNT_V3";
     private static final String STATS_COUNT_API_DATA_FILE = "./stroom-integrationtest/src/integrationTest/resources/SetupSampleDataBean_COUNT_V3.xml";
 
@@ -116,6 +129,8 @@ public final class SetupSampleDataBean {
     private ContentImportService contentImportService;
     @Resource
     private StatisticStoreEntityService statisticsDataSourceService;
+    @Resource
+    private StroomStatsStoreEntityService stroomStatsStoreEntityService;
 
     public SetupSampleDataBean() {
     }
@@ -157,26 +172,13 @@ public final class SetupSampleDataBean {
             loadDirectory(shutdown, dir);
         }
 
-
         //Additional content is loaded by the gradle build in task downloadStroomContent
 
-
-        generateSampleStatisticsData();
-
-        // code to check that the statisticsDataSource objects are stored
-        // correctly
-        final BaseResultList<StatisticStoreEntity> statisticsDataSources = statisticsDataSourceService
-                .find(FindStatisticsEntityCriteria.instance());
-
-        for (final StatisticStoreEntity statisticsDataSource : statisticsDataSources) {
-            LOGGER.info(String.format("Retrieving statisticsDataSource with name: {}, and type: {}",
-                    statisticsDataSource.getName(),
-                    statisticsDataSource.getStatisticType()));
-        }
 
         // Add volumes to all indexes.
         final BaseResultList<Volume> volumeList = volumeService.find(new FindVolumeCriteria());
         final BaseResultList<Index> indexList = indexService.find(new FindIndexCriteria());
+        logEntities(indexList, "indexes");
         final Set<Volume> volumeSet = new HashSet<>(volumeList);
 
         for (final Index index : indexList) {
@@ -188,9 +190,9 @@ public final class SetupSampleDataBean {
                     .find(new FindPipelineEntityCriteria(index.getName()));
 
             if (pipelines == null || pipelines.size() == 0) {
-                LOGGER.warn("No pipeline found for index '" + index.getName() + "'");
+                LOGGER.warn("No pipeline found for index [{}]", index.getName());
             } else if (pipelines.size() > 1) {
-                LOGGER.warn("More than 1 pipeline found for index '" + index.getName() + "'");
+                LOGGER.warn("More than 1 pipeline found for index [{}]", index.getName());
             } else {
                 final PipelineEntity pipeline = pipelines.getFirst();
 
@@ -215,6 +217,19 @@ public final class SetupSampleDataBean {
         }
 
         final List<Feed> feeds = feedService.find(new FindFeedCriteria());
+        logEntities(feeds, "feeds");
+
+        generateSampleStatisticsData();
+
+        // code to check that the statisticsDataSource objects are stored
+        // correctly
+        final BaseResultList<StatisticStoreEntity> statisticsDataSources = statisticsDataSourceService
+                .find(FindStatisticsEntityCriteria.instance());
+        logEntities(statisticsDataSources, "statisticStores");
+
+        final BaseResultList<StroomStatsStoreEntity> stroomStatsStoreEntities = stroomStatsStoreEntityService
+                .find(FindStroomStatsStoreEntityCriteria.instance());
+        logEntities(stroomStatsStoreEntities, "stroomStatsStores");
 
         // Create stream processors for all feeds.
         for (final Feed feed : feeds) {
@@ -262,6 +277,17 @@ public final class SetupSampleDataBean {
         }
     }
 
+    private static void logEntities(BaseResultList<? extends NamedEntity> entities, String entityTypes) {
+        logEntities(entities.getValues(),entityTypes);
+    }
+    private static void logEntities(List<? extends NamedEntity> entities, String entityTypes) {
+        LOGGER.info("Listing loaded {}:", entityTypes);
+        entities.stream()
+                .map(NamedEntity::getName)
+                .sorted()
+                .forEach(name -> LOGGER.info("  {}", name));
+    }
+
     public void loadDirectory(final boolean shutdown, final Path importRootDir) throws IOException {
         LOGGER.info("Loading sample data for directory: " + FileUtil.getCanonicalPath(importRootDir));
 
@@ -291,7 +317,7 @@ public final class SetupSampleDataBean {
             LOGGER.info("StatisticDataSource count = " + commonTestControl.countEntity(StatisticStore.class));
 
         } else {
-            LOGGER.info(String.format("Directory {} doesn't exist so skipping", configDir));
+            LOGGER.info("Directory {} doesn't exist so skipping", configDir);
         }
 
         if (Files.exists(dataDir)) {
@@ -323,7 +349,7 @@ public final class SetupSampleDataBean {
                 startTime += tenMinMs;
             }
         } else {
-            LOGGER.info(String.format("Directory {} doesn't exist so skipping", dataDir));
+            LOGGER.info("Directory {} doesn't exist so skipping", dataDir);
         }
 
         // streamTaskCreator.doCreateTasks();
@@ -335,6 +361,27 @@ public final class SetupSampleDataBean {
 
     }
 
+    private void loadStatsData(final DataLoader dataLoader,
+                               final String feedName,
+                               final int iterations,
+                               final Instant startTime,
+                               final BiFunction<Integer, Instant, String> dataGenerationFunction) {
+        try {
+            LOGGER.info("Generating statistics test data for feed {}", feedName);
+
+            final Feed feed = dataLoader.getFeed(feedName);
+
+            dataLoader.loadInputStream(
+                    feed,
+                    "Auto generated statistics data",
+                    StreamUtil.stringToStream(dataGenerationFunction.apply(iterations, startTime)),
+                    false,
+                    startTime.toEpochMilli());
+        } catch (final RuntimeException e) {
+            LOGGER.error("Feed {} does not exist so cannot load the sample statistics data", feedName, e);
+        }
+    }
+
     /**
      * Generates some sample statistics data in two feeds. If the feed doesn't
      * exist it will fail silently
@@ -343,27 +390,37 @@ public final class SetupSampleDataBean {
         final DataLoader dataLoader = new DataLoader(feedService, streamStore);
         final long startTime = System.currentTimeMillis();
 
-        // count stats data
-        try {
-            final Feed countFeed = dataLoader.getFeed(STATS_COUNT_FEED_NAME);
+        //keep the big and small feeds apart in terms of their event times
+        Instant startOfToday = Instant.now().truncatedTo(ChronoUnit.DAYS);
+        Instant startOfAWeekAgo = startOfToday.minus(7, ChronoUnit.DAYS);
 
-            dataLoader.loadInputStream(countFeed, "Auto generated statistics count data",
-                    StreamUtil.stringToStream(GenerateSampleStatisticsData.generateCountData()), false, startTime);
-        } catch (final RuntimeException e1) {
-            LOGGER.warn(String.format("Feed {} does not exist so cannot load the sample count statistics data.",
-                    STATS_COUNT_FEED_NAME));
-        }
+        loadStatsData(
+                dataLoader,
+                STATS_COUNT_FEED_LARGE_NAME,
+                STATS_ITERATIONS_LARGE,
+                startOfAWeekAgo,
+                GenerateSampleStatisticsData::generateCountData);
 
-        // value stats data
-        try {
-            final Feed valueFeed = dataLoader.getFeed(STATS_VALUE_FEED_NAME);
+        loadStatsData(
+                dataLoader,
+                STATS_COUNT_FEED_SMALL_NAME,
+                STATS_ITERATIONS_SMALL,
+                startOfToday,
+                GenerateSampleStatisticsData::generateCountData);
 
-            dataLoader.loadInputStream(valueFeed, "Auto generated statistics value data",
-                    StreamUtil.stringToStream(GenerateSampleStatisticsData.generateValueData()), false, startTime);
-        } catch (final RuntimeException e) {
-            LOGGER.warn(String.format("Feed {} does not exist so cannot load the sample value statistics data.",
-                    STATS_VALUE_FEED_NAME));
-        }
+        loadStatsData(
+                dataLoader,
+                STATS_VALUE_FEED_LARGE_NAME,
+                STATS_ITERATIONS_LARGE,
+                startOfAWeekAgo,
+                GenerateSampleStatisticsData::generateValueData);
+
+        loadStatsData(
+                dataLoader,
+                STATS_VALUE_FEED_SMALL_NAME,
+                STATS_ITERATIONS_SMALL,
+                startOfToday,
+                GenerateSampleStatisticsData::generateValueData);
 
         try {
             final Feed apiFeed = dataLoader.getFeed(STATS_COUNT_API_FEED_NAME);
@@ -376,10 +433,9 @@ public final class SetupSampleDataBean {
                     false,
                     startTime);
         } catch (final RuntimeException | IOException e) {
-            LOGGER.warn(String.format("Feed {} does not exist so cannot load the sample count for export to API statistics data.",
-                    STATS_COUNT_API_FEED_NAME));
+            LOGGER.warn("Feed {} does not exist so cannot load the sample count for export to API statistics data.",
+                    STATS_COUNT_API_FEED_NAME);
         }
-
     }
 
     private String createRandomData() {

@@ -19,15 +19,11 @@ package stroom.spring;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
-import org.springframework.context.annotation.Scope;
 import stroom.explorer.server.ExplorerActionHandlers;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.importexport.server.ImportExportActionHandlers;
-import stroom.util.config.StroomProperties;
 import stroom.util.spring.StroomBeanStore;
-import stroom.util.spring.StroomScope;
-import stroom.util.thread.ThreadLocalBuffer;
 
 import javax.inject.Inject;
 
@@ -43,14 +39,6 @@ public class ServerConfiguration {
                                final FeedService feedService) {
         explorerActionHandlers.add(3, Feed.ENTITY_TYPE, Feed.ENTITY_TYPE, feedService);
         importExportActionHandlers.add(Feed.ENTITY_TYPE, feedService);
-    }
-
-    @Bean
-    @Scope(StroomScope.PROTOTYPE)
-    public ThreadLocalBuffer prototypeThreadLocalBuffer() {
-        final ThreadLocalBuffer threadLocalBuffer = new ThreadLocalBuffer();
-        threadLocalBuffer.setBufferSize(StroomProperties.getProperty("stroom.buffersize"));
-        return threadLocalBuffer;
     }
 
     @Bean

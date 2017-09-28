@@ -21,11 +21,13 @@ import java.io.IOException;
 public class DataBaseValidatorRequestHandler implements RequestHandler {
     private final static Logger LOGGER = LoggerFactory.getLogger(DataBaseValidatorRequestHandler.class);
 
-    @Resource
-    MetaMap metaMap;
+    private final LocalFeedService localFeedService;
+    private final MetaMap metaMap;
 
-    @Resource
-    LocalFeedService localFeedService;
+    public DataBaseValidatorRequestHandler(final LocalFeedService localFeedService, final MetaMap metaMap) {
+        this.localFeedService = localFeedService;
+        this.metaMap = metaMap;
+    }
 
     @Override
     public void handleHeader() throws IOException {

@@ -40,8 +40,13 @@ import java.nio.file.Paths;
  */
 @Component
 @Scope(StroomScope.PROTOTYPE)
-@ConfigurableElement(type = "FileAppender", category = Category.DESTINATION, roles = {PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_DESTINATION, PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
+@ConfigurableElement(
+        type = "FileAppender",
+        category = Category.DESTINATION,
+        roles = {PipelineElementType.ROLE_TARGET,
+                PipelineElementType.ROLE_DESTINATION,
+                PipelineElementType.VISABILITY_STEPPING},
+        icon = ElementIcons.FILE)
 public class FileAppender extends AbstractAppender {
     private static final String LOCK_EXTENSION = ".lock";
 

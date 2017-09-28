@@ -42,7 +42,7 @@ import stroom.util.shared.Monitor;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.MonitorImpl;
 import stroom.util.task.TaskMonitor;
-import stroom.util.thread.ThreadLocalBuffer;
+import stroom.util.thread.BufferFactory;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -61,8 +61,6 @@ public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloa
     private TaskMonitor taskMonitor;
     @Resource
     private StreamStore streamStore;
-    @Resource(name = "prototypeThreadLocalBuffer")
-    private ThreadLocalBuffer writeThreadLocalBuffer;
 
     @Override
     public StreamDownloadResult exec(final StreamDownloadTask task) {
@@ -235,7 +233,7 @@ public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloa
 
             final StroomZipEntry stroomZipEntry = new StroomZipEntry(null, basePartName, fileType);
             final OutputStream outputStream = zipOutputStream.addEntry(stroomZipEntry);
-            final byte[] buffer = writeThreadLocalBuffer.getBuffer();
+            final byte[] buffer = BufferFactory.create();
 
             int len;
             while ((len = StreamUtil.eagerRead(nestedInputStream, buffer)) != -1) {

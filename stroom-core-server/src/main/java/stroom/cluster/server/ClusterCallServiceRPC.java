@@ -16,19 +16,32 @@
 
 package stroom.cluster.server;
 
-import org.springframework.remoting.caucho.HessianServiceExporter;
+import com.caucho.hessian.server.HessianServlet;
 import org.springframework.stereotype.Component;
+import stroom.node.shared.Node;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
-@Component(ClusterCallServiceRPC.BEAN_NAME)
-public class ClusterCallServiceRPC extends HessianServiceExporter {
-    public static final String BEAN_NAME = "clusterCallServiceRPC";
+@Component//(ClusterCallServiceRPC.BEAN_NAME)
+public class ClusterCallServiceRPC extends HessianServlet implements ClusterCallService {
+//    public static final String BEAN_NAME = "clusterCallServiceRPC";
+//
+//    @Inject
+//    ClusterCallServiceRPC(@Named("clusterCallServiceLocal") final ClusterCallService clusterCallService) {
+//        setService(clusterCallService);
+//        setServiceInterface(ClusterCallService.class);
+//    }
+
+    private final ClusterCallService clusterCallService;
 
     @Inject
-    ClusterCallServiceRPC(@Named("clusterCallServiceLocal") final ClusterCallService clusterCallService) {
-        setService(clusterCallService);
-        setServiceInterface(ClusterCallService.class);
+    public ClusterCallServiceRPC(@Named("clusterCallServiceLocal") final ClusterCallService clusterCallService) {
+        this.clusterCallService = clusterCallService;
+    }
+
+    @Override
+    public Object call(final Node sourceNode, final Node targetNode, final String beanName, final String methodName, final Class<?>[] parameterTypes, final Object[] args) throws Exception {
+        return clusterCallService.call(sourceNode, targetNode, beanName, methodName, parameterTypes, args);
     }
 }

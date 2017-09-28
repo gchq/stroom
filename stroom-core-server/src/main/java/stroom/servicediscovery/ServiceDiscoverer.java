@@ -1,13 +1,14 @@
 package stroom.servicediscovery;
 
 import org.apache.curator.x.discovery.ServiceInstance;
+import stroom.util.HasHealthCheck;
 
 import java.util.Optional;
 
 /**
  * Interface for obtaining instances of discoverable services that have been defined in {@link ExternalService}
  */
-public interface ServiceDiscoverer {
+public interface ServiceDiscoverer extends HasHealthCheck {
 
     /**
      * Get a {@link ServiceInstance} object for the passed {@link ExternalService} definition. The instance of the service

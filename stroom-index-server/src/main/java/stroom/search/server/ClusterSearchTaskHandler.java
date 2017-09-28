@@ -458,7 +458,9 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
     @Override
     public void log(final Severity severity, final Location location, final String elementId, final String message,
                     final Throwable e) {
-        LOGGER.debug(e.getMessage(), e);
+        if (e != null) {
+            LOGGER.debug(e.getMessage(), e);
+        }
 
         if (e == null || !(e instanceof TaskTerminatedException)) {
             final String msg = MessageUtil.getMessage(message, e);

@@ -23,16 +23,16 @@ import javax.servlet.http.HttpSession;
 
 @Component
 public class HttpServletRequestHolderImpl implements HttpServletRequestHolder {
-    private static final ThreadLocal<HttpServletRequest> THREAD_LOCAL_CONTEXT = new InheritableThreadLocal<>();
+    private final ThreadLocal<HttpServletRequest> threadLocal = new InheritableThreadLocal<>();
 
     @Override
     public HttpServletRequest get() {
-        return THREAD_LOCAL_CONTEXT.get();
+        return threadLocal.get();
     }
 
     @Override
     public void set(final HttpServletRequest httpServletRequest) {
-        THREAD_LOCAL_CONTEXT.set(httpServletRequest);
+        threadLocal.set(httpServletRequest);
     }
 
     @Override

@@ -48,9 +48,14 @@ import java.util.function.Consumer;
  */
 @Component
 @Scope(StroomScope.PROTOTYPE)
-@ConfigurableElement(type = "HDFSFileAppender", category = Category.DESTINATION, roles = {
-        PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_DESTINATION,
-        PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
+@ConfigurableElement(
+        type = "HDFSFileAppender",
+        category = Category.DESTINATION,
+        roles = {
+            PipelineElementType.ROLE_TARGET,
+            PipelineElementType.ROLE_DESTINATION,
+            PipelineElementType.VISABILITY_STEPPING},
+        icon = ElementIcons.HADOOP)
 public class HDFSFileAppender extends AbstractAppender {
     private static final Logger LOGGER = LoggerFactory.getLogger(HDFSFileAppender.class);
 

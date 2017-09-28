@@ -41,9 +41,14 @@ import java.nio.file.Paths;
  */
 @Component
 @Scope(StroomScope.PROTOTYPE)
-@ConfigurableElement(type = "RollingFileAppender", category = Category.DESTINATION, roles = {
-        PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_DESTINATION,
-        PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
+@ConfigurableElement(
+        type = "RollingFileAppender",
+        category = Category.DESTINATION,
+        roles = {
+                PipelineElementType.ROLE_TARGET,
+                PipelineElementType.ROLE_DESTINATION,
+                PipelineElementType.VISABILITY_STEPPING},
+        icon = ElementIcons.FILES)
 class RollingFileAppender extends AbstractRollingAppender {
 
     private final PathCreator pathCreator;

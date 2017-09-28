@@ -39,6 +39,11 @@ dependencies {
     integrationTestRuntime libs.log4j_over_slf4j
     integrationTestRuntime libs.logback_classic
     integrationTestRuntime libs.logback_core
+
+    integrationTestCompile libs.mockito_core
+    integrationTestCompile libs.assertj_core
+    integrationTestCompile libs.dropwizard_testing
+    integrationTestCompile libs.dropwizard_client
 }
 
 task setupSampleData(type: JavaExec) {

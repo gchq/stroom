@@ -25,10 +25,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-@Component(DebugServlet.BEAN_NAME)
+@Component
 public class DebugServlet extends HttpServlet {
-    public static final String BEAN_NAME = "debugServlet";
-
     private static final long serialVersionUID = 5785836851738107760L;
 
     @Override
