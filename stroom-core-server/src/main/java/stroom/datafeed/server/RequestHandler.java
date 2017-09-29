@@ -16,14 +16,17 @@
 
 package stroom.datafeed.server;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * Class to handle every incoming feed request.
  */
-public interface DataFeedRequest {
+public interface RequestHandler {
     /**
      * Handle the request and return a HTTP response code.
      *
      * @return HTTP response code
      */
-    void processRequest();
+    void handle(HttpServletRequest request, HttpServletResponse response);
 }

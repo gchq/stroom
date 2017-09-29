@@ -19,6 +19,7 @@ package stroom.datafeed.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import stroom.feed.MetaMap;
@@ -34,12 +35,14 @@ import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamtask.server.StreamTargetStroomStreamHandler;
+import stroom.util.spring.StroomScope;
 import stroom.util.task.ServerTask;
 import stroom.util.thread.BufferFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -50,26 +53,24 @@ import java.util.stream.Collectors;
  * Handle the incoming requests and stream them to disk checking a few things.
  * </p>
  */
-@Component("dataFeedRequest")
-public class DefaultDataFeedRequest implements DataFeedRequest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultDataFeedRequest.class);
+@Component
+@Scope(StroomScope.PROTOTYPE)
+public class DataFeedRequestHandler implements RequestHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataFeedRequestHandler.class);
 
     private final SecurityContext securityContext;
-    private final HttpServletRequest request;
     private final StreamStore streamStore;
     private final FeedService feedService;
     private final MetaDataStatistic metaDataStatistics;
     private final MetaMapFilter metaMapFilter;
 
     @Inject
-    DefaultDataFeedRequest(final SecurityContext securityContext,
-                           final HttpServletRequest request,
+    DataFeedRequestHandler(final SecurityContext securityContext,
                            final StreamStore streamStore,
                            @Named("cachedFeedService") final FeedService feedService,
                            final MetaDataStatistic metaDataStatistics,
                            final MetaMapFilterFactory metaMapFilterFactory) {
         this.securityContext = securityContext;
-        this.request = request;
         this.streamStore = streamStore;
         this.feedService = feedService;
         this.metaDataStatistics = metaDataStatistics;
@@ -78,7 +79,7 @@ public class DefaultDataFeedRequest implements DataFeedRequest {
 
     @Override
     @Insecure
-    public void processRequest() {
+    public void handle(final HttpServletRequest request, final HttpServletResponse response) {
         securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
         try {
             final MetaMap metaMap = MetaMapFactory.create(request);
@@ -104,11 +105,11 @@ public class DefaultDataFeedRequest implements DataFeedRequest {
                         feedService, metaDataStatistics, feed, feed.getStreamType());
 
                 final byte[] buffer = BufferFactory.create();
-                final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlers, buffer, "DefaultDataFeedRequest-" + metaMap.get(StroomHeaderArguments.GUID));
+                final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlers, buffer, "DataFeedRequestHandler-" + metaMap.get(StroomHeaderArguments.GUID));
 
                 try {
                     stroomStreamProcessor.processRequestHeader(request);
-                    stroomStreamProcessor.process(getInputStream(), "");
+                    stroomStreamProcessor.process(getInputStream(request), "");
                     stroomStreamProcessor.closeHandlers();
                     handlers = null;
                 } finally {
@@ -144,7 +145,7 @@ public class DefaultDataFeedRequest implements DataFeedRequest {
         }
     }
 
-    private InputStream getInputStream() {
+    private InputStream getInputStream(final HttpServletRequest request) {
         try {
             return request.getInputStream();
         } catch (final IOException ioEx) {
