@@ -56,7 +56,7 @@ import java.util.zip.ZipOutputStream;
 @Ignore("TODO 2015-11-18: These tests have interdependencies: they pass individually but fail when run together. Ignoring so the test may be fixed later.")
 public class TestDataFeedServiceImpl extends StroomIntegrationTest {
     @Resource
-    private DataFeedServiceImpl dataFeedService;
+    private DataFeedServlet dataFeedService;
     @Resource
     private FeedService feedService;
     @Resource

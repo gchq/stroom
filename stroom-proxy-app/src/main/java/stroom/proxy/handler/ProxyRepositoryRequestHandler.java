@@ -7,7 +7,6 @@ import stroom.proxy.repo.ProxyRepositoryManager;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipOutputStream;
 
-import javax.annotation.Resource;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -18,14 +17,18 @@ public class ProxyRepositoryRequestHandler implements RequestHandler {
     private static Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryRequestHandler.class);
 
     private final ProxyRepositoryManager proxyRepositoryManager;
-    private final MetaMap metaMap;
 
+    private MetaMap metaMap;
     private StroomZipOutputStream stroomZipOutputStream;
     private OutputStream entryStream;
     private boolean doneOne = false;
 
-    public ProxyRepositoryRequestHandler(final ProxyRepositoryManager proxyRepositoryManager, final MetaMap metaMap) {
+    public ProxyRepositoryRequestHandler(final ProxyRepositoryManager proxyRepositoryManager) {
         this.proxyRepositoryManager = proxyRepositoryManager;
+    }
+
+    @Override
+    public void setMetaMap(final MetaMap metaMap) {
         this.metaMap = metaMap;
     }
 

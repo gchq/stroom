@@ -1,9 +1,11 @@
 package stroom.proxy.repo;
 
+import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Required;
 import org.springframework.util.StringUtils;
+import stroom.proxy.util.ProxyProperties;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileNameUtil;
 import stroom.util.io.FileUtil;
@@ -13,6 +15,8 @@ import stroom.util.spring.StroomShutdown;
 import stroom.util.spring.StroomStartup;
 import stroom.util.thread.ThreadUtil;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,20 +30,50 @@ import java.util.stream.Stream;
  * Manager class that handles rolling the repository if required. Also tracks
  * old rolled repositories.
  */
+@Singleton
 public class ProxyRepositoryManager implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryManager.class);
 
     private final AtomicReference<StroomZipRepository> activeRepository = new AtomicReference<>();
     private final List<StroomZipRepository> rolledRepository = new ArrayList<>();
 
-    private volatile Scheduler scheduler;
     private volatile Thread timerThread;
     private volatile boolean finish = false;
 
-    private volatile Path rootRepoDir = null;
+    private final Path rootRepoDir;
+    private final String repositoryFormat;
+    private final Scheduler scheduler;
+
     private volatile int lockDeleteAgeMs = 1000 * 60 * 60;
 
-    private volatile String repositoryFormat;
+    @Inject
+    public ProxyRepositoryManager(@Named(ProxyProperties.REPO_DIR) final String repoDir,
+                                  @Named(ProxyProperties.REPOSITORY_FORMAT) final String repositoryFormat,
+                                  @Named(ProxyProperties.ROLL_CRON) final String simpleCron) {
+        this(repoDir, repositoryFormat, createScheduler(simpleCron));
+    }
+
+    public ProxyRepositoryManager(final String repoDir,
+                                  final String repositoryFormat,
+                                  final Scheduler scheduler) {
+        if (StringUtils.hasText(repoDir)) {
+            rootRepoDir = Paths.get(repoDir);
+        } else {
+            rootRepoDir = FileUtil.getTempDir().resolve("stroom-proxy");
+            LOGGER.warn("setRepoDir() - Using temp dir as repoDir is not set. " + rootRepoDir);
+        }
+
+        this.repositoryFormat = repositoryFormat;
+        this.scheduler = scheduler;
+    }
+
+    private static Scheduler createScheduler(final String simpleCron) {
+        if (StringUtils.hasText(simpleCron)) {
+            return SimpleCron.compile(simpleCron).createScheduler();
+        }
+
+        return null;
+    }
 
     @StroomStartup(priority = 100)
     public synchronized void start() {
@@ -55,21 +89,6 @@ public class ProxyRepositoryManager implements Runnable {
             timerThread = new Thread(this);
             timerThread.start();
         }
-    }
-
-    @Required
-    public void setRepoDir(final String dir) {
-        if (StringUtils.hasText(dir)) {
-            rootRepoDir = Paths.get(dir);
-        } else {
-            rootRepoDir = FileUtil.getTempDir().resolve("stroom-proxy");
-            LOGGER.warn("setRepoDir() - Using temp dir as repoDir is not set. " + rootRepoDir);
-        }
-    }
-
-    @Required
-    public void setRepositoryFormat(final String repositoryFormat) {
-        this.repositoryFormat = repositoryFormat;
     }
 
     public void scanForOldRepositories() {
@@ -198,16 +217,6 @@ public class ProxyRepositoryManager implements Runnable {
 
     public void setLockDeleteAgeMs(final int lockDeleteAgeMs) {
         this.lockDeleteAgeMs = lockDeleteAgeMs;
-    }
-
-    public void setSimpleCron(final String simpleCron) {
-        if (StringUtils.hasText(simpleCron)) {
-            this.scheduler = SimpleCron.compile(simpleCron).createScheduler();
-        }
-    }
-
-    public void setScheduler(final Scheduler scheduler) {
-        this.scheduler = scheduler;
     }
 
     @StroomShutdown

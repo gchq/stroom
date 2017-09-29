@@ -19,9 +19,8 @@ public class TestProxyRepositoryManager extends StroomUnitTest {
 
     @Test
     public void testRolling() throws IOException {
-        final ProxyRepositoryManager proxyRepositoryManager = new ProxyRepositoryManager();
-        proxyRepositoryManager.setRepoDir(FileUtil.getCanonicalPath(getCurrentTestDir()));
-        proxyRepositoryManager.setScheduler(new Scheduler() {
+        final String repoDir = FileUtil.getCanonicalPath(getCurrentTestDir());
+        final Scheduler scheduler = new Scheduler() {
             @Override
             public boolean execute() {
                 // Always run
@@ -32,7 +31,9 @@ public class TestProxyRepositoryManager extends StroomUnitTest {
             public Long getScheduleReferenceTime() {
                 return null;
             }
-        });
+        };
+
+        final ProxyRepositoryManager proxyRepositoryManager = new ProxyRepositoryManager(repoDir, null, scheduler);
 
         final StroomZipRepository proxyRepository1 = proxyRepositoryManager.getActiveRepository();
         final StroomZipOutputStream stream1 = proxyRepository1.getStroomZipOutputStream();
@@ -63,9 +64,8 @@ public class TestProxyRepositoryManager extends StroomUnitTest {
 
     @Test
     public void testNonRolling() throws IOException {
-        final ProxyRepositoryManager proxyRepositoryManager = new ProxyRepositoryManager();
-        proxyRepositoryManager.setRepoDir(FileUtil.getCanonicalPath(getCurrentTestDir()));
-        proxyRepositoryManager.setScheduler(null);
+        final String repoDir = FileUtil.getCanonicalPath(getCurrentTestDir());
+        final ProxyRepositoryManager proxyRepositoryManager = new ProxyRepositoryManager(repoDir, null, "");
 
         final StroomZipRepository proxyRepository1 = proxyRepositoryManager.getActiveRepository();
         final StroomZipOutputStream stream1 = proxyRepository1.getStroomZipOutputStream();

@@ -8,7 +8,7 @@
         <property name="forwardDelayMs" value="${forwardDelayMs}"/>
     </bean>
 
-    <bean name="forwardRequestHandlerUrlFactory" class="stroom.proxy.handler.ForwardRequestHandlerUrlFactory"
+    <bean name="forwardRequestHandlerUrlFactory" class="stroom.proxy.handler.ForwardRequestHandlerFactory"
           scope="thread">
         <property name="forwardUrl" value="${forwardUrl}"/>
     </bean>

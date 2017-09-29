@@ -3,6 +3,7 @@ package stroom.proxy.servlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
+import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomStreamException;
 import stroom.proxy.datafeed.CSVFormatter;
 import stroom.proxy.datafeed.ProxyHandlerFactory;
@@ -46,15 +47,16 @@ public class DataFeedServlet extends HttpServlet {
     @Override
     protected void doPost(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
         // Send the data
-        final List<RequestHandler> handlers = proxyHandlerFactory.getIncomingRequestHandlerList();
+        final List<RequestHandler> handlers = proxyHandlerFactory.createIncomingHandlers();
 
         concurrentRequestCount.incrementAndGet();
         final long startTime = System.currentTimeMillis();
 
-        final MetaMap metaMap = new MetaMap();
+        final MetaMap metaMap = MetaMapFactory.create(req);
         try {
+            final byte[] buffer = BufferFactory.create();
             final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlers,
-                    BufferFactory.create(), "DataFeedRequestHandler");
+                    buffer, "DataFeedServlet");
 
             stroomStreamProcessor.processRequestHeader(req);
 

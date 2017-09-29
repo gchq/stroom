@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
 import stroom.proxy.repo.StroomZipEntry;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.List;
 
@@ -13,10 +13,15 @@ public class LogRequestHandler implements RequestHandler {
     private static Logger LOGGER = LoggerFactory.getLogger(LogRequestHandler.class);
 
     private final LogRequestConfig logRequestConfig;
-    private final MetaMap metaMap;
+    private MetaMap metaMap;
 
-    public LogRequestHandler(final LogRequestConfig logRequestConfig, final MetaMap metaMap) {
+    @Inject
+    public LogRequestHandler(final LogRequestConfig logRequestConfig) {
         this.logRequestConfig = logRequestConfig;
+    }
+
+    @Override
+    public void setMetaMap(final MetaMap metaMap) {
         this.metaMap = metaMap;
     }
 
@@ -68,5 +73,4 @@ public class LogRequestHandler implements RequestHandler {
     @Override
     public void validate() {
     }
-
 }

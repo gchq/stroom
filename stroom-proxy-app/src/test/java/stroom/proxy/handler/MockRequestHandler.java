@@ -1,5 +1,6 @@
 package stroom.proxy.handler;
 
+import stroom.feed.MetaMap;
 import stroom.proxy.repo.StroomZipEntry;
 
 import java.io.ByteArrayOutputStream;
@@ -12,13 +13,17 @@ public class MockRequestHandler implements RequestHandler {
     private List<byte[]> byteArrayList = new ArrayList<>();
     private ByteArrayOutputStream byteArrayOutputStream = null;
 
-    int handleErrorCount = 0;
-    int handleFooterCount = 0;
-    int handleHeaderCount = 0;
-    int handleEntryCount = 0;
+    private int handleErrorCount = 0;
+    private int handleFooterCount = 0;
+    private int handleHeaderCount = 0;
+    private int handleEntryCount = 0;
 
-    boolean generateExceptionOnHeader = false;
-    boolean generateExceptionOnData = false;
+    private boolean generateExceptionOnHeader = false;
+    private boolean generateExceptionOnData = false;
+
+    @Override
+    public void setMetaMap(final MetaMap metaMap) {
+    }
 
     @Override
     public void handleError() throws IOException {
@@ -36,10 +41,6 @@ public class MockRequestHandler implements RequestHandler {
         if (generateExceptionOnHeader) {
             throw new IOException("Mock Header Error");
         }
-    }
-
-    @Override
-    public void validate() {
     }
 
     @Override
@@ -65,12 +66,12 @@ public class MockRequestHandler implements RequestHandler {
         byteArrayOutputStream = null;
     }
 
-    public List<String> getEntryNameList() {
-        return entryNameList;
+    @Override
+    public void validate() {
     }
 
-    public List<byte[]> getByteArrayList() {
-        return byteArrayList;
+    public List<String> getEntryNameList() {
+        return entryNameList;
     }
 
     public byte[] getByteArray(String entryName) {
@@ -100,5 +101,4 @@ public class MockRequestHandler implements RequestHandler {
     public void setGenerateExceptionOnHeader(boolean generateExceptionOnHeader) {
         this.generateExceptionOnHeader = generateExceptionOnHeader;
     }
-
 }

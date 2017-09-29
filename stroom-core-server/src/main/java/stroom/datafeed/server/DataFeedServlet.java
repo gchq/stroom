@@ -36,12 +36,12 @@ import java.util.Enumeration;
  * Servlet that streams files to disk based on meta input arguments.
  * </p>
  */
-@Component(DataFeedServiceImpl.BEAN_NAME)
-public class DataFeedServiceImpl extends HttpServlet {
+@Component(DataFeedServlet.BEAN_NAME)
+public class DataFeedServlet extends HttpServlet {
     public static final String BEAN_NAME = "dataFeedService";
     private static final long serialVersionUID = 1L;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DataFeedServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataFeedServlet.class);
 
     @Resource
     private transient StroomBeanStore beanStore;

@@ -2,16 +2,14 @@ package stroom.proxy.handler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
 import stroom.feed.MetaMap;
+import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.StroomStreamException;
-import stroom.feed.MetaMapFactory;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.thread.ThreadUtil;
 
-import javax.annotation.Resource;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSession;
@@ -29,9 +27,10 @@ import java.util.zip.ZipOutputStream;
 public class ForwardRequestHandler implements RequestHandler, HostnameVerifier {
     private static Logger LOGGER = LoggerFactory.getLogger(ForwardRequestHandler.class);
 
-    private Integer forwardTimeoutMs = null;
-    private Integer forwardDelayMs = null;
-    private Integer forwardChunkSize;
+    private final String forwardUrl;
+    private final Integer forwardTimeoutMs;
+    private final Integer forwardDelayMs;
+    private final Integer forwardChunkSize;
 
     private String guid = null;
     private HttpURLConnection connection = null;
@@ -39,18 +38,25 @@ public class ForwardRequestHandler implements RequestHandler, HostnameVerifier {
     private long startTimeMs;
     private long bytesSent = 0;
 
-    private final MetaMap metaMap;
-    private final ForwardRequestHandlerUrlFactory forwardRequestHandlerUrlFactory;
+    private MetaMap metaMap;
 
-    private String forwardUrl;
-
-    public ForwardRequestHandler(final MetaMap metaMap, final ForwardRequestHandlerUrlFactory forwardRequestHandlerUrlFactory) {
-        this.metaMap = metaMap;
-        this.forwardRequestHandlerUrlFactory = forwardRequestHandlerUrlFactory;
+    public ForwardRequestHandler(final String forwardUrl,
+                                 final Integer forwardTimeoutMs,
+                                 final Integer forwardDelayMs,
+                                 final Integer forwardChunkSize) {
+        this.forwardUrl = forwardUrl;
+        this.forwardTimeoutMs = forwardTimeoutMs;
+        this.forwardDelayMs = forwardDelayMs;
+        this.forwardChunkSize = forwardChunkSize;
     }
 
     @Override
-    public void handleEntryStart(StroomZipEntry stroomZipEntry) throws IOException {
+    public void setMetaMap(final MetaMap metaMap) {
+        this.metaMap = metaMap;
+    }
+
+    @Override
+    public void handleEntryStart(final StroomZipEntry stroomZipEntry) throws IOException {
         // First call we set up if we are going to do chuncked streaming
         zipOutputStream.putNextEntry(new ZipEntry(stroomZipEntry.getFullName()));
     }
@@ -64,7 +70,7 @@ public class ForwardRequestHandler implements RequestHandler, HostnameVerifier {
      * Handle some pay load.
      */
     @Override
-    public void handleEntryData(byte[] buffer, int off, int length) throws IOException {
+    public void handleEntryData(final byte[] buffer, final int off, final int length) throws IOException {
         bytesSent += length;
         zipOutputStream.write(buffer, off, length);
         if (forwardDelayMs != null) {
@@ -96,22 +102,15 @@ public class ForwardRequestHandler implements RequestHandler, HostnameVerifier {
 
     }
 
-    public String getForwardUrl() {
-        if (forwardUrl == null) {
-            forwardUrl = forwardRequestHandlerUrlFactory.getForwardUrlPart();
-        }
-        return forwardUrl;
-    }
-
     @Override
     public void handleHeader() throws IOException {
         if (LOGGER.isInfoEnabled()) {
-            LOGGER.info("handleHeader() - " + getForwardUrl() + " Sending request " + metaMap);
+            LOGGER.info("handleHeader() - " + forwardUrl + " Sending request " + metaMap);
         }
         startTimeMs = System.currentTimeMillis();
         guid = metaMap.computeIfAbsent(StroomHeaderArguments.GUID, k -> UUID.randomUUID().toString());
 
-        URL url = new URL(getForwardUrl());
+        URL url = new URL(forwardUrl);
         connection = (HttpURLConnection) url.openConnection();
 
         sslCheck();
@@ -153,13 +152,13 @@ public class ForwardRequestHandler implements RequestHandler, HostnameVerifier {
     }
 
     @Override
-    public boolean verify(String arg0, SSLSession arg1) {
+    public boolean verify(final String s, final SSLSession sslSession) {
         return true;
     }
 
     @Override
     public void handleError() throws IOException {
-        LOGGER.info("handleError() - " + getForwardUrl());
+        LOGGER.info("handleError() - " + forwardUrl);
         if (connection != null) {
             connection.disconnect();
         }
@@ -168,7 +167,7 @@ public class ForwardRequestHandler implements RequestHandler, HostnameVerifier {
     @Override
     public void validate() {
         try {
-            URL url = new URL(getForwardUrl());
+            URL url = new URL(forwardUrl);
             connection = (HttpURLConnection) url.openConnection();
             connection.disconnect();
         } catch (IOException ex) {
@@ -176,24 +175,28 @@ public class ForwardRequestHandler implements RequestHandler, HostnameVerifier {
         }
     }
 
-    public void setForwardTimeoutMs(String timeout) {
-        this.forwardTimeoutMs = getInteger(timeout, forwardTimeoutMs);
+    public String getForwardUrl() {
+        return forwardUrl;
     }
 
-    public void setForwardDelayMs(String forwardDelayMs) {
-        this.forwardDelayMs = getInteger(forwardDelayMs, this.forwardDelayMs);
-    }
-
-    public void setForwardChunkSize(Integer chunkSize) {
-        this.forwardChunkSize = chunkSize;
-    }
-
-    private Integer getInteger(String newVal, Integer defVal) {
-        if (StringUtils.hasText(newVal)) {
-            return Integer.valueOf(newVal);
-        } else {
-            return defVal;
-        }
-    }
+    //    public void setForwardTimeoutMs(String timeout) {
+//        this.forwardTimeoutMs = getInteger(timeout, forwardTimeoutMs);
+//    }
+//
+//    public void setForwardDelayMs(String forwardDelayMs) {
+//        this.forwardDelayMs = getInteger(forwardDelayMs, this.forwardDelayMs);
+//    }
+//
+//    public void setForwardChunkSize(Integer chunkSize) {
+//        this.forwardChunkSize = chunkSize;
+//    }
+//
+//    private Integer getInteger(String newVal, Integer defVal) {
+//        if (StringUtils.hasText(newVal)) {
+//            return Integer.valueOf(newVal);
+//        } else {
+//            return defVal;
+//        }
+//    }
 
 }

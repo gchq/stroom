@@ -37,10 +37,6 @@
                 requestDelayMs=
                 forwardDelayMs=
                 repoDir=
-                dbRequestValidatorContext=
-                dbRequestValidatorJndiName=
-                dbRequestValidatorAuthQuery=
-                dbRequestValidatorFeedQuery=
                 remotingUrl=
                 remotingReadTimeoutMs=10000
                 remotingConnectTimeoutMs=10000

@@ -17,34 +17,34 @@ import java.util.Properties;
 public class ProxyProperties {
     public final static String REMOTING_URL = "remotingUrl";
     public final static String REPO_DIR = "repoDir";
-    private final static String REPOSITORY_FORMAT = "repositoryFormat";
+    public final static String REPOSITORY_FORMAT = "repositoryFormat";
     public final static String DB_REQUEST_VALIDATOR_JNDI_NAME = "dbRequestValidatorJndiName";
     public final static String LOG_REQUEST = "logRequest";
     public final static String FORWARD_URL = "forwardUrl";
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyProperties.class);
-    private final static String FORWARD_THREAD_COUNT = "forwardThreadCount";
+    public static final Logger LOGGER = LoggerFactory.getLogger(ProxyProperties.class);
+    public final static String FORWARD_THREAD_COUNT = "forwardThreadCount";
     public final static String BUFFER_SIZE = "bufferSize";
-    private final static String FORWARD_TIMEOUT_MS = "forwardTimeoutMs";
-    private final static String FORWARD_CHUNK_SIZE = "forwardChunkSize";
-    private final static String DB_REQUEST_VALIDATOR_CONTEXT = "dbRequestValidatorContext";
-    private final static String ROLL_CRON = "rollCron";
-    private final static String READ_CRON = "readCron";
-    private final static String MAX_AGGREGATION = "maxAggregation";
+    public final static String FORWARD_TIMEOUT_MS = "forwardTimeoutMs";
+    public final static String FORWARD_CHUNK_SIZE = "forwardChunkSize";
+    public final static String DB_REQUEST_VALIDATOR_CONTEXT = "dbRequestValidatorContext";
+    public final static String ROLL_CRON = "rollCron";
+    public final static String READ_CRON = "readCron";
+    public final static String MAX_AGGREGATION = "maxAggregation";
 
-    private final static String REQUEST_DELAY_MS = "requestDelayMs";
-    private final static String FORWARD_DELAY_MS = "forwardDelayMs";
+    public final static String REQUEST_DELAY_MS = "requestDelayMs";
+    public final static String FORWARD_DELAY_MS = "forwardDelayMs";
 
-    private final static String DB_REQUEST_VALIDATOR_AUTH_QUERY = "dbRequestValidatorAuthQuery";
-    private final static String DB_REQUEST_VALIDATOR_FEED_QUERY = "dbRequestValidatorFeedQuery";
+    public final static String DB_REQUEST_VALIDATOR_AUTH_QUERY = "dbRequestValidatorAuthQuery";
+    public final static String DB_REQUEST_VALIDATOR_FEED_QUERY = "dbRequestValidatorFeedQuery";
 
-    private final static String REMOTING_READ_TIMEOUT_MS = "remotingReadTimeoutMs";
-    private final static String REMOTING_CONNECT_TIMEOUT_MS = "remotingConnectTimeoutMs";
+    public final static String REMOTING_READ_TIMEOUT_MS = "remotingReadTimeoutMs";
+    public final static String REMOTING_CONNECT_TIMEOUT_MS = "remotingConnectTimeoutMs";
 
-    private final static String MAX_STREAM_SIZE = "maxStreamSize";
-    private final static String MAX_FILE_SCAN = "maxFileScan";
+    public final static String MAX_STREAM_SIZE = "maxStreamSize";
+    public final static String MAX_FILE_SCAN = "maxFileScan";
 
-    private final static String CACHE_TIME_TO_IDLE_SECONDS = "cacheTimeToIdleSeconds";
-    private final static String CACHE_TIME_TO_LIVE_SECONDS = "cacheTimeToLiveSeconds";
+    public final static String CACHE_TIME_TO_IDLE_SECONDS = "cacheTimeToIdleSeconds";
+    public final static String CACHE_TIME_TO_LIVE_SECONDS = "cacheTimeToLiveSeconds";
     private final static String DEFAULT_PROPERTIES = "/proxy.properties";
     private final static String PROPERTIES_SUFFIX = ".properties";
     private static Map<String, String> propertyDescriptionMap = new HashMap<>();

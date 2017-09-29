@@ -33,7 +33,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import stroom.cluster.server.ClusterCallServiceRPC;
 import stroom.dashboard.spring.DashboardConfiguration;
-import stroom.datafeed.server.DataFeedServiceImpl;
+import stroom.datafeed.server.DataFeedServlet;
 import stroom.dispatch.shared.DispatchService;
 import stroom.entity.server.SpringRequestFactoryServlet;
 import stroom.feed.server.RemoteFeedServiceRPC;
@@ -138,8 +138,8 @@ public class App extends Application<Configuration> {
         SpringUtil.addServlet(servletContextHandler, applicationContext, SessionResourceStoreImpl.class, "/resourcestore/*");
         SpringUtil.addServlet(servletContextHandler, applicationContext, SpringRequestFactoryServlet.class, "/gwtRequest");
         SpringUtil.addServlet(servletContextHandler, applicationContext, RemoteFeedServiceRPC.class, "/remoting/remotefeedservice.rpc");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, DataFeedServiceImpl.class, "/datafeed");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, DataFeedServiceImpl.class, "/datafeed/*");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, DataFeedServlet.class, "/datafeed");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, DataFeedServlet.class, "/datafeed/*");
 
         // Add session listeners.
         SpringUtil.addServletListener(environment.servlets(), applicationContext, SessionListListener.class);
