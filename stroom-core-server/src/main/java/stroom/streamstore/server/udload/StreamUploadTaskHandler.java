@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Scope;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
 import stroom.feed.MetaMap;
+import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.internalstatistics.MetaDataStatistic;
@@ -46,8 +47,7 @@ import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.MonitorImpl;
 import stroom.util.task.TaskMonitor;
-import stroom.util.thread.ThreadLocalBuffer;
-import stroom.feed.StroomHeaderArguments;
+import stroom.util.thread.BufferFactory;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -75,9 +75,6 @@ public class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTas
     private FeedService feedService;
     @Resource
     private MetaDataStatistic metaDataStatistics;
-
-    @Resource(name = "prototypeThreadLocalBuffer")
-    private ThreadLocalBuffer readThreadLocalBuffer;
 
     @Override
     public VoidResult exec(final StreamUploadTask task) {
@@ -164,8 +161,9 @@ public class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTas
             final Feed feed = feedService.loadByUuid(task.getFeed().getUuid());
             final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
                     .buildSingleHandlerList(streamStore, feedService, metaDataStatistics, feed, streamType);
+            final byte[] buffer = BufferFactory.create();
             final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlerList,
-                    readThreadLocalBuffer.getBuffer(), "Upload");
+                    buffer, "Upload");
             try (final InputStream inputStream = Files.newInputStream(streamUploadTask.getFile())) {
                 stroomStreamProcessor.process(inputStream, "Upload");
                 stroomStreamProcessor.closeHandlers();
@@ -251,7 +249,7 @@ public class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTas
 
     private boolean streamToStream(final InputStream inputStream, final OutputStream outputStream,
                                    final StreamProgressMonitor streamProgressMonitor) throws IOException {
-        final byte[] buffer = readThreadLocalBuffer.getBuffer();
+        final byte[] buffer = BufferFactory.create();
         int len;
         while ((len = StreamUtil.eagerRead(inputStream, buffer)) != -1) {
             outputStream.write(buffer, 0, len);

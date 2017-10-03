@@ -27,10 +27,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 
-@Component(EchoServlet.BEAN_NAME)
+@Component
 public class EchoServlet extends HttpServlet {
-    public static final String BEAN_NAME = "echoServlet";
-
     private static final long serialVersionUID = -2569496543022536282L;
 
     @Override

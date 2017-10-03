@@ -3,7 +3,8 @@ plugins {
     id "com.benjaminsproule.swagger" version "0.1.4"
 }
 
-def swaggerDir = "${projectDir}/src/main/resources/swagger"
+def uiDir = project.file('src/main/resources/ui')
+def swaggerDir = "${uiDir}/swagger"
 def jarName = 'stroom-app.jar'
 def fatJarName = 'stroom-app-all.jar'
 
@@ -23,12 +24,6 @@ jar {
         )
     }
     archiveName jarName
-
-    //explicitly add in the swagger spec files as they won't be in the source set as they
-    //were generated after processResources
-    from ("${project.buildDir}/swagger") {
-        into ("ui")
-    }
 }
 
 import com.github.jengelman.gradle.plugins.shadow.transformers.ServiceFileTransformer
@@ -45,23 +40,10 @@ shadowJar {
         include 'META-INF/spring.*'
     }
     archiveName fatJarName
-
-    //explicitly add in the swagger spec files as they won't be in the source set as they
-    //were generated after processResources
-    from ("${project.buildDir}/swagger") {
-        into ("ui")
-    }
 }
 
-
 dependencies {
-
-    //Deps on -app-gwt and -
-    //compile project(':stroom-app-gwt')
-    //permitUnusedDeclared project(':stroom-app-gwt')
-    //compile project(':stroom-dashboard-gwt')
-    //permitUnusedDeclared project(':stroom-dashboard-gwt')
-
+    compile project(':stroom-core-shared')
     compile project(':stroom-core-server')
     compile project(':stroom-security-server')
     permitUnusedDeclared project(':stroom-security-server') //not clear why it thinks this is unused
@@ -71,18 +53,58 @@ dependencies {
     compile project(':stroom-entity-shared')
     permitUnusedDeclared project(':stroom-entity-shared') //not clear why it thinks this is unused
     compile project(':stroom-index-shared')
+    permitUnusedDeclared project(':stroom-index-shared') // not clear why it thinks this is unused
     compile project(':stroom-util')
-    compile project(':stroom-security-api')
-
-    runtime project(':stroom-dashboard-server')
-    runtime project(':stroom-statistics-server')
+    compile project(':stroom-pipeline')
+    compile project(':stroom-dashboard-server')
+    compile project(':stroom-statistics-server')
 
     compile urlDependencies.get(urlLibs.stroomQueryApi)
     compile urlDependencies.get(urlLibs.stroomQueryCommon)
 
-    compile libs.curator_client
-    compile libs.curator_framework
-    compile libs.curator_x_discovery
+
+
+
+
+
+    //    compile project(':stroom-module')
+//
+//    compile project(':stroom-core-shared')
+//    compile project(':stroom-core-server')
+//    compile project(':stroom-security-server')
+//    compile project(':stroom-index-server')
+//    compile project(':stroom-statistics-api')
+//    permitUnusedDeclared project(':stroom-statistics-api') // not clear why it thinks this is unused
+//    compile project(':stroom-util')
+//    compile project(':stroom-pipeline')
+//    compile project(':stroom-dashboard-server')
+//    compile project(':stroom-statistics-server')
+//
+//    compile urlDependencies.get(urlLibs.stroomQueryApi)
+//    compile urlDependencies.get(urlLibs.stroomQueryCommon)
+//
+//    compile(libs.dropwizard_core) {
+//        exclude(group: "org.glassfish.web", module: "javax.el")
+//    }
+    compile libs.dropwizard_lifecycle
+//    compile libs.dropwizard_jersey
+//    compile libs.dropwizard_jetty
+//    compile libs.dropwizard_metrics_healthchecks
+    compile libs.guava
+    compile libs.javax_inject
+//    compile libs.javax_servlet_api
+    compile libs.jetty_servlet
+    compile libs.shiro_web
+//    compile libs.slf4j_api
+    compile libs.spring_core
+    compile libs.spring_beans
+    compile libs.spring_context
+
+
+
+
+
+
     compile (libs.dropwizard_assets) {
         exclude ( group: "org.glassfish.web", module: "javax.el" )
     }
@@ -91,36 +113,23 @@ dependencies {
     }
     compile libs.dropwizard_jersey
     compile libs.dropwizard_jetty
-    compile libs.dropwizard_metrics_annotation
     compile libs.dropwizard_metrics_healthchecks
     compile libs.dropwizard_servlets
     compile libs.dropwizard_configuration
     compile libs.guava
-    compile libs.jackson_annotations
+//    compile libs.jackson_annotations
     compile libs.javax_inject
     compile libs.javax_servlet_api
-    compile libs.javax_validation
+//    compile libs.javax_validation
+    compile libs.javax_servlet_api
     compile libs.jetty_server
-    compile libs.jetty_servlet
     compile libs.jetty_servlets
     compile libs.logback_classic
     compile libs.slf4j_api
-    compile libs.spring_beans
-    compile libs.spring_context
-    compile libs.spring_web
-    compile libs.swagger_annotations
-    compile libs.vavr
-    compile libs.ws_rs_api
 
     runtime libs.shiro_web
     runtime libs.javax_el
     runtime libs.javax_el_api
-
-    integrationTestCompile libs.junit
-    integrationTestCompile libs.mockito_core
-    integrationTestCompile libs.assertj_core
-    integrationTestCompile libs.dropwizard_testing
-    integrationTestCompile libs.dropwizard_client
 }
 
 run {
@@ -140,38 +149,6 @@ runShadow {
 //the fat jar will be missing all the GWT generated files and the UI will fail to start
 processResources.mustRunAfter(':stroom-app-gwt:gwtCompile')
 processResources.mustRunAfter(':stroom-dashboard-gwt:gwtCompile')
-
-swagger {
-    apiSource {
-        springmvc = false //makes it search for jersey annotations
-        outputFormats = 'json,yaml'
-        locations = [ 
-            'stroom.resources.query.v2.SqlStatisticsQueryResource',
-            'stroom.resources.query.v2.StroomIndexQueryResource',
-            'stroom.resources.authorisation.v1.AuthorisationResource' ]
-        schemes = [ 
-            'http',
-            'https' ]
-        host = 'localhost:8080'
-        basePath = '/api'
-        info {
-            title = 'stroom API'
-            version = 'v1'
-            description = 'Various APIs for interacting with stroom and its data'
-            contact {
-                name = 'GCHQ'
-                url = 'https://github.com/gchq/stroom'
-            }
-            license {
-                url = 'http://www.apache.org/licenses/LICENSE-2.0.html'
-                name = 'Apache 2.0'
-            }
-        }
-        outputPath = "${project.buildDir}/generated/document.html"
-        swaggerDirectory = "${project.buildDir}/swagger"
-    }
-}
-
 
 def dockerBuildDir = "${projectDir}/docker/build"
 
@@ -206,8 +183,37 @@ task copyFilesForDockerBuild() {
     }
 }
 
-tasks.build.dependsOn copyFilesForDockerBuild
+swagger {
+    apiSource {
+        springmvc = false //makes it search for jersey annotations
+        outputFormats = 'json,yaml'
+        locations = [
+                'stroom.statistics.server.sql.search.SqlStatisticsQueryResource',
+                'stroom.index.server.StroomIndexQueryResource',
+                'stroom.security.server.AuthorisationResource' ]
+        schemes = [
+                'http',
+                'https' ]
+        host = 'localhost:8080'
+        basePath = '/api'
+        info {
+            title = 'stroom API'
+            version = 'v1'
+            description = 'Various APIs for interacting with stroom and its data'
+            contact {
+                name = 'GCHQ'
+                url = 'https://github.com/gchq/stroom'
+            }
+            license {
+                url = 'http://www.apache.org/licenses/LICENSE-2.0.html'
+                name = 'Apache 2.0'
+            }
+        }
+        outputPath = "${swaggerDir}/document.html"
+        swaggerDirectory = "${swaggerDir}"
+    }
+}
 
-//make generateSwaggerDocumentation and shadowJar happen as part of a build
 tasks.build.dependsOn generateSwaggerDocumentation
+tasks.build.dependsOn copyFilesForDockerBuild
 tasks.build.dependsOn shadowJar

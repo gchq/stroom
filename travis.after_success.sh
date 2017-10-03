@@ -1,4 +1,7 @@
 #!/bin/bash
+#exit script on any error
+set -o errexit
+
 DOCKER_REPO="gchq/stroom"
 DATE_ONLY="$(date +%Y%m%d)"
 DATE_TIME="$(date +%Y%m%d%H%M%S)"
@@ -68,7 +71,7 @@ if [ "$TRAVIS_BRANCH" = "master" ]; then
     swaggerUiCloneDir=$TRAVIS_BUILD_DIR/swagger-ui
     mkdir -p $ghPagesDir
     #copy our generated swagger specs to gh-pages
-    cp $TRAVIS_BUILD_DIR/stroom-app/build/swagger/swagger.* $ghPagesDir/
+    cp $TRAVIS_BUILD_DIR/stroom-app/src/main/resources/ui/swagger/swagger.* $ghPagesDir/
     #clone swagger-ui repo so we can get the ui html/js/etc
     git clone --depth 1 https://github.com/swagger-api/swagger-ui.git $swaggerUiCloneDir
     #copy the bits of swagger-ui that we need

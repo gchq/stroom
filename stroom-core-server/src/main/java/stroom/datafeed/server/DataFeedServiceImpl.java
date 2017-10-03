@@ -19,11 +19,11 @@ package stroom.datafeed.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.util.spring.StroomBeanStore;
 import stroom.feed.StroomStatusCode;
 import stroom.feed.StroomStreamException;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -36,15 +36,18 @@ import java.util.Enumeration;
  * Servlet that streams files to disk based on meta input arguments.
  * </p>
  */
-@Component(DataFeedServiceImpl.BEAN_NAME)
+@Component
 public class DataFeedServiceImpl extends HttpServlet {
-    public static final String BEAN_NAME = "dataFeedService";
     private static final long serialVersionUID = 1L;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataFeedServiceImpl.class);
 
-    @Resource
-    private transient StroomBeanStore beanStore;
+    private final Provider<RequestHandler> requestHandlerProvider;
+
+    @Inject
+    DataFeedServiceImpl(final Provider<RequestHandler> requestHandlerProvider) {
+        this.requestHandlerProvider = requestHandlerProvider;
+    }
 
     /**
      * <p>
@@ -120,19 +123,18 @@ public class DataFeedServiceImpl extends HttpServlet {
      * @param request
      * @param response
      */
-    protected void handleRequest(final HttpServletRequest request, final HttpServletResponse response)
+    private void handleRequest(final HttpServletRequest request, final HttpServletResponse response)
             throws IOException {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("handleRequest " + getRequestTrace(request));
         }
         try {
-            DataFeedRequest dataFeedRequest = beanStore.getBean(DataFeedRequest.class);
-            dataFeedRequest.processRequest();
+            final RequestHandler requestHandler = requestHandlerProvider.get();
+            requestHandler.handle(request, response);
             response.setStatus(StroomStatusCode.OK.getHttpCode());
             LOGGER.info("handleRequest response " + StroomStatusCode.OK);
         } catch (Exception ex) {
             StroomStreamException.sendErrorResponse(response, ex);
         }
     }
-
 }

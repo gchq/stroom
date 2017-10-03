@@ -4,6 +4,10 @@ import com.google.common.base.Strings;
 import org.apache.shiro.web.util.WebUtils;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientResponse;
+import org.jose4j.jws.JsonWebSignature;
+import org.jose4j.jwt.JwtClaims;
+import org.jose4j.keys.HmacKey;
+import org.jose4j.lang.JoseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,6 +19,8 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Response;
 import java.util.Optional;
+
+import static org.jose4j.jws.AlgorithmIdentifiers.HMAC_SHA256;
 
 @Component
 public class JWTService {
@@ -34,6 +40,19 @@ public class JWTService {
         }
     }
 
+    private static String toToken(byte[] key, JwtClaims claims) {
+        final JsonWebSignature jws = new JsonWebSignature();
+        jws.setPayload(claims.toJson());
+        jws.setAlgorithmHeaderValue(HMAC_SHA256);
+        jws.setKey(new HmacKey(key));
+        jws.setDoKeyValidation(false);
+
+        try {
+            return jws.getCompactSerialization();
+        } catch (JoseException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
 
     public Optional<JWTAuthenticationToken> verifyToken(ServletRequest request){
         Optional<String> authHeader = getAuthHeader(request);
@@ -70,7 +89,7 @@ public class JWTService {
         }
     }
 
-    private JWTAuthenticationToken verifyToken(String token) {
+    public JWTAuthenticationToken verifyToken(String token) {
         Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
         Response response = client
             .target(this.authenticationServiceUrl + "/verify/" + token)

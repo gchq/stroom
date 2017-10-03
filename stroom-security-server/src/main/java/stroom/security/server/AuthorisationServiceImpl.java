@@ -15,4 +15,7 @@ public class AuthorisationServiceImpl implements AuthorisationService {
     public boolean hasDocumentPermission(String documentType, String documentUuid, String permission) {
         return securityContext.hasDocumentPermission(documentType, documentUuid, permission);
     }
+
+
+
 }

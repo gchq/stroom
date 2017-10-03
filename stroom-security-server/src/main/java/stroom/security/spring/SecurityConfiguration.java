@@ -154,4 +154,24 @@ public class SecurityConfiguration {
         simpleMailMessage.setText("Dear ${username},\n\nYour Stroom password for host '${hostname}' has been reset.\n\nYour new password is '${password}'.\n\nThank you.");
         return simpleMailMessage;
     }
+
+//    @Bean
+//    public AuthenticationResource authenticationResource(final Environment environment, final AuthenticationService authenticationService, final JWTService jwtService) {
+//        final AuthenticationResource authenticationResource = new AuthenticationResource(authenticationService, jwtService);
+//
+//        // Add resource.
+//        environment.jersey().register(authenticationResource);
+//
+//        return authenticationResource;
+//    }
+//
+//    @Bean
+//    public AuthorisationResource authorisationResource(final Environment environment, final AuthorisationService authorisationService) {
+//        final AuthorisationResource authorisationResource = new AuthorisationResource(authorisationService);
+//
+//        // Add resource.
+//        environment.jersey().register(authorisationResource);
+//
+//        return authorisationResource;
+//    }
 }

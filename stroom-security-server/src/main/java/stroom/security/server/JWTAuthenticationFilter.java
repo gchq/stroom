@@ -23,13 +23,13 @@ import org.apache.shiro.web.servlet.ShiroHttpServletRequest;
 import org.apache.shiro.web.util.WebUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import stroom.util.config.StroomProperties;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.HttpMethod;
+import javax.ws.rs.core.Response;
 import java.io.IOException;
 
 public class JWTAuthenticationFilter extends AuthenticatingFilter {
@@ -69,7 +69,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
             if(isApiRequest) {
                 LOGGER.debug("API request is unauthorised.");
                 HttpServletResponse httpResponse = WebUtils.toHttp(response);
-                httpResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
+                httpResponse.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
             }
             else {
                 String loginUrl = StroomProperties.getProperty(LOGIN_URL_PROPERTY_NAME);

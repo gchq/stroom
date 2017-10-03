@@ -89,7 +89,7 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
 
             if(usersApiToken.isPresent()) {
                 Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-                invocationBuilder.header(HttpHeaders.AUTHORIZATION, securityContext.getToken());
+                invocationBuilder.header(HttpHeaders.AUTHORIZATION, "Bearer " + securityContext.getToken());
                 Response response = invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON));
 
                 if (HttpServletResponse.SC_OK == response.getStatus()) {

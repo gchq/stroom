@@ -30,7 +30,6 @@ import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
-import stroom.util.spring.ContextAwareService;
 import stroom.util.spring.StroomBeanLifeCycle;
 import stroom.util.spring.StroomBeanMethodExecutable;
 import stroom.util.task.ServerTask;
@@ -46,7 +45,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Component
-public class LifecycleServiceImpl implements ContextAwareService {
+public class LifecycleServiceImpl implements LifecycleService {
     private static final Logger LOGGER = LoggerFactory.getLogger(LifecycleServiceImpl.class);
     private static final String STROOM_LIFECYCLE_THREAD_POOL = "Stroom Lifecycle#";
 
@@ -100,7 +99,7 @@ public class LifecycleServiceImpl implements ContextAwareService {
      * Called when the application context is initialised.
      */
     @Override
-    public void init() {
+    public void start() throws Exception {
         if (enabled) {
             // Do this async so that we don't delay starting the web app up
             new Thread(() -> {
@@ -116,7 +115,7 @@ public class LifecycleServiceImpl implements ContextAwareService {
      * Called when the application context is destroyed.
      */
     @Override
-    public void destroy() {
+    public void stop() throws Exception {
         LOGGER.debug("contextDestroyed()");
         if (enabled) {
             shutdown();

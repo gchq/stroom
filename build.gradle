@@ -39,11 +39,9 @@ ext.getPropertyOrDefault = { propName, defaultValue ->
 
 ext.gwtCompilerProps = [
     mainClass: 'stroom.gwt.GwtCompilerWrapper',
-    minHeap: getPropertyOrDefault('gwtCompilerMinHeap', '50M'),
-    maxHeap: getPropertyOrDefault('gwtCompilerMaxHeap', '500M'),
-    workers: getPropertyOrDefault('gwtCompilerWorkers', '5'),
-    devModeMinHeap: '1G',
-    devModeMaxHeap: '4G'
+    minHeap: getPropertyOrDefault('gwtCompilerMinHeap', '1G'),
+    maxHeap: getPropertyOrDefault('gwtCompilerMaxHeap', '4G'),
+    workers: getPropertyOrDefault('gwtCompilerWorkers', '5')
 ]
 
 //version numbers for libs that share version numbers, e.g. dropwizard-*, or for github repo release versions
@@ -64,7 +62,7 @@ ext.versions = [
     //------------3rd-party------------
     curator: '2.12.0', //must be chosen to be compatible with the ZK version in CDH 5.10
     dropwizard: '1.1.0', //if you change this version you should check the versions below that need to move in sync with it
-    dropwizard_metrics: '3.1.2', //should be kept in step with dropwizard
+    dropwizard_metrics: '3.2.2', //should be kept in step with dropwizard
     gwt: '2.8.0',
     hibernate: '4.3.8.Final', //dropwiz 1.1.0 uses -validator 5.3.4.Final and -core 5.2.8.Final
     jackson: '2.8.6',
@@ -115,6 +113,7 @@ ext.libs = [
     dropwizard_core: "io.dropwizard:dropwizard-core:$versions.dropwizard"  ,
     dropwizard_jersey: "io.dropwizard:dropwizard-jersey:$versions.dropwizard",
     dropwizard_jetty: "io.dropwizard:dropwizard-jetty:$versions.dropwizard", //was 1.0.6 now 1.1.0
+    dropwizard_lifecycle: "io.dropwizard:dropwizard-lifecycle:$versions.dropwizard",
     dropwizard_metrics_annotation: "io.dropwizard.metrics:metrics-annotation:$versions.dropwizard_metrics",
     dropwizard_metrics_healthchecks: "io.dropwizard.metrics:metrics-healthchecks:$versions.dropwizard_metrics",
     dropwizard_servlets: "io.dropwizard:dropwizard-servlets:$versions.dropwizard",
@@ -186,9 +185,6 @@ ext.libs = [
     spring_orm: "org.springframework:spring-orm:$versions.spring",
     spring_test: "org.springframework:spring-test:$versions.spring",
     spring_tx: "org.springframework:spring-tx:$versions.spring",
-    spring_web: "org.springframework:spring-web:$versions.spring",
-    spring_web: "org.springframework:spring-web:$versions.spring", //was 4.2.1.RELEASE now 4.3.4.RELEASE
-    spring_webmvc: "org.springframework:spring-webmvc:$versions.spring",
     stax_api: "stax:stax-api:1.0.1",
     swagger_annotations: "io.swagger:swagger-annotations:$versions.swagger",
     validation_api: "javax.validation:validation-api:1.0.0.GA", //GWT 2.8.0 throws errors on gwtCompile if validation-api 1.1.0.Final is used
@@ -341,14 +337,15 @@ clean{
     tasks.integrationTest.mustRunAfter test
 }
 
-configure(subprojects.findAll {it.name != 'stroom-app' && it.name != 'stroom-integrationtest'}) {
-    //swagger has to generate the spec from code so all modules except for stroom-app (which is the module the 
-    //swagger task is in) and stroom-integrationtest (which depends on stroom-app) must be compiled to jars first
-    //so stroom-app can access their code
-    //However, generateSwaggerDocumentation must run before stroom-app:jar as its artefacts (the json/yaml spec files) 
-    // need to go into that jar 
-    tasks.getByPath(':stroom-app:generateSwaggerDocumentation').mustRunAfter jar
-}
+// NOT SURE IF WE NEED THIS NOW
+//configure(subprojects.findAll {it.name != 'stroom-app' && it.name != 'stroom-integrationtest'}) {
+//    //swagger has to generate the spec from code so all modules except for stroom-app (which is the module the
+//    //swagger task is in) and stroom-integrationtest (which depends on stroom-app) must be compiled to jars first
+//    //so stroom-app can access their code
+//    //However, generateSwaggerDocumentation must run before stroom-app:jar as its artefacts (the json/yaml spec files)
+//    // need to go into that jar
+//    tasks.getByPath(':stroom-core-module:generateSwaggerDocumentation').mustRunAfter jar
+//}
 
 
 task clearContentPackImportDir(type: Delete) {

@@ -16,16 +16,17 @@ import java.io.OutputStream;
  */
 public class ProxyRepositoryRequestHandler implements RequestHandler {
     private static Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryRequestHandler.class);
-    @Resource
-    ProxyRepositoryManager proxyRepositoryManager;
-    @Resource
-    MetaMap metaMap;
+
+    private final ProxyRepositoryManager proxyRepositoryManager;
+    private final MetaMap metaMap;
 
     private StroomZipOutputStream stroomZipOutputStream;
     private OutputStream entryStream;
     private boolean doneOne = false;
 
-    public ProxyRepositoryRequestHandler() {
+    public ProxyRepositoryRequestHandler(final ProxyRepositoryManager proxyRepositoryManager, final MetaMap metaMap) {
+        this.proxyRepositoryManager = proxyRepositoryManager;
+        this.metaMap = metaMap;
     }
 
     @Override

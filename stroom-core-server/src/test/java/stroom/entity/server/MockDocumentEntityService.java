@@ -128,7 +128,7 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
 
         for (final E entity : results) {
             boolean found = true;
-            if (folder != null && !folder.equals(entity.getFolder())) {
+            if (folder != null && !folder.equals(DocRefUtil.create(entity.getFolder()))) {
                 found = false;
             }
 
@@ -230,7 +230,7 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
 
         final List<E> list = new ArrayList<>(results.size());
         for (final E entity : results) {
-            if (folder != null && folder.equals(entity.getFolder())) {
+            if (folder != null && folder.equals(DocRefUtil.create(entity.getFolder()))) {
                 list.add(entity);
             }
         }
