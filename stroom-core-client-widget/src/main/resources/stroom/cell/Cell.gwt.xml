@@ -3,6 +3,7 @@
   <!-- Inherit the core Web Toolkit stuff. -->
   <inherits name='com.google.gwt.user.User' />
 
+  <inherits name='stroom.cell.clickable.ClickableSafeHtmlCell' />
   <inherits name='stroom.cell.expander.Expander' />
   <inherits name='stroom.cell.tickbox.TickBox' />
   <inherits name='stroom.cell.info.Info' />

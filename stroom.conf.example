@@ -40,3 +40,8 @@ stroom.serviceDiscovery.enabled=true
 #Set this to blank to prevent stroom from trying to establish a connection
 stroom.connectors.kafka.default.bootstrap.servers=localhost:9092
 stroom.connectors.kafka.default.connector.version=0.10.0.1
+
+stroom.url.list=annotations-ui,annotations-service,dashboard
+stroom.url.annotations-ui=http://localhost:3000/
+stroom.url.annotations-service=http://localhost:8199/annotations/v1
+stroom.url.dashboard=http://localhost:8080/dashboard.jsp

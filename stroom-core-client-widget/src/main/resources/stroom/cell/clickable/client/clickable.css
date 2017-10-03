@@ -14,21 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.app.client.gin;
+.active {
+	
+}
 
-import stroom.about.client.AboutPlugin;
-import stroom.annotations.client.AnnotationsPlugin;
-import stroom.core.client.gin.PluginModule;
-import stroom.entity.client.EntityPluginEventManager;
-import stroom.help.client.HelpPlugin;
+.active img {
+	cursor:pointer;
+	cursor:hand;
+}
 
-public class PluginsModule extends PluginModule {
-    @Override
-    protected void configure() {
-        bindPlugin(EntityPluginEventManager.class);
-
-        bindPlugin(HelpPlugin.class);
-        bindPlugin(AboutPlugin.class);
-        bindPlugin(AnnotationsPlugin.class);
-    }
+.expanderIcon {
+    width: 14px;
+    height: 14px;
 }

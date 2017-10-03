@@ -45,6 +45,15 @@ public class ClientPropertiesServiceImpl implements ClientPropertiesService {
         addProperty(props, ClientProperties.LABEL_COLOURS);
         addProperty(props, ClientProperties.HELP_URL);
 
+        final String urlList = StroomProperties.getProperty(ClientProperties.URL_LIST);
+        props.put(ClientProperties.URL_LIST, urlList);
+        if (null != urlList) {
+            final String[] namedUrls = urlList.split(",");
+            for (final String namedUrl : namedUrls) {
+                addProperty(props, ClientProperties.URL_BASE + namedUrl);
+            }
+        }
+
         return props;
     }
 

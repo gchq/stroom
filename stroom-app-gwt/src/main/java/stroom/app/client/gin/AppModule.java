@@ -61,6 +61,9 @@ import stroom.menubar.client.presenter.MenubarPresenter;
 import stroom.menubar.client.presenter.MenubarPresenter.MenubarProxy;
 import stroom.menubar.client.presenter.MenubarPresenter.MenubarView;
 import stroom.menubar.client.view.MenubarViewImpl;
+import stroom.widget.iframe.client.presenter.IFramePresenter;
+import stroom.widget.iframe.client.presenter.IFramePresenter.IFrameView;
+import stroom.widget.iframe.client.view.IFrameViewImpl;
 import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
@@ -104,6 +107,7 @@ public class AppModule extends AbstractPresenterModule {
         bindPresenter(AboutPresenter.class, AboutView.class, AboutViewImpl.class, AboutProxy.class);
 
         bindPresenterWidget(TooltipPresenter.class, TooltipView.class, TooltipViewImpl.class);
+        bindPresenterWidget(IFramePresenter.class, IFrameView.class, IFrameViewImpl.class);
 
         bindPresenterWidget(EntityTreePresenter.class, EntityTreeView.class, EntityTreeViewImpl.class);
         bindPresenterWidget(EntityCheckTreePresenter.class, EntityCheckTreeView.class, EntityCheckTreeViewImpl.class);
