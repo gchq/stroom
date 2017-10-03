@@ -86,21 +86,29 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
             WebTarget webTarget = client.target(url).path(path);
 
             Optional<String> usersApiToken = getUsersApiToken();
+            String requestingUser = securityContext.getUserId();
 
             if(usersApiToken.isPresent()) {
                 Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-                invocationBuilder.header(HttpHeaders.AUTHORIZATION, "Bearer " + securityContext.getToken());
+                invocationBuilder.header(HttpHeaders.AUTHORIZATION, "Bearer " + usersApiToken.get());
                 Response response = invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON));
 
                 if (HttpServletResponse.SC_OK == response.getStatus()) {
                     return response.readEntity(responseClass);
                 }
-                throw new RuntimeException(String.format("Error %s sending request %s to %s: %s",
-                    response.getStatus(), request, webTarget.getUri(), response.getStatusInfo().getReasonPhrase()));
+                else if(HttpServletResponse.SC_UNAUTHORIZED == response.getStatus()){
+                    throw new RuntimeException("The user is not authorized to make this request! The user was " +
+                        requestingUser);
+                }
+                else {
+                    throw new RuntimeException("There was a problem making this a request! The user was: " +
+                        requestingUser);
+                }
             }
-
-            throw new RuntimeException("Could not get a token to use for this request! User was: " +
-                securityContext.getUserId());
+            else {
+                throw new RuntimeException("Could not get a token to use for this request! The user was: " +
+                    requestingUser);
+            }
 
         } catch (RuntimeException e) {
             throw new RuntimeException(String.format("Error sending request %s to %s", request, path), e);
@@ -127,12 +135,14 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
         authServiceClient.setBasePath(tokenServiceUrl);
         authServiceClient.addDefaultHeader("Authorization", "Bearer " + ourApiToken);
 
+        String requestingUser = securityContext.getUserId();
+
         DefaultApi authServiceApi = new DefaultApi(authServiceClient);
         stroom.auth.service.api.model.SearchRequest authSearchRequest = new stroom.auth.service.api.model.SearchRequest();
         authSearchRequest.setLimit(10);
         authSearchRequest.setPage(0);
         authSearchRequest.setFilters(new HashMap<String, String>() {{
-            put("user_email", securityContext.getUserId());
+            put("user_email", requestingUser);
             put("token_type", "api");
             put("enabled", "true");
         }});
@@ -144,7 +154,7 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
             if(authSearchResponse.getTokens().isEmpty()){
                 // User doesn't have an API token and cannot make this request.
                 LOGGER.warn("Tried to get a user's API key but they don't have one! User was: " +
-                    securityContext.getUserId());
+                    requestingUser);
                 usersApiToken = Optional.empty();
             }
             else {
@@ -152,7 +162,7 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
             }
         } catch (ApiException e) {
             LOGGER.error("Unable to get the user's token from the Token service! User was: " +
-                securityContext.getUserId());
+                requestingUser);
             usersApiToken = Optional.empty();
         }
 
