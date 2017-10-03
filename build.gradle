@@ -59,6 +59,7 @@ ext.versions = [
     stroomExpression: 'v1.0.0', 
     stroomQuery: 'v2.0.0-alpha.3', //same version for both stroom-query-api and stroom-query-common
     stroomStats: 'v0.6.0-alpha',
+    stroomAuthServiceApi: 'v0.1.0-all',
 
     //------------3rd-party------------
     curator: '2.12.0', //must be chosen to be compatible with the ZK version in CDH 5.10
@@ -90,6 +91,7 @@ ext.urlLibs = [
     eventLogging: "event-logging-$versions.eventLogging",
     hadoopCommonShaded: "hadoop-common-shaded-$versions.hadoopCommonShaded-all",
     hadoopHdfsShaded: "hadoop-hdfs-shaded-$versions.hadoopHdfsShaded-all",
+    stroomAuthServiceApi: "stroom-auth-service-api-$versions.stroomAuthServiceApi-all",
     zzDUMMYzz: "makes sorting easier"
 ]
 
@@ -342,7 +344,7 @@ clean{
 configure(subprojects.findAll {it.name != 'stroom-app' && it.name != 'stroom-integrationtest'}) {
     //swagger has to generate the spec from code so all modules except for stroom-app (which is the module the 
     //swagger task is in) and stroom-integrationtest (which depends on stroom-app) must be compiled to jars first
-    //so stroom-app can access thier code
+    //so stroom-app can access their code
     //However, generateSwaggerDocumentation must run before stroom-app:jar as its artefacts (the json/yaml spec files) 
     // need to go into that jar 
     tasks.getByPath(':stroom-app:generateSwaggerDocumentation').mustRunAfter jar
@@ -432,6 +434,9 @@ urlDependencies {
 
     compile(urlLibs.stroomStatsSchema,
             "https://github.com/gchq/stroom-stats/releases/download/$versions.stroomStats/${urlLibs.stroomStatsSchema}.jar")
+
+    compile(urlLibs.stroomAuthServiceApi,
+            "https://github.com/gchq/stroom-auth/releases/download/v0.1.0/stroom-auth-service-api-v0.1.0-all.jar")
 
 //    compile(urlLibs.stroomProxyRepo,
 //            "https://github.com/gchq/stroom-proxy/releases/download/$versions.stroomProxyRepo/${urlLibs.stroomProxyRepo}.jar")

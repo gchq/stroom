@@ -89,14 +89,14 @@ class SecurityContextImpl implements SecurityContext {
 
         if (token != null) {
             final String[] parts = token.split("\\|", -1);
-            if (parts.length < 2) {
+            if (parts.length < 4) {
                 LOGGER.error("Unexpected token format '" + token + "'");
                 throw new AuthenticationServiceException("Unexpected token format '" + token + "'");
             }
 
             final String type = parts[0];
             final String name = parts[1];
-//            final String sessionId = parts[2];
+            final String securityToken = parts[3];
 
             if (SYSTEM.equals(type)) {
                 if (INTERNAL.equals(name)) {
@@ -108,6 +108,7 @@ class SecurityContextImpl implements SecurityContext {
             } else if (USER.equals(type)) {
                 if (name.length() > 0) {
                     userRef = userService.getUserByName(name);
+                    userRef.setToken(securityToken);
                     if (userRef == null) {
                         final String message = "Unable to push user '" + name + "' as user is unknown";
                         LOGGER.error(message);

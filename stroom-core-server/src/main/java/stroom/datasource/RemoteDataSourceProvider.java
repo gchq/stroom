@@ -20,12 +20,16 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.auth.service.ApiClient;
+import stroom.auth.service.ApiException;
+import stroom.auth.service.api.DefaultApi;
 import stroom.datasource.api.v2.DataSource;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.security.SecurityContext;
+import stroom.util.config.StroomProperties;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.client.Client;
@@ -36,6 +40,8 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.HashMap;
+import java.util.Optional;
 
 public class RemoteDataSourceProvider implements DataSourceProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(RemoteDataSourceProvider.class);
@@ -79,16 +85,23 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
             Client client = ClientBuilder.newClient(new ClientConfig().register(LoggingFeature.class));
             WebTarget webTarget = client.target(url).path(path);
 
-            Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-            invocationBuilder.header(HttpHeaders.AUTHORIZATION, securityContext.getToken());
-            Response response = invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON));
+            Optional<String> usersApiToken = getUsersApiToken();
 
-            if (HttpServletResponse.SC_OK == response.getStatus()) {
-                return response.readEntity(responseClass);
+            if(usersApiToken.isPresent()) {
+                Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
+                invocationBuilder.header(HttpHeaders.AUTHORIZATION, securityContext.getToken());
+                Response response = invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON));
+
+                if (HttpServletResponse.SC_OK == response.getStatus()) {
+                    return response.readEntity(responseClass);
+                }
+                throw new RuntimeException(String.format("Error %s sending request %s to %s: %s",
+                    response.getStatus(), request, webTarget.getUri(), response.getStatusInfo().getReasonPhrase()));
             }
 
-            throw new RuntimeException(String.format("Error %s sending request %s to %s: %s",
-                    response.getStatus(), request, webTarget.getUri(), response.getStatusInfo().getReasonPhrase()));
+            throw new RuntimeException("Could not get a token to use for this request! User was: " +
+                securityContext.getUserId());
+
         } catch (RuntimeException e) {
             throw new RuntimeException(String.format("Error sending request %s to %s", request, path), e);
         }
@@ -104,5 +117,45 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
         return "RemoteDataSourceProvider{" +
                 "url='" + url + '\'' +
                 '}';
+    }
+
+    private Optional<String> getUsersApiToken(){
+        // We need to get the user's API token. We're going to use the general purpose search endpoint for this.
+        String ourApiToken = StroomProperties.getProperty("stroom.security.apiToken");
+        String tokenServiceUrl = StroomProperties.getProperty("stroom.security.auth.url");
+        ApiClient authServiceClient = new ApiClient();
+        authServiceClient.setBasePath(tokenServiceUrl);
+        authServiceClient.addDefaultHeader("Authorization", "Bearer " + ourApiToken);
+
+        DefaultApi authServiceApi = new DefaultApi(authServiceClient);
+        stroom.auth.service.api.model.SearchRequest authSearchRequest = new stroom.auth.service.api.model.SearchRequest();
+        authSearchRequest.setLimit(10);
+        authSearchRequest.setPage(0);
+        authSearchRequest.setFilters(new HashMap<String, String>() {{
+            put("user_email", securityContext.getUserId());
+            put("token_type", "api");
+            put("enabled", "true");
+        }});
+
+        //TODO Cache tokens
+        Optional<String> usersApiToken;
+        try {
+            stroom.auth.service.api.model.SearchResponse authSearchResponse = authServiceApi.search(authSearchRequest);
+            if(authSearchResponse.getTokens().isEmpty()){
+                // User doesn't have an API token and cannot make this request.
+                LOGGER.warn("Tried to get a user's API key but they don't have one! User was: " +
+                    securityContext.getUserId());
+                usersApiToken = Optional.empty();
+            }
+            else {
+                usersApiToken = Optional.of(authSearchResponse.getTokens().get(0).getToken());
+            }
+        } catch (ApiException e) {
+            LOGGER.error("Unable to get the user's token from the Token service! User was: " +
+                securityContext.getUserId());
+            usersApiToken = Optional.empty();
+        }
+
+        return usersApiToken;
     }
 }

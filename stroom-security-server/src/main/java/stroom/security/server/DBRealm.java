@@ -32,6 +32,7 @@ import stroom.security.SecurityContext;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserRef;
+import stroom.util.shared.UserTokenUtil;
 import stroom.util.task.ServerTask;
 
 import javax.inject.Inject;
@@ -95,11 +96,13 @@ public class DBRealm extends AuthenticatingRealm {
             // At this point the user has been authenticated using JWT.
             // If the user doesn't exist in the DB then we need to create them an account here, so Stroom has
             // some way of sensibly referencing the user and something to attach permissions to.
-            // We need to elevate the user because on one is currently logged in.
+            // We need to elevate the user because no one is currently logged in.
             securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
             userService.createUser(userId);
             securityContext.popUser();
         }
+
+        securityContext.pushUser(UserTokenUtil.create((String)token.getUserId(), null, token.getToken()));
 
         if (user != null) {
             return new SimpleAuthenticationInfo(UserRefFactory.create(user), user.getPasswordHash(), getName());

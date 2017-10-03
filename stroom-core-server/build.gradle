@@ -12,6 +12,7 @@ dependencies {
     compile urlDependencies.get(urlLibs.eventLogging)
     compile urlDependencies.get(urlLibs.stroomQueryCommon)
     compile urlDependencies.get(urlLibs.stroomStatsSchema)
+    compile urlDependencies.get(urlLibs.stroomAuthServiceApi)
 
     compile libs.hessian
     compile libs.guava
