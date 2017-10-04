@@ -35,34 +35,6 @@
    </Event>
    <Event>
       <EventTime>
-         <TimeCreated>2015-10-22T07:42:00.000Z</TimeCreated>
-      </EventTime>
-      <EventSource>
-         <System>
-            <Name/>
-            <Environment/>
-         </System>
-         <Generator>Apache HTTPD</Generator>
-         <Device>
-            <IPAddress>192.168.0.2</IPAddress>
-         </Device>
-         <User>
-            <Id>user2</Id>
-         </User>
-      </EventSource>
-      <EventDetail>
-         <TypeId>0001</TypeId>
-         <View>
-            <Resource>
-               <Type>WebPage</Type>
-               <URL>/</URL>
-               <ResponseCode>200</ResponseCode>
-            </Resource>
-         </View>
-      </EventDetail>
-   </Event>
-   <Event>
-      <EventTime>
          <TimeCreated>2015-10-22T07:43:00.000Z</TimeCreated>
       </EventTime>
       <EventSource>
