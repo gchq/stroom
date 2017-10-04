@@ -36,10 +36,13 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
     private final ImmutableMap<String, String> urlMap;
 
     private final SecurityContext securityContext;
+    private final RemoteDataSourceTokenManager remoteDataSourceTokenManager;
 
     public SimpleDataSourceProviderRegistry(final SecurityContext securityContext,
-                                            final StroomPropertyService stroomPropertyService) {
+                                            final StroomPropertyService stroomPropertyService,
+                                            RemoteDataSourceTokenManager remoteDataSourceTokenManager) {
         this.securityContext = securityContext;
+        this.remoteDataSourceTokenManager = remoteDataSourceTokenManager;
 
         final String basePath = stroomPropertyService.getProperty(PROP_KEY_BASE_PATH);
 
@@ -79,7 +82,7 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
      */
     private Optional<DataSourceProvider> getDataSourceProvider(final String docRefType) {
         return Optional.ofNullable(urlMap.get(docRefType))
-                .map(url -> new RemoteDataSourceProvider(securityContext, url));
+                .map(url -> new RemoteDataSourceProvider(securityContext, url, remoteDataSourceTokenManager));
     }
 
     /**

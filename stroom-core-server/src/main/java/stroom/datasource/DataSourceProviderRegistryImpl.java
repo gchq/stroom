@@ -26,14 +26,17 @@ public class DataSourceProviderRegistryImpl implements DataSourceProviderRegistr
     private final SecurityContext securityContext;
     private final StroomPropertyService stroomPropertyService;
     private final DataSourceProviderRegistry delegateDataSourceProviderRegistry;
+    private final RemoteDataSourceTokenManager remoteDataSourceTokenManager;
 
     @SuppressWarnings("unused")
     @Inject
     public DataSourceProviderRegistryImpl (final SecurityContext securityContext,
                                            final StroomPropertyService stroomPropertyService,
-                                           final StroomBeanStore stroomBeanStore) {
+                                           final StroomBeanStore stroomBeanStore,
+                                           final RemoteDataSourceTokenManager remoteDataSourceTokenManager) {
         this.securityContext = securityContext;
         this.stroomPropertyService = stroomPropertyService;
+        this.remoteDataSourceTokenManager = remoteDataSourceTokenManager;
 
         boolean isServiceDiscoveryEnabled = stroomPropertyService.getBooleanProperty(
                 PROP_KEY_SERVICE_DISCOVERY_ENABLED,
@@ -44,10 +47,14 @@ public class DataSourceProviderRegistryImpl implements DataSourceProviderRegistr
             LOGGER.debug("Using service discovery for service lookup");
             delegateDataSourceProviderRegistry = new ServiceDiscoveryDataSourceProviderRegistry(
                     securityContext,
-                    serviceDiscoverer);
+                    serviceDiscoverer,
+                remoteDataSourceTokenManager);
         } else {
             LOGGER.debug("Using local services");
-            delegateDataSourceProviderRegistry = new SimpleDataSourceProviderRegistry(securityContext, stroomPropertyService);
+            delegateDataSourceProviderRegistry = new SimpleDataSourceProviderRegistry(
+                securityContext,
+                stroomPropertyService,
+                remoteDataSourceTokenManager);
         }
     }
 

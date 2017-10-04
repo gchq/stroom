@@ -29,12 +29,15 @@ public class ServiceDiscoveryDataSourceProviderRegistry implements DataSourcePro
 
     private final SecurityContext securityContext;
     private final ServiceDiscoverer serviceDiscoverer;
+    private final RemoteDataSourceTokenManager remoteDataSourceTokenManager;
 
-//    @Inject
+    //    @Inject
     public ServiceDiscoveryDataSourceProviderRegistry(final SecurityContext securityContext,
-                                                      final ServiceDiscoverer serviceDiscoverer) {
+                                                      final ServiceDiscoverer serviceDiscoverer,
+                                                      final RemoteDataSourceTokenManager remoteDataSourceTokenManager) {
         this.securityContext = securityContext;
         this.serviceDiscoverer = serviceDiscoverer;
+        this.remoteDataSourceTokenManager = remoteDataSourceTokenManager;
     }
 
     /**
@@ -55,7 +58,7 @@ public class ServiceDiscoveryDataSourceProviderRegistry implements DataSourcePro
 //                .filter(ServiceInstance::isEnabled) //not available until curator 2.12
                 .flatMap(serviceInstance -> {
                     String address = serviceInstance.buildUriSpec();
-                    return Optional.of(new RemoteDataSourceProvider(securityContext, address));
+                    return Optional.of(new RemoteDataSourceProvider(securityContext, address, remoteDataSourceTokenManager));
                 });
     }
 
