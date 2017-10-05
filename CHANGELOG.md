@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.48] - 2017-10-05
+
 * Issue **433** : Fixed slow stream queries caused by feed permission restrictions.
 
 ## [v5.0-beta.47] - 2017-09-11
@@ -557,7 +559,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.47...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.48...HEAD
+[v5.0-beta.48]: https://github.com/gchq/stroom/compare/v5.0-beta.47...v5.0-beta.48
 [v5.0-beta.47]: https://github.com/gchq/stroom/compare/v5.0-beta.46...v5.0-beta.47
 [v5.0-beta.46]: https://github.com/gchq/stroom/compare/v5.0-beta.45...v5.0-beta.46
 [v5.0-beta.45]: https://github.com/gchq/stroom/compare/v5.0-beta.44...v5.0-beta.45
