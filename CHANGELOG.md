@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **433** : Fixed slow stream queries caused by feed permission restrictions.
+
 ## [v5.0-beta.47] - 2017-09-11
 
 * Issue **385** : Individual index shards can now be deleted without deleting all shards.
