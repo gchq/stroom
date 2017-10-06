@@ -19,7 +19,6 @@ package stroom.entity.server.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import stroom.util.logging.StroomLogger;
 import java.lang.reflect.Proxy;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
