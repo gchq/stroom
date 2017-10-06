@@ -192,6 +192,6 @@ public class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         }
 
         // Make sure the writer is still open.
-        Assert.assertTrue(compareStatus(IndexShardStatus.OPEN, writer1.getIndexShardId()));
+        Assert.assertTrue(compareStatus(IndexShardStatus.OPEN, writer2.getIndexShardId()));
     }
 }
