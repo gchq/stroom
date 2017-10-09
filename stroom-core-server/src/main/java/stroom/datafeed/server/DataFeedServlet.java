@@ -36,14 +36,8 @@ import java.util.Enumeration;
  * Servlet that streams files to disk based on meta input arguments.
  * </p>
  */
-<<<<<<< HEAD:stroom-core-server/src/main/java/stroom/datafeed/server/DataFeedServlet.java
-@Component(DataFeedServlet.BEAN_NAME)
-public class DataFeedServlet extends HttpServlet {
-    public static final String BEAN_NAME = "dataFeedService";
-=======
 @Component
-public class DataFeedServiceImpl extends HttpServlet {
->>>>>>> f2db7371139347d6dc4fa64aa70b1ef6d0fb1e26:stroom-core-server/src/main/java/stroom/datafeed/server/DataFeedServiceImpl.java
+public class DataFeedServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataFeedServlet.class);
@@ -51,7 +45,7 @@ public class DataFeedServiceImpl extends HttpServlet {
     private final Provider<RequestHandler> requestHandlerProvider;
 
     @Inject
-    DataFeedServiceImpl(final Provider<RequestHandler> requestHandlerProvider) {
+    DataFeedServlet(final Provider<RequestHandler> requestHandlerProvider) {
         this.requestHandlerProvider = requestHandlerProvider;
     }
 

@@ -40,7 +40,6 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityServiceException;
-import stroom.entity.shared.FolderIdSet;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Sort.Direction;
@@ -722,9 +721,6 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         final FindStreamCriteria queryCriteria = new FindStreamCriteria();
         queryCriteria.copyFrom(originalCriteria);
 
-        // Turn all folders in the criteria into feeds.
-        convertFoldersToFeeds(queryCriteria, DocumentPermissionNames.READ);
-
         // Ensure that included feeds are restricted to ones the user can read.
         restrictCriteriaByFeedPermissions(queryCriteria, DocumentPermissionNames.READ);
 
@@ -841,28 +837,6 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         findFeedCriteria.setRequiredPermission(requiredPermission);
         findFeedCriteria.setPageRequest(null);
         return feedService.find(findFeedCriteria);
-    }
-
-    private void convertFoldersToFeeds(final FindStreamCriteria findStreamCriteria, final String requiredPermission) {
-        final FolderIdSet folderIdSet = findStreamCriteria.getFolderIdSet();
-        if (folderIdSet != null) {
-            if (folderIdSet.isConstrained()) {
-                final FindFeedCriteria findFeedCriteria = new FindFeedCriteria();
-                findFeedCriteria.setRequiredPermission(requiredPermission);
-                findFeedCriteria.setPageRequest(null);
-                findFeedCriteria.getFolderIdSet().copyFrom(folderIdSet);
-                final List<Feed> folderFeeds = feedService.find(findFeedCriteria);
-
-                // If the user is filtering by feed then make sure they can read all of the feeds that they are filtering by.
-                final EntityIdSet<Feed> feeds = findStreamCriteria.obtainFeeds().obtainInclude();
-
-                // Ensure a user cannot match all feeds.
-                feeds.setMatchAll(Boolean.FALSE);
-                folderFeeds.forEach(feed -> feeds.add(feed.getId()));
-            }
-
-            findStreamCriteria.setFolderIdSet(null);
-        }
     }
 
     private void buildRawSelectSQL(final FindStreamCriteria queryCriteria, final SqlBuilder sql) {
@@ -1347,9 +1321,6 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     @Override
     @Secured(Stream.DELETE_DATA_PERMISSION)
     public Long findDelete(final FindStreamCriteria criteria) {
-        // Turn all folders in the criteria into feeds.
-        convertFoldersToFeeds(criteria, DocumentPermissionNames.READ);
-
         // Ensure that included feeds are restricted to ones the user can delete.
         restrictCriteriaByFeedPermissions(criteria, DocumentPermissionNames.DELETE);
 
