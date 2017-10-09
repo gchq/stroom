@@ -40,7 +40,9 @@ import javax.inject.Inject;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Component
@@ -59,11 +61,11 @@ public class LifecycleServiceImpl implements LifecycleService {
     private final AtomicInteger startingBeanCount = new AtomicInteger();
     private final AtomicInteger stoppingBeanCount = new AtomicInteger();
     // The scheduled executor that executes executable beans.
-    private ScheduledExecutorService scheduledExecutorService;
-    private boolean startingUp = false;
-    private boolean running = false;
-    private boolean enabled;
-    private long executionInterval;
+    private final AtomicReference<ScheduledExecutorService> scheduledExecutorService = new AtomicReference<>();
+    private final AtomicBoolean startingUp = new AtomicBoolean();
+    private final AtomicBoolean  running = new AtomicBoolean();
+    private final AtomicBoolean  enabled = new AtomicBoolean();
+    private final long executionInterval;
 
     @Inject
     public LifecycleServiceImpl(final TaskManager taskManager,
@@ -78,7 +80,7 @@ public class LifecycleServiceImpl implements LifecycleService {
         this.entityManager = entityManager;
         this.scheduledTaskExecutor = scheduledTaskExecutor;
         this.securityContext = securityContext;
-        this.enabled = PropertyUtil.toBoolean(enabled, false);
+        this.enabled.set(PropertyUtil.toBoolean(enabled, false));
 
         Long executionInterval;
         try {
@@ -99,7 +101,7 @@ public class LifecycleServiceImpl implements LifecycleService {
      */
     @Override
     public void start() throws Exception {
-        if (enabled) {
+        if (enabled.get()) {
             // Do this async so that we don't delay starting the web app up
             new Thread(() -> {
                 final LogExecutionTime logExecutionTime = new LogExecutionTime();
@@ -116,57 +118,60 @@ public class LifecycleServiceImpl implements LifecycleService {
     @Override
     public void stop() throws Exception {
         LOGGER.debug("contextDestroyed()");
-        if (enabled) {
+        if (enabled.get()) {
             shutdown();
         }
     }
 
     public void startup() {
         LOGGER.info("Starting Stroom Lifecycle service");
-        startingUp = true;
+        try {
+            startingUp.set(true);
 
-        taskManager.startup();
+            taskManager.startup();
 
-        startNext();
-        // Wait for startup to complete.
-        while (startingBeanCount.get() > 0) {
-            ThreadUtil.sleep(500);
-        }
+            startNext();
+            // Wait for startup to complete.
+            while (startingBeanCount.get() > 0) {
+                ThreadUtil.sleep(500);
+            }
 
         // Create the runnable object that will perform execution on all
         // scheduled services.
-        final ReentrantLock lock = new ReentrantLock();
-        final Runnable runnable = () -> {
-            if (lock.tryLock()) {
-
-                securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
-                try {
-                    Thread.currentThread().setName("Stroom Lifecycle - ScheduledExecutor");
-                    scheduledTaskExecutor.execute();
-                } catch (final Throwable t) {
-                    LOGGER.error(t.getMessage(), t);
-                } finally {
-                    securityContext.popUser();
-                    lock.unlock();
+        final  ReentrantLock lock = new ReentrantLock();
+            final Runnable runnable =() ->{
+                if (lock.tryLock()) {
+                    securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
+                    try {
+                        Thread.currentThread().setName("Stroom Lifecycle - ScheduledExecutor");
+                        scheduledTaskExecutor.execute();
+                    } catch (final Throwable t) {
+                        LOGGER.error(t.getMessage(), t);
+                    } finally {
+                        securityContext.popUser();
+                        lock.unlock();
+                    }
+                } else {
+                    LOGGER.warn("Still trying to execute tasks");
                 }
-            } else {
-                LOGGER.warn("Still trying to execute tasks");
-            }
-        };
+            };
 
-        // Create the thread pool that we will use to startup, shutdown and
-        // execute lifecycle beans asynchronously.
-        final CustomThreadFactory threadFactory = new CustomThreadFactory(STROOM_LIFECYCLE_THREAD_POOL,
-                StroomThreadGroup.instance(), Thread.MIN_PRIORITY + 1);
+            // Create the thread pool that we will use to startup, shutdown and
+            // execute lifecycle beans asynchronously.
+            final CustomThreadFactory threadFactory = new CustomThreadFactory(STROOM_LIFECYCLE_THREAD_POOL,
+                    StroomThreadGroup.instance(), Thread.MIN_PRIORITY + 1);
 
-        // Create the executor service that will execute scheduled
-        // services.
-        scheduledExecutorService = Executors.newScheduledThreadPool(1, threadFactory);
-        scheduledExecutorService.scheduleWithFixedDelay(runnable, 0, executionInterval, TimeUnit.MILLISECONDS);
+            // Create the executor service that will execute scheduled
+            // services.
+            final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1, threadFactory);
+            scheduledExecutorService.scheduleWithFixedDelay(runnable, 0, executionInterval, TimeUnit.MILLISECONDS);
+            this.scheduledExecutorService.set(scheduledExecutorService);
 
-        LOGGER.info("Started Stroom Lifecycle service");
-        running = true;
-        startingUp = false;
+            LOGGER.info("Started Stroom Lifecycle service");
+            running.set(true);
+        } finally {
+            startingUp.set(false);
+        }
     }
 
     private void startNext() {
@@ -184,38 +189,42 @@ public class LifecycleServiceImpl implements LifecycleService {
     }
 
     public void shutdown() {
-        // Wait for startup to finish.
-        while (startingUp) {
-            LOGGER.info("Waiting for startup to finish before shutting down");
-            ThreadUtil.sleep(ONE_SECOND);
-        }
-
-        LOGGER.info("Stopping Stroom Lifecycle service");
-        if (scheduledExecutorService != null) {
-            // Stop the scheduled executor.
-            scheduledExecutorService.shutdown();
-            try {
-                scheduledExecutorService.awaitTermination(1, TimeUnit.MINUTES);
-            } catch (final InterruptedException e) {
-                LOGGER.error("Waiting termination interrupted!", e);
+        try {
+            // Wait for startup to finish.
+            while (startingUp.get()) {
+                LOGGER.info("Waiting for startup to finish before shutting down");
+                ThreadUtil.sleep(ONE_SECOND);
             }
+
+            LOGGER.info("Stopping Stroom Lifecycle service");
+            final ScheduledExecutorService scheduledExecutorService = this.scheduledExecutorService.get();
+            if (scheduledExecutorService != null) {
+                // Stop the scheduled executor.
+                scheduledExecutorService.shutdown();
+                try {
+                    scheduledExecutorService.awaitTermination(1, TimeUnit.MINUTES);
+                } catch (final InterruptedException e) {
+                    LOGGER.error("Waiting termination interrupted!", e);
+                }
+            }
+
+            stopNext();
+            // Wait for stop to complete.
+            while (stoppingBeanCount.get() > 0) {
+                ThreadUtil.sleep(500);
+            }
+
+            taskManager.shutdown();
+
+            // Finally shutdown the entity manager.
+            if (entityManager != null) {
+                entityManager.shutdown();
+            }
+
+            LOGGER.info("Stopped Stroom Lifecycle service");
+        } finally {
+            running.set(false);
         }
-
-        stopNext();
-        // Wait for stop to complete.
-        while (stoppingBeanCount.get() > 0) {
-            ThreadUtil.sleep(500);
-        }
-
-        taskManager.shutdown();
-
-        // Finally shutdown the entity manager.
-        if (entityManager != null) {
-            entityManager.shutdown();
-        }
-
-        LOGGER.info("Stopped Stroom Lifecycle service");
-        running = false;
     }
 
     private void stopNext() {
@@ -233,6 +242,6 @@ public class LifecycleServiceImpl implements LifecycleService {
     }
 
     public boolean isRunning() {
-        return running;
+        return running.get();
     }
 }

@@ -26,7 +26,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
+## [v5.0-beta.48] - 2017-10-05
 
+* Issue **433** : Fixed slow stream queries caused by feed permission restrictions.
 
 ## [v5.0-beta.47] - 2017-09-11
 
@@ -578,6 +580,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
 [v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
 
+[v5.0-beta.48]: https://github.com/gchq/stroom/compare/v5.0-beta.47...v5.0-beta.48
 [v5.0-beta.47]: https://github.com/gchq/stroom/compare/v5.0-beta.46...v5.0-beta.47
 [v5.0-beta.46]: https://github.com/gchq/stroom/compare/v5.0-beta.45...v5.0-beta.46
 [v5.0-beta.45]: https://github.com/gchq/stroom/compare/v5.0-beta.44...v5.0-beta.45

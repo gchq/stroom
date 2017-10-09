@@ -1,6 +1,7 @@
 #!/bin/bash
+
 #exit script on any error
-set -o errexit
+set -e
 
 DOCKER_REPO="gchq/stroom"
 DATE_ONLY="$(date +%Y%m%d)"
@@ -10,6 +11,10 @@ SPECIFIC_TAG=""
 #This is a whitelist of branches to produce docker builds for
 BRANCH_WHITELIST_REGEX='(^dev$|^master$|^v[0-9].*$)'
 doDockerBuild=false
+
+#Do the gradle build
+# Use 1 local worker to avoid using too much memory as each worker will chew up ~500Mb ram
+./gradlew -Pversion=$TRAVIS_TAG -PgwtCompilerWorkers=1 -PgwtCompilerMinHeap=50M -PgwtCompilerMaxHeap=500M clean build
 
 #establish what version of stroom we are building
 if [ -n "$TRAVIS_TAG" ]; then

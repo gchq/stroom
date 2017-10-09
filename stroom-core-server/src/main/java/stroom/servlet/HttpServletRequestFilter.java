@@ -14,34 +14,41 @@
  * limitations under the License.
  */
 
-package stroom.security.server;
+package stroom.servlet;
 
-import org.apache.shiro.web.servlet.AbstractFilter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.servlet.HttpServletRequestHolder;
+import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
+import javax.servlet.Filter;
 import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 
-public class RequestCaptureFilter extends AbstractFilter {
-    private static final Logger LOGGER = LoggerFactory.getLogger(RequestCaptureFilter.class);
-
+@Component
+public class HttpServletRequestFilter implements Filter {
     private final HttpServletRequestHolder httpServletRequestHolder;
 
-    public RequestCaptureFilter(final HttpServletRequestHolder httpServletRequestHolder) {
+    @Inject
+    public HttpServletRequestFilter(final HttpServletRequestHolder httpServletRequestHolder) {
         this.httpServletRequestHolder = httpServletRequestHolder;
+    }
+
+    @Override
+    public void init(final FilterConfig filterConfig) throws ServletException {
+    }
+
+    @Override
+    public void destroy() {
     }
 
     @Override
     public void doFilter(final ServletRequest request,
                          final ServletResponse response,
                          final FilterChain chain) throws IOException, ServletException {
-
         if (request instanceof HttpServletRequest) {
             httpServletRequestHolder.set((HttpServletRequest) request);
         }
@@ -49,8 +56,7 @@ public class RequestCaptureFilter extends AbstractFilter {
         chain.doFilter(request, response);
 
         if (request instanceof HttpServletRequest) {
-            //clear the held request in case the thread holding the thread scoped holder is re-used
-            //for something else
+            // Clear the held request in case the thread holding the thread scoped holder is re-used for something else
             httpServletRequestHolder.set(null);
         }
     }

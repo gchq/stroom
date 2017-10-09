@@ -40,6 +40,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityServiceException;
+import stroom.entity.shared.FolderIdSet;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Sort.Direction;
@@ -104,11 +105,11 @@ import java.util.stream.Collectors;
 //@Secured(feature = Stream.ENTITY_TYPE, permission = DocumentPermissionNames.READ)
 @Component
 public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
-    public static final String MYSQL_INDEX_STRM_CRT_MS_IDX = "STRM_CRT_MS_IDX";
-    public static final String MYSQL_INDEX_STRM_FK_FD_ID_CRT_MS_IDX = "STRM_FK_FD_ID_CRT_MS_IDX";
-    public static final String MYSQL_INDEX_STRM_EFFECT_MS_IDX = "STRM_EFFECT_MS_IDX";
-    public static final String MYSQL_INDEX_STRM_PARNT_STRM_ID_IDX = "STRM_PARNT_STRM_ID_IDX";
-    public static final String MYSQL_INDEX_STRM_FK_STRM_PROC_ID_CRT_MS_IDX = "STRM_FK_STRM_PROC_ID_CRT_MS_IDX";
+    private static final String MYSQL_INDEX_STRM_CRT_MS_IDX = "STRM_CRT_MS_IDX";
+    private static final String MYSQL_INDEX_STRM_FK_FD_ID_CRT_MS_IDX = "STRM_FK_FD_ID_CRT_MS_IDX";
+    private static final String MYSQL_INDEX_STRM_EFFECT_MS_IDX = "STRM_EFFECT_MS_IDX";
+    private static final String MYSQL_INDEX_STRM_PARNT_STRM_ID_IDX = "STRM_PARNT_STRM_ID_IDX";
+    private static final String MYSQL_INDEX_STRM_FK_STRM_PROC_ID_CRT_MS_IDX = "STRM_FK_STRM_PROC_ID_CRT_MS_IDX";
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamStoreImpl.class);
     private static final Set<String> SOURCE_FETCH_SET;
     private static final FieldMap FIELD_MAP = new FieldMap()
@@ -166,18 +167,20 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     // public Stream loadStream(final Stream stream, final boolean anyStatus) {
     // return loadStreamById(stream.getId(), null, anyStatus);
     // }
-    private final FileSystemStreamStoreTransactionHelper fileSystemStreamStoreTransactionHelper;
+//    private final FileSystemStreamStoreTransactionHelper fileSystemStreamStoreTransactionHelper;
     private final StreamAttributeValueFlush streamAttributeValueFlush;
 
     @Inject
-    FileSystemStreamStoreImpl(final StroomEntityManager entityManager, final StroomDatabaseInfo stroomDatabaseInfo,
+    FileSystemStreamStoreImpl(final StroomEntityManager entityManager,
+                              final StroomDatabaseInfo stroomDatabaseInfo,
                               final NodeCache nodeCache,
                               @Named("cachedStreamProcessorService") final StreamProcessorService streamProcessorService,
                               @Named("cachedPipelineEntityService") final PipelineService pipelineService,
                               @Named("cachedFeedService") final FeedService feedService,
                               @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
-                              final VolumeService volumeService, final FileSystemStreamStoreTransactionHelper fileSystemStreamStoreTransactionHelper,
-                              final StreamAttributeValueFlush streamAttributeValueFlush, final SecurityContext securityContext) {
+                              final VolumeService volumeService,
+                              final StreamAttributeValueFlush streamAttributeValueFlush,
+                              final SecurityContext securityContext) {
         this.entityManager = entityManager;
         this.stroomDatabaseInfo = stroomDatabaseInfo;
         this.nodeCache = nodeCache;
@@ -186,7 +189,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         this.feedService = feedService;
         this.streamTypeService = streamTypeService;
         this.volumeService = volumeService;
-        this.fileSystemStreamStoreTransactionHelper = fileSystemStreamStoreTransactionHelper;
+//        this.fileSystemStreamStoreTransactionHelper = fileSystemStreamStoreTransactionHelper;
         this.streamAttributeValueFlush = streamAttributeValueFlush;
         this.securityContext = securityContext;
     }
@@ -197,7 +200,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         outerCriteria.obtainPageRequest().setLength(1000);
         outerCriteria.setSort(FindStreamCriteria.FIELD_CREATE_MS, Direction.DESCENDING, false);
         final FileSystemStreamStoreImpl fileSystemStreamStore = new FileSystemStreamStoreImpl(null, null, null, null,
-                null, null, null, null, null, null, null);
+                null, null, null, null, null, null);
         final SqlBuilder sql = new SqlBuilder();
 
         sql.append("SELECT U.* FROM ( ");
@@ -382,10 +385,8 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
     /**
      * Utility to lock a stream.
-     *
-     * @throws StreamException
      */
-    private Set<StreamVolume> obtainLockForUpdate(final Stream stream, final boolean lockCheck) throws StreamException {
+    private Set<StreamVolume> obtainLockForUpdate(final Stream stream) throws StreamException {
         LOGGER.debug("obtainLock() Entry " + stream);
         Set<StreamVolume> lock;
         try {
@@ -484,7 +485,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             throw new StreamException("Trying to append to a stream target that doesn't exist");
         }
 
-        final Set<StreamVolume> lock = obtainLockForUpdate(stream, true);
+        final Set<StreamVolume> lock = obtainLockForUpdate(stream);
         if (lock != null) {
             final Stream dbStream = lock.iterator().next().getStream();
             final StreamType streamType = streamTypeService.load(dbStream.getStreamType());
@@ -708,7 +709,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     }
 
     @Override
-    @Transactional(readOnly = false)
+    @Transactional(readOnly = true)
     public BaseResultList<Stream> find(final FindStreamCriteria originalCriteria) {
         final boolean relationshipQuery = originalCriteria.getFetchSet().contains(Stream.ENTITY_TYPE);
         final PageRequest pageRequest = originalCriteria.getPageRequest();
@@ -720,6 +721,9 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
         final FindStreamCriteria queryCriteria = new FindStreamCriteria();
         queryCriteria.copyFrom(originalCriteria);
+
+        // Turn all folders in the criteria into feeds.
+        convertFoldersToFeeds(queryCriteria, DocumentPermissionNames.READ);
 
         // Ensure that included feeds are restricted to ones the user can read.
         restrictCriteriaByFeedPermissions(queryCriteria, DocumentPermissionNames.READ);
@@ -744,7 +748,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             rtnList = limitedList;
         }
 
-        EntityServiceLogUtil.logQuery(LOGGER, "findStream()", logExecutionTime, rtnList, sql);
+        EntityServiceLogUtil.logQuery(LOGGER, "find()", logExecutionTime, rtnList, sql);
 
         // Only return back children or parents?
         if (originalCriteria.getFetchSet().contains(Stream.ENTITY_TYPE)) {
@@ -810,24 +814,25 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     }
 
     private void restrictCriteriaByFeedPermissions(final FindStreamCriteria findStreamCriteria, final String requiredPermission) {
-        // If the user is filtering by feed then make sure they can read all of the feeds that they are filtering by.
-        final EntityIdSet<Feed> feeds = findStreamCriteria.obtainFeeds().obtainInclude();
+        // We only need to restrict data by feed for non admins.
+        if (!securityContext.isAdmin()) {
+            // If the user is filtering by feed then make sure they can read all of the feeds that they are filtering by.
+            final EntityIdSet<Feed> feeds = findStreamCriteria.obtainFeeds().obtainInclude();
 
-        // Ensure a user cannot match all feeds.
-        feeds.setMatchAll(Boolean.FALSE);
-
-        final List<Feed> restrictedFeeds = getRestrictedFeeds(requiredPermission);
+            // Ensure a user cannot match all feeds.
+            feeds.setMatchAll(Boolean.FALSE);
+            final List<Feed> restrictedFeeds = getRestrictedFeeds(requiredPermission);
 
         if (feeds.size() > 0) {
-            final Set<Long> restrictedFeedIds = restrictedFeeds.stream()
-                    .map(Feed::getId)
-                    .collect(Collectors.toSet());
+            final Set<Long> restrictedFeedIds =
+            restrictedFeeds.stream().map(Feed::getId).collect(Collectors.toSet());
 
-            // Retain only the feeds that the user has the required permission on.
-            feeds.getSet().retainAll(restrictedFeedIds);
+                // Retain only the feeds that the user has the required permission on.
+                feeds.getSet().retainAll(restrictedFeedIds);
 
-        } else {
-            feeds.addAllEntities(restrictedFeeds);
+            } else {
+                feeds.addAllEntities(restrictedFeeds);
+            }
         }
     }
 
@@ -835,8 +840,29 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         final FindFeedCriteria findFeedCriteria = new FindFeedCriteria();
         findFeedCriteria.setRequiredPermission(requiredPermission);
         findFeedCriteria.setPageRequest(null);
-
         return feedService.find(findFeedCriteria);
+    }
+
+    private void convertFoldersToFeeds(final FindStreamCriteria findStreamCriteria, final String requiredPermission) {
+        final FolderIdSet folderIdSet = findStreamCriteria.getFolderIdSet();
+        if (folderIdSet != null) {
+            if (folderIdSet.isConstrained()) {
+                final FindFeedCriteria findFeedCriteria = new FindFeedCriteria();
+                findFeedCriteria.setRequiredPermission(requiredPermission);
+                findFeedCriteria.setPageRequest(null);
+                findFeedCriteria.getFolderIdSet().copyFrom(folderIdSet);
+                final List<Feed> folderFeeds = feedService.find(findFeedCriteria);
+
+                // If the user is filtering by feed then make sure they can read all of the feeds that they are filtering by.
+                final EntityIdSet<Feed> feeds = findStreamCriteria.obtainFeeds().obtainInclude();
+
+                // Ensure a user cannot match all feeds.
+                feeds.setMatchAll(Boolean.FALSE);
+                folderFeeds.forEach(feed -> feeds.add(feed.getId()));
+            }
+
+            findStreamCriteria.setFolderIdSet(null);
+        }
     }
 
     private void buildRawSelectSQL(final FindStreamCriteria queryCriteria, final SqlBuilder sql) {
@@ -1039,11 +1065,9 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                                 break;
 
                             case BETWEEN:
-                                if (values.length > 0) {
-                                    sql.append(field);
-                                    sql.append(" >= ");
-                                    sql.arg(values[0]);
-                                }
+                                sql.append(field);
+                                sql.append(" >= ");
+                                sql.arg(values[0]);
 
                                 if (values.length > 1) {
                                     sql.append(" AND ");
@@ -1323,6 +1347,9 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     @Override
     @Secured(Stream.DELETE_DATA_PERMISSION)
     public Long findDelete(final FindStreamCriteria criteria) {
+        // Turn all folders in the criteria into feeds.
+        convertFoldersToFeeds(criteria, DocumentPermissionNames.READ);
+
         // Ensure that included feeds are restricted to ones the user can delete.
         restrictCriteriaByFeedPermissions(criteria, DocumentPermissionNames.DELETE);
 
@@ -1551,7 +1578,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         }
         final StreamType streamType = streamTypeService.loadByName(name);
         if (streamType == null) {
-            throw new EntityServiceException("Unable to find streamType: " + streamType);
+            throw new EntityServiceException("Unable to find streamType '" + name + "'");
         }
         return streamType;
     }

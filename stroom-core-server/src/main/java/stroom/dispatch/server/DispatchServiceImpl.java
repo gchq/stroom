@@ -142,7 +142,6 @@ public class DispatchServiceImpl extends RemoteServiceServlet implements Dispatc
     @Override
     protected void service(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
         try {
-            httpServletRequestHolder.set(req);
             SessionListListener.setLastRequest(req);
 
             super.service(req, resp);
@@ -150,11 +149,6 @@ public class DispatchServiceImpl extends RemoteServiceServlet implements Dispatc
         } catch (final Exception ex) {
             LOGGER.error("handle() - {}", req.getRequestURI(), ex);
             throw ex;
-        } finally {
-            // Make sure this thread no longer references this request as it
-            // might be reused for other processing. We also don't want to hold
-            // on to this request for longer than necessary.
-            httpServletRequestHolder.set(null);
         }
     }
 

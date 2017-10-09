@@ -19,6 +19,7 @@ package stroom.security.spring;
 import org.apache.commons.lang.StringUtils;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
+import org.apache.shiro.web.filter.authc.AnonymousFilter;
 import org.apache.shiro.web.servlet.AbstractShiroFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,8 +34,6 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import stroom.security.server.CertificateAuthenticationFilter;
 import stroom.security.server.JWTAuthenticationFilter;
 import stroom.security.server.JWTService;
-import stroom.security.server.RequestCaptureFilter;
-import stroom.servlet.HttpServletRequestHolder;
 import stroom.util.config.StroomProperties;
 import stroom.util.spring.StroomScope;
 
@@ -71,33 +70,27 @@ public class SecurityConfiguration {
     @Resource
     private SecurityManager securityManager;
 
-    @Bean(name = "requestCaptureFilter")
-    public RequestCaptureFilter requestCaptureFilter(HttpServletRequestHolder httpServletRequestHolder) {
-        return new RequestCaptureFilter(httpServletRequestHolder);
-    }
-
     @Bean(name = "jwtFilter")
     public JWTAuthenticationFilter jwtAuthenticationFilter(JWTService jwtService) {
         return new JWTAuthenticationFilter(jwtService);
     }
 
     @Bean(name = "shiroFilter")
-    public AbstractShiroFilter shiroFilter(
-            JWTAuthenticationFilter jwtAuthenticationFilter,
-            RequestCaptureFilter requestCaptureFilter) throws Exception {
+    public AbstractShiroFilter shiroFilter(final JWTAuthenticationFilter jwtAuthenticationFilter) throws Exception {
         final ShiroFilterFactoryBean shiroFilter = new ShiroFilterFactoryBean();
         shiroFilter.setSecurityManager(securityManager);
         shiroFilter.setLoginUrl("/login.html");
         shiroFilter.setSuccessUrl("/stroom.jsp");
 
         Map<String, Filter> filters = shiroFilter.getFilters();
-        filters.put("requestCaptureFilter", requestCaptureFilter);
         filters.put("certFilter", new CertificateAuthenticationFilter());
         filters.put("jwtFilter", jwtAuthenticationFilter);
+        filters.put("anonymousFilter", new AnonymousFilter());
 
         shiroFilter.getFilterChainDefinitionMap().put("/**/secure/**", "authc, roles[USER]");
         shiroFilter.getFilterChainDefinitionMap().put("/export", "certFilter");
-        shiroFilter.getFilterChainDefinitionMap().put("/api/authentication/v*/getToken", "requestCaptureFilter");
+        // Allow anonymous access to the getToken resource.
+        shiroFilter.getFilterChainDefinitionMap().put("/api/authentication/v*/getToken", "anonymousFilter");
         shiroFilter.getFilterChainDefinitionMap().put("/api/**", "jwtFilter");
         return (AbstractShiroFilter) shiroFilter.getObject();
     }

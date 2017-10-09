@@ -166,7 +166,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     }
 
     public void setParams(final String params) {
-        logger.log(Level.SEVERE, "Dashboard Presenter setParams " + params);
+        logger.log(Level.INFO, "Dashboard Presenter setParams " + params);
 
         this.currentParams = params;
     }
