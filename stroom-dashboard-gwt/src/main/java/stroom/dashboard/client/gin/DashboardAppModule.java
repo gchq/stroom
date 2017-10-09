@@ -36,6 +36,8 @@ import stroom.widget.dropdowntree.client.presenter.DropDownPresenter;
 import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter;
 import stroom.widget.dropdowntree.client.view.DropDownTreeViewImpl;
 import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
+import stroom.widget.iframe.client.presenter.IFramePresenter;
+import stroom.widget.iframe.client.view.IFrameViewImpl;
 
 public class DashboardAppModule extends AbstractPresenterModule {
     @Override
@@ -52,5 +54,6 @@ public class DashboardAppModule extends AbstractPresenterModule {
         bindSharedView(DropDownTreePresenter.DropDownTreeView.class, DropDownTreeViewImpl.class);
         bindPresenterWidget(EntityTreePresenter.class, EntityTreePresenter.EntityTreeView.class, EntityTreeViewImpl.class);
         bindPresenterWidget(EditorPresenter.class, EditorView.class, EditorViewImpl.class);
+        bindPresenterWidget(IFramePresenter.class, IFramePresenter.IFrameView.class, IFrameViewImpl.class);
     }
 }

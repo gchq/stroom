@@ -34,9 +34,6 @@ before_install:
   - sudo mv docker-compose /usr/local/bin
   - docker-compose --version
 
-# We run a script to build dependencies and do database setup
-#install: "./.travis.install.sh"
-    
 install: echo "skip 'gradle assemble' step to speed up build"
 
 # Increase the size of the heap

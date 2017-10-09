@@ -17,12 +17,10 @@
 package stroom.dashboard.client.table;
 
 import com.google.gwt.cell.client.Cell;
-import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
@@ -34,7 +32,11 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.cell.clickable.client.ClickableSafeHtml;
+import stroom.cell.clickable.client.ClickableSafeHtmlCell;
+import stroom.cell.clickable.client.Hyperlink;
 import stroom.cell.expander.client.ExpanderCell;
+import stroom.core.client.ContentManager;
 import stroom.core.client.LocationManager;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
@@ -74,6 +76,7 @@ import stroom.security.client.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.iframe.client.presenter.IFramePresenter;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -88,9 +91,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 
 public class TablePresenter extends AbstractComponentPresenter<TableView>
         implements HasDirtyHandlers, ResultComponent {
+
+    private static final Logger LOGGER = Logger.getLogger(TablePresenter.class.getName());
 
     public static final ComponentType TYPE = new ComponentType(1, "table", "Table");
     private static final int MIN_EXPANDER_COL_WIDTH = 0;
@@ -99,7 +105,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final TableResultRequest tableResultRequest = new TableResultRequest(0, 100);
     private final List<Column<Row, ?>> existingColumns = new ArrayList<>();
     private final List<HandlerRegistration> searchModelHandlerRegistrations = new ArrayList<>();
-    private final UrlDetector urlDetector = new UrlDetector();
     private final ButtonView addFieldButton;
     private final ButtonView downloadButton;
     private final Provider<FieldAddPresenter> fieldAddPresenterProvider;
@@ -108,11 +113,15 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final TimeZones timeZones;
     private final FieldsManager fieldsManager;
     private final DataGridView<Row> dataGrid;
+    private final Provider<IFramePresenter> iFramePresenterProvider;
+    private final ContentManager contentManager;
 
     private int lastExpanderColumnWidth;
     private int currentExpanderColumnWidth;
     private SearchModel currentSearchModel;
     private FieldAddPresenter fieldAddPresenter;
+    private Map<String, String> namedUrls;
+
     // TODO : Temporary action mechanism.
     private int streamIdIndex = -1;
     private int eventIdIndex = -1;
@@ -137,14 +146,18 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final DownloadPresenter downloadPresenter,
                           final ClientDispatchAsync dispatcher,
                           final ClientPropertyCache clientPropertyCache,
-                          final TimeZones timeZones) {
+                          final TimeZones timeZones,
+                          final Provider<IFramePresenter> iFramePresenterProvider,
+                          final ContentManager contentManager) {
         super(eventBus, view, settingsPresenterProvider);
         this.locationManager = locationManager;
         this.fieldAddPresenterProvider = fieldAddPresenterProvider;
         this.downloadPresenter = downloadPresenter;
         this.dispatcher = dispatcher;
         this.timeZones = timeZones;
+        this.iFramePresenterProvider = iFramePresenterProvider;
         this.dataGrid = new DataGridViewImpl<>(true);
+        this.contentManager = contentManager;
 
         view.setTableView(dataGrid);
 
@@ -162,6 +175,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         clientPropertyCache.get()
                 .onSuccess(result -> {
+                    namedUrls = result.getLookupTable(ClientProperties.URL_LIST, ClientProperties.URL_BASE);
                     final String value = result.get(ClientProperties.DEFAULT_MAX_RESULTS);
                     if (value != null) {
                         final String[] parts = value.split(",");
@@ -425,9 +439,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void addColumn(final Field field, final int pos) {
-        final Column<Row, SafeHtml> column = new Column<Row, SafeHtml>(new SafeHtmlCell()) {
+        final ClickableSafeHtmlCell cell = new ClickableSafeHtmlCell(this::presentIFrameDialog);
+        final Column<Row, ClickableSafeHtml> column = new Column<Row, ClickableSafeHtml>(cell) {
             @Override
-            public SafeHtml getValue(final Row row) {
+            public ClickableSafeHtml getValue(final Row row) {
                 if (row == null) {
                     return null;
                 }
@@ -436,19 +451,26 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 if (values != null) {
                     final String value = values[pos];
                     if (value != null) {
-                        final UrlDetector.Hyperlink hyperlink = urlDetector.detect(value);
+                        final Hyperlink hyperlink = Hyperlink.detect(value, namedUrls);
 
                         if (null != hyperlink) {
-                            return hyperlink.getSafeHtml();
+                            return ClickableSafeHtml
+                                    .safeHtml(hyperlink.toSafeHtml())
+                                    .hyperlink(hyperlink)
+                                    .build();
                         } else if (field.getGroup() != null && field.getGroup() >= row.depth) {
                             final SafeHtmlBuilder sb = new SafeHtmlBuilder();
                             sb.appendHtmlConstant("<b>");
                             sb.appendEscaped(value);
                             sb.appendHtmlConstant("</b>");
 
-                            return sb.toSafeHtml();
+                            return ClickableSafeHtml
+                                    .safeHtml(sb.toSafeHtml())
+                                    .build();
                         }
-                        return SafeHtmlUtils.fromString(value);
+                        return ClickableSafeHtml
+                                .safeHtml(SafeHtmlUtils.fromString(value))
+                                .build();
                     }
                 }
                 return null;
@@ -469,6 +491,40 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         dataGrid.addResizableColumn(column, fieldHeader, field.getWidth());
         existingColumns.add(column);
+    }
+
+    private void presentIFrameDialog(final Hyperlink hyperlink) {
+        switch (hyperlink.getTarget()) {
+            case DIALOG: {
+                final PopupSize popupSize = new PopupSize(800, 600);
+                final IFramePresenter iFramePresenter = iFramePresenterProvider.get();
+                iFramePresenter.setHyperlink(hyperlink);
+                ShowPopupEvent.fire(TablePresenter.this,
+                        iFramePresenter,
+                        PopupType.CLOSE_DIALOG,
+                        null,
+                        popupSize,
+                        hyperlink.getTitle(),
+                        null,
+                        null);
+                break;
+            }
+            case STROOM_TAB: {
+                final IFramePresenter iFramePresenter = iFramePresenterProvider.get();
+                iFramePresenter.setHyperlink(hyperlink);
+                contentManager.open(callback ->
+                    ConfirmEvent.fire(TablePresenter.this,
+                            "Are you sure you want to close " + hyperlink.getTitle() + "?",
+                            callback::closeTab)
+                , iFramePresenter, iFramePresenter);
+                break;
+            }
+            case BROWSER_TAB:
+                // do nothing
+                break;
+        }
+
+
     }
 
     private void performRowAction(final Row result) {

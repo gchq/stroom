@@ -73,9 +73,13 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
             }
             else {
                 String loginUrl = StroomProperties.getProperty(LOGIN_URL_PROPERTY_NAME);
-                LOGGER.info("Redirecting to login at: '{}'", loginUrl);
+                //TODO referrer to the login URL.
+                String jSessionId = ((ShiroHttpServletRequest) request).getSession().getId();
+//                String jSessionId = this.getThreadLocalRequest().getSession().getId();
+                String redirectionUrl = String.format(loginUrl + "?session_id=%s", jSessionId);
+                LOGGER.info("Redirecting to login at: '{}'", redirectionUrl);
                 HttpServletResponse httpResponse = WebUtils.toHttp(response);
-                httpResponse.sendRedirect(loginUrl);
+                httpResponse.sendRedirect(redirectionUrl);
             }
         }
 

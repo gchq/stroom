@@ -14,21 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.app.client.gin;
-
-import stroom.about.client.AboutPlugin;
-import stroom.annotations.client.AnnotationsPlugin;
-import stroom.core.client.gin.PluginModule;
-import stroom.entity.client.EntityPluginEventManager;
-import stroom.help.client.HelpPlugin;
-
-public class PluginsModule extends PluginModule {
-    @Override
-    protected void configure() {
-        bindPlugin(EntityPluginEventManager.class);
-
-        bindPlugin(HelpPlugin.class);
-        bindPlugin(AboutPlugin.class);
-        bindPlugin(AnnotationsPlugin.class);
-    }
+.iframe {
+	width: 100%;
+	height: 100%;
 }

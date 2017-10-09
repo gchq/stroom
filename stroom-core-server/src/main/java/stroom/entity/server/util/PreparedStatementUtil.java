@@ -33,21 +33,28 @@ public class PreparedStatementUtil {
 
     public static void setArguments(final PreparedStatement ps, final Iterable<Object> args) throws SQLException {
         if (args != null) {
-            int pos = 1;
-            for (final Object arg : args) {
+            int index = 1;
+            for (final Object o : args) {
                 try {
-                    if (arg instanceof Number) {
-                        ps.setLong(pos++, ((Number) arg).longValue());
-                    } else if (arg instanceof String) {
-                        ps.setString(pos++, ((String) arg));
-                    } else if (arg instanceof Boolean) {
-                        ps.setBoolean(pos++, ((Boolean) arg));
+                    if (o instanceof Long) {
+                        ps.setLong(index, (Long) o);
+                    } else if (o instanceof Integer) {
+                        ps.setInt(index, (Integer) o);
+                    } else if (o instanceof Double) {
+                        ps.setDouble(index, (Double) o);
+                    } else if (o instanceof Byte) {
+                        ps.setByte(index, (Byte) o);
+                    } else if (o instanceof String) {
+                        ps.setString(index, ((String) o));
+                    } else if (o instanceof Boolean) {
+                        ps.setBoolean(index, ((Boolean) o));
                     } else {
-                        ps.setObject(pos++, arg);
+                        ps.setObject(index, o);
                     }
                 } catch (final SQLSyntaxErrorException syntaxError) {
-                    throw new SQLSyntaxErrorException("Unable to set arg " + (pos - 1) + " (" + arg + ") in arg list " + args);
+                    throw new SQLSyntaxErrorException("Unable to set arg " + index + " (" + o + ") in arg list " + args);
                 }
+                index++;
             }
         }
     }

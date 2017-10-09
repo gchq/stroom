@@ -56,6 +56,7 @@ import stroom.servlet.DebugServlet;
 import stroom.servlet.DynamicCSSServlet;
 import stroom.servlet.EchoServlet;
 import stroom.servlet.ExportConfigServlet;
+import stroom.servlet.HttpServletRequestFilter;
 import stroom.servlet.ImportFileServlet;
 import stroom.servlet.RejectPostFilter;
 import stroom.servlet.SessionListListener;
@@ -125,11 +126,9 @@ public class App extends Application<Configuration> {
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, StroomIndexQueryResource.class);
 
         // Add filters
+        SpringUtil.addFilter(servletContextHandler, applicationContext, HttpServletRequestFilter.class, "/*");
         FilterUtil.addFilter(servletContextHandler, ThreadScopeContextFilter.class, "threadScopeContextFilter", null);
-
-        FilterUtil.addFilter(servletContextHandler, RejectPostFilter.class, "rejectPostFilter",
-                ImmutableMap.<String, String>builder().put("rejectUri", "/").build());
-
+        FilterUtil.addFilter(servletContextHandler, RejectPostFilter.class, "rejectPostFilter", ImmutableMap.<String, String>builder().put("rejectUri", "/").build());
         SpringUtil.addFilter(servletContextHandler, applicationContext, AbstractShiroFilter.class, "/*");
 
         // Add servlets
