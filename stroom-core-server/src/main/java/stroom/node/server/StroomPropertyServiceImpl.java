@@ -63,19 +63,4 @@ public class StroomPropertyServiceImpl implements StroomPropertyService {
     public boolean getBooleanProperty(final String propertyName, final boolean defaultValue) {
         return StroomProperties.getBooleanProperty(propertyName, defaultValue);
     }
-
-    public Map<String, String> getLookupTable(final String listProp, final String base) {
-        final Map<String, String> result = new HashMap<>();
-
-        final String keyList = getProperty(listProp);
-        if (null != keyList) {
-            final String[] keys = keyList.split(",");
-            for (final String key : keys) {
-                final String value = getProperty(base + key);
-                result.put(key, value);
-            }
-        }
-
-        return result;
-    }
 }

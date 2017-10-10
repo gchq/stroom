@@ -16,6 +16,7 @@
 
 package stroom.node.server;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -35,5 +36,18 @@ public interface StroomPropertyService {
 
     boolean getBooleanProperty(String propertyName, boolean defaultValue);
 
-    Map<String, String> getLookupTable(final String listProp, final String base);
+    default Map<String, String> getLookupTable(final String listProp, final String base) {
+        final Map<String, String> result = new HashMap<>();
+
+        final String keyList = getProperty(listProp);
+        if (null != keyList) {
+            final String[] keys = keyList.split(",");
+            for (final String key : keys) {
+                final String value = getProperty(base + key);
+                result.put(key, value);
+            }
+        }
+
+        return result;
+    }
 }
