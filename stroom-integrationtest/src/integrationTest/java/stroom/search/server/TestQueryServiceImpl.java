@@ -40,12 +40,11 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
 import stroom.security.server.UserService;
-import stroom.security.shared.UserRef;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.thread.ThreadUtil;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
+import java.util.Collections;
 
 public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
     private static final String QUERY_COMPONENT = "Test Component";
@@ -62,7 +61,6 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
     private QueryHistoryCleanExecutor queryHistoryCleanExecutor;
 
     private Dashboard dashboard;
-    private UserRef userRef;
     private QueryEntity testQuery;
     private QueryEntity refQuery;
 
@@ -71,7 +69,6 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         // need an explicit teardown and setup of the DB before each test method
         clean();
 
-        userRef = userService.createUser("testuser");
         dashboard = dashboardService.create("Test");
 
         final Index index = indexService.create("Test index");
@@ -80,7 +77,7 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         refQuery = queryService.create("Ref query");
         refQuery.setDashboardId(dashboard.getId());
         refQuery.setQueryId(QUERY_COMPONENT);
-        refQuery.setQuery(new Query(dataSourceRef, new ExpressionOperator(null, Op.AND, Arrays.asList())));
+        refQuery.setQuery(new Query(dataSourceRef, new ExpressionOperator(null, Op.AND, Collections.emptyList())));
         queryService.save(refQuery);
 
         // Ensure the two query creation times are separated by one second so that ordering by time works correctly in

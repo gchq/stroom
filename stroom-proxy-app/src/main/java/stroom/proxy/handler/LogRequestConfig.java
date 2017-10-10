@@ -1,6 +1,6 @@
 package stroom.proxy.handler;
 
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class LogRequestConfig {
     private String logRequest = "guid,feed,system,environment,remotehost,remoteaddress";

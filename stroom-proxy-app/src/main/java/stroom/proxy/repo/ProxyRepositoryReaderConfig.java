@@ -1,6 +1,6 @@
 package stroom.proxy.repo;
 
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.ModelStringUtil;
 
 public class ProxyRepositoryReaderConfig {
