@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **426** : Fix for incorrect processor filters. Old processor filters reference `systemGroupIdSet` rather than `folderIdSet`. The new migration updates them accordingly.
+
 ## [v5.0-beta.48] - 2017-10-05
 
 * Issue **433** : Fixed slow stream queries caused by feed permission restrictions.
