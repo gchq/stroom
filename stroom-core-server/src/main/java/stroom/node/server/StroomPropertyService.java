@@ -16,6 +16,8 @@
 
 package stroom.node.server;
 
+import java.util.Map;
+
 /**
  * A service that can be injected with spring that caches and delegates property
  * lookups to StroomProperties.
@@ -32,4 +34,6 @@ public interface StroomPropertyService {
     long getLongProperty(String propertyName, long defaultValue);
 
     boolean getBooleanProperty(String propertyName, boolean defaultValue);
+
+    Map<String, String> getLookupTable(final String listProp, final String base);
 }

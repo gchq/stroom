@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;
+import stroom.node.shared.ClientProperties;
 import stroom.util.spring.StroomScope;
 
 import javax.annotation.PostConstruct;
@@ -18,36 +19,38 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Map;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
-public class FetchAnnotation extends StroomExtensionFunctionCall {
-    private static final Logger LOGGER = LoggerFactory.getLogger(FetchAnnotation.class);
-
-    private static final String ANNOTATION_URL_PROPERTY = "stroom.url.annotations-service";
+public class FetchJson extends StroomExtensionFunctionCall {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FetchJson.class);
 
     @Resource
     private StroomPropertyService propertyService;
 
-    private String annotationServiceUrl;
+    private Map<String, String> namedUrls;
 
     @PostConstruct
     public void postConstruct() {
-        annotationServiceUrl = propertyService.getProperty(ANNOTATION_URL_PROPERTY);
+        namedUrls = propertyService.getLookupTable(ClientProperties.URL_LIST, ClientProperties.URL_BASE);
     }
 
     @Override
     protected Sequence call(String functionName, XPathContext context, Sequence[] arguments) throws XPathException {
-        Sequence sequence = EmptyAtomicSequence.getInstance();;
+        Sequence sequence = EmptyAtomicSequence.getInstance();
 
-        final String annotationId = getSafeString(functionName, context, arguments, 0);
-        final String annotationUrl = String.format("%ssingle/%s", annotationServiceUrl, annotationId);
+        final String urlName = getSafeString(functionName, context, arguments, 0);
+        final String path = getSafeString(functionName, context, arguments, 1);
 
-        LOGGER.trace(String.format("Looking Up Annotation for ID %s at %s", annotationId, annotationUrl));
+        LOGGER.trace(String.format("Looking Up JSON at %s - %s", urlName, path));
 
         try {
-            if (null != annotationServiceUrl) {
-                final URL ann = new URL(annotationUrl);
+            final String namedUrl = namedUrls.get(urlName);
+
+            if (null != namedUrl) {
+                final String completeUrl = namedUrl + path;
+                final URL ann = new URL(completeUrl);
                 final HttpURLConnection yc = (HttpURLConnection) ann.openConnection();
 
                 switch (yc.getResponseCode()) {
@@ -57,7 +60,7 @@ public class FetchAnnotation extends StroomExtensionFunctionCall {
                             final String json = in.lines().reduce("", String::concat);
 
                             sequence = JsonToXml.jsonToXml(context, json);
-                            LOGGER.trace(String.format("Found Annotation %s: %s", annotationId, json));
+                            LOGGER.trace(String.format("Found Data %s: %s", completeUrl, json));
                         }
                         break;
                     }

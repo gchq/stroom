@@ -102,14 +102,15 @@ public class StroomXSLTFunctionLibrary {
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
-                .functionName("fetch-annotation")
+                .functionName("fetch-json")
                 .library(this)
-                .minArgs(1)
-                .maxArgs(1)
+                .minArgs(2)
+                .maxArgs(2)
                 .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING,
                         SequenceType.SINGLE_STRING
                 })
-                .delegateClass(FetchAnnotation.class)
+                .delegateClass(FetchJson.class)
                 .resultType(SequenceType.NODE_SEQUENCE)
                 .build());
 

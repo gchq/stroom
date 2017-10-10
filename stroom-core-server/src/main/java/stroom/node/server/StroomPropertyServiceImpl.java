@@ -22,6 +22,9 @@ import org.springframework.stereotype.Component;
 import stroom.security.Insecure;
 import stroom.util.config.StroomProperties;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * A service that can be injected with spring that caches and delegates property
  * lookups to StroomProperties.
@@ -59,5 +62,20 @@ public class StroomPropertyServiceImpl implements StroomPropertyService {
     @Cacheable(cacheName = "serviceCache", keyGenerator = @KeyGenerator(name = "ListCacheKeyGenerator"))
     public boolean getBooleanProperty(final String propertyName, final boolean defaultValue) {
         return StroomProperties.getBooleanProperty(propertyName, defaultValue);
+    }
+
+    public Map<String, String> getLookupTable(final String listProp, final String base) {
+        final Map<String, String> result = new HashMap<>();
+
+        final String keyList = getProperty(listProp);
+        if (null != keyList) {
+            final String[] keys = keyList.split(",");
+            for (final String key : keys) {
+                final String value = getProperty(base + key);
+                result.put(key, value);
+            }
+        }
+
+        return result;
     }
 }
