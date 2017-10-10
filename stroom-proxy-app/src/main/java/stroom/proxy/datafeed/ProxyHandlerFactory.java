@@ -1,12 +1,12 @@
 package stroom.proxy.datafeed;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.lang.StringUtils;
 import stroom.proxy.handler.ForwardRequestHandlerFactory;
+import stroom.proxy.handler.LogRequestConfig;
 import stroom.proxy.handler.LogRequestHandler;
-import stroom.proxy.handler.ProxyRepositoryRequestHandler;
 import stroom.proxy.handler.RequestHandler;
-import stroom.proxy.util.ProxyProperties;
+import stroom.proxy.repo.ProxyRepositoryConfig;
+import stroom.proxy.repo.ProxyRepositoryRequestHandler;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -18,7 +18,7 @@ import java.util.List;
  * context if the config has changed.
  */
 public class ProxyHandlerFactory {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyHandlerFactory.class);
+//    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyHandlerFactory.class);
 
 //    private static final String COMMON_HANDLER_CONTEXT = "/META-INF/spring/stroomProxyCommonHandlerFactoryContext.xml";
 //    private static final String DATABASE_HANDLER_CONTEXT = "/META-INF/spring/stroomProxyDatabaseHandlerFactoryContext.xml";
@@ -38,12 +38,22 @@ public class ProxyHandlerFactory {
 //    private volatile Thread refreshThread;
 //    private volatile ClassPathXmlApplicationContext proxyHandlerContext;
 
+
+    private final LogRequestConfig logRequestConfig;
+    private final ProxyRepositoryConfig proxyRepositoryConfig;
+
     private final Provider<ProxyRepositoryRequestHandler> proxyRepositoryRequestHandlerProxider;
     private final Provider<LogRequestHandler> logRequestHandlerProvider;
     private final ForwardRequestHandlerFactory forwardRequestHandlerFactory;
 
     @Inject
-    ProxyHandlerFactory(final Provider<ProxyRepositoryRequestHandler> proxyRepositoryRequestHandlerProxider, final Provider<LogRequestHandler> logRequestHandlerProvider, final ForwardRequestHandlerFactory forwardRequestHandlerFactory) {
+    public ProxyHandlerFactory(final LogRequestConfig logRequestConfig,
+                        final ProxyRepositoryConfig proxyRepositoryConfig,
+                        final Provider<ProxyRepositoryRequestHandler> proxyRepositoryRequestHandlerProxider,
+                        final Provider<LogRequestHandler> logRequestHandlerProvider,
+                        final ForwardRequestHandlerFactory forwardRequestHandlerFactory) {
+        this.logRequestConfig = logRequestConfig;
+        this.proxyRepositoryConfig = proxyRepositoryConfig;
         this.proxyRepositoryRequestHandlerProxider = proxyRepositoryRequestHandlerProxider;
         this.logRequestHandlerProvider = logRequestHandlerProvider;
         this.forwardRequestHandlerFactory = forwardRequestHandlerFactory;
@@ -131,10 +141,10 @@ public class ProxyHandlerFactory {
 //        if (ProxyProperties.isDefined(ProxyProperties.DB_REQUEST_VALIDATOR_JNDI_NAME)) {
 //            contextList.add(DATABASE_HANDLER_CONTEXT);
 //        }
-        if (ProxyProperties.isDefined(ProxyProperties.LOG_REQUEST)) {
+        if (StringUtils.isNotBlank(logRequestConfig.getLogRequest())) {
             handlerList.add(logRequestHandlerProvider.get());
         }
-        if (ProxyProperties.isDefined(ProxyProperties.REPO_DIR)) {
+        if (StringUtils.isNotBlank(proxyRepositoryConfig.getRepoDir())) {
 //            if (ProxyProperties.isDefined(ProxyProperties.FORWARD_URL)) {
 //                handlerList.add(proxyRepositoryRequestHandlerProxider.get());
 //                return STORE_AND_FORWARD_HANDLER_CONTEXT;
@@ -143,7 +153,7 @@ public class ProxyHandlerFactory {
 //                return STORE_HANDLER_CONTEXT;
 //            }
         } else {
-            handlerList.addAll(forwardRequestHandlerFactory.createHandlers());
+            handlerList.addAll(forwardRequestHandlerFactory.create());
         }
 
 //        // Load it ...
@@ -167,11 +177,11 @@ public class ProxyHandlerFactory {
     public List<RequestHandler> createOutgoingHandlers() {
         final List<RequestHandler> handlerList = new ArrayList<>();
 
-        if (ProxyProperties.isDefined(ProxyProperties.LOG_REQUEST)) {
+        if (StringUtils.isNotBlank(logRequestConfig.getLogRequest())) {
             handlerList.add(logRequestHandlerProvider.get());
         }
-        if (ProxyProperties.isDefined(ProxyProperties.REPO_DIR) && ProxyProperties.isDefined(ProxyProperties.FORWARD_URL)) {
-            handlerList.addAll(forwardRequestHandlerFactory.createHandlers());
+        if (StringUtils.isNotBlank(proxyRepositoryConfig.getRepoDir())) {
+            handlerList.addAll(forwardRequestHandlerFactory.create());
         }
 
         return handlerList;

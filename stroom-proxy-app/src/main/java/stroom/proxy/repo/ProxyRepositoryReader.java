@@ -5,23 +5,25 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
+import stroom.proxy.datafeed.ProxyHandlerFactory;
+import stroom.proxy.handler.HandlerFactory;
 import stroom.proxy.handler.RequestHandler;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamProgressMonitor;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.Monitor;
-import stroom.util.shared.TerminateHandler;
 import stroom.util.spring.StroomShutdown;
 import stroom.util.spring.StroomStartup;
-import stroom.util.thread.ThreadUtil;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
@@ -30,87 +32,54 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * Class that reads repositories.
  */
-public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProcessor implements Runnable {
+public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryReader.class);
 
-    public static final String PROXY_FORWARD_ID = "ProxyForwardId";
+    private static final String PROXY_FORWARD_ID = "ProxyForwardId";
 
     private final ProxyRepositoryManager proxyRepositoryManager;
 
     private final ReentrantLock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
 
+    private final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig;
+    private final HandlerFactory handlerFactory;
+
     /**
      * Our worker thread
      */
-    private volatile Thread readerThread;
+    private volatile CompletableFuture<Void> readerThread;
 
     /**
      * CRON trigger - can be null
      */
-    private volatile Scheduler scheduler;
-
+    private final Scheduler scheduler;
     private final AtomicLong proxyForwardId = new AtomicLong(0);
-
-    private volatile Boolean hasOutgoingRequestHandlers = null;
 
     /**
      * Flag set to stop things
      */
     private final AtomicBoolean finish = new AtomicBoolean(false);
 
-    static int instanceCount = 0;
-
     private volatile String hostName = null;
 
-    private static class MonitorImpl implements Monitor {
-        @Override
-        public String getName() {
-            return null;
-        }
-
-        @Override
-        public void setName(final String name) {
-
-        }
-
-        @Override
-        public String getInfo() {
-            return null;
-        }
-
-        @Override
-        public void terminate() {
-
-        }
-
-        @Override
-        public void addTerminateHandler(final TerminateHandler handler) {
-
-        }
-
-        @Override
-        public void info(final Object... args) {
-
-        }
-
-        @Override
-        public boolean isTerminated() {
-            return false;
-        }
-
-        @Override
-        public Monitor getParent() {
-            return null;
-        }
-    }
-
-    public ProxyRepositoryReader(final Monitor monitor, final ProxyRepositoryManager proxyRepositoryManager) {
-        super(monitor);
+    ProxyRepositoryReader(final Monitor monitor, final ProxyRepositoryManager proxyRepositoryManager, final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig, final HandlerFactory handlerFactory) {
+        super(monitor, proxyRepositoryReaderConfig.getForwardThreadCount());
+        this.proxyRepositoryReaderConfig = proxyRepositoryReaderConfig;
+        this.handlerFactory = handlerFactory;
         this.proxyRepositoryManager = proxyRepositoryManager;
+        this.scheduler = createScheduler(proxyRepositoryReaderConfig.getReadCron());
     }
 
-    public String getHostName() {
+    private static Scheduler createScheduler(final String simpleCron) {
+        if (StringUtils.hasText(simpleCron)) {
+            return SimpleCron.compile(simpleCron).createScheduler();
+        }
+
+        return null;
+    }
+
+    private String getHostName() {
         if (hostName == null) {
             try {
                 hostName = InetAddress.getLocalHost().getHostName();
@@ -125,8 +94,7 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
         if (readerThread == null) {
             finish.set(false);
 
-            readerThread = new Thread(this, "Repository Reader Thread " + (++instanceCount));
-            readerThread.start();
+            readerThread = CompletableFuture.runAsync(this::process);
         }
     }
 
@@ -141,9 +109,18 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
                 lock.unlock();
             }
 
-            while (readerThread.isAlive()) {
-                LOGGER.info("stopReading() - Waiting for read thread to stop");
-                ThreadUtil.sleep(1000);
+            boolean waiting = true;
+            while (waiting) {
+                try {
+                    LOGGER.info("stopReading() - Waiting for read thread to stop");
+                    readerThread.get(1, TimeUnit.SECONDS);
+                    waiting = false;
+                } catch (final TimeoutException e) {
+                    // Ignore.
+                } catch (final Exception e) {
+                    LOGGER.error(e.getMessage(), e);
+                    waiting = false;
+                }
             }
         }
     }
@@ -151,8 +128,7 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
     /**
      * Main Working Thread - Keep looping until we have been told to finish
      */
-    @Override
-    public void run() {
+    private void process() {
         lock.lock();
         try {
             while (!finish.get()) {
@@ -199,7 +175,8 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
             }
 
             // Only process the thing if we have some outgoing handlers.
-            if (hasOutgoingRequestHandlers()) {
+            final List<RequestHandler> handlers = handlerFactory.create();
+            if (handlers.size() > 0) {
                 process(readyToProcess);
             }
             // Otherwise just clean.
@@ -207,9 +184,9 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
         }
     }
 
-    public List<RequestHandler> createOutgoingRequestHandlerList() {
-        return new ArrayList<>();
-    }
+//    public List<RequestHandler> createOutgoingRequestHandlerList() {
+//        return new ArrayList<>();
+//    }
 
     /**
      * Send a load of files for the same feed
@@ -231,13 +208,12 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
             metaMap.put(PROXY_FORWARD_ID, String.valueOf(thisPostId));
         }
 
-//        ThreadScopeContextHolder.getContext().put(MetaMap.NAME, metaMap);
-
-        final List<RequestHandler> requestHandlerList = createOutgoingRequestHandlerList();
+        final List<RequestHandler> handlers = handlerFactory.create();
 
         try {
             // Start the post
-            for (final RequestHandler requestHandler : requestHandlerList) {
+            for (final RequestHandler requestHandler : handlers) {
+                requestHandler.setMetaMap(metaMap);
                 requestHandler.handleHeader();
             }
 
@@ -247,7 +223,7 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
             final StreamProgressMonitor streamProgress = new StreamProgressMonitor("ProxyRepositoryReader " + feed);
             final List<Path> deleteList = new ArrayList<>();
 
-            Long nextBatchBreak = getMaxStreamSize();
+            Long nextBatchBreak = proxyRepositoryReaderConfig.getMaxStreamSize();
 
             for (final Path file : fileList) {
                 // Send no more if told to finish
@@ -255,37 +231,35 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
                     LOGGER.info("processFeedFiles() - Quitting early as we have been told to stop");
                     break;
                 }
-                if (sequenceId > getMaxAggregation()
-                        || (nextBatchBreak != null && streamProgress.getTotalBytes() > nextBatchBreak)) {
+                if (sequenceId > proxyRepositoryReaderConfig.getMaxAggregation()
+                        || (streamProgress.getTotalBytes() > nextBatchBreak)) {
                     batch++;
                     LOGGER.info("processFeedFiles() - Starting new batch %s as sequence %s > %s or size %s > %s", batch,
-                            sequenceId, getMaxAggregation(), streamProgress.getTotalBytes(), nextBatchBreak);
+                            sequenceId, proxyRepositoryReaderConfig.getMaxAggregation(), streamProgress.getTotalBytes(), nextBatchBreak);
 
                     sequenceId = 1;
-
-                    if (nextBatchBreak != null) {
-                        nextBatchBreak = streamProgress.getTotalBytes() + getMaxStreamSize();
-                    }
+                    nextBatchBreak = streamProgress.getTotalBytes() + proxyRepositoryReaderConfig.getMaxStreamSize();
 
                     // Start a new batch
-                    for (final RequestHandler requestHandler : requestHandlerList) {
+                    for (final RequestHandler requestHandler : handlers) {
                         requestHandler.handleFooter();
                     }
                     deleteFiles(stroomZipRepository, deleteList);
                     deleteList.clear();
 
                     // Start the post
-                    for (final RequestHandler requestHandler : requestHandlerList) {
+                    for (final RequestHandler requestHandler : handlers) {
+                        requestHandler.setMetaMap(metaMap);
                         requestHandler.handleHeader();
                     }
                 }
 
-                sequenceId = processFeedFile(requestHandlerList, stroomZipRepository, file, streamProgress, sequenceId);
+                sequenceId = processFeedFile(handlers, stroomZipRepository, file, streamProgress, sequenceId);
 
                 deleteList.add(file);
 
             }
-            for (final RequestHandler requestHandler : requestHandlerList) {
+            for (final RequestHandler requestHandler : handlers) {
                 requestHandler.handleFooter();
             }
 
@@ -296,7 +270,7 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("processFeedFiles() - Debug trace " + feed, ex);
             }
-            for (final RequestHandler requestHandler : requestHandlerList) {
+            for (final RequestHandler requestHandler : handlers) {
                 try {
                     requestHandler.handleError();
                 } catch (final IOException ioEx) {
@@ -317,31 +291,8 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
         LOGGER.info("stop() - Stopped  Reader Thread");
     }
 
-    public boolean hasOutgoingRequestHandlers() {
-        if (hasOutgoingRequestHandlers == null) {
-            final List<RequestHandler> requestHandlerList = createOutgoingRequestHandlerList();
-            hasOutgoingRequestHandlers = requestHandlerList != null && requestHandlerList.size() > 0;
-        }
-        return hasOutgoingRequestHandlers.booleanValue();
-    }
-
     @StroomStartup
     public void start() {
-        final List<RequestHandler> requestHandlerList = createOutgoingRequestHandlerList();
-        hasOutgoingRequestHandlers = requestHandlerList != null && requestHandlerList.size() > 0;
-
         startReading();
-    }
-
-    public void setForwardThreadCount(final int forwardThreadCount) {
-        setThreadCount(forwardThreadCount);
-    }
-
-    public void setSimpleCron(final String simpleCron) {
-        if (StringUtils.hasText(simpleCron)) {
-            scheduler = SimpleCron.compile(simpleCron).createScheduler();
-        } else {
-            scheduler = null;
-        }
     }
 }

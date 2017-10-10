@@ -11,28 +11,20 @@ import java.util.stream.Collectors;
 /**
  * Handler class that forwards the request to a URL.
  */
-public class ForwardRequestHandlerFactory {
-    private final String forwardUrl;
-    private final Integer forwardTimeoutMs;
-    private final Integer forwardDelayMs;
-    private final Integer forwardChunkSize;
+public class ForwardRequestHandlerFactory implements HandlerFactory {
+    private final ForwardRequestConfig forwardRequestConfig;
 
     @Inject
-    public ForwardRequestHandlerFactory(final String forwardUrl,
-                                        final Integer forwardTimeoutMs,
-                                        final Integer forwardDelayMs,
-                                        final Integer forwardChunkSize) {
-        this.forwardUrl = forwardUrl;
-        this.forwardTimeoutMs = forwardTimeoutMs;
-        this.forwardDelayMs = forwardDelayMs;
-        this.forwardChunkSize = forwardChunkSize;
+    public ForwardRequestHandlerFactory(final ForwardRequestConfig forwardRequestConfig) {
+        this.forwardRequestConfig = forwardRequestConfig;
     }
 
-    public List<RequestHandler> createHandlers() {
-        if (StringUtils.hasText(forwardUrl)) {
+    @Override
+    public List<RequestHandler> create() {
+        if (StringUtils.hasText(forwardRequestConfig.getForwardUrl())) {
             return Arrays
-                    .stream(forwardUrl.split(","))
-                    .map(url -> new ForwardRequestHandler(url, forwardTimeoutMs, forwardDelayMs, forwardChunkSize))
+                    .stream(forwardRequestConfig.getForwardUrl().split(","))
+                    .map(url -> new ForwardRequestHandler(url, forwardRequestConfig.getForwardTimeoutMs(), forwardRequestConfig.getForwardDelayMs(), forwardRequestConfig.getForwardChunkSize()))
                     .collect(Collectors.toList());
         }
         return Collections.emptyList();

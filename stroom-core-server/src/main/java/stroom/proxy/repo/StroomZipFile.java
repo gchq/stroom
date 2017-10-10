@@ -26,7 +26,7 @@ public class StroomZipFile implements Closeable {
     private ZipFile zipFile;
     private RuntimeException openStack;
     private StroomZipNameSet stroomZipNameSet;
-    private long totalSize = 0;
+//    private long totalSize = 0;
 
     public StroomZipFile(Path path) {
         this.file = path;
@@ -58,10 +58,10 @@ public class StroomZipFile implements Closeable {
                     stroomZipNameSet.add(fileName);
                 }
 
-                long entrySize = entry.getSize();
-                if (entrySize > 0) {
-                    totalSize += entrySize;
-                }
+//                long entrySize = entry.getSize();
+//                if (entrySize > 0) {
+//                    totalSize += entrySize;
+//                }
 
             }
         }
@@ -96,19 +96,31 @@ public class StroomZipFile implements Closeable {
     }
 
     public InputStream getInputStream(String baseName, StroomZipFileType fileType) throws IOException {
-        String fullName = getStroomZipNameSet().getName(baseName, fileType);
-        if (fullName != null) {
-            return getZipFile().getInputStream(getZipFile().getEntry(fullName));
+        final ZipArchiveEntry entry = getEntry(baseName, fileType);
+        if (entry != null) {
+            return getZipFile().getInputStream(entry);
         }
         return null;
     }
 
-    public boolean containsEntry(String baseName, StroomZipFileType fileType) throws IOException {
-        String fullName = getStroomZipNameSet().getName(baseName, fileType);
-        if (fullName != null) {
-            return getZipFile().getEntry(fullName) != null;
+    public long getSize(String baseName, StroomZipFileType fileType) throws IOException {
+        final ZipArchiveEntry entry = getEntry(baseName, fileType);
+        if (entry != null) {
+            return entry.getSize();
         }
-        return false;
+        return 0;
+    }
+
+    public boolean containsEntry(String baseName, StroomZipFileType fileType) throws IOException {
+        return getEntry(baseName, fileType) != null;
+    }
+
+    private ZipArchiveEntry getEntry(String baseName, StroomZipFileType fileType) throws IOException {
+        final String fullName = getStroomZipNameSet().getName(baseName, fileType);
+        if (fullName == null) {
+            return null;
+        }
+        return getZipFile().getEntry(fullName);
     }
 
     void renameTo(Path newFileName) throws IOException {

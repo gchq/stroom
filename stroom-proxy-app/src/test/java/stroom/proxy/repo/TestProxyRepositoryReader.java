@@ -3,11 +3,12 @@ package stroom.proxy.repo;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.feed.MetaMap;
+import stroom.proxy.handler.HandlerFactory;
 import stroom.proxy.handler.MockRequestHandler;
 import stroom.proxy.handler.RequestHandler;
 import stroom.util.io.CloseableUtil;
-import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.task.MonitorImpl;
 import stroom.util.test.StroomExpectedException;
 import stroom.util.test.StroomUnitTest;
 
@@ -24,24 +25,28 @@ import java.util.stream.Stream;
 import java.util.zip.ZipException;
 
 public class TestProxyRepositoryReader extends StroomUnitTest {
+    private ProxyRepositoryReaderConfig proxyRepositoryReaderConfig;
     private ProxyRepositoryManager proxyRepositoryManager;
     private MockRequestHandler mockRequestHandler;
     private ProxyRepositoryReader proxyRepositoryReader;
 
     private void init() throws IOException {
-        proxyRepositoryManager = new ProxyRepositoryManager();
-        proxyRepositoryManager.setRepoDir(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")));
+        init("${pathId}/${id}");
+    }
 
+    private void init(final String repoFormat) throws IOException {
+        final Path repoDir = Files.createTempDirectory("stroom");
+        proxyRepositoryReaderConfig = new ProxyRepositoryReaderConfig();
+        proxyRepositoryManager = new ProxyRepositoryManager(repoDir, repoFormat, null);
         mockRequestHandler = new MockRequestHandler();
-        proxyRepositoryReader = new ProxyRepositoryReader(new stroom.util.task.MonitorImpl(), proxyRepositoryManager) {
-            @Override
-            public List<RequestHandler> createOutgoingRequestHandlerList() {
-                final List<RequestHandler> list = new ArrayList<>();
-                list.add(mockRequestHandler);
-                return list;
-            }
 
+        final HandlerFactory handlerFactory = () -> {
+            final List<RequestHandler> list = new ArrayList<>();
+            list.add(mockRequestHandler);
+            return list;
         };
+
+        proxyRepositoryReader = new ProxyRepositoryReader(new MonitorImpl(), proxyRepositoryManager, proxyRepositoryReaderConfig, handlerFactory);
     }
 
     @Test
@@ -312,7 +317,7 @@ public class TestProxyRepositoryReader extends StroomUnitTest {
                 "Test Context".getBytes(StreamUtil.DEFAULT_CHARSET));
         stroomZipOutputStream3.close();
 
-        proxyRepositoryReader.setMaxAggregation(10);
+        proxyRepositoryReaderConfig.setMaxAggregation(10);
         proxyRepositoryReader.doRunWork();
 
         Assert.assertEquals(2, mockRequestHandler.getHandleHeaderCount());
@@ -343,8 +348,8 @@ public class TestProxyRepositoryReader extends StroomUnitTest {
             stroomZipOutputStream1.close();
         }
 
-        proxyRepositoryReader.setMaxAggregation(10000);
-        proxyRepositoryReader.setMaxStreamSize(10L);
+        proxyRepositoryReaderConfig.setMaxAggregation(10000);
+        proxyRepositoryReaderConfig.setMaxStreamSize(10);
         proxyRepositoryReader.doRunWork();
 
         Assert.assertEquals(5, mockRequestHandler.getHandleHeaderCount());
@@ -375,8 +380,8 @@ public class TestProxyRepositoryReader extends StroomUnitTest {
             stroomZipOutputStream1.close();
         }
 
-        proxyRepositoryReader.setMaxAggregation(10000);
-        proxyRepositoryReader.setMaxStreamSize(100000L);
+        proxyRepositoryReaderConfig.setMaxAggregation(10000);
+        proxyRepositoryReaderConfig.setMaxStreamSize(100000L);
         proxyRepositoryReader.doRunWork();
 
         Assert.assertEquals(1, mockRequestHandler.getHandleHeaderCount());
@@ -407,8 +412,8 @@ public class TestProxyRepositoryReader extends StroomUnitTest {
             stroomZipOutputStream1.close();
         }
 
-        proxyRepositoryReader.setMaxAggregation(20);
-        proxyRepositoryReader.setMaxStreamSize(null);
+        proxyRepositoryReaderConfig.setMaxAggregation(20);
+        proxyRepositoryReaderConfig.setMaxStreamSize(1000000);
         proxyRepositoryReader.doRunWork();
 
         Assert.assertEquals(3, mockRequestHandler.getHandleHeaderCount());
@@ -422,7 +427,7 @@ public class TestProxyRepositoryReader extends StroomUnitTest {
 
     @Test
     public void testSimpleOneFileTemplated() throws IOException {
-        init();
+        init("${id}_${FEED}_${key2}_${kEy1}_${keyNotInMeta}_${Key3}");
 
         MetaMap metaMap = new MetaMap();
         metaMap.put("feed", "myFeed");
@@ -431,8 +436,6 @@ public class TestProxyRepositoryReader extends StroomUnitTest {
         metaMap.put("key3", "myKey3");
 
         // template should be case insensitive as far as key names go as the metamap is case insensitive
-        final String repositoryFormat = "${id}_${FEED}_${key2}_${kEy1}_${keyNotInMeta}_${Key3}";
-        proxyRepositoryManager.setRepositoryFormat(repositoryFormat);
         final StroomZipRepository proxyRepository = proxyRepositoryManager.getActiveRepository();
 
         final StroomZipOutputStream stroomZipOutputStream = proxyRepository.getStroomZipOutputStream(metaMap);
@@ -476,7 +479,7 @@ public class TestProxyRepositoryReader extends StroomUnitTest {
 
     @Test
     public void testSimpleOneFileEmptyTemplate() throws IOException {
-        init();
+        init("");
 
         MetaMap metaMap = new MetaMap();
         metaMap.put("feed", "myFeed");
@@ -485,8 +488,6 @@ public class TestProxyRepositoryReader extends StroomUnitTest {
         metaMap.put("key3", "myKey3");
 
         //template should be case insensitive as far as key names go as the metamap is case insensitive
-        final String repositoryFormat = "";
-        proxyRepositoryManager.setRepositoryFormat(repositoryFormat);
         final StroomZipRepository proxyRepository = proxyRepositoryManager.getActiveRepository();
         final StroomZipOutputStream stroomZipOutputStream = proxyRepository.getStroomZipOutputStream(metaMap);
 

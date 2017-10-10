@@ -1,11 +1,9 @@
-package stroom.proxy.handler;
+package stroom.proxy.repo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
-import stroom.proxy.repo.ProxyRepositoryManager;
-import stroom.proxy.repo.StroomZipEntry;
-import stroom.proxy.repo.StroomZipOutputStream;
+import stroom.proxy.handler.RequestHandler;
 
 import java.io.IOException;
 import java.io.OutputStream;

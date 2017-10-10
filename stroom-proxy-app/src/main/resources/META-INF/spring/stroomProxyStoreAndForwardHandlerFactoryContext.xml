@@ -20,7 +20,7 @@
     <bean name="forwardRequestHandlerNameList" factory-bean="forwardRequestHandlerNameListFactory"
           factory-method="create"/>
 
-    <bean name="proxyRepositoryRequestHandler" class="stroom.proxy.handler.ProxyRepositoryRequestHandler"
+    <bean name="proxyRepositoryRequestHandler" class="stroom.proxy.repo.ProxyRepositoryRequestHandler"
           scope="thread">
     </bean>
 

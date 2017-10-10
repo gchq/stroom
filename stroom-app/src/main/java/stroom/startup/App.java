@@ -34,8 +34,10 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import stroom.cluster.server.ClusterCallServiceRPC;
 import stroom.dashboard.spring.DashboardConfiguration;
 import stroom.datafeed.server.DataFeedServlet;
+import stroom.dictionary.spring.DictionaryConfiguration;
 import stroom.dispatch.shared.DispatchService;
 import stroom.entity.server.SpringRequestFactoryServlet;
+import stroom.explorer.server.ExplorerConfiguration;
 import stroom.feed.server.RemoteFeedServiceRPC;
 import stroom.index.server.StroomIndexQueryResource;
 import stroom.index.spring.IndexConfiguration;
@@ -165,7 +167,9 @@ public class App extends Application<Configuration> {
                 ServerComponentScanConfiguration.class,
                 ServerConfiguration.class,
                 EventLoggingConfiguration.class,
+                DictionaryConfiguration.class,
                 PipelineConfiguration.class,
+                ExplorerConfiguration.class,
                 IndexConfiguration.class,
                 SearchConfiguration.class,
                 ScriptConfiguration.class,

@@ -3,9 +3,7 @@ package stroom.proxy.repo;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Required;
 import org.springframework.util.StringUtils;
-import stroom.proxy.util.ProxyProperties;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileNameUtil;
 import stroom.util.io.FileUtil;
@@ -16,13 +14,13 @@ import stroom.util.spring.StroomStartup;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
@@ -31,40 +29,52 @@ import java.util.stream.Stream;
  * old rolled repositories.
  */
 @Singleton
-public class ProxyRepositoryManager implements Runnable {
+public class ProxyRepositoryManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryManager.class);
 
     private final AtomicReference<StroomZipRepository> activeRepository = new AtomicReference<>();
     private final List<StroomZipRepository> rolledRepository = new ArrayList<>();
 
-    private volatile Thread timerThread;
     private volatile boolean finish = false;
 
     private final Path rootRepoDir;
     private final String repositoryFormat;
     private final Scheduler scheduler;
 
-    private volatile int lockDeleteAgeMs = 1000 * 60 * 60;
+    private final int lockDeleteAgeMs = 1000 * 60 * 60;
 
     @Inject
-    public ProxyRepositoryManager(@Named(ProxyProperties.REPO_DIR) final String repoDir,
-                                  @Named(ProxyProperties.REPOSITORY_FORMAT) final String repositoryFormat,
-                                  @Named(ProxyProperties.ROLL_CRON) final String simpleCron) {
-        this(repoDir, repositoryFormat, createScheduler(simpleCron));
+    public ProxyRepositoryManager(final ProxyRepositoryConfig proxyRepositoryConfig) {
+        this(getPath(proxyRepositoryConfig.getRepoDir()), getFormat(proxyRepositoryConfig.getRepositoryFormat()), createScheduler(proxyRepositoryConfig.getSimpleCron()));
     }
 
-    public ProxyRepositoryManager(final String repoDir,
+    public ProxyRepositoryManager(final Path repoDir,
                                   final String repositoryFormat,
                                   final Scheduler scheduler) {
-        if (StringUtils.hasText(repoDir)) {
-            rootRepoDir = Paths.get(repoDir);
-        } else {
-            rootRepoDir = FileUtil.getTempDir().resolve("stroom-proxy");
-            LOGGER.warn("setRepoDir() - Using temp dir as repoDir is not set. " + rootRepoDir);
-        }
-
+        this.rootRepoDir = repoDir;
         this.repositoryFormat = repositoryFormat;
         this.scheduler = scheduler;
+    }
+
+    private static Path getPath(final String repoDir) {
+        Path path;
+
+        if (StringUtils.hasText(repoDir)) {
+            path = Paths.get(repoDir);
+        } else {
+            path = FileUtil.getTempDir().resolve("stroom-proxy");
+            LOGGER.warn("setRepoDir() - Using temp dir as repoDir is not set. " + FileUtil.getCanonicalPath(path));
+        }
+
+        return path;
+    }
+
+    private static String getFormat(final String repositoryFormat) {
+        if (StringUtils.hasText(repositoryFormat)) {
+            return repositoryFormat;
+        }
+
+        return "${pathId}/${id}";
     }
 
     private static Scheduler createScheduler(final String simpleCron) {
@@ -86,12 +96,23 @@ public class ProxyRepositoryManager implements Runnable {
 
         // Rolling?
         if (scheduler != null) {
-            timerThread = new Thread(this);
-            timerThread.start();
+            CompletableFuture.runAsync(() -> {
+                        while (!finish) {
+                            // Sleep for a second
+                            ThreadUtil.sleep(1000);
+
+                            try {
+                                doRunWork();
+                            } catch (final Throwable th) {
+                                LOGGER.error("run() Exception", th);
+                            }
+                        }
+                    }
+            );
         }
     }
 
-    public void scanForOldRepositories() {
+    private void scanForOldRepositories() {
         try (final Stream<Path> stream = Files.list(rootRepoDir)) {
             stream.forEach(file -> {
                 if (Files.isDirectory(file)) {
@@ -179,20 +200,6 @@ public class ProxyRepositoryManager implements Runnable {
         }
     }
 
-    @Override
-    public void run() {
-        while (!finish) {
-            // Sleep for a second
-            ThreadUtil.sleep(1000);
-
-            try {
-                doRunWork();
-            } catch (final Throwable th) {
-                LOGGER.error("run() Exception", th);
-            }
-        }
-    }
-
     void doRunWork() {
         if (scheduler != null && scheduler.execute()) {
             if (LOGGER.isInfoEnabled()) {
@@ -213,10 +220,6 @@ public class ProxyRepositoryManager implements Runnable {
                 }
             }
         }
-    }
-
-    public void setLockDeleteAgeMs(final int lockDeleteAgeMs) {
-        this.lockDeleteAgeMs = lockDeleteAgeMs;
     }
 
     @StroomShutdown

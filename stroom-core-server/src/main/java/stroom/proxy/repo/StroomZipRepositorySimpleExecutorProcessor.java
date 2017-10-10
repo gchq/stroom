@@ -23,18 +23,13 @@ import stroom.util.shared.Monitor;
 
 public abstract class StroomZipRepositorySimpleExecutorProcessor extends StroomZipRepositoryProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomZipRepositorySimpleExecutorProcessor.class);
+
+    private final int threadCount;
+
     private SimpleExecutor simpleExecutor;
-    private int threadCount = 1;
 
-    public StroomZipRepositorySimpleExecutorProcessor(final Monitor monitor) {
+    public StroomZipRepositorySimpleExecutorProcessor(final Monitor monitor, final int threadCount) {
         super(monitor);
-    }
-
-    public int getThreadCount() {
-        return threadCount;
-    }
-
-    public void setThreadCount(final int threadCount) {
         this.threadCount = threadCount;
     }
 
@@ -44,11 +39,11 @@ public abstract class StroomZipRepositorySimpleExecutorProcessor extends StroomZ
             throw new RuntimeException("simpleExecutor is still running?");
         }
         // Start up the thread worker pool
-        simpleExecutor = new SimpleExecutor(getThreadCount());
+        simpleExecutor = new SimpleExecutor(threadCount);
     }
 
     @Override
-    public void stopExecutor(final boolean now) {
+    public final synchronized void stopExecutor(final boolean now) {
         if (simpleExecutor != null) {
             simpleExecutor.stop(now);
         }

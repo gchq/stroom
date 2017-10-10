@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
 import stroom.util.io.CloseableUtil;
+import stroom.util.io.FileUtil;
 import stroom.util.io.InitialByteArrayOutputStream;
 import stroom.util.io.InitialByteArrayOutputStream.BufferPos;
 import stroom.util.io.StreamProgressMonitor;
@@ -44,18 +45,7 @@ import java.util.List;
  * then both stroom-proxy and stroom can use it.
  */
 public abstract class StroomZipRepositoryProcessor extends RepositoryProcessor {
-    public final static int DEFAULT_MAX_AGGREGATION = 10000;
-    public final static long DEFAULT_MAX_STREAM_SIZE = ModelStringUtil.parseIECByteSizeString("10G");
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomZipRepositoryProcessor.class);
-
-    /**
-     * The max number of parts to send in a zip file
-     */
-    private int maxAggregation = DEFAULT_MAX_AGGREGATION;
-    /**
-     * The max size of the stream before giving up on this iteration
-     */
-    private Long maxStreamSize = DEFAULT_MAX_STREAM_SIZE;
 
     public StroomZipRepositoryProcessor(final Monitor monitor) {
         super(monitor);
@@ -106,16 +96,38 @@ public abstract class StroomZipRepositoryProcessor extends RepositoryProcessor {
         return entrySequence;
     }
 
-    public void setMaxStreamSizeString(final String maxStreamSizeString) {
-        this.maxStreamSize = ModelStringUtil.parseIECByteSizeString(maxStreamSizeString);
+    private long getRawContentSize(final Path file) throws IOException {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Getting raw content size for  '" + FileUtil.getCanonicalPath(file) + "'");
+        }
+
+        long totalSize = 0;
+
+        try (final StroomZipFile stroomZipFile = new StroomZipFile(file)) {
+            for (final String sourceName : stroomZipFile.getStroomZipNameSet().getBaseNameSet()) {
+                totalSize += getRawEntrySize(stroomZipFile, sourceName, StroomZipFileType.Meta);
+                totalSize += getRawEntrySize(stroomZipFile, sourceName, StroomZipFileType.Context);
+                totalSize += getRawEntrySize(stroomZipFile, sourceName, StroomZipFileType.Data);
+            }
+        }
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Raw content size for  '" + FileUtil.getCanonicalPath(file) + "' is " + ModelStringUtil.formatIECByteSizeString(totalSize));
+        }
+
+        return totalSize;
     }
 
-    public Long getMaxStreamSize() {
-        return maxStreamSize;
-    }
+    private long getRawEntrySize(final StroomZipFile stroomZipFile,
+                                 final String sourceName,
+                                 final StroomZipFileType fileType)
+            throws IOException {
+        final long size = stroomZipFile.getSize(sourceName, fileType);
+        if (size == -1) {
+            throw new IOException("Unknown raw file size");
+        }
 
-    public void setMaxStreamSize(final Long maxStreamSize) {
-        this.maxStreamSize = maxStreamSize;
+        return size;
     }
 
     protected void sendEntry(final List<? extends StroomStreamHandler> requestHandlerList, final StroomZipFile stroomZipFile,
@@ -188,13 +200,5 @@ public abstract class StroomZipRepositoryProcessor extends RepositoryProcessor {
         for (final Path file : fileList) {
             stroomZipRepository.delete(new StroomZipFile(file));
         }
-    }
-
-    public int getMaxAggregation() {
-        return maxAggregation;
-    }
-
-    public void setMaxAggregation(final int maxAggregation) {
-        this.maxAggregation = maxAggregation;
     }
 }

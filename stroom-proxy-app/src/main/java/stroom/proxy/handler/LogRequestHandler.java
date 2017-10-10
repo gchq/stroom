@@ -7,17 +7,24 @@ import stroom.proxy.repo.StroomZipEntry;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class LogRequestHandler implements RequestHandler {
     private static Logger LOGGER = LoggerFactory.getLogger(LogRequestHandler.class);
 
-    private final LogRequestConfig logRequestConfig;
+    private final List<String> logConfigList;
     private MetaMap metaMap;
 
     @Inject
     public LogRequestHandler(final LogRequestConfig logRequestConfig) {
-        this.logRequestConfig = logRequestConfig;
+        if (logRequestConfig.getLogRequest() != null && logRequestConfig.getLogRequest().length() > 0) {
+            logConfigList = Arrays.stream(logRequestConfig.getLogRequest().split(",")).collect(Collectors.toList());
+        } else {
+            logConfigList = Collections.emptyList();
+        }
     }
 
     @Override
@@ -27,8 +34,6 @@ public class LogRequestHandler implements RequestHandler {
 
     @Override
     public void handleHeader() throws IOException {
-        List<String> logConfigList = logRequestConfig.getLogRequestList();
-
         if (logConfigList != null) {
             StringBuilder builder = new StringBuilder();
             for (String logKey : logConfigList) {

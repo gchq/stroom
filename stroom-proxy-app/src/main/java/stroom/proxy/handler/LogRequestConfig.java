@@ -1,28 +1,20 @@
 package stroom.proxy.handler;
 
-import stroom.proxy.util.ProxyProperties;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 public class LogRequestConfig {
-    private final List<String> logRequest;
+    private String logRequest = "guid,feed,system,environment,remotehost,remoteaddress";
 
-    @Inject
-    public LogRequestConfig(@Named(ProxyProperties.LOG_REQUEST) final String logRequestCsv) {
-        if (logRequestCsv != null && logRequestCsv.length() > 0) {
-            logRequest = Arrays.stream(logRequestCsv.split(",")).collect(Collectors.toList());
-        } else {
-            logRequest = Collections.emptyList();
-        }
+    /**
+     * Optional log line with header attributes output as defined by this property
+     */
+    @JsonProperty
+    public String getLogRequest() {
+        return logRequest;
     }
 
-    public List<String> getLogRequestList() {
-        return logRequest;
+    @JsonProperty
+    public void setLogRequest(final String logRequest) {
+        this.logRequest = logRequest;
     }
 }
