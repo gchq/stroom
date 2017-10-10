@@ -85,7 +85,7 @@ public class StroomXSLTFunctionLibrary {
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
                 .functionName("feed-attribute")
                 .library(this)
-                .delegateClass(CurrentUser.class)
+                .delegateClass(Meta.class)
                 .minArgs(1)
                 .maxArgs(1)
                 .argTypes(new SequenceType[]{
