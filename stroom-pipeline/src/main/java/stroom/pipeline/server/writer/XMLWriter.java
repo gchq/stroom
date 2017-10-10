@@ -61,6 +61,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     private Locator locator;
 
     private boolean doneElement;
+    private boolean seenStartElement;
     private int depth;
     private String rootElement;
 
@@ -109,6 +110,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     public void startStream() {
         super.startStream();
         doneElement = false;
+        seenStartElement = false;
     }
 
     /**
@@ -207,6 +209,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
             throws SAXException {
         try {
+            seenStartElement = true;
             // If depth is 1 then we are entering an event.
             if (rootElement == null) {
                 rootElement = localName;
@@ -289,7 +292,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
         depth--;
 
         try {
-            if (depth <= 1) {
+            if (depth <= 1 && seenStartElement) {
                 bufferedWriter.flush();
                 final CharBuffer cb = stringWriter.getBuffer();
 
