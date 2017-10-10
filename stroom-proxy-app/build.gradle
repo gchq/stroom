@@ -11,7 +11,7 @@ dependencies {
 
 //    compile libs.spring_beans
 //    compile libs.spring_context
-    compile libs.spring_core
+//    compile libs.spring_core
     compile libs.guice
     compile libs.javax_inject
 

@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Main entry point to handling proxy requests.
  * <p>
- * This class used the main spring context and forwards the request on to our
+ * This class used the main context and forwards the request on to our
  * dynamic mini proxy.
  */
 public class DataFeedServlet extends HttpServlet {

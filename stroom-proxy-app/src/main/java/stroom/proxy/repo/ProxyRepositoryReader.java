@@ -2,10 +2,8 @@ package stroom.proxy.repo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
-import stroom.proxy.datafeed.ProxyHandlerFactory;
 import stroom.proxy.handler.HandlerFactory;
 import stroom.proxy.handler.RequestHandler;
 import stroom.util.date.DateUtil;
@@ -72,7 +70,7 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
     }
 
     private static Scheduler createScheduler(final String simpleCron) {
-        if (StringUtils.hasText(simpleCron)) {
+        if (simpleCron != null && simpleCron.length() > 0) {
             return SimpleCron.compile(simpleCron).createScheduler();
         }
 

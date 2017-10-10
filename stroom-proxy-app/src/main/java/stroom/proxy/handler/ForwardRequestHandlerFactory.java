@@ -1,7 +1,5 @@
 package stroom.proxy.handler;
 
-import org.springframework.util.StringUtils;
-
 import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.Collections;
@@ -21,9 +19,10 @@ public class ForwardRequestHandlerFactory implements HandlerFactory {
 
     @Override
     public List<RequestHandler> create() {
-        if (StringUtils.hasText(forwardRequestConfig.getForwardUrl())) {
+        final String urls = forwardRequestConfig.getForwardUrl();
+        if (urls != null && urls.length() > 0) {
             return Arrays
-                    .stream(forwardRequestConfig.getForwardUrl().split(","))
+                    .stream(urls.split(","))
                     .map(url -> new ForwardRequestHandler(url, forwardRequestConfig.getForwardTimeoutMs(), forwardRequestConfig.getForwardDelayMs(), forwardRequestConfig.getForwardChunkSize()))
                     .collect(Collectors.toList());
         }

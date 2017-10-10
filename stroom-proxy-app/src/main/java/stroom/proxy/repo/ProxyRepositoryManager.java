@@ -3,7 +3,6 @@ package stroom.proxy.repo;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileNameUtil;
 import stroom.util.io.FileUtil;
@@ -48,7 +47,7 @@ public class ProxyRepositoryManager {
         this(getPath(proxyRepositoryConfig.getRepoDir()), getFormat(proxyRepositoryConfig.getRepositoryFormat()), createScheduler(proxyRepositoryConfig.getSimpleCron()));
     }
 
-    public ProxyRepositoryManager(final Path repoDir,
+    ProxyRepositoryManager(final Path repoDir,
                                   final String repositoryFormat,
                                   final Scheduler scheduler) {
         this.rootRepoDir = repoDir;
@@ -59,7 +58,7 @@ public class ProxyRepositoryManager {
     private static Path getPath(final String repoDir) {
         Path path;
 
-        if (StringUtils.hasText(repoDir)) {
+        if (repoDir != null && repoDir.length() > 0) {
             path = Paths.get(repoDir);
         } else {
             path = FileUtil.getTempDir().resolve("stroom-proxy");
@@ -70,7 +69,7 @@ public class ProxyRepositoryManager {
     }
 
     private static String getFormat(final String repositoryFormat) {
-        if (StringUtils.hasText(repositoryFormat)) {
+        if (repositoryFormat != null && repositoryFormat.length() > 0) {
             return repositoryFormat;
         }
 
@@ -78,7 +77,7 @@ public class ProxyRepositoryManager {
     }
 
     private static Scheduler createScheduler(final String simpleCron) {
-        if (StringUtils.hasText(simpleCron)) {
+        if (simpleCron != null && simpleCron.length() > 0) {
             return SimpleCron.compile(simpleCron).createScheduler();
         }
 
