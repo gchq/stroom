@@ -16,22 +16,12 @@
 
 package stroom.pipeline.server.writer;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-
-import javax.inject.Inject;
-import javax.xml.transform.ErrorListener;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.sax.TransformerHandler;
-import javax.xml.transform.stream.StreamResult;
-
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-
 import stroom.entity.server.util.XMLUtil;
 import stroom.pipeline.server.LocationFactory;
 import stroom.pipeline.server.errorhandler.ErrorListenerAdaptor;
@@ -45,23 +35,42 @@ import stroom.pipeline.server.filter.XMLFilter;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.CharBuffer;
+import stroom.util.logging.StroomLogger;
+
+import javax.inject.Inject;
+import javax.xml.transform.ErrorListener;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.transform.stream.StreamResult;
+import java.io.BufferedWriter;
+import java.io.IOException;
 
 /**
  * Writes out XML and records segment boundaries as it goes.
  */
 @Component
 @Scope("prototype")
-@ConfigurableElement(type = "XMLWriter", category = Category.WRITER, roles = { PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.ROLE_WRITER, PipelineElementType.ROLE_MUTATOR,
-        PipelineElementType.VISABILITY_STEPPING }, icon = ElementIcons.XML)
+@ConfigurableElement(
+        type = "XMLWriter",
+        category = Category.WRITER,
+        roles = {
+                PipelineElementType.ROLE_TARGET,
+                PipelineElementType.ROLE_HAS_TARGETS,
+                PipelineElementType.ROLE_WRITER,
+                PipelineElementType.ROLE_MUTATOR,
+                PipelineElementType.VISABILITY_STEPPING },
+        icon = ElementIcons.XML)
 public class XMLWriter extends AbstractWriter implements XMLFilter {
+
+    public static final StroomLogger LOGGER = StroomLogger.getLogger(XMLWriter.class);
+
     private final LocationFactory locationFactory;
 
     private ContentHandler handler = NullXMLFilter.INSTANCE;
     private Locator locator;
 
     private boolean doneElement;
-    private boolean seenStartElement;
+    private boolean seenStartElementSinceStartDoc;
     private int depth;
     private String rootElement;
 
@@ -87,6 +96,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
 
     @Override
     public void startProcessing() {
+        LOGGER.trace("startProcessing called");
         try {
             stringWriter = new CharBufferWriter();
             bufferedWriter = new BufferedWriter(stringWriter);
@@ -108,9 +118,9 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
 
     @Override
     public void startStream() {
+        LOGGER.trace("startStream called");
         super.startStream();
         doneElement = false;
-        seenStartElement = false;
     }
 
     /**
@@ -123,6 +133,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
      */
     @Override
     public void setDocumentLocator(final Locator locator) {
+        LOGGER.trace("setDocumentLocator called");
         // Just remember the locator in case we start to output a document.
         this.locator = locator;
         super.setDocumentLocator(locator);
@@ -130,17 +141,37 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
 
     @Override
     public void startDocument() throws SAXException {
-        if (!startedDocument) {
-            startedDocument = true;
-            handler.startDocument();
-            super.startDocument();
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace("startDocument called, buffer [%s]", truncateAndStripWhitespace(getBuffer()));
         }
+        try {
+            //clear out the buffer in case we have a lone processing instruction from a previous empty split
+            //as the sax processor will write a processing instruction whenever startDocument is called, potentially
+            //leading to many of them if we have lots of empty splits before this
+            bufferedWriter.flush();
+            stringWriter.getBuffer().setLength(0);
+        } catch (final IOException e) {
+            throw new SAXException(e);
+        } finally {
+            seenStartElementSinceStartDoc = false;
+            if (!startedDocument) {
+                startedDocument = true;
+                handler.startDocument();
+                super.startDocument();
+            }
+        }
+
     }
 
     @Override
     public void endDocument() throws SAXException {
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace("endDocument called, buffer [%s]", truncateAndStripWhitespace(getBuffer()));
+        }
+
         handler.endDocument();
         super.endDocument();
+        seenStartElementSinceStartDoc = false;
         startedDocument = false;
     }
 
@@ -208,8 +239,14 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
             throws SAXException {
+
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace(String.format("startElement called for %s at depth %s, buffer [%s]",
+                    localName, depth, truncateAndStripWhitespace(getBuffer())));
+        }
+        seenStartElementSinceStartDoc = true;
+
         try {
-            seenStartElement = true;
             // If depth is 1 then we are entering an event.
             if (rootElement == null) {
                 rootElement = localName;
@@ -245,6 +282,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
 
                             final String header = cb.toString();
                             final String footer = footerBuilder.toString();
+                            LOGGER.trace(String.format("Setting header [%s] and footer [%s]", header, footer));
 
                             this.header = header.getBytes(getCharset());
                             this.footer = footer.getBytes(getCharset());
@@ -286,19 +324,23 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
      */
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace(String.format("endElement called for %s at depth %s, buffer [%s]",
+                    localName, depth, truncateAndStripWhitespace(getBuffer())));
+        }
         handler.endElement(uri, localName, qName);
 
         // Decrease the element depth
         depth--;
 
         try {
-            if (depth <= 1 && seenStartElement) {
+            if (depth <= 1) {
                 bufferedWriter.flush();
                 final CharBuffer cb = stringWriter.getBuffer();
 
                 // If depth = 1 then we have finished an event.
                 if (depth == 1) {
-                    if (cb.length() > 0) {
+                    if (cb.length() > 0 && seenStartElementSinceStartDoc) {
                         // Compensate for the fact that the writer will now have
                         // received a closing bracket see comment in
                         // startElement() for an explanation.
@@ -316,6 +358,12 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
                         final String body = cb.toString();
 
                         borrowDestinations(header, footer);
+
+                        if (LOGGER.isTraceEnabled()) {
+                            LOGGER.trace(String.format("Writing %s chars [%s] to destinations",
+                                    body.length(),
+                                    truncateAndStripWhitespace(body)));
+                        }
                         getWriter().write(body);
                         returnDestinations();
                     }
@@ -323,6 +371,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
                     doneElement = false;
                 }
 
+                LOGGER.trace("Clearing charbuffer");
                 cb.setLength(0);
             }
         } catch (final IOException e) {
@@ -421,4 +470,39 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     public void setEncoding(final String encoding) {
         super.setEncoding(encoding);
     }
+
+    private static String truncateAndStripWhitespace(String str) {
+        //remove any line breaks and white space, accepting that white space in element text or attributes will be lost
+        //but is this is intended for debugging that is ok.
+        String truncatedStr = str
+                .replaceAll("\\s+","")
+                .replace("\n", "");
+        int strLen = -1;
+        if (truncatedStr != null) {
+            strLen = truncatedStr.length();
+            if (strLen > 100) {
+                truncatedStr = String.format("%s..TRUNCATED..%s", truncatedStr.substring(0, 45), truncatedStr.substring(strLen - 45));
+            }
+        } else {
+            truncatedStr = "NULL";
+        }
+        return truncatedStr;
+    }
+
+    /**
+     * Only for use in debugging as it will flush the stringWriter
+     * @return
+     */
+    private String getBuffer() {
+        CharBuffer charBuffer = null;
+        try {
+            stringWriter.flush();
+            charBuffer = stringWriter.getBuffer();
+        } catch (Exception e) {
+            LOGGER.warn("Ignoring error %s", e.getMessage());
+        }
+        return charBuffer != null ? charBuffer.toString() : "";
+    }
+
+
 }
