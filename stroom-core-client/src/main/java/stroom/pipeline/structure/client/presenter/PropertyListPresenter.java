@@ -444,14 +444,9 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
             }
         }
 
-
         if (docRefs.size() > 0) {
-
-
             // Load entities.
             dispatcher.exec(new FetchDocRefsAction(docRefs)).onSuccess(result -> {
-
-
                 final Map<DocRef, DocRef> fetchedDocRefs = result
                         .stream()
                         .collect(Collectors.toMap(Function.identity(), Function.identity()));
