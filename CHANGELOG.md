@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **439** : Fix for caches where elements were not eagerly evicted.
 
+* Issue **424** : Fix for cluster ping error display.
+
 ## [v5.0-beta.48] - 2017-10-05
 
 * Issue **433** : Fixed slow stream queries caused by feed permission restrictions.
