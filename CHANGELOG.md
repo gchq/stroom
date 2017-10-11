@@ -9,7 +9,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
-* Issue **419** : Fixed multiple xml processing instructions appearing in output.
+* Issue **419** : Fix multiple xml processing instructions appearing in output.
+
+* Issue **426** : Fix for incorrect processor filters. Old processor filters reference `systemGroupIdSet` rather than `folderIdSet`. The new migration updates them accordingly.
+
+* Issue **429** : Fix to remove `usePool` parser parameter.
+
+* Issue **439** : Fix for caches where elements were not eagerly evicted.
+
+* Issue **424** : Fix for cluster ping error display.
 
 ## [v5.0-beta.48] - 2017-10-05
 

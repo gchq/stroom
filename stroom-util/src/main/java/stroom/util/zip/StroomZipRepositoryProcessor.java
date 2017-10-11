@@ -248,7 +248,7 @@ public abstract class StroomZipRepositoryProcessor {
             LOGGER.error("fileScan()", ex);
 
         } finally {
-            CloseableUtil.closeLogAndIngoreException(stroomZipFile);
+            CloseableUtil.closeLogAndIgnoreException(stroomZipFile);
         }
     }
 
