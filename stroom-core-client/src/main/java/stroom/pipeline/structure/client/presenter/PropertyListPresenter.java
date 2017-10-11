@@ -30,9 +30,12 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
+import stroom.entity.shared.DocRef;
+import stroom.pipeline.shared.FetchDocRefsAction;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -51,8 +54,12 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class PropertyListPresenter extends MyPresenterWidget<DataGridView<PipelineProperty>>
         implements HasDirtyHandlers {
@@ -80,6 +87,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
 
     private final GlyphButtonView editButton;
     private final Provider<NewPropertyPresenter> newPropertyPresenter;
+    private final ClientDispatchAsync dispatcher;
 
     private Map<PipelineElementType, Map<String, PipelinePropertyType>> allPropertyTypes;
     private PipelineEntity pipelineEntity;
@@ -89,9 +97,11 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
 
     @Inject
     public PropertyListPresenter(final EventBus eventBus,
-                                 final Provider<NewPropertyPresenter> newPropertyPresenter) {
+                                 final Provider<NewPropertyPresenter> newPropertyPresenter,
+                                 final ClientDispatchAsync dispatcher) {
         super(eventBus, new DataGridViewImpl<PipelineProperty>(true));
         this.newPropertyPresenter = newPropertyPresenter;
+        this.dispatcher = dispatcher;
 
         editButton = getView().addButton(GlyphIcons.EDIT);
         editButton.setTitle("Edit Property");
@@ -141,23 +151,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
         getView().addResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final PipelineProperty property) {
-                String value = property.getPropertyType().getDefaultValue();
-
-                final PipelineProperty added = getActualProperty(pipelineModel.getPipelineData().getAddedProperties(),
-                        property);
-                if (added != null) {
-                    value = getVal(added);
-                } else {
-                    final PipelineProperty removed = getActualProperty(
-                            pipelineModel.getPipelineData().getRemovedProperties(), property);
-                    if (removed == null) {
-                        final PipelineProperty inherited = getInheritedProperty(property);
-                        if (inherited != null) {
-                            value = getVal(inherited);
-                        }
-                    }
-                }
-
+                final String value = getVal(property);
                 return getSafeHtmlWithState(property, value, true);
             }
         }, "Value", 200);
@@ -320,7 +314,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
     }
 
     public void setCurrentElement(final PipelineElement currentElement) {
-        final List<PipelineProperty> defaultProperties = new ArrayList<PipelineProperty>();
+        final List<PipelineProperty> defaultProperties = new ArrayList<>();
         if (currentElement != null && allPropertyTypes != null) {
             final Map<String, PipelinePropertyType> propertyTypes = allPropertyTypes
                     .get(currentElement.getElementType());
@@ -418,9 +412,72 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
     }
 
     private void refresh() {
+        final Set<DocRef> docRefs = new HashSet<>();
+
+        final List<PipelineProperty> propertyList = new ArrayList<>(defaultProperties.size());
+        for (final PipelineProperty defaultProperty : defaultProperties) {
+            PipelineProperty property = defaultProperty;
+
+            final PipelineProperty added = getActualProperty(pipelineModel.getPipelineData().getAddedProperties(),
+                    property);
+            if (added != null) {
+                // Add our version of the property.
+                property = added;
+            } else {
+                final PipelineProperty removed = getActualProperty(
+                        pipelineModel.getPipelineData().getRemovedProperties(), property);
+                if (removed == null) {
+                    // Get the inherited property as we haven't set the property or removed (shadowed) the parent property.
+                    final PipelineProperty inherited = getInheritedProperty(property);
+                    if (inherited != null) {
+                        property = inherited;
+                    }
+                }
+            }
+            // Add the property.
+            propertyList.add(property);
+
+            // If the property is a doc ref then we will have to look it up on the server to get the current name for the entity.
+            final DocRef docRef = property.getValue().getEntity();
+            if (docRef != null) {
+                docRefs.add(docRef);
+            }
+        }
+
+
+        if (docRefs.size() > 0) {
+
+
+            // Load entities.
+            dispatcher.exec(new FetchDocRefsAction(docRefs)).onSuccess(result -> {
+
+
+                final Map<DocRef, DocRef> fetchedDocRefs = result
+                        .stream()
+                        .collect(Collectors.toMap(Function.identity(), Function.identity()));
+
+                for (final PipelineProperty property : propertyList) {
+                    final DocRef docRef = property.getValue().getEntity();
+                    if (docRef != null) {
+                        final DocRef fetchedDocRef = fetchedDocRefs.get(docRef);
+                        if (fetchedDocRef != null) {
+                            property.getValue().setEntity(fetchedDocRef);
+                        }
+                    }
+                }
+
+                setData(propertyList);
+            });
+
+        } else {
+            setData(propertyList);
+        }
+    }
+
+    private void setData(final List<PipelineProperty> propertyList) {
         getView().getSelectionModel().clear();
-        getView().setRowData(0, defaultProperties);
-        getView().setRowCount(defaultProperties.size());
+        getView().setRowData(0, propertyList);
+        getView().setRowCount(propertyList.size());
     }
 
     private void enableButtons() {
