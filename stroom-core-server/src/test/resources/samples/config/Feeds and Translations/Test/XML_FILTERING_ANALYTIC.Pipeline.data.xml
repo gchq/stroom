@@ -1,0 +1,32 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<pipeline>
+    <properties>
+        <add>
+            <property>
+                <element>translationFilter</element>
+                <name>xslt</name>
+                <value>
+                    <entity>
+                        <type>XSLT</type>
+                        <uuid>6f684aed-4bd6-4ad8-af08-dccd75ae14ab</uuid>
+                        <name>XML_FILTERING_ANALYTIC</name>
+                    </entity>
+                </value>
+            </property>
+            <property>
+                <element>splitFilter</element>
+                <name>splitDepth</name>
+                <value>
+                    <integer>1</integer>
+                </value>
+            </property>
+            <property>
+                <element>splitFilter</element>
+                <name>splitCount</name>
+                <value>
+                    <integer>2</integer>
+                </value>
+            </property>
+        </add>
+    </properties>
+</pipeline>
