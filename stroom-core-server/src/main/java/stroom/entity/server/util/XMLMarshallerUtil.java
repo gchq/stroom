@@ -18,6 +18,9 @@ package stroom.entity.server.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
+import java.util.Collection;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
@@ -29,11 +32,78 @@ import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
+import javassist.Modifier;
 import stroom.util.io.StreamUtil;
 
 public final class XMLMarshallerUtil {
     private XMLMarshallerUtil() {
         // Utility class.
+    }
+
+    public static Object removeEmptyCollections(final Object obj) {
+        return deepClone(obj, 0);
+    }
+
+    private static Object deepClone(final Object obj, final int depth) {
+        Object result = null;
+        try {
+            if (obj != null) {
+                Class<?> clazz = obj.getClass();
+                Object clone;
+
+                try {
+                    clone = clazz.newInstance();
+                } catch (final Exception e) {
+                    return obj;
+                }
+
+                while (clazz != null) {
+                    for (final Field field : clazz.getDeclaredFields()) {
+                        if (!(Modifier.isStatic(field.getModifiers()) && Modifier.isFinal(field.getModifiers()))) {
+                            field.setAccessible(true);
+                            try {
+                                Object o = field.get(obj);
+                                if (o != null) {
+                                    if (o instanceof Collection<?>) {
+                                        final Collection<?> collection = (Collection<?>) o;
+                                        if (collection.size() == 0) {
+                                            o = null;
+                                        }
+                                    } else if (field.getType().isArray()) {
+                                        if (Array.getLength(o) == 0) {
+                                            o = null;
+                                        }
+                                    } else {
+                                        o = deepClone(o, depth + 1);
+                                    }
+                                }
+
+                                field.set(clone, o);
+
+                                if (o != null) {
+                                    result = clone;
+                                }
+                            } catch (final Exception e) {
+                                throw new RuntimeException(e.getMessage(), e);
+                            }
+                        }
+                    }
+                    clazz = clazz.getSuperclass();
+                }
+
+                // If we are at the depth of the initial object then ensure we
+                // return a clone of the
+                // initial object as we don't want null tobe returned unless
+                // null was supplied.
+                if (result == null && depth == 0) {
+                    result = clone;
+                }
+            }
+        } catch (final Exception e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+
+        return result;
     }
 
     public static <T> String marshal(final JAXBContext context, final T obj, final XmlAdapter<?, ?>... adapters) {
