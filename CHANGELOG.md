@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **419** : Fixed multiple xml processing instructions appearing in output.
+
 ## [v5.0-beta.48] - 2017-10-05
 
 * Issue **433** : Fixed slow stream queries caused by feed permission restrictions.
