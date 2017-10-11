@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import stroom.apiclients.AuthenticationServiceClient;
 import stroom.node.server.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
@@ -26,17 +27,17 @@ public class DataSourceProviderRegistryImpl implements DataSourceProviderRegistr
     private final SecurityContext securityContext;
     private final StroomPropertyService stroomPropertyService;
     private final DataSourceProviderRegistry delegateDataSourceProviderRegistry;
-    private final RemoteDataSourceTokenManager remoteDataSourceTokenManager;
+    private final AuthenticationServiceClient authenticationServiceClient;
 
     @SuppressWarnings("unused")
     @Inject
     public DataSourceProviderRegistryImpl (final SecurityContext securityContext,
                                            final StroomPropertyService stroomPropertyService,
                                            final StroomBeanStore stroomBeanStore,
-                                           final RemoteDataSourceTokenManager remoteDataSourceTokenManager) {
+                                           final AuthenticationServiceClient authenticationServiceClient) {
         this.securityContext = securityContext;
         this.stroomPropertyService = stroomPropertyService;
-        this.remoteDataSourceTokenManager = remoteDataSourceTokenManager;
+        this.authenticationServiceClient = authenticationServiceClient;
 
         boolean isServiceDiscoveryEnabled = stroomPropertyService.getBooleanProperty(
                 PROP_KEY_SERVICE_DISCOVERY_ENABLED,
@@ -48,13 +49,13 @@ public class DataSourceProviderRegistryImpl implements DataSourceProviderRegistr
             delegateDataSourceProviderRegistry = new ServiceDiscoveryDataSourceProviderRegistry(
                     securityContext,
                     serviceDiscoverer,
-                remoteDataSourceTokenManager);
+                    authenticationServiceClient);
         } else {
             LOGGER.debug("Using local services");
             delegateDataSourceProviderRegistry = new SimpleDataSourceProviderRegistry(
                 securityContext,
                 stroomPropertyService,
-                remoteDataSourceTokenManager);
+                    authenticationServiceClient);
         }
     }
 

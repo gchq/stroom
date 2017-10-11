@@ -16,6 +16,7 @@
 
 package stroom.datasource;
 
+import stroom.apiclients.AuthenticationServiceClient;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.servicediscovery.ExternalService;
@@ -29,15 +30,15 @@ public class ServiceDiscoveryDataSourceProviderRegistry implements DataSourcePro
 
     private final SecurityContext securityContext;
     private final ServiceDiscoverer serviceDiscoverer;
-    private final RemoteDataSourceTokenManager remoteDataSourceTokenManager;
+    private final AuthenticationServiceClient authenticationServiceClient;
 
     //    @Inject
     public ServiceDiscoveryDataSourceProviderRegistry(final SecurityContext securityContext,
                                                       final ServiceDiscoverer serviceDiscoverer,
-                                                      final RemoteDataSourceTokenManager remoteDataSourceTokenManager) {
+                                                      final AuthenticationServiceClient authenticationServiceClient) {
         this.securityContext = securityContext;
         this.serviceDiscoverer = serviceDiscoverer;
-        this.remoteDataSourceTokenManager = remoteDataSourceTokenManager;
+        this.authenticationServiceClient = authenticationServiceClient;
     }
 
     /**
@@ -58,7 +59,7 @@ public class ServiceDiscoveryDataSourceProviderRegistry implements DataSourcePro
 //                .filter(ServiceInstance::isEnabled) //not available until curator 2.12
                 .flatMap(serviceInstance -> {
                     String address = serviceInstance.buildUriSpec();
-                    return Optional.of(new RemoteDataSourceProvider(securityContext, address, remoteDataSourceTokenManager));
+                    return Optional.of(new RemoteDataSourceProvider(securityContext, address, authenticationServiceClient));
                 });
     }
 

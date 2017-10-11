@@ -55,6 +55,7 @@ public class JWTService {
     }
 
     public Optional<JWTAuthenticationToken> verifyToken(ServletRequest request){
+        //TODO We're not getting the token from the request any more.
         Optional<String> authHeader = getAuthHeader(request);
         Optional<String> authParam = getAuthParam(request);
         String jws;

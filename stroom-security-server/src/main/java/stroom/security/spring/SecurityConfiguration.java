@@ -32,8 +32,10 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
+import stroom.apiclients.AuthenticationServiceClient;
 import stroom.security.server.JWTAuthenticationFilter;
 import stroom.security.server.JWTService;
+import stroom.security.server.NonceManager;
 import stroom.util.config.StroomProperties;
 import stroom.util.spring.StroomScope;
 
@@ -69,8 +71,11 @@ public class SecurityConfiguration {
     private SecurityManager securityManager;
 
     @Bean(name = "jwtFilter")
-    public JWTAuthenticationFilter jwtAuthenticationFilter(JWTService jwtService) {
-        return new JWTAuthenticationFilter(jwtService);
+    public JWTAuthenticationFilter jwtAuthenticationFilter(
+            JWTService jwtService,
+            NonceManager nonceManager,
+            AuthenticationServiceClient authenticationServiceClient) {
+        return new JWTAuthenticationFilter(jwtService, nonceManager, authenticationServiceClient);
     }
 
     @Bean(name = "shiroFilter")
@@ -86,9 +91,9 @@ public class SecurityConfiguration {
         filters.put("anonymousFilter", new AnonymousFilter());
 
         shiroFilter.getFilterChainDefinitionMap().put("/**/secure/**", "authc, roles[USER]");
-        shiroFilter.getFilterChainDefinitionMap().put("/export", "certFilter");
         // Allow anonymous access to the getToken resource.
         shiroFilter.getFilterChainDefinitionMap().put("/api/authentication/v*/getToken", "anonymousFilter");
+        shiroFilter.getFilterChainDefinitionMap().put("/**", "jwtFilter");
         shiroFilter.getFilterChainDefinitionMap().put("/api/**", "jwtFilter");
         return (AbstractShiroFilter) shiroFilter.getObject();
     }

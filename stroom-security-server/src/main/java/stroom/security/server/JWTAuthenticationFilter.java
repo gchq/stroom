@@ -21,26 +21,45 @@ import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.web.filter.authc.AuthenticatingFilter;
 import org.apache.shiro.web.servlet.ShiroHttpServletRequest;
 import org.apache.shiro.web.util.WebUtils;
+import org.jose4j.jwt.JwtClaims;
+import org.jose4j.jwt.MalformedClaimException;
+import org.jose4j.jwt.consumer.InvalidJwtException;
+import org.jose4j.jwt.consumer.JwtConsumer;
+import org.jose4j.jwt.consumer.JwtConsumerBuilder;
+import org.jose4j.keys.HmacKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.apiclients.AuthenticationServiceClient;
 import stroom.util.config.StroomProperties;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.UUID;
 
 public class JWTAuthenticationFilter extends AuthenticatingFilter {
     private static final Logger LOGGER = LoggerFactory.getLogger(JWTAuthenticationFilter.class);
 
     private JWTService jwtService;
+    private NonceManager nonceManager;
+    private AuthenticationServiceClient authenticationServiceClient;
     //TODO Use an API gateway
     private final String LOGIN_URL_PROPERTY_NAME = "stroom.security.login.url";
+    private final String AUTHENTICATION_URL_PROPERTY_NAME = "stroom.security.authentication.url";
+    private final String ADVERTISED_STROOM_URL = "stroom.advertisedUrl";
+    private final String JWT_SECRET = "stroom.security.jwtSecret";
+    private final String JWT_ISSUER = "stroom.security.jwtIssuer";
 
-    public JWTAuthenticationFilter(final JWTService jwtService) {
+    public JWTAuthenticationFilter(final JWTService jwtService, final NonceManager nonceManager, AuthenticationServiceClient authenticationServiceClient) {
         this.jwtService = jwtService;
+        this.nonceManager = nonceManager;
+        this.authenticationServiceClient = authenticationServiceClient;
     }
 
     @Override
@@ -52,10 +71,13 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
         }
 
         boolean loggedIn = false;
+        String accessCode = request.getParameter("accessCode");
+        Optional<String> sessionId = Arrays.stream(((ShiroHttpServletRequest) request).getCookies())
+                .filter(cookie -> cookie.getName().equals("authSession"))
+                .map(cookie -> cookie.getValue())
+                .findFirst();
 
-        if (JWTService.getAuthHeader(request).isPresent()
-            || JWTService.getAuthParam(request).isPresent()) {
-            LOGGER.info("About to attempt login");
+        if(accessCode != null) {
             loggedIn = executeLogin(request, response);
         }
 
@@ -72,13 +94,25 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
                 httpResponse.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
             }
             else {
-                String loginUrl = StroomProperties.getProperty(LOGIN_URL_PROPERTY_NAME);
-                //TODO referrer to the login URL.
-                String jSessionId = ((ShiroHttpServletRequest) request).getSession().getId();
-//                String jSessionId = this.getThreadLocalRequest().getSession().getId();
-                String redirectionUrl = String.format(loginUrl + "?session_id=%s", jSessionId);
+                String authenticationUrl = StroomProperties.getProperty(AUTHENTICATION_URL_PROPERTY_NAME) + "/authenticate";
+                String advertisedStroomUrl = StroomProperties.getProperty(ADVERTISED_STROOM_URL);
+
+                String nonceHash = nonceManager.createNonce(sessionId.get());
+
+                StringBuilder redirectionParams = new StringBuilder();
+                redirectionParams.append("?scope=openid");
+                redirectionParams.append("&response_type=code");
+                redirectionParams.append("&client_id=stroom");
+                redirectionParams.append("&redirect_url=");
+                redirectionParams.append(advertisedStroomUrl);
+                redirectionParams.append("&state="); //TODO Not yet sure what's needed here
+                redirectionParams.append("&nonce=");
+                redirectionParams.append(nonceHash);
+
+                String redirectionUrl = authenticationUrl + redirectionParams.toString();
                 LOGGER.info("Redirecting to login at: '{}'", redirectionUrl);
                 HttpServletResponse httpResponse = WebUtils.toHttp(response);
+                httpResponse.addCookie(new Cookie("authSession", UUID.randomUUID().toString()));
                 httpResponse.sendRedirect(redirectionUrl);
             }
         }
@@ -87,8 +121,45 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
     }
 
     @Override
-    protected JWTAuthenticationToken createToken(ServletRequest request, ServletResponse response) throws IOException {
-        return jwtService.verifyToken(request).orElse(null);
+    protected JWTAuthenticationToken createToken(ServletRequest request, ServletResponse response) throws IOException, InvalidJwtException, MalformedClaimException {
+        String accessCode = request.getParameter("accessCode");
+
+        Optional<String> sessionId = Arrays.stream(((ShiroHttpServletRequest) request).getCookies())
+                .filter(cookie -> cookie.getName().equals("authSession"))
+                .map(cookie -> cookie.getValue())
+                .findFirst();
+
+        //TODO: check the optionals and handle empties.
+        if(accessCode != null){
+            Optional<String> idToken = authenticationServiceClient.getIdToken(accessCode, sessionId.get());
+            String jwtSecret = StroomProperties.getProperty(JWT_SECRET);
+            String jwtIssuer = StroomProperties.getProperty(JWT_ISSUER);
+
+            JwtConsumerBuilder builder = new JwtConsumerBuilder()
+                    .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account for clock skew
+                    .setRequireSubject() // the JWT must have a subject claim
+                    .setVerificationKey(new HmacKey(jwtSecret.getBytes())) // verify the signature with the public key
+                    .setRelaxVerificationKeyValidation() // relaxes key length requirement
+                    .setExpectedIssuer(jwtIssuer);
+
+            JwtConsumer consumer = builder.build();
+
+            final JwtClaims claims = consumer.processToClaims(idToken.get());
+            String nonceHash = (String)claims.getClaimsMap().get("nonce");
+            boolean doNoncesMatch = nonceManager.match(sessionId.get(), nonceHash);
+            if(!doNoncesMatch){
+                throw new RuntimeException("TODO");
+            }
+
+            // The user is authenticated now.
+            nonceManager.forget(sessionId.get());
+            return new JWTAuthenticationToken(claims.getSubject(), idToken.get());
+        }
+        else{
+            LOGGER.info("Attempted access without an access code.");
+        }
+
+        return null;
     }
 
     @Override

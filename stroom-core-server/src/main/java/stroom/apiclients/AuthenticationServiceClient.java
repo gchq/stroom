@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.datasource;
+package stroom.apiclients;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +23,7 @@ import stroom.auth.service.ApiClient;
 import stroom.auth.service.ApiException;
 import stroom.auth.service.api.DefaultApi;
 import stroom.auth.service.api.model.CreateTokenRequest;
+import stroom.auth.service.api.model.IdTokenRequest;
 import stroom.auth.service.api.model.SearchRequest;
 import stroom.auth.service.api.model.SearchResponse;
 import stroom.util.config.StroomProperties;
@@ -40,13 +41,13 @@ import java.util.Optional;
  * If a logged-in user's API token is ever needed elsewhere then this class should be refactored accordingly.
  */
 @Component
-class RemoteDataSourceTokenManager {
-    private static final Logger LOGGER = LoggerFactory.getLogger(RemoteDataSourceTokenManager.class);
+public class AuthenticationServiceClient {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationServiceClient.class);
     private DefaultApi authServiceApi;
     private final String ourApiToken;
     private final String tokenServiceUrl;
 
-    RemoteDataSourceTokenManager() {
+    public AuthenticationServiceClient() {
         ourApiToken = StroomProperties.getProperty("stroom.security.apiToken");
         tokenServiceUrl = StroomProperties.getProperty("stroom.security.auth.url");
         ApiClient authServiceClient = new ApiClient();
@@ -81,7 +82,7 @@ class RemoteDataSourceTokenManager {
         createTokenRequest.setTokenType("api");
         createTokenRequest.setUserEmail(userId);
         createTokenRequest.setComments(
-                "Created by Stroom's RemoteDataSourceTokenManager because the user did not have an existing API token.");
+                "Created by Stroom's AuthenticationServiceClient because the user did not have an existing API token.");
         String token = authServiceApi.create(createTokenRequest);
         return token;
     }
@@ -116,5 +117,18 @@ class RemoteDataSourceTokenManager {
         }
 
         return usersApiToken;
+    }
+
+    public Optional<String> getIdToken(String accessCode, String sessionId) {
+        IdTokenRequest idTokenRequest = new IdTokenRequest();
+        idTokenRequest.setAccessCode(accessCode);
+        idTokenRequest.setSessionId(sessionId);
+        String idToken = null;
+        try {
+            idToken = authServiceApi.getIdToken(idTokenRequest);
+        } catch (ApiException e) {
+            LOGGER.error("Unable to retrieve id token!", e);
+        }
+        return Optional.of(idToken);
     }
 }
