@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **424** : Fix for cluster ping error display.
 
+* Issue **441** : Fix to ensure correct names are shown in pipeline properties.
+
 ## [v5.0-beta.48] - 2017-10-05
 
 * Issue **433** : Fixed slow stream queries caused by feed permission restrictions.
