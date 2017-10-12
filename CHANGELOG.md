@@ -9,39 +9,41 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#444** : Fix segment markers on RollingStreamAppender.
+
 ## [v5.0-beta.49] - 2017-10-11
 
-* Issue **426** : Fix for incorrect processor filters. Old processor filters reference `systemGroupIdSet` rather than `folderIdSet`. The new migration updates them accordingly.
+* Issue **#426** : Fix for incorrect processor filters. Old processor filters reference `systemGroupIdSet` rather than `folderIdSet`. The new migration updates them accordingly.
 
-* Issue **429** : Fix to remove `usePool` parser parameter.
+* Issue **#429** : Fix to remove `usePool` parser parameter.
 
-* Issue **439** : Fix for caches where elements were not eagerly evicted.
+* Issue **#439** : Fix for caches where elements were not eagerly evicted.
 
-* Issue **424** : Fix for cluster ping error display.
+* Issue **#424** : Fix for cluster ping error display.
 
-* Issue **441** : Fix to ensure correct names are shown in pipeline properties.
+* Issue **#441** : Fix to ensure correct names are shown in pipeline properties.
 
 ## [v5.0-beta.48] - 2017-10-05
 
-* Issue **433** : Fixed slow stream queries caused by feed permission restrictions.
+* Issue **#433** : Fixed slow stream queries caused by feed permission restrictions.
 
 ## [v5.0-beta.47] - 2017-09-11
 
-* Issue **385** : Individual index shards can now be deleted without deleting all shards.
+* Issue **#385** : Individual index shards can now be deleted without deleting all shards.
 
-* Issue **391** : Users needed `Manage Processors` permission to initiate pipeline stepping. This is no longer required as the 'best fit' pipeline is now discovered as the internal processing user.
+* Issue **#391** : Users needed `Manage Processors` permission to initiate pipeline stepping. This is no longer required as the 'best fit' pipeline is now discovered as the internal processing user.
 
-* Issue **392** : Inherited pipelines now only require 'Use' permission to be used instead of requiring 'Read' permission.
+* Issue **#392** : Inherited pipelines now only require 'Use' permission to be used instead of requiring 'Read' permission.
 
-* Issue **394** : Pipeline stepping will now show errors with an alert popup.
+* Issue **#394** : Pipeline stepping will now show errors with an alert popup.
 
-* Issue **396** : All queries associated with a dashboard should now be correctly deleted when a dashboard is deleted.
+* Issue **#396** : All queries associated with a dashboard should now be correctly deleted when a dashboard is deleted.
 
-* Issue **393** : All caches now cache items within the context of the current user so that different users do not have the possibility of having problems caused by others users not having read permissions on items.
+* Issue **#393** : All caches now cache items within the context of the current user so that different users do not have the possibility of having problems caused by others users not having read permissions on items.
 
-* Issue **358** : Schemas are now selected from a subset matching the criteria set on SchemaFilter by the user.
+* Issue **#358** : Schemas are now selected from a subset matching the criteria set on SchemaFilter by the user.
 
-* Issue **369** : Translation stepping wasn't showing any errors during stepping if a schema had an error in it.
+* Issue **#369** : Translation stepping wasn't showing any errors during stepping if a schema had an error in it.
 
 ## [v5.0-beta.46] - 2017-08-15
 
