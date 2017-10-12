@@ -137,10 +137,21 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
                 if (eventIds != null) {
                     final int index = (int) count;
                     if (eventIds.length <= index) {
-                        final String msg = "Unexpected number of events being extracted";
-                        final ProcessException searchException = new ProcessException(msg);
-                        errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), msg, searchException);
-                        throw searchException;
+                        // FIXME : THIS IS A TEMPORARY FIX TO ACCOUNT FOR SOME ROLLING STREAM APPENDERS MISSING CORRECT SEGMENTS
+                        // FIXME : SEE gh-444
+                        if (eventIds.length + 2 > index) {
+                            final String msg = "Unexpected number of events being extracted";
+                            final ProcessException searchException = new ProcessException(msg);
+                            errorReceiverProxy.log(Severity.WARNING, null, getElementId(), msg, searchException);
+
+
+                        } else {
+                            // FIXME : THIS IS THE STANDARD CODE - KEEP
+                            final String msg = "Unexpected number of events being extracted";
+                            final ProcessException searchException = new ProcessException(msg);
+                            errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), msg, searchException);
+                            throw searchException;
+                        }
                     }
                     eventId = String.valueOf(eventIds[index]);
                 } else {
