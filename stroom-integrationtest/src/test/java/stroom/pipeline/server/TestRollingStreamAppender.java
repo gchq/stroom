@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,12 @@
 
 package stroom.pipeline.server;
 
+import org.junit.Assert;
+import org.junit.Test;
 import stroom.AbstractProcessIntegrationTest;
+import stroom.CommonTestScenarioCreator;
+import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedService;
 import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
@@ -34,14 +39,16 @@ import stroom.pipeline.shared.XSLTService;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.RecordCount;
-import stroom.test.StroomProcessTestFileUtil;
-import stroom.test.ComparisonHelper;
+import stroom.streamstore.server.StreamSource;
+import stroom.streamstore.server.StreamStore;
+import stroom.streamstore.server.fs.serializable.RASegmentInputStream;
+import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.shared.Stream;
 import stroom.test.PipelineTestUtil;
+import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
-import org.junit.Assert;
-import org.junit.Test;
 
 import javax.annotation.Resource;
 import java.io.BufferedInputStream;
@@ -50,8 +57,9 @@ import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.List;
 
-public class TestRollingFileAppender extends AbstractProcessIntegrationTest {
+public class TestRollingStreamAppender extends AbstractProcessIntegrationTest {
     @Resource
     private PipelineFactory pipelineFactory;
     @Resource
@@ -70,31 +78,39 @@ public class TestRollingFileAppender extends AbstractProcessIntegrationTest {
     private PipelineDataCache pipelineDataCache;
     @Resource
     private RollingDestinations destinations;
+    @Resource
+    private StreamStore streamStore;
+    @Resource
+    private FeedService feedService;
+    @Resource
+    private CommonTestScenarioCreator commonTestScenarioCreator;
 
     @Test
     public void testXML() throws Exception {
-        final String dir = "TestRollingFileAppender/";
-        final TextConverter textConverter = createTextConverter(dir + "TestRollingFileAppender.ds3.xml",
-                "TestRollingFileAppender", TextConverterType.DATA_SPLITTER);
-        final XSLT filteredXSLT = createXSLT(dir + "TestRollingFileAppender.xsl", "TestRollingFileAppender");
-        final PipelineEntity pipelineEntity = createPipeline(dir + "TestRollingFileAppender_XML_Pipeline.xml",
+        final Feed feed = commonTestScenarioCreator.createSimpleFeed("TEST", "12345");
+        final String dir = "TestRollingStreamAppender/";
+        final TextConverter textConverter = createTextConverter(dir + "TestRollingStreamAppender.ds3.xml",
+                "TestRollingStreamAppender", TextConverterType.DATA_SPLITTER);
+        final XSLT filteredXSLT = createXSLT(dir + "TestRollingStreamAppender.xsl", "TestRollingStreamAppender");
+        final PipelineEntity pipelineEntity = createPipeline(dir + "TestRollingStreamAppender_XML_Pipeline.xml",
                 textConverter, filteredXSLT);
-        test(pipelineEntity, dir, "TestRollingFileAppender", dir + "TestRollingFileAppender.xml.out", null, false);
+        test(pipelineEntity, dir, "TestRollingStreamAppender", dir + "TestRollingStreamAppender.xml.out", null, false);
     }
 
     @Test
     public void testText() throws Exception {
-        final String dir = "TestRollingFileAppender/";
-        final TextConverter textConverter = createTextConverter(dir + "TestRollingFileAppender.ds3.xml",
-                "TestRollingFileAppender", TextConverterType.DATA_SPLITTER);
-        final XSLT filteredXSLT = createXSLT(dir + "TestRollingFileAppender_Text.xsl", "TestRollingFileAppender");
-        final PipelineEntity pipelineEntity = createPipeline(dir + "TestRollingFileAppender_Text_Pipeline.xml",
+        final Feed feed = commonTestScenarioCreator.createSimpleFeed("TEST", "12345");
+        final String dir = "TestRollingStreamAppender/";
+        final TextConverter textConverter = createTextConverter(dir + "TestRollingStreamAppender.ds3.xml",
+                "TestRollingStreamAppender", TextConverterType.DATA_SPLITTER);
+        final XSLT filteredXSLT = createXSLT(dir + "TestRollingStreamAppender_Text.xsl", "TestRollingStreamAppender");
+        final PipelineEntity pipelineEntity = createPipeline(dir + "TestRollingStreamAppender_Text_Pipeline.xml",
                 textConverter, filteredXSLT);
-        test(pipelineEntity, dir, "TestRollingFileAppender", dir + "TestRollingFileAppender.txt.out", null, true);
+        test(pipelineEntity, dir, "TestRollingStreamAppender", dir + "TestRollingStreamAppender.txt.out", null, true);
     }
 
     private PipelineEntity createPipeline(final String pipelineFile, final TextConverter textConverter,
-            final XSLT xslt) {
+                                          final XSLT xslt) {
         // Load the pipeline config.
         final String data = StroomProcessTestFileUtil.getString(pipelineFile);
         final PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineEntityService, pipelineMarshaller, data);
@@ -112,7 +128,7 @@ public class TestRollingFileAppender extends AbstractProcessIntegrationTest {
     }
 
     private TextConverter createTextConverter(final String textConverterFile, final String name,
-            final TextConverterType textConverterType) {
+                                              final TextConverterType textConverterType) {
         // Create a record for the TextConverter.
         final InputStream textConverterInputStream = StroomProcessTestFileUtil.getInputStream(textConverterFile);
         TextConverter textConverter = textConverterService.create(null, name);
@@ -134,7 +150,7 @@ public class TestRollingFileAppender extends AbstractProcessIntegrationTest {
     // TODO This method is 80% the same in a whole bunch of test classes -
     // refactor some of the repetition out.
     private void test(final PipelineEntity pipelineEntity, final String inputPath, final String inputStem,
-            final String outputReference, final String encoding, final boolean text) throws Exception {
+                      final String outputReference, final String encoding, final boolean text) throws Exception {
         String fileName = inputStem;
         if (text) {
             fileName += ".txt";
@@ -189,9 +205,6 @@ public class TestRollingFileAppender extends AbstractProcessIntegrationTest {
         // FORCE ROLL SO WE CAN GET OUTPUT
         destinations.forceRoll();
 
-        final File refFile = StroomProcessTestFileUtil.getTestResourcesFile(outputReference);
-        final File tmpFile = new File(FileUtil.getTempDir(), fileName);
-
         Assert.assertTrue(recordCount.getRead() > 0);
         Assert.assertTrue(recordCount.getWritten() > 0);
         // Assert.assertEquals(recordCount.getRead(), recordCount.getWritten());
@@ -201,6 +214,73 @@ public class TestRollingFileAppender extends AbstractProcessIntegrationTest {
         Assert.assertEquals(59, loggingErrorReceiver.getRecords(Severity.ERROR));
         Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.FATAL_ERROR));
 
-        ComparisonHelper.compareFiles(refFile, tmpFile, false, false);
+        final List<Stream> streams = streamStore.find(new FindStreamCriteria());
+        Assert.assertEquals(1, streams.size());
+        final StreamSource streamSource = streamStore.openStreamSource(streams.get(0).getId());
+
+        checkHeaderFooterOnly(streamSource);
+
+        final File refFile = StroomProcessTestFileUtil.getTestResourcesFile(outputReference);
+        final String refData = StreamUtil.fileToString(refFile);
+        final String data = StreamUtil.streamToString(streamSource.getInputStream());
+        Assert.assertEquals(refData, data);
     }
+
+    private void checkHeaderFooterOnly(final StreamSource streamSource) throws Exception {
+        final RASegmentInputStream segmentInputStream = new RASegmentInputStream(streamSource);
+        try {
+            // Include the XML Header and footer.
+            segmentInputStream.include(0);
+            segmentInputStream.include(segmentInputStream.count() - 1);
+
+//            // Include as many segments as we can.
+//            for (final long segmentId : eventIds) {
+//                segmentInputStream.include(segmentId);
+//                count++;
+//            }
+
+            final String data = StreamUtil.streamToString(segmentInputStream);
+            final String ref = "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n" +
+                    "<Events xmlns=\"event-logging:3\"\n" +
+                    "        xmlns:stroom=\"stroom\"\n" +
+                    "        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                    "        xsi:schemaLocation=\"event-logging:3 file://event-logging-v3.0.0.xsd\"\n" +
+                    "        Version=\"3.0.0\">\n" +
+                    "</Events>\n";
+
+            Assert.assertEquals(ref, data);
+
+        } finally {
+            segmentInputStream.close();
+        }
+    }
+
+//    private void checkFullOutput(final StreamSource streamSource) throws Exception {
+//        final RASegmentInputStream segmentInputStream = new RASegmentInputStream(streamSource);
+//        try {
+////            // Include the XML Header and footer.
+////            segmentInputStream.include(0);
+////            segmentInputStream.include(segmentInputStream.count() - 1);
+//
+////            // Include as many segments as we can.
+////            for (final long segmentId : eventIds) {
+////                segmentInputStream.include(segmentId);
+////                count++;
+////            }
+//
+//            final String data = StreamUtil.streamToString(segmentInputStream);
+//            final String ref = "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n" +
+//                    "<Events xmlns=\"event-logging:3\"\n" +
+//                    "        xmlns:stroom=\"stroom\"\n" +
+//                    "        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+//                    "        xsi:schemaLocation=\"event-logging:3 file://event-logging-v3.0.0.xsd\"\n" +
+//                    "        Version=\"3.0.0\">\n" +
+//                    "</Events>\n";
+//
+//            Assert.assertEquals(ref, data);
+//
+//        } finally {
+//            segmentInputStream.close();
+//        }
+//    }
 }
