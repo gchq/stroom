@@ -94,13 +94,8 @@ public class RollingStreamDestination extends RollingDestination {
                     write(header);
                 }
 
-                if (outputStream != null && outputStream.getBytesWritten() > 0) {
-                    // Add a segment marker to the output stream if we are
-                    // segmenting.
-                    if (segmentOutputStream != null) {
-                        segmentOutputStream.addSegment();
-                    }
-                }
+                // Insert a segment marker before we write the next record.
+                insertSegmentMarker();
 
                 recordCount.incrementAndGet();
 
@@ -169,6 +164,9 @@ public class RollingStreamDestination extends RollingDestination {
 
         // If we have written then write a footer if we have one.
         if (footer != null && outputStream != null && outputStream.getBytesWritten() > 0) {
+            // Insert a segment marker before we write the footer.
+            insertSegmentMarker();
+
             // Write the footer.
             try {
                 write(footer);
@@ -211,6 +209,16 @@ public class RollingStreamDestination extends RollingDestination {
             LOGGER.debug("Closing: %s", key);
         }
         outputStream.close();
+    }
+
+    private void insertSegmentMarker() throws IOException {
+        if (outputStream != null && outputStream.getBytesWritten() > 0) {
+            // Add a segment marker to the output stream if we are
+            // segmenting.
+            if (segmentOutputStream != null) {
+                segmentOutputStream.addSegment();
+            }
+        }
     }
 
     @Override

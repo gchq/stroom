@@ -9,8 +9,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -23,16 +25,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -41,8 +42,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -55,16 +58,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -73,8 +75,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -87,16 +91,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -105,8 +108,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -119,16 +124,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -137,8 +141,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -151,16 +157,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -169,8 +174,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -183,16 +190,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -201,8 +207,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -215,16 +223,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -233,8 +240,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -247,16 +256,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -265,8 +273,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -279,16 +289,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -297,8 +306,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -311,16 +322,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -329,8 +339,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -343,16 +355,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -361,8 +372,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -375,16 +388,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -393,8 +405,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -407,16 +421,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -425,8 +438,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -439,16 +454,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -457,8 +471,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -471,16 +487,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -489,8 +504,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -503,16 +520,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -521,8 +537,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -535,16 +553,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -553,8 +570,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -567,16 +586,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -585,8 +603,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -599,16 +619,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -617,8 +636,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -631,16 +652,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -649,8 +669,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -663,16 +685,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -681,8 +702,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -695,16 +718,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -713,8 +735,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -727,16 +751,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -745,8 +768,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -759,16 +784,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -777,8 +801,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -791,16 +817,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -809,8 +834,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -823,16 +850,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -841,8 +867,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -855,16 +883,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -873,8 +900,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -887,16 +916,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -905,8 +933,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -919,16 +949,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -937,8 +966,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -951,16 +982,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -969,8 +999,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -983,16 +1015,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1001,8 +1032,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1015,16 +1048,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1033,8 +1065,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1047,16 +1081,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1065,8 +1098,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1079,16 +1114,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1097,8 +1131,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1111,16 +1147,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1129,8 +1164,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1143,16 +1180,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1161,8 +1197,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1175,16 +1213,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1193,8 +1230,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1207,16 +1246,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1225,8 +1263,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1239,16 +1279,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1257,8 +1296,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1271,16 +1312,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1289,8 +1329,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1303,16 +1345,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1321,8 +1362,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1335,16 +1378,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1353,8 +1395,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1367,16 +1411,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1385,8 +1428,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1399,16 +1444,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1417,8 +1461,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1431,16 +1477,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1449,8 +1494,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1463,16 +1510,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1481,8 +1527,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1495,16 +1543,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1513,8 +1560,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1527,16 +1576,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1545,8 +1593,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1559,16 +1609,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1577,8 +1626,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1591,16 +1642,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1609,8 +1659,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1623,16 +1675,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1641,8 +1692,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1655,16 +1708,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1673,8 +1725,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1687,16 +1741,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1705,8 +1758,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1719,16 +1774,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1737,8 +1791,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1751,16 +1807,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1769,8 +1824,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1783,16 +1840,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1801,8 +1857,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1815,16 +1873,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1833,8 +1890,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1847,16 +1906,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1865,8 +1923,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1879,16 +1939,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1897,8 +1956,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1911,16 +1972,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1929,8 +1989,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1943,16 +2005,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1961,8 +2022,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -1975,16 +2038,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -1993,8 +2055,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2007,16 +2071,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2025,8 +2088,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2039,16 +2104,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2057,8 +2121,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2071,16 +2137,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2089,8 +2154,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2103,16 +2170,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2121,8 +2187,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2135,16 +2203,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2153,8 +2220,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2167,16 +2236,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2185,8 +2253,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2199,16 +2269,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2217,8 +2286,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2231,16 +2302,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2249,8 +2319,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2263,16 +2335,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2281,8 +2352,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2295,16 +2368,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2313,8 +2385,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2327,16 +2401,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2345,8 +2418,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2359,16 +2434,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2377,8 +2451,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2391,16 +2467,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2409,8 +2484,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2423,16 +2500,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2441,8 +2517,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2455,16 +2533,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2473,8 +2550,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2487,16 +2566,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2505,8 +2583,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2519,16 +2599,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2537,8 +2616,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2551,16 +2632,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2569,8 +2649,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2583,16 +2665,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2601,8 +2682,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2615,16 +2698,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2633,8 +2715,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2647,16 +2731,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2665,8 +2748,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2679,16 +2764,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2697,8 +2781,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2711,16 +2797,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2729,8 +2814,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2743,16 +2830,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2761,8 +2847,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2775,16 +2863,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2793,8 +2880,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2807,16 +2896,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2825,8 +2913,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2839,16 +2929,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2857,8 +2946,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2871,16 +2962,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2889,8 +2979,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2903,16 +2995,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2921,8 +3012,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2935,16 +3028,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2953,8 +3045,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2967,16 +3061,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -2985,8 +3078,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -2999,16 +3094,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3017,8 +3111,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3031,16 +3127,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3049,8 +3144,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3063,16 +3160,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3081,8 +3177,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3095,16 +3193,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3113,8 +3210,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3127,16 +3226,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3145,8 +3243,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3159,16 +3259,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3177,8 +3276,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3191,16 +3292,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3209,8 +3309,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3223,16 +3325,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3241,8 +3342,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3255,16 +3358,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3273,8 +3375,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3287,16 +3391,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3305,8 +3408,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3319,16 +3424,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3337,8 +3441,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3351,16 +3457,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3369,8 +3474,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3383,16 +3490,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3401,8 +3507,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3415,16 +3523,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3433,8 +3540,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3447,16 +3556,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3465,8 +3573,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3479,16 +3589,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3497,8 +3606,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3511,16 +3622,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3529,8 +3639,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3543,16 +3655,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3561,8 +3672,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3575,16 +3688,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3593,8 +3705,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3607,16 +3721,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3625,8 +3738,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3639,16 +3754,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3657,8 +3771,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3671,16 +3787,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3689,8 +3804,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3703,16 +3820,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3721,8 +3837,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3735,16 +3853,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3753,8 +3870,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3767,16 +3886,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3785,8 +3903,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3799,16 +3919,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3817,8 +3936,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3831,16 +3952,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3849,8 +3969,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3863,16 +3985,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3881,8 +4002,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3895,16 +4018,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3913,8 +4035,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3927,16 +4051,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3945,8 +4068,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3959,16 +4084,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -3977,8 +4101,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -3991,16 +4117,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -4009,8 +4134,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -4023,16 +4150,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -4041,8 +4167,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -4055,16 +4183,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -4073,8 +4200,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -4087,16 +4216,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -4105,8 +4233,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -4119,16 +4249,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -4137,8 +4266,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -4151,16 +4282,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -4169,8 +4299,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -4183,16 +4315,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -4201,8 +4332,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -4215,16 +4348,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -4233,8 +4365,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -4247,16 +4381,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -4265,8 +4398,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -4279,16 +4414,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -4297,8 +4431,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -4311,16 +4447,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -4329,8 +4464,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -4343,16 +4480,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -4361,8 +4497,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -4375,16 +4513,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -4393,8 +4530,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -4407,16 +4546,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -4425,8 +4563,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -4439,16 +4579,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -4457,8 +4596,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -4471,16 +4612,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>
@@ -4489,8 +4629,10 @@
          <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>
       </EventTime>
       <EventSource>
-         <System>TEST</System>
-         <Environment>OPS</Environment>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
          <Generator>Apache</Generator>
          <Device>
             <HostName>test.test.com</HostName>
@@ -4503,16 +4645,15 @@
          </User>
       </EventSource>
       <EventDetail>
+         <TypeId>1234</TypeId>
          <View>
-            <Object>
-               <Type>WebPage</Type>
-               <Version>HTTP/1.0</Version>
+            <Resource>
                <URL>/good</URL>
                <HTTPMethod>GET</HTTPMethod>
+               <HTTPVersion>HTTP/1.0</HTTPVersion>
                <UserAgent>someagent</UserAgent>
                <ResponseCode>200</ResponseCode>
-               <Size>12345</Size>
-            </Object>
+            </Resource>
          </View>
       </EventDetail>
    </Event>

@@ -190,7 +190,7 @@ public class TestRollingFileAppender extends AbstractProcessIntegrationTest {
         destinations.forceRoll();
 
         final File refFile = StroomProcessTestFileUtil.getTestResourcesFile(outputReference);
-        final File tmpFile = new File(refFile.getParentFile(), fileName + ".tmp");
+        final File tmpFile = new File(FileUtil.getTempDir(), fileName);
 
         Assert.assertTrue(recordCount.getRead() > 0);
         Assert.assertTrue(recordCount.getWritten() > 0);
