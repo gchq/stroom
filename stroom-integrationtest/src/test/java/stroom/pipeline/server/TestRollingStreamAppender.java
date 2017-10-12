@@ -218,29 +218,20 @@ public class TestRollingStreamAppender extends AbstractProcessIntegrationTest {
         Assert.assertEquals(1, streams.size());
         final StreamSource streamSource = streamStore.openStreamSource(streams.get(0).getId());
 
-        checkHeaderFooterOnly(streamSource);
-
-        final File refFile = StroomProcessTestFileUtil.getTestResourcesFile(outputReference);
-        final String refData = StreamUtil.fileToString(refFile);
-        final String data = StreamUtil.streamToString(streamSource.getInputStream());
-        Assert.assertEquals(refData, data);
+        final long streamId = streams.get(0).getId();
+        checkHeaderFooterOnly(streamId, text);
+        checkFull(streamId, outputReference);
     }
 
-    private void checkHeaderFooterOnly(final StreamSource streamSource) throws Exception {
-        final RASegmentInputStream segmentInputStream = new RASegmentInputStream(streamSource);
-        try {
-            // Include the XML Header and footer.
-            segmentInputStream.include(0);
-            segmentInputStream.include(segmentInputStream.count() - 1);
+    private void checkHeaderFooterOnly(final long streamId, final boolean text) throws Exception {
+        if (text) {
+            final String ref = "2013-04-09T00:00:50.000ZTestTestApachetest.test.com123.123.123.123firstuser1234/goodGETHTTP/1.0someagent200\n" +
+                    "2013-04-09T00:00:50.000ZTestTestApachetest.test.com123.123.123.123lastuser1234/goodGETHTTP/1.0someagent200\n";
 
-//            // Include as many segments as we can.
-//            for (final long segmentId : eventIds) {
-//                segmentInputStream.include(segmentId);
-//                count++;
-//            }
+            checkOuterData(streamId, 141, ref);
 
-            final String data = StreamUtil.streamToString(segmentInputStream);
-            final String ref = "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n" +
+        } else {
+            final String outerRef = "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n" +
                     "<Events xmlns=\"event-logging:3\"\n" +
                     "        xmlns:stroom=\"stroom\"\n" +
                     "        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
@@ -248,39 +239,126 @@ public class TestRollingStreamAppender extends AbstractProcessIntegrationTest {
                     "        Version=\"3.0.0\">\n" +
                     "</Events>\n";
 
-            Assert.assertEquals(ref, data);
+            checkOuterData(streamId, 143, outerRef);
 
-        } finally {
-            segmentInputStream.close();
+            final String innerRef = "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n" +
+                    "<Events xmlns=\"event-logging:3\"\n" +
+                    "        xmlns:stroom=\"stroom\"\n" +
+                    "        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                    "        xsi:schemaLocation=\"event-logging:3 file://event-logging-v3.0.0.xsd\"\n" +
+                    "        Version=\"3.0.0\">\n" +
+                    "   <Event>\n" +
+                    "      <EventTime>\n" +
+                    "         <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>\n" +
+                    "      </EventTime>\n" +
+                    "      <EventSource>\n" +
+                    "         <System>\n" +
+                    "            <Name>Test</Name>\n" +
+                    "            <Environment>Test</Environment>\n" +
+                    "         </System>\n" +
+                    "         <Generator>Apache</Generator>\n" +
+                    "         <Device>\n" +
+                    "            <HostName>test.test.com</HostName>\n" +
+                    "         </Device>\n" +
+                    "         <Client>\n" +
+                    "            <IPAddress>123.123.123.123</IPAddress>\n" +
+                    "         </Client>\n" +
+                    "         <User>\n" +
+                    "            <Id>firstuser</Id>\n" +
+                    "         </User>\n" +
+                    "      </EventSource>\n" +
+                    "      <EventDetail>\n" +
+                    "         <TypeId>1234</TypeId>\n" +
+                    "         <View>\n" +
+                    "            <Resource>\n" +
+                    "               <URL>/good</URL>\n" +
+                    "               <HTTPMethod>GET</HTTPMethod>\n" +
+                    "               <HTTPVersion>HTTP/1.0</HTTPVersion>\n" +
+                    "               <UserAgent>someagent</UserAgent>\n" +
+                    "               <ResponseCode>200</ResponseCode>\n" +
+                    "            </Resource>\n" +
+                    "         </View>\n" +
+                    "      </EventDetail>\n" +
+                    "   </Event>\n" +
+                    "   <Event>\n" +
+                    "      <EventTime>\n" +
+                    "         <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>\n" +
+                    "      </EventTime>\n" +
+                    "      <EventSource>\n" +
+                    "         <System>\n" +
+                    "            <Name>Test</Name>\n" +
+                    "            <Environment>Test</Environment>\n" +
+                    "         </System>\n" +
+                    "         <Generator>Apache</Generator>\n" +
+                    "         <Device>\n" +
+                    "            <HostName>test.test.com</HostName>\n" +
+                    "         </Device>\n" +
+                    "         <Client>\n" +
+                    "            <IPAddress>123.123.123.123</IPAddress>\n" +
+                    "         </Client>\n" +
+                    "         <User>\n" +
+                    "            <Id>lastuser</Id>\n" +
+                    "         </User>\n" +
+                    "      </EventSource>\n" +
+                    "      <EventDetail>\n" +
+                    "         <TypeId>1234</TypeId>\n" +
+                    "         <View>\n" +
+                    "            <Resource>\n" +
+                    "               <URL>/good</URL>\n" +
+                    "               <HTTPMethod>GET</HTTPMethod>\n" +
+                    "               <HTTPVersion>HTTP/1.0</HTTPVersion>\n" +
+                    "               <UserAgent>someagent</UserAgent>\n" +
+                    "               <ResponseCode>200</ResponseCode>\n" +
+                    "            </Resource>\n" +
+                    "         </View>\n" +
+                    "      </EventDetail>\n" +
+                    "   </Event>\n" +
+                    "</Events>\n";
+
+            checkInnerData(streamId, 143, innerRef);
         }
     }
 
-//    private void checkFullOutput(final StreamSource streamSource) throws Exception {
-//        final RASegmentInputStream segmentInputStream = new RASegmentInputStream(streamSource);
-//        try {
-////            // Include the XML Header and footer.
-////            segmentInputStream.include(0);
-////            segmentInputStream.include(segmentInputStream.count() - 1);
-//
-////            // Include as many segments as we can.
-////            for (final long segmentId : eventIds) {
-////                segmentInputStream.include(segmentId);
-////                count++;
-////            }
-//
-//            final String data = StreamUtil.streamToString(segmentInputStream);
-//            final String ref = "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n" +
-//                    "<Events xmlns=\"event-logging:3\"\n" +
-//                    "        xmlns:stroom=\"stroom\"\n" +
-//                    "        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-//                    "        xsi:schemaLocation=\"event-logging:3 file://event-logging-v3.0.0.xsd\"\n" +
-//                    "        Version=\"3.0.0\">\n" +
-//                    "</Events>\n";
-//
-//            Assert.assertEquals(ref, data);
-//
-//        } finally {
-//            segmentInputStream.close();
-//        }
-//    }
+    private void checkFull(final long streamId, final String outputReference) {
+        final StreamSource streamSource = streamStore.openStreamSource(streamId);
+        final File refFile = StroomProcessTestFileUtil.getTestResourcesFile(outputReference);
+        final String refData = StreamUtil.fileToString(refFile);
+        final String data = StreamUtil.streamToString(streamSource.getInputStream());
+        Assert.assertEquals(refData, data);
+        streamStore.closeStreamSource(streamSource);
+    }
+
+    private void checkOuterData(final long streamId, final int count, final String ref) throws Exception {
+        final StreamSource streamSource = streamStore.openStreamSource(streamId);
+        final RASegmentInputStream segmentInputStream = new RASegmentInputStream(streamSource);
+
+        Assert.assertEquals(count, segmentInputStream.count());
+
+        // Include the first and last segment only.
+        segmentInputStream.include(0);
+        segmentInputStream.include(segmentInputStream.count() - 1);
+
+        final String data = StreamUtil.streamToString(segmentInputStream);
+        Assert.assertEquals(ref, data);
+
+        streamStore.closeStreamSource(streamSource);
+    }
+
+    private void checkInnerData(final long streamId, final int count, final String ref) throws Exception {
+        final StreamSource streamSource = streamStore.openStreamSource(streamId);
+        final RASegmentInputStream segmentInputStream = new RASegmentInputStream(streamSource);
+
+        Assert.assertEquals(count, segmentInputStream.count());
+
+        // Include the first and last segment only.
+        segmentInputStream.include(0);
+        segmentInputStream.include(1);
+        segmentInputStream.include(segmentInputStream.count() - 2);
+        segmentInputStream.include(segmentInputStream.count() - 1);
+
+        final String data = StreamUtil.streamToString(segmentInputStream);
+        Assert.assertEquals(ref, data);
+
+        streamStore.closeStreamSource(streamSource);
+    }
 }

@@ -21,7 +21,7 @@
             <IPAddress>123.123.123.123</IPAddress>
          </Client>
          <User>
-            <Id>testuser</Id>
+            <Id>firstuser</Id>
          </User>
       </EventSource>
       <EventDetail>
@@ -4641,7 +4641,7 @@
             <IPAddress>123.123.123.123</IPAddress>
          </Client>
          <User>
-            <Id>testuser</Id>
+            <Id>lastuser</Id>
          </User>
       </EventSource>
       <EventDetail>
