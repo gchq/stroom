@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.50] - 2017-10-13
+
 * Issue **#444** : Fix segment markers on RollingStreamAppender.
 
 ## [v5.0-beta.49] - 2017-10-11
@@ -573,7 +575,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.49...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.50...HEAD
+[v5.0-beta.50]: https://github.com/gchq/stroom/compare/v5.0-beta.49...v5.0-beta.50
 [v5.0-beta.49]: https://github.com/gchq/stroom/compare/v5.0-beta.48...v5.0-beta.49
 [v5.0-beta.48]: https://github.com/gchq/stroom/compare/v5.0-beta.47...v5.0-beta.48
 [v5.0-beta.47]: https://github.com/gchq/stroom/compare/v5.0-beta.46...v5.0-beta.47
