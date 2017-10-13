@@ -16,22 +16,12 @@
 
 package stroom.pipeline.server.writer;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-
-import javax.inject.Inject;
-import javax.xml.transform.ErrorListener;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.sax.TransformerHandler;
-import javax.xml.transform.stream.StreamResult;
-
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-
 import stroom.entity.server.util.XMLUtil;
 import stroom.pipeline.server.LocationFactory;
 import stroom.pipeline.server.errorhandler.ErrorListenerAdaptor;
@@ -45,16 +35,35 @@ import stroom.pipeline.server.filter.XMLFilter;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.CharBuffer;
+import stroom.util.logging.StroomLogger;
+
+import javax.inject.Inject;
+import javax.xml.transform.ErrorListener;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.transform.stream.StreamResult;
+import java.io.BufferedWriter;
+import java.io.IOException;
 
 /**
  * Writes out XML and records segment boundaries as it goes.
  */
 @Component
 @Scope("prototype")
-@ConfigurableElement(type = "XMLWriter", category = Category.WRITER, roles = { PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.ROLE_WRITER, PipelineElementType.ROLE_MUTATOR,
-        PipelineElementType.VISABILITY_STEPPING }, icon = ElementIcons.XML)
+@ConfigurableElement(
+        type = "XMLWriter",
+        category = Category.WRITER,
+        roles = {
+                PipelineElementType.ROLE_TARGET,
+                PipelineElementType.ROLE_HAS_TARGETS,
+                PipelineElementType.ROLE_WRITER,
+                PipelineElementType.ROLE_MUTATOR,
+                PipelineElementType.VISABILITY_STEPPING },
+        icon = ElementIcons.XML)
 public class XMLWriter extends AbstractWriter implements XMLFilter {
+
+    public static final StroomLogger LOGGER = StroomLogger.getLogger(XMLWriter.class);
+
     private final LocationFactory locationFactory;
 
     private ContentHandler handler = NullXMLFilter.INSTANCE;
@@ -86,6 +95,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
 
     @Override
     public void startProcessing() {
+        //LOGGER.trace("startProcessing called");
         try {
             stringWriter = new CharBufferWriter();
             bufferedWriter = new BufferedWriter(stringWriter);
@@ -107,6 +117,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
 
     @Override
     public void startStream() {
+        //LOGGER.trace("startStream called");
         super.startStream();
         doneElement = false;
     }
@@ -128,15 +139,33 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
 
     @Override
     public void startDocument() throws SAXException {
-        if (!startedDocument) {
-            startedDocument = true;
-            handler.startDocument();
-            super.startDocument();
+        //if (LOGGER.isTraceEnabled()) {
+        //    LOGGER.trace("startDocument called, buffer [%s]", truncateAndStripWhitespace(getBuffer()));
+        //}
+        try {
+            //clear out the buffer in case we have a lone processing instruction from a previous empty split
+            //as the sax processor will write a processing instruction whenever startDocument is called, potentially
+            //leading to many of them if we have lots of empty splits before this
+            bufferedWriter.flush();
+            stringWriter.getBuffer().setLength(0);
+        } catch (final IOException e) {
+            throw new SAXException(e);
+        } finally {
+            if (!startedDocument) {
+                startedDocument = true;
+                handler.startDocument();
+                super.startDocument();
+            }
         }
+
     }
 
     @Override
     public void endDocument() throws SAXException {
+        //if (LOGGER.isTraceEnabled()) {
+        //    LOGGER.trace("endDocument called, buffer [%s]", truncateAndStripWhitespace(getBuffer()));
+        //}
+
         handler.endDocument();
         super.endDocument();
         startedDocument = false;
@@ -206,6 +235,12 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
             throws SAXException {
+
+        //if (LOGGER.isTraceEnabled()) {
+        //    LOGGER.trace(String.format("startElement called for %s at depth %s, buffer [%s]",
+        //            localName, depth, truncateAndStripWhitespace(getBuffer())));
+        //}
+
         try {
             // If depth is 1 then we are entering an event.
             if (rootElement == null) {
@@ -242,13 +277,13 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
 
                             final String header = cb.toString();
                             final String footer = footerBuilder.toString();
+                            //LOGGER.trace(String.format("Setting header [%s] and footer [%s]", header, footer));
 
                             this.header = header.getBytes(getCharset());
                             this.footer = footer.getBytes(getCharset());
                         }
                     }
                 }
-
                 cb.setLength(0);
             }
 
@@ -283,6 +318,10 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
      */
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
+        //if (LOGGER.isTraceEnabled()) {
+        //    LOGGER.trace(String.format("endElement called for %s at depth %s, buffer [%s]",
+        //            localName, depth, truncateAndStripWhitespace(getBuffer())));
+        //}
         handler.endElement(uri, localName, qName);
 
         // Decrease the element depth
@@ -313,6 +352,12 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
                         final String body = cb.toString();
 
                         borrowDestinations(header, footer);
+
+                        //if (LOGGER.isTraceEnabled()) {
+                        //    LOGGER.trace(String.format("Writing %s chars [%s] to destinations",
+                        //            body.length(),
+                        //            truncateAndStripWhitespace(body)));
+                        //}
                         getWriter().write(body);
                         returnDestinations();
                     }
@@ -418,4 +463,39 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     public void setEncoding(final String encoding) {
         super.setEncoding(encoding);
     }
+
+    @SuppressWarnings("unused") //useful for debugging
+    private static String truncateAndStripWhitespace(String str) {
+        //remove any line breaks and white space, accepting that white space in element text or attributes will be lost
+        //but is this is intended for debugging that is ok.
+        String truncatedStr = str
+                .replaceAll("\\s+","")
+                .replace("\n", "");
+        if (truncatedStr != null) {
+            int strLen = truncatedStr.length();
+            if (strLen > 100) {
+                truncatedStr = String.format("%s..TRUNCATED..%s", truncatedStr.substring(0, 45), truncatedStr.substring(strLen - 45));
+            }
+        } else {
+            truncatedStr = "NULL";
+        }
+        return truncatedStr;
+    }
+
+    /**
+     * Only for use in debugging as it will flush the stringWriter
+     */
+    @SuppressWarnings("unused") //useful for debugging
+    private String getBuffer() {
+        CharBuffer charBuffer = null;
+        try {
+            stringWriter.flush();
+            charBuffer = stringWriter.getBuffer();
+        } catch (Exception e) {
+            LOGGER.warn("Ignoring error %s", e.getMessage());
+        }
+        return charBuffer != null ? charBuffer.toString() : "";
+    }
+
+
 }

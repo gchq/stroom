@@ -106,7 +106,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Resource
     private ImportExportSerializer importExportSerializer;
 
-    protected void testTranslationTask(final boolean translate, final boolean compareOutput) {
+    protected void testTranslationTask(final boolean compareOutput) {
         final List<Exception> exceptions = new ArrayList<>();
 
         final File dir = new File(StroomCoreServerTestFileUtil.getTestResourcesDir(), "samples");
@@ -186,7 +186,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
     private void test(final File inputFile, final Feed feed, final File outputDir, final String stem,
                       final boolean compareOutput, final List<Exception> exceptions) throws Exception {
-        LOGGER.info("Testing: " + inputFile.getName());
+        LOGGER.info("Testing input %s, feed %s, output %s, stem %s",
+                inputFile.getName(), feed.getName(), outputDir.getName(), stem);
 
         addStream(inputFile, feed);
 
@@ -210,6 +211,12 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                         processedStreams.add(stream);
                     }
                 }
+
+                //make sure we have at least one processed stream else it indicates
+                //an error in processing somewhere
+                //TODO if we get an error stream would be good to dump it out to make debugging easier
+                //or you can just run the pipeline in stroom
+                Assert.assertTrue(processedStreams.size() > 0);
 
                 // Copy the contents of the latest written stream to the output.
                 int i = 1;
