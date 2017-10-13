@@ -118,7 +118,6 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
                 LOGGER.info("Redirecting with an AuthenticationRequest to: {}", redirectionUrl);
                 HttpServletResponse httpResponse = WebUtils.toHttp(response);
                 // We need to make sure that the client has the cookie.
-                LOGGER.info("DEBUG: Setting sessionId cookie to " + sessionId);
                 httpResponse.addCookie(new Cookie("sessionId", sessionId));
                 httpResponse.sendRedirect(redirectionUrl);
             }
