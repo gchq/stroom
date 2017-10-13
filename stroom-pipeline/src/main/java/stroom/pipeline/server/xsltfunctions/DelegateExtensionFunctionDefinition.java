@@ -34,8 +34,12 @@ public class DelegateExtensionFunctionDefinition extends ExtensionFunctionDefini
 
     private DelegateExtensionFunctionCall functionCall;
 
-    public DelegateExtensionFunctionDefinition(final StroomXSLTFunctionLibrary library, final String functionName,
-                                               final int minArgs, final int maxArgs, final SequenceType[] argTypes, final SequenceType resultType,
+    private DelegateExtensionFunctionDefinition(final StroomXSLTFunctionLibrary library,
+                                               final String functionName,
+                                               final int minArgs,
+                                               final int maxArgs,
+                                               final SequenceType[] argTypes,
+                                               final SequenceType resultType,
                                                final Class<?> delegateClass) {
         this.functionName = functionName;
         this.minArgs = minArgs;
@@ -85,5 +89,69 @@ public class DelegateExtensionFunctionDefinition extends ExtensionFunctionDefini
 
     public DelegateExtensionFunctionCall getFunctionCall() {
         return functionCall;
+    }
+
+    public static Builder startBuild() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private StroomXSLTFunctionLibrary library;
+        private String functionName;
+        private int minArgs = 0;
+        private int maxArgs = 0;
+        private SequenceType[] argTypes = new SequenceType[]{};
+        private SequenceType resultType;
+        private Class<?> delegateClass;
+
+        private Builder() {
+
+        }
+
+        public Builder library(final StroomXSLTFunctionLibrary value) {
+            this.library = value;
+            return this;
+        }
+
+        public Builder functionName(final String value) {
+            this.functionName = value;
+            return this;
+        }
+
+        public Builder minArgs(final int value) {
+            this.minArgs = value;
+            return this;
+        }
+
+        public Builder maxArgs(final int value) {
+            this.maxArgs = value;
+            return this;
+        }
+
+        public Builder argTypes(final SequenceType[] value) {
+            this.argTypes = value;
+            return this;
+        }
+
+        public Builder resultType(final SequenceType value) {
+            this.resultType = value;
+            return this;
+        }
+
+        public Builder delegateClass(final Class<?> value) {
+            this.delegateClass = value;
+            return this;
+        }
+
+        public DelegateExtensionFunctionDefinition build() {
+            return new DelegateExtensionFunctionDefinition(
+                    library,
+                    functionName,
+                    minArgs,
+                    maxArgs,
+                    argTypes,
+                    resultType,
+                    delegateClass);
+        }
     }
 }

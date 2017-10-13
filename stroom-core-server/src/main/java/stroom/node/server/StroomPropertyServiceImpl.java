@@ -22,6 +22,9 @@ import org.springframework.stereotype.Component;
 import stroom.security.Insecure;
 import stroom.util.config.StroomProperties;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * A service that can be injected with spring that caches and delegates property
  * lookups to StroomProperties.
