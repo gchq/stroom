@@ -10,6 +10,7 @@ libs/
 jars/
 stroom-dashboard-gwt/hs_err_pid*.log
 stroom-app-gwt/hs_err_pid*.log
+stroom-util-build.properties
 
 stroom-core-server/src/test/resources/transientContentPacks/
 
