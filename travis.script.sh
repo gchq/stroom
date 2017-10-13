@@ -5,6 +5,7 @@ set -e
 
 DOCKER_REPO="gchq/stroom"
 GITHUB_REPO="gchq/stroom"
+DOCKER_CONTEXT_ROOT="stroom-app/docker/."
 FLOATING_TAG=""
 SPECIFIC_TAG=""
 #This is a whitelist of branches to produce docker builds for
@@ -83,8 +84,8 @@ else
 
         #The username and password are configured in the travis gui
         docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-        docker build ${SPECIFIC_TAG} ${FLOATING_TAG} stroom-app/docker/.
-        docker push gchq/stroom
+        docker build ${SPECIFIC_TAG} ${FLOATING_TAG} ${DOCKER_CONTEXT_ROOT}
+        docker push ${DOCKER_REPO}
     fi
 
     #Deploy the generated swagger specs and swagger UI (obtained from github) to gh-pages
