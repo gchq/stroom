@@ -212,10 +212,9 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     }
                 }
 
-                //make sure we have at least one processed stream else it indicates
-                //an error in processing somewhere
-                //TODO if we get an error stream would be good to dump it out to make debugging easier
-                //or you can just run the pipeline in stroom
+                // Make sure we have at least one processed stream else it indicates an error in processing somewhere
+                // TODO : If we get an error stream would be good to dump it out to make debugging easier
+                // or you can just run the pipeline in stroom
                 Assert.assertTrue(processedStreams.size() > 0);
 
                 // Copy the contents of the latest written stream to the output.
