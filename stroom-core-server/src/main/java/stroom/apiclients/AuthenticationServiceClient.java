@@ -129,6 +129,6 @@ public class AuthenticationServiceClient {
         } catch (ApiException e) {
             LOGGER.error("Unable to retrieve id token!", e);
         }
-        return Optional.of(idToken);
+        return Optional.ofNullable(idToken);
     }
 }

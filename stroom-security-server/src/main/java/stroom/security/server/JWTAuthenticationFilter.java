@@ -72,10 +72,12 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
 
         boolean loggedIn = false;
         String accessCode = request.getParameter("accessCode");
-        Optional<String> sessionId = Arrays.stream(((ShiroHttpServletRequest) request).getCookies())
-                .filter(cookie -> cookie.getName().equals("authSession"))
-                .map(cookie -> cookie.getValue())
-                .findFirst();
+        String sessionId = request.getParameter("sessionId");
+
+        // Are we dealing with a new session?
+        if(sessionId == null){
+            sessionId = UUID.randomUUID().toString();
+        }
 
         if(accessCode != null) {
             loggedIn = executeLogin(request, response);
@@ -94,10 +96,11 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
                 httpResponse.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
             }
             else {
+                // We have a a new request so we're going to redirect with an AuthenticationRequest.
                 String authenticationUrl = StroomProperties.getProperty(AUTHENTICATION_URL_PROPERTY_NAME) + "/authenticate";
                 String advertisedStroomUrl = StroomProperties.getProperty(ADVERTISED_STROOM_URL);
 
-                String nonceHash = nonceManager.createNonce(sessionId.get());
+                String nonceHash = nonceManager.createNonce(sessionId);
 
                 StringBuilder redirectionParams = new StringBuilder();
                 redirectionParams.append("?scope=openid");
@@ -108,11 +111,15 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
                 redirectionParams.append("&state="); //TODO Not yet sure what's needed here
                 redirectionParams.append("&nonce=");
                 redirectionParams.append(nonceHash);
+                redirectionParams.append("&sessionId=");
+                redirectionParams.append(sessionId);
 
                 String redirectionUrl = authenticationUrl + redirectionParams.toString();
-                LOGGER.info("Redirecting to login at: '{}'", redirectionUrl);
+                LOGGER.info("Redirecting with an AuthenticationRequest to: {}", redirectionUrl);
                 HttpServletResponse httpResponse = WebUtils.toHttp(response);
-                httpResponse.addCookie(new Cookie("authSession", UUID.randomUUID().toString()));
+                // We need to make sure that the client has the cookie.
+                LOGGER.info("DEBUG: Setting sessionId cookie to " + sessionId);
+                httpResponse.addCookie(new Cookie("sessionId", sessionId));
                 httpResponse.sendRedirect(redirectionUrl);
             }
         }
@@ -123,11 +130,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
     @Override
     protected JWTAuthenticationToken createToken(ServletRequest request, ServletResponse response) throws IOException, InvalidJwtException, MalformedClaimException {
         String accessCode = request.getParameter("accessCode");
-
-        Optional<String> sessionId = Arrays.stream(((ShiroHttpServletRequest) request).getCookies())
-                .filter(cookie -> cookie.getName().equals("authSession"))
-                .map(cookie -> cookie.getValue())
-                .findFirst();
+        Optional<String> sessionId = Optional.ofNullable(request.getParameter("sessionId"));
 
         //TODO: check the optionals and handle empties.
         if(accessCode != null){
@@ -148,15 +151,18 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
             String nonceHash = (String)claims.getClaimsMap().get("nonce");
             boolean doNoncesMatch = nonceManager.match(sessionId.get(), nonceHash);
             if(!doNoncesMatch){
+                LOGGER.info("Received a bad nonce!");
                 throw new RuntimeException("TODO");
             }
 
+            LOGGER.info("User is authenticated for sessionId " + sessionId.get());
             // The user is authenticated now.
             nonceManager.forget(sessionId.get());
             return new JWTAuthenticationToken(claims.getSubject(), idToken.get());
         }
         else{
             LOGGER.info("Attempted access without an access code.");
+            //TODO redirect back to try again?
         }
 
         return null;
