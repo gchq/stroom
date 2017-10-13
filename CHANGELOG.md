@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#446** : Fix for deadlock on rolling appenders.
+
 ## [v5.0-beta.50] - 2017-10-13
 
 * Issue **#444** : Fix segment markers on RollingStreamAppender.
