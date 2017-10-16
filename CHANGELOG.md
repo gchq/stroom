@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#444** : Fix for segment markers when writing text to StreamAppender.
 
+* Issue **#447** : Fix for AsyncSearchTask not being displayed as a child of EventSearchTask in the server tasks view.
+
 ## [v5.0-beta.51] - 2017-10-13
 
 * Issue **#419** : Fix multiple xml processing instructions appearing in output.
