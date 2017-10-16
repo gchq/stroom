@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#421** : FileAppender now causes fatal error where no output path set.
 
+* Issue **#427** : Pipelines with no source element will now only treat a single parser element as being a root element for backwards compatibility.
+
 ## [v5.0-beta.51] - 2017-10-13
 
 * Issue **#419** : Fix multiple xml processing instructions appearing in output.
