@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.52] - 2017-10-17
+
 * Issue **#444** : Fix for segment markers when writing text to StreamAppender.
 
 * Issue **#447** : Fix for AsyncSearchTask not being displayed as a child of EventSearchTask in the server tasks view.
@@ -589,7 +591,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.51...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.52...HEAD
+[v5.0-beta.52]: https://github.com/gchq/stroom/compare/v5.0-beta.51...v5.0-beta.52
 [v5.0-beta.51]: https://github.com/gchq/stroom/compare/v5.0-beta.50...v5.0-beta.51
 [v5.0-beta.50]: https://github.com/gchq/stroom/compare/v5.0-beta.49...v5.0-beta.50
 [v5.0-beta.49]: https://github.com/gchq/stroom/compare/v5.0-beta.48...v5.0-beta.49
