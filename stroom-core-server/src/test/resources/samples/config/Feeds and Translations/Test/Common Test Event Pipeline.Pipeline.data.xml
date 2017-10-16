@@ -35,16 +35,8 @@
             <type>XMLWriter</type>
          </element>
          <element>
-            <id>textWriter</id>
-            <type>TextWriter</type>
-         </element>
-         <element>
             <id>streamAppender</id>
             <type>StreamAppender</type>
-         </element>
-         <element>
-            <id>fileAppender</id>
-            <type>FileAppender</type>
          </element>
       </add>
    </elements>
@@ -188,16 +180,8 @@
             <to>xmlWriter</to>
          </link>
          <link>
-            <from>writeRecordCountFilter</from>
-            <to>textWriter</to>
-         </link>
-         <link>
             <from>xmlWriter</from>
             <to>streamAppender</to>
-         </link>
-         <link>
-            <from>textWriter</from>
-            <to>fileAppender</to>
          </link>
       </add>
    </links>

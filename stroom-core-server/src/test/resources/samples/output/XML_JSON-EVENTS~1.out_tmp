@@ -47,6 +47,46 @@
    </Event>
    <Event>
       <EventTime>
+         <TimeCreated>2010-01-01T00:01:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
+         <Generator>CSV</Generator>
+         <Device>
+            <IPAddress>1.1.1.1</IPAddress>
+            <MACAddress>00-00-00-00-00-00</MACAddress>
+            <Location>
+               <Country>UK</Country>
+               <Site>Site 1</Site>
+               <Building>Main</Building>
+               <Floor>1</Floor>
+               <Room>A</Room>
+               <Desk>100</Desk>
+            </Location>
+         </Device>
+         <User>
+            <Id>user2</Id>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <TypeId>Logon</TypeId>
+         <Description> </Description>
+         <Authenticate>
+            <Action>Logon</Action>
+            <LogonType>Interactive</LogonType>
+            <User>
+               <Id>user2</Id>
+            </User>
+            <Data Name="FileNo" Value="1"/>
+            <Data Name="LineNo" Value="2"/>
+         </Authenticate>
+      </EventDetail>
+   </Event>
+   <Event>
+      <EventTime>
          <TimeCreated>2010-01-01T00:02:00.000Z</TimeCreated>
       </EventTime>
       <EventSource>

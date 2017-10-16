@@ -90,7 +90,6 @@ public class PipelineDataCacheImpl extends AbstractCacheBean<VersionedEntityDeco
             throw new PipelineFactoryException(e);
         }
 
-        final PipelineData mergedPipelineData = pipelineDataMerger.createMergedData();
-        return mergedPipelineData;
+        return pipelineDataMerger.createMergedData();
     }
 }
