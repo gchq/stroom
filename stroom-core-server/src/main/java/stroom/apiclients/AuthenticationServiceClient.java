@@ -23,7 +23,6 @@ import stroom.auth.service.ApiClient;
 import stroom.auth.service.ApiException;
 import stroom.auth.service.api.DefaultApi;
 import stroom.auth.service.api.model.CreateTokenRequest;
-import stroom.auth.service.api.model.IdTokenRequest;
 import stroom.auth.service.api.model.SearchRequest;
 import stroom.auth.service.api.model.SearchResponse;
 import stroom.util.config.StroomProperties;
@@ -119,16 +118,7 @@ public class AuthenticationServiceClient {
         return usersApiToken;
     }
 
-    public Optional<String> getIdToken(String accessCode, String sessionId) {
-        IdTokenRequest idTokenRequest = new IdTokenRequest();
-        idTokenRequest.setAccessCode(accessCode);
-        idTokenRequest.setSessionId(sessionId);
-        String idToken = null;
-        try {
-            idToken = authServiceApi.getIdToken(idTokenRequest);
-        } catch (ApiException e) {
-            LOGGER.error("Unable to retrieve id token!", e);
-        }
-        return Optional.ofNullable(idToken);
+    public DefaultApi getAuthServiceApi(){
+        return this.authServiceApi;
     }
 }

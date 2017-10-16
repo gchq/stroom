@@ -30,6 +30,9 @@ import org.jose4j.keys.HmacKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.apiclients.AuthenticationServiceClient;
+import stroom.auth.service.ApiException;
+import stroom.auth.service.ApiException;
+import stroom.auth.service.api.model.IdTokenRequest;
 import stroom.util.config.StroomProperties;
 
 import javax.servlet.ServletRequest;
@@ -39,8 +42,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Optional;
 import java.util.UUID;
 
 public class JWTAuthenticationFilter extends AuthenticatingFilter {
@@ -129,11 +130,25 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
     @Override
     protected JWTAuthenticationToken createToken(ServletRequest request, ServletResponse response) throws IOException, InvalidJwtException, MalformedClaimException {
         String accessCode = request.getParameter("accessCode");
-        Optional<String> sessionId = Optional.ofNullable(request.getParameter("sessionId"));
+        String sessionId = request.getParameter("sessionId");
 
         //TODO: check the optionals and handle empties.
         if(accessCode != null){
-            Optional<String> idToken = authenticationServiceClient.getIdToken(accessCode, sessionId.get());
+            IdTokenRequest idTokenRequest = new IdTokenRequest();
+            idTokenRequest.setAccessCode(accessCode);
+            idTokenRequest.setSessionId(sessionId);
+            idTokenRequest.setRequestingClientId("stroom");
+            String idToken = null;
+            try {
+                idToken = authenticationServiceClient.getAuthServiceApi().getIdToken(idTokenRequest);
+            } catch (ApiException e) {
+                if(e.getCode() == Response.Status.UNAUTHORIZED.getStatusCode()){
+                    // Our access code isn't valid, so we need to redirect and start the flow again.
+                    LOGGER.error("My request for an id_token was rejected as unauthorised!", e);
+                    return null;
+                }
+            }
+
             String jwtSecret = StroomProperties.getProperty(JWT_SECRET);
             String jwtIssuer = StroomProperties.getProperty(JWT_ISSUER);
 
@@ -146,25 +161,24 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
 
             JwtConsumer consumer = builder.build();
 
-            final JwtClaims claims = consumer.processToClaims(idToken.get());
+            final JwtClaims claims = consumer.processToClaims(idToken);
             String nonceHash = (String)claims.getClaimsMap().get("nonce");
-            boolean doNoncesMatch = nonceManager.match(sessionId.get(), nonceHash);
+            boolean doNoncesMatch = nonceManager.match(sessionId, nonceHash);
             if(!doNoncesMatch){
+                // If the nonces don't match we need to redirect to log in again.
                 LOGGER.info("Received a bad nonce!");
-                throw new RuntimeException("TODO");
+                return null;
             }
 
-            LOGGER.info("User is authenticated for sessionId " + sessionId.get());
+            LOGGER.info("User is authenticated for sessionId " + sessionId);
             // The user is authenticated now.
-            nonceManager.forget(sessionId.get());
-            return new JWTAuthenticationToken(claims.getSubject(), idToken.get());
+            nonceManager.forget(sessionId);
+            return new JWTAuthenticationToken(claims.getSubject(), idToken);
         }
         else{
             LOGGER.info("Attempted access without an access code.");
-            //TODO redirect back to try again?
+            return null;
         }
-
-        return null;
     }
 
     @Override
