@@ -139,11 +139,12 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
                 final CoprocessorSettings coprocessorSettings = entry.getValue();
 
                 // Create a parameter map.
-                final Map<String, String> paramMap = Collections.emptyMap();
+                final Map<String, String> paramMap;
                 if (searchRequest.getQuery().getParams() != null) {
-                    for (final Param param : searchRequest.getQuery().getParams()) {
-                        paramMap.put(param.getKey(), param.getValue());
-                    }
+                    paramMap = searchRequest.getQuery().getParams().stream()
+                            .collect(Collectors.toMap(Param::getKey, Param::getValue));
+                } else {
+                    paramMap = Collections.emptyMap();
                 }
 
                 final Coprocessor coprocessor = createCoprocessor(
