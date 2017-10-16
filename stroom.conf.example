@@ -5,6 +5,8 @@
 #Prevents stroom from prompting for a new password on first login
 stroom.developmentMode=true
 
+stroom.htmlTitle=Development Stroom
+
 stroom.node=node1a
 stroom.rack=rack1
 stroom.temp=/tmp/stroom/
