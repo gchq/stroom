@@ -10,7 +10,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **135** : [BREAKING CHANGE] Removed JODA Time library and replaced with Java 7 Time API. This change breaks time zone output previously formatted with `ZZ` or `ZZZ`.
 
+* Added XSLT functions generate-url and fetch-json
+
+* Added ability to put clickable hyperlinks in Dashboard tables
+
 ### Changed
+
+* Issue **#412** : Fixed no-column table breakage
+
+* Issue **#380** : Fixed build details on welcome/about
 
 * Issue **#348** : Fixed new menu icons.
 
