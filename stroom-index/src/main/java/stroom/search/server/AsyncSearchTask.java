@@ -19,14 +19,14 @@ package stroom.search.server;
 import stroom.node.shared.Node;
 import stroom.query.shared.CoprocessorSettings;
 import stroom.query.shared.Search;
+import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
 import stroom.util.task.ServerTask;
 
 import java.io.Serializable;
-import java.time.ZonedDateTime;
 import java.util.Map;
 
-public class AsyncSearchTask extends ServerTask<VoidResult>implements Serializable {
+public class AsyncSearchTask extends ServerTask<VoidResult> implements Serializable {
     private static final long serialVersionUID = -1305243739417365803L;
 
     private final String searchName;
@@ -38,10 +38,15 @@ public class AsyncSearchTask extends ServerTask<VoidResult>implements Serializab
 
     private volatile transient ClusterSearchResultCollector resultCollector;
 
-    public AsyncSearchTask(final String userToken, final String searchName, final Search search,
-                           final Node targetNode, final int resultSendFrequency,
-                           final Map<Integer, CoprocessorSettings> coprocessorMap, final long now) {
-        super(null, userToken);
+    public AsyncSearchTask(final Task<?> parentTask,
+                           final String userToken,
+                           final String searchName,
+                           final Search search,
+                           final Node targetNode,
+                           final int resultSendFrequency,
+                           final Map<Integer, CoprocessorSettings> coprocessorMap,
+                           final long now) {
+        super(parentTask, userToken);
         this.searchName = searchName;
         this.search = search;
         this.targetNode = targetNode;

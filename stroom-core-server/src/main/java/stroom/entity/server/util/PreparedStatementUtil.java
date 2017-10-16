@@ -16,6 +16,8 @@
 
 package stroom.entity.server.util;
 
+import stroom.util.logging.StroomLogger;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -24,9 +26,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLSyntaxErrorException;
-import java.util.List;
-
-import stroom.util.logging.StroomLogger;
 
 /**
  * Utility Class
@@ -34,24 +33,30 @@ import stroom.util.logging.StroomLogger;
 public class PreparedStatementUtil {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(PreparedStatementUtil.class);
 
-    public static void setArguments(final PreparedStatement ps, final List<Object> args) throws SQLException {
+    public static void setArguments(final PreparedStatement ps, final Iterable<Object> args) throws SQLException {
         if (args != null) {
-            for (int i = 0; i < args.size(); i++) {
-                final Object o = args.get(i);
+            int index = 1;
+            for (final Object o : args) {
                 try {
-                    if (o instanceof Number) {
-                        ps.setLong(i + 1, ((Number) o).longValue());
+                    if (o instanceof Long) {
+                        ps.setLong(index, (Long) o);
+                    } else if (o instanceof Integer) {
+                        ps.setInt(index, (Integer) o);
+                    } else if (o instanceof Double) {
+                        ps.setDouble(index, (Double) o);
+                    } else if (o instanceof Byte) {
+                        ps.setByte(index, (Byte) o);
                     } else if (o instanceof String) {
-                        ps.setString(i + 1, ((String) o));
+                        ps.setString(index, ((String) o));
                     } else if (o instanceof Boolean) {
-                        ps.setBoolean(i + 1, ((Boolean) o));
+                        ps.setBoolean(index, ((Boolean) o));
                     } else {
-                        ps.setObject(i + 1, o);
+                        ps.setObject(index, o);
                     }
                 } catch (final SQLSyntaxErrorException syntaxError) {
-                    throw new SQLSyntaxErrorException("Unable to set arg " + i + " (" + o + ") in arg list " + args);
+                    throw new SQLSyntaxErrorException("Unable to set arg " + index + " (" + o + ") in arg list " + args);
                 }
-
+                index++;
             }
         }
     }
@@ -69,7 +74,7 @@ public class PreparedStatementUtil {
 
     public static ResultSet createCloseStatementResultSet(final PreparedStatement statement) throws SQLException {
         final ResultSet resultSet = statement.executeQuery();
-        return (ResultSet) Proxy.newProxyInstance(SqlUtil.class.getClassLoader(), new Class[] { ResultSet.class },
+        return (ResultSet) Proxy.newProxyInstance(SqlUtil.class.getClassLoader(), new Class[]{ResultSet.class},
                 new InvocationHandler() {
                     @Override
                     public Object invoke(final Object proxy, final Method method, final Object[] args)

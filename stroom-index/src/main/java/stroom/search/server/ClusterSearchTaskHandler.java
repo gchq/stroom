@@ -22,7 +22,6 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
-import org.springframework.util.StringUtils;
 import stroom.dashboard.expression.FieldIndexMap;
 import stroom.dictionary.shared.DictionaryService;
 import stroom.entity.shared.DocRef;
@@ -58,7 +57,6 @@ import stroom.task.server.TaskTerminatedException;
 import stroom.util.config.PropertyUtil;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Location;
-import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
@@ -113,19 +111,19 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
 
     @Inject
     ClusterSearchTaskHandler(final TaskManager taskManager,
-                                    final IndexService indexService,
-                                    final DictionaryService dictionaryService,
-                                    final TaskMonitor taskMonitor,
-                                    final CoprocessorFactory coprocessorFactory,
-                                    final IndexShardSearchTaskExecutor indexShardSearchTaskExecutor,
-                                    final IndexShardSearchTaskProperties indexShardSearchTaskProperties,
-                                    final IndexShardSearcherCache indexShardSearcherCache,
-                                    final ExtractionTaskExecutor extractionTaskExecutor,
-                                    final ExtractionTaskProperties extractionTaskProperties,
-                                    final StreamStore streamStore,
-                                    final SecurityContext securityContext,
-                                    @Value("#{propertyConfigurer.getProperty('stroom.search.maxBooleanClauseCount')}") final String maxBooleanClauseCount,
-                                    @Value("#{propertyConfigurer.getProperty('stroom.search.maxStoredDataQueueSize')}") final String maxStoredDataQueueSize) {
+                             final IndexService indexService,
+                             final DictionaryService dictionaryService,
+                             final TaskMonitor taskMonitor,
+                             final CoprocessorFactory coprocessorFactory,
+                             final IndexShardSearchTaskExecutor indexShardSearchTaskExecutor,
+                             final IndexShardSearchTaskProperties indexShardSearchTaskProperties,
+                             final IndexShardSearcherCache indexShardSearcherCache,
+                             final ExtractionTaskExecutor extractionTaskExecutor,
+                             final ExtractionTaskProperties extractionTaskProperties,
+                             final StreamStore streamStore,
+                             final SecurityContext securityContext,
+                             @Value("#{propertyConfigurer.getProperty('stroom.search.maxBooleanClauseCount')}") final String maxBooleanClauseCount,
+                             @Value("#{propertyConfigurer.getProperty('stroom.search.maxStoredDataQueueSize')}") final String maxStoredDataQueueSize) {
         this.taskManager = taskManager;
         this.indexService = indexService;
         this.dictionaryService = dictionaryService;
@@ -382,6 +380,13 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                             // Wait for completion.
                             while (!task.isTerminated() && (!indexShardSearchTaskProducer.isComplete()
                                     || !extractionTaskProducer.isComplete())) {
+                                taskMonitor.info(
+                                        "Searching... " +
+                                                indexShardSearchTaskProducer.remainingTasks() +
+                                                " shards and " +
+                                                extractionTaskProducer.remainingTasks() +
+                                                " extractions remaining");
+
                                 // Keep trying to execute extraction tasks.
                                 extractionTaskExecutor.exec();
                                 ThreadUtil.sleep(1000);

@@ -16,19 +16,19 @@
 
 package stroom.pipeline.server.task;
 
-import java.io.File;
-
-import stroom.test.StroomProcessTestFileUtil;
-import stroom.util.logging.StroomLogger;
 import org.joda.time.Period;
 import org.junit.Test;
+import stroom.test.StroomProcessTestFileUtil;
+import stroom.util.logging.StroomLogger;
+
+import java.io.File;
 
 public class TestFullTranslationTaskAndStepping extends TranslationTest {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(TestFullTranslationTaskAndStepping.class);
 
     @Override
     protected boolean doSingleSetup() {
-        testTranslationTask(false, false);
+        testTranslationTask(false);
         return true;
     }
 

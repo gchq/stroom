@@ -23,7 +23,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import javax.annotation.Resource;
+import javax.inject.Inject;
 
+import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -45,10 +47,16 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 public class FileAppender extends AbstractAppender {
     private static final String LOCK_EXTENSION = ".lock";
 
-    @Resource
-    private PathCreator pathCreator;
+    private final PathCreator pathCreator;
 
     private String[] outputPaths;
+
+    @Inject
+    public FileAppender(final ErrorReceiverProxy errorReceiverProxy,
+                        final PathCreator pathCreator) {
+        super(errorReceiverProxy);
+        this.pathCreator = pathCreator;
+    }
 
     @Override
     protected OutputStream createOutputStream() throws IOException {
@@ -67,10 +75,6 @@ public class FileAppender extends AbstractAppender {
             }
 
             // Replace some of the path elements with system variables.
-            if (pathCreator == null) {
-                pathCreator = new PathCreator();
-            }
-
             path = pathCreator.replaceAll(path);
 
             // Make sure we can create this path.

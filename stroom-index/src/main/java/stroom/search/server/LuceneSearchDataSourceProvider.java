@@ -100,7 +100,7 @@ public class LuceneSearchDataSourceProvider implements SearchDataSourceProvider 
 
         // Create an asynchronous search task.
         final String searchName = "Search '" + queryKey.toString() + "'";
-        final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(userToken, searchName, search, node,
+        final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(null, userToken, searchName, search, node,
                 SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY, coprocessorMap.getMap(), nowEpochMilli);
 
         // Create a handler for search results.

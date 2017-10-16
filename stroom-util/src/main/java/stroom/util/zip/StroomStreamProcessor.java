@@ -208,7 +208,7 @@ public class StroomStreamProcessor {
         } catch (final IOException zex) {
             StroomStreamException.create(zex);
         } finally {
-            CloseableUtil.closeLogAndIngoreException(inputStream);
+            CloseableUtil.closeLogAndIgnoreException(inputStream);
         }
 
     }
@@ -360,7 +360,7 @@ public class StroomStreamProcessor {
     public void closeHandlers() {
         for (final StroomStreamHandler handler : stroomStreamHandlerList) {
             if (handler instanceof Closeable) {
-                CloseableUtil.closeLogAndIngoreException((Closeable) handler);
+                CloseableUtil.closeLogAndIgnoreException((Closeable) handler);
             }
         }
     }

@@ -84,6 +84,10 @@ public class IndexShardSearchTaskProducer extends AbstractTaskProducer {
         return tasksCreated == tasksCompleted.get();
     }
 
+    public int remainingTasks() {
+        return tasksCreated - tasksCompleted.get();
+    }
+
     @Override
     public Task<?> next() {
         IndexShardSearchTask task = null;
