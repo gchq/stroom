@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#442** : Remove 'Old Internal Statistics' folder, improve import exception handling
+
 ## [v5.0-beta.51] - 2017-10-13
 
 * Issue **#419** : Fix multiple xml processing instructions appearing in output.
