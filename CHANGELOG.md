@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#420** : Pipelines were producing errors in the UI when elements were deleted but still had properties set on them. The pipeline validator was attempting to set and validate properties for unknown elements. The validator now ignores properties and links to elements that are undeclared.
 
+* Issue **#420** : The pipeline model now removes all properties and links for deleted elements on save.
+
 ## [v5.0-beta.51] - 2017-10-13
 
 * Issue **#419** : Fix multiple xml processing instructions appearing in output.
