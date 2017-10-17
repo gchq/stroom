@@ -174,7 +174,8 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             final Stream stream = streamSource.getStream();
 
             // Set the search id to be the id of the stream processor filter.
-            if (streamProcessorFilter != null) {
+            // Only do this where the task has specific data ranges that need extracting as this is only the case with a batch search.
+            if (streamProcessorFilter != null && streamTask.getData() != null && streamTask.getData().length() > 0) {
                 searchIdHolder.setSearchId(Long.toString(streamProcessorFilter.getId()));
             }
 
