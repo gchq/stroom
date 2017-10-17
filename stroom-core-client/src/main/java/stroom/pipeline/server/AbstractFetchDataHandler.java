@@ -100,7 +100,17 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
     private Long pageTotal = 0L;
     private boolean pageTotalIsExact = false;
 
-    AbstractFetchDataHandler(final StreamStore streamStore, final FeedService feedService, final FeedHolder feedHolder, final PipelineHolder pipelineHolder, final StreamHolder streamHolder, final PipelineEntityService pipelineEntityService, final PipelineFactory pipelineFactory, final ErrorReceiverProxy errorReceiverProxy, final PipelineDataCache pipelineDataCache, final StreamEventLog streamEventLog, final SecurityContext securityContext) {
+    AbstractFetchDataHandler(final StreamStore streamStore,
+                             final FeedService feedService,
+                             final FeedHolder feedHolder,
+                             final PipelineHolder pipelineHolder,
+                             final StreamHolder streamHolder,
+                             final PipelineEntityService pipelineEntityService,
+                             final PipelineFactory pipelineFactory,
+                             final ErrorReceiverProxy errorReceiverProxy,
+                             final PipelineDataCache pipelineDataCache,
+                             final StreamEventLog streamEventLog,
+                             final SecurityContext securityContext) {
         this.streamStore = streamStore;
         this.feedService = feedService;
         this.feedHolder = feedHolder;
@@ -453,7 +463,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
         // Create an output stream and give it to the writer.
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final BufferedOutputStream bos = new BufferedOutputStream(baos);
-        final OutputStreamAppender appender = new OutputStreamAppender(bos);
+        final OutputStreamAppender appender = new OutputStreamAppender(errorReceiverProxy, bos);
         writer.setTarget(appender);
 
         // Process the input.
