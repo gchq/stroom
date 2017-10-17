@@ -48,6 +48,7 @@ import stroom.script.server.ScriptServlet;
 import stroom.script.spring.ScriptConfiguration;
 import stroom.search.spring.SearchConfiguration;
 import stroom.security.server.AuthorisationResource;
+import stroom.security.server.SessionResource;
 import stroom.security.spring.SecurityConfiguration;
 import stroom.servicediscovery.ResourcePaths;
 import stroom.servicediscovery.ServiceDiscovererImpl;
@@ -155,6 +156,7 @@ public class App extends Application<Configuration> {
         SpringUtil.addResource(environment.jersey(), applicationContext, StroomIndexQueryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, SqlStatisticsQueryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, AuthorisationResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, SessionResource.class);
 
         // Listen to the lifecycle of the Dropwizard app.
         SpringUtil.manage(environment.lifecycle(), applicationContext, LifecycleService.class);

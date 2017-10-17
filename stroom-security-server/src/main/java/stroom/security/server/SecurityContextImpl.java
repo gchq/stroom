@@ -93,7 +93,7 @@ class SecurityContextImpl implements SecurityContext {
 
             final String type = parts[0];
             final String name = parts[1];
-            final String securityToken = parts[3];
+            final String jSessionId = parts[2];
 
             if (SYSTEM.equals(type)) {
                 if (INTERNAL.equals(name)) {
@@ -105,7 +105,7 @@ class SecurityContextImpl implements SecurityContext {
             } else if (USER.equals(type)) {
                 if (name.length() > 0) {
                     userRef = userService.getUserByName(name);
-                    userRef.setToken(securityToken);
+                    userRef.setjSessionId(jSessionId);
                     if (userRef == null) {
                         final String message = "Unable to push user '" + name + "' as user is unknown";
                         LOGGER.error(message);
@@ -170,17 +170,21 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     @Override
+    public String getJSessionId() {
+        final UserRef userRef = getUserRef();
+        if (userRef == null) {
+            return null;
+        }
+        return userRef.getJSessionId();
+    }
+
+    @Override
     public String getUserUuid() {
         final UserRef userRef = getUserRef();
         if (userRef == null) {
             return null;
         }
         return userRef.getUuid();
-    }
-
-    @Override
-    public String getToken() {
-        return getUserRef().getToken();
     }
 
     @Override

@@ -36,6 +36,7 @@ import stroom.apiclients.AuthenticationServiceClient;
 import stroom.security.server.JWTAuthenticationFilter;
 import stroom.security.server.JWTService;
 import stroom.security.server.NonceManager;
+import stroom.security.server.SessionManager;
 import stroom.util.config.StroomProperties;
 import stroom.util.spring.StroomScope;
 
@@ -74,8 +75,9 @@ public class SecurityConfiguration {
     public JWTAuthenticationFilter jwtAuthenticationFilter(
             JWTService jwtService,
             NonceManager nonceManager,
-            AuthenticationServiceClient authenticationServiceClient) {
-        return new JWTAuthenticationFilter(jwtService, nonceManager, authenticationServiceClient);
+            AuthenticationServiceClient authenticationServiceClient,
+            SessionManager sessionManager) {
+        return new JWTAuthenticationFilter(jwtService, nonceManager, authenticationServiceClient, sessionManager);
     }
 
     @Bean(name = "shiroFilter")

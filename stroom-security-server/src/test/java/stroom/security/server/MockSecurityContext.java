@@ -45,7 +45,7 @@ public class MockSecurityContext implements SecurityContext {
     }
 
     @Override
-    public String getToken() {
+    public String getJSessionId() {
         return null;
     }
 

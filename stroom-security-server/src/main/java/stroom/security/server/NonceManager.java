@@ -61,7 +61,7 @@ public class NonceManager {
             throw new RuntimeException(e);
         }
         digest.update(nonce);
-        String nonceHash = Base64.getEncoder().encodeToString(nonce);
+        String nonceHash = Base64.getUrlEncoder().encodeToString(nonce);
         return nonceHash;
     }
 

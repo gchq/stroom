@@ -31,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.apiclients.AuthenticationServiceClient;
 import stroom.auth.service.ApiException;
-import stroom.auth.service.ApiException;
 import stroom.auth.service.api.model.IdTokenRequest;
 import stroom.util.config.StroomProperties;
 
@@ -42,6 +41,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Optional;
 import java.util.UUID;
 
 public class JWTAuthenticationFilter extends AuthenticatingFilter {
@@ -50,6 +51,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
     private JWTService jwtService;
     private NonceManager nonceManager;
     private AuthenticationServiceClient authenticationServiceClient;
+    private SessionManager sessionManager;
     //TODO Use an API gateway
     private final String LOGIN_URL_PROPERTY_NAME = "stroom.security.login.url";
     private final String AUTHENTICATION_URL_PROPERTY_NAME = "stroom.security.authentication.url";
@@ -57,10 +59,15 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
     private final String JWT_SECRET = "stroom.security.jwtSecret";
     private final String JWT_ISSUER = "stroom.security.jwtIssuer";
 
-    public JWTAuthenticationFilter(final JWTService jwtService, final NonceManager nonceManager, AuthenticationServiceClient authenticationServiceClient) {
+    public JWTAuthenticationFilter(
+            final JWTService jwtService,
+            final NonceManager nonceManager,
+            AuthenticationServiceClient authenticationServiceClient,
+            SessionManager sessionManager) {
         this.jwtService = jwtService;
         this.nonceManager = nonceManager;
         this.authenticationServiceClient = authenticationServiceClient;
+        this.sessionManager = sessionManager;
     }
 
     @Override
@@ -78,6 +85,17 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
         // Are we dealing with a new session?
         if(sessionId == null){
             sessionId = UUID.randomUUID().toString();
+        }
+
+        // We need to know what jSessionIds are associated with this
+        // wider session Id, so we'll record a mapping.
+        Optional<String> optionalJSessionId = Arrays.stream(((ShiroHttpServletRequest) request).getCookies())
+                .filter(cookie -> cookie.getName().equals("JSESSIONID"))
+                .findFirst()
+                .map(cookie -> cookie.getValue());
+
+        if(optionalJSessionId.isPresent()){
+            sessionManager.add(sessionId, optionalJSessionId.get());
         }
 
         if(accessCode != null) {
@@ -145,7 +163,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
                 if(e.getCode() == Response.Status.UNAUTHORIZED.getStatusCode()){
                     // Our access code isn't valid, so we need to redirect and start the flow again.
                     LOGGER.error("My request for an id_token was rejected as unauthorised!", e);
-                    return null;
+                    throw new RuntimeException("Request to log you in was not authenticated! Is Stroom configured correctly?");
                 }
             }
 

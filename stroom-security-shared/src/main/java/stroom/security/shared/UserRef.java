@@ -19,14 +19,12 @@ package stroom.security.shared;
 import stroom.query.api.v2.DocRef;
 import stroom.util.shared.SharedObject;
 
-import java.util.Optional;
-
 public class UserRef extends DocRef implements SharedObject {
     private static final long serialVersionUID = 5883121212911541301L;
 
     private boolean group;
     private boolean enabled;
-    private String token;
+    private String jSessionId;
 
     public UserRef() {
         // Default constructor necessary for GWT serialisation.
@@ -37,15 +35,15 @@ public class UserRef extends DocRef implements SharedObject {
         super(type, uuid, name);
         this.group = group;
         this.enabled = enabled;
-        this.token = "";
+        this.jSessionId = "";
     }
 
     public UserRef (final String type, final String uuid, final String name,
-                    final boolean group, final boolean enabled, final String token) {
+                    final boolean group, final boolean enabled, final String jSessionId) {
         super(type, uuid, name);
         this.group = group;
         this.enabled = enabled;
-        this.token = token;
+        this.jSessionId = jSessionId;
     }
 
     public boolean isGroup() {
@@ -56,11 +54,11 @@ public class UserRef extends DocRef implements SharedObject {
         return enabled;
     }
 
-    public String getToken() {
-        return token;
+    public String getJSessionId() {
+        return jSessionId;
     }
 
-    public void setToken(String token) {
-        this.token = token;
+    public void setjSessionId(String jSessionId) {
+        this.jSessionId = jSessionId;
     }
 }
