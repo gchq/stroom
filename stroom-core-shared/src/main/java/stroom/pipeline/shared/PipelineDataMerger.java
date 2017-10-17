@@ -59,11 +59,11 @@ public class PipelineDataMerger {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public void merge(final PipelineData... configStack) throws PipelineModelException {
-        merge(Arrays.asList(configStack));
+    public PipelineDataMerger merge(final PipelineData... configStack) throws PipelineModelException {
+        return merge(Arrays.asList(configStack));
     }
 
-    public void merge(final List<PipelineData> configStack) throws PipelineModelException {
+    public PipelineDataMerger merge(final List<PipelineData> configStack) throws PipelineModelException {
         final Map<String, PipelineElement> allElementMap = new HashMap<>();
         boolean sourceProvided = false;
 
@@ -245,6 +245,8 @@ public class PipelineDataMerger {
                 linkMap.computeIfAbsent(SOURCE, k -> new ArrayList<>()).add(pipelineLink);
             }
         }
+
+        return this;
     }
 
     public Map<String, PipelineElement> getElements() {
