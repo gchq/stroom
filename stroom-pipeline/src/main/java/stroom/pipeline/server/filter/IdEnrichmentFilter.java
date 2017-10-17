@@ -16,14 +16,11 @@
 
 package stroom.pipeline.server.filter;
 
-import javax.annotation.Resource;
-
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
-
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
@@ -35,6 +32,8 @@ import stroom.streamstore.shared.Stream;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
+import javax.inject.Inject;
+
 /**
  * A SAX filter used to count the number of first level elements in an XML
  * instance. The first level elements are assumed to be records in the context
@@ -42,19 +41,17 @@ import stroom.util.spring.StroomScope;
  */
 @Component
 @Scope(StroomScope.PROTOTYPE)
-@ConfigurableElement(type = "IdEnrichmentFilter", category = Category.FILTER, roles = { PipelineElementType.ROLE_TARGET,
+@ConfigurableElement(type = "IdEnrichmentFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_STEPPING,
-        PipelineElementType.ROLE_MUTATOR }, icon = ElementIcons.ID)
+        PipelineElementType.ROLE_MUTATOR}, icon = ElementIcons.ID)
 public class IdEnrichmentFilter extends AbstractXMLFilter {
     private static final String URI = "";
     private static final String STRING = "string";
     private static final String STREAM_ID = "StreamId";
     private static final String EVENT_ID = "EventId";
 
-    @Resource
-    private StreamHolder streamHolder;
-    @Resource
-    private ErrorReceiverProxy errorReceiverProxy;
+    private final StreamHolder streamHolder;
+    private final ErrorReceiverProxy errorReceiverProxy;
 
     private int depth;
     private long count;
@@ -63,12 +60,15 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
     private String streamId;
     private long[] eventIds;
 
+    @Inject
+    public IdEnrichmentFilter(final StreamHolder streamHolder, final ErrorReceiverProxy errorReceiverProxy) {
+        this.streamHolder = streamHolder;
+        this.errorReceiverProxy = errorReceiverProxy;
+    }
+
     /**
      * This method tells filters that a stream is about to be parsed so that
      * they can complete any setup necessary.
-     *
-     * @throws SAXException
-     *             Could be thrown by an implementing class.
      */
     @Override
     public void startStream() {
@@ -100,22 +100,17 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
     /**
      * Fired on start element.
      *
-     * @param uri
-     *            the Namespace URI, or the empty string if the element has no
-     *            Namespace URI or if Namespace processing is not being
-     *            performed
-     * @param localName
-     *            the local name (without prefix), or the empty string if
-     *            Namespace processing is not being performed
-     * @param qName
-     *            the qualified name (with prefix), or the empty string if
-     *            qualified names are not available
-     * @param atts
-     *            the attributes attached to the element. If there are no
-     *            attributes, it shall be an empty Attributes object. The value
-     *            of this object after startElement returns is undefined
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param uri       the Namespace URI, or the empty string if the element has no
+     *                  Namespace URI or if Namespace processing is not being
+     *                  performed
+     * @param localName the local name (without prefix), or the empty string if
+     *                  Namespace processing is not being performed
+     * @param qName     the qualified name (with prefix), or the empty string if
+     *                  qualified names are not available
+     * @param atts      the attributes attached to the element. If there are no
+     *                  attributes, it shall be an empty Attributes object. The value
+     *                  of this object after startElement returns is undefined
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #endElement
      * @see org.xml.sax.Attributes
      * @see org.xml.sax.helpers.AttributesImpl
@@ -131,15 +126,18 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
             // Modify the attributes if this is an event element so that a
             // unique ID is inserted.
             if (streamId != null) {
-                String eventId = null;
+                // This is a first level element.
+                count++;
+
+                String eventId;
                 // If we are using this is search result output then we need to
                 // get event ids from a list.
                 if (eventIds != null) {
-                    final int index = (int) count;
-                    if (eventIds.length <= index) {
+                    // Check we haven't found more events than we are expecting to extract.
+                    if (count > eventIds.length) {
                         // FIXME : THIS IS A TEMPORARY FIX TO ACCOUNT FOR SOME ROLLING STREAM APPENDERS MISSING CORRECT SEGMENTS
                         // FIXME : SEE gh-444
-                        if (eventIds.length + 2 > index) {
+                        if (count <= eventIds.length + 4) {
                             final String msg = "Unexpected number of events being extracted";
                             final ProcessException searchException = new ProcessException(msg);
                             errorReceiverProxy.log(Severity.WARNING, null, getElementId(), msg, searchException);
@@ -153,13 +151,12 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
                             throw searchException;
                         }
                     }
+
+                    final int index = (int) (count - 1);
                     eventId = String.valueOf(eventIds[index]);
                 } else {
-                    eventId = String.valueOf(count + 1);
+                    eventId = String.valueOf(count);
                 }
-
-                // This is a first level element.
-                count++;
 
                 final AttributesImpl idAtts = new AttributesImpl(newAtts);
 
@@ -187,18 +184,14 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
     /**
      * Fired on an end element.
      *
-     * @param uri
-     *            the Namespace URI, or the empty string if the element has no
-     *            Namespace URI or if Namespace processing is not being
-     *            performed
-     * @param localName
-     *            the local name (without prefix), or the empty string if
-     *            Namespace processing is not being performed
-     * @param qName
-     *            the qualified XML name (with prefix), or the empty string if
-     *            qualified names are not available
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param uri       the Namespace URI, or the empty string if the element has no
+     *                  Namespace URI or if Namespace processing is not being
+     *                  performed
+     * @param localName the local name (without prefix), or the empty string if
+     *                  Namespace processing is not being performed
+     * @param qName     the qualified XML name (with prefix), or the empty string if
+     *                  qualified names are not available
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      */
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {

@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#442** : Remove 'Old Internal Statistics' folder, improve import exception handling
 
+## [v5.0-beta.52] - 2017-10-17
+
+* Issue **#444** : Fix for segment markers when writing text to StreamAppender.
+
+* Issue **#447** : Fix for AsyncSearchTask not being displayed as a child of EventSearchTask in the server tasks view.
+
+* Issue **#421** : FileAppender now causes fatal error where no output path set.
+
+* Issue **#427** : Pipelines with no source element will now only treat a single parser element as being a root element for backwards compatibility.
+
 ## [v5.0-beta.51] - 2017-10-13
 
 * Issue **#419** : Fix multiple xml processing instructions appearing in output.
@@ -583,7 +593,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.51...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.52...HEAD
+[v5.0-beta.52]: https://github.com/gchq/stroom/compare/v5.0-beta.51...v5.0-beta.52
 [v5.0-beta.51]: https://github.com/gchq/stroom/compare/v5.0-beta.50...v5.0-beta.51
 [v5.0-beta.50]: https://github.com/gchq/stroom/compare/v5.0-beta.49...v5.0-beta.50
 [v5.0-beta.49]: https://github.com/gchq/stroom/compare/v5.0-beta.48...v5.0-beta.49

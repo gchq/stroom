@@ -23,7 +23,6 @@ import stroom.CommonTestScenarioCreator;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.io.StreamCloser;
-import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.server.factory.Pipeline;
@@ -60,7 +59,7 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 
-public class TestRollingStreamAppender extends AbstractProcessIntegrationTest {
+public class TestStreamAppender extends AbstractProcessIntegrationTest {
     @Resource
     private PipelineFactory pipelineFactory;
     @Resource
@@ -78,8 +77,6 @@ public class TestRollingStreamAppender extends AbstractProcessIntegrationTest {
     @Resource
     private PipelineDataCache pipelineDataCache;
     @Resource
-    private RollingDestinations destinations;
-    @Resource
     private StreamStore streamStore;
     @Resource
     private FeedService feedService;
@@ -91,25 +88,25 @@ public class TestRollingStreamAppender extends AbstractProcessIntegrationTest {
     @Test
     public void testXML() throws Exception {
         final Feed feed = commonTestScenarioCreator.createSimpleFeed("TEST", "12345");
-        final String dir = "TestRollingStreamAppender/";
-        final TextConverter textConverter = createTextConverter(dir + "TestRollingStreamAppender.ds3.xml",
-                "TestRollingStreamAppender", TextConverterType.DATA_SPLITTER);
-        final XSLT filteredXSLT = createXSLT(dir + "TestRollingStreamAppender.xsl", "TestRollingStreamAppender");
-        final PipelineEntity pipelineEntity = createPipeline(dir + "TestRollingStreamAppender_XML_Pipeline.xml",
+        final String dir = "TestStreamAppender/";
+        final TextConverter textConverter = createTextConverter(dir + "TestStreamAppender.ds3.xml",
+                "TestStreamAppender", TextConverterType.DATA_SPLITTER);
+        final XSLT filteredXSLT = createXSLT(dir + "TestStreamAppender.xsl", "TestStreamAppender");
+        final PipelineEntity pipelineEntity = createPipeline(dir + "TestStreamAppender_XML_Pipeline.xml",
                 textConverter, filteredXSLT);
-        test(pipelineEntity, dir, "TestRollingStreamAppender", dir + "TestRollingStreamAppender.xml.out", null, false);
+        test(pipelineEntity, dir, "TestStreamAppender", dir + "TestStreamAppender.xml.out", null, false);
     }
 
     @Test
     public void testText() throws Exception {
         final Feed feed = commonTestScenarioCreator.createSimpleFeed("TEST", "12345");
-        final String dir = "TestRollingStreamAppender/";
-        final TextConverter textConverter = createTextConverter(dir + "TestRollingStreamAppender.ds3.xml",
-                "TestRollingStreamAppender", TextConverterType.DATA_SPLITTER);
-        final XSLT filteredXSLT = createXSLT(dir + "TestRollingStreamAppender_Text.xsl", "TestRollingStreamAppender");
-        final PipelineEntity pipelineEntity = createPipeline(dir + "TestRollingStreamAppender_Text_Pipeline.xml",
+        final String dir = "TestStreamAppender/";
+        final TextConverter textConverter = createTextConverter(dir + "TestStreamAppender.ds3.xml",
+                "TestStreamAppender", TextConverterType.DATA_SPLITTER);
+        final XSLT filteredXSLT = createXSLT(dir + "TestStreamAppender_Text.xsl", "TestStreamAppender");
+        final PipelineEntity pipelineEntity = createPipeline(dir + "TestStreamAppender_Text_Pipeline.xml",
                 textConverter, filteredXSLT);
-        test(pipelineEntity, dir, "TestRollingStreamAppender", dir + "TestRollingStreamAppender.txt.out", null, true);
+        test(pipelineEntity, dir, "TestStreamAppender", dir + "TestStreamAppender.txt.out", null, true);
     }
 
     private PipelineEntity createPipeline(final String pipelineFile, final TextConverter textConverter,
@@ -207,9 +204,6 @@ public class TestRollingStreamAppender extends AbstractProcessIntegrationTest {
 
         // Close all streams that have been written.,
         streamCloser.close();
-
-        // FORCE ROLL SO WE CAN GET OUTPUT
-        destinations.forceRoll();
 
         Assert.assertTrue(recordCount.getRead() > 0);
         Assert.assertTrue(recordCount.getWritten() > 0);

@@ -3,6 +3,10 @@
    <elements>
       <add>
          <element>
+            <id>Source</id>
+            <type>Source</type>
+         </element>
+         <element>
             <id>bomRemovalFilterInput</id>
             <type>BOMRemovalFilterInput</type>
          </element>
@@ -33,6 +37,10 @@
    </properties>
    <links>
       <add>
+         <link>
+            <from>Source</from>
+            <to>bomRemovalFilterInput</to>
+         </link>
          <link>
             <from>bomRemovalFilterInput</from>
             <to>invalidCharFilterReader</to>
