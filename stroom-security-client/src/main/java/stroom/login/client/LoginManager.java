@@ -21,7 +21,10 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import stroom.core.client.LocationManager;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.node.client.ClientPropertyCache;
+import stroom.node.shared.ClientProperties;
 import stroom.security.client.CurrentUser;
 import stroom.security.client.event.LoginEvent;
 import stroom.security.client.event.LoginFailedEvent;
@@ -33,15 +36,28 @@ public class LoginManager implements HasHandlers {
     private final EventBus eventBus;
     private final CurrentUser currentUser;
     private final ClientDispatchAsync dispatcher;
+    private String postLogoutRedirectUrl;
+    private LocationManager locationManager;
 
     @Inject
-    public LoginManager(final EventBus eventBus, final CurrentUser currentUser, final ClientDispatchAsync dispatcher) {
+    public LoginManager(
+            final EventBus eventBus,
+            final CurrentUser currentUser,
+            final ClientDispatchAsync dispatcher,
+            final LocationManager locationManager,
+            final ClientPropertyCache clientPropertyCache) {
         this.eventBus = eventBus;
         this.currentUser = currentUser;
         this.dispatcher = dispatcher;
+        this.locationManager = locationManager;
 
         // Listen for logout events.
         eventBus.addHandler(LogoutEvent.getType(), event -> logout());
+
+        clientPropertyCache.get()
+                .onSuccess(result -> {
+                    this.postLogoutRedirectUrl = result.get(ClientProperties.POST_LOGOUT_REDIRECT_URL);
+                });
     }
 
     public void autoLogin() {
@@ -65,6 +81,7 @@ public class LoginManager implements HasHandlers {
         currentUser.clear();
         // When we start the application we will try and auto login using a client certificate.
         dispatcher.exec(new LogoutAction(), null);
+        locationManager.replace(postLogoutRedirectUrl);
     }
 
     @Override

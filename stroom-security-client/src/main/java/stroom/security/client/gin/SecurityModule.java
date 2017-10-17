@@ -22,6 +22,7 @@ import stroom.entity.client.presenter.ManageEntityPresenter.ManageEntityView;
 import stroom.entity.client.view.ManageEntityViewImpl;
 import stroom.login.client.LoginManager;
 import stroom.login.client.presenter.LoginPresenter;
+import stroom.login.client.presenter.LogoutPlugin;
 import stroom.login.client.view.LoginViewImpl;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.client.CurrentUser;
@@ -57,6 +58,7 @@ public class SecurityModule extends PluginModule {
         bindPresenter(LoginPresenter.class, LoginPresenter.LoginView.class, LoginViewImpl.class,
                 LoginPresenter.LoginProxy.class);
 
+        bindPlugin(LogoutPlugin.class);
 
         bindPresenter(ChangePasswordPresenter.class, ChangePasswordView.class, ChangePasswordViewImpl.class,
                 ChangePasswordProxy.class);

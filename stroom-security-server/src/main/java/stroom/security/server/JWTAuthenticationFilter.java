@@ -89,13 +89,15 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
 
         // We need to know what jSessionIds are associated with this
         // wider session Id, so we'll record a mapping.
-        Optional<String> optionalJSessionId = Arrays.stream(((ShiroHttpServletRequest) request).getCookies())
-                .filter(cookie -> cookie.getName().equals("JSESSIONID"))
-                .findFirst()
-                .map(cookie -> cookie.getValue());
+        if(((ShiroHttpServletRequest) request).getCookies() != null) {
+            Optional<String> optionalJSessionId = Arrays.stream(((ShiroHttpServletRequest) request).getCookies())
+                    .filter(cookie -> cookie.getName().equals("JSESSIONID"))
+                    .findFirst()
+                    .map(cookie -> cookie.getValue());
 
-        if(optionalJSessionId.isPresent()){
-            sessionManager.add(sessionId, optionalJSessionId.get());
+            if (optionalJSessionId.isPresent()) {
+                sessionManager.add(sessionId, optionalJSessionId.get());
+            }
         }
 
         if(accessCode != null) {

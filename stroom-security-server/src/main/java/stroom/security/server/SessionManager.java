@@ -76,7 +76,7 @@ public class SessionManager {
         try {
             authenticationServiceClient.getAuthServiceApi().logout(sessionId);
         } catch (ApiException e) {
-            LOGGER.error("Unable to log user out!");
+            LOGGER.error("Unable to log user out!", e);
         }
     }
 }

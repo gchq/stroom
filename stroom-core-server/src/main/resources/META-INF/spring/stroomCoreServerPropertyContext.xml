@@ -675,6 +675,14 @@
             <property name="editable" value="true"/>
             <property name="requireRestart" value="true"/>
         </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.postLogout.redirectUrl"/>
+            <property name="value"
+                      value="http://localhost"/>
+            <property name="description" value="The URL to go to after logging out."/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="true"/>
+        </bean>
 
         <!-- CLUSTER COMMUNICATION -->
         <bean class="stroom.node.shared.GlobalProperty">
