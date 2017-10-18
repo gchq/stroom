@@ -80,11 +80,23 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
 
         boolean loggedIn = false;
         String accessCode = request.getParameter("accessCode");
-        String sessionId = request.getParameter("sessionId");
+        LOGGER.debug("We have the following access code: {{}}", accessCode);
+        Optional<String> sessionId = Optional.ofNullable(request.getParameter("sessionId"));
+
+        if(!sessionId.isPresent()){
+            LOGGER.debug("There is no session in the request -- attempting to get one from a cookie.");
+            if(((ShiroHttpServletRequest) request).getCookies() != null) {
+                sessionId = Arrays.stream(((ShiroHttpServletRequest) request).getCookies())
+                        .filter(cookie -> cookie.getName().equals("sessionId"))
+                        .findFirst()
+                        .map(cookie -> cookie.getValue());
+            }
+        }
 
         // Are we dealing with a new session?
-        if(sessionId == null){
-            sessionId = UUID.randomUUID().toString();
+        if(!sessionId.isPresent()){
+            sessionId = Optional.of(UUID.randomUUID().toString());
+            LOGGER.debug("There is no session in the cookie, creating a new session: {}", sessionId);
         }
 
         // We need to know what jSessionIds are associated with this
@@ -96,7 +108,11 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
                     .map(cookie -> cookie.getValue());
 
             if (optionalJSessionId.isPresent()) {
-                sessionManager.add(sessionId, optionalJSessionId.get());
+                LOGGER.debug("We found the following jSessionId: {}", optionalJSessionId.get());
+                sessionManager.add(sessionId.get(), optionalJSessionId.get());
+            }
+            else{
+                LOGGER.debug("There is no jSessionId associated with this request!");
             }
         }
 
@@ -121,7 +137,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
                 String authenticationUrl = StroomProperties.getProperty(AUTHENTICATION_URL_PROPERTY_NAME) + "/authenticate";
                 String advertisedStroomUrl = StroomProperties.getProperty(ADVERTISED_STROOM_URL);
 
-                String nonceHash = nonceManager.createNonce(sessionId);
+                String nonceHash = nonceManager.createNonce(sessionId.get());
 
                 StringBuilder redirectionParams = new StringBuilder();
                 redirectionParams.append("?scope=openid");
@@ -133,14 +149,15 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
                 redirectionParams.append("&nonce=");
                 redirectionParams.append(nonceHash);
                 redirectionParams.append("&sessionId=");
-                redirectionParams.append(sessionId);
+                redirectionParams.append(sessionId.get());
 
                 String redirectionUrl = authenticationUrl + redirectionParams.toString();
                 LOGGER.info("Redirecting with an AuthenticationRequest to: {}", redirectionUrl);
                 HttpServletResponse httpResponse = WebUtils.toHttp(response);
-                // We need to make sure that the client has the cookie.
-                httpResponse.addCookie(new Cookie("sessionId", sessionId));
+                // We want to make sure that the client has the cookie.
+                httpResponse.addCookie(new Cookie("sessionId", sessionId.get()));
                 httpResponse.sendRedirect(redirectionUrl);
+                return false;
             }
         }
 
