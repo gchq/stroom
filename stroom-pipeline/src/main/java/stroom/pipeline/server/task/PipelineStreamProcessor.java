@@ -170,6 +170,12 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     }
 
     private void process() {
+        // Record when processing began so we know how long it took
+        // afterwards.
+        final long startTime = System.currentTimeMillis();
+        Feed feed = null;
+        PipelineEntity pipelineEntity = null;
+
         try {
             final Stream stream = streamSource.getStream();
 
@@ -180,16 +186,12 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             }
 
             // Load the feed.
-            final Feed feed = feedService.load(stream.getFeed());
+            feed = feedService.load(stream.getFeed());
             feedHolder.setFeed(feed);
 
             // Set the pipeline so it can be used by a filter if needed.
-            final PipelineEntity pipelineEntity = pipelineEntityService.load(streamProcessor.getPipeline());
+            pipelineEntity = pipelineEntityService.load(streamProcessor.getPipeline());
             pipelineHolder.setPipeline(pipelineEntity);
-
-            // Create the parser.
-            final PipelineData pipelineData = pipelineDataCache.getOrCreate(pipelineEntity);
-            final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
             // Create some processing info.
             final StringBuilder infoSb = new StringBuilder();
@@ -215,15 +217,13 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                 LOGGER.info(processingInfo);
             }
 
-            // Record when processing began so we know how long it took
-            // afterwards.
-            final long startTime = System.currentTimeMillis();
-
             // Hold the source and feed so the pipeline filters can get them.
             streamProcessorHolder.setStreamProcessor(streamProcessor, streamTask);
             feedHolder.setFeed(feed);
 
             // Process the streams.
+            final PipelineData pipelineData = pipelineDataCache.getOrCreate(pipelineEntity);
+            final Pipeline pipeline = pipelineFactory.create(pipelineData);
             processNestedStreams(pipeline, stream, streamSource, feed, stream.getStreamType());
 
             // Create processing finished message.
@@ -236,19 +236,21 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
 
             // Log that we have finished processing.
             taskMonitor.info(finishedInfo);
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info(finishedInfo);
-            }
-
-            // Check we are not superseded
-            checkSuperseded(startTime);
-
-            recordStats(feed, pipelineEntity);
+            LOGGER.info(finishedInfo);
 
         } catch (final Exception e) {
             outputError(e);
 
         } finally {
+            // Check we are not superseded.
+            checkSuperseded(startTime);
+
+            // Record some statistics about processing.
+            recordStats(feed, pipelineEntity);
+
+            // Update the meta data for all output streams to use.
+            updateMetaData(streamSource);
+
             try {
                 // Close all open streams.
                 streamCloser.close();
@@ -455,26 +457,20 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                 outputError(e);
 
             } finally {
-                try {
-                    // Update the meta data for all output streams to use
-                    updateMetaData(streamSource);
+                // Update the meta data for all output streams to use
+                updateMetaData(streamSource);
 
+                try {
+                    if (startedProcessing) {
+                        pipeline.endProcessing();
+                    }
+                } catch (final LoggedException e) {
+                    // The exception has already been logged so ignore it.
+                    if (LOGGER.isTraceEnabled() && stream != null) {
+                        LOGGER.trace("Error while processing stream task: id = " + stream.getId(), e);
+                    }
                 } catch (final Exception e) {
                     outputError(e);
-
-                } finally {
-                    try {
-                        if (startedProcessing) {
-                            pipeline.endProcessing();
-                        }
-                    } catch (final LoggedException e) {
-                        // The exception has already been logged so ignore it.
-                        if (LOGGER.isTraceEnabled() && stream != null) {
-                            LOGGER.trace("Error while processing stream task: id = " + stream.getId(), e);
-                        }
-                    } catch (final Exception e) {
-                        outputError(e);
-                    }
                 }
             }
         } catch (final Exception e) {
