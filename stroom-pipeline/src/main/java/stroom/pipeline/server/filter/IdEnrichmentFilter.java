@@ -16,6 +16,8 @@
 
 package stroom.pipeline.server.filter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
@@ -45,6 +47,8 @@ import javax.inject.Inject;
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_STEPPING,
         PipelineElementType.ROLE_MUTATOR}, icon = ElementIcons.ID)
 public class IdEnrichmentFilter extends AbstractXMLFilter {
+    private static final Logger LOGGER = LoggerFactory.getLogger(IdEnrichmentFilter.class);
+
     private static final String URI = "";
     private static final String STRING = "string";
     private static final String STREAM_ID = "StreamId";
@@ -135,21 +139,11 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
                 if (eventIds != null) {
                     // Check we haven't found more events than we are expecting to extract.
                     if (count > eventIds.length) {
-                        // FIXME : THIS IS A TEMPORARY FIX TO ACCOUNT FOR SOME ROLLING STREAM APPENDERS MISSING CORRECT SEGMENTS
-                        // FIXME : SEE gh-444
-                        if (count <= eventIds.length + 4) {
-                            final String msg = "Unexpected number of events being extracted";
-                            final ProcessException searchException = new ProcessException(msg);
-                            errorReceiverProxy.log(Severity.WARNING, null, getElementId(), msg, searchException);
+                        LOGGER.debug("Expected " + eventIds.length + " events but extracted " + count);
 
-
-                        } else {
-                            // FIXME : THIS IS THE STANDARD CODE - KEEP
-                            final String msg = "Unexpected number of events being extracted";
-                            final ProcessException searchException = new ProcessException(msg);
-                            errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), msg, searchException);
-                            throw searchException;
-                        }
+                        final String msg = "Unexpected number of events being extracted";
+                        final ProcessException searchException = new ProcessException(msg);
+                        errorReceiverProxy.log(Severity.WARNING, null, getElementId(), msg, searchException);
                     }
 
                     final int index = (int) (count - 1);
