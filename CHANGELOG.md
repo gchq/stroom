@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.53] - 2017-10-18
+
 * Issue **#451** : Data paging was allowing the user to jump beyond the end of a stream whereby just the XML root elements were displayed. This is now fixed by adding a constraint to the page offset so that the user cannot jump beyond the last record. Because data paging assumes that segmented streams have a header and footer, text streams now include segments after a header and before a footer, even if neither are added, so that paging always works correctly regardless of the presence of a header or footer.
 
 * Issue **#461** : The stream attributes on the filter dialog were not sorted alphabetically, they now are.
@@ -605,7 +607,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.52...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.53...HEAD
+[v5.0-beta.53]: https://github.com/gchq/stroom/compare/v5.0-beta.52...v5.0-beta.53
 [v5.0-beta.52]: https://github.com/gchq/stroom/compare/v5.0-beta.51...v5.0-beta.52
 [v5.0-beta.51]: https://github.com/gchq/stroom/compare/v5.0-beta.50...v5.0-beta.51
 [v5.0-beta.50]: https://github.com/gchq/stroom/compare/v5.0-beta.49...v5.0-beta.50
