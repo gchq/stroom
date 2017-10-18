@@ -47,6 +47,9 @@ public abstract class DocumentEntity extends NamedEntity implements Document, Ha
         uuid = null;
     }
 
+    /**
+     * The parent folder
+     */
     @Override
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = Folder.FOREIGN_KEY)

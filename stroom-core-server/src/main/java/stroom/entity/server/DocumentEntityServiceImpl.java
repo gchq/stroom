@@ -19,8 +19,8 @@ package stroom.entity.server;
 import com.google.common.base.Preconditions;
 import event.logging.BaseAdvancedQueryItem;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.FieldMap;
+import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
@@ -524,6 +524,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
                                  final Map<String, String> dataMap,
                                  final ImportState importState,
                                  final ImportMode importMode) {
+
         LOGGER.debug("importDocument: folder [%s]",
                 (folder != null ? folder.getName()  + " - " + folder.getUuid() : "null"));
         E entity = null;
@@ -567,7 +568,10 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
                 LOGGER.debug("Import state is %s for uuid %s", importState.getState(), uuid);
             }
 
+
             importExportHelper.performImport(entity, dataMap, mainConfigPath, importState, importMode);
+
+            validateNameUniqueness(folder, importState, importMode, config, uuid);
 
             // We don't want to overwrite any marshaled data so disable marshalling on creation.
             setFolder(entity, DocRef.create(folder));
@@ -585,6 +589,34 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         }
 
         return DocRef.create(entity);
+    }
+
+    private void validateNameUniqueness(final Folder folder,
+                                        final ImportState importState,
+                                        final ImportMode importMode,
+                                        final Config config,
+                                        final String uuid) {
+        if (folder == null) {
+            //this is a root level folder so make sure the name is unique at this level
+            //as mysql cannot enforce uniqueness at root level because the unique key
+            //cannot enforce uniqueness on nulls
+            String entityName = config.getString("name");
+            Preconditions.checkNotNull(entityName, "Unable to get name from configuration");
+            DocumentEntity existingEntity = loadByName(null, entityName);
+
+            if (existingEntity != null && !uuid.equals(existingEntity.getUuid())) {
+                String msg = String.format("A %s entity already exists at this level with the same name [%s], existing uuid [%s]. This entity cannot be imported",
+                        existingEntity.getType(),
+                        existingEntity.getName(),
+                        existingEntity.getUuid());
+                if (importMode == ImportMode.CREATE_CONFIRMATION) {
+                    importState.addMessage(Severity.ERROR, msg);
+                } else {
+                    //must fail the import at this point
+                    throw new RuntimeException(msg);
+                }
+            }
+        }
     }
 
     @Override

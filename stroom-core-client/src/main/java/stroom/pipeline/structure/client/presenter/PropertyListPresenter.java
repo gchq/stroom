@@ -438,9 +438,8 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
             propertyList.add(property);
 
             // If the property is a doc ref then we will have to look it up on the server to get the current name for the entity.
-            final DocRef docRef = property.getValue().getEntity();
-            if (docRef != null) {
-                docRefs.add(docRef);
+            if (property.getValue() != null && property.getValue().getEntity() != null) {
+                docRefs.add(property.getValue().getEntity());
             }
         }
 

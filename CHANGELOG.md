@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#442** : Remove 'Old Internal Statistics' folder, improve import exception handling
 
+* Issue **#457** : Add check to import to preventy duplicate root level entities
+
 ## [v5.0-beta.52] - 2017-10-17
 
 * Issue **#444** : Fix for segment markers when writing text to StreamAppender.
@@ -20,6 +22,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#421** : FileAppender now causes fatal error where no output path set.
 
 * Issue **#427** : Pipelines with no source element will now only treat a single parser element as being a root element for backwards compatibility.
+
+* Issue **#420** : Pipelines were producing errors in the UI when elements were deleted but still had properties set on them. The pipeline validator was attempting to set and validate properties for unknown elements. The validator now ignores properties and links to elements that are undeclared.
+
+* Issue **#420** : The pipeline model now removes all properties and links for deleted elements on save.
+
+* Issue **#458** : Only event searches should populate the `searchId`. Now `searchId` is only populated when a stream processor task is created by an event search as only event searches extract specific records from the source stream.
+
+* Issue **#437** : The event log now includes source in move events.
 
 ## [v5.0-beta.51] - 2017-10-13
 
