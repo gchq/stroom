@@ -80,6 +80,11 @@ public class SessionManager {
         authenticationService.logout();
 
         try {
+            //TODO: FIXME: [JC 2017-10-18] This is failing! It's failing because at the point it is
+            // called we have a new jSessionId, one that hasn't been registered with
+            // this SessionManager. I don't know why this is happening. At the moment it
+            // doesn't matter because we're completely logging out here, but when we have
+            // collaborating services that need logging out this will be a problem.
             authenticationServiceClient.getAuthServiceApi().logout(sessionId);
         } catch (ApiException e) {
             LOGGER.error("Unable to log user out!", e);
