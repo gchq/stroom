@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#457** : Add check to import to preventy duplicate root level entities
+
 ## [v5.0-beta.52] - 2017-10-17
 
 * Issue **#444** : Fix for segment markers when writing text to StreamAppender.
