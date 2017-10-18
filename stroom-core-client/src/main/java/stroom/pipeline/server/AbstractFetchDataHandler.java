@@ -310,11 +310,6 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
 //            }
         }
 
-        // Make sure we can't exceed the page total.
-        if (pageOffset > pageTotal) {
-            pageOffset = pageTotal;
-        }
-
         // Set the result.
         final String classification = feedService.getDisplayClassification(feed);
         final OffsetRange<Long> resultStreamsRange = new OffsetRange<>(streamsOffset, streamsLength);
@@ -348,14 +343,20 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
         // Get the appropriate encoding for the stream type.
         final String encoding = EncodingSelection.select(feed, streamType);
 
-        pageOffset = pageRange.getOffset();
-
         // Set the page total.
         if (segmentInputStream.count() > 2) {
-            // Subtract 2 to account for the XML root elements.
+            // Subtract 2 to account for the XML root elements (header and footer).
             pageTotal = segmentInputStream.count() - 2;
+        } else {
+            pageTotal = segmentInputStream.count();
         }
         pageTotalIsExact = true;
+
+        // Make sure we can't exceed the page total.
+        pageOffset = pageRange.getOffset();
+        if (pageOffset >= pageTotal) {
+            pageOffset = pageTotal - 1;
+        }
 
         // Include start root element.
         segmentInputStream.include(0);
@@ -414,6 +415,11 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
         pageTotal = pageOffset + pageLength;
         // If there was no more content then the page total has been reached.
         pageTotalIsExact = len == -1;
+
+        // Make sure we can't exceed the page total.
+        if (pageOffset >= pageTotal) {
+            pageOffset = pageTotal - 1;
+        }
 
         return sb.toString();
     }

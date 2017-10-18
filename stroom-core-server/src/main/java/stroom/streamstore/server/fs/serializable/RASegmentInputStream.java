@@ -496,7 +496,7 @@ public class RASegmentInputStream extends InputStream implements SegmentInputStr
                         }
                     } else {
                         // Empty range
-                        remaining = 0;
+                        beforeRangeEnd = 0;
                     }
 
                     if (beforeRangeEnd == 0) {

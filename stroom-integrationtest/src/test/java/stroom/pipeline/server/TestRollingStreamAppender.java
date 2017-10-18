@@ -231,10 +231,14 @@ public class TestRollingStreamAppender extends AbstractProcessIntegrationTest {
 
     private void checkHeaderFooterOnly(final long streamId, final boolean text) throws Exception {
         if (text) {
-            final String ref = "2013-04-09T00:00:50.000ZTestTestApachetest.test.com123.123.123.123firstuser1234/goodGETHTTP/1.0someagent200\n" +
+            final String outerRef = "";
+
+            checkOuterData(streamId, 143, outerRef);
+
+            final String innerRef = "2013-04-09T00:00:50.000ZTestTestApachetest.test.com123.123.123.123firstuser1234/goodGETHTTP/1.0someagent200\n" +
                     "2013-04-09T00:00:50.000ZTestTestApachetest.test.com123.123.123.123lastuser1234/goodGETHTTP/1.0someagent200\n";
 
-            checkOuterData(streamId, 141, ref);
+            checkInnerData(streamId, 143, innerRef);
 
         } else {
             final String outerRef = "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n" +
