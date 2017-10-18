@@ -73,6 +73,12 @@ public class SessionManager {
         LOGGER.info("Logging out user.");
         String jSessionId = securityContext.getJSessionId();
         String sessionId = getSession(jSessionId);
+
+        // This method will be called by the remote authentication service. But if
+        // there's a problem with the service we still want to log the user out if we can,
+        // so we'll call logout here too.
+        authenticationService.logout();
+
         try {
             authenticationServiceClient.getAuthServiceApi().logout(sessionId);
         } catch (ApiException e) {

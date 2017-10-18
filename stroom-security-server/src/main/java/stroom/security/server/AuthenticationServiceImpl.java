@@ -178,15 +178,15 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         final HttpServletRequest request = httpServletRequestHolder.get();
         final UserRef user = getCurrentUser();
 
+        // Remove the user authentication object
+        SecurityUtils.getSubject().logout();
+
+        // Invalidate the current user session
+        request.getSession().invalidate();
+
         if (user != null) {
             // Create an event for logout
             eventLog.logoff(user.getName());
-
-            // Remove the user authentication object
-            SecurityUtils.getSubject().logout();
-
-            // Invalidate the current user session
-            request.getSession().invalidate();
 
             return user.getName();
         }
