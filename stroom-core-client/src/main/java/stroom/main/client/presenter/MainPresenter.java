@@ -16,6 +16,8 @@
 
 package stroom.main.client.presenter;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.dom.client.HasDoubleClickHandlers;
 import com.google.gwt.event.shared.GwtEvent.Type;
@@ -41,6 +43,7 @@ import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.util.client.DoubleSelectTest;
 
 public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPresenter.MainProxy> {
+
     @ContentSlot
     public static final Type<RevealContentHandler<?>> MENUBAR = new Type<>();
     @ContentSlot
@@ -51,8 +54,11 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
     private boolean click;
 
     @Inject
-    public MainPresenter(final EventBus eventBus, final MainView view, final MainProxy proxy,
-                         final KeyboardInterceptor keyboardInterceptor, final ClientPropertyCache clientPropertyCache) {
+    public MainPresenter(final EventBus eventBus,
+                         final MainView view,
+                         final MainProxy proxy,
+                         final KeyboardInterceptor keyboardInterceptor,
+                         final ClientPropertyCache clientPropertyCache) {
         super(eventBus, view, proxy);
 
         // Handle key presses.
@@ -77,7 +83,17 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
                 }
             }
         });
-        registerHandler(clientPropertyCache.addPropertyChangeHandler(event -> getView().setBanner(event.getProperties().get(ClientProperties.MAINTENANCE_MESSAGE))));
+        registerHandler(clientPropertyCache.addPropertyChangeHandler(
+                event -> getView().setBanner(event.getProperties().get(ClientProperties.MAINTENANCE_MESSAGE))
+                ));
+
+        registerHandler(clientPropertyCache.addPropertyChangeHandler(event -> {
+            final String customHtmlTitle = event.getProperties().get(ClientProperties.HTML_TITLE);
+
+            if ((Document.get() != null) && (customHtmlTitle != null)) {
+                Document.get().setTitle(customHtmlTitle);
+            }
+        }));
 
         registerHandler(view.getSpinner().addClickHandler(event -> {
             if (click) {

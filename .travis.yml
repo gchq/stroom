@@ -14,48 +14,30 @@ env:
     # and: https://docs.travis-ci.com/user/best-practices-security/
     - secure: "afb4Uu7C+f3DzugpcWGdL+IeW2Nlp6f/yZYd+1gOlOXEOjdF4cxnv8ENpApc6YgfJXhzZB/gBXx4EzcJwDnm/6ehBoPp9vqRd6zukkB9IcctjvL/0wSuoXnyagVjxZkpA8Jjv2z/tOLNppPbbTkS8gNqdN2ODCYbFos9oDH92h9b8pT6XUe3kfuqkw71+lLsK0xqXWWHprn5s6vjWOq6qGn0v7fwAIhRTT36/29IXuBB2hqzmzypq2U06nDGQ1HBfQhr/N7HMaZlQ2w5VGw3LgpEtc37JR5T4lvFso50dP3pmsfwUFdt+m08gxc4jPiaG+KFOFSi1MIXJxWec9sTf+HudfdO1LrsyqMHvY0i/ylL+9Qb3xqpWJ2g6RipHFKUyXyWbulSo5j94tuULxbjjoBrsoSfKZSO+jtFWdbKnQOsy5g9W7YuQ0m9hSmWji93pvDWq0N6ZLI6b5KA3vvHVgzbRZEKeYLdyDhFiGNxGhzBtWtGKp6qs5IKCKWvVx9jyt0Xgr+JsxNe3EY5S45xH6a4hoR3ZwMS0vxWJP/woHvfxZYz6LQl4gat3nUtSXyN4vxnFHSRaIDX0P5D6nH47kaEa7sjWBAch9gxIEXJg6aj/K+c6eNiXD3B5MN1FLbv2rico4AovAakOb+P1Po5WctcSFdEukVOhq5mUyml9Mk="
     
-before_install:
-    #Print out the current versions before we change them
-  - docker --version
-  - docker-compose --version
-    #remove the old docker version
-  - sudo apt-get -y remove docker docker-engine
-    #extra stuff required for docker CE
-  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-    #Add the apt repo for docker
-  - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-  - sudo apt-get update
-  - sudo apt-get -y install linux-image-extra-$(uname -r) linux-image-extra-virtual apt-transport-https ca-certificates curl software-properties-common docker-ce
-  - docker --version
-    #remove the old docker-compose
-  - sudo rm /usr/local/bin/docker-compose
-  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
-  - chmod +x docker-compose
-  - sudo mv docker-compose /usr/local/bin
-  - docker-compose --version
+#Don't think we need to manually install docker/compose at it comes built in
+#before_install:
+    ##Print out the current versions before we change them
+  #- docker --version
+  #- docker-compose --version
+    ##remove the old docker version
+  #- sudo apt-get -y remove docker docker-engine
+    ##extra stuff required for docker CE
+  #- curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+    ##Add the apt repo for docker
+  #- sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+  #- sudo apt-get update
+  #- sudo apt-get -y install linux-image-extra-$(uname -r) linux-image-extra-virtual apt-transport-https ca-certificates curl software-properties-common docker-ce
+  #- docker --version
+    ##remove the old docker-compose
+  #- sudo rm /usr/local/bin/docker-compose
+  #- curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+  #- chmod +x docker-compose
+  #- sudo mv docker-compose /usr/local/bin
+  #- docker-compose --version
 
 install: echo "skip 'gradle assemble' step to speed up build"
 
-# Increase the size of the heap
-before_script:
-  - echo $JAVA_OPTS
-  - export JAVA_OPTS=-Xmx1024m
-  - mkdir -p ../git_work
-  - pushd ../git_work
-  - git clone https://github.com/gchq/urlDependencies-plugin.git
-  - pushd urlDependencies-plugin
-  - ./gradlew clean build publishToMavenLocal
-  - popd
-  - git clone https://github.com/gchq/stroom-resources.git
-  - pushd stroom-resources/dev-resources/compose
-    #start all the services we need to run the integration tests in stroom
-  - docker-compose -f kafka-stroomDb-stroomStatsDb-zk.yml up -d
-  - popd
-  - popd
-  - mkdir -p ~/.stroom/
-  - mkdir -p ~/.stroom/plugins
-  - cp stroom.conf.example ~/.stroom/stroom.conf
-  - echo "stroom.plugins.lib.dir=$HOME/.stroom/plugins" >> ~/.stroom/stroom.conf
+before_script: ./travis.before_script.sh
 
 # Use 1 local worker to avoid using too much memory as each worker will chew up ~500Mb ram
 script: ./gradlew -Pversion=$TRAVIS_TAG -PgwtCompilerWorkers=1 -PgwtCompilerMinHeap=50M -PgwtCompilerMaxHeap=500M clean build

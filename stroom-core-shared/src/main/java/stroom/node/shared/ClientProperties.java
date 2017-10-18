@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.stream.StreamSupport;
 
 public class ClientProperties implements SharedObject {
+    public static final String HTML_TITLE = "stroom.htmlTitle";
     public static final String LOGIN_HTML = "stroom.loginHTML";
     public static final String WELCOME_HTML = "stroom.welcomeHTML";
     public static final String ABOUT_HTML = "stroom.aboutHTML";

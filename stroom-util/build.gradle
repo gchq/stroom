@@ -27,3 +27,15 @@ dependencies {
     testRuntime libs.logback_classic
     testRuntime libs.logback_core
 }
+
+task writeBuildProperties {
+    def propertyFile = file "${project.rootDir}/stroom-util/src/main/resources/META-INF/stroom-util-build.properties"
+    def props = new Properties()
+
+    props.setProperty("buildVersion", versions.stroom)
+    props.setProperty("buildDate", new Date().toString())
+
+    props.store(propertyFile.newWriter(), null)
+}
+
+tasks.compileJava.dependsOn writeBuildProperties
