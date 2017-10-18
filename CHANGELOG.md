@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#461** : The stream attributes on the filter dialog were not sorted alphabetically, they now are.
 
+* Issue **#460** : In some instances error streams did not always have stream attributes added to them for fatal errors. This mainly occurred in instances where processing failed early on during pipeline creation. An error was recorded but stream attributes were not added to the meta data for the error stream. Processing now ensures that stream attributes are recorded for all error cases.
+
 ## [v5.0-beta.52] - 2017-10-17
 
 * Issue **#444** : Fix for segment markers when writing text to StreamAppender.
