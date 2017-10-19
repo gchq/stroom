@@ -16,10 +16,6 @@
 
 package stroom.entity.server;
 
-import com.google.common.base.Preconditions;
-import event.logging.BaseAdvancedQueryItem;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.logging.DocumentEventLog;
 import stroom.entity.server.util.FieldMap;
@@ -41,7 +37,6 @@ import stroom.entity.shared.PermissionException;
 import stroom.entity.shared.ProvidesNamePattern;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.server.ImportExportHelper;
-import stroom.importexport.server.ImportExportSerializerImpl;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -61,8 +56,6 @@ import java.util.stream.Collectors;
 @Transactional
 @AutoMarshal
 public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C extends FindDocumentEntityCriteria> implements DocumentEntityService<E>, BaseEntityService<E>, FindService<E, C>, ProvidesNamePattern {
-
-    protected static final Logger LOGGER = LoggerFactory.getLogger(ImportExportSerializerImpl.class);
     public static final String FOLDER = ExplorerConstants.FOLDER;
     private static final String NAME_PATTERN_PROPERTY = "stroom.namePattern";
     private static final String NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
@@ -508,13 +501,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     }
 
     @Override
-    public DocRef importDocument(final DocRef docRef,
-                                 final Map<String, String> dataMap,
-                                 final ImportState importState,
-                                 final ImportMode importMode) {
-
-        LOGGER.debug("importDocument: folder [%s]",
-                (folder != null ? folder.getName() + " - " + folder.getUuid() : "null"));
+    public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
         E entity = null;
 
         try {
@@ -523,12 +510,8 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
             if (entity == null) {
                 entity = getEntityClass().newInstance();
             }
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Import state is %s for uuid %s", importState.getState(), uuid);
-            }
 
-
-            importExportHelper.performImport(entity, dataMap, mainConfigPath, importState, importMode);
+            importExportHelper.performImport(entity, dataMap, importState, importMode);
 
             // Save directly so there is no marshalling of objects that would destroy imported data.
             if (importState.ok(importMode)) {
@@ -537,39 +520,9 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
         } catch (final Exception e) {
             importState.addMessage(Severity.ERROR, e.getMessage());
-            LOGGER.error("Error while importing document entity %s",
-                    (entity != null ? entity.getName() : "null"), e);
         }
 
         return DocRefUtil.create(entity);
-    }
-
-    private void validateNameUniqueness(final Folder folder,
-                                        final ImportState importState,
-                                        final ImportMode importMode,
-                                        final Config config,
-                                        final String uuid) {
-        if (folder == null) {
-            //this is a root level folder so make sure the name is unique at this level
-            //as mysql cannot enforce uniqueness at root level because the unique key
-            //cannot enforce uniqueness on nulls
-            String entityName = config.getString("name");
-            Preconditions.checkNotNull(entityName, "Unable to get name from configuration");
-            DocumentEntity existingEntity = loadByName(null, entityName);
-
-            if (existingEntity != null && !uuid.equals(existingEntity.getUuid())) {
-                String msg = String.format("A %s entity already exists at this level with the same name [%s], existing uuid [%s]. This entity cannot be imported",
-                        existingEntity.getType(),
-                        existingEntity.getName(),
-                        existingEntity.getUuid());
-                if (importMode == ImportMode.CREATE_CONFIRMATION) {
-                    importState.addMessage(Severity.ERROR, msg);
-                } else {
-                    //must fail the import at this point
-                    throw new RuntimeException(msg);
-                }
-            }
-        }
     }
 
     @Override
