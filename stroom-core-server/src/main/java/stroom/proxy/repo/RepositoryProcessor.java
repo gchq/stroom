@@ -203,7 +203,7 @@ public abstract class RepositoryProcessor {
             LOGGER.error("getMetaMap", ex);
 
         } finally {
-            CloseableUtil.closeLogAndIngoreException(stroomZipFile);
+            CloseableUtil.closeLogAndIgnoreException(stroomZipFile);
         }
 
         return metaMap;
@@ -215,7 +215,7 @@ public abstract class RepositoryProcessor {
             stroomZipFile = new StroomZipFile(path);
             stroomZipRepository.addErrorMessage(stroomZipFile, msg, bad);
         } finally {
-            CloseableUtil.closeLogAndIngoreException(stroomZipFile);
+            CloseableUtil.closeLogAndIgnoreException(stroomZipFile);
         }
     }
 

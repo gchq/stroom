@@ -128,10 +128,9 @@ public class TestJSONParser extends StroomUnitTest {
         final OutputStream xmlOS = new BufferedOutputStream(Files.newOutputStream(outTempXML));
         final OutputStream jsonOS = new BufferedOutputStream(Files.newOutputStream(outTempJSON));
 
-        final OutputStreamAppender xmlAppender = new OutputStreamAppender(xmlOS);
-        final OutputStreamAppender jsonAppender = new OutputStreamAppender(jsonOS);
-
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
+        final OutputStreamAppender xmlAppender = new OutputStreamAppender(errorReceiverProxy, xmlOS);
+        final OutputStreamAppender jsonAppender = new OutputStreamAppender(errorReceiverProxy, jsonOS);
 
         final XMLWriter xmlWriter = new XMLWriter(errorReceiverProxy, null);
         xmlWriter.setIndentOutput(true);

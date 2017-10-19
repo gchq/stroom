@@ -3,6 +3,10 @@
    <elements>
       <add>
          <element>
+            <id>Source</id>
+            <type>Source</type>
+         </element>
+         <element>
             <id>streamAppender</id>
             <type>StreamAppender</type>
          </element>
@@ -19,4 +23,12 @@
          </property>
       </add>
    </properties>
+   <links>
+      <add>
+         <link>
+            <from>Source</from>
+            <to>streamAppender</to>
+         </link>
+      </add>
+   </links>
 </pipeline>

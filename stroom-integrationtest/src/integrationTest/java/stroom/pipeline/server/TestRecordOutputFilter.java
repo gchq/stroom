@@ -18,6 +18,7 @@ package stroom.pipeline.server;
 
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.io.StreamCloser;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.server.factory.Pipeline;
@@ -68,6 +69,8 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
     private PipelineService pipelineService;
     @Resource
     private PipelineDataCache pipelineDataCache;
+    @Resource
+    private StreamCloser streamCloser;
 
     @Test
     public void testAll() throws Exception {
@@ -186,6 +189,9 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
         }
 
         pipeline.endProcessing();
+
+        // Close all streams that have been written.,
+        streamCloser.close();
 
         Assert.assertTrue(recordCount.getRead() > 0);
         Assert.assertTrue(recordCount.getWritten() > 0);

@@ -16,13 +16,17 @@
 
 package stroom.pipeline.server.writer;
 
+import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
+
 import java.io.IOException;
 import java.io.OutputStream;
 
 public class OutputStreamAppender extends AbstractAppender {
     private final OutputStream outputStream;
 
-    public OutputStreamAppender(final OutputStream outputStream) {
+    public OutputStreamAppender(final ErrorReceiverProxy errorReceiverProxy,
+                                final OutputStream outputStream) {
+        super(errorReceiverProxy);
         this.outputStream = outputStream;
     }
 

@@ -46,12 +46,16 @@ public abstract class EntityMarshaller<E extends BaseEntity, O> implements Marsh
     @Override
     public E marshal(final E entity) {
         try {
-            final Object object = getObject(entity);
+            Object object = getObject(entity);
 
             // Strip out references to empty collections.
-            final Object clone = clone(object);
+            try {
+                object = XMLMarshallerUtil.removeEmptyCollections(object);
+            } catch (final Exception e) {
+                LOGGER.error(e.getMessage(), e);
+            }
 
-            final String data = XMLMarshallerUtil.marshal(jaxbContext, clone);
+            final String data = XMLMarshallerUtil.marshal(jaxbContext, object);
             setData(entity, data);
         } catch (final Exception e) {
             LOGGER.debug("Problem marshaling {} {}", new Object[]{entity.getClass(), entity.getId()}, e);
@@ -72,72 +76,6 @@ public abstract class EntityMarshaller<E extends BaseEntity, O> implements Marsh
             LOGGER.warn(e.getMessage());
         }
         return entity;
-    }
-
-    private Object clone(final Object obj) {
-        return deepClone(obj, 0);
-    }
-
-    private Object deepClone(final Object obj, final int depth) {
-        Object result = null;
-        try {
-            if (obj != null) {
-                Class<?> clazz = obj.getClass();
-                Object clone;
-
-                try {
-                    clone = clazz.newInstance();
-                } catch (final Exception e) {
-                    return obj;
-                }
-
-                while (clazz != null) {
-                    for (final Field field : clazz.getDeclaredFields()) {
-                        if (!(Modifier.isStatic(field.getModifiers()) && Modifier.isFinal(field.getModifiers()))) {
-                            field.setAccessible(true);
-                            try {
-                                Object o = field.get(obj);
-                                if (o != null) {
-                                    if (o instanceof Collection<?>) {
-                                        final Collection<?> collection = (Collection<?>) o;
-                                        if (collection.size() == 0) {
-                                            o = null;
-                                        }
-                                    } else if (field.getType().isArray()) {
-                                        if (Array.getLength(o) == 0) {
-                                            o = null;
-                                        }
-                                    } else {
-                                        o = deepClone(o, depth + 1);
-                                    }
-                                }
-
-                                field.set(clone, o);
-
-                                if (o != null) {
-                                    result = clone;
-                                }
-                            } catch (final Exception e) {
-                                LOGGER.error(e.getMessage(), e);
-                            }
-                        }
-                    }
-                    clazz = clazz.getSuperclass();
-                }
-
-                // If we are at the depth of the initial object then ensure we
-                // return a clone of the
-                // initial object as we don't want null tobe returned unless
-                // null was supplied.
-                if (result == null && depth == 0) {
-                    result = clone;
-                }
-            }
-        } catch (final Exception e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-
-        return result;
     }
 
     protected abstract String getData(E entity);

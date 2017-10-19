@@ -67,7 +67,7 @@ public class DynamicCSSServlet extends HttpServlet {
         if (cssTemplate == null) {
             final InputStream is = getClass().getResourceAsStream("dynamic.css");
             cssTemplate = StreamUtil.streamToString(is);
-            CloseableUtil.closeLogAndIngoreException(is);
+            CloseableUtil.closeLogAndIgnoreException(is);
         }
         return cssTemplate;
 

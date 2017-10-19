@@ -17,10 +17,7 @@
 package stroom.pipeline.server.xsltfunctions;
 
 import net.sf.saxon.Configuration;
-import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.SequenceType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.server.LocationFactory;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
@@ -30,80 +27,274 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StroomXSLTFunctionLibrary {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StroomXSLTFunctionLibrary.class);
-
     private final Configuration config;
     private final List<DelegateExtensionFunctionCall> callsInUse = new ArrayList<>();
 
     public StroomXSLTFunctionLibrary(final Configuration config) {
         this.config = config;
-        try {
-            register("bitmap-lookup",
-                    BitmapLookup.class, 2, 4, new SequenceType[]{SequenceType.SINGLE_STRING,
-                            SequenceType.SINGLE_STRING, SequenceType.OPTIONAL_STRING, SequenceType.OPTIONAL_BOOLEAN},
-                    SequenceType.NODE_SEQUENCE);
-            register("classification", Classification.class, 0, 0, new SequenceType[]{}, SequenceType.SINGLE_STRING);
-            register("current-time", CurrentTime.class, 0, 0, new SequenceType[]{}, SequenceType.SINGLE_STRING);
-            register("current-user", CurrentUser.class, 0, 0, new SequenceType[]{}, SequenceType.SINGLE_STRING);
-            register("dictionary", Dictionary.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING},
-                    SequenceType.OPTIONAL_STRING);
 
-            // TODO : Deprecate
-            register("feed-attribute", Meta.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING},
-                    SequenceType.OPTIONAL_STRING);
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("bitmap-lookup")
+                .library(this)
+                .delegateClass(BitmapLookup.class)
+                .minArgs(2)
+                .maxArgs(4)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING,
+                        SequenceType.SINGLE_STRING,
+                        SequenceType.OPTIONAL_STRING,
+                        SequenceType.OPTIONAL_BOOLEAN
+                })
+                .resultType(SequenceType.NODE_SEQUENCE)
+                .build());
 
-            register("feed-name", FeedName.class, 0, 0, new SequenceType[]{}, SequenceType.SINGLE_STRING);
-            register("format-date", FormatDate.class, 1, 5,
-                    new SequenceType[]{SequenceType.SINGLE_STRING, SequenceType.OPTIONAL_STRING,
-                            SequenceType.OPTIONAL_STRING, SequenceType.OPTIONAL_STRING, SequenceType.OPTIONAL_STRING},
-                    SequenceType.SINGLE_STRING);
-            register("get", Get.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING},
-                    SequenceType.OPTIONAL_STRING);
-            register("json-to-xml", JsonToXml.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING},
-                    SequenceType.NODE_SEQUENCE);
-            register("log", Log.class, 2, 2,
-                    new SequenceType[]{SequenceType.SINGLE_STRING, SequenceType.SINGLE_STRING},
-                    SequenceType.EMPTY_SEQUENCE);
-            register(
-                    "lookup", Lookup.class, 2, 4, new SequenceType[]{SequenceType.SINGLE_STRING,
-                            SequenceType.SINGLE_STRING, SequenceType.OPTIONAL_STRING, SequenceType.OPTIONAL_BOOLEAN},
-                    SequenceType.NODE_SEQUENCE);
-            register("meta", Meta.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING},
-                    SequenceType.OPTIONAL_STRING);
-            register("numeric-ip", NumericIP.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING},
-                    SequenceType.SINGLE_STRING);
-            register("random", Random.class, 0, 0, new SequenceType[]{}, SequenceType.SINGLE_DOUBLE);
-            register("search-id", SearchId.class, 0, 0, new SequenceType[]{}, SequenceType.SINGLE_STRING);
-            register("stream-id", StreamId.class, 0, 0, new SequenceType[]{}, SequenceType.SINGLE_STRING);
-            register("hex-to-dec", HexToDec.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING},
-                    SequenceType.SINGLE_STRING);
-            register("hex-to-oct", HexToOct.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING},
-                    SequenceType.SINGLE_STRING);
-            register("pipeline-name", PipelineName.class, 0, 0, new SequenceType[]{}, SequenceType.SINGLE_STRING);
-            register("put", Put.class, 2, 2,
-                    new SequenceType[]{SequenceType.SINGLE_STRING, SequenceType.SINGLE_STRING},
-                    SequenceType.EMPTY_SEQUENCE);
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("classification")
+                .library(this)
+                .delegateClass(Classification.class)
+                .resultType(SequenceType.SINGLE_STRING)
+                .build());
 
-        } catch (final XPathException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-    }
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("current-time")
+                .library(this)
+                .delegateClass(CurrentTime.class)
+                .resultType(SequenceType.SINGLE_STRING)
+                .build());
 
-    private <T extends StroomExtensionFunctionCall> void register(final String functionName, final Class<T> clazz,
-                                                                  final int minArgs, final int maxArgs, final SequenceType[] argTypes, final SequenceType resultType)
-            throws XPathException {
-        final DelegateExtensionFunctionDefinition function = new DelegateExtensionFunctionDefinition(this, functionName,
-                minArgs, maxArgs, argTypes, resultType, clazz);
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("current-user")
+                .library(this)
+                .delegateClass(CurrentUser.class)
+                .resultType(SequenceType.SINGLE_STRING)
+                .build());
 
-        config.registerExtensionFunction(function);
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("dictionary")
+                .library(this)
+                .delegateClass(Dictionary.class)
+                .minArgs(1)
+                .maxArgs(1)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING
+                })
+                .resultType(SequenceType.OPTIONAL_STRING)
+                .build());
+
+        // TODO : Deprecate
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("feed-attribute")
+                .library(this)
+                .delegateClass(Meta.class)
+                .minArgs(1)
+                .maxArgs(1)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING
+                })
+                .resultType(SequenceType.OPTIONAL_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("feed-name")
+                .library(this)
+                .delegateClass(FeedName.class)
+                .resultType(SequenceType.SINGLE_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("fetch-json")
+                .library(this)
+                .minArgs(2)
+                .maxArgs(2)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING,
+                        SequenceType.SINGLE_STRING
+                })
+                .delegateClass(FetchJson.class)
+                .resultType(SequenceType.NODE_SEQUENCE)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("format-date")
+                .library(this)
+                .delegateClass(FormatDate.class)
+                .minArgs(1)
+                .maxArgs(5)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING,
+                        SequenceType.OPTIONAL_STRING,
+                        SequenceType.OPTIONAL_STRING,
+                        SequenceType.OPTIONAL_STRING,
+                        SequenceType.OPTIONAL_STRING
+                })
+                .resultType(SequenceType.SINGLE_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("generate-url")
+                .library(this)
+                .minArgs(4)
+                .maxArgs(4)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING,
+                        SequenceType.SINGLE_STRING,
+                        SequenceType.SINGLE_STRING,
+                        SequenceType.SINGLE_STRING
+                })
+                .delegateClass(GenerateURL.class)
+                .resultType(SequenceType.SINGLE_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("get")
+                .library(this)
+                .delegateClass(Get.class)
+                .minArgs(1)
+                .maxArgs(1)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING
+                })
+                .resultType(SequenceType.OPTIONAL_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("json-to-xml")
+                .library(this)
+                .delegateClass(JsonToXml.class)
+                .minArgs(1)
+                .maxArgs(1)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING
+                })
+                .resultType(SequenceType.NODE_SEQUENCE)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("log")
+                .library(this)
+                .delegateClass(Log.class)
+                .minArgs(2)
+                .maxArgs(2)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING,
+                        SequenceType.SINGLE_STRING
+                })
+                .resultType(SequenceType.EMPTY_SEQUENCE)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("lookup")
+                .library(this)
+                .delegateClass(Lookup.class)
+                .minArgs(2)
+                .maxArgs(4)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING,
+                        SequenceType.SINGLE_STRING,
+                        SequenceType.OPTIONAL_STRING,
+                        SequenceType.OPTIONAL_BOOLEAN
+                })
+                .resultType(SequenceType.NODE_SEQUENCE)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("meta")
+                .library(this)
+                .delegateClass(Meta.class)
+                .minArgs(1)
+                .maxArgs(1)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING
+                })
+                .resultType(SequenceType.OPTIONAL_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("numeric-ip")
+                .library(this)
+                .delegateClass(NumericIP.class)
+                .minArgs(1)
+                .maxArgs(1)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING
+                })
+                .resultType(SequenceType.SINGLE_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("random")
+                .library(this)
+                .delegateClass(Random.class)
+                .resultType(SequenceType.SINGLE_DOUBLE)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("search-id")
+                .library(this)
+                .delegateClass(SearchId.class)
+                .resultType(SequenceType.SINGLE_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("stream-id")
+                .library(this)
+                .delegateClass(StreamId.class)
+                .resultType(SequenceType.SINGLE_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("hex-to-dec")
+                .library(this)
+                .delegateClass(HexToDec.class)
+                .minArgs(1)
+                .maxArgs(1)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING
+                })
+                .resultType(SequenceType.SINGLE_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("hex-to-oct")
+                .library(this)
+                .delegateClass(HexToOct.class)
+                .minArgs(1)
+                .maxArgs(1)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING
+                })
+                .resultType(SequenceType.SINGLE_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("pipeline-name")
+                .library(this)
+                .delegateClass(PipelineName.class)
+                .resultType(SequenceType.SINGLE_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("put")
+                .library(this)
+                .delegateClass(Put.class)
+                .minArgs(2)
+                .maxArgs(2)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING,
+                        SequenceType.SINGLE_STRING
+                })
+                .resultType(SequenceType.EMPTY_SEQUENCE)
+                .build());
     }
 
     void registerInUse(final DelegateExtensionFunctionCall call) {
         callsInUse.add(call);
     }
 
-    public void configure(final StroomBeanStore beanStore, final ErrorReceiver errorReceiver,
-                          final LocationFactory locationFactory, final List<PipelineReference> pipelineReferences) {
+    public void configure(final StroomBeanStore beanStore,
+                          final ErrorReceiver errorReceiver,
+                          final LocationFactory locationFactory,
+                          final List<PipelineReference> pipelineReferences) {
         if (beanStore != null) {
             for (final DelegateExtensionFunctionCall call : callsInUse) {
                 final Class<?> delegateClass = call.getDelegateClass();

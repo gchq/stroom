@@ -21,19 +21,19 @@ import stroom.entity.shared.EntityRow;
 public class NodeInfoResult extends EntityRow<Node> {
     private static final long serialVersionUID = -6143973264434353978L;
 
-    private String ping;
-    private long pingMs;
+    private Long ping;
     private boolean master;
+    private String error;
 
     public NodeInfoResult() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public String getPing() {
+    public Long getPing() {
         return ping;
     }
 
-    public void setPing(final String ping) {
+    public void setPing(final Long ping) {
         this.ping = ping;
     }
 
@@ -45,11 +45,11 @@ public class NodeInfoResult extends EntityRow<Node> {
         this.master = master;
     }
 
-    public long getPingMs() {
-        return pingMs;
+    public String getError() {
+        return error;
     }
 
-    public void setPingMs(final long pingMs) {
-        this.pingMs = pingMs;
+    public void setError(final String error) {
+        this.error = error;
     }
 }

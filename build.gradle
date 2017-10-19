@@ -7,7 +7,7 @@ buildscript {
     }
     dependencies {
         classpath group: 'gchq', name: 'urlDependencyPlugin', version: 'v0.2.0'
-        classpath group: 'ca.cutterslade.gradle', name: 'gradle-dependency-analyze', version: '1.1.0'
+        classpath group: 'ca.cutterslade.gradle', name: 'gradle-dependency-analyze', version: '1.2.0'
     }
 }
 
@@ -20,6 +20,7 @@ plugins {
 }
 
 apply plugin: 'gchq.urldependencies'
+apply plugin: 'ca.cutterslade.analyze'
 
 ext.stroomPluginsDir = System.getProperty("user.home") + "/.stroom/plugins"
 
@@ -54,7 +55,7 @@ ext.versions = [
     hadoopCommonShaded: 'v2.6.4-3',
     hadoopHdfsShaded: 'v2.6.4',
     stroomExpression: 'v1.0.0', 
-    stroomQuery: 'v2.0.0-alpha.3', //same version for both stroom-query-api and stroom-query-common
+    stroomQuery: 'v2.0.0-alpha.4', //same version for both stroom-query-api and stroom-query-common
     stroomStats: 'v0.6.0-alpha',
 
     //------------3rd-party------------
@@ -216,9 +217,9 @@ allprojects {
 
 subprojects {
     apply plugin: 'java'
-
     //analyze missing dependencies for the code base
     apply plugin: 'ca.cutterslade.analyze'
+
     apply plugin: 'idea'
 
     sourceCompatibility = 1.8

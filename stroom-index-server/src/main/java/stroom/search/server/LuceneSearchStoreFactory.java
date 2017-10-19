@@ -30,12 +30,12 @@ import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
 import stroom.node.shared.Node;
-import stroom.query.common.v2.CoprocessorSettingsMap;
-import stroom.query.common.v2.SearchResultHandler;
-import stroom.query.common.v2.Store;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.common.v2.CoprocessorSettingsMap;
+import stroom.query.common.v2.SearchResultHandler;
+import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreSize;
 import stroom.search.server.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.security.SecurityContext;
@@ -45,9 +45,11 @@ import stroom.util.config.PropertyUtil;
 import stroom.util.shared.UserTokenUtil;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
-
 
 
 @Component
@@ -108,6 +110,7 @@ public class LuceneSearchStoreFactory {
         final String userToken = UserTokenUtil.create(securityContext.getUserId(), null);
         final String searchName = "Search '" + searchRequest.getKey().toString() + "'";
         final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(
+                null,
                 userToken,
                 searchName,
                 query,
