@@ -18,8 +18,6 @@ package stroom.pipeline.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractProcessIntegrationTest;
-import stroom.CommonTestScenarioCreator;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.io.StreamCloser;
@@ -44,6 +42,8 @@ import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.fs.serializable.RASegmentInputStream;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
+import stroom.test.AbstractProcessIntegrationTest;
+import stroom.test.CommonTestScenarioCreator;
 import stroom.test.PipelineTestUtil;
 import stroom.test.StroomProcessTestFileUtil;
 import stroom.util.io.FileUtil;

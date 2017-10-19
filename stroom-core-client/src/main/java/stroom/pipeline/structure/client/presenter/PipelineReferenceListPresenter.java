@@ -37,7 +37,6 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
-import stroom.entity.shared.DocRef;
 import stroom.pipeline.shared.FetchDocRefsAction;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineElement;
@@ -45,6 +44,7 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.shared.data.SourcePipeline;
+import stroom.query.api.v2.DocRef;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -65,8 +65,6 @@ import java.util.stream.Collectors;
 
 public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridView<PipelineReference>>
         implements HasDirtyHandlers {
-//    private final MySingleSelectionModel<PipelineReference> selectionModel;
-
     private static final SafeHtml ADDED = SafeHtmlUtils.fromSafeConstant("<div style=\"font-weight:500\">");
     private static final SafeHtml REMOVED = SafeHtmlUtils
             .fromSafeConstant("<div style=\"font-weight:500;text-decoration:line-through\">");
@@ -78,15 +76,12 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
     private final Map<PipelineReference, State> referenceStateMap = new HashMap<>();
     private final List<PipelineReference> references = new ArrayList<>();
     private final Provider<NewPipelineReferencePresenter> newPipelineReferencePresenter;
+    private final ClientDispatchAsync dispatcher;
+
     private Map<PipelineElementType, Map<String, PipelinePropertyType>> allPropertyTypes;
     private PipelineEntity pipeline;
     private PipelineModel pipelineModel;
     private PipelineElement currentElement;
-    private final Map<PipelineReference, State> referenceStateMap = new HashMap<>();
-    private final List<PipelineReference> references = new ArrayList<>();
-
-    private final Provider<NewPipelineReferencePresenter> newPipelineReferencePresenter;
-    private final ClientDispatchAsync dispatcher;
     private PipelinePropertyType propertyType;
 
     @Inject

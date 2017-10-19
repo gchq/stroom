@@ -44,13 +44,7 @@ public class RollingKafkaDestination extends RollingDestination {
     }
 
     @Override
-    void onHeaderWritten(final ByteCountOutputStream outputStream,
-                         final Consumer<Throwable> exceptionConsumer) {
-        // Nothing to do here
-    }
-
-    @Override
-    void onFooterWritten(final Consumer<Throwable> exceptionConsumer) {
+    void afterRoll(final Consumer<Throwable> exceptionConsumer) {
         byte[] msgValue = byteArrayOutputStream.toByteArray();
 
         final StroomKafkaProducerRecord<String, byte[]> newRecord =

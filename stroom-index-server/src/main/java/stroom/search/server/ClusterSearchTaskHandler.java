@@ -386,6 +386,13 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                             // Wait for completion.
                             while (!task.isTerminated() && (!indexShardSearchTaskProducer.isComplete()
                                     || !extractionTaskProducer.isComplete())) {
+                                taskMonitor.info(
+                                        "Searching... " +
+                                                indexShardSearchTaskProducer.remainingTasks() +
+                                                " shards and " +
+                                                extractionTaskProducer.remainingTasks() +
+                                                " extractions remaining");
+
                                 // Keep trying to execute extraction tasks.
                                 extractionTaskExecutor.exec();
                                 ThreadUtil.sleep(1000);

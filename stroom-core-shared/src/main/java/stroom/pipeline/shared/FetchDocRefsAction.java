@@ -16,14 +16,14 @@
 
 package stroom.pipeline.shared;
 
-import stroom.dispatch.shared.Action;
-import stroom.entity.shared.DocRef;
-import stroom.entity.shared.DocRefs;
+import stroom.entity.shared.Action;
+import stroom.entity.shared.SharedDocRef;
+import stroom.query.api.v2.DocRef;
 import stroom.util.shared.SharedSet;
 
 import java.util.Set;
 
-public class FetchDocRefsAction extends Action<SharedSet<DocRef>> {
+public class FetchDocRefsAction extends Action<SharedSet<SharedDocRef>> {
     private static final long serialVersionUID = -1773546031158236156L;
 
     private Set<DocRef> docRefs;

@@ -31,16 +31,7 @@ import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
-
-import javax.annotation.Resource;
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.security.PrivilegedExceptionAction;
-import java.util.Optional;
-import java.util.function.Consumer;
 
 import javax.inject.Inject;
 import java.io.BufferedOutputStream;
@@ -62,9 +53,9 @@ import java.util.function.Consumer;
         type = "HDFSFileAppender",
         category = Category.DESTINATION,
         roles = {
-            PipelineElementType.ROLE_TARGET,
-            PipelineElementType.ROLE_DESTINATION,
-            PipelineElementType.VISABILITY_STEPPING},
+                PipelineElementType.ROLE_TARGET,
+                PipelineElementType.ROLE_DESTINATION,
+                PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.HADOOP)
 public class HDFSFileAppender extends AbstractAppender {
     private static final Logger LOGGER = LoggerFactory.getLogger(HDFSFileAppender.class);

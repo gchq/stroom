@@ -17,10 +17,11 @@
 package stroom.db.migration.mysql;
 
 import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.server.util.XMLMarshallerUtil;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineProperty;
-import stroom.util.logging.StroomLogger;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -31,7 +32,7 @@ import java.sql.Statement;
 import java.util.List;
 
 public class V5_0_0_44__PipelineProperties implements JdbcMigration {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(V5_0_0_44__PipelineProperties.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(V5_0_0_44__PipelineProperties.class);
 
     private final JAXBContext jaxbContext;
 
@@ -39,7 +40,7 @@ public class V5_0_0_44__PipelineProperties implements JdbcMigration {
         try {
             jaxbContext = JAXBContext.newInstance(PipelineData.class);
         } catch (final JAXBException e) {
-            LOGGER.fatal(e, e);
+            LOGGER.error(e.getMessage(), e);
             throw new RuntimeException(e.getMessage());
         }
     }

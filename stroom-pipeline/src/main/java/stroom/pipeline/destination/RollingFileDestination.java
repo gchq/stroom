@@ -84,13 +84,7 @@ public class RollingFileDestination extends RollingDestination {
     }
 
     @Override
-    void onHeaderWritten(final ByteCountOutputStream outputStream,
-                         final Consumer<Throwable> exceptionConsumer) {
-        // Nothing to do here
-    }
-
-    @Override
-    protected void onFooterWritten(Consumer<Throwable> exceptionConsumer) {
+    void afterRoll(Consumer<Throwable> exceptionConsumer) {
         boolean success = false;
 
         String destFileName = rolledFileName;

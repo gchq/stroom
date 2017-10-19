@@ -185,7 +185,7 @@ public class ProxyProperties {
             } catch (Exception ex) {
                 LOGGER.error("Exception when loading properties from %s %s", url, ex.getMessage());
             } finally {
-                CloseableUtil.closeLogAndIngoreException(is);
+                CloseableUtil.closeLogAndIgnoreException(is);
             }
         }
         return properties;

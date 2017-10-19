@@ -16,6 +16,8 @@
 
 package stroom.pipeline.server.writer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
@@ -35,15 +37,6 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.CharBuffer;
-import stroom.util.logging.StroomLogger;
-
-import javax.inject.Inject;
-import javax.xml.transform.ErrorListener;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.sax.TransformerHandler;
-import javax.xml.transform.stream.StreamResult;
-import java.io.BufferedWriter;
-import java.io.IOException;
 
 import javax.inject.Inject;
 import javax.xml.transform.ErrorListener;
@@ -58,12 +51,12 @@ import java.io.IOException;
  */
 @Component
 @Scope("prototype")
-@ConfigurableElement(type = "XMLWriter", category = Category.WRITER, roles = { PipelineElementType.ROLE_TARGET,
+@ConfigurableElement(type = "XMLWriter", category = Category.WRITER, roles = {PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.ROLE_WRITER, PipelineElementType.ROLE_MUTATOR,
-        PipelineElementType.VISABILITY_STEPPING }, icon = ElementIcons.XML)
+        PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.XML)
 public class XMLWriter extends AbstractWriter implements XMLFilter {
 
-    public static final StroomLogger LOGGER = StroomLogger.getLogger(XMLWriter.class);
+    public static final Logger LOGGER = LoggerFactory.getLogger(XMLWriter.class);
 
     private final LocationFactory locationFactory;
 
@@ -433,7 +426,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
         //remove any line breaks and white space, accepting that white space in element text or attributes will be lost
         //but is this is intended for debugging that is ok.
         String truncatedStr = str
-                .replaceAll("\\s+","")
+                .replaceAll("\\s+", "")
                 .replace("\n", "");
         if (truncatedStr != null) {
             int strLen = truncatedStr.length();

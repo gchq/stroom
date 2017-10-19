@@ -20,8 +20,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import stroom.entity.server.GenericEntityService;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
+import stroom.entity.shared.SharedDocRef;
 import stroom.pipeline.shared.FetchDocRefsAction;
+import stroom.query.api.v2.DocRef;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedSet;
@@ -32,7 +34,7 @@ import javax.inject.Inject;
 @TaskHandlerBean(task = FetchDocRefsAction.class)
 @Scope(value = StroomScope.TASK)
 public class FetchDocRefsHandler
-        extends AbstractTaskHandler<FetchDocRefsAction, SharedSet<DocRef>> {
+        extends AbstractTaskHandler<FetchDocRefsAction, SharedSet<SharedDocRef>> {
     private final Logger LOGGER = LoggerFactory.getLogger(FetchDocRefsHandler.class);
     private final GenericEntityService genericEntityService;
 
@@ -42,13 +44,16 @@ public class FetchDocRefsHandler
     }
 
     @Override
-    public SharedSet<DocRef> exec(final FetchDocRefsAction action) {
-        final SharedSet<DocRef> result = new SharedSet<>();
+    public SharedSet<SharedDocRef> exec(final FetchDocRefsAction action) {
+        final SharedSet<SharedDocRef> result = new SharedSet<>();
         if (action.getDocRefs() != null) {
             for (final DocRef docRef : action.getDocRefs()) {
                 try {
-                    final DocRef loaded = DocRef.create(genericEntityService.loadByUuid(docRef.getType(), docRef.getUuid()));
-                    result.add(loaded);
+                    final DocRef loaded = DocRefUtil.create(genericEntityService.loadByUuid(docRef.getType(), docRef.getUuid()));
+                    final SharedDocRef sharedDocRef = SharedDocRef.create(loaded);
+                    if (sharedDocRef != null) {
+                        result.add(sharedDocRef);
+                    }
                 } catch (final Exception e) {
                     LOGGER.debug(e.getMessage(), e);
                 }

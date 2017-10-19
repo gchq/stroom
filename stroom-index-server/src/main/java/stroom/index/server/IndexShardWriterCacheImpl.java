@@ -201,8 +201,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             // Something went wrong.
             indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSED);
         } catch (final Throwable t) {
-            LOGGER.error(t::getMessage, t);
             // Something went wrong.
+            LOGGER.error(() -> "Setting index shard status to corrupt because (" + t.toString() + ")", t);
             indexShardManager.setStatus(indexShardId, IndexShardStatus.CORRUPT);
         }
 

@@ -18,6 +18,8 @@ package stroom.entity.server;
 
 import com.google.common.base.Preconditions;
 import event.logging.BaseAdvancedQueryItem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.HqlBuilder;
@@ -43,12 +45,11 @@ import stroom.entity.shared.PermissionException;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.importexport.server.Config;
 import stroom.importexport.server.ImportExportHelper;
-import stroom.query.api.v2.DocRef;
 import stroom.importexport.server.ImportExportSerializerImpl;
+import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.config.StroomProperties;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
@@ -68,7 +69,7 @@ import java.util.stream.Collectors;
 @AutoMarshal
 public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C extends FindDocumentEntityCriteria> implements DocumentEntityService<E>, FindService<E, C>, SupportsCriteriaLogging<C> {
 
-    protected static final StroomLogger LOGGER = StroomLogger.getLogger(ImportExportSerializerImpl.class);
+    protected static final Logger LOGGER = LoggerFactory.getLogger(ImportExportSerializerImpl.class);
     public static final String NAME_PATTERN_PROPERTY = "stroom.namePattern";
     public static final String NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
     public static final String ID = "@ID@";
@@ -529,7 +530,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
                                  final ImportMode importMode) {
 
         LOGGER.debug("importDocument: folder [%s]",
-                (folder != null ? folder.getName()  + " - " + folder.getUuid() : "null"));
+                (folder != null ? folder.getName() + " - " + folder.getUuid() : "null"));
         E entity = null;
 
         try {
