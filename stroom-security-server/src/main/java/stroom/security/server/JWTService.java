@@ -33,7 +33,7 @@ public class JWTService {
     private final String authenticationServiceUrl;
 
     public JWTService(
-        @Value("#{propertyConfigurer.getProperty('stroom.security.authentication.url')}") final String authenticationServiceUrl){
+        @Value("#{propertyConfigurer.getProperty('stroom.auth.url')}") final String authenticationServiceUrl){
         this.authenticationServiceUrl = authenticationServiceUrl;
 
         if (authenticationServiceUrl == null) {

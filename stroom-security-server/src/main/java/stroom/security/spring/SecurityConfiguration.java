@@ -72,10 +72,20 @@ public class SecurityConfiguration {
 
     @Bean(name = "jwtFilter")
     public JWTAuthenticationFilter jwtAuthenticationFilter(
+            @Value("#{propertyConfigurer.getProperty('stroom.auth.url')}")
+            final String authenticationServiceUrl,
+            @Value("#{propertyConfigurer.getProperty('stroom.advertisedUrl')}")
+            final String advertisedStroomUrl,
+            @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.verificationkey')}")
+            final String jwtVerificationKey,
+            @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.issuer')}")
+            final String jwtIssuer,
             JWTService jwtService,
             NonceManager nonceManager,
             AuthenticationServiceClient authenticationServiceClient) {
-        return new JWTAuthenticationFilter(jwtService, nonceManager, authenticationServiceClient);
+        return new JWTAuthenticationFilter(
+                authenticationServiceUrl, advertisedStroomUrl, jwtVerificationKey, jwtIssuer,
+                jwtService, nonceManager, authenticationServiceClient);
     }
 
     @Bean(name = "shiroFilter")

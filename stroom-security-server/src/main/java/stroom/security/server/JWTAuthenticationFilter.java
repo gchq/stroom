@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 import stroom.apiclients.AuthenticationServiceClient;
 import stroom.auth.service.ApiException;
 import stroom.auth.service.api.model.IdTokenRequest;
-import stroom.util.config.StroomProperties;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -62,26 +61,30 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
     // we don't have an SSO sessionId. And JSESSIONIDs change too frequently.
     private static final String STROOM_SESSION_COOKIE = "stroomSessionId";
 
-    private JWTService jwtService;
-    private NonceManager nonceManager;
-    private AuthenticationServiceClient authenticationServiceClient;
-    //TODO Use an API gateway
-    private final String LOGIN_URL_PROPERTY_NAME = "stroom.security.login.url";
-    private final String AUTHENTICATION_URL_PROPERTY_NAME = "stroom.security.authentication.url";
-    private final String ADVERTISED_STROOM_URL = "stroom.advertisedUrl";
-    //TODO Change these to something like stroom.auth.jwt.issuer and stroom.auth.jwt.verificationkey
-    private final String JWT_SECRET = "stroom.security.jwtSecret";
-    private final String JWT_ISSUER = "stroom.security.jwtIssuer";
+    private final String authenticationServiceUrl;
+    private final String advertisedStroomUrl;
+    private final String jwtVerificationKey;
+    private final String jwtIssuer;
+    private final JWTService jwtService;
+    private final NonceManager nonceManager;
+    private final AuthenticationServiceClient authenticationServiceClient;
 
     public JWTAuthenticationFilter(
+            final String authenticationServiceUrl,
+            final String advertisedStroomUrl,
+            final String jwtVerificationKey,
+            final String jwtIssuer,
             final JWTService jwtService,
             final NonceManager nonceManager,
-            AuthenticationServiceClient authenticationServiceClient) {
+            final AuthenticationServiceClient authenticationServiceClient) {
+        this.authenticationServiceUrl = authenticationServiceUrl;
+        this.advertisedStroomUrl = advertisedStroomUrl;
+        this.jwtVerificationKey = jwtVerificationKey;
+        this.jwtIssuer = jwtIssuer;
         this.jwtService = jwtService;
         this.nonceManager = nonceManager;
         this.authenticationServiceClient = authenticationServiceClient;
     }
-
 
     @Override
     protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws Exception {
@@ -144,9 +147,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
             }
             else {
                 // We have a a new request so we're going to redirect with an AuthenticationRequest.
-                String authenticationUrl = StroomProperties.getProperty(AUTHENTICATION_URL_PROPERTY_NAME) + "/authenticate";
-                String advertisedStroomUrl = StroomProperties.getProperty(ADVERTISED_STROOM_URL);
-
+                String authenticationUrl = authenticationServiceUrl + "/authenticate";
                 String nonceHash = nonceManager.createNonce(stroomSessionId);
 
                 StringBuilder redirectionParams = new StringBuilder();
@@ -184,12 +185,10 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
             Optional<String> optionalJws = jwtService.getJws(request);
             if(optionalJws.isPresent()){
                 // TODO: We're doing JWS verification in a couple of places - factor it out.
-                String jwtSecret = StroomProperties.getProperty(JWT_SECRET);
-                String jwtIssuer = StroomProperties.getProperty(JWT_ISSUER);
                 JwtConsumerBuilder builder = new JwtConsumerBuilder()
                         .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account for clock skew
                         .setRequireSubject() // the JWT must have a subject claim
-                        .setVerificationKey(new HmacKey(jwtSecret.getBytes())) // verify the signature with the public key
+                        .setVerificationKey(new HmacKey(jwtVerificationKey.getBytes())) // verify the signature with the public key
                         .setRelaxVerificationKeyValidation() // relaxes key length requirement
                         .setExpectedIssuer(jwtIssuer);
                 JwtConsumer consumer = builder.build();
@@ -239,7 +238,6 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
                     // staring at a blank screen so we'll also redirect them back to the main page so
                     // we can start the login flow again.
                     HttpServletResponse httpResponse = WebUtils.toHttp(response);
-                    String advertisedStroomUrl = StroomProperties.getProperty(ADVERTISED_STROOM_URL);
                     httpResponse.sendRedirect(advertisedStroomUrl);
                     // Our access code isn't valid, so we need to redirect and start the flow again.
                     String errorMessage = "The accessCode used to obtain an idToken was rejected. Has it already been used?";
@@ -248,13 +246,10 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
                 }
             }
 
-            String jwtSecret = StroomProperties.getProperty(JWT_SECRET);
-            String jwtIssuer = StroomProperties.getProperty(JWT_ISSUER);
-
             JwtConsumerBuilder builder = new JwtConsumerBuilder()
                     .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account for clock skew
                     .setRequireSubject() // the JWT must have a subject claim
-                    .setVerificationKey(new HmacKey(jwtSecret.getBytes())) // verify the signature with the public key
+                    .setVerificationKey(new HmacKey(jwtVerificationKey.getBytes())) // verify the signature with the public key
                     .setRelaxVerificationKeyValidation() // relaxes key length requirement
                     .setExpectedIssuer(jwtIssuer);
 
@@ -268,7 +263,6 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
                 // Maybe the request uses an out-of-date stroomSessionId?
                 LOGGER.info("Received a bad nonce!");
                 HttpServletResponse httpResponse = WebUtils.toHttp(response);
-                String advertisedStroomUrl = StroomProperties.getProperty(ADVERTISED_STROOM_URL);
                 httpResponse.sendRedirect(advertisedStroomUrl);
                 return null;
             }

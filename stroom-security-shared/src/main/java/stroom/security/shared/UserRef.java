@@ -58,7 +58,6 @@ public class UserRef extends DocRef implements SharedObject {
         return jSessionId;
     }
 
-    //TODO: Can probably get rid of this now
     public void setjSessionId(String jSessionId) {
         this.jSessionId = jSessionId;
     }
