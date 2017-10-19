@@ -16,16 +16,16 @@
 
 package stroom.pipeline.destination;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.concurrent.atomic.AtomicLong;
-
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.util.logging.StroomLogger;
 import stroom.feed.MetaMap;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class RollingStreamDestination extends RollingDestination {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(RollingStreamDestination.class);
@@ -42,17 +42,21 @@ public class RollingStreamDestination extends RollingDestination {
     private final long creationTime;
 
     private volatile long lastFlushTime;
-    private byte[] footer;
+    private volatile byte[] footer;
 
     private volatile boolean rolled;
 
     private final ByteCountOutputStream outputStream;
-    private RASegmentOutputStream segmentOutputStream;
+    private final RASegmentOutputStream segmentOutputStream;
     private final AtomicLong recordCount = new AtomicLong();
 
-    public RollingStreamDestination(final StreamKey key, final long frequency, final long maxSize,
-            final StreamStore streamStore, final StreamTarget streamTarget, final String nodeName,
-            final long creationTime) throws IOException {
+    public RollingStreamDestination(final StreamKey key,
+                                    final long frequency,
+                                    final long maxSize,
+                                    final StreamStore streamStore,
+                                    final StreamTarget streamTarget,
+                                    final String nodeName,
+                                    final long creationTime) throws IOException {
         this.key = key;
 
         this.frequency = frequency;
@@ -66,6 +70,7 @@ public class RollingStreamDestination extends RollingDestination {
             segmentOutputStream = new RASegmentOutputStream(streamTarget);
             outputStream = new ByteCountOutputStream(segmentOutputStream);
         } else {
+            segmentOutputStream = null;
             outputStream = new ByteCountOutputStream(streamTarget.getOutputStream());
         }
     }
@@ -89,18 +94,15 @@ public class RollingStreamDestination extends RollingDestination {
 
                 // If we haven't written yet then create the output stream and
                 // write a header if we have one.
-                if (header != null && outputStream != null && outputStream.getBytesWritten() == 0) {
+                if (header != null && header.length > 0 && outputStream.getBytesWritten() == 0) {
                     // Write the header.
                     write(header);
                 }
 
-                if (outputStream != null && outputStream.getBytesWritten() > 0) {
-                    // Add a segment marker to the output stream if we are
-                    // segmenting.
-                    if (segmentOutputStream != null) {
-                        segmentOutputStream.addSegment();
-                    }
-                }
+                // Insert a segment marker before we write the next record regardless of whether the header has actually
+                // been written. This is because we always make an allowance for the existence of a header in a segmented
+                // stream when viewing data.
+                insertSegmentMarker();
 
                 recordCount.incrementAndGet();
 
@@ -167,8 +169,17 @@ public class RollingStreamDestination extends RollingDestination {
         rolled = true;
         IOException exception = null;
 
+        try {
+            // Writing a segment marker here ensures there is always a marker written before the footer regardless or
+            // whether a footer is actually written. We do this because we always make an allowance for a footer for data
+            // display purposes.
+            insertSegmentMarker();
+        } catch (final Throwable e) {
+            exception = handleException(exception, e);
+        }
+
         // If we have written then write a footer if we have one.
-        if (footer != null && outputStream != null && outputStream.getBytesWritten() > 0) {
+        if (footer != null && footer.length > 0) {
             // Write the footer.
             try {
                 write(footer);
@@ -176,6 +187,7 @@ public class RollingStreamDestination extends RollingDestination {
                 exception = handleException(exception, e);
             }
         }
+
         // Try and close the output stream.
         try {
             close();
@@ -211,6 +223,13 @@ public class RollingStreamDestination extends RollingDestination {
             LOGGER.debug("Closing: %s", key);
         }
         outputStream.close();
+    }
+
+    private void insertSegmentMarker() throws IOException {
+        // Add a segment marker to the output stream if we are segmenting.
+        if (segmentOutputStream != null) {
+            segmentOutputStream.addSegment();
+        }
     }
 
     @Override

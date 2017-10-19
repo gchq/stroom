@@ -19,27 +19,79 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
+## [v5.0-beta.53] - 2017-10-18
+
+* Issue **#451** : Data paging was allowing the user to jump beyond the end of a stream whereby just the XML root elements were displayed. This is now fixed by adding a constraint to the page offset so that the user cannot jump beyond the last record. Because data paging assumes that segmented streams have a header and footer, text streams now include segments after a header and before a footer, even if neither are added, so that paging always works correctly regardless of the presence of a header or footer.
+
+* Issue **#461** : The stream attributes on the filter dialog were not sorted alphabetically, they now are.
+
+* Issue **#460** : In some instances error streams did not always have stream attributes added to them for fatal errors. This mainly occurred in instances where processing failed early on during pipeline creation. An error was recorded but stream attributes were not added to the meta data for the error stream. Processing now ensures that stream attributes are recorded for all error cases.
+
+* Issue **#442** : Remove 'Old Internal Statistics' folder, improve import exception handling
+
+* Issue **#457** : Add check to import to preventy duplicate root level entities
+
+## [v5.0-beta.52] - 2017-10-17
+
+* Issue **#444** : Fix for segment markers when writing text to StreamAppender.
+
+* Issue **#447** : Fix for AsyncSearchTask not being displayed as a child of EventSearchTask in the server tasks view.
+
+* Issue **#421** : FileAppender now causes fatal error where no output path set.
+
+* Issue **#427** : Pipelines with no source element will now only treat a single parser element as being a root element for backwards compatibility.
+
+* Issue **#420** : Pipelines were producing errors in the UI when elements were deleted but still had properties set on them. The pipeline validator was attempting to set and validate properties for unknown elements. The validator now ignores properties and links to elements that are undeclared.
+
+* Issue **#420** : The pipeline model now removes all properties and links for deleted elements on save.
+
+* Issue **#458** : Only event searches should populate the `searchId`. Now `searchId` is only populated when a stream processor task is created by an event search as only event searches extract specific records from the source stream.
+
+* Issue **#437** : The event log now includes source in move events.
+
+## [v5.0-beta.51] - 2017-10-13
+
+* Issue **#419** : Fix multiple xml processing instructions appearing in output.
+
+* Issue **#446** : Fix for deadlock on rolling appenders.
+
+## [v5.0-beta.50] - 2017-10-13
+
+* Issue **#444** : Fix segment markers on RollingStreamAppender.
+
+## [v5.0-beta.49] - 2017-10-11
+
+* Issue **#426** : Fix for incorrect processor filters. Old processor filters reference `systemGroupIdSet` rather than `folderIdSet`. The new migration updates them accordingly.
+
+* Issue **#429** : Fix to remove `usePool` parser parameter.
+
+* Issue **#439** : Fix for caches where elements were not eagerly evicted.
+
+* Issue **#424** : Fix for cluster ping error display.
+
+* Issue **#441** : Fix to ensure correct names are shown in pipeline properties.
+
 ## [v5.0-beta.48] - 2017-10-05
 
-* Issue **433** : Fixed slow stream queries caused by feed permission restrictions.
+* Issue **#433** : Fixed slow stream queries caused by feed permission restrictions.
 
 ## [v5.0-beta.47] - 2017-09-11
 
-* Issue **385** : Individual index shards can now be deleted without deleting all shards.
+* Issue **#385** : Individual index shards can now be deleted without deleting all shards.
 
-* Issue **391** : Users needed `Manage Processors` permission to initiate pipeline stepping. This is no longer required as the 'best fit' pipeline is now discovered as the internal processing user.
+* Issue **#391** : Users needed `Manage Processors` permission to initiate pipeline stepping. This is no longer required as the 'best fit' pipeline is now discovered as the internal processing user.
 
-* Issue **392** : Inherited pipelines now only require 'Use' permission to be used instead of requiring 'Read' permission.
+* Issue **#392** : Inherited pipelines now only require 'Use' permission to be used instead of requiring 'Read' permission.
 
-* Issue **394** : Pipeline stepping will now show errors with an alert popup.
+* Issue **#394** : Pipeline stepping will now show errors with an alert popup.
 
-* Issue **396** : All queries associated with a dashboard should now be correctly deleted when a dashboard is deleted.
+* Issue **#396** : All queries associated with a dashboard should now be correctly deleted when a dashboard is deleted.
 
-* Issue **393** : All caches now cache items within the context of the current user so that different users do not have the possibility of having problems caused by others users not having read permissions on items.
+* Issue **#393** : All caches now cache items within the context of the current user so that different users do not have the possibility of having problems caused by others users not having read permissions on items.
 
-* Issue **358** : Schemas are now selected from a subset matching the criteria set on SchemaFilter by the user.
+* Issue **#358** : Schemas are now selected from a subset matching the criteria set on SchemaFilter by the user.
 
-* Issue **369** : Translation stepping wasn't showing any errors during stepping if a schema had an error in it.
+* Issue **#369** : Translation stepping wasn't showing any errors during stepping if a schema had an error in it.
 
 ## [v5.0-beta.46] - 2017-08-15
 
@@ -573,6 +625,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
 [v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
 
+[v5.0-beta.53]: https://github.com/gchq/stroom/compare/v5.0-beta.52...v5.0-beta.53
+[v5.0-beta.52]: https://github.com/gchq/stroom/compare/v5.0-beta.51...v5.0-beta.52
+[v5.0-beta.51]: https://github.com/gchq/stroom/compare/v5.0-beta.50...v5.0-beta.51
+[v5.0-beta.50]: https://github.com/gchq/stroom/compare/v5.0-beta.49...v5.0-beta.50
+[v5.0-beta.49]: https://github.com/gchq/stroom/compare/v5.0-beta.48...v5.0-beta.49
 [v5.0-beta.48]: https://github.com/gchq/stroom/compare/v5.0-beta.47...v5.0-beta.48
 [v5.0-beta.47]: https://github.com/gchq/stroom/compare/v5.0-beta.46...v5.0-beta.47
 [v5.0-beta.46]: https://github.com/gchq/stroom/compare/v5.0-beta.45...v5.0-beta.46

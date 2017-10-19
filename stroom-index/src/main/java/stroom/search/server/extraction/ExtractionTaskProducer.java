@@ -74,6 +74,10 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
         }
     }
 
+    public int remainingTasks() {
+        return tasksCreated.get()  - tasksCompleted.get();
+    }
+
     private int fillTaskQueue() {
         synchronized (taskQueue) {
             int added = 0;

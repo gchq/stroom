@@ -16,9 +16,6 @@
 
 package stroom.pipeline.server.writer;
 
-import stroom.util.io.FileUtil;
-import stroom.util.logging.StroomLogger;
-import stroom.util.test.StroomUnitTest;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.FileSystem;
@@ -30,6 +27,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import stroom.util.io.FileUtil;
+import stroom.util.logging.StroomLogger;
+import stroom.util.test.StroomUnitTest;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -147,7 +147,7 @@ public class TestHDFSFileAppender extends StroomUnitTest {
 
     private HDFSFileAppender buildTestObject() {
         final String name = "/${year}-${month}-${day}T${hour}:${minute}:${second}.${millis}Z-${uuid}.xml";
-        final HDFSFileAppender provider = new HDFSFileAppender();
+        final HDFSFileAppender provider = new HDFSFileAppender(null, new PathCreator());
 
         provider.setOutputPaths(ROOT_TEST_PATH + "/t1" + name + "," + ROOT_TEST_PATH + "/t2" + name + ","
                 + ROOT_TEST_PATH + "/t3" + name);

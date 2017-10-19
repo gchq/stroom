@@ -1,6 +1,22 @@
+Prerequisites 
+
+1. Git clone the github repo https://github.com/gchq/event-logging.git
+
+1. cd into event-logging
+
+1. git checkout 3.0
+
+1. mvn clean install
+
+To build the root project (without tests):
+
+`mvn clean install -U -Dskip.surefire.tests=true`
+
 To start Super Dev Mode use the following program arguments for Startup:
 
 `-startupUrl stroom.jsp -style PRETTY -logLevel INFO -war . -logdir . -gen . -extra . -workDir . stroom.app.AppSuperDevMode`
+
+(Open stroom at localhost:8888)
 
 To use HTTPS with Jetty internal certificate
 

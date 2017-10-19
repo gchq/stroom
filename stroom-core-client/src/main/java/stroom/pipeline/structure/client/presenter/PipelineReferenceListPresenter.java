@@ -33,9 +33,12 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.event.DirtyEvent;
 import stroom.entity.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.event.HasDirtyHandlers;
+import stroom.entity.shared.DocRef;
+import stroom.pipeline.shared.FetchDocRefsAction;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -53,8 +56,12 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridView<PipelineReference>>
         implements HasDirtyHandlers {
@@ -83,16 +90,16 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
     private final List<PipelineReference> references = new ArrayList<PipelineReference>();
 
     private final Provider<NewPipelineReferencePresenter> newPipelineReferencePresenter;
+    private final ClientDispatchAsync dispatcher;
     private PipelinePropertyType propertyType;
 
     @Inject
     public PipelineReferenceListPresenter(final EventBus eventBus,
-                                          final Provider<NewPipelineReferencePresenter> newPipelineReferencePresenter) {
+                                          final Provider<NewPipelineReferencePresenter> newPipelineReferencePresenter,
+                                          final ClientDispatchAsync dispatcher) {
         super(eventBus, new DataGridViewImpl<PipelineReference>(true));
         this.newPipelineReferencePresenter = newPipelineReferencePresenter;
-
-//        selectionModel = new MySingleSelectionModel<PipelineReference>();
-//        getView().setSelectionModel(selectionModel);
+        this.dispatcher = dispatcher;
 
         addButton = getView().addButton(SvgPresets.NEW_ITEM);
         addButton.setTitle("New Reference");
@@ -395,11 +402,56 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
             }
         }
 
+        // See if we need to load accurate doc refs (we do this to get correct entity names for display)
+        final Set<DocRef> docRefs = new HashSet<>();
+        references.forEach(ref -> addPipelineReference(docRefs, ref));
+        if (docRefs.size() > 0) {
+            // Load entities.
+            dispatcher.exec(new FetchDocRefsAction(docRefs)).onSuccess(result -> {
+                final Map<DocRef, DocRef> fetchedDocRefs = result
+                        .stream()
+                        .collect(Collectors.toMap(Function.identity(), Function.identity()));
+
+                for (final PipelineReference reference : references) {
+                    reference.setFeed(resolve(fetchedDocRefs, reference.getFeed()));
+                    reference.setPipeline(resolve(fetchedDocRefs, reference.getPipeline()));
+                }
+
+                setData(references);
+            });
+        } else {
+            setData(references);
+        }
+    }
+
+    private DocRef resolve(final Map<DocRef, DocRef> map, final DocRef docRef) {
+        if (docRef == null) {
+            return null;
+        }
+
+        final DocRef fetchedDocRef = map.get(docRef);
+        if (fetchedDocRef != null) {
+            return fetchedDocRef;
+        }
+
+        return docRef;
+    }
+
+    private void addPipelineReference(final Set<DocRef> docRefs, PipelineReference reference) {
+        if (reference.getFeed() != null) {
+            docRefs.add(reference.getFeed());
+        }
+        if (reference.getPipeline() != null) {
+            docRefs.add(reference.getPipeline());
+        }
+    }
+
+    private void setData(final List<PipelineReference> references) {
         getView().setRowData(0, references);
         getView().setRowCount(references.size());
-
         enableButtons();
     }
+
 
     protected void enableButtons() {
         addButton.setEnabled(propertyType != null);

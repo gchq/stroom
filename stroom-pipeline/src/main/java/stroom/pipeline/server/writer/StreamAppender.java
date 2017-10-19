@@ -16,6 +16,8 @@
 
 package stroom.pipeline.server.writer;
 
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.io.StreamCloser;
@@ -39,10 +41,8 @@ import stroom.util.io.WrappedOutputStream;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 import stroom.feed.MetaMap;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -52,28 +52,39 @@ import java.io.OutputStream;
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_DESTINATION,
         PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
 public class StreamAppender extends AbstractAppender {
+    private final ErrorReceiverProxy errorReceiverProxy;
+    private final StreamStore streamStore;
+    private final StreamHolder streamHolder;
+    private final FeedService feedService;
+    private final StreamTypeService streamTypeService;
+    private final StreamProcessorHolder streamProcessorHolder;
+    private final MetaData metaData;
+    private final StreamCloser streamCloser;
+
     private Feed feed;
     private String streamType;
     private boolean segmentOutput = true;
-
-    @Resource
-    private StreamStore streamStore;
-    @Resource
-    private StreamHolder streamHolder;
-    @Resource
-    private FeedService feedService;
-    @Resource
-    private StreamTypeService streamTypeService;
-    @Resource
-    private StreamProcessorHolder streamProcessorHolder;
-    @Resource
-    private MetaData metaData;
-    @Resource
-    private StreamCloser streamCloser;
-    @Resource
-    private ErrorReceiverProxy errorReceiverProxy;
-
     private StreamTarget streamTarget;
+
+    @Inject
+    public StreamAppender(final ErrorReceiverProxy errorReceiverProxy,
+                   final StreamStore streamStore,
+                   final StreamHolder streamHolder,
+                   final FeedService feedService,
+                   final StreamTypeService streamTypeService,
+                   final StreamProcessorHolder streamProcessorHolder,
+                   final MetaData metaData,
+                   final StreamCloser streamCloser) {
+        super(errorReceiverProxy);
+        this.errorReceiverProxy = errorReceiverProxy;
+        this.streamStore = streamStore;
+        this.streamHolder = streamHolder;
+        this.feedService = feedService;
+        this.streamTypeService = streamTypeService;
+        this.streamProcessorHolder = streamProcessorHolder;
+        this.metaData = metaData;
+        this.streamCloser = streamCloser;
+    }
 
     @Override
     protected OutputStream createOutputStream() throws IOException {

@@ -131,10 +131,6 @@
             <to>combinedParser</to>
          </link>
          <link>
-            <from>Source</from>
-            <to>fileAppender2</to>
-         </link>
-         <link>
             <from>combinedParser</from>
             <to>readRecordCountFilter</to>
          </link>

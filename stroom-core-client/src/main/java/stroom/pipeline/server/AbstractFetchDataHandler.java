@@ -100,7 +100,17 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
     private Long pageTotal = 0L;
     private boolean pageTotalIsExact = false;
 
-    AbstractFetchDataHandler(final StreamStore streamStore, final FeedService feedService, final FeedHolder feedHolder, final PipelineHolder pipelineHolder, final StreamHolder streamHolder, final PipelineEntityService pipelineEntityService, final PipelineFactory pipelineFactory, final ErrorReceiverProxy errorReceiverProxy, final PipelineDataCache pipelineDataCache, final StreamEventLog streamEventLog, final SecurityContext securityContext) {
+    AbstractFetchDataHandler(final StreamStore streamStore,
+                             final FeedService feedService,
+                             final FeedHolder feedHolder,
+                             final PipelineHolder pipelineHolder,
+                             final StreamHolder streamHolder,
+                             final PipelineEntityService pipelineEntityService,
+                             final PipelineFactory pipelineFactory,
+                             final ErrorReceiverProxy errorReceiverProxy,
+                             final PipelineDataCache pipelineDataCache,
+                             final StreamEventLog streamEventLog,
+                             final SecurityContext securityContext) {
         this.streamStore = streamStore;
         this.feedService = feedService;
         this.feedHolder = feedHolder;
@@ -300,11 +310,6 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
 //            }
         }
 
-        // Make sure we can't exceed the page total.
-        if (pageOffset > pageTotal) {
-            pageOffset = pageTotal;
-        }
-
         // Set the result.
         final String classification = feedService.getDisplayClassification(feed);
         final OffsetRange<Long> resultStreamsRange = new OffsetRange<>(streamsOffset, streamsLength);
@@ -338,14 +343,20 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
         // Get the appropriate encoding for the stream type.
         final String encoding = EncodingSelection.select(feed, streamType);
 
-        pageOffset = pageRange.getOffset();
-
         // Set the page total.
         if (segmentInputStream.count() > 2) {
-            // Subtract 2 to account for the XML root elements.
+            // Subtract 2 to account for the XML root elements (header and footer).
             pageTotal = segmentInputStream.count() - 2;
+        } else {
+            pageTotal = segmentInputStream.count();
         }
         pageTotalIsExact = true;
+
+        // Make sure we can't exceed the page total.
+        pageOffset = pageRange.getOffset();
+        if (pageOffset >= pageTotal) {
+            pageOffset = pageTotal - 1;
+        }
 
         // Include start root element.
         segmentInputStream.include(0);
@@ -405,6 +416,11 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
         // If there was no more content then the page total has been reached.
         pageTotalIsExact = len == -1;
 
+        // Make sure we can't exceed the page total.
+        if (pageOffset >= pageTotal) {
+            pageOffset = pageTotal - 1;
+        }
+
         return sb.toString();
     }
 
@@ -453,7 +469,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
         // Create an output stream and give it to the writer.
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final BufferedOutputStream bos = new BufferedOutputStream(baos);
-        final OutputStreamAppender appender = new OutputStreamAppender(bos);
+        final OutputStreamAppender appender = new OutputStreamAppender(errorReceiverProxy, bos);
         writer.setTarget(appender);
 
         // Process the input.

@@ -17,6 +17,7 @@
 package stroom.pipeline.server;
 
 import stroom.AbstractProcessIntegrationTest;
+import stroom.io.StreamCloser;
 import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
@@ -70,6 +71,8 @@ public class TestRollingFileAppender extends AbstractProcessIntegrationTest {
     private PipelineDataCache pipelineDataCache;
     @Resource
     private RollingDestinations destinations;
+    @Resource
+    private StreamCloser streamCloser;
 
     @Test
     public void testXML() throws Exception {
@@ -186,11 +189,14 @@ public class TestRollingFileAppender extends AbstractProcessIntegrationTest {
 
         pipeline.endProcessing();
 
+        // Close all streams that have been written.,
+        streamCloser.close();
+
         // FORCE ROLL SO WE CAN GET OUTPUT
         destinations.forceRoll();
 
         final File refFile = StroomProcessTestFileUtil.getTestResourcesFile(outputReference);
-        final File tmpFile = new File(refFile.getParentFile(), fileName + ".tmp");
+        final File tmpFile = new File(FileUtil.getTempDir(), fileName);
 
         Assert.assertTrue(recordCount.getRead() > 0);
         Assert.assertTrue(recordCount.getWritten() > 0);

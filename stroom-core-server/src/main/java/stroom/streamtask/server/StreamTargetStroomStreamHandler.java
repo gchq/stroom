@@ -207,7 +207,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
 
     @Override
     public void close() {
-        feedNestedStreamTarget.values().forEach(CloseableUtil::closeLogAndIngoreException);
+        feedNestedStreamTarget.values().forEach(CloseableUtil::closeLogAndIgnoreException);
         feedStreamTarget.values().forEach(streamStore::closeStreamTarget);
 
         feedNestedStreamTarget.clear();
@@ -218,7 +218,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("closeCurrentFeed() - " + currentFeed);
         }
-        CloseableUtil.closeLogAndIngoreException(feedNestedStreamTarget.remove(currentFeed));
+        CloseableUtil.closeLogAndIgnoreException(feedNestedStreamTarget.remove(currentFeed));
         streamStore.closeStreamTarget(feedStreamTarget.remove(currentFeed));
     }
 

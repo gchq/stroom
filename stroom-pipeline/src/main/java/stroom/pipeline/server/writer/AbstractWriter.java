@@ -117,7 +117,7 @@ public abstract class AbstractWriter extends AbstractXMLFilter implements Target
                         }
                     }
                 } catch (final Throwable t) {
-                    error(t);
+                    fatal(t);
                 }
             }
 

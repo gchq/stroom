@@ -16,7 +16,7 @@
 
 package stroom.pipeline.shared;
 
-public class PipelineModelException extends Exception {
+public class PipelineModelException extends RuntimeException {
     private static final long serialVersionUID = 2482398821645955609L;
 
     public PipelineModelException(final String message) {
