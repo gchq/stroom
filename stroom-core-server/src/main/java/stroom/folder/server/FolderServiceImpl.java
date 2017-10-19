@@ -18,6 +18,7 @@ package stroom.folder.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.google.common.base.Preconditions;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.DocumentEntityServiceImpl;
@@ -67,6 +68,8 @@ public class FolderServiceImpl extends DocumentEntityServiceImpl<Folder, FindFol
 
     @Override
     public Folder save(Folder entity) throws RuntimeException {
+        Preconditions.checkNotNull(entity);
+
         // If existing already check that any move is valid
         if (entity.isPersistent()) {
             final Folder origFolder = getEntityServiceHelper().load(entity);

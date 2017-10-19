@@ -153,7 +153,7 @@ public class TestPipelineModel {
         override.removeElement(ELEM_TYPE, "test2");
         override.addLink("test2", "test3");
 
-        test(baseStack, override, 0, 1, 0, 0, 0, 0, 0, 1);
+        test(baseStack, override, 0, 1, 0, 0, 0, 0, 0, 0);
     }
 
     @Test

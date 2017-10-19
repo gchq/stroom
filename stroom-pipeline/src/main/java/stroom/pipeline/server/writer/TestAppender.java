@@ -18,11 +18,13 @@ package stroom.pipeline.server.writer;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.util.spring.StroomScope;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -33,7 +35,11 @@ import java.io.OutputStream;
 public class TestAppender extends AbstractAppender {
     private OutputStream outputStream;
 
-    public TestAppender() {
+    @Inject
+    public TestAppender(final ErrorReceiverProxy errorReceiverProxy,
+                        final OutputStream outputStream) {
+        super(errorReceiverProxy);
+        this.outputStream = outputStream;
     }
 
     @Override

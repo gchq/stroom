@@ -26,6 +26,7 @@ import stroom.cache.shared.FindCacheInfoCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.PageRequest;
+import stroom.util.spring.StroomFrequencySchedule;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -88,6 +89,21 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
             }
         }
         return list;
+    }
+
+    @Override
+    @StroomFrequencySchedule("1m")
+    public void evictExpiredElements() {
+        final String[] cacheNames = cacheManager.getCacheNames();
+        for (final String cacheName : cacheNames) {
+            LOGGER.debug("Evicting cache entries for " + cacheName);
+            try {
+                final Ehcache cache = cacheManager.getEhcache(cacheName);
+                cache.evictExpiredElements();
+            } catch (final Exception e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        }
     }
 
     /**

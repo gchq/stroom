@@ -84,8 +84,4 @@ public final class MapStoreCache extends AbstractCacheBean<MapStoreCacheKey, Map
 
         return mapStore;
     }
-
-    public ReferenceDataLoader getReferenceDataLoader() {
-        return referenceDataLoader;
-    }
 }

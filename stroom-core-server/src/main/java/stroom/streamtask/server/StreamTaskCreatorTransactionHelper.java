@@ -286,7 +286,7 @@ public class StreamTaskCreatorTransactionHelper {
 
             // Anything created?
             if (totalTasksCreated > 0) {
-                LOGGER.debug("processStreamProcessorFilter() - Created {} tasks ({} avaliable) in the range {}",
+                LOGGER.debug("processStreamProcessorFilter() - Created {} tasks ({} available) in the range {}",
                         new Object[]{totalTasksCreated, availableTasksCreated, streamIdRange});
 
                 // If we have never created tasks before or the last poll gave

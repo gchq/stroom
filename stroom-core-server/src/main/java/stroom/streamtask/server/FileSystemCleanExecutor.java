@@ -217,7 +217,7 @@ public class FileSystemCleanExecutor {
                 }
             }
         } finally {
-            printWriterMap.values().forEach(CloseableUtil::closeLogAndIngoreException);
+            printWriterMap.values().forEach(CloseableUtil::closeLogAndIgnoreException);
         }
 
         logInfo("start() - Completed file system clean task in {}", logExecutionTime);

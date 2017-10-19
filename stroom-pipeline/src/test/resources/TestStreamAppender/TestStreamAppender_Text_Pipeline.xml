@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?> 
+<!--
+  ~ Copyright 2017 Crown Copyright
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<pipeline>
+  <elements> 
+    <add> 
+      <element> 
+        <id>combinedParser</id> 
+        <type>CombinedParser</type> 
+      </element> 
+      <element> 
+        <id>readRecordCountFilter</id> 
+        <type>RecordCountFilter</type> 
+      </element> 
+      <element> 
+        <id>splitFilter</id> 
+        <type>SplitFilter</type> 
+      </element> 
+      <element> 
+        <id>translationFilter</id> 
+        <type>XSLTFilter</type> 
+      </element> 
+      <element> 
+        <id>decorationFilter</id> 
+        <type>XSLTFilter</type> 
+      </element> 
+      <element> 
+        <id>flattenFilter</id> 
+        <type>XSLTFilter</type> 
+      </element>
+      <element> 
+        <id>schemaSplitFilter</id> 
+        <type>SplitFilter</type> 
+      </element> 
+      <element> 
+        <id>schemaFilter</id> 
+        <type>SchemaFilter</type> 
+      </element> 
+      <element> 
+        <id>recordOutputFilter</id> 
+        <type>RecordOutputFilter</type> 
+      </element> 
+      <element> 
+        <id>writeRecordCountFilter</id> 
+        <type>RecordCountFilter</type> 
+      </element> 
+      <element> 
+        <id>textWriter</id> 
+        <type>TextWriter</type> 
+      </element> 
+      <element> 
+        <id>streamAppender</id>
+        <type>StreamAppender</type>
+      </element> 
+    </add> 
+  </elements> 
+  <properties> 
+    <add> 
+      <property> 
+        <element>readRecordCountFilter</element> 
+        <name>countRead</name> 
+        <value> 
+          <boolean>true</boolean> 
+        </value> 
+      </property> 
+      <property> 
+        <element>splitFilter</element> 
+        <name>splitDepth</name> 
+        <value> 
+          <integer>1</integer> 
+        </value> 
+      </property> 
+      <property> 
+        <element>splitFilter</element> 
+        <name>splitCount</name> 
+        <value> 
+          <integer>100</integer> 
+        </value> 
+      </property> 
+      <property> 
+        <element>schemaSplitFilter</element> 
+        <name>splitCount</name> 
+        <value> 
+          <integer>1</integer> 
+        </value> 
+      </property> 
+      <property> 
+        <element>schemaFilter</element> 
+        <name>schemaGroup</name> 
+        <value> 
+          <string>EVENTS</string> 
+        </value> 
+      </property> 
+      <property> 
+        <element>writeRecordCountFilter</element> 
+        <name>countRead</name> 
+        <value> 
+          <boolean>false</boolean> 
+        </value> 
+      </property>
+      <property>
+        <element>streamAppender</element>
+        <name>streamType</name>
+        <value>
+          <string>Events</string>
+        </value>
+      </property>
+      <property>
+        <element>streamAppender</element>
+        <name>feed</name>
+        <value>
+          <entity>
+            <type>Feed</type>
+            <uuid>12345</uuid>
+            <name>TEST</name>
+          </entity>
+        </value>
+      </property>
+      <property>
+        <element>streamAppender</element>
+        <name>frequency</name>
+        <value>
+          <integer>1</integer>
+        </value>
+      </property>
+    </add> 
+  </properties> 
+  <links> 
+    <add> 
+      <link> 
+        <from>combinedParser</from> 
+        <to>readRecordCountFilter</to> 
+      </link> 
+      <link> 
+        <from>readRecordCountFilter</from> 
+        <to>splitFilter</to> 
+      </link> 
+      <link> 
+        <from>splitFilter</from> 
+        <to>translationFilter</to> 
+      </link> 
+      <link> 
+        <from>translationFilter</from> 
+        <to>decorationFilter</to> 
+      </link> 
+      
+      
+<!--       <link>  -->
+<!--         <from>decorationFilter</from>  -->
+<!--         <to>schemaSplitFilter</to>  -->
+<!--       </link> -->
+<!--       <link>  -->
+<!--         <from>schemaSplitFilter</from>  -->
+<!--         <to>schemaFilter</to>  -->
+<!--       </link>  -->
+      
+      <link> 
+        <from>decorationFilter</from> 
+        <to>schemaFilter</to> 
+      </link>       
+      
+      <link> 
+        <from>schemaFilter</from> 
+        <to>recordOutputFilter</to> 
+      </link> 
+      <link> 
+        <from>recordOutputFilter</from> 
+        <to>writeRecordCountFilter</to> 
+      </link> 
+      <link> 
+        <from>writeRecordCountFilter</from> 
+        <to>textWriter</to> 
+      </link> 
+      <link> 
+        <from>textWriter</from> 
+        <to>streamAppender</to>
+      </link> 
+    </add> 
+  </links> 
+</pipeline>

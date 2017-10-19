@@ -42,6 +42,7 @@ import stroom.node.shared.FetchNodeInfoAction;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeInfoResult;
 import stroom.streamstore.client.presenter.ActionDataProvider;
+import stroom.util.shared.ModelStringUtil;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
@@ -52,6 +53,7 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
+import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
 public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<NodeInfoResult>> implements Refreshable {
     private final ClientDispatchAsync dispatcher;
@@ -106,55 +108,40 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
             protected void showInfo(final NodeInfoResult row, final int x, final int y) {
                 dispatcher.exec(new ClusterNodeInfoAction(row.getEntity().getId()))
                         .onSuccess(result -> {
-                            String html = "";
+                            final StringBuilder html = new StringBuilder();
+                            TooltipUtil.addHeading(html, "Node Details");
 
-                            if (result == null) {
-                                if (row != null) {
-                                    final StringBuilder builder = new StringBuilder();
-                                    builder.append("<b>Node Details</b><br/>");
-                                    builder.append("Node Name: ");
-                                    builder.append(row.getEntity().getName());
-                                    builder.append("<br/>Cluster URL: ");
-                                    builder.append(row.getEntity().getClusterURL());
-                                    builder.append("<br/>Ping: ");
-                                    builder.append(row.getPing());
-
-                                    html = builder.toString();
-                                }
-
+                            if (result != null) {
+                                TooltipUtil.addRowData(html, "Node Name", result.getNodeName(), true);
+                                TooltipUtil.addRowData(html, "Build Version", result.getBuildVersion(), true);
+                                TooltipUtil.addRowData(html, "Build Date", result.getBuildDate(), true);
+                                TooltipUtil.addRowData(html, "Up Date", result.getUpDate(), true);
+                                TooltipUtil.addRowData(html, "Discover Time", result.getDiscoverTime(), true);
+                                TooltipUtil.addRowData(html, "Cluster URL", result.getClusterURL(), true);
                             } else {
-                                final StringBuilder builder = new StringBuilder();
-                                builder.append("<b>Node Details</b><br/>");
-                                builder.append("Node Name: ");
-                                builder.append(result.getNodeName());
-                                builder.append("<br/>Build Version: ");
-                                builder.append(result.getBuildVersion());
-                                builder.append("<br/>Build Date: ");
-                                builder.append(result.getBuildDate());
-                                builder.append("<br/>Up Date: ");
-                                builder.append(result.getUpDate());
-                                builder.append("<br/>Discover Time: ");
-                                builder.append(result.getDiscoverTime());
-                                builder.append("<br/>Cluster URL: ");
-                                builder.append(result.getClusterURL());
-                                builder.append("<br/>");
-                                builder.append("<br/><b>Node List</b><br/>");
-
-                                for (final ClusterNodeInfo.ClusterNodeInfoItem info : result.getItemList()) {
-                                    builder.append(info.getNode().getName());
-                                    if (!info.isActive()) {
-                                        builder.append(" (Unknown)");
-                                    }
-                                    if (info.isMaster()) {
-                                        builder.append(" (Master)");
-                                    }
-                                    builder.append("<br/>");
-                                }
-
-                                html = builder.toString();
+                                TooltipUtil.addRowData(html, "Node Name", row.getEntity().getName(), true);
+                                TooltipUtil.addRowData(html, "Cluster URL", row.getEntity().getClusterURL(), true);
                             }
 
-                            tooltipPresenter.setHTML(html);
+                            TooltipUtil.addRowData(html, "Ping", ModelStringUtil.formatDurationString(row.getPing()));
+                            TooltipUtil.addRowData(html, "Error", row.getError());
+
+                            if (result != null) {
+                                TooltipUtil.addBreak(html);
+                                TooltipUtil.addHeading(html, "Node List");
+                                for (final ClusterNodeInfo.ClusterNodeInfoItem info : result.getItemList()) {
+                                    html.append(info.getNode().getName());
+                                    if (!info.isActive()) {
+                                        html.append(" (Unknown)");
+                                    }
+                                    if (info.isMaster()) {
+                                        html.append(" (Master)");
+                                    }
+                                    html.append("<br/>");
+                                }
+                            }
+
+                            tooltipPresenter.setHTML(html.toString());
                             final PopupPosition popupPosition = new PopupPosition(x, y);
                             ShowPopupEvent.fire(NodeMonitoringPresenter.this, tooltipPresenter, PopupType.POPUP,
                                     popupPosition, null);
@@ -201,7 +188,14 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 if (row == null) {
                     return null;
                 }
-                return row.getPing();
+                if ("No response".equals(row.getError())) {
+                    return row.getError();
+                }
+                if (row.getError() != null) {
+                    return "Error";
+                }
+
+                return ModelStringUtil.formatDurationString(row.getPing());
             }
         };
         getView().addResizableColumn(pingColumn, "Ping", 150);

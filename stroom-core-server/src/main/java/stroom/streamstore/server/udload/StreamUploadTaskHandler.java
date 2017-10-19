@@ -149,7 +149,7 @@ public class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTas
         } catch (final Exception ex) {
             throw EntityServiceExceptionUtil.create(ex);
         } finally {
-            CloseableUtil.closeLogAndIngoreException(stroomZipFile);
+            CloseableUtil.closeLogAndIgnoreException(stroomZipFile);
             taskMonitor.info("done");
         }
     }

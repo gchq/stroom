@@ -41,7 +41,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
@@ -111,12 +110,12 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
         final PipelineData result = new PipelineData();
 
         if (pipelineData != null) {
-            // Remove orphaned elements.
-            final Set<String> usedElements = new HashSet<>();
+            // Get a set of valid (used/linked) elements.
+            final Set<String> validElements = new HashSet<>();
             for (final List<PipelineLink> list : combinedData.getLinks().values()) {
                 for (final PipelineLink link : list) {
-                    usedElements.add(link.getFrom());
-                    usedElements.add(link.getTo());
+                    validElements.add(link.getFrom());
+                    validElements.add(link.getTo());
                 }
             }
 
@@ -125,7 +124,7 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
                 final PipelineElement baseElement = baseData.getElements().get(combinedElement.getId());
                 if (baseElement == null) {
                     // Only add the element if there are links from/to it.
-                    if (usedElements.contains(combinedElement.getId())) {
+                    if (validElements.contains(combinedElement.getId())) {
                         result.addElement(combinedElement);
                     }
                 }
@@ -141,9 +140,7 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
 
             // We only need to worry about properties, pipeline references and
             // links that are related to valid elements.
-            for (final Entry<String, PipelineElement> elementEntry : combinedData.getElements().entrySet()) {
-                final String id = elementEntry.getKey();
-
+            for (final String id : validElements) {
                 if (id != null) {
                     copyProperties(id, pipelineData.getAddedProperties(), result.getAddedProperties(),
                             pipelineData.getRemovedProperties());

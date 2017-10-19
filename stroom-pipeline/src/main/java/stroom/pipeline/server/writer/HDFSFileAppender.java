@@ -24,15 +24,25 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
 
 import javax.annotation.Resource;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.security.PrivilegedExceptionAction;
+import java.util.Optional;
+import java.util.function.Consumer;
+
+import javax.inject.Inject;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -61,16 +71,21 @@ public class HDFSFileAppender extends AbstractAppender {
 
     private static final String LOCK_EXTENSION = ".lock";
 
-    @Resource
-    private PathCreator pathCreator;
+    private final PathCreator pathCreator;
 
     private String[] outputPaths;
     private String hdfsUri;
     private String runAsUser;
-    ;
 
     private Configuration conf;
     private UserGroupInformation userGroupInformation;
+
+    @Inject
+    HDFSFileAppender(final ErrorReceiverProxy errorReceiverProxy,
+                     final PathCreator pathCreator) {
+        super(errorReceiverProxy);
+        this.pathCreator = pathCreator;
+    }
 
     public static Configuration buildConfiguration(final String hdfsUri) {
         final Configuration conf = new Configuration();
@@ -161,18 +176,12 @@ public class HDFSFileAppender extends AbstractAppender {
             }
 
             // Replace some of the path elements with system variables.
-            if (pathCreator == null) {
-                pathCreator = new PathCreator();
-            }
-
             path = pathCreator.replaceAll(path);
 
             // Make sure we can create this path.
             final Path file = createCleanPath(path);
 
-            final HDFSLockedOutputStream hdfsLockedOutputStream = getHDFSLockedOutputStream(file);
-
-            return hdfsLockedOutputStream;
+            return getHDFSLockedOutputStream(file);
 
         } catch (final IOException e) {
             throw e;
