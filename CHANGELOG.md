@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **425** : Changed string replacement in pipeline migration code to use a literal match
+
 ## [v5.0-beta.48] - 2017-10-05
 
 * Issue **433** : Fixed slow stream queries caused by feed permission restrictions.
