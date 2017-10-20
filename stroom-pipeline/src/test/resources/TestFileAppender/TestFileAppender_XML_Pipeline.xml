@@ -43,12 +43,12 @@
         <type>RecordCountFilter</type> 
       </element> 
       <element> 
-        <id>textWriter</id> 
-        <type>TextWriter</type> 
+        <id>xmlWriter</id> 
+        <type>XMLWriter</type> 
       </element> 
       <element> 
-        <id>rollingFileAppender</id> 
-        <type>RollingFileAppender</type> 
+        <id>fileAppender</id>
+        <type>FileAppender</type>
       </element> 
     </add> 
   </elements> 
@@ -96,33 +96,19 @@
           <boolean>false</boolean> 
         </value> 
       </property> 
-      <property>
-          <element>rollingFileAppender</element>
-          <name>outputPaths</name>
-          <value>
-              <string>${stroom.temp}</string>
-          </value>
+      <property> 
+        <element>xmlWriter</element> 
+        <name>indentOutput</name> 
+        <value> 
+          <boolean>true</boolean> 
+        </value> 
       </property>
       <property>
-          <element>rollingFileAppender</element>
-          <name>fileName</name>
-          <value>
-              <string>TestRollingFileAppender_Text.lock</string>
-          </value>
-      </property>
-      <property>
-          <element>rollingFileAppender</element>
-          <name>rolledFileName</name>
-          <value>
-              <string>TestRollingFileAppender_Text.tmp</string>
-          </value>
-      </property>
-      <property>
-          <element>rollingFileAppender</element>
-          <name>frequency</name>
-          <value>
-              <integer>1</integer> 
-          </value>
+        <element>fileAppender</element>
+        <name>outputPaths</name>
+        <value>
+          <string>${stroom.temp}/TestFileAppender_XML.tmp</string>
+        </value>
       </property>
     </add> 
   </properties> 
@@ -158,11 +144,11 @@
       </link> 
       <link> 
         <from>writeRecordCountFilter</from> 
-        <to>textWriter</to> 
+        <to>xmlWriter</to> 
       </link> 
       <link> 
-        <from>textWriter</from> 
-        <to>rollingFileAppender</to> 
+        <from>xmlWriter</from> 
+        <to>fileAppender</to>
       </link> 
     </add> 
   </links> 

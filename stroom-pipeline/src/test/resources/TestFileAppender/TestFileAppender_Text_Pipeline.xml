@@ -47,8 +47,8 @@
         <type>TextWriter</type> 
       </element> 
       <element> 
-        <id>rollingFileAppender</id> 
-        <type>RollingFileAppender</type> 
+        <id>fileAppender</id>
+        <type>FileAppender</type>
       </element> 
     </add> 
   </elements> 
@@ -97,31 +97,10 @@
         </value> 
       </property> 
       <property>
-          <element>rollingFileAppender</element>
+          <element>fileAppender</element>
           <name>outputPaths</name>
           <value>
-              <string>${stroom.temp}</string>
-          </value>
-      </property>
-      <property>
-          <element>rollingFileAppender</element>
-          <name>fileName</name>
-          <value>
-              <string>TestRollingFileAppender_Text.lock</string>
-          </value>
-      </property>
-      <property>
-          <element>rollingFileAppender</element>
-          <name>rolledFileName</name>
-          <value>
-              <string>TestRollingFileAppender_Text.tmp</string>
-          </value>
-      </property>
-      <property>
-          <element>rollingFileAppender</element>
-          <name>frequency</name>
-          <value>
-              <integer>1</integer> 
+              <string>${stroom.temp}/TestFileAppender_Text.tmp</string>
           </value>
       </property>
     </add> 
@@ -162,7 +141,7 @@
       </link> 
       <link> 
         <from>textWriter</from> 
-        <to>rollingFileAppender</to> 
+        <to>fileAppender</to>
       </link> 
     </add> 
   </links> 

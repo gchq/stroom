@@ -18,14 +18,14 @@ package stroom.pipeline.server;
 
 import org.junit.Test;
 
-public class TestRollingFileAppender extends AbstractFileAppenderTest {
+public class TestFileAppender extends AbstractFileAppenderTest {
     @Test
     public void testXML() throws Exception {
-        test("TestRollingFileAppender", "XML");
+        test("TestFileAppender", "XML");
     }
 
     @Test
     public void testText() throws Exception {
-        test("TestRollingFileAppender", "Text");
+        test("TestFileAppender", "Text");
     }
 }

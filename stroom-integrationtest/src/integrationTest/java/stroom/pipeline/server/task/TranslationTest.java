@@ -24,6 +24,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.ImportState.ImportMode;
 import stroom.feed.MetaMap;
+import stroom.feed.StroomHeaderArguments;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
@@ -63,7 +64,6 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Indicators;
 import stroom.util.task.ServerTask;
-import stroom.feed.StroomHeaderArguments;
 
 import javax.annotation.Resource;
 import java.io.BufferedInputStream;
@@ -195,7 +195,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private void test(final Path inputFile, final Feed feed, final Path outputDir, final String stem,
                       final boolean compareOutput, final List<Exception> exceptions) throws Exception {
         LOGGER.info("Testing input {}, feed {}, output {}, stem {}",
-                inputFile.getFileName().toString(), feed.getName(), outputDir.getName(), stem);
+                inputFile.getFileName().toString(), feed.getName(), outputDir.getFileName().toString(), stem);
 
         addStream(inputFile, feed);
 

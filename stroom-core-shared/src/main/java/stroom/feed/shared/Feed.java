@@ -75,23 +75,10 @@ public class Feed extends DocumentEntity {
         setName(name);
     }
 
-    public static final Feed createStub(final long pk) {
+    public static Feed createStub(final long pk) {
         final Feed feed = new Feed();
         feed.setStub(pk);
         return feed;
-    }
-
-    @Override
-    public void prePersist() {
-        // This became mandatory in 3.2 ... handle case when still null
-        if (getStreamType() == null) {
-            if (isReference()) {
-                setStreamType(StreamType.RAW_REFERENCE);
-            } else {
-                setStreamType(StreamType.RAW_EVENTS);
-            }
-        }
-        super.prePersist();
     }
 
     @Column(name = SQLNameConstants.DESCRIPTION)

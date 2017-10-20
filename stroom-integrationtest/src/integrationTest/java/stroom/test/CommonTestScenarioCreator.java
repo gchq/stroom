@@ -104,8 +104,7 @@ public class CommonTestScenarioCreator {
     }
 
     public Feed createSimpleFeed(final String name, final String uuid) {
-        final DocRef folder = getTestFolder();
-        Feed feed = feedService.create(folder, FileSystemTestUtil.getUniqueTestString());
+        Feed feed = feedService.create(FileSystemTestUtil.getUniqueTestString());
         feed.setUuid(uuid);
         feed.setDescription(name);
         feed.setStatus(FeedStatus.RECEIVE);
