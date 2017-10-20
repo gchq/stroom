@@ -28,8 +28,6 @@ import stroom.util.task.ServerTask;
 public class ExtractionTask extends ServerTask<VoidResult> {
     public interface ResultReceiver {
         void receive(String[] values);
-
-        void complete();
     }
 
     private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Stroom Data Extraction", 5, 0, Integer.MAX_VALUE);

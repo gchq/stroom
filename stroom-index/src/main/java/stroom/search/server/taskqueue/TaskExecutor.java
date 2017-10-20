@@ -16,12 +16,12 @@
 
 package stroom.search.server.taskqueue;
 
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import stroom.task.server.TaskCallbackAdaptor;
 import stroom.task.server.TaskManager;
 import stroom.util.shared.Task;
+
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TaskExecutor {
     private static final int DEFAULT_MAX_THREADS = 5;
@@ -53,54 +53,39 @@ public class TaskExecutor {
         }
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private Task execNextTask() {
+        TaskProducer producer = null;
         Task<?> task = null;
 
         final int total = totalThreads.getAndIncrement();
         if (total < maxThreads) {
             // Try and get a task from usable producers.
-            AtomicInteger producerThreadsUsed = null;
             final int tries = producers.size();
             for (int i = 0; i < tries && task == null; i++) {
-                final TaskProducer producer = nextProducer();
+                producer = nextProducer();
                 if (producer != null) {
-                    producerThreadsUsed = producer.getThreadsUsed();
-                    final int count = producerThreadsUsed.incrementAndGet();
-                    if (count > producer.getMaxThreadsPerTask()) {
-                        producerThreadsUsed.decrementAndGet();
-                    } else {
-                        task = producer.next();
-                        if (task == null) {
-                            producerThreadsUsed.decrementAndGet();
-                        }
-                    }
+                    task = producer.next();
                 }
             }
 
-            final AtomicInteger currentProducerThreadsUsed = producerThreadsUsed;
+            final TaskProducer currentProducer = producer;
             final Task<?> currentTask = task;
 
             if (currentTask != null) {
                 if (currentTask.isTerminated()) {
-                    totalThreads.decrementAndGet();
-                    currentProducerThreadsUsed.decrementAndGet();
-                    exec();
+                    taskComplete(currentProducer, currentTask);
 
                 } else {
                     taskManager.execAsync(currentTask, new TaskCallbackAdaptor() {
                         @Override
                         public void onSuccess(final Object result) {
-                            totalThreads.decrementAndGet();
-                            currentProducerThreadsUsed.decrementAndGet();
-                            exec();
+                            taskComplete(currentProducer, currentTask);
                         }
 
                         @Override
                         public void onFailure(final Throwable t) {
-                            totalThreads.decrementAndGet();
-                            currentProducerThreadsUsed.decrementAndGet();
-                            exec();
+                            taskComplete(currentProducer, currentTask);
                         }
                     });
                 }
@@ -112,6 +97,12 @@ public class TaskExecutor {
         }
 
         return task;
+    }
+
+    private void taskComplete(final TaskProducer producer, final Task<?> task) {
+        totalThreads.decrementAndGet();
+        producer.complete(task);
+        exec();
     }
 
     private synchronized TaskProducer nextProducer() {

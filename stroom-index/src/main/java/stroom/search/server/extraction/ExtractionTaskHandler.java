@@ -114,8 +114,6 @@ public class ExtractionTaskHandler extends AbstractTaskHandler<ExtractionTask, V
             }
         } finally {
             securityContext.restorePermissions();
-
-            task.getResultReceiver().complete();
         }
 
         return VoidResult.INSTANCE;
@@ -204,8 +202,7 @@ public class ExtractionTaskHandler extends AbstractTaskHandler<ExtractionTask, V
                 try {
                     // This is a valid stream so try and extract as many
                     // segments as we are allowed.
-                    final RASegmentInputStream segmentInputStream = new RASegmentInputStream(streamSource);
-                    try {
+                    try (final RASegmentInputStream segmentInputStream = new RASegmentInputStream(streamSource)) {
                         // Include the XML Header and footer.
                         segmentInputStream.include(0);
                         segmentInputStream.include(segmentInputStream.count() - 1);
@@ -224,8 +221,6 @@ public class ExtractionTaskHandler extends AbstractTaskHandler<ExtractionTask, V
                         // stream.
                         error("Unable to extract data from stream source with id: " + streamId + " - " + e.getMessage(),
                                 e);
-                    } finally {
-                        segmentInputStream.close();
                     }
                 } catch (final Exception e) {
                     // Something went wrong extracting data from this stream.

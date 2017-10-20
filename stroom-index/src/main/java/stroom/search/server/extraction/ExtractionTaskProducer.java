@@ -46,8 +46,6 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
     private final ErrorReceiver errorReceiver;
 
     private final Queue<Task<?>> taskQueue = new ConcurrentLinkedQueue<>();
-    private final AtomicInteger tasksCreated = new AtomicInteger();
-    private final AtomicInteger tasksCompleted = new AtomicInteger();
 
     public ExtractionTaskProducer(final ClusterSearchTask clusterSearchTask, final StreamMapCreator streamMapCreator,
             final TransferList<String[]> storedData, final FieldIndexMap extractionFieldIndexMap,
@@ -65,17 +63,17 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
 
     public boolean isComplete() {
         synchronized (taskQueue) {
-            if (tasksCreated.get() != tasksCompleted.get()) {
+            if (getTasksTotal().get() != getTasksCompleted().get()) {
                 return false;
             }
             fillTaskQueue();
-            return tasksCreated.get() == tasksCompleted.get();
+            return getTasksTotal().get() == getTasksCompleted().get();
 
         }
     }
 
     public int remainingTasks() {
-        return tasksCreated.get()  - tasksCompleted.get();
+        return getTasksTotal().get()  - getTasksCompleted().get();
     }
 
     private int fillTaskQueue() {
@@ -107,21 +105,13 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
             if (pipelineRef != null) {
                 // This set of coprocessors require result extraction so invoke
                 // the extraction service.
-                final ResultReceiver resultReceiver = new ResultReceiver() {
-                    @Override
-                    public void receive(final String[] values) {
-                        for (final Coprocessor<?> coprocessor : coprocessors) {
-                            try {
-                                coprocessor.receive(values);
-                            } catch (final Exception e) {
-                                error(e.getMessage(), e);
-                            }
+                final ResultReceiver resultReceiver = values -> {
+                    for (final Coprocessor<?> coprocessor : coprocessors) {
+                        try {
+                            coprocessor.receive(values);
+                        } catch (final Exception e) {
+                            error(e.getMessage(), e);
                         }
-                    }
-
-                    @Override
-                    public void complete() {
-                        tasksCompleted.incrementAndGet();
                     }
                 };
 
@@ -136,7 +126,7 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
                     Arrays.sort(eventIds);
                 }
 
-                tasksCreated.incrementAndGet();
+                getTasksTotal().incrementAndGet();
                 final ExtractionTask task = new ExtractionTask(clusterSearchTask, streamId, eventIds, pipelineRef,
                         extractionFieldIndexMap, resultReceiver, errorReceiver);
                 taskQueue.add(task);
@@ -157,7 +147,7 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
     }
 
     @Override
-    public Task<?> next() {
+    protected Task<?> getNext() {
         if (clusterSearchTask.isTerminated()) {
             return null;
         }

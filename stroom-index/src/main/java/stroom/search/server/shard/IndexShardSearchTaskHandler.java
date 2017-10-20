@@ -68,23 +68,18 @@ public class IndexShardSearchTaskHandler extends AbstractTaskHandler<IndexShardS
             if (!taskMonitor.isTerminated()) {
                 taskMonitor.info("Searching shard " + task.getShardNumber() + " of " + task.getShardTotal() + " (id="
                         + task.getIndexShardId() + ")");
-                searchPool(task);
+
+                // Borrow a searcher from the pool.
+                final IndexShardSearcher indexShardSearcher = indexShardSearcherCache.get(task.getIndexShardId());
+
+                // Start searching.
+                searchShard(task, indexShardSearcher);
             }
-        } finally {
-            task.getResultReceiver().complete(task.getIndexShardId());
-        }
-
-        return VoidResult.INSTANCE;
-    }
-
-    private void searchPool(final IndexShardSearchTask task) {
-        try {
-            // Borrow a searcher from this pool.
-            final IndexShardSearcher indexShardSearcher = indexShardSearcherCache.get(task.getIndexShardId());
-            searchShard(task, indexShardSearcher);
         } catch (final Throwable t) {
             error(task, t.getMessage(), t);
         }
+
+        return VoidResult.INSTANCE;
     }
 
     private void searchShard(final IndexShardSearchTask task, final IndexShardSearcher indexShardSearcher) {

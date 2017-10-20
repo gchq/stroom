@@ -31,8 +31,6 @@ import stroom.util.task.ServerTask;
 public class IndexShardSearchTask extends ServerTask<VoidResult> {
     public interface ResultReceiver {
         void receive(long shardId, String[] values);
-
-        void complete(long shardId);
     }
 
     public interface IndexShardQueryFactory {
