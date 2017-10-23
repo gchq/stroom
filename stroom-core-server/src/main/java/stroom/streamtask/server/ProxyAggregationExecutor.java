@@ -101,21 +101,36 @@ public class ProxyAggregationExecutor {
                 proxyDir,
                 PropertyUtil.toInt(threadCount, 10),
                 PropertyUtil.toInt(maxAggregation, DEFAULT_MAX_AGGREGATION),
-                PropertyUtil.toLong(maxStreamSize, DEFAULT_MAX_STREAM_SIZE),
+                getByteSize(maxStreamSize, DEFAULT_MAX_STREAM_SIZE),
                 PropertyUtil.toInt(maxFileScan, RepositoryProcessor.DEFAULT_MAX_FILE_SCAN)
         );
     }
 
+    private static long getByteSize(final String propertyValue, final long defaultValue) {
+        Long value = null;
+        try {
+            value = ModelStringUtil.parseIECByteSizeString(propertyValue);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+
+        if (value == null) {
+            value = defaultValue;
+        }
+
+        return value;
+    }
+
     ProxyAggregationExecutor(final StreamStore streamStore,
-                                    final FeedService feedService,
-                                    final MetaDataStatistic metaDataStatistic,
-                                    final TaskMonitor taskMonitor,
-                                    final TaskManager taskManager,
-                                    final String proxyDir,
-                                    final int threadCount,
-                                    final int maxAggregation,
-                                    final long maxStreamSize,
-                                    final int maxFileScan) {
+                             final FeedService feedService,
+                             final MetaDataStatistic metaDataStatistic,
+                             final TaskMonitor taskMonitor,
+                             final TaskManager taskManager,
+                             final String proxyDir,
+                             final int threadCount,
+                             final int maxAggregation,
+                             final long maxStreamSize,
+                             final int maxFileScan) {
         this.streamStore = streamStore;
         this.feedService = feedService;
         this.metaDataStatistic = metaDataStatistic;
