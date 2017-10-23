@@ -30,6 +30,7 @@ import stroom.index.shared.IndexService;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.MessageUtil;
 import stroom.pipeline.server.errorhandler.TerminatedException;
+import stroom.query.Payload;
 import stroom.query.shared.CoprocessorSettings;
 import stroom.query.shared.ExpressionOperator;
 import stroom.query.shared.IndexField;
@@ -41,7 +42,6 @@ import stroom.search.server.extraction.ExtractionTaskHandler;
 import stroom.search.server.extraction.ExtractionTaskProducer;
 import stroom.search.server.extraction.ExtractionTaskProperties;
 import stroom.search.server.extraction.StreamMapCreator;
-import stroom.search.server.sender.SenderTask;
 import stroom.search.server.shard.IndexShardSearchTask.IndexShardQueryFactory;
 import stroom.search.server.shard.IndexShardSearchTaskExecutor;
 import stroom.search.server.shard.IndexShardSearchTaskHandler;
@@ -51,35 +51,43 @@ import stroom.search.server.shard.IndexShardSearcherCache;
 import stroom.search.server.shard.TransferList;
 import stroom.security.SecurityContext;
 import stroom.streamstore.server.StreamStore;
+import stroom.task.server.ExecutorProvider;
 import stroom.task.server.TaskCallback;
+import stroom.task.server.TaskContext;
 import stroom.task.server.TaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.task.server.TaskManager;
 import stroom.task.server.TaskTerminatedException;
+import stroom.task.server.ThreadPoolImpl;
 import stroom.util.config.PropertyUtil;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
+import stroom.util.shared.ThreadPool;
 import stroom.util.spring.StroomScope;
-import stroom.util.task.TaskMonitor;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
 @TaskHandlerBean(task = ClusterSearchTask.class)
 @Scope(StroomScope.TASK)
 class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeResult>, ErrorReceiver {
+    private static final StroomLogger LOGGER = StroomLogger.getLogger(ClusterSearchTaskHandler.class);
+
     /**
      * We don't want to collect more than 1 million doc's data into the queue by
      * default. When the queue is full the index shard data tasks will pause
@@ -88,12 +96,12 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     private static final int DEFAULT_MAX_STORED_DATA_QUEUE_SIZE = 1000000;
     private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ClusterSearchTaskHandler.class);
+    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Stroom Result Sender", 5, 0, Integer.MAX_VALUE);
+
     private static final long ONE_SECOND = TimeUnit.SECONDS.toNanos(1);
-    private final TaskManager taskManager;
     private final IndexService indexService;
     private final DictionaryService dictionaryService;
-    private final TaskMonitor taskMonitor;
+    private final TaskContext taskContext;
     private final CoprocessorFactory coprocessorFactory;
     private final IndexShardSearchTaskExecutor indexShardSearchTaskExecutor;
     private final IndexShardSearchTaskProperties indexShardSearchTaskProperties;
@@ -109,16 +117,16 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     private final AtomicBoolean sendingComplete = new AtomicBoolean();
     private final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider;
     private final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider;
+    private final ExecutorProvider executorProvider;
 
     private ClusterSearchTask task;
 
     private TransferList<String[]> storedData;
 
     @Inject
-    ClusterSearchTaskHandler(final TaskManager taskManager,
-                             final IndexService indexService,
+    ClusterSearchTaskHandler(final IndexService indexService,
                              final DictionaryService dictionaryService,
-                             final TaskMonitor taskMonitor,
+                             final TaskContext taskContext,
                              final CoprocessorFactory coprocessorFactory,
                              final IndexShardSearchTaskExecutor indexShardSearchTaskExecutor,
                              final IndexShardSearchTaskProperties indexShardSearchTaskProperties,
@@ -130,11 +138,11 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                              @Value("#{propertyConfigurer.getProperty('stroom.search.maxBooleanClauseCount')}") final String maxBooleanClauseCount,
                              @Value("#{propertyConfigurer.getProperty('stroom.search.maxStoredDataQueueSize')}") final String maxStoredDataQueueSize,
                              final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider,
-                             final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider) {
-        this.taskManager = taskManager;
+                             final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider,
+                             final ExecutorProvider executorProvider) {
         this.indexService = indexService;
         this.dictionaryService = dictionaryService;
-        this.taskMonitor = taskMonitor;
+        this.taskContext = taskContext;
         this.coprocessorFactory = coprocessorFactory;
         this.indexShardSearchTaskExecutor = indexShardSearchTaskExecutor;
         this.indexShardSearchTaskProperties = indexShardSearchTaskProperties;
@@ -147,6 +155,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
         this.maxStoredDataQueueSize = PropertyUtil.toInt(maxStoredDataQueueSize, DEFAULT_MAX_STORED_DATA_QUEUE_SIZE);
         this.indexShardSearchTaskHandlerProvider = indexShardSearchTaskHandlerProvider;
         this.extractionTaskHandlerProvider = extractionTaskHandlerProvider;
+        this.executorProvider = executorProvider;
     }
 
     @Override
@@ -154,8 +163,8 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
         try {
             securityContext.elevatePermissions();
 
-            if (!taskMonitor.isTerminated()) {
-                taskMonitor.info("Initialising...");
+            if (!taskContext.isTerminated()) {
+                taskContext.info("Initialising...");
 
                 this.task = task;
                 final Search search = task.getSearch();
@@ -219,7 +228,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                             }
 
                             final Coprocessor<?> coprocessor = coprocessorFactory.create(
-                                    coprocessorSettings, fieldIndexMap, search.getParamMap(), taskMonitor);
+                                    coprocessorSettings, fieldIndexMap, search.getParamMap(), taskContext);
 
                             if (coprocessor != null) {
                                 coprocessorMap.put(coprocessorId, coprocessor);
@@ -239,13 +248,11 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     }
 
                     // Start forwarding data to target node.
-                    final SenderTask senderTask = new SenderTask(task, coprocessorMap, callback, frequency, sendingComplete,
-                            searchComplete, errors);
-                    taskManager.execAsync(senderTask);
+                    final Executor executor = executorProvider.getExecutor(THREAD_POOL);
+                    sendData(coprocessorMap, callback, frequency, executor);
 
-                    taskMonitor.info("Searching...");
-                    search(task, search, storedFieldNames, filterStreams, indexFieldsMap, extractionFieldIndexMap,
-                            extractionCoprocessorsMap);
+                    // Start searching.
+                    search(task, search, storedFieldNames, filterStreams, indexFieldsMap, extractionFieldIndexMap, extractionCoprocessorsMap);
 
                 } catch (final Throwable t) {
                     try {
@@ -263,7 +270,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                 }
 
                 // Now we must wait for results to be sent to the requesting node.
-                taskMonitor.info("Sending final results");
+                taskContext.info("Sending final results");
                 while (!task.isTerminated() && !sendingComplete.get()) {
                     ThreadUtil.sleep(1000);
                 }
@@ -273,10 +280,92 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
         }
     }
 
+    private void sendData(final Map<Integer, Coprocessor<?>> coprocessorMap, final TaskCallback<NodeResult> callback, final long frequency, final Executor executor) {
+        final long now = System.currentTimeMillis();
+
+        final Supplier<Boolean> supplier = () -> {
+            // Find out if searching is complete.
+            final boolean searchComplete = ClusterSearchTaskHandler.this.searchComplete.get();
+
+            if (!taskContext.isTerminated()) {
+                taskContext.info("Creating search result");
+
+                // Produce payloads for each coprocessor.
+                Map<Integer, Payload> payloadMap = null;
+                if (coprocessorMap != null && coprocessorMap.size() > 0) {
+                    for (final Entry<Integer, Coprocessor<?>> entry : coprocessorMap.entrySet()) {
+                        final Payload payload = entry.getValue().createPayload();
+                        if (payload != null) {
+                            if (payloadMap == null) {
+                                payloadMap = new HashMap<>();
+                            }
+
+                            payloadMap.put(entry.getKey(), payload);
+                        }
+                    }
+                }
+
+                // Drain all current errors to a list.
+                List<String> errorsSnapshot = new ArrayList<>();
+                errors.drainTo(errorsSnapshot);
+                if (errorsSnapshot.size() == 0) {
+                    errorsSnapshot = null;
+                }
+
+                // Only send a result if we have something new to send.
+                if (payloadMap != null || errorsSnapshot != null || searchComplete) {
+                    // Form a result to send back to the requesting node.
+                    final NodeResult result = new NodeResult(payloadMap, errorsSnapshot, searchComplete);
+
+                    // Give the result to the callback.
+                    taskContext.info("Sending search result");
+                    callback.onSuccess(result);
+                }
+            }
+
+            return searchComplete;
+        };
+
+        // Run the sending code asynchronously.
+        CompletableFuture.supplyAsync(supplier, executor)
+                .thenAccept(complete -> {
+                    if (complete) {
+                        // We have sent the last data we were expected to so tell the
+                        // parent cluster search that we have finished sending data.
+                        sendingComplete.set(true);
+
+                    } else {
+                        // If we aren't complete then send more using the supplied
+                        // sending frequency.
+                        final long duration = System.currentTimeMillis() - now;
+                        if (duration < frequency) {
+                            ThreadUtil.sleep(frequency - duration);
+                        }
+
+                        // Make sure we don't continue to execute this task if it should
+                        // have terminated.
+                        if (!taskContext.isTerminated()) {
+                            // Try to send more data.
+                            sendData(coprocessorMap, callback, frequency, executor);
+                        }
+                    }
+                })
+                .exceptionally(t -> {
+                    // If we failed to send the result or the source node
+                    // rejected the result because the source task has been
+                    // terminated then terminate the task.
+                    LOGGER.info("Terminating search because we were unable to send result");
+                    task.terminate();
+                    return null;
+                });
+    }
+
     private void search(final ClusterSearchTask task, final Search search, final String[] storedFieldNames,
                         final boolean filterStreams, final IndexFieldsMap indexFieldsMap,
                         final FieldIndexMap extractionFieldIndexMap,
                         final Map<DocRef, Set<Coprocessor<?>>> extractionCoprocessorsMap) {
+        taskContext.info("Searching...");
+
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Incoming search request:\n" + search.getExpression().toString());
         }
@@ -396,7 +485,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                             // Wait for completion.
                             while (!task.isTerminated() && (!indexShardSearchTaskProducer.isComplete()
                                     || !extractionTaskProducer.isComplete())) {
-                                taskMonitor.info(
+                                taskContext.info(
                                         "Searching... " +
                                                 indexShardSearchTaskProducer.remainingTasks() +
                                                 " shards and " +

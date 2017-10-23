@@ -31,10 +31,10 @@ import stroom.index.shared.IndexShard;
 import stroom.node.server.StroomPropertyService;
 import stroom.pipeline.server.errorhandler.TerminatedException;
 import stroom.task.server.ExecutorProvider;
+import stroom.task.server.TaskContext;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
-import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -51,24 +51,24 @@ public class IndexShardSearchTaskHandler {
     private final IndexShardSearcherCache indexShardSearcherCache;
     private final StroomPropertyService propertyService;
     private final ExecutorProvider executorProvider;
-    private final TaskMonitor taskMonitor;
+    private final TaskContext taskContext;
 
     @Inject
     IndexShardSearchTaskHandler(final IndexShardSearcherCache indexShardSearcherCache,
                                 final StroomPropertyService propertyService,
                                 final ExecutorProvider executorProvider,
-                                final TaskMonitor taskMonitor) {
+                                final TaskContext taskContext) {
         this.indexShardSearcherCache = indexShardSearcherCache;
         this.propertyService = propertyService;
         this.executorProvider = executorProvider;
-        this.taskMonitor = taskMonitor;
+        this.taskContext = taskContext;
     }
 
     public VoidResult exec(final IndexShardSearchTask task) {
         try {
-            taskMonitor.setName("Index shard search");
-            if (!taskMonitor.isTerminated()) {
-                taskMonitor.info("Searching shard " + task.getShardNumber() + " of " + task.getShardTotal() + " (id="
+            taskContext.setName("Index shard search");
+            if (!taskContext.isTerminated()) {
+                taskContext.info("Searching shard " + task.getShardNumber() + " of " + task.getShardTotal() + " (id="
                         + task.getIndexShardId() + ")");
 
                 // Borrow a searcher from the pool.
@@ -98,7 +98,7 @@ public class IndexShardSearchTaskHandler {
             final TransferList<Integer> docIdStore = new TransferList<>(maxDocIdQueueSize);
 
             // Create a collector.
-            final IndexShardHitCollector collector = new IndexShardHitCollector(taskMonitor, docIdStore,
+            final IndexShardHitCollector collector = new IndexShardHitCollector(taskContext, docIdStore,
                     task.getHitCount());
 
             try {
@@ -108,7 +108,7 @@ public class IndexShardSearchTaskHandler {
                     final Executor executor = executorProvider.getExecutor(IndexShardSearchTaskExecutor.THREAD_POOL);
                     final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(() -> {
                         try {
-                            taskMonitor.setName("Index Searcher");
+                            taskContext.setName("Index Searcher");
                             searcher.search(query, collector);
                         } catch (final Throwable t) {
                             error(task, t.getMessage(), t);
@@ -119,7 +119,7 @@ public class IndexShardSearchTaskHandler {
                     boolean complete = false;
                     List<Integer> list = null;
 
-                    while (!complete && !taskMonitor.isTerminated()) {
+                    while (!complete && !taskContext.isTerminated()) {
                         complete = completableFuture.isDone();
 
                         if (complete) {
@@ -139,7 +139,7 @@ public class IndexShardSearchTaskHandler {
                         // Get stored data for every doc id in the list.
                         if (list != null && list.size() > 0) {
                             for (final Integer docId : list) {
-                                if (taskMonitor.isTerminated()) {
+                                if (taskContext.isTerminated()) {
                                     throw new TerminatedException();
                                 }
 

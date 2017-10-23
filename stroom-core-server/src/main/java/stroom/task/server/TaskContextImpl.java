@@ -26,7 +26,17 @@ class TaskContextImpl implements TaskContext {
     }
 
     @Override
-    public void setInfo(final Object... args) {
-        CurrentTaskState.setInfo(args);
+    public void info(final Object... args) {
+        CurrentTaskState.info(args);
+    }
+
+    @Override
+    public boolean isTerminated() {
+        return CurrentTaskState.isTerminated();
+    }
+
+    @Override
+    public void terminate() {
+        CurrentTaskState.terminate();
     }
 }

@@ -51,7 +51,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -340,7 +339,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         return exec.exec(() -> {
             try {
                 taskContext.setName("Flushing writer");
-                taskContext.setInfo("Flushing writer for index shard " + indexShardWriter.getIndexShardId());
+                taskContext.info("Flushing writer for index shard " + indexShardWriter.getIndexShardId());
 
                 // Flush the shard.
                 indexShardWriter.flush();
@@ -365,7 +364,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             try {
                 try {
                     taskContext.setName("Closing writer");
-                    taskContext.setInfo("Closing writer for index shard " + indexShardWriter.getIndexShardId());
+                    taskContext.info("Closing writer for index shard " + indexShardWriter.getIndexShardId());
 
                     // Close the shard.
                     indexShardWriter.close();

@@ -29,16 +29,14 @@ public class TaskExecutor {
 
     private volatile int maxThreads = DEFAULT_MAX_THREADS;
 
-    private final ExecutorProvider executorProvider;
-    private final ThreadPool threadPool;
+    private final Executor executor;
     private final AtomicInteger totalThreads = new AtomicInteger();
 
     private final ConcurrentSkipListSet<TaskProducer> producers = new ConcurrentSkipListSet<>();
     private volatile TaskProducer lastProducer;
 
     public TaskExecutor(final ExecutorProvider executorProvider, final ThreadPool threadPool) {
-        this.executorProvider = executorProvider;
-        this.threadPool = threadPool;
+        executor = executorProvider.getExecutor(threadPool);
     }
 
     public void addProducer(final TaskProducer producer) {
@@ -78,7 +76,6 @@ public class TaskExecutor {
                 final Runnable currentTask = task;
 
                 if (currentTask != null) {
-                    final Executor executor = executorProvider.getExecutor(threadPool);
                     executing = true;
                     CompletableFuture.runAsync(currentTask, executor).thenAccept(result -> taskComplete(currentProducer, currentTask));
                 }
