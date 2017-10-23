@@ -19,7 +19,6 @@ package stroom.feed.server;
 
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.logging.DocumentEventLog;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.FieldMap;
@@ -29,6 +28,7 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.importexport.server.ImportExportHelper;
+import stroom.logging.DocumentEventLog;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.streamstore.shared.StreamType;
@@ -145,6 +145,21 @@ public class FeedServiceImpl extends DocumentEntityServiceImpl<Feed, FindFeedCri
 
             sql.appendValueQuery(alias + ".reference", criteria.getReference());
             sql.appendEntityIdSetQuery(alias, criteria.getFeedIdSet());
+        }
+
+        @Override
+        protected void preSave(final Feed entity) {
+            if (entity != null) {
+                if (entity.getStreamType() == null) {
+                    if (entity.isReference()) {
+                        entity.setStreamType(StreamType.RAW_REFERENCE);
+                    } else {
+                        entity.setStreamType(StreamType.RAW_EVENTS);
+                    }
+                }
+            }
+
+            super.preSave(entity);
         }
     }
 }

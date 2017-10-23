@@ -17,7 +17,6 @@
 package stroom.entity.server;
 
 import org.springframework.transaction.annotation.Transactional;
-import stroom.logging.DocumentEventLog;
 import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
@@ -37,6 +36,7 @@ import stroom.entity.shared.PermissionException;
 import stroom.entity.shared.ProvidesNamePattern;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.server.ImportExportHelper;
+import stroom.logging.DocumentEventLog;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -515,7 +515,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
             // Save directly so there is no marshalling of objects that would destroy imported data.
             if (importState.ok(importMode)) {
-                entity = getEntityManager().saveEntity(entity);
+                entity = entityServiceHelper.save(entity, queryAppender);
             }
 
         } catch (final Exception e) {
