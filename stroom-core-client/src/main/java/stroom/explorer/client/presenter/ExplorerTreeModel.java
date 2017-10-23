@@ -202,7 +202,7 @@ public class ExplorerTreeModel {
     private List<ExplorerNode> update() {
         // Build the row list from the tree structure.
         final List<ExplorerNode> rows = new ArrayList<>();
-        if (currentTreeStructure != null) {
+        if (currentTreeStructure != null && currentTreeStructure.getRoot() != null) {
             addToRows(currentTreeStructure.getRoot(), currentTreeStructure, rows, openItems.getAllOpenItems());
         }
 
