@@ -206,7 +206,7 @@ class ExplorerServiceImpl implements ExplorerService {
         if (children != null) {
             for (final ExplorerNode child : children) {
                 result.getTreeStructure().add(null, child);
-                addChildren(child, filteredModel, openItems, forcedOpenItems, temporaryOpenItems, 1, result);
+                addChildren(child, filteredModel, openItems, forcedOpenItems, temporaryOpenItems, 0, result);
             }
         }
     }
