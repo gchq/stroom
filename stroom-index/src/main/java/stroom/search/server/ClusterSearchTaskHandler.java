@@ -37,12 +37,14 @@ import stroom.query.shared.IndexFieldsMap;
 import stroom.query.shared.Search;
 import stroom.search.server.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.search.server.extraction.ExtractionTaskExecutor;
+import stroom.search.server.extraction.ExtractionTaskHandler;
 import stroom.search.server.extraction.ExtractionTaskProducer;
 import stroom.search.server.extraction.ExtractionTaskProperties;
 import stroom.search.server.extraction.StreamMapCreator;
 import stroom.search.server.sender.SenderTask;
 import stroom.search.server.shard.IndexShardSearchTask.IndexShardQueryFactory;
 import stroom.search.server.shard.IndexShardSearchTaskExecutor;
+import stroom.search.server.shard.IndexShardSearchTaskHandler;
 import stroom.search.server.shard.IndexShardSearchTaskProducer;
 import stroom.search.server.shard.IndexShardSearchTaskProperties;
 import stroom.search.server.shard.IndexShardSearcherCache;
@@ -63,6 +65,7 @@ import stroom.util.task.TaskMonitor;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -76,7 +79,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @TaskHandlerBean(task = ClusterSearchTask.class)
 @Scope(StroomScope.TASK)
-public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeResult>, ErrorReceiver {
+class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeResult>, ErrorReceiver {
     /**
      * We don't want to collect more than 1 million doc's data into the queue by
      * default. When the queue is full the index shard data tasks will pause
@@ -104,8 +107,10 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
     private final LinkedBlockingDeque<String> errors = new LinkedBlockingDeque<>();
     private final AtomicBoolean searchComplete = new AtomicBoolean();
     private final AtomicBoolean sendingComplete = new AtomicBoolean();
+    private final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider;
+    private final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider;
+
     private ClusterSearchTask task;
-    private Index index;
 
     private TransferList<String[]> storedData;
 
@@ -123,7 +128,9 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                              final StreamStore streamStore,
                              final SecurityContext securityContext,
                              @Value("#{propertyConfigurer.getProperty('stroom.search.maxBooleanClauseCount')}") final String maxBooleanClauseCount,
-                             @Value("#{propertyConfigurer.getProperty('stroom.search.maxStoredDataQueueSize')}") final String maxStoredDataQueueSize) {
+                             @Value("#{propertyConfigurer.getProperty('stroom.search.maxStoredDataQueueSize')}") final String maxStoredDataQueueSize,
+                             final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider,
+                             final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider) {
         this.taskManager = taskManager;
         this.indexService = indexService;
         this.dictionaryService = dictionaryService;
@@ -138,6 +145,8 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
         this.securityContext = securityContext;
         this.maxBooleanClauseCount = PropertyUtil.toInt(maxBooleanClauseCount, DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
         this.maxStoredDataQueueSize = PropertyUtil.toInt(maxStoredDataQueueSize, DEFAULT_MAX_STORED_DATA_QUEUE_SIZE);
+        this.indexShardSearchTaskHandlerProvider = indexShardSearchTaskHandlerProvider;
+        this.extractionTaskHandlerProvider = extractionTaskHandlerProvider;
     }
 
     @Override
@@ -155,7 +164,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                     final long frequency = task.getResultSendFrequency();
 
                     // Reload the index.
-                    index = indexService.loadByUuid(search.getDataSourceRef().getUuid());
+                    final Index index = indexService.loadByUuid(search.getDataSourceRef().getUuid());
 
                     // Make sure we have a search index.
                     if (index == null) {
@@ -179,7 +188,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
 
                     // See if we need to filter steams and if any of the
                     // coprocessors need us to extract data.
-                    boolean filterStreams = false;
+                    boolean filterStreams;
 
                     Map<Integer, Coprocessor<?>> coprocessorMap = null;
                     Map<DocRef, Set<Coprocessor<?>>> extractionCoprocessorsMap = null;
@@ -224,12 +233,7 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                                     filterStreams = true;
                                 }
 
-                                Set<Coprocessor<?>> extractionCoprocessors = extractionCoprocessorsMap.get(pipelineRef);
-                                if (extractionCoprocessors == null) {
-                                    extractionCoprocessors = new HashSet<>();
-                                    extractionCoprocessorsMap.put(pipelineRef, extractionCoprocessors);
-                                }
-                                extractionCoprocessors.add(coprocessor);
+                                extractionCoprocessorsMap.computeIfAbsent(pipelineRef, k -> new HashSet<>()).add(coprocessor);
                             }
                         }
                     }
@@ -343,8 +347,15 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                 // Make a task producer that will create event data extraction
                 // tasks when requested by the executor.
                 final IndexShardSearchTaskProducer indexShardSearchTaskProducer = new IndexShardSearchTaskProducer(task,
-                        storedData, indexShardSearcherCache, task.getShards(), queryFactory, storedFieldNames, this,
-                        hitCount, indexShardSearchTaskProperties.getMaxThreadsPerTask());
+                        storedData,
+                        indexShardSearcherCache,
+                        task.getShards(),
+                        queryFactory,
+                        storedFieldNames,
+                        this,
+                        hitCount,
+                        indexShardSearchTaskProperties.getMaxThreadsPerTask(),
+                        indexShardSearchTaskHandlerProvider);
 
                 // Add the task producer to the task executor.
                 indexShardSearchTaskExecutor.addProducer(indexShardSearchTaskProducer);
@@ -371,8 +382,13 @@ public class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, 
                         // Make a task producer that will create event data
                         // extraction tasks when requested by the executor.
                         final ExtractionTaskProducer extractionTaskProducer = new ExtractionTaskProducer(task,
-                                streamMapCreator, storedData, extractionFieldIndexMap, extractionCoprocessorsMap, this,
-                                extractionTaskProperties.getMaxThreadsPerTask());
+                                streamMapCreator,
+                                storedData,
+                                extractionFieldIndexMap,
+                                extractionCoprocessorsMap,
+                                this,
+                                extractionTaskProperties.getMaxThreadsPerTask(),
+                                extractionTaskHandlerProvider);
 
                         // Add the task producer to the task executor.
                         extractionTaskExecutor.addProducer(extractionTaskProducer);

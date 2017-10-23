@@ -16,6 +16,18 @@
 
 package stroom.search.server.extraction;
 
+import stroom.dashboard.expression.FieldIndexMap;
+import stroom.entity.shared.DocRef;
+import stroom.pipeline.server.errorhandler.ErrorReceiver;
+import stroom.search.server.ClusterSearchTask;
+import stroom.search.server.Coprocessor;
+import stroom.search.server.Event;
+import stroom.search.server.extraction.ExtractionTask.ResultReceiver;
+import stroom.search.server.shard.TransferList;
+import stroom.search.server.taskqueue.AbstractTaskProducer;
+import stroom.util.shared.Severity;
+
+import javax.inject.Provider;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -23,19 +35,6 @@ import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import stroom.dashboard.expression.FieldIndexMap;
-import stroom.entity.shared.DocRef;
-import stroom.search.server.ClusterSearchTask;
-import stroom.search.server.Coprocessor;
-import stroom.search.server.Event;
-import stroom.search.server.extraction.ExtractionTask.ResultReceiver;
-import stroom.search.server.shard.TransferList;
-import stroom.search.server.taskqueue.AbstractTaskProducer;
-import stroom.pipeline.server.errorhandler.ErrorReceiver;
-import stroom.util.shared.Severity;
-import stroom.util.shared.Task;
 
 public class ExtractionTaskProducer extends AbstractTaskProducer {
     private final ClusterSearchTask clusterSearchTask;
@@ -44,13 +43,18 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
     private final FieldIndexMap extractionFieldIndexMap;
     private final Map<DocRef, Set<Coprocessor<?>>> extractionCoprocessorsMap;
     private final ErrorReceiver errorReceiver;
+    private final Provider<ExtractionTaskHandler> handlerProvider;
 
-    private final Queue<Task<?>> taskQueue = new ConcurrentLinkedQueue<>();
+    private final Queue<ExtractionRunnable> taskQueue = new ConcurrentLinkedQueue<>();
 
-    public ExtractionTaskProducer(final ClusterSearchTask clusterSearchTask, final StreamMapCreator streamMapCreator,
-            final TransferList<String[]> storedData, final FieldIndexMap extractionFieldIndexMap,
-            final Map<DocRef, Set<Coprocessor<?>>> extractionCoprocessorsMap, final ErrorReceiver errorReceiver,
-            final int maxThreadsPerTask) {
+    public ExtractionTaskProducer(final ClusterSearchTask clusterSearchTask,
+                                  final StreamMapCreator streamMapCreator,
+                                  final TransferList<String[]> storedData,
+                                  final FieldIndexMap extractionFieldIndexMap,
+                                  final Map<DocRef, Set<Coprocessor<?>>> extractionCoprocessorsMap,
+                                  final ErrorReceiver errorReceiver,
+                                  final int maxThreadsPerTask,
+                                  final Provider<ExtractionTaskHandler> handlerProvider) {
         super(maxThreadsPerTask);
 
         this.clusterSearchTask = clusterSearchTask;
@@ -59,6 +63,7 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
         this.extractionFieldIndexMap = extractionFieldIndexMap;
         this.extractionCoprocessorsMap = extractionCoprocessorsMap;
         this.errorReceiver = errorReceiver;
+        this.handlerProvider = handlerProvider;
     }
 
     public boolean isComplete() {
@@ -73,7 +78,7 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
     }
 
     public int remainingTasks() {
-        return getTasksTotal().get()  - getTasksCompleted().get();
+        return getTasksTotal().get() - getTasksCompleted().get();
     }
 
     private int fillTaskQueue() {
@@ -127,9 +132,8 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
                 }
 
                 getTasksTotal().incrementAndGet();
-                final ExtractionTask task = new ExtractionTask(clusterSearchTask, streamId, eventIds, pipelineRef,
-                        extractionFieldIndexMap, resultReceiver, errorReceiver);
-                taskQueue.add(task);
+                final ExtractionTask task = new ExtractionTask(streamId, eventIds, pipelineRef, extractionFieldIndexMap, resultReceiver, errorReceiver);
+                taskQueue.add(new ExtractionRunnable(task, handlerProvider));
                 created++;
 
             } else {
@@ -147,12 +151,12 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
     }
 
     @Override
-    protected Task<?> getNext() {
+    protected Runnable getNext() {
         if (clusterSearchTask.isTerminated()) {
             return null;
         }
 
-        Task<?> task = null;
+        ExtractionRunnable task = null;
         synchronized (taskQueue) {
             if (!clusterSearchTask.isTerminated()) {
                 if (taskQueue.size() == 0) {
@@ -175,5 +179,25 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
 
     private void error(final String message, final Throwable t) {
         errorReceiver.log(Severity.ERROR, null, null, message, t);
+    }
+
+    private static class ExtractionRunnable implements Runnable {
+        private final ExtractionTask task;
+        private final Provider<ExtractionTaskHandler> handlerProvider;
+
+        ExtractionRunnable(final ExtractionTask task, final Provider<ExtractionTaskHandler> handlerProvider) {
+            this.task = task;
+            this.handlerProvider = handlerProvider;
+        }
+
+        @Override
+        public void run() {
+            final ExtractionTaskHandler handler = handlerProvider.get();
+            handler.exec(task);
+        }
+
+        public ExtractionTask getTask() {
+            return task;
+        }
     }
 }

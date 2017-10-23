@@ -16,8 +16,6 @@
 
 package stroom.search.server.taskqueue;
 
-import stroom.util.shared.Task;
-
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class AbstractTaskProducer implements TaskProducer {
@@ -34,8 +32,8 @@ public abstract class AbstractTaskProducer implements TaskProducer {
     }
 
     @Override
-    public final Task<?> next() {
-        Task<?> task = null;
+    public final Runnable next() {
+        Runnable task = null;
 
         final int count = threadsUsed.incrementAndGet();
         if (count > maxThreadsPerTask) {
@@ -51,12 +49,12 @@ public abstract class AbstractTaskProducer implements TaskProducer {
     }
 
     @Override
-    public final void complete(final Task<?> task) {
+    public final void complete(final Runnable task) {
         threadsUsed.decrementAndGet();
         tasksCompleted.incrementAndGet();
     }
 
-    protected abstract Task<?> getNext();
+    protected abstract Runnable getNext();
 
     protected final AtomicInteger getTasksTotal() {
         return tasksTotal;

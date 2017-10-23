@@ -16,8 +16,6 @@
 
 package stroom.search.server.taskqueue;
 
-import stroom.util.shared.Task;
-
 public interface TaskProducer extends Comparable<TaskProducer> {
     /**
      * Get the next task to execute or null if the producer has reached a concurrent execution limit or no further tasks
@@ -25,7 +23,7 @@ public interface TaskProducer extends Comparable<TaskProducer> {
      *
      * @return The next task to execute or null if no tasks are available at this time.
      */
-    Task<?> next();
+    Runnable next();
 
     /**
      * When an executor has finished executing a task return it to the producer so it can be marked complete and the
@@ -33,5 +31,5 @@ public interface TaskProducer extends Comparable<TaskProducer> {
      *
      * @param task The task that has been completed.
      */
-    void complete(Task<?> task);
+    void complete(Runnable task);
 }

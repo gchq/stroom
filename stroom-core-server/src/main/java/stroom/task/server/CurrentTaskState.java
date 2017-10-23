@@ -18,6 +18,7 @@ package stroom.task.server;
 
 import stroom.util.shared.Monitor;
 import stroom.util.shared.Task;
+import stroom.util.shared.TaskId;
 import stroom.util.task.TaskMonitor;
 
 import java.util.Deque;
