@@ -60,7 +60,7 @@ public class ForkDocumentPresenter
 
         view.setFolderView(entityTreePresenter.getView());
 
-        entityTreePresenter.setIncludedTypes(ExplorerConstants.FOLDER);
+        entityTreePresenter.setIncludedTypes(ExplorerConstants.SYSTEM, ExplorerConstants.FOLDER);
         entityTreePresenter.setRequiredPermissions(DocumentPermissionNames.USE, DocumentPermissionNames.READ);
     }
 
