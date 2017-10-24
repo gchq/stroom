@@ -61,8 +61,12 @@ public class PermissionException extends EntityServiceException {
     @Override
     public String getMessage() {
         String message = getGenericMessage();
-        message = message.replace("You do", "User '" + user + "' does");
-        message = message.replace("User does", "User '" + user + "' does");
+        message = message.replace("You do", "User does");
+
+        if (user != null && user.length() > 0) {
+            message = message.replace("User does", "User '" + user + "' does");
+        }
+
         return message;
     }
 
