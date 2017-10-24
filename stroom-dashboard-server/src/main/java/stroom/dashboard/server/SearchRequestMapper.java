@@ -43,7 +43,6 @@ import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dashboard.shared.VisResultRequest;
 import stroom.query.api.v2.DateTimeFormat;
 import stroom.query.api.v2.DocRef;
-import stroom.query.api.v2.FieldBuilder;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.NumberFormat;
 import stroom.query.api.v2.Param;
@@ -53,7 +52,6 @@ import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.ResultStyle;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.api.v2.TableSettingsBuilder;
 import stroom.query.api.v2.TimeZone.Use;
 import stroom.util.shared.OffsetRange;
 import stroom.visualisation.shared.Visualisation;
@@ -166,12 +164,12 @@ public class SearchRequestMapper {
             return null;
         }
 
-        final TableSettings tableSettings = new TableSettingsBuilder()
+        final TableSettings tableSettings = new TableSettings.Builder()
                 .queryId(tableComponentSettings.getQueryId())
-                .fields(mapFields(tableComponentSettings.getFields()))
+                .addFields(mapFields(tableComponentSettings.getFields()))
                 .extractValues(tableComponentSettings.extractValues())
                 .extractionPipeline(tableComponentSettings.getExtractionPipeline())
-                .maxResults(mapIntArray(tableComponentSettings.getMaxResults()))
+                .addMaxResults(mapIntArray(tableComponentSettings.getMaxResults()))
                 .showDetail(tableComponentSettings.getShowDetail())
                 .build();
 
@@ -185,7 +183,7 @@ public class SearchRequestMapper {
 
         final List<stroom.query.api.v2.Field> list = new ArrayList<>(fields.size());
         for (final Field field : fields) {
-            final FieldBuilder builder = new FieldBuilder()
+            final stroom.query.api.v2.Field.Builder builder = new stroom.query.api.v2.Field.Builder()
                     .name(field.getName())
                     .expression(field.getExpression())
                     .sort(mapSort(field.getSort()))
@@ -355,8 +353,9 @@ public class SearchRequestMapper {
 //        return tableSettings;
 //    }
 
-    private FieldBuilder convertField(final VisField visField, final Map<String, stroom.query.api.v2.Format> formatMap) {
-        final FieldBuilder builder = new FieldBuilder();
+    private stroom.query.api.v2.Field.Builder convertField(final VisField visField,
+                                                           final Map<String, stroom.query.api.v2.Format> formatMap) {
+        final stroom.query.api.v2.Field.Builder builder = new stroom.query.api.v2.Field.Builder();
 
         builder.format(Type.GENERAL);
 
@@ -374,7 +373,8 @@ public class SearchRequestMapper {
     }
 
 
-    private stroom.query.api.v2.TableSettings mapVisSettingsToTableSettings(final VisComponentSettings visComponentSettings, final TableSettings parentTableSettings) {
+    private stroom.query.api.v2.TableSettings mapVisSettingsToTableSettings(final VisComponentSettings visComponentSettings,
+                                                                            final TableSettings parentTableSettings) {
         DocRef docRef = visComponentSettings.getVisualisation();
         TableSettings tableSettings = null;
 
@@ -417,7 +417,7 @@ public class SearchRequestMapper {
 
                     int group = 0;
                     while (nest != null) {
-                        final FieldBuilder builder = convertField(nest.getKey(), formatMap);
+                        final stroom.query.api.v2.Field.Builder builder = convertField(nest.getKey(), formatMap);
                         builder.group(group++);
 
                         fields.add(builder.build());
@@ -448,9 +448,9 @@ public class SearchRequestMapper {
                         }
                     }
 
-                    tableSettings = new TableSettingsBuilder()
-                            .fields(fields)
-                            .maxResults(limits)
+                    tableSettings = new TableSettings.Builder()
+                            .addFields(fields)
+                            .addMaxResults(limits)
                             .showDetail(true)
                             .build();
                 }

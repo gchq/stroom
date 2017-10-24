@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.server.util.StroomDatabaseInfo;
-import stroom.query.api.v2.ExpressionBuilder;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
@@ -192,7 +192,7 @@ public class TestSQLStatisticEventStoreWithDB extends AbstractCoreIntegrationTes
     }
 
     private StatisticDataSet doSearch(final List<StatisticTag> searchTags, final ExpressionOperator.Op op) {
-        final ExpressionBuilder rootOperator = new ExpressionBuilder(op);
+        final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(op);
         rootOperator
                 .addTerm(StatisticStoreEntity.FIELD_NAME_DATE_TIME, Condition.BETWEEN, DATE_RANGE);
 

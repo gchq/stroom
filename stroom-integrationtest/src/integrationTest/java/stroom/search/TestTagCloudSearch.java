@@ -26,10 +26,10 @@ import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
-import stroom.query.api.v2.ExpressionBuilder;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
-import stroom.query.api.v2.FieldBuilder;
+import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Query;
@@ -76,7 +76,7 @@ public class TestTagCloudSearch extends AbstractSearchTest {
         final DocRef dataSourceRef = DocRefUtil.create(index);
 
         // Create text field.
-        final Field fldText = new FieldBuilder()
+        final Field fldText = new Field.Builder()
                 .name("Text")
                 .expression(ParamUtil.makeParam("Text"))
                 .group(0)
@@ -84,7 +84,7 @@ public class TestTagCloudSearch extends AbstractSearchTest {
                 .build();
 
         // Create count field.
-        final Field fldCount = new FieldBuilder()
+        final Field fldCount = new Field.Builder()
                 .name("Count")
                 .expression("count()")
                 .format(Format.Type.NUMBER)
@@ -93,7 +93,7 @@ public class TestTagCloudSearch extends AbstractSearchTest {
         final PipelineEntity resultPipeline = commonIndexingTest.getSearchResultTextPipeline();
         final TableSettings tableSettings = new TableSettings(null, Arrays.asList(fldText, fldCount), true, DocRefUtil.create(resultPipeline), null, null);
 
-        final ExpressionBuilder expression = buildExpression("user5", "2000-01-01T00:00:00.000Z", "2016-01-02T00:00:00.000Z");
+        final ExpressionOperator.Builder expression = buildExpression("user5", "2000-01-01T00:00:00.000Z", "2016-01-02T00:00:00.000Z");
         final Query query = new Query(dataSourceRef, expression.build());
 
         final ResultRequest tableResultRequest = new ResultRequest(componentId, Collections.singletonList(tableSettings), null, null, ResultRequest.ResultStyle.TABLE, Fetch.CHANGES);
@@ -143,9 +143,9 @@ public class TestTagCloudSearch extends AbstractSearchTest {
         Assert.assertEquals("Value does not have expected word count", 4, count);
     }
 
-    private ExpressionBuilder buildExpression(final String user, final String from,
+    private ExpressionOperator.Builder buildExpression(final String user, final String from,
                                               final String to) {
-        final ExpressionBuilder operator = new ExpressionBuilder();
+        final ExpressionOperator.Builder operator = new ExpressionOperator.Builder();
         operator.addTerm("UserId", Condition.CONTAINS, user);
         operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);
 
