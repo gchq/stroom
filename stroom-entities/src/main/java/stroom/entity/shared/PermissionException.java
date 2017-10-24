@@ -21,17 +21,25 @@ import stroom.util.shared.ModelStringUtil;
 public class PermissionException extends EntityServiceException {
     private static final long serialVersionUID = -7671344466028839328L;
 
+    private String user;
+
     public PermissionException() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public PermissionException(final String message) {
+    public PermissionException(final String user,
+                               final String message) {
         super(message);
+        this.user = user;
     }
 
-    public PermissionException(final String securedType, final String name, final String methodName,
+    public PermissionException(final String user,
+                               final String securedType,
+                               final String name,
+                               final String methodName,
                                final String message) {
         super(message, null, false);
+        this.user = user;
         if (securedType != null || name != null || methodName != null) {
             setDetail(ModelStringUtil.toDisplayValue(securedType) + (name == null ? "" : " - " + name)
                     + (methodName == null ? "" : " - " + methodName));
@@ -40,18 +48,20 @@ public class PermissionException extends EntityServiceException {
 
     public static PermissionException createLoginRequiredException(final String name,
                                                                    final String methodName) {
-        return new PermissionException(null, name, methodName, "User must be logged in to call service");
+        return new PermissionException(null, null, name, methodName, "A user must be logged in to call service");
     }
 
-    public static PermissionException createAppPermissionRequiredException(final String permission,
+    public static PermissionException createAppPermissionRequiredException(final String user,
+                                                                           final String permission,
                                                                            final String methodName) {
-        return new PermissionException(null, permission, methodName,
+        return new PermissionException(user, null, permission, methodName,
                 "User does not have the required permission (" + permission + ")");
     }
 
-    public static PermissionException createDocumentPermissionRequiredException(final Document document, final String permission,
-                                                                                final String methodName) {
-        return new PermissionException(document.getType(), permission, methodName,
-                "User does not have the required permission (" + permission + ") on document (type=" + document.getType() + ", uuid=" + document.getUuid() + ")");
+    public String getUserMessage() {
+        String message = getMessage();
+        message = message.replace("You do", "User '" + user + "' does");
+        message = message.replace("User does", "User '" + user + "' does");
+        return message;
     }
 }
