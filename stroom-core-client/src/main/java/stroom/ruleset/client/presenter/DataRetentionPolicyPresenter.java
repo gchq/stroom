@@ -30,7 +30,7 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.query.api.v2.ExpressionBuilder;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.ruleset.shared.DataRetentionPolicy;
@@ -225,7 +225,14 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
     }
 
     private void add() {
-        final DataRetentionRule newRule = new DataRetentionRule(0, System.currentTimeMillis(), "", true, new ExpressionBuilder(Op.AND).build(), 1, TimeUnit.YEARS, true);
+        final DataRetentionRule newRule = new DataRetentionRule(0,
+                System.currentTimeMillis(),
+                "",
+                true,
+                new ExpressionOperator.Builder(Op.AND).build(),
+                1,
+                TimeUnit.YEARS,
+                true);
         final DataRetentionRulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(newRule);
 

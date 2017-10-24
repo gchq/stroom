@@ -25,7 +25,7 @@ import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.SearchResponse;
 import stroom.query.api.v2.DocRef;
-import stroom.query.api.v2.ExpressionBuilder;
+
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -134,7 +134,7 @@ public class SearchModel {
                 currentParameterMap = KVMapUtil.parse(params);
 
                 // Replace any parameters in the expression.
-                final ExpressionBuilder builder = new ExpressionBuilder(expression.getEnabled(), expression.getOp());
+                final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(expression.getEnabled(), expression.getOp());
                 replaceExpressionParameters(builder, expression, currentParameterMap);
                 currentExpression = builder.build();
 
@@ -194,27 +194,26 @@ public class SearchModel {
         }
     }
 
-    private void replaceExpressionParameters(final ExpressionBuilder builder,
+    private void replaceExpressionParameters(final ExpressionOperator.ABuilder<?, ?> builder,
                                              final ExpressionOperator operator,
                                              final Map<String, String> paramMap) {
         if (operator.getChildren() != null) {
             for (ExpressionItem child : operator.getChildren()) {
                 if (child instanceof ExpressionOperator) {
                     final ExpressionOperator childOperator = (ExpressionOperator) child;
-                    final ExpressionBuilder childBuilder = builder.addOperator(
-                            childOperator.getEnabled(),
-                            childOperator.getOp());
+                    final ExpressionOperator.OBuilder<?> childBuilder = builder.addOperator(childOperator.getOp())
+                            .enabled(childOperator.getEnabled());
                     replaceExpressionParameters(childBuilder, childOperator, paramMap);
                 } else if (child instanceof ExpressionTerm) {
                     final ExpressionTerm term = (ExpressionTerm) child;
                     final String value = term.getValue();
                     final String replaced = KVMapUtil.replaceParameters(value, paramMap);
-                    builder.addTerm(
-                            term.getEnabled(),
-                            term.getField(),
-                            term.getCondition(),
-                            replaced,
-                            term.getDictionary());
+                    builder.addTerm()
+                            .enabled(term.getEnabled())
+                            .field(term.getField())
+                            .condition(term.getCondition())
+                            .value(replaced)
+                            .dictionary(term.getDictionary());
                 }
             }
         }

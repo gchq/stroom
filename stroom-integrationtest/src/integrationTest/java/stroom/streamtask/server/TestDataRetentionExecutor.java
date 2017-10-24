@@ -26,7 +26,7 @@ import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.policy.server.DataRetentionExecutor;
 import stroom.policy.server.DataRetentionService;
-import stroom.query.api.v2.ExpressionBuilder;
+
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -74,7 +74,7 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
         LOGGER.info("timeOutsideRetentionPeriod: %s", DateUtil.createNormalDateTimeString(timeOutsideRetentionPeriod));
 
         // save two streams, one inside retention period, one outside
-        final ExpressionBuilder builder = new ExpressionBuilder(true, Op.AND);
+        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, Op.AND);
         builder.addTerm("Feed", Condition.EQUALS, feed.getName());
         final DataRetentionRule rule = createRule(1, builder.build(), RETENTION_PERIOD_DAYS, stroom.streamstore.shared.TimeUnit.DAYS);
         final DataRetentionPolicy currentPolicy = dataRetentionService.load();

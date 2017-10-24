@@ -22,7 +22,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.datasource.api.v2.DataSourceField;
-import stroom.query.api.v2.ExpressionBuilder;
+
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.ruleset.client.presenter.RulePresenter.RuleView;
@@ -49,7 +49,7 @@ public class RulePresenter extends MyPresenterWidget<RuleView> {
         this.originalRule = rule;
         getView().setName(rule.getName());
         if (rule.getExpression() == null) {
-            editExpressionPresenter.read(new ExpressionBuilder(Op.AND).build());
+            editExpressionPresenter.read(new ExpressionOperator.Builder(Op.AND).build());
         } else {
             editExpressionPresenter.read(rule.getExpression());
         }

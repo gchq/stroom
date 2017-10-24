@@ -57,7 +57,7 @@ import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.process.shared.CreateProcessorAction;
 import stroom.query.api.v2.DocRef;
-import stroom.query.api.v2.ExpressionBuilder;
+
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.client.ExpressionTreePresenter;
@@ -480,7 +480,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         // Read expression.
         ExpressionOperator root = queryComponentSettings.getExpression();
         if (root == null) {
-            root = new ExpressionBuilder(Op.AND).build();
+            root = new ExpressionOperator.Builder(Op.AND).build();
         }
         setExpression(root);
     }

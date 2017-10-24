@@ -31,7 +31,7 @@ import stroom.dashboard.shared.TableResultRequest;
 import stroom.dashboard.shared.TimeZone;
 import stroom.entity.shared.SharedDocRef;
 import stroom.query.api.v2.DocRef;
-import stroom.query.api.v2.ExpressionBuilder;
+
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ResultRequest.Fetch;
@@ -52,7 +52,7 @@ public class SearchRequestTestData {
     static stroom.dashboard.shared.SearchRequest dashboardSearchRequest() {
         DocRef docRef = new DocRef("docRefType", "docRefUuid", "docRefName");
 
-        ExpressionBuilder expressionOperator = new ExpressionBuilder(ExpressionOperator.Op.AND);
+        ExpressionOperator.Builder expressionOperator = new ExpressionOperator.Builder(ExpressionOperator.Op.AND);
         expressionOperator.addTerm("field1", ExpressionTerm.Condition.EQUALS, "value1");
         expressionOperator.addOperator(ExpressionOperator.Op.AND);
         expressionOperator.addTerm("field2", ExpressionTerm.Condition.BETWEEN, "value2");

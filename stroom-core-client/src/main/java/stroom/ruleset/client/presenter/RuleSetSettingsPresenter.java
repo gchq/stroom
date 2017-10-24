@@ -31,7 +31,8 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
-import stroom.query.api.v2.ExpressionBuilder;
+
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.ruleset.client.presenter.RuleSetSettingsPresenter.RuleSetSettingsView;
@@ -202,7 +203,7 @@ public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsV
     }
 
     private void add() {
-        final Rule newRule = new Rule(0, System.currentTimeMillis(), "", true, new ExpressionBuilder(Op.AND).build(), DataReceiptAction.RECEIVE);
+        final Rule newRule = new Rule(0, System.currentTimeMillis(), "", true, new ExpressionOperator.Builder(Op.AND).build(), DataReceiptAction.RECEIVE);
         final RulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(newRule, fields);
 

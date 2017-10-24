@@ -19,7 +19,7 @@ package stroom.streamstore.server;
 
 import org.junit.Test;
 import stroom.entity.server.util.XMLMarshallerUtil;
-import stroom.query.api.v2.ExpressionBuilder;
+
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -34,7 +34,7 @@ import java.util.List;
 public class TestDataRetentionPolicySerialisation {
     @Test
     public void test() throws Exception {
-        final ExpressionBuilder builder = new ExpressionBuilder(true, Op.AND);
+        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, Op.AND);
         builder.addTerm("StreamType", Condition.EQUALS, "Raw Events");
         builder.addTerm("Feed", Condition.EQUALS, "TEST_FEED");
         final ExpressionOperator expression = builder.build();

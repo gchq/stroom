@@ -16,7 +16,7 @@
 
 package stroom.query.client;
 
-import stroom.query.api.v2.ExpressionBuilder;
+
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -41,7 +41,7 @@ public class ExpressionModel {
         final Item item = tree.getRoot();
         if (item != null && item instanceof Operator) {
             final Operator source = (Operator) item;
-            final ExpressionBuilder dest = new ExpressionBuilder(source.getEnabled(), source.getOp());
+            final ExpressionOperator.Builder dest = new ExpressionOperator.Builder(source.getEnabled(), source.getOp());
             addChildrenFromTree(source, dest, tree);
             return dest.build();
         }
@@ -91,17 +91,24 @@ public class ExpressionModel {
         }
     }
 
-    private void addChildrenFromTree(final Operator source, final ExpressionBuilder dest, final DefaultTreeForTreeLayout<Item> tree) {
+    private void addChildrenFromTree(final Operator source,
+                                     final ExpressionOperator.ABuilder<?, ?> dest,
+                                     final DefaultTreeForTreeLayout<Item> tree) {
         final List<Item> children = tree.getChildren(source);
         if (children != null) {
             for (final Item child : children) {
                 if (child instanceof Operator) {
                     final Operator operator = (Operator) child;
-                    final ExpressionBuilder childDest = dest.addOperator(operator.getEnabled(), operator.getOp());
+                    final ExpressionOperator.OBuilder<?> childDest = dest.addOperator(operator.getEnabled(), operator.getOp());
                     addChildrenFromTree(operator, childDest, tree);
                 } else if (child instanceof Term) {
                     final Term term = (Term) child;
-                    dest.addTerm(term.getEnabled(), term.getField(), term.getCondition(), term.getValue(), term.getDictionary());
+                    dest.addTerm()
+                            .enabled(term.getEnabled())
+                            .field(term.getField())
+                            .condition(term.getCondition())
+                            .value(term.getValue())
+                            .dictionary(term.getDictionary());
                 }
             }
         }

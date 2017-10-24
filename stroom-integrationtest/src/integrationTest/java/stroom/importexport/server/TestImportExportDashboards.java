@@ -46,7 +46,8 @@ import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
-import stroom.query.api.v2.ExpressionBuilder;
+
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -292,8 +293,8 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         Assert.assertEquals(0, commonTestControl.countEntity(Dashboard.class));
     }
 
-    private ExpressionBuilder createExpression(final Dictionary dictionary) {
-        final ExpressionBuilder root = new ExpressionBuilder(Op.AND);
+    private ExpressionOperator.Builder createExpression(final Dictionary dictionary) {
+        final ExpressionOperator.Builder root = new ExpressionOperator.Builder(Op.AND);
         root.addTerm("EventTime", Condition.LESS_THAN, "2020-01-01T00:00:00.000Z");
         root.addDictionaryTerm("User", Condition.IN_DICTIONARY, DocRefUtil.create(dictionary));
         return root;

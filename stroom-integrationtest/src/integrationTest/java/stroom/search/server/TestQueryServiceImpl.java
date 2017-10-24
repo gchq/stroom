@@ -34,7 +34,7 @@ import stroom.entity.shared.Sort.Direction;
 import stroom.index.server.IndexService;
 import stroom.index.shared.Index;
 import stroom.query.api.v2.DocRef;
-import stroom.query.api.v2.ExpressionBuilder;
+
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -84,7 +84,7 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         // the test.
         ThreadUtil.sleep(1000);
 
-        final ExpressionBuilder root = new ExpressionBuilder(Op.OR);
+        final ExpressionOperator.Builder root = new ExpressionOperator.Builder(Op.OR);
         root.addTerm("Some field", Condition.CONTAINS, "Some value");
 
         LOGGER.info(root.toString());
