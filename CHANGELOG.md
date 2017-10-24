@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#464** : When a user resets a password, the password now has an expiry date set in the future determined by the password expiry policy. Password that are reset by email still expire immediately as expected.
 
+* Issue **#462** : Permission exceptions now carry details of the user that the exception applies to. This change allows error logging to record the user id in the message where appropriate.
+
 ## [v5.0-beta.53] - 2017-10-18
 
 * Issue **#451** : Data paging was allowing the user to jump beyond the end of a stream whereby just the XML root elements were displayed. This is now fixed by adding a constraint to the page offset so that the user cannot jump beyond the last record. Because data paging assumes that segmented streams have a header and footer, text streams now include segments after a header and before a footer, even if neither are added, so that paging always works correctly regardless of the presence of a header or footer.
