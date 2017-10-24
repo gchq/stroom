@@ -28,7 +28,7 @@ import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardService;
-import stroom.query.api.v2.ExpressionBuilder;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -66,7 +66,7 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
 
     @Test
     public void testTermQuery() throws Exception {
-        final ExpressionBuilder expression = new ExpressionBuilder();
+        final ExpressionOperator.Builder expression = new ExpressionOperator.Builder();
         expression.addTerm("UserId", Condition.CONTAINS, "user5");
 
         test(expression, 1, 5);
@@ -76,7 +76,7 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     public void testPhraseQuery() throws Exception {
         final String field = "Command";
 
-        final ExpressionBuilder expression = new ExpressionBuilder();
+        final ExpressionOperator.Builder expression = new ExpressionOperator.Builder();
         expression.addTerm(field, Condition.CONTAINS, "service");
         expression.addTerm(field, Condition.CONTAINS, "cwhp");
         expression.addTerm(field, Condition.CONTAINS, "authorize");
@@ -88,8 +88,8 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     @Test
     public void testBooleanQuery() throws Exception {
         final String field = "Command";
-        final ExpressionBuilder expression = new ExpressionBuilder();
-        final ExpressionBuilder innerAndCondition = expression.addOperator(Op.AND);
+        final ExpressionOperator.Builder expression = new ExpressionOperator.Builder();
+        final ExpressionOperator.OBuilder<?> innerAndCondition = expression.addOperator(Op.AND);
         innerAndCondition.addTerm(field, Condition.CONTAINS, "service");
         innerAndCondition.addTerm(field, Condition.CONTAINS, "cwhp");
         innerAndCondition.addTerm(field, Condition.CONTAINS, "authorize");
@@ -101,10 +101,10 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     @Test
     public void testNestedBooleanQuery() throws Exception {
         // Create an or query.
-        final ExpressionBuilder orCondition = new ExpressionBuilder(ExpressionOperator.Op.OR);
+        final ExpressionOperator.Builder orCondition = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
         orCondition.addTerm("UserId", Condition.CONTAINS, "user6");
 
-        final ExpressionBuilder andCondition = orCondition.addOperator(Op.AND);
+        final ExpressionOperator.OBuilder<?> andCondition = orCondition.addOperator(Op.AND);
         andCondition.addTerm("UserId", Condition.CONTAINS, "user1");
 
         // Check there are 4 events.
@@ -125,13 +125,15 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
 
     @Test
     public void testRangeQuery() throws Exception {
-        final ExpressionBuilder expression = new ExpressionBuilder();
+        final ExpressionOperator.Builder expression = new ExpressionOperator.Builder();
         expression.addTerm("EventTime", Condition.BETWEEN, "2007-08-18T13:21:48.000Z,2007-08-18T13:23:49.000Z");
 
         test(expression, 1, 2);
     }
 
-    private void test(final ExpressionBuilder expression, final long expectedStreams, final long expectedEvents)
+    private void test(final ExpressionOperator.ABuilder<?, ?> expression,
+                      final long expectedStreams,
+                      final long expectedEvents)
             throws Exception {
         final Index index = indexService.find(new FindIndexCriteria()).getFirst();
 

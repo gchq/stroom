@@ -18,7 +18,7 @@ package stroom.statistics.server.sql;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.query.api.v2.ExpressionBuilder;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
@@ -256,7 +256,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
     @Test(expected = UnsupportedOperationException.class)
     public void testBuildCriteria_noDate() throws Exception {
-        final ExpressionBuilder rootOperator = new ExpressionBuilder(Op.AND);
+        final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
 
         final Query query = new Query(null, rootOperator.build());
         final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
@@ -270,7 +270,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
     @Test(expected = UnsupportedOperationException.class)
     public void testBuildCriteria_invalidDateCondition() throws Exception {
-        final ExpressionBuilder rootOperator = new ExpressionBuilder(Op.AND);
+        final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
 
         final String dateTerm = "2000-01-01T00:00:00.000Z,2010-01-01T00:00:00.000Z";
 
@@ -289,7 +289,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
     @Test
     public void testBuildCriteria_validDateTerm() throws Exception {
-        final ExpressionBuilder rootOperator = new ExpressionBuilder(Op.AND);
+        final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
 
         final String fromDateStr = "2000-01-01T00:00:00.000Z";
         final long fromDate = DateUtil.parseNormalDateTimeString(fromDateStr);
@@ -319,7 +319,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
     @Test(expected = RuntimeException.class)
     public void testBuildCriteria_invalidDateTermOnlyOneDate() throws Exception {
-        final ExpressionBuilder rootOperator = new ExpressionBuilder(Op.AND);
+        final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
 
         final String fromDateStr = "2000-01-01T00:00:00.000Z";
         final long fromDate = DateUtil.parseNormalDateTimeString(fromDateStr);
@@ -339,7 +339,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testBuildCriteria_validDateTermOtherTermMissingFieldName() throws Exception {
-        final ExpressionBuilder rootOperator = new ExpressionBuilder(Op.AND);
+        final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
 
         final String fromDateStr = "2000-01-01T00:00:00.000Z";
         final long fromDate = DateUtil.parseNormalDateTimeString(fromDateStr);
@@ -362,7 +362,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
     @Test
     public void testBuildCriteria_validDateTermOtherTermMissingFieldValue() throws Exception {
-        final ExpressionBuilder rootOperator = new ExpressionBuilder(Op.AND);
+        final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
 
         final String fromDateStr = "2000-01-01T00:00:00.000Z";
         final long fromDate = DateUtil.parseNormalDateTimeString(fromDateStr);
@@ -388,7 +388,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
     @Test
     public void testBuildCriteria_validDateTermAndOtherTerm() throws Exception {
-        final ExpressionBuilder rootOperator = new ExpressionBuilder(Op.AND);
+        final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
 
         final String fromDateStr = "2000-01-01T00:00:00.000Z";
         final long fromDate = DateUtil.parseNormalDateTimeString(fromDateStr);

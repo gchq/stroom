@@ -24,7 +24,7 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.policy.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
 import stroom.policy.shared.DataRetentionRule;
 import stroom.query.api.v2.DocRef;
-import stroom.query.api.v2.ExpressionBuilder;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.streamstore.shared.FetchFieldsAction;
@@ -50,7 +50,7 @@ public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionR
         this.originalRule = rule;
         getView().setName(rule.getName());
         if (rule.getExpression() == null) {
-            editExpressionPresenter.read(new ExpressionBuilder(Op.AND).build());
+            editExpressionPresenter.read(new ExpressionOperator.Builder(Op.AND).build());
         } else {
             editExpressionPresenter.read(rule.getExpression());
         }
