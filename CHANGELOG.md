@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#442** : Remove 'Old Internal Statistics' folder, improve import exception handling
 
-* Issue **#457** : Add check to import to preventy duplicate root level entities
+* Issue **#457** : Add check to import to prevent duplicate root level entities
 
 ## [v5.0-beta.52] - 2017-10-17
 
