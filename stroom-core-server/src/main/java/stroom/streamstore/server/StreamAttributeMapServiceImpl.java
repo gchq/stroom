@@ -161,7 +161,7 @@ public class StreamAttributeMapServiceImpl
             } catch (final PermissionException e) {
                 // The current user might not have permission to see this
                 // stream.
-                LOGGER.debug(e.getUserMessage());
+                LOGGER.debug(e.getMessage());
             }
         }
         if (streamIds.length() > 0) {
@@ -235,7 +235,7 @@ public class StreamAttributeMapServiceImpl
             } catch (final PermissionException e) {
                 // The current user might not have permission to see this stream
                 // processor.
-                LOGGER.debug(e.getUserMessage());
+                LOGGER.debug(e.getMessage());
             }
         }
 
@@ -250,7 +250,7 @@ public class StreamAttributeMapServiceImpl
 
                 // The current user might not have permission to see this
                 // pipeline.
-                LOGGER.debug(e.getUserMessage());
+                LOGGER.debug(e.getMessage());
                 throw e;
             }
         }
@@ -287,7 +287,7 @@ public class StreamAttributeMapServiceImpl
                 } catch (final PermissionException e) {
                     // The current user might not have permission to see this
                     // stream.
-                    LOGGER.debug(e.getUserMessage());
+                    LOGGER.debug(e.getMessage());
                 }
             }
 

@@ -21,6 +21,7 @@ import stroom.dispatch.client.DispatchService;
 import stroom.dispatch.shared.Action;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
+import stroom.entity.shared.PermissionException;
 import stroom.security.SecurityContext;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.task.server.TaskHandlerBean;
@@ -75,7 +76,9 @@ public class DispatchServiceImpl implements DispatchService {
 
             LOGGER.debug("exec() - >> %s returns %s", action.getClass().getName(), r);
             return r;
-
+        } catch (final PermissionException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw new EntityServiceException(e.getGenericMessage());
         } catch (final Throwable t) {
             LOGGER.debug(t.getMessage(), t);
             throw EntityServiceExceptionUtil.create(t);
