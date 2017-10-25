@@ -29,6 +29,8 @@ public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameVie
 
     private Hyperlink hyperlink;
 
+    private Icon icon = SvgPresets.EXPLORER;
+
     @Inject
     public IFramePresenter(final EventBus eventBus, final IFrameView view) {
         super(eventBus, view);
@@ -43,7 +45,7 @@ public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameVie
 
     @Override
     public Icon getIcon() {
-        return SvgPresets.EXPLORER;
+        return icon;
     }
 
     @Override
@@ -58,5 +60,9 @@ public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameVie
 
     public interface IFrameView extends View {
         void setHyperlink(Hyperlink hyperlink);
+    }
+
+    public void setIcon(final Icon icon) {
+        this.icon = icon;
     }
 }

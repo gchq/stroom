@@ -1,7 +1,8 @@
 dependencies {
     compile urlDependencies.get(urlLibs.stroomExpression)
     compile project(':stroom-core-server')
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-explorer-server')
 
     compile libs.javax_inject
-    compile libs.slf4j_api
 }

@@ -13,6 +13,7 @@ import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
+import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.iframe.client.presenter.IFramePresenter;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -56,6 +57,7 @@ public class AnnotationsPlugin extends Plugin {
                                     .build();
                             final IFramePresenter iFramePresenter = iFramePresenterProvider.get();
                             iFramePresenter.setHyperlink(hyperlink);
+                            iFramePresenter.setIcon(SvgPresets.ANNOTATIONS);
                             contentManager.open(callback ->
                                             ConfirmEvent.fire(AnnotationsPlugin.this,
                                                     "Are you sure you want to close " + hyperlink.getTitle() + "?",

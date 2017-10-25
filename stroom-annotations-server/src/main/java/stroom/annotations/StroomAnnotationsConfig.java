@@ -7,7 +7,8 @@ import javax.inject.Inject;
 
 public class StroomAnnotationsConfig {
     @Inject
-    public StroomAnnotationsConfig(final ExplorerActionHandlers explorerActionHandlers) {
-        explorerActionHandlers.add(30, ExplorerConstants.ANNOTATIONS, ExplorerConstants.ANNOTATIONS, new StroomAnnotationsStore());
+    public StroomAnnotationsConfig(final ExplorerActionHandlers explorerActionHandlers,
+                                   final StroomAnnotationsExplorerActionHandler actionHandler) {
+        explorerActionHandlers.add(30, ExplorerConstants.ANNOTATIONS, ExplorerConstants.ANNOTATIONS, actionHandler);
     }
 }
