@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#462** : Permission exceptions now carry details of the user that the exception applies to. This change allows error logging to record the user id in the message where appropriate.
 
+* Issue **#463** : Many index shards are being corrupted which may be caused by insufficient locking of the shard writers and readers. This fix changes the locking mechanism to use the file system.
+
 ## [v5.0-beta.53] - 2017-10-18
 
 * Issue **#451** : Data paging was allowing the user to jump beyond the end of a stream whereby just the XML root elements were displayed. This is now fixed by adding a constraint to the page offset so that the user cannot jump beyond the last record. Because data paging assumes that segmented streams have a header and footer, text streams now include segments after a header and before a footer, even if neither are added, so that paging always works correctly regardless of the presence of a header or footer.
