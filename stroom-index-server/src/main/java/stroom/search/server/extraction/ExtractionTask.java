@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 
 package stroom.search.server.extraction;
 
-import stroom.dashboard.expression.FieldIndexMap;
-import stroom.entity.shared.DocRef;
+import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
+import stroom.query.api.v2.DocRef;
 
 public class ExtractionTask {
     private final long streamId;

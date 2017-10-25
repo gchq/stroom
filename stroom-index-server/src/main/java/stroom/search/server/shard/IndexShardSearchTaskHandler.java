@@ -46,6 +46,7 @@ import java.util.concurrent.TimeUnit;
 @Scope(StroomScope.TASK)
 public class IndexShardSearchTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardSearchTaskHandler.class);
+
     private static final long ONE_SECOND = TimeUnit.SECONDS.toNanos(1);
 
     private final IndexShardSearcherCache indexShardSearcherCache;

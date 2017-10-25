@@ -16,20 +16,21 @@
 
 package stroom.search.server.shard;
 
-import org.apache.lucene.index.AtomicReaderContext;
-import org.apache.lucene.search.Collector;
-import org.apache.lucene.search.Scorer;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.search.SimpleCollector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.pipeline.server.errorhandler.TerminatedException;
 import stroom.task.server.TaskContext;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class IndexShardHitCollector extends Collector {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(IndexShardHitCollector.class);
+public class IndexShardHitCollector extends SimpleCollector {
+    private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardHitCollector.class);
+
     private static final long ONE_SECOND = TimeUnit.SECONDS.toNanos(1);
 
     private final TaskContext taskContext;
@@ -43,6 +44,12 @@ public class IndexShardHitCollector extends Collector {
         this.docIdStore = docIdStore;
         this.taskContext = taskContext;
         this.hitCount = hitCount;
+    }
+
+    @Override
+    protected void doSetNextReader(final LeafReaderContext context) throws IOException {
+        super.doSetNextReader(context);
+        docBase = context.docBase;
     }
 
     @Override
@@ -102,17 +109,7 @@ public class IndexShardHitCollector extends Collector {
     }
 
     @Override
-    public boolean acceptsDocsOutOfOrder() {
-        return true;
-    }
-
-    @Override
-    public void setNextReader(final AtomicReaderContext context) throws IOException {
-        this.docBase = context.docBase;
-    }
-
-    @Override
-    public void setScorer(final Scorer scorer) throws IOException {
-        // Not implemented as we don't score docs.
+    public boolean needsScores() {
+        return false;
     }
 }

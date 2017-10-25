@@ -39,7 +39,7 @@ public final class LockFactoryUtil {
      * @return A lock factory for the supplied directory.
      */
     public static LockFactory get(final Path dir) {
-        return new SimpleFSLockFactory(dir.toFile());
+        return SimpleFSLockFactory.INSTANCE;
     }
 
     /**

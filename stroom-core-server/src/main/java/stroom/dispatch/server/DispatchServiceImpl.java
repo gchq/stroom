@@ -27,6 +27,7 @@ import stroom.entity.server.util.BaseEntityDeProxyProcessor;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.Action;
 import stroom.entity.shared.EntityServiceException;
+import stroom.entity.shared.PermissionException;
 import stroom.security.SecurityContext;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.servlet.SessionListListener;
@@ -105,12 +106,9 @@ public class DispatchServiceImpl extends RemoteServiceServlet implements Dispatc
 
             LOGGER.debug("exec() - >> {} returns {}", action.getClass().getName(), processedResult);
             return processedResult;
-
-//            final R r = taskManager.exec(action);
-//
-//            LOGGER.debug("exec() - >> {} returns {}", action.getClass().getName(), r);
-//            return r;
-
+        } catch (final PermissionException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw new EntityServiceException(e.getGenericMessage());
         } catch (final Throwable t) {
             LOGGER.debug(t.getMessage(), t);
             throw EntityServiceExceptionUtil.create(t);
