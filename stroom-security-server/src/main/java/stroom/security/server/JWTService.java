@@ -54,6 +54,39 @@ public class JWTService {
         }
     }
 
+    public boolean containsValidJws(ServletRequest request) {
+        Optional<String> authHeader = getAuthHeader(request);
+        String jws;
+        if (authHeader.isPresent()) {
+            String bearerString = authHeader.get();
+
+            if(bearerString.startsWith(BEARER)){
+                // This chops out 'Bearer' so we get just the token.
+                jws = bearerString.substring(BEARER.length());
+            }
+            else{
+                jws = bearerString;
+            }
+            LOGGER.debug("Found auth header in request. It looks like this: {}", jws);
+        }
+        else {
+            // If there's no token then we've nothing to do.
+            return false;
+        }
+
+        try {
+            JWTAuthenticationToken jwtAuthenticationToken = verifyToken(jws);
+            return jwtAuthenticationToken.getUserId() != null;
+        } catch (Exception e){
+            LOGGER.error("Unable to verify token:", e.getMessage(), e);
+            // If we get an exception verifying the token then we need to log the message
+            // and continue as if the token wasn't provided.
+            // TODO: decide if this should be handled by an exception and how
+            return false;
+        }
+
+    }
+
     public Optional<JWTAuthenticationToken> verifyToken(ServletRequest request){
         //TODO We're not getting the token from the request any more.
         Optional<String> authHeader = getAuthHeader(request);
@@ -115,4 +148,6 @@ public class JWTService {
         String authHeader = httpServletRequest.getHeader(AUTHORIZATION_HEADER);
         return Strings.isNullOrEmpty(authHeader) ? Optional.empty() : Optional.of(authHeader);
     }
+
+
 }

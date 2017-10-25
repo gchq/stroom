@@ -90,7 +90,7 @@ ext.urlLibs = [
     eventLogging: "event-logging-$versions.eventLogging",
     hadoopCommonShaded: "hadoop-common-shaded-$versions.hadoopCommonShaded-all",
     hadoopHdfsShaded: "hadoop-hdfs-shaded-$versions.hadoopHdfsShaded-all",
-    stroomAuthServiceApi: "stroom-auth-service-api-$versions.stroomAuthServiceApi-all",
+    stroomAuthServiceApi: "stroom-auth-service-api-$versions.stroomAuthServiceApi",
     zzDUMMYzz: "makes sorting easier"
 ]
 

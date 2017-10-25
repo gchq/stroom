@@ -74,11 +74,21 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
     protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws Exception {
         // We need to allow CORS preflight requests
         String httpMethod = (((ShiroHttpServletRequest) request).getMethod());
-        if(httpMethod.toUpperCase().equals(HttpMethod.OPTIONS)) {
+        if (httpMethod.toUpperCase().equals(HttpMethod.OPTIONS)) {
             return true;
         }
 
         boolean loggedIn = false;
+
+
+        // Authenticate requests from an API client
+        boolean isAuthenticatedApiRequest = jwtService.containsValidJws(request);
+        if (isAuthenticatedApiRequest) {
+            loggedIn = executeLogin(request, response);
+            return loggedIn;
+        }
+
+        // Authenticate requests from a User Agent
         String accessCode = request.getParameter("accessCode");
         LOGGER.debug("We have the following access code: {{}}", accessCode);
         Optional<String> sessionId = Optional.ofNullable(request.getParameter("sessionId"));
@@ -91,12 +101,6 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
                         .findFirst()
                         .map(cookie -> cookie.getValue());
             }
-        }
-
-        // Are we dealing with a new session?
-        if(!sessionId.isPresent()){
-            sessionId = Optional.of(UUID.randomUUID().toString());
-            LOGGER.debug("There is no session in the cookie, creating a new session: {}", sessionId);
         }
 
         // We need to know what jSessionIds are associated with this
@@ -166,8 +170,16 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
 
     @Override
     protected JWTAuthenticationToken createToken(ServletRequest request, ServletResponse response) throws IOException, InvalidJwtException, MalformedClaimException {
+        // TODO: Check for a JWT for API clients
+
+        // We expect the accessCode in the query parameters...
         String accessCode = request.getParameter("accessCode");
-        String sessionId = request.getParameter("sessionId");
+        // ... and we expect a sessionId cookie.
+        Optional<String> optionalSessionId  = Arrays.stream(((ShiroHttpServletRequest)request).getCookies())
+                .filter(cookie -> cookie.getName().equals("sessionId"))
+                .findFirst()
+                .map(cookie -> cookie.getValue());
+        String sessionId = optionalSessionId.get();
 
         //TODO: check the optionals and handle empties.
         if(accessCode != null){
@@ -177,7 +189,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
             idTokenRequest.setRequestingClientId("stroom");
             String idToken = null;
             try {
-                idToken = authenticationServiceClient.getAuthServiceApi().getIdToken(idTokenRequest);
+                idToken = authenticationServiceClient.getAuthServiceApi().getIdTokenWithPost(idTokenRequest);
             } catch (ApiException e) {
                 if(e.getCode() == Response.Status.UNAUTHORIZED.getStatusCode()){
                     // Our access code isn't valid, so we need to redirect and start the flow again.
