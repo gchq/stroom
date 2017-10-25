@@ -136,8 +136,6 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
                 redirectionParams.append("&state="); //TODO Not yet sure what's needed here
                 redirectionParams.append("&nonce=");
                 redirectionParams.append(nonceHash);
-                redirectionParams.append("&sessionId=");
-                redirectionParams.append(sessionId.get());
 
                 String redirectionUrl = authenticationUrl + redirectionParams.toString();
                 LOGGER.info("Redirecting with an AuthenticationRequest to: {}", redirectionUrl);
