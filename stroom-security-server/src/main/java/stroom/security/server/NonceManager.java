@@ -18,6 +18,8 @@ import java.util.Map;
  * that Stroom makes to the Authentication Service. When Stroom subsequently receives an access code
  * it retrieves the ID token from the Authentication Service and expects to see
  * the hash of the nonce on the token. It can then compare the hashes.
+ *
+ * TODO: management of nonces should probably be part of a larger session management component.
  */
 @Component
 public class NonceManager {

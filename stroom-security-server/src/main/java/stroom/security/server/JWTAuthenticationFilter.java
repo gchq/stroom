@@ -37,6 +37,7 @@ import stroom.util.config.StroomProperties;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.Response;
@@ -45,8 +46,21 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 
+// TODO: Could this be refactored into a resource with distinct
+// sendAuthenticationRequest and handleAuthenticationResponse parts?
+// The logic here works in the context of a Shiro filter. It's possible that
+// this is no longer an appropriate abstraction, which means this whole area
+// could be refactored.
 public class JWTAuthenticationFilter extends AuthenticatingFilter {
     private static final Logger LOGGER = LoggerFactory.getLogger(JWTAuthenticationFilter.class);
+
+    // This cookie contains the SSO session ID
+    private static final String SESSION_COOKIE = "sessionId";
+
+    // This cookie contains Stroom's session ID - we need this so we know what nonce to check.
+    // We create the nonce when we send the AuthenticationRequest, but at that point
+    // we don't have an SSO sessionId. And JSESSIONIDs change too frequently.
+    private static final String STROOM_SESSION_COOKIE = "stroomSessionId";
 
     private JWTService jwtService;
     private NonceManager nonceManager;
@@ -55,6 +69,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
     private final String LOGIN_URL_PROPERTY_NAME = "stroom.security.login.url";
     private final String AUTHENTICATION_URL_PROPERTY_NAME = "stroom.security.authentication.url";
     private final String ADVERTISED_STROOM_URL = "stroom.advertisedUrl";
+    //TODO Change these to something like stroom.auth.jwt.issuer and stroom.auth.jwt.verificationkey
     private final String JWT_SECRET = "stroom.security.jwtSecret";
     private final String JWT_ISSUER = "stroom.security.jwtIssuer";
 
@@ -67,8 +82,10 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
         this.authenticationServiceClient = authenticationServiceClient;
     }
 
+
     @Override
     protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws Exception {
+
         // We need to allow CORS preflight requests
         String httpMethod = (((ShiroHttpServletRequest) request).getMethod());
         if (httpMethod.toUpperCase().equals(HttpMethod.OPTIONS)) {
@@ -85,29 +102,34 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
         }
 
         // Authenticate requests from a User Agent
-        String accessCode = request.getParameter("accessCode");
-        LOGGER.debug("We have the following access code: {{}}", accessCode);
-        Optional<String> sessionId = Optional.ofNullable(request.getParameter("sessionId"));
-
-        if(!sessionId.isPresent()){
-            LOGGER.debug("There is no session in the request -- attempting to get one from a cookie.");
-            if(((ShiroHttpServletRequest) request).getCookies() != null) {
-                sessionId = Arrays.stream(((ShiroHttpServletRequest) request).getCookies())
-                        .filter(cookie -> cookie.getName().equals("sessionId"))
-                        .findFirst()
-                        .map(cookie -> cookie.getValue());
-            }
-
-            // If we still don't have a UUID then we need to create one.
-            if(!sessionId.isPresent()){
-                sessionId = Optional.of(UUID.randomUUID().toString());
-            }
+        // We need to see if we have a stroom session cookie, and create one if we don't.
+        // We need one so we we get an access code we know which nonce to check against.
+        String stroomSessionId;
+        LOGGER.debug("There is no stroomSessionId in the request -- attempting to get one from a cookie.");
+        Optional<String> optionalStroomSessionId = Optional.empty();
+        if(((ShiroHttpServletRequest) request).getCookies() != null) {
+            optionalStroomSessionId = Arrays.stream(((ShiroHttpServletRequest) request).getCookies())
+                    .filter(cookie -> cookie.getName().equals(STROOM_SESSION_COOKIE))
+                    .findFirst()
+                    .map(cookie -> cookie.getValue());
+        }
+        // If we don't have a stroomSessionId then we need to create one.
+        if(optionalStroomSessionId.isPresent()){
+            stroomSessionId = optionalStroomSessionId.get();
+        }
+        else {
+            stroomSessionId = UUID.randomUUID().toString();
         }
 
+
+        // If we have an access code we can try and log in.
+        String accessCode = request.getParameter("accessCode");
         if(accessCode != null) {
+            LOGGER.debug("We have the following access code: {{}}", accessCode);
             loggedIn = executeLogin(request, response);
         }
 
+        // If we're not logged in we need to start an AuthenticationRequest flow.
         if (!loggedIn) {
             // We need to distinguish between requests from an API client and from the GWT front-end.
             // If a request is from the GWT front-end and fails authentication then we need to redirect to the login page.
@@ -125,7 +147,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
                 String authenticationUrl = StroomProperties.getProperty(AUTHENTICATION_URL_PROPERTY_NAME) + "/authenticate";
                 String advertisedStroomUrl = StroomProperties.getProperty(ADVERTISED_STROOM_URL);
 
-                String nonceHash = nonceManager.createNonce(sessionId.get());
+                String nonceHash = nonceManager.createNonce(stroomSessionId);
 
                 StringBuilder redirectionParams = new StringBuilder();
                 redirectionParams.append("?scope=openid");
@@ -141,7 +163,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
                 LOGGER.info("Redirecting with an AuthenticationRequest to: {}", redirectionUrl);
                 HttpServletResponse httpResponse = WebUtils.toHttp(response);
                 // We want to make sure that the client has the cookie.
-                httpResponse.addCookie(new Cookie("sessionId", sessionId.get()));
+                httpResponse.addCookie(new Cookie(STROOM_SESSION_COOKIE, stroomSessionId));
                 httpResponse.sendRedirect(redirectionUrl);
                 return false;
             }
@@ -156,19 +178,52 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
      */
     @Override
     protected JWTAuthenticationToken createToken(ServletRequest request, ServletResponse response) throws IOException, InvalidJwtException, MalformedClaimException {
-        // TODO: Check for a JWT for API clients
+        // First we'll check if this is an API request. If it is we'll check the JWS and create a token.
+        String path = ((HttpServletRequest)request).getRequestURI();
+        if(path.contains("/api/")){
+            Optional<String> optionalJws = jwtService.getJws(request);
+            if(optionalJws.isPresent()){
+                // TODO: We're doing JWS verification in a couple of places - factor it out.
+                String jwtSecret = StroomProperties.getProperty(JWT_SECRET);
+                String jwtIssuer = StroomProperties.getProperty(JWT_ISSUER);
+                JwtConsumerBuilder builder = new JwtConsumerBuilder()
+                        .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account for clock skew
+                        .setRequireSubject() // the JWT must have a subject claim
+                        .setVerificationKey(new HmacKey(jwtSecret.getBytes())) // verify the signature with the public key
+                        .setRelaxVerificationKeyValidation() // relaxes key length requirement
+                        .setExpectedIssuer(jwtIssuer);
+                JwtConsumer consumer = builder.build();
+                final JwtClaims claims = consumer.processToClaims(optionalJws.get());
+                return new JWTAuthenticationToken(claims.getSubject(), optionalJws.get());
+            }
+            else{
+                LOGGER.error("Cannot get a JWS for an API request!");
+                return null;
+            }
+        }
+
+        // If we're not dealing with an API request we'll assume we're completing the AuthenticationRequest
+        // flow, i.e. we have an access code and we need to get an idToken.
 
         // We expect the accessCode in the query parameters...
         String accessCode = request.getParameter("accessCode");
-        // ... and we expect a sessionId cookie.
-        Optional<String> optionalSessionId  = Arrays.stream(((ShiroHttpServletRequest)request).getCookies())
-                .filter(cookie -> cookie.getName().equals("sessionId"))
+        // ... and we expect a stroomSessionId cookie.
+        Optional<String> optionalStroomSessionId = Arrays.stream(((ShiroHttpServletRequest) request).getCookies())
+                .filter(cookie -> cookie.getName().equals(STROOM_SESSION_COOKIE))
+                .findFirst()
+                .map(cookie -> cookie.getValue());
+        String stroomSessionId = optionalStroomSessionId.get();
+
+        // We need the sessionId cookie so we can identify this session to the remote AuthenticationService.
+        Optional<String> optionalSessionId = Arrays.stream(((ShiroHttpServletRequest) request).getCookies())
+                .filter(cookie -> cookie.getName().equals(SESSION_COOKIE))
                 .findFirst()
                 .map(cookie -> cookie.getValue());
         String sessionId = optionalSessionId.get();
 
+
         //TODO: check the optionals and handle empties.
-        if(accessCode != null){
+        if (accessCode != null) {
             IdTokenRequest idTokenRequest = new IdTokenRequest();
             idTokenRequest.setAccessCode(accessCode);
             idTokenRequest.setSessionId(sessionId);
@@ -177,7 +232,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
             try {
                 idToken = authenticationServiceClient.getAuthServiceApi().getIdTokenWithPost(idTokenRequest);
             } catch (ApiException e) {
-                if(e.getCode() == Response.Status.UNAUTHORIZED.getStatusCode()){
+                if (e.getCode() == Response.Status.UNAUTHORIZED.getStatusCode()) {
                     // If we can't exchange the accessCode for an idToken then this probably means the
                     // accessCode doesn't exist any more, or has already been used.
                     // We can't proceed and need to throw an exception. We don't want to leave the user
@@ -206,11 +261,14 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
             JwtConsumer consumer = builder.build();
 
             final JwtClaims claims = consumer.processToClaims(idToken);
-            String nonceHash = (String)claims.getClaimsMap().get("nonce");
-            boolean doNoncesMatch = nonceManager.match(sessionId, nonceHash);
-            if(!doNoncesMatch){
+            String nonceHash = (String) claims.getClaimsMap().get("nonce");
+            boolean doNoncesMatch = nonceManager.match(stroomSessionId, nonceHash);
+            if (!doNoncesMatch) {
                 // If the nonces don't match we need to redirect to log in again.
                 LOGGER.info("Received a bad nonce!");
+                HttpServletResponse httpResponse = WebUtils.toHttp(response);
+                String advertisedStroomUrl = StroomProperties.getProperty(ADVERTISED_STROOM_URL);
+                httpResponse.sendRedirect(advertisedStroomUrl);
                 return null;
             }
 
@@ -218,9 +276,8 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
             // The user is authenticated now.
             nonceManager.forget(sessionId);
             return new JWTAuthenticationToken(claims.getSubject(), idToken);
-        }
-        else{
-            LOGGER.info("Attempted access without an access code.");
+        } else {
+            LOGGER.error("Attempted access without an access code!");
             return null;
         }
     }

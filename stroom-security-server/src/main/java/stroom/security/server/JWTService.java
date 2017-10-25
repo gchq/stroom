@@ -22,6 +22,7 @@ import java.util.Optional;
 
 import static org.jose4j.jws.AlgorithmIdentifiers.HMAC_SHA256;
 
+// TODO: Do we still need this class? Could it be refactored?
 @Component
 public class JWTService {
     private static final Logger LOGGER = LoggerFactory.getLogger(JWTService.class);
@@ -87,6 +88,23 @@ public class JWTService {
 
     }
 
+    public Optional<String> getJws(ServletRequest request){
+        Optional<String> authHeader = getAuthHeader(request);
+        Optional<String> jws = Optional.empty();
+        if (authHeader.isPresent()) {
+            String bearerString = authHeader.get();
+            if(bearerString.startsWith(BEARER)){
+                // This chops out 'Bearer' so we get just the token.
+                jws = Optional.of(bearerString.substring(BEARER.length()));
+            }
+            else{
+                jws = Optional.of(bearerString);
+            }
+            LOGGER.debug("Found auth header in request. It looks like this: {}", jws);
+        }
+        return jws;
+    }
+
     public Optional<JWTAuthenticationToken> verifyToken(ServletRequest request){
         //TODO We're not getting the token from the request any more.
         Optional<String> authHeader = getAuthHeader(request);
@@ -124,6 +142,7 @@ public class JWTService {
     }
 
     public JWTAuthenticationToken verifyToken(String token) {
+        //TODO: refactor to use Swagger API
         Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
         Response response = client
             .target(this.authenticationServiceUrl + "/verify/" + token)
