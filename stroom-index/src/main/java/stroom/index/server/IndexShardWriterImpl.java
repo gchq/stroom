@@ -25,7 +25,6 @@ import org.apache.lucene.index.LiveIndexWriterConfig;
 import org.apache.lucene.store.AlreadyClosedException;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
-import org.apache.lucene.store.SingleInstanceLockFactory;
 import org.apache.lucene.util.Version;
 import stroom.index.server.analyzer.AnalyzerFactory;
 import stroom.index.shared.IndexShard;
@@ -161,7 +160,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         }
 
         // Create lucene directory object.
-        directory = new NIOFSDirectory(dir, new SingleInstanceLockFactory());
+        directory = new NIOFSDirectory(dir, LockFactoryUtil.get(dir.toPath()));
 
         // IndexWriter to use for adding data to the index.
         indexWriter = new IndexWriter(directory, indexWriterConfig);

@@ -45,6 +45,7 @@ import stroom.util.spring.StroomStartup;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -198,11 +199,10 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             return indexShardWriter;
 
         } catch (final LockObtainFailedException t) {
-            LOGGER.warn(t::getMessage);
-            // Something went wrong.
-            indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSED);
+            LOGGER.error(t::getMessage, t);
+
         } catch (final Throwable t) {
-            // Something went wrong.
+            // Something unexpected went wrong.
             LOGGER.error(() -> "Setting index shard status to corrupt because (" + t.toString() + ")", t);
             indexShardManager.setStatus(indexShardId, IndexShardStatus.CORRUPT);
         }
@@ -398,12 +398,28 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         criteria.getIndexShardStatusSet().add(IndexShardStatus.CLOSING);
         final List<IndexShard> list = indexShardService.find(criteria);
         for (final IndexShard indexShard : list) {
-            LOGGER.info(() -> "Changing shard status to closed (" + indexShard + ")");
-            indexShard.setStatus(IndexShardStatus.CLOSED);
-            indexShardService.save(indexShard);
+            clean(indexShard);
         }
 
         LOGGER.info(() -> "Index shard writer cache startup completed in " + logExecutionTime);
+    }
+
+    private void clean(final IndexShard indexShard) {
+        try {
+            LOGGER.info(() -> "Changing shard status to closed (" + indexShard + ")");
+            indexShard.setStatus(IndexShardStatus.CLOSED);
+            indexShardService.save(indexShard);
+        } catch (final Exception e) {
+            LOGGER.error(e::getMessage, e);
+        }
+
+        try {
+            LOGGER.info(() -> "Clearing any lingering locks (" + indexShard + ")");
+            final Path dir = IndexShardUtil.getIndexDir(indexShard).toPath();
+            LockFactoryUtil.clean(dir);
+        } catch (final Exception e) {
+            LOGGER.error(e::getMessage, e);
+        }
     }
 
     @StroomShutdown
