@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.54] - 2017-10-25
+
 * Issue **#448** : Some search related tasks never seem to complete, presumably because an error is thrown at some point and so their callbacks do not get called normally. This fix changes the way task completion is recorded so that it isn't dependant on the callbacks being called correctly.
 
 * Issue **#464** : When a user resets a password, the password now has an expiry date set in the future determined by the password expiry policy. Password that are reset by email still expire immediately as expected.
@@ -619,7 +621,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.53...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.54...HEAD
+[v5.0-beta.54]: https://github.com/gchq/stroom/compare/v5.0-beta.53...v5.0-beta.54
 [v5.0-beta.53]: https://github.com/gchq/stroom/compare/v5.0-beta.52...v5.0-beta.53
 [v5.0-beta.52]: https://github.com/gchq/stroom/compare/v5.0-beta.51...v5.0-beta.52
 [v5.0-beta.51]: https://github.com/gchq/stroom/compare/v5.0-beta.50...v5.0-beta.51
