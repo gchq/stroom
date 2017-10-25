@@ -1,0 +1,7 @@
+dependencies {
+    compile urlDependencies.get(urlLibs.stroomExpression)
+    compile project(':stroom-core-server')
+
+    compile libs.javax_inject
+    compile libs.slf4j_api
+}

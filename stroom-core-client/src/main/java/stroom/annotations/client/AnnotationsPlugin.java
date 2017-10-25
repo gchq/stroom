@@ -48,7 +48,7 @@ public class AnnotationsPlugin extends Plugin {
                     final IconMenuItem annotationsMenuItem;
                     final String annotationsURL = result.get(ClientProperties.URL_ANNOTATIONS_UI);
                     if (annotationsURL != null && annotationsURL.trim().length() > 0) {
-                        annotationsMenuItem = new IconMenuItem(5, SvgPresets.EXPLORER, null, "Annotations", null, true, () -> {
+                        annotationsMenuItem = new IconMenuItem(5, SvgPresets.ANNOTATIONS, null, "Annotations", null, true, () -> {
                             final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()
                                     .title("Annotations")
                                     .href(annotationsURL)
@@ -63,7 +63,7 @@ public class AnnotationsPlugin extends Plugin {
                                     , iFramePresenter, iFramePresenter);
                         });
                     } else {
-                        annotationsMenuItem = new IconMenuItem(5, SvgPresets.EXPLORER, SvgPresets.EXPLORER, "Annotations is not configured!", null, false, null);
+                        annotationsMenuItem = new IconMenuItem(5, SvgPresets.ANNOTATIONS, SvgPresets.ANNOTATIONS, "Annotations is not configured!", null, false, null);
                     }
 
                     event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, annotationsMenuItem);

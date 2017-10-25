@@ -28,13 +28,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class V6_0_0_11__Explorer implements JdbcMigration {
     private static final Logger LOGGER = LoggerFactory.getLogger(V6_0_0_11__Explorer.class);
@@ -68,6 +62,8 @@ public class V6_0_0_11__Explorer implements JdbcMigration {
             ancestorIdList = Collections.singletonList(nodeId);
         }
 
+        addAnnotationsNode(connection, nodeId);
+
         // Store the mapping of folder id to explorer node ancestors.
         folderIdToAncestorIDMap.put(0L, ancestorIdList);
 
@@ -87,6 +83,21 @@ public class V6_0_0_11__Explorer implements JdbcMigration {
         addOtherNodes(connection, "DASH", "Dashboard");
         addOtherNodes(connection, "DICT", "Dictionary");
         addOtherNodes(connection, "XSLT", "XSLT");
+    }
+
+    private void addAnnotationsNode(final Connection connection,
+                                    final Long rootNodeId) throws Exception {
+        final DocRef root = ExplorerConstants.ANNOTATIONS_DOC_REF;
+
+        Long annotationsNodeId = getExplorerTreeNodeId(connection, root);
+
+        if (annotationsNodeId == null) {
+            createExplorerTreeNode(connection, root, "DataSource");
+            annotationsNodeId = getExplorerTreeNodeId(connection, root);
+
+            // Insert paths.
+            insertPaths(connection, annotationsNodeId, Arrays.asList(annotationsNodeId, rootNodeId));
+        }
     }
 
     private void addOtherNodes(final Connection connection, final String tableName, final String type) throws SQLException {

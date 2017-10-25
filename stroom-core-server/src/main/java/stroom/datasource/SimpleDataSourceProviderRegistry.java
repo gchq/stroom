@@ -49,6 +49,7 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
             urlMap = ImmutableMap.of(
                     "Index", basePath + "/api/stroom-index/v2",
                     "StatisticStore", basePath + "/api/sqlstatistics/v2",
+                    "Annotations", "http://192.168.1.7:8199/annotationsQuery/v1",
                     //strooom-stats is not available as a local service as if you have stroom-stats you have zookeeper so
                     //you can run service discovery
                     "authentication", basePath + "/api/authentication/v1",
