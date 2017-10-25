@@ -373,7 +373,8 @@ public class SearchRequestMapper {
     }
 
 
-    private stroom.query.api.v2.TableSettings mapVisSettingsToTableSettings(final VisComponentSettings visComponentSettings, final TableSettings parentTableSettings) {
+    private stroom.query.api.v2.TableSettings mapVisSettingsToTableSettings(final VisComponentSettings visComponentSettings,
+                                                                            final TableSettings parentTableSettings) {
         DocRef docRef = visComponentSettings.getVisualisation();
         TableSettings tableSettings = null;
 
