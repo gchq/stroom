@@ -56,6 +56,34 @@ public class IndexShardSearcherCacheImpl extends AbstractCacheBean<IndexShardSea
     private final AtomicLong closing = new AtomicLong();
     private final TaskContext taskContext;
 
+    public static class Key {
+        private final long indexShardId;
+        private final IndexWriter indexWriter;
+
+        public Key(final long indexShardId, final IndexWriter indexWriter) {
+            this.indexShardId = indexShardId;
+            this.indexWriter = indexWriter;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            final Key key = (Key) o;
+
+            if (indexShardId != key.indexShardId) return false;
+            return indexWriter != null ? indexWriter.equals(key.indexWriter) : key.indexWriter == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = (int) (indexShardId ^ (indexShardId >>> 32));
+            result = 31 * result + (indexWriter != null ? indexWriter.hashCode() : 0);
+            return result;
+        }
+    }
+
     @Inject
     IndexShardSearcherCacheImpl(final CacheManager cacheManager,
                                 final IndexShardService indexShardService,
@@ -114,7 +142,7 @@ public class IndexShardSearcherCacheImpl extends AbstractCacheBean<IndexShardSea
             executor.execute(() -> {
                 try {
                     taskContext.setName("Closing searcher");
-                    taskContext.setInfo("Closing searcher for index shard " + key.indexShardId);
+                    taskContext.info("Closing searcher for index shard " + key.indexShardId);
 
                     indexShardSearcher.destroy();
                 } finally {
@@ -200,33 +228,5 @@ public class IndexShardSearcherCacheImpl extends AbstractCacheBean<IndexShardSea
         });
 
         LOGGER.debug(() -> "refresh() - Completed in " + logExecutionTime);
-    }
-
-    public static class Key {
-        private final long indexShardId;
-        private final IndexWriter indexWriter;
-
-        public Key(final long indexShardId, final IndexWriter indexWriter) {
-            this.indexShardId = indexShardId;
-            this.indexWriter = indexWriter;
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            final Key key = (Key) o;
-
-            if (indexShardId != key.indexShardId) return false;
-            return indexWriter != null ? indexWriter.equals(key.indexWriter) : key.indexWriter == null;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = (int) (indexShardId ^ (indexShardId >>> 32));
-            result = 31 * result + (indexWriter != null ? indexWriter.hashCode() : 0);
-            return result;
-        }
     }
 }

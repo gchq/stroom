@@ -22,8 +22,8 @@ import stroom.search.server.shard.IndexShardSearchTask.IndexShardQueryFactory;
 import stroom.search.server.shard.IndexShardSearchTask.ResultReceiver;
 import stroom.search.server.taskqueue.AbstractTaskProducer;
 import stroom.util.shared.Severity;
-import stroom.util.shared.Task;
 
+import javax.inject.Provider;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -38,15 +38,19 @@ public class IndexShardSearchTaskProducer extends AbstractTaskProducer {
     private final IndexShardSearcherCache indexShardSearcherCache;
     private final ErrorReceiver errorReceiver;
 
-    private final Queue<IndexShardSearchTask> taskQueue = new ConcurrentLinkedQueue<>();
-    private final int tasksCreated;
+    private final Queue<IndexShardSearchRunnable> taskQueue = new ConcurrentLinkedQueue<>();
     private final AtomicInteger tasksRequested = new AtomicInteger();
-    private final AtomicInteger tasksCompleted = new AtomicInteger();
 
     public IndexShardSearchTaskProducer(final ClusterSearchTask clusterSearchTask,
-                                        final TransferList<String[]> storedData, final IndexShardSearcherCache indexShardSearcherCache,
-                                        final List<Long> shards, final IndexShardQueryFactory queryFactory, final String[] fieldNames,
-                                        final ErrorReceiver errorReceiver, final AtomicLong hitCount, final int maxThreadsPerTask) {
+                                        final TransferList<String[]> storedData,
+                                        final IndexShardSearcherCache indexShardSearcherCache,
+                                        final List<Long> shards,
+                                        final IndexShardQueryFactory queryFactory,
+                                        final String[] fieldNames,
+                                        final ErrorReceiver errorReceiver,
+                                        final AtomicLong hitCount,
+                                        final int maxThreadsPerTask,
+                                        final Provider<IndexShardSearchTaskHandler> handlerProvider) {
         super(maxThreadsPerTask);
         this.clusterSearchTask = clusterSearchTask;
         this.indexShardSearcherCache = indexShardSearcherCache;
@@ -54,47 +58,41 @@ public class IndexShardSearchTaskProducer extends AbstractTaskProducer {
 
         // Create a deque to capture stored data from the index that can be used
         // by coprocessors.
-        final ResultReceiver resultReceiver = new ResultReceiver() {
-            @Override
-            public void receive(final long shardId, final String[] values) {
-                try {
-                    while (!clusterSearchTask.isTerminated() && !storedData.offer(values, ONE_SECOND)) {
-                        // Loop until item is added or we terminate.
-                    }
-                } catch (final Throwable e) {
-                    error(e.getMessage(), e);
+        final ResultReceiver resultReceiver = (shardId, values) -> {
+            try {
+                boolean stored = false;
+                while (!clusterSearchTask.isTerminated() && !stored) {
+                    // Loop until item is added or we terminate.
+                    stored = storedData.offer(values, ONE_SECOND);
                 }
-            }
-
-            @Override
-            public void complete(final long shardId) {
-                tasksCompleted.incrementAndGet();
+            } catch (final Throwable e) {
+                error(e.getMessage(), e);
             }
         };
 
-        tasksCreated = shards.size();
+        getTasksTotal().set(shards.size());
         for (final Long shard : shards) {
-            final IndexShardSearchTask task = new IndexShardSearchTask(clusterSearchTask, queryFactory, shard,
-                    fieldNames, resultReceiver, errorReceiver, hitCount);
-            taskQueue.add(task);
+            final IndexShardSearchTask task = new IndexShardSearchTask(queryFactory, shard, fieldNames, resultReceiver, errorReceiver, hitCount);
+            final IndexShardSearchRunnable runnable = new IndexShardSearchRunnable(task, handlerProvider);
+            taskQueue.add(runnable);
         }
     }
 
     public boolean isComplete() {
-        return tasksCreated == tasksCompleted.get();
+        return remainingTasks() == 0;
     }
 
     public int remainingTasks() {
-        return tasksCreated - tasksCompleted.get();
+        return getTasksTotal().get() - getTasksCompleted().get();
     }
 
     @Override
-    public Task<?> next() {
-        IndexShardSearchTask task = null;
+    protected Runnable getNext() {
+        IndexShardSearchRunnable task = null;
         if (!clusterSearchTask.isTerminated()) {
             // First try and get a task that will make use of an open shard.
-            for (final IndexShardSearchTask t : taskQueue) {
-                if (indexShardSearcherCache.isCached(t.getIndexShardId())) {
+            for (final IndexShardSearchRunnable t : taskQueue) {
+                if (indexShardSearcherCache.isCached(t.getTask().getIndexShardId())) {
                     if (taskQueue.remove(t)) {
                         task = t;
                         break;
@@ -111,8 +109,8 @@ public class IndexShardSearchTaskProducer extends AbstractTaskProducer {
 
         if (task != null) {
             final int no = tasksRequested.incrementAndGet();
-            task.setShardTotal(tasksCreated);
-            task.setShardNumber(no);
+            task.getTask().setShardTotal(getTasksTotal().get());
+            task.getTask().setShardNumber(no);
         }
 
         return task;
@@ -120,5 +118,25 @@ public class IndexShardSearchTaskProducer extends AbstractTaskProducer {
 
     private void error(final String message, final Throwable t) {
         errorReceiver.log(Severity.ERROR, null, null, message, t);
+    }
+
+    private static class IndexShardSearchRunnable implements Runnable {
+        private final IndexShardSearchTask task;
+        private final Provider<IndexShardSearchTaskHandler> handlerProvider;
+
+        IndexShardSearchRunnable(final IndexShardSearchTask task, final Provider<IndexShardSearchTaskHandler> handlerProvider) {
+            this.task = task;
+            this.handlerProvider = handlerProvider;
+        }
+
+        @Override
+        public void run() {
+            final IndexShardSearchTaskHandler handler = handlerProvider.get();
+            handler.exec(task);
+        }
+
+        public IndexShardSearchTask getTask() {
+            return task;
+        }
     }
 }

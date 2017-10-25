@@ -78,6 +78,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
     protected static final String[] STANDARD_PERMISSIONS = new String[]{DocumentPermissionNames.USE,
             DocumentPermissionNames.READ, DocumentPermissionNames.UPDATE, DocumentPermissionNames.DELETE, DocumentPermissionNames.OWNER};
+
     private final StroomEntityManager entityManager;
     private final SecurityContext securityContext;
     private final EntityServiceHelper<E> entityServiceHelper;
@@ -642,6 +643,9 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     }
 
     private String getDocReference(BaseEntity entity) {
+        if (entity == null) {
+            return "";
+        }
         return "(" + DocRefUtil.create(entity).toString() + ")";
     }
 
@@ -680,34 +684,34 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         // Only allow administrators to create documents with no folder.
         if (folder == null) {
             if (!securityContext.isAdmin()) {
-                throw new PermissionException("Only administrators can create root level entries");
+                throw new PermissionException(securityContext.getUserId(), "Only administrators can create root level entries");
             }
         } else {
             if (!securityContext.hasDocumentPermission(Folder.ENTITY_TYPE, folder.getUuid(), DocumentPermissionNames.getDocumentCreatePermission(getEntityType()))) {
-                throw new PermissionException("You do not have permission to create " + getDocReference(entity) + " in folder " + folder);
+                throw new PermissionException(securityContext.getUserId(), "You do not have permission to create " + getDocReference(entity) + " in folder " + folder);
             }
         }
     }
 
     protected void checkUpdatePermission(final E entity) {
         if (!entity.isPersistent()) {
-            throw new EntityServiceException("You cannot update an entity that has not been created");
+            throw new PermissionException(securityContext.getUserId(), "You cannot update an entity that has not been created " + getDocReference(entity));
         }
 
         if (!securityContext.hasDocumentPermission(entity.getType(), entity.getUuid(), DocumentPermissionNames.UPDATE)) {
-            throw new PermissionException("You do not have permission to update " + getDocReference(entity));
+            throw new PermissionException(securityContext.getUserId(), "You do not have permission to update " + getDocReference(entity));
         }
     }
 
     protected final void checkReadPermission(final E entity) {
         if (!securityContext.hasDocumentPermission(entity.getType(), entity.getUuid(), DocumentPermissionNames.READ)) {
-            throw new PermissionException("You do not have permission to read " + getDocReference(entity));
+            throw new PermissionException(securityContext.getUserId(), "You do not have permission to read " + getDocReference(entity));
         }
     }
 
     protected final void checkDeletePermission(final E entity) {
         if (!securityContext.hasDocumentPermission(entity.getType(), entity.getUuid(), DocumentPermissionNames.DELETE)) {
-            throw new PermissionException("You do not have permission to delete " + getDocReference(entity));
+            throw new PermissionException(securityContext.getUserId(), "You do not have permission to delete " + getDocReference(entity));
         }
     }
 

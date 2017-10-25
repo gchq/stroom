@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,11 @@
 
 package stroom.search.server.extraction;
 
-import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.FieldIndexMap;
+import stroom.entity.shared.DocRef;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
-import stroom.query.api.v2.DocRef;
-import stroom.search.server.ClusterSearchTask;
-import stroom.task.server.ThreadPoolImpl;
-import stroom.util.shared.ThreadPool;
-import stroom.util.shared.VoidResult;
-import stroom.util.task.ServerTask;
 
-public class ExtractionTask extends ServerTask<VoidResult> {
-    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Stroom Data Extraction", 5, 0, Integer.MAX_VALUE);
-    private final ClusterSearchTask clusterSearchTask;
+public class ExtractionTask {
     private final long streamId;
     private final long[] eventIds;
     private final DocRef pipelineRef;
@@ -35,21 +28,18 @@ public class ExtractionTask extends ServerTask<VoidResult> {
     private final ResultReceiver resultReceiver;
     private final ErrorReceiver errorReceiver;
 
-    public ExtractionTask(final ClusterSearchTask clusterSearchTask, final long streamId, final long[] eventIds,
-                          final DocRef pipelineRef, final FieldIndexMap fieldIndexes, final ResultReceiver resultReceiver,
-                          final ErrorReceiver errorReceiver) {
-        super(clusterSearchTask);
-        this.clusterSearchTask = clusterSearchTask;
+    ExtractionTask(final long streamId,
+                   final long[] eventIds,
+                   final DocRef pipelineRef,
+                   final FieldIndexMap fieldIndexes,
+                   final ResultReceiver resultReceiver,
+                   final ErrorReceiver errorReceiver) {
         this.streamId = streamId;
         this.eventIds = eventIds;
         this.pipelineRef = pipelineRef;
         this.fieldIndexes = fieldIndexes;
         this.resultReceiver = resultReceiver;
         this.errorReceiver = errorReceiver;
-    }
-
-    public ClusterSearchTask getClusterSearchTask() {
-        return clusterSearchTask;
     }
 
     public long getStreamId() {
@@ -76,14 +66,7 @@ public class ExtractionTask extends ServerTask<VoidResult> {
         return errorReceiver;
     }
 
-    @Override
-    public ThreadPool getThreadPool() {
-        return THREAD_POOL;
-    }
-
     public interface ResultReceiver {
         void receive(String[] values);
-
-        void complete();
     }
 }
