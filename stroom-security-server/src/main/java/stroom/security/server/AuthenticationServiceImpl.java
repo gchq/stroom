@@ -25,8 +25,9 @@ import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import stroom.apiclients.AuthenticationServiceClient;
+import stroom.auth.service.ApiException;
 import stroom.dashboard.server.logging.AuthenticationEventLog;
-import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
 import stroom.node.server.StroomPropertyService;
 import stroom.security.Insecure;
@@ -45,6 +46,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.Optional;
 
 @Component
 @Secured(FindUserCriteria.MANAGE_USERS_PERMISSION)
@@ -63,9 +66,18 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final SecurityContext securityContext;
+    private AuthenticationServiceClient authenticationServiceClient;
 
     @Inject
-    AuthenticationServiceImpl(final StroomPropertyService stroomPropertyService, final HttpServletRequestHolder httpServletRequestHolder, final AuthenticationEventLog eventLog, final Provider<AuthenticationServiceMailSender> mailSenderProvider, final UserService userService, final PasswordEncoder passwordEncoder, final SecurityContext securityContext) {
+    AuthenticationServiceImpl(
+            final StroomPropertyService stroomPropertyService,
+            final HttpServletRequestHolder httpServletRequestHolder,
+            final AuthenticationEventLog eventLog,
+            final Provider<AuthenticationServiceMailSender> mailSenderProvider,
+            final UserService userService,
+            final PasswordEncoder passwordEncoder,
+            final SecurityContext securityContext,
+            final AuthenticationServiceClient authenticationServiceClient) {
         this.stroomPropertyService = stroomPropertyService;
         this.httpServletRequestHolder = httpServletRequestHolder;
         this.eventLog = eventLog;
@@ -73,6 +85,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
         this.securityContext = securityContext;
+        this.authenticationServiceClient = authenticationServiceClient;
     }
 
     private void checkLoginAllowed(final UserRef userRef) {
@@ -175,7 +188,24 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     @Insecure
     public String logout() {
+        // We have to call the remote AuthenticationService to log us out.
         final HttpServletRequest request = httpServletRequestHolder.get();
+        Optional<String> optionalSessionId  = Arrays.stream(request.getCookies())
+                .filter(cookie -> cookie.getName().equals("sessionId"))
+                .findFirst()
+                .map(cookie -> cookie.getValue());
+        if(!optionalSessionId.isPresent()){
+            LOGGER.debug("Tried to log a user out but there wasn't a session.");
+        }
+        else {
+            String sessionId = optionalSessionId.get();
+            try {
+                authenticationServiceClient.getAuthServiceApi().logout(sessionId);
+            } catch (ApiException e) {
+                LOGGER.error("Unable to log user out!", e);
+            }
+        }
+
         final UserRef user = getCurrentUser();
 
         // Remove the user authentication object

@@ -31,19 +31,16 @@ import javax.inject.Inject;
 @Insecure
 public class LogoutHandler extends AbstractTaskHandler<LogoutAction, VoidResult> {
 
-    private SessionManager sessionManager;
     private final AuthenticationService authenticationService;
 
     @Inject
-    LogoutHandler(SessionManager sessionManager,
-                  AuthenticationService authenticationService) {
-        this.sessionManager = sessionManager;
+    LogoutHandler(AuthenticationService authenticationService) {
         this.authenticationService = authenticationService;
     }
 
     @Override
     public VoidResult exec(final LogoutAction task) {
-        sessionManager.logout();
+        authenticationService.logout();
         return new VoidResult();
     }
 }

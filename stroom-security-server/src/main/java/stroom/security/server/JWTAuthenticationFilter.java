@@ -51,7 +51,6 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
     private JWTService jwtService;
     private NonceManager nonceManager;
     private AuthenticationServiceClient authenticationServiceClient;
-    private SessionManager sessionManager;
     //TODO Use an API gateway
     private final String LOGIN_URL_PROPERTY_NAME = "stroom.security.login.url";
     private final String AUTHENTICATION_URL_PROPERTY_NAME = "stroom.security.authentication.url";
@@ -62,12 +61,10 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
     public JWTAuthenticationFilter(
             final JWTService jwtService,
             final NonceManager nonceManager,
-            AuthenticationServiceClient authenticationServiceClient,
-            SessionManager sessionManager) {
+            AuthenticationServiceClient authenticationServiceClient) {
         this.jwtService = jwtService;
         this.nonceManager = nonceManager;
         this.authenticationServiceClient = authenticationServiceClient;
-        this.sessionManager = sessionManager;
     }
 
     @Override
@@ -79,7 +76,6 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
         }
 
         boolean loggedIn = false;
-
 
         // Authenticate requests from an API client
         boolean isAuthenticatedApiRequest = jwtService.containsValidJws(request);
@@ -101,22 +97,10 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
                         .findFirst()
                         .map(cookie -> cookie.getValue());
             }
-        }
 
-        // We need to know what jSessionIds are associated with this
-        // wider session Id, so we'll record a mapping.
-        if(((ShiroHttpServletRequest) request).getCookies() != null) {
-            Optional<String> optionalJSessionId = Arrays.stream(((ShiroHttpServletRequest) request).getCookies())
-                    .filter(cookie -> cookie.getName().equals("JSESSIONID"))
-                    .findFirst()
-                    .map(cookie -> cookie.getValue());
-
-            if (optionalJSessionId.isPresent()) {
-                LOGGER.debug("We found the following jSessionId: {}", optionalJSessionId.get());
-                sessionManager.add(sessionId.get(), optionalJSessionId.get());
-            }
-            else{
-                LOGGER.debug("There is no jSessionId associated with this request!");
+            // If we still don't have a UUID then we need to create one.
+            if(!sessionId.isPresent()){
+                sessionId = Optional.of(UUID.randomUUID().toString());
             }
         }
 
@@ -168,6 +152,10 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
         return loggedIn;
     }
 
+    /**
+     * This method must create the token used by Shiro.
+     * It does this by enacting the OpenId exchange of accessCode for idToken.
+     */
     @Override
     protected JWTAuthenticationToken createToken(ServletRequest request, ServletResponse response) throws IOException, InvalidJwtException, MalformedClaimException {
         // TODO: Check for a JWT for API clients
@@ -192,9 +180,18 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
                 idToken = authenticationServiceClient.getAuthServiceApi().getIdTokenWithPost(idTokenRequest);
             } catch (ApiException e) {
                 if(e.getCode() == Response.Status.UNAUTHORIZED.getStatusCode()){
+                    // If we can't exchange the accessCode for an idToken then this probably means the
+                    // accessCode doesn't exist any more, or has already been used.
+                    // We can't proceed and need to throw an exception. We don't want to leave the user
+                    // staring at a blank screen so we'll also redirect them back to the main page so
+                    // we can start the login flow again.
+                    HttpServletResponse httpResponse = WebUtils.toHttp(response);
+                    String advertisedStroomUrl = StroomProperties.getProperty(ADVERTISED_STROOM_URL);
+                    httpResponse.sendRedirect(advertisedStroomUrl);
                     // Our access code isn't valid, so we need to redirect and start the flow again.
-                    LOGGER.error("My request for an id_token was rejected as unauthorised!", e);
-                    throw new RuntimeException("Request to log you in was not authenticated! Is Stroom configured correctly?");
+                    String errorMessage = "The accessCode used to obtain an idToken was rejected. Has it already been used?";
+                    LOGGER.error(errorMessage, e);
+                    throw new RuntimeException(errorMessage);
                 }
             }
 
