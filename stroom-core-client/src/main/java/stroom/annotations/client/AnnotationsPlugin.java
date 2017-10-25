@@ -13,6 +13,7 @@ import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
+import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.iframe.client.presenter.IFramePresenter;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -48,7 +49,7 @@ public class AnnotationsPlugin extends Plugin {
                     final IconMenuItem annotationsMenuItem;
                     final String annotationsURL = result.get(ClientProperties.URL_ANNOTATIONS_UI);
                     if (annotationsURL != null && annotationsURL.trim().length() > 0) {
-                        annotationsMenuItem = new IconMenuItem(5, SvgPresets.EXPLORER, null, "Annotations", null, true, () -> {
+                        annotationsMenuItem = new IconMenuItem(5, SvgPresets.ANNOTATIONS, null, "Annotations", null, true, () -> {
                             final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()
                                     .title("Annotations")
                                     .href(annotationsURL)
@@ -56,6 +57,7 @@ public class AnnotationsPlugin extends Plugin {
                                     .build();
                             final IFramePresenter iFramePresenter = iFramePresenterProvider.get();
                             iFramePresenter.setHyperlink(hyperlink);
+                            iFramePresenter.setIcon(SvgPresets.ANNOTATIONS);
                             contentManager.open(callback ->
                                             ConfirmEvent.fire(AnnotationsPlugin.this,
                                                     "Are you sure you want to close " + hyperlink.getTitle() + "?",
@@ -63,7 +65,7 @@ public class AnnotationsPlugin extends Plugin {
                                     , iFramePresenter, iFramePresenter);
                         });
                     } else {
-                        annotationsMenuItem = new IconMenuItem(5, SvgPresets.EXPLORER, SvgPresets.EXPLORER, "Annotations is not configured!", null, false, null);
+                        annotationsMenuItem = new IconMenuItem(5, SvgPresets.ANNOTATIONS, SvgPresets.ANNOTATIONS, "Annotations is not configured!", null, false, null);
                     }
 
                     event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, annotationsMenuItem);

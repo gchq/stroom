@@ -32,6 +32,7 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleDataSourceProviderRegistry.class);
 
     public static final String PROP_KEY_BASE_PATH = "stroom.serviceDiscovery.simpleLookup.basePath";
+    public static final String PROP_KEY_ANNOTATIONS_PATH = "stroom.serviceDiscovery.simpleLookup.annotationsPath";
 
     private final ImmutableMap<String, String> urlMap;
 
@@ -42,6 +43,7 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
         this.securityContext = securityContext;
 
         final String basePath = stroomPropertyService.getProperty(PROP_KEY_BASE_PATH);
+        final String annotationsPath = stroomPropertyService.getProperty(PROP_KEY_ANNOTATIONS_PATH);
 
         if (!Strings.isNullOrEmpty(basePath)) {
             //TODO the path strings are defined in ResourcePaths but this is not accessible from here
@@ -49,6 +51,7 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
             urlMap = ImmutableMap.of(
                     "Index", basePath + "/api/stroom-index/v2",
                     "StatisticStore", basePath + "/api/sqlstatistics/v2",
+                    "Annotations", annotationsPath,
                     //strooom-stats is not available as a local service as if you have stroom-stats you have zookeeper so
                     //you can run service discovery
                     "authentication", basePath + "/api/authentication/v1",

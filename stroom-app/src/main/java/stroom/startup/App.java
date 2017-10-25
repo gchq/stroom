@@ -31,6 +31,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import stroom.annotations.StroomAnnotationsConfig;
+import stroom.annotations.StroomAnnotationsExplorerActionHandler;
 import stroom.cluster.server.ClusterCallServiceRPC;
 import stroom.dashboard.spring.DashboardConfiguration;
 import stroom.datafeed.server.DataFeedServlet;
@@ -177,7 +179,9 @@ public class App extends Application<Configuration> {
                 DashboardConfiguration.class,
                 MetaDataStatisticConfiguration.class,
                 StatisticsConfiguration.class,
-                SecurityConfiguration.class
+                SecurityConfiguration.class,
+                StroomAnnotationsConfig.class,
+                StroomAnnotationsExplorerActionHandler.class
         );
         applicationContext.refresh();
         return applicationContext;

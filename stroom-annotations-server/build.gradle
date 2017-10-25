@@ -1,0 +1,10 @@
+dependencies {
+    compile urlDependencies.get(urlLibs.stroomExpression)
+    compile project(':stroom-core-server')
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-explorer-server')
+    compile project(':stroom-security-api')
+
+    compile libs.javax_inject
+    compile libs.spring_context
+}
