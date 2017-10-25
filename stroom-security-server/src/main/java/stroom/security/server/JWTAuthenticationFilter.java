@@ -265,6 +265,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
             boolean doNoncesMatch = nonceManager.match(stroomSessionId, nonceHash);
             if (!doNoncesMatch) {
                 // If the nonces don't match we need to redirect to log in again.
+                // Maybe the request uses an out-of-date stroomSessionId?
                 LOGGER.info("Received a bad nonce!");
                 HttpServletResponse httpResponse = WebUtils.toHttp(response);
                 String advertisedStroomUrl = StroomProperties.getProperty(ADVERTISED_STROOM_URL);
