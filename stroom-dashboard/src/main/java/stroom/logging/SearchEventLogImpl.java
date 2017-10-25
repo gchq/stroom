@@ -66,7 +66,7 @@ public class SearchEventLogImpl implements SearchEventLog {
 
     @Override
     public void batchSearch(final DocRef dataSourceRef, final ExpressionOperator expression,
-            final Exception ex) {
+                            final Exception ex) {
         search("Batch search", dataSourceRef, expression, ex);
     }
 
@@ -77,13 +77,13 @@ public class SearchEventLogImpl implements SearchEventLog {
 
     @Override
     public void downloadResults(final DocRef dataSourceRef, final ExpressionOperator expression,
-            final Exception ex) {
+                                final Exception ex) {
         downloadResults("Download search results", dataSourceRef, expression, ex);
     }
 
     @Override
     public void downloadResults(final String type, final DocRef dataSourceRef,
-            final ExpressionOperator expression, final Exception ex) {
+                                final ExpressionOperator expression, final Exception ex) {
         try {
             final String dataSourceName = getDataSourceName(dataSourceRef);
 
@@ -107,13 +107,13 @@ public class SearchEventLogImpl implements SearchEventLog {
 
             eventLoggingService.log(event);
         } catch (final Exception e) {
-            LOGGER.error(e, e);
+            LOGGER.error(e.getMessage(), e);
         }
     }
 
     @Override
     public void search(final String type, final DocRef dataSourceRef, final ExpressionOperator expression,
-            final Exception ex) {
+                       final Exception ex) {
         try {
             String dataSourceName = getDataSourceName(dataSourceRef);
             if (dataSourceName == null || dataSourceName.isEmpty()) {

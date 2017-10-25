@@ -45,13 +45,13 @@ import stroom.util.spring.StroomStartup;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -118,7 +118,11 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     @Override
     public IndexShardWriter getWriterByShardKey(final IndexShardKey indexShardKey) {
-        return openWritersByShardKey.computeIfAbsent(indexShardKey, k -> {
+        return openWritersByShardKey.compute(indexShardKey, (k, v) -> {
+            if (v != null) {
+                return v;
+            }
+
             // Make sure we have room to add a new writer.
             makeRoom();
 
@@ -199,11 +203,10 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             return indexShardWriter;
 
         } catch (final LockObtainFailedException t) {
-            LOGGER.warn(t::getMessage);
-            // Something went wrong.
-            indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSED);
+            LOGGER.error(t::getMessage, t);
+
         } catch (final Throwable t) {
-            // Something went wrong.
+            // Something unexpected went wrong.
             LOGGER.error(() -> "Setting index shard status to corrupt because (" + t.toString() + ")", t);
             indexShardManager.setStatus(indexShardId, IndexShardStatus.CORRUPT);
         }
@@ -340,7 +343,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         return exec.exec(() -> {
             try {
                 taskContext.setName("Flushing writer");
-                taskContext.setInfo("Flushing writer for index shard " + indexShardWriter.getIndexShardId());
+                taskContext.info("Flushing writer for index shard " + indexShardWriter.getIndexShardId());
 
                 // Flush the shard.
                 indexShardWriter.flush();
@@ -353,37 +356,47 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     }
 
     private CompletableFuture<IndexShardWriter> close(final IndexShardWriter indexShardWriter, final Runner exec) {
-        final long indexShardId = indexShardWriter.getIndexShardId();
-
         // Set the status of the shard to closing so it won't be used again immediately if removed from the map.
-        indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSING);
-        // Remove the shard from the map.
-        openWritersByShardKey.remove(indexShardWriter.getIndexShardKey());
-
+        indexShardManager.setStatus(indexShardWriter.getIndexShardId(), IndexShardStatus.CLOSING);
         closing.incrementAndGet();
-        return exec.exec(() -> {
-            try {
-                try {
-                    taskContext.setName("Closing writer");
-                    taskContext.setInfo("Closing writer for index shard " + indexShardWriter.getIndexShardId());
 
-                    // Close the shard.
-                    indexShardWriter.close();
-                } finally {
-                    // Remove the writer from ones that cen be used by readers.
-                    openWritersByShardId.remove(indexShardWriter.getIndexShardId());
+        final CompletableFuture<IndexShardWriter> completableFuture = exec.exec(() -> {
+            // Remove the shard from the map.
+            openWritersByShardKey.compute(indexShardWriter.getIndexShardKey(), (k, v) -> {
+                if (v != null) {
+                    try {
+                        final long indexShardId = v.getIndexShardId();
+                        try {
+                            taskContext.setName("Closing writer");
+                            taskContext.info("Closing writer for index shard " + indexShardId);
 
-                    // Update the shard status.
-                    indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSED);
+                            // Close the shard.
+                            v.close();
+                        } finally {
+                            // Remove the writer from ones that can be used by readers.
+                            openWritersByShardId.remove(indexShardId);
+
+                            // Update the shard status.
+                            indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSED);
+                        }
+                    } catch (final Exception e) {
+                        LOGGER.error(e::getMessage, e);
+                    }
                 }
-            } catch (final Exception e) {
-                LOGGER.error(e::getMessage, e);
-            } finally {
-                closing.decrementAndGet();
-            }
+
+                return null;
+            });
 
             return indexShardWriter;
         });
+        completableFuture.thenApply(result -> closing.decrementAndGet());
+        completableFuture.exceptionally(t -> {
+            LOGGER.error(t::getMessage, t);
+            closing.decrementAndGet();
+            return null;
+        });
+
+        return completableFuture;
     }
 
     @StroomStartup
@@ -399,12 +412,28 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         criteria.getIndexShardStatusSet().add(IndexShardStatus.CLOSING);
         final List<IndexShard> list = indexShardService.find(criteria);
         for (final IndexShard indexShard : list) {
-            LOGGER.info(() -> "Changing shard status to closed (" + indexShard + ")");
-            indexShard.setStatus(IndexShardStatus.CLOSED);
-            indexShardService.save(indexShard);
+            clean(indexShard);
         }
 
         LOGGER.info(() -> "Index shard writer cache startup completed in " + logExecutionTime);
+    }
+
+    private void clean(final IndexShard indexShard) {
+        try {
+            LOGGER.info(() -> "Changing shard status to closed (" + indexShard + ")");
+            indexShard.setStatus(IndexShardStatus.CLOSED);
+            indexShardService.save(indexShard);
+        } catch (final Exception e) {
+            LOGGER.error(e::getMessage, e);
+        }
+
+        try {
+            LOGGER.info(() -> "Clearing any lingering locks (" + indexShard + ")");
+            final Path dir = IndexShardUtil.getIndexDir(indexShard).toPath();
+            LockFactoryUtil.clean(dir);
+        } catch (final Exception e) {
+            LOGGER.error(e::getMessage, e);
+        }
     }
 
     @StroomShutdown

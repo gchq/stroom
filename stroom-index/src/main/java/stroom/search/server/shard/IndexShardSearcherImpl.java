@@ -22,11 +22,10 @@ import org.apache.lucene.search.SearcherFactory;
 import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
-import org.apache.lucene.store.NoLockFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.index.server.AbstractIndexShard;
 import stroom.index.server.IndexShardUtil;
+import stroom.index.server.LockFactoryUtil;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.search.server.SearchException;
@@ -35,7 +34,7 @@ import java.io.File;
 import java.io.IOException;
 
 public class IndexShardSearcherImpl implements IndexShardSearcher {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractIndexShard.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardSearcherImpl.class);
 
     private final IndexShard indexShard;
 
@@ -50,7 +49,7 @@ public class IndexShardSearcherImpl implements IndexShardSearcher {
         this(indexShard, null);
     }
 
-    IndexShardSearcherImpl(final IndexShard indexShard, final IndexWriter indexWriter) {
+    public IndexShardSearcherImpl(final IndexShard indexShard, final IndexWriter indexWriter) {
         this.indexShard = indexShard;
         this.indexWriter = indexWriter;
 
@@ -78,7 +77,7 @@ public class IndexShardSearcherImpl implements IndexShardSearcher {
                     throw new SearchException("Index directory not found for searching: " + dir.getAbsolutePath());
                 }
 
-                directory = new NIOFSDirectory(dir, NoLockFactory.getNoLockFactory());
+                directory = new NIOFSDirectory(dir, LockFactoryUtil.get(dir.toPath()));
 //                indexReader = DirectoryReader.open(directory);
                 searcherManager = new SearcherManager(directory, new SearcherFactory());
 

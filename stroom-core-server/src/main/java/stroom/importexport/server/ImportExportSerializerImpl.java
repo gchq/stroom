@@ -328,7 +328,7 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
                 // TODO : In v6 the root folder will be a real folder.
                 if (SYSTEM_FOLDER.equals(nearestFolder)) {
                     if (!securityContext.isAdmin()) {
-                        throw new PermissionException("Only administrators can create root level entries");
+                        throw new PermissionException(securityContext.getUserId(), "Only administrators can create root level entries");
                     }
                 }
 
@@ -336,11 +336,11 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
                 // If this is the case then we will need to create folders in the nearest folder.
                 if (nearestFolder != folderRef) {
                     if (!securityContext.hasDocumentPermission(nearestFolder.getType(), nearestFolder.getUuid(), DocumentPermissionNames.getDocumentCreatePermission(Folder.ENTITY_TYPE))) {
-                        throw new PermissionException("You do not have permission to create a folder in '" + nearestFolder);
+                        throw new PermissionException(securityContext.getUserId(), "You do not have permission to create a folder in '" + nearestFolder);
                     }
 
                     if (!securityContext.hasDocumentPermission(nearestFolder.getType(), nearestFolder.getUuid(), DocumentPermissionNames.IMPORT)) {
-                        throw new PermissionException("You do not have permission to import folders into '" + nearestFolder);
+                        throw new PermissionException(securityContext.getUserId(), "You do not have permission to import folders into '" + nearestFolder);
                     }
 
                     // Add the required folders for this new item.
@@ -362,11 +362,11 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
 
                 } else {
                     if (!securityContext.hasDocumentPermission(folderRef.getType(), folderRef.getUuid(), DocumentPermissionNames.getDocumentCreatePermission(entityType))) {
-                        throw new PermissionException("You do not have permission to create '" + docRef + "' in '" + folderRef);
+                        throw new PermissionException(securityContext.getUserId(), "You do not have permission to create '" + docRef + "' in '" + folderRef);
                     }
 
                     if (!securityContext.hasDocumentPermission(folderRef.getType(), folderRef.getUuid(), DocumentPermissionNames.IMPORT)) {
-                        throw new PermissionException("You do not have permission to import '" + docRef + "' into '" + folderRef);
+                        throw new PermissionException(securityContext.getUserId(), "You do not have permission to import '" + docRef + "' into '" + folderRef);
                     }
                 }
 
@@ -375,11 +375,11 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
 //                        }
             } else {
                 if (!securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.UPDATE)) {
-                    throw new PermissionException("You do not have permission to update '" + docRef + "'");
+                    throw new PermissionException(securityContext.getUserId(), "You do not have permission to update '" + docRef + "'");
                 }
 
                 if (!securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.IMPORT)) {
-                    throw new PermissionException("You do not have permission to import '" + docRef + "'");
+                    throw new PermissionException(securityContext.getUserId(), "You do not have permission to import '" + docRef + "'");
                 }
 
 //                        if (importMode == ImportMode.CREATE_CONFIRMATION) {

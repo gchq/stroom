@@ -16,14 +16,20 @@
 
 package stroom.search.server.taskqueue;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
-import stroom.util.shared.Task;
-
 public interface TaskProducer extends Comparable<TaskProducer> {
-    Task<?> next();
+    /**
+     * Get the next task to execute or null if the producer has reached a concurrent execution limit or no further tasks
+     * are available.
+     *
+     * @return The next task to execute or null if no tasks are available at this time.
+     */
+    Runnable next();
 
-    int getMaxThreadsPerTask();
-
-    AtomicInteger getThreadsUsed();
+    /**
+     * When an executor has finished executing a task return it to the producer so it can be marked complete and the
+     * producer can decrement the current execution count.
+     *
+     * @param task The task that has been completed.
+     */
+    void complete(Runnable task);
 }

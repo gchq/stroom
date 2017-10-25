@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 import stroom.dashboard.expression.FieldIndexMap;
 import stroom.query.TableCoprocessorSettings;
 import stroom.query.shared.CoprocessorSettings;
+import stroom.util.shared.HasTerminate;
 import stroom.util.task.TaskMonitor;
 
 import java.util.Map;
@@ -27,11 +28,11 @@ import java.util.Map;
 @Component
 public class CoprocessorFactory {
     public Coprocessor<?> create(final CoprocessorSettings settings,
-                                 final FieldIndexMap fieldIndexMap, final Map<String, String> paramMap, final TaskMonitor taskMonitor) {
+                                 final FieldIndexMap fieldIndexMap, final Map<String, String> paramMap, final HasTerminate monitor) {
         if (settings instanceof TableCoprocessorSettings) {
             final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) settings;
             final TableCoprocessor tableCoprocessor = new TableCoprocessor(tableCoprocessorSettings,
-                    fieldIndexMap, taskMonitor, paramMap);
+                    fieldIndexMap, monitor, paramMap);
             return tableCoprocessor;
         } else if (settings instanceof EventCoprocessorSettings) {
             final EventCoprocessorSettings eventCoprocessorSettings = (EventCoprocessorSettings) settings;

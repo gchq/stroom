@@ -18,7 +18,6 @@ package stroom.task.server;
 
 import stroom.util.shared.Monitor;
 import stroom.util.shared.Task;
-import stroom.util.task.TaskMonitor;
 
 import java.util.Deque;
 import java.util.LinkedList;
@@ -70,10 +69,22 @@ final class CurrentTaskState {
         }
     }
 
-    static void setInfo(final Object... args) {
+    static void info(final Object... args) {
         final TaskState taskState = currentState();
         if (taskState != null) {
             taskState.monitor.info(args);
+        }
+    }
+
+    static boolean isTerminated() {
+        final TaskState taskState = currentState();
+        return taskState != null && taskState.task.isTerminated();
+    }
+
+    static void terminate() {
+        final TaskState taskState = currentState();
+        if (taskState != null) {
+            taskState.task.terminate();
         }
     }
 }

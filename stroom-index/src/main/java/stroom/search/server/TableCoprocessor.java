@@ -30,6 +30,7 @@ import stroom.query.TableCoprocessorSettings;
 import stroom.query.TablePayload;
 import stroom.query.shared.Field;
 import stroom.query.shared.TableSettings;
+import stroom.util.shared.HasTerminate;
 import stroom.util.task.TaskMonitor;
 
 import java.util.List;
@@ -43,14 +44,14 @@ public class TableCoprocessor implements Coprocessor<TableCoprocessorSettings> {
     private final CompiledDepths compiledDepths;
 
     public TableCoprocessor(final TableCoprocessorSettings settings,
-                            final FieldIndexMap fieldIndexMap, final TaskMonitor taskMonitor, final Map<String, String> paramMap) {
+                            final FieldIndexMap fieldIndexMap, final HasTerminate monitor, final Map<String, String> paramMap) {
         final TableSettings tableSettings = settings.getTableSettings();
 
         final List<Field> fields = tableSettings.getFields();
         compiledDepths = new CompiledDepths(fields, tableSettings.showDetail());
         compiledFields = new CompiledFields(fields, fieldIndexMap, paramMap);
 
-        queue = new BlockingPairQueue<>(taskMonitor);
+        queue = new BlockingPairQueue<>(monitor);
         mapper = new ItemMapper(queue, compiledFields, compiledDepths.getMaxDepth(), compiledDepths.getMaxGroupDepth());
     }
 
