@@ -1,4 +1,4 @@
-package stroom.users.client;
+package stroom.changepassword.client;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -18,17 +18,17 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.iframe.client.presenter.IFramePresenter;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
-public class UsersPlugin extends Plugin {
+public class ChangePasswordPlugin extends Plugin {
 
     private final Provider<IFramePresenter> iFramePresenterProvider;
     private final ContentManager contentManager;
     private final ClientPropertyCache clientPropertyCache;
 
     @Inject
-    public UsersPlugin(final EventBus eventBus,
-                       final Provider<IFramePresenter> iFramePresenterProvider,
-                       final ContentManager contentManager,
-                       final ClientPropertyCache clientPropertyCache) {
+    public ChangePasswordPlugin(final EventBus eventBus,
+                                final Provider<IFramePresenter> iFramePresenterProvider,
+                                final ContentManager contentManager,
+                                final ClientPropertyCache clientPropertyCache) {
         super(eventBus);
         this.iFramePresenterProvider = iFramePresenterProvider;
         this.contentManager = contentManager;
@@ -46,31 +46,31 @@ public class UsersPlugin extends Plugin {
     public void onReveal(final BeforeRevealMenubarEvent event) {
         clientPropertyCache.get()
                 .onSuccess(result -> {
-                    final IconMenuItem usersMenuItem;
-                    final SvgPreset icon = SvgPresets.USER_GROUP;
-                    final String usersUiUrl = result.get(ClientProperties.USERS_UI_URL);
-                    if (usersUiUrl != null && usersUiUrl.trim().length() > 0) {
-                        usersMenuItem = new IconMenuItem(5, icon, null, "Users", null, true, () -> {
+                    final IconMenuItem changePasswordMenuItem;
+                    final SvgPreset icon = SvgPresets.PASSWORD;
+                    final String changePasswordUiUrl = result.get(ClientProperties.CHANGE_PASSWORD_UI);
+                    if (changePasswordUiUrl != null && changePasswordUiUrl.trim().length() > 0) {
+                        changePasswordMenuItem = new IconMenuItem(5, icon, null, "Change password", null, true, () -> {
                             final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()
-                                    .title("Users")
-                                    .href(usersUiUrl)
+                                    .title("Change password")
+                                    .href(changePasswordUiUrl)
                                     .target(HyperlinkTarget.STROOM_TAB)
                                     .build();
                             final IFramePresenter iFramePresenter = iFramePresenterProvider.get();
                             iFramePresenter.setHyperlink(hyperlink);
                             contentManager.open(callback ->
-                                            ConfirmEvent.fire(UsersPlugin.this,
+                                            ConfirmEvent.fire(ChangePasswordPlugin.this,
                                                     "Are you sure you want to close " + hyperlink.getTitle() + "?",
                                                     callback::closeTab)
                                     , iFramePresenter, iFramePresenter);
                         });
                     } else {
-                        usersMenuItem = new IconMenuItem(5, icon, icon, "Users is not configured!", null, false, null);
+                        changePasswordMenuItem = new IconMenuItem(5, icon, icon, "'Change Password' is not configured!", null, false, null);
                     }
 
-                    event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, usersMenuItem);
+                    event.getMenuItems().addMenuItem(MenuKeys.USER_MENU, changePasswordMenuItem);
                 })
-                .onFailure(caught -> AlertEvent.fireError(UsersPlugin.this, caught.getMessage(), null));
+                .onFailure(caught -> AlertEvent.fireError(ChangePasswordPlugin.this, caught.getMessage(), null));
 
 
     }

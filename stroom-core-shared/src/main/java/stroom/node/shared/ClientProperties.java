@@ -49,6 +49,7 @@ public class ClientProperties implements SharedObject {
     public static final String POST_LOGOUT_REDIRECT_URL = "stroom.postLogout.redirectUrl";
     public static final String USERS_UI_URL = "stroom.users.ui.url";
     public static final String API_KEYS_UI = "stroom.apikeys.ui.url";
+    public static final String CHANGE_PASSWORD_UI = "stroom.changepassword.url";
 
     private static final long serialVersionUID = 8717922468620533698L;
     private HashMap<String, String> map;

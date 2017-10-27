@@ -36,8 +36,10 @@ stroom.postLogout.redirectUrl=http://localhost
 stroom.auth.jwt.verificationkey=CHANGE_ME
 stroom.auth.jwt.issuer=stroom
 stroom.auth.url=http://localhost:8099
+
 stroom.users.ui.url=http://localhost:3000/userSearch
 stroom.apikeys.ui.url=http://localhost:3000/tokens
+stroom.changepassword.url=http://localhost:3000/changepassword
 
 #Service discovery
 #Set this to false to local service lookup when you do not have Zookeeper

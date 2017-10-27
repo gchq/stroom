@@ -13,6 +13,7 @@ import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
+import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.iframe.client.presenter.IFramePresenter;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -46,9 +47,10 @@ public class ApiKeysPlugin extends Plugin {
         clientPropertyCache.get()
                 .onSuccess(result -> {
                     final IconMenuItem apiKeysMenuItem;
+                    final SvgPreset icon = SvgPresets.PASSWORD;
                     final String apiKeysUi = result.get(ClientProperties.API_KEYS_UI);
                     if (apiKeysUi != null && apiKeysUi.trim().length() > 0) {
-                        apiKeysMenuItem = new IconMenuItem(5, SvgPresets.EXPLORER, null, "API Keys", null, true, () -> {
+                        apiKeysMenuItem = new IconMenuItem(5, icon, null, "API Keys", null, true, () -> {
                             final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()
                                     .title("API Keys")
                                     .href(apiKeysUi)
@@ -63,7 +65,7 @@ public class ApiKeysPlugin extends Plugin {
                                     , iFramePresenter, iFramePresenter);
                         });
                     } else {
-                        apiKeysMenuItem = new IconMenuItem(5, SvgPresets.EXPLORER, SvgPresets.EXPLORER, "API Keys is not configured!", null, false, null);
+                        apiKeysMenuItem = new IconMenuItem(5, icon, icon, "API Keys is not configured!", null, false, null);
                     }
 
                     event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, apiKeysMenuItem);
