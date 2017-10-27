@@ -147,7 +147,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
             }
             else {
                 // We have a a new request so we're going to redirect with an AuthenticationRequest.
-                String authenticationUrl = authenticationServiceUrl + "/authenticate";
+                String authenticationUrl = authenticationServiceUrl + "/authentication/v1/authenticate";
                 String nonceHash = nonceManager.createNonce(stroomSessionId);
 
                 StringBuilder redirectionParams = new StringBuilder();
@@ -184,14 +184,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
         if(path.contains("/api/")){
             Optional<String> optionalJws = jwtService.getJws(request);
             if(optionalJws.isPresent()){
-                // TODO: We're doing JWS verification in a couple of places - factor it out.
-                JwtConsumerBuilder builder = new JwtConsumerBuilder()
-                        .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account for clock skew
-                        .setRequireSubject() // the JWT must have a subject claim
-                        .setVerificationKey(new HmacKey(jwtVerificationKey.getBytes())) // verify the signature with the public key
-                        .setRelaxVerificationKeyValidation() // relaxes key length requirement
-                        .setExpectedIssuer(jwtIssuer);
-                JwtConsumer consumer = builder.build();
+                JwtConsumer consumer = jwtService.newJwsConsumer();
                 final JwtClaims claims = consumer.processToClaims(optionalJws.get());
                 return new JWTAuthenticationToken(claims.getSubject(), optionalJws.get());
             }
@@ -246,15 +239,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
                 }
             }
 
-            JwtConsumerBuilder builder = new JwtConsumerBuilder()
-                    .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account for clock skew
-                    .setRequireSubject() // the JWT must have a subject claim
-                    .setVerificationKey(new HmacKey(jwtVerificationKey.getBytes())) // verify the signature with the public key
-                    .setRelaxVerificationKeyValidation() // relaxes key length requirement
-                    .setExpectedIssuer(jwtIssuer);
-
-            JwtConsumer consumer = builder.build();
-
+            JwtConsumer consumer = jwtService.newJwsConsumer();
             final JwtClaims claims = consumer.processToClaims(idToken);
             String nonceHash = (String) claims.getClaimsMap().get("nonce");
             boolean doNoncesMatch = nonceManager.match(stroomSessionId, nonceHash);

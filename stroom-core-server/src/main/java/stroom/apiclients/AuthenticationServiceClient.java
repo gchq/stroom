@@ -18,6 +18,7 @@ package stroom.apiclients;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import stroom.auth.service.ApiClient;
 import stroom.auth.service.ApiException;
@@ -25,8 +26,8 @@ import stroom.auth.service.api.DefaultApi;
 import stroom.auth.service.api.model.CreateTokenRequest;
 import stroom.auth.service.api.model.SearchRequest;
 import stroom.auth.service.api.model.SearchResponse;
-import stroom.util.config.StroomProperties;
 
+import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Optional;
 
@@ -46,9 +47,14 @@ public class AuthenticationServiceClient {
     private final String ourApiToken;
     private final String tokenServiceUrl;
 
-    public AuthenticationServiceClient() {
-        ourApiToken = StroomProperties.getProperty("stroom.security.apiToken");
-        tokenServiceUrl = StroomProperties.getProperty("stroom.security.auth.url");
+    @Inject
+    public AuthenticationServiceClient(
+        @Value("#{propertyConfigurer.getProperty('stroom.security.apiToken')}")
+        final String ourApiToken,
+        @Value("#{propertyConfigurer.getProperty('stroom.auth.url')}")
+        final String tokenServiceUrl) {
+        this.ourApiToken = ourApiToken;
+        this.tokenServiceUrl = tokenServiceUrl;
         ApiClient authServiceClient = new ApiClient();
         authServiceClient.setBasePath(tokenServiceUrl);
         authServiceClient.addDefaultHeader("Authorization", "Bearer " + ourApiToken);
