@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
+## [v5.0-beta.55] - 2017-10-26
+
+* Issue **#463** : Made further improvements to the index shard writer cache to improve performance.
+
 ## [v5.0-beta.54] - 2017-10-25
 
 * Issue **#448** : Some search related tasks never seem to complete, presumably because an error is thrown at some point and so their callbacks do not get called normally. This fix changes the way task completion is recorded so that it isn't dependant on the callbacks being called correctly.
@@ -635,6 +639,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
 [v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
 
+[v5.0-beta.55]: https://github.com/gchq/stroom/compare/v5.0-beta.54...v5.0-beta.55
 [v5.0-beta.54]: https://github.com/gchq/stroom/compare/v5.0-beta.53...v5.0-beta.54
 [v5.0-beta.53]: https://github.com/gchq/stroom/compare/v5.0-beta.52...v5.0-beta.53
 [v5.0-beta.52]: https://github.com/gchq/stroom/compare/v5.0-beta.51...v5.0-beta.52
