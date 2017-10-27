@@ -42,7 +42,6 @@ import stroom.process.shared.SetId;
 import stroom.process.shared.StreamProcessorFilterRow;
 import stroom.process.shared.StreamProcessorRow;
 import stroom.query.api.v2.DocRef;
-import stroom.query.api.v2.ExpressionBuilder;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -213,10 +212,10 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 
                 if (expression != null && dataSourceRef != null) {
                     dispatcher.exec(new EntityServiceLoadAction<NamedEntity>(dataSourceRef, null)).onSuccess(result -> {
-                        final ExpressionBuilder builder = new ExpressionBuilder(Op.AND);
+                        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
                         builder.addTerm("Data Source", Condition.EQUALS, result.getName());
 
-                        builder.addOperator(expression);
+                        builder.addOperators(expression);
 
                         expressionPresenter.read(builder.build());
                     });
@@ -248,12 +247,12 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                     final DocRefs feedsExclude = result.get(feedExcludeSetId);
                     final DocRefs streamTypes = result.get(streamTypeSetId);
 
-                    final ExpressionBuilder operator = new ExpressionBuilder(Op.AND);
+                    final ExpressionOperator.Builder operator = new ExpressionOperator.Builder(Op.AND);
                     addEntityListTerm(operator, folders, "Folder");
                     addEntityListTerm(operator, feedsInclude, "Feed");
 
                     if (feedsExclude != null && feedsExclude.iterator().hasNext()) {
-                        final ExpressionBuilder not = operator.addOperator(Op.NOT);
+                        final ExpressionOperator.ABuilder<?, ?> not = operator.addOperator(Op.NOT);
                         addEntityListTerm(not, feedsExclude, "Feed");
                     }
 
@@ -269,13 +268,13 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         }
     }
 
-    private void addEntityListTerm(final ExpressionBuilder operator, final DocRefs entities,
+    private void addEntityListTerm(final ExpressionOperator.ABuilder<?, ?> operator, final DocRefs entities,
                                    final String label) {
         if (entities != null) {
             final List<DocRef> list = new ArrayList<>(entities.getDoc());
             if (list.size() > 0) {
                 if (list.size() > 1) {
-                    final ExpressionBuilder or = operator.addOperator(Op.OR);
+                    final ExpressionOperator.OBuilder<?> or = operator.addOperator(Op.OR);
 
                     list.sort(new EntityReferenceComparator());
                     for (final DocRef entity : list) {
@@ -290,13 +289,13 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         }
     }
 
-    private void addEntity(final ExpressionBuilder operator, final DocRef entity, final String label) {
+    private void addEntity(final ExpressionOperator.ABuilder<?, ?> operator, final DocRef entity, final String label) {
         if (entity != null) {
             operator.addTerm(label, Condition.EQUALS, entity.getName());
         }
     }
 
-    private void addIdTerm(final ExpressionBuilder operator, final EntityIdSet<?> entities, final String label) {
+    private void addIdTerm(final ExpressionOperator.Builder operator, final EntityIdSet<?> entities, final String label) {
         if (entities != null && entities.size() > 0) {
             Condition condition = Condition.EQUALS;
             if (entities.size() > 1) {
@@ -318,7 +317,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         }
     }
 
-    private void addPeriodTerm(final ExpressionBuilder operator, final Period period, final String label) {
+    private void addPeriodTerm(final ExpressionOperator.Builder operator, final Period period, final String label) {
         if (period != null && (period.getFrom() != null || period.getTo() != null)) {
             Condition condition = null;
 

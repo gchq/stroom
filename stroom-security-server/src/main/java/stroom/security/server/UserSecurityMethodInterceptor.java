@@ -179,7 +179,7 @@ public class UserSecurityMethodInterceptor {
 
     private void checkAppPermission(final String permission, final String methodName) {
         if (!hasAppPermission(permission)) {
-            throw PermissionException.createAppPermissionRequiredException(permission, methodName);
+            throw PermissionException.createAppPermissionRequiredException(securityContext.getUserId(), permission, methodName);
         }
     }
 

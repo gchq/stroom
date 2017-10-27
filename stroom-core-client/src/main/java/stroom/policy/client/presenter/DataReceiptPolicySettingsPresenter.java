@@ -34,7 +34,7 @@ import stroom.policy.client.presenter.DataReceiptPolicySettingsPresenter.DataRec
 import stroom.policy.shared.DataReceiptAction;
 import stroom.policy.shared.DataReceiptPolicy;
 import stroom.policy.shared.DataReceiptRule;
-import stroom.query.api.v2.ExpressionBuilder;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.svg.client.SvgPresets;
@@ -201,7 +201,7 @@ public class DataReceiptPolicySettingsPresenter extends MyPresenterWidget<DataRe
     }
 
     private void add() {
-        final DataReceiptRule newRule = new DataReceiptRule(0, System.currentTimeMillis(), "", true, new ExpressionBuilder(Op.AND).build(), DataReceiptAction.RECEIVE);
+        final DataReceiptRule newRule = new DataReceiptRule(0, System.currentTimeMillis(), "", true, new ExpressionOperator.Builder(Op.AND).build(), DataReceiptAction.RECEIVE);
         final DataReceiptRulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(newRule, fields);
 

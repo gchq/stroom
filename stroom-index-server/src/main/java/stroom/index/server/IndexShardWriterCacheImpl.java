@@ -45,6 +45,7 @@ import stroom.util.spring.StroomStartup;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -85,6 +86,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private final Runner asyncRunner;
     private final Runner syncRunner;
     private final TaskContext taskContext;
+
     private volatile Settings settings;
 
     @Inject
@@ -116,7 +118,12 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     @Override
     public IndexShardWriter getWriterByShardKey(final IndexShardKey indexShardKey) {
-        return openWritersByShardKey.computeIfAbsent(indexShardKey, k -> {
+        return openWritersByShardKey.compute(indexShardKey, (k, v) -> {
+            // If there is already a value in this map for the provided key just return the value.
+            if (v != null) {
+                return v;
+            }
+
             // Make sure we have room to add a new writer.
             makeRoom();
 
@@ -197,12 +204,11 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             return indexShardWriter;
 
         } catch (final LockObtainFailedException t) {
-            LOGGER.warn(t::getMessage);
-            // Something went wrong.
-            indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSED);
-        } catch (final Throwable t) {
             LOGGER.error(t::getMessage, t);
-            // Something went wrong.
+
+        } catch (final Throwable t) {
+            // Something unexpected went wrong.
+            LOGGER.error(() -> "Setting index shard status to corrupt because (" + t.toString() + ")", t);
             indexShardManager.setStatus(indexShardId, IndexShardStatus.CORRUPT);
         }
 
@@ -338,7 +344,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         return exec.exec(() -> {
             try {
                 taskContext.setName("Flushing writer");
-                taskContext.setInfo("Flushing writer for index shard " + indexShardWriter.getIndexShardId());
+                taskContext.info("Flushing writer for index shard " + indexShardWriter.getIndexShardId());
 
                 // Flush the shard.
                 indexShardWriter.flush();
@@ -350,37 +356,55 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         });
     }
 
-    private CompletableFuture<IndexShardWriter> close(final IndexShardWriter indexShardWriter, final Runner exec) {
+    private void close(final IndexShardWriter indexShardWriter, final Runner exec) {
         final long indexShardId = indexShardWriter.getIndexShardId();
 
-        // Set the status of the shard to closing so it won't be used again immediately if removed from the map.
-        indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSING);
         // Remove the shard from the map.
-        openWritersByShardKey.remove(indexShardWriter.getIndexShardKey());
-
-        closing.incrementAndGet();
-        return exec.exec(() -> {
-            try {
-                try {
-                    taskContext.setName("Closing writer");
-                    taskContext.setInfo("Closing writer for index shard " + indexShardWriter.getIndexShardId());
-
-                    // Close the shard.
-                    indexShardWriter.close();
-                } finally {
-                    // Remove the writer from ones that cen be used by readers.
-                    openWritersByShardId.remove(indexShardWriter.getIndexShardId());
-
-                    // Update the shard status.
-                    indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSED);
-                }
-            } catch (final Exception e) {
-                LOGGER.error(e::getMessage, e);
-            } finally {
-                closing.decrementAndGet();
+        openWritersByShardKey.compute(indexShardWriter.getIndexShardKey(), (k, v) -> {
+            // If there is no value associated with the key or the value is not the one we expect it to be then just return the current value.
+            if (v == null || v != indexShardWriter) {
+                return v;
             }
 
-            return indexShardWriter;
+            try {
+                // Set the status of the shard to closing so it won't be used again immediately when removed from the map.
+                indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSING);
+
+                // Close the shard.
+                closing.incrementAndGet();
+                final CompletableFuture<IndexShardWriter> completableFuture = exec.exec(() -> {
+                    try {
+                        try {
+                            taskContext.setName("Closing writer");
+                            taskContext.info("Closing writer for index shard " + indexShardId);
+
+                            // Close the shard.
+                            indexShardWriter.close();
+                        } finally {
+                            // Remove the writer from ones that can be used by readers.
+                            openWritersByShardId.remove(indexShardId);
+
+                            // Update the shard status.
+                            indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSED);
+                        }
+                    } catch (final Exception e) {
+                        LOGGER.error(e::getMessage, e);
+                    }
+
+                    return null;
+                });
+                completableFuture.thenApply(result -> closing.decrementAndGet());
+                completableFuture.exceptionally(t -> {
+                    LOGGER.error(t::getMessage, t);
+                    closing.decrementAndGet();
+                    return null;
+                });
+            } catch (final Exception e) {
+                LOGGER.error(e::getMessage, e);
+            }
+
+            // Return null to remove the writer from the map.
+            return null;
         });
     }
 
@@ -397,12 +421,28 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         criteria.getIndexShardStatusSet().add(IndexShardStatus.CLOSING);
         final List<IndexShard> list = indexShardService.find(criteria);
         for (final IndexShard indexShard : list) {
-            LOGGER.info(() -> "Changing shard status to closed (" + indexShard + ")");
-            indexShard.setStatus(IndexShardStatus.CLOSED);
-            indexShardService.save(indexShard);
+            clean(indexShard);
         }
 
         LOGGER.info(() -> "Index shard writer cache startup completed in " + logExecutionTime);
+    }
+
+    private void clean(final IndexShard indexShard) {
+        try {
+            LOGGER.info(() -> "Changing shard status to closed (" + indexShard + ")");
+            indexShard.setStatus(IndexShardStatus.CLOSED);
+            indexShardService.save(indexShard);
+        } catch (final Exception e) {
+            LOGGER.error(e::getMessage, e);
+        }
+
+        try {
+            LOGGER.info(() -> "Clearing any lingering locks (" + indexShard + ")");
+            final Path dir = IndexShardUtil.getIndexPath(indexShard);
+            LockFactoryUtil.clean(dir);
+        } catch (final Exception e) {
+            LOGGER.error(e::getMessage, e);
+        }
     }
 
     @StroomShutdown
@@ -468,10 +508,6 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         return duration;
     }
 
-    private interface Runner {
-        CompletableFuture<IndexShardWriter> exec(Supplier<IndexShardWriter> supplier);
-    }
-
     private static class AsyncRunner implements Runner {
         private final Executor executor;
 
@@ -490,6 +526,10 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         public CompletableFuture<IndexShardWriter> exec(final Supplier<IndexShardWriter> supplier) {
             return CompletableFuture.completedFuture(supplier.get());
         }
+    }
+
+    private interface Runner {
+        CompletableFuture<IndexShardWriter> exec(Supplier<IndexShardWriter> supplier);
     }
 
     private static class Settings {

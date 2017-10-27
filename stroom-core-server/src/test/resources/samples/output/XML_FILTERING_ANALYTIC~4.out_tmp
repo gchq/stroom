@@ -1,0 +1,56 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2010-01-01T00:07:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
+         <Generator>CSV</Generator>
+         <Device>
+            <IPAddress>1.1.1.1</IPAddress>
+            <MACAddress>00-00-00-00-00-00</MACAddress>
+            <Location>
+               <Country>UK</Country>
+               <Site>Site 4</Site>
+               <Building>Main</Building>
+               <Floor>4</Floor>
+               <Room>A</Room>
+               <Desk>A4a.A4.4</Desk>
+            </Location>
+            <Data Name="Designation" Value="alpha mu"/>
+            <Data Name="Zone1" Value="Zone1"/>
+            <Data Name="Zone2" Value="Zone2"/>
+            <Data Name="Zone3" Value="Zone3"/>
+            <Data Name="Zone4" Value="Zone4"/>
+            <Data Name="Zone5" Value="Zone5"/>
+         </Device>
+         <User>
+            <Id>user8</Id>
+         </User>
+         <Data Name="LocalTime" Value="1 Jan 2010 00:07:00 +0000"/>
+         <Data Name="LocalTime" Value="1 Jan 2010 00:07:00 +00:00"/>
+         <Data Name="LocalTime" Value="1 Jan 2010 00:07:00 Europe/London"/>
+      </EventSource>
+      <EventDetail>
+         <TypeId>0001</TypeId>
+         <Description>Some message 8</Description>
+         <Authenticate>
+            <Action>Logon</Action>
+            <LogonType>Interactive</LogonType>
+            <User>
+               <Id>user8</Id>
+            </User>
+            <Data Name="FileNo" Value="4"/>
+            <Data Name="LineNo" Value="8"/>
+         </Authenticate>
+      </EventDetail>
+   </Event>
+</Events>

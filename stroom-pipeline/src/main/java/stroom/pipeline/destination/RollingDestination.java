@@ -36,7 +36,7 @@ public abstract class RollingDestination implements Destination {
     private final long frequency;
     private final long maxSize;
     private final long creationTime;
-    private byte[] footer;
+    private volatile byte[] footer;
 
     private volatile long lastFlushTime;
 
@@ -94,12 +94,12 @@ public abstract class RollingDestination implements Destination {
 
         // If we haven't written yet then create the output stream and
         // write a header if we have one.
-        if (header != null && outputStream != null && outputStream.getBytesWritten() == 0) {
+        if (header != null && header.length > 0 && outputStream != null && outputStream.getBytesWritten() == 0) {
             // Write the header.
-            outputStream.write(header);
+            write(header);
         }
 
-        onHeaderWritten(outputStream, exceptions::add);
+        onGetOutputStream(exceptions::add);
 
         throwFirstAsIOExceptions(exceptions);
 
@@ -160,15 +160,18 @@ public abstract class RollingDestination implements Destination {
 
         final Collection<Throwable> exceptions = new ArrayList<>();
 
+        beforeRoll(exceptions::add);
+
         // If we have written any data then write a footer if we have one.
-        if (footer != null && outputStream != null && outputStream.getBytesWritten() > 0) {
+        if (footer != null && footer.length > 0 && outputStream != null && outputStream.getBytesWritten() > 0) {
             // Write the footer.
             try {
-                outputStream.write(footer);
+                write(footer);
             } catch (final Throwable e) {
                 exceptions.add(e);
             }
         }
+
         // Try and close the output stream.
         try {
             close();
@@ -176,9 +179,13 @@ public abstract class RollingDestination implements Destination {
             exceptions.add(e);
         }
 
-        onFooterWritten(exceptions::add);
+        afterRoll(exceptions::add);
 
         throwFirstAsIOExceptions(exceptions);
+    }
+
+    private void write(final byte[] bytes) throws IOException {
+        outputStream.write(bytes, 0, bytes.length);
     }
 
     private void flush() throws IOException {
@@ -226,19 +233,26 @@ public abstract class RollingDestination implements Destination {
     }
 
     /**
-     * Child classes may have their own action to take on the output stream after the header has been written.
-     * This event handler gives them that chance.
+     * Child classes can take action when the output stream is requested.
      *
-     * @param outputStream The output stream, with the header already written.
      * @param exceptionConsumer Exceptions are gathered up and thrown as part of a larger process.
      */
-    abstract void onHeaderWritten(ByteCountOutputStream outputStream,
-                                  Consumer<Throwable> exceptionConsumer);
+    void onGetOutputStream(Consumer<Throwable> exceptionConsumer) {
+    }
+
+    /**
+     * Child classes can take action before the footer has been written to the particular instance of the destination.
+     *
+     * @param exceptionConsumer Exceptions are gathered up and thrown as part of a larger process.
+     */
+    void beforeRoll(Consumer<Throwable> exceptionConsumer) {
+    }
 
     /**
      * Child classes can take action after the footer has been written to the particular instance of the destination.
      *
      * @param exceptionConsumer Exceptions are gathered up and thrown as part of a larger process.
      */
-    abstract void onFooterWritten(Consumer<Throwable> exceptionConsumer);
+    void afterRoll(Consumer<Throwable> exceptionConsumer) {
+    }
 }

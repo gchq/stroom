@@ -120,6 +120,7 @@ public class IndexerImpl implements Indexer {
             // Mark the shard as corrupt as this should be the
             // only reason we can't add a document.
             if (indexShardManager != null) {
+                LOGGER.error(() -> "Setting index shard status to corrupt because (" + t.toString() + ")", t);
                 indexShardManager.setStatus(indexShardWriter.getIndexShardId(), IndexShardStatus.CORRUPT);
             }
         }

@@ -24,10 +24,10 @@ import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
-import stroom.query.api.v2.ExpressionBuilder;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
-import stroom.query.api.v2.FieldBuilder;
+import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Query;
@@ -73,17 +73,17 @@ public class TestEventSearch extends AbstractSearchTest {
      */
     @Test
     public void positiveCaseInsensitiveTest() {
-        final ExpressionBuilder expression = buildExpression("UserId", "user5", "2000-01-01T00:00:00.000Z",
+        final ExpressionOperator.Builder expression = buildExpression("UserId", "user5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description", "e0567");
         test(expression, 5);
     }
 
-    private void test(final ExpressionBuilder expressionIn, final int expectResultCount) {
+    private void test(final ExpressionOperator.Builder expressionIn, final int expectResultCount) {
         final List<String> componentIds = Collections.singletonList("table-1");
         test(expressionIn, expectResultCount, componentIds, true);
     }
 
-    private void test(final ExpressionBuilder expressionIn, final int expectResultCount, final List<String> componentIds,
+    private void test(final ExpressionOperator.Builder expressionIn, final int expectResultCount, final List<String> componentIds,
                       final boolean extractValues) {
         // ADDED THIS SECTION TO TEST SPRING VALUE INJECTION.
         StroomProperties.setOverrideProperty("stroom.search.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
@@ -170,12 +170,12 @@ public class TestEventSearch extends AbstractSearchTest {
     }
 
     private TableSettings createTableSettings(final Index index, final boolean extractValues) {
-        final Field idField = new FieldBuilder()
+        final Field idField = new Field.Builder()
                 .name("Id")
                 .expression(ParamUtil.makeParam("StreamId"))
                 .build();
 
-        final Field timeField = new FieldBuilder()
+        final Field timeField = new Field.Builder()
                 .name("Event Time")
                 .expression(ParamUtil.makeParam("EventTime"))
                 .format(Format.Type.DATE_TIME)
@@ -185,9 +185,9 @@ public class TestEventSearch extends AbstractSearchTest {
         return new TableSettings(null, Arrays.asList(idField, timeField), extractValues, DocRefUtil.create(resultPipeline), null, null);
     }
 
-    private ExpressionBuilder buildExpression(final String userField, final String userTerm, final String from,
+    private ExpressionOperator.Builder buildExpression(final String userField, final String userTerm, final String from,
                                               final String to, final String wordsField, final String wordsTerm) {
-        final ExpressionBuilder operator = new ExpressionBuilder();
+        final ExpressionOperator.Builder operator = new ExpressionOperator.Builder();
         operator.addTerm(userField, Condition.CONTAINS, userTerm);
         operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);
         operator.addTerm(wordsField, Condition.CONTAINS, wordsTerm);

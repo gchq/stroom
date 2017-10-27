@@ -18,14 +18,18 @@ package stroom.search.server.shard;
 
 import org.springframework.stereotype.Component;
 import stroom.search.server.taskqueue.TaskExecutor;
-import stroom.task.server.TaskManager;
+import stroom.task.server.ExecutorProvider;
+import stroom.task.server.ThreadPoolImpl;
+import stroom.util.shared.ThreadPool;
 
 import javax.inject.Inject;
 
 @Component
 public class IndexShardSearchTaskExecutor extends TaskExecutor {
+    static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Stroom Search Index Shard", 5, 0, Integer.MAX_VALUE);
+
     @Inject
-    public IndexShardSearchTaskExecutor(final TaskManager taskManager) {
-        super(taskManager);
+    public IndexShardSearchTaskExecutor(final ExecutorProvider executorProvider) {
+        super(executorProvider, THREAD_POOL);
     }
 }

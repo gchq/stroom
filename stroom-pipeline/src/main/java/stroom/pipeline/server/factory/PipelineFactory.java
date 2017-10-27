@@ -20,6 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import stroom.entity.server.GenericEntityService;
 import stroom.entity.shared.BaseEntity;
 import stroom.pipeline.destination.DestinationProvider;
@@ -32,6 +34,7 @@ import stroom.pipeline.server.parser.AbstractParser;
 import stroom.pipeline.server.reader.InputStreamElement;
 import stroom.pipeline.server.reader.InputStreamRecordDetectorElement;
 import stroom.pipeline.server.reader.ReaderRecordDetectorElement;
+import stroom.pipeline.server.source.SourceElement;
 import stroom.pipeline.server.task.ElementMonitor;
 import stroom.pipeline.server.task.Recorder;
 import stroom.pipeline.server.task.SteppingController;
@@ -71,7 +74,9 @@ public class PipelineFactory {
 
     @Inject
     public PipelineFactory(final ElementRegistryFactory pipelineElementRegistryFactory,
-                           final ElementFactory elementFactory, final ProcessorFactory processorFactory, final GenericEntityService genericEntityService) {
+                           final ElementFactory elementFactory,
+                           final ProcessorFactory processorFactory,
+                           final GenericEntityService genericEntityService) {
         this.pipelineElementRegistryFactory = pipelineElementRegistryFactory;
         this.elementFactory = elementFactory;
         this.processorFactory = processorFactory;
@@ -89,7 +94,8 @@ public class PipelineFactory {
         return create(pipelineData, null);
     }
 
-    public Pipeline create(final PipelineData pipelineData, final SteppingController controller) {
+    public Pipeline create(final PipelineData pipelineData,
+                           final SteppingController controller) {
         final ElementRegistry pipelineElementRegistry = pipelineElementRegistryFactory.get();
 
         // If we are stepping then we don't want to use the cache.
@@ -97,9 +103,6 @@ public class PipelineFactory {
         final Map<String, Element> elementInstances = new HashMap<>();
         final Map<Element, PipelineElementType> elementTypeMap = new HashMap<>();
         final Map<String, Set<String>> linkSets = new HashMap<>();
-
-        final Set<String> rootLinkSet = new HashSet<>();
-        linkSets.put(null, rootLinkSet);
 
         for (final PipelineElement element : pipelineData.getElements().getAdd()) {
             LOGGER.debug("create() - loading element {}", element);
@@ -118,9 +121,7 @@ public class PipelineFactory {
 
             // Set the id on the pipeline element for use in tracing
             // errors, intercepting input/output etc.
-            if (elementInstance instanceof HasElementId) {
-                elementInstance.setElementId(element.getId());
-            }
+            elementInstance.setElementId(element.getId());
 
             // Set the properties on this instance.
             setProperties(pipelineElementRegistry, element.getId(), element.getType(), elementInstance, pipelineData,
@@ -135,46 +136,27 @@ public class PipelineFactory {
             elementTypeMap.put(elementInstance, pipelineElementRegistry.getElementType(element.getType()));
 
             // Record links.
-            boolean root = true;
             final Set<String> linkSet = new HashSet<>();
             linkSets.put(element.getId(), linkSet);
             for (final PipelineLink link : pipelineData.getLinks().getAdd()) {
                 if (link.getFrom().equals(element.getId())) {
                     linkSet.add(link.getTo());
-                } else if (link.getTo().equals(element.getId())) {
-                    root = false;
                 }
-            }
-
-            if (root) {
-                rootLinkSet.add(element.getId());
             }
         }
 
-        if (rootLinkSet.size() == 0) {
-            throw new PipelineFactoryException("The pipeline has no elements");
+        // Get the source element.
+        final SourceElement sourceElement = (SourceElement) elementInstances.get("Source");
+        if (sourceElement == null) {
+            throw new PipelineFactoryException("The pipeline has no source element");
         }
 
         // Link the instances.
-        final List<Element> rootElements = link(elementInstances, elementTypeMap, linkSets, controller);
-
-        // Get a list of root elements that take input.
-        final List<Target> targetElements = new ArrayList<>(rootElements.size());
-        for (final Element pipelineElement : rootElements) {
-            if (pipelineElement instanceof Target
-                    && (pipelineElement instanceof TakesInput || pipelineElement instanceof DestinationProvider)) {
-                targetElements.add((Target) pipelineElement);
-            }
-        }
-
-        // Check to make sure we have at least one target that takes input.
-        if (targetElements.size() == 0) {
-            throw new PipelineFactoryException("The pipeline has no elements that accept input");
-        }
+        link(elementInstances, elementTypeMap, linkSets, controller, sourceElement, sourceElement.getElementId());
 
         // We need to create a root element that will be a target for the input
         // stream.
-        Target root = null;
+        TakesInput root = sourceElement;
 
         // Perform the last bit of setup if we are stepping.
         if (controller != null) {
@@ -183,35 +165,25 @@ public class PipelineFactory {
             if (controller.getRecordDetector() == null) {
                 final InputStreamRecordDetectorElement recordDetector = new InputStreamRecordDetectorElement();
                 controller.setRecordDetector(recordDetector);
-                targetElements.forEach(recordDetector::addTarget);
+                recordDetector.addTarget(sourceElement);
                 root = recordDetector;
             }
 
             controller.getRecordDetector().setController(controller);
         }
 
-        if (root == null) {
-            if (targetElements.size() == 1 && targetElements.get(0) instanceof TakesInput) {
-                // If the single target element takes input then this can be
-                // root.
-                root = targetElements.get(0);
-            } else {
-                // Else unify all target elements as children of a single input
-                // stream element that can be root.
-                final InputStreamElement inputStreamElement = new InputStreamElement();
-                targetElements.forEach(inputStreamElement::addTarget);
-                root = inputStreamElement;
-            }
-        }
-
-        return new PipelineImpl(processorFactory, elementInstances, (TakesInput) root, controller != null);
+        return new PipelineImpl(processorFactory, elementInstances, root, controller != null);
     }
 
     /**
      * Set the properties on the newly created element instance.
      */
-    private void setProperties(final ElementRegistry pipelineElementRegistry, final String id, final String elementType,
-                               final Object elementInstance, final PipelineData pipelineData, final SteppingController controller) {
+    private void setProperties(final ElementRegistry pipelineElementRegistry,
+                               final String id,
+                               final String elementType,
+                               final Object elementInstance,
+                               final PipelineData pipelineData,
+                               final SteppingController controller) {
         // Set the properties on this instance.
         for (final PipelineProperty property : pipelineData.getProperties().getAdd()) {
             if (property.getElement().equals(id)) {
@@ -224,8 +196,12 @@ public class PipelineFactory {
     /**
      * Code for properties.
      */
-    private void setProperty(final ElementRegistry pipelineElementRegistry, final String id, final String elementType,
-                             final Object elementInstance, final String propertyName, final PipelinePropertyValue value,
+    private void setProperty(final ElementRegistry pipelineElementRegistry,
+                             final String id,
+                             final String elementType,
+                             final Object elementInstance,
+                             final String propertyName,
+                             final PipelinePropertyValue value,
                              final SteppingController controller) {
         // Some methods might be removed so ignore them if they don't exist.
         final Method method = pipelineElementRegistry.getMethod(elementType, propertyName);
@@ -281,9 +257,7 @@ public class PipelineFactory {
 
                 method.invoke(elementInstance, obj);
 
-            } catch (final InvocationTargetException e) {
-                throw new PipelineFactoryException(e);
-            } catch (final IllegalAccessException e) {
+            } catch (final InvocationTargetException | IllegalAccessException e) {
                 throw new PipelineFactoryException(e);
             }
         }
@@ -292,8 +266,11 @@ public class PipelineFactory {
     /**
      * Set the pipeline references on the newly created element instance.
      */
-    private void setPipelineReferences(final ElementRegistry pipelineElementRegistry, final String id,
-                                       final String elementType, final Object elementInstance, final PipelineData pipelineData) {
+    private void setPipelineReferences(final ElementRegistry pipelineElementRegistry,
+                                       final String id,
+                                       final String elementType,
+                                       final Object elementInstance,
+                                       final PipelineData pipelineData) {
         // Set the properties on this instance.
         for (final PipelineReference pipelineReference : pipelineData.getPipelineReferences().getAdd()) {
             if (pipelineReference.getElement().equals(id)) {
@@ -306,8 +283,11 @@ public class PipelineFactory {
     /**
      * Code for pipeline references.
      */
-    private void setPipelineReference(final ElementRegistry pipelineElementRegistry, final String elementType,
-                                      final Object elementInstance, final String propertyName, final PipelineReference pipelineReference) {
+    private void setPipelineReference(final ElementRegistry pipelineElementRegistry,
+                                      final String elementType,
+                                      final Object elementInstance,
+                                      final String propertyName,
+                                      final PipelineReference pipelineReference) {
         final Method method = pipelineElementRegistry.getMethod(elementType, propertyName);
 
         if (method != null) {
@@ -316,9 +296,7 @@ public class PipelineFactory {
                 method.setAccessible(true);
                 method.invoke(elementInstance, pipelineReference);
 
-            } catch (final InvocationTargetException e) {
-                throw new PipelineFactoryException(e);
-            } catch (final IllegalAccessException e) {
+            } catch (final InvocationTargetException | IllegalAccessException e) {
                 throw new PipelineFactoryException(e);
             }
         }
@@ -327,23 +305,16 @@ public class PipelineFactory {
     /**
      * Link element instances together to form the pipeline.
      */
-    private List<Element> link(final Map<String, Element> elementInstances,
-                               final Map<Element, PipelineElementType> elementTypeMap, final Map<String, Set<String>> linkSets,
-                               final SteppingController controller) {
-        return link(elementInstances, elementTypeMap, linkSets, controller, null, null);
-    }
-
-    private List<Element> link(final Map<String, Element> elementInstances,
-                               final Map<Element, PipelineElementType> elementTypeMap, final Map<String, Set<String>> linkSets,
-                               final SteppingController controller, final Element parentElement, final String parentElementId) {
+    private void link(final Map<String, Element> elementInstances,
+                      final Map<Element, PipelineElementType> elementTypeMap,
+                      final Map<String, Set<String>> linkSets,
+                      final SteppingController controller,
+                      final Element parentElement,
+                      final String parentElementId) {
         // Get the child elements of the supplied 'from' element id that we want
         // to work with.
         final List<Element> childElements = getChildElements(parentElementId, elementInstances, elementTypeMap,
                 linkSets, controller);
-
-        // All elements that are successfully created will be returned in this
-        // list.
-        final List<Element> elements = new ArrayList<>(childElements.size());
 
         // Loop over the child elements and link them to the parent.
         for (final Element childElement : childElements) {
@@ -369,8 +340,8 @@ public class PipelineFactory {
                     fragment = insertRecorder(elementId, elementType, fragment, true, controller);
                     fragment = insertRecorder(elementId, elementType, fragment, false, controller);
                     addMonitor(elementId, elementType, childElement, fragment, controller);
-                    fragment = insertRecordDetector(elementId, elementType, fragment, true, controller);
-                    fragment = insertRecordDetector(elementId, elementType, fragment, false, controller);
+                    fragment = insertRecordDetector(elementType, fragment, true, controller);
+                    fragment = insertRecordDetector(elementType, fragment, false, controller);
                 }
             }
 
@@ -390,19 +361,13 @@ public class PipelineFactory {
                             + parentElement.getElementId() + " > " + elementId);
                 }
 
-                if (parentElement instanceof HasTargets) {
-                    final HasTargets hasTargets = (HasTargets) parentElement;
-                    if (fragment.getIn() instanceof Target) {
-                        final Target target = (Target) fragment.getIn();
-                        hasTargets.addTarget(target);
-                    }
+                final HasTargets hasTargets = (HasTargets) parentElement;
+                if (fragment.getIn() instanceof Target) {
+                    final Target target = (Target) fragment.getIn();
+                    hasTargets.addTarget(target);
                 }
             }
-
-            elements.add(fragment.getIn());
         }
-
-        return elements;
     }
 
     /**
@@ -419,8 +384,10 @@ public class PipelineFactory {
      * @return A list of immediate child or descendant elements for the supplied
      * parent element id.
      */
-    private List<Element> getChildElements(final String fromElementId, final Map<String, Element> elementInstances,
-                                           final Map<Element, PipelineElementType> elementTypeMap, final Map<String, Set<String>> linkSets,
+    private List<Element> getChildElements(final String fromElementId,
+                                           final Map<String, Element> elementInstances,
+                                           final Map<Element, PipelineElementType> elementTypeMap,
+                                           final Map<String, Set<String>> linkSets,
                                            final SteppingController controller) {
         List<Element> childElements = Collections.emptyList();
 
@@ -471,8 +438,11 @@ public class PipelineFactory {
      * @return A modified pipeline fragment if a recorder was added or the
      * original if it remains unchanged.
      */
-    private Fragment insertRecorder(final String elementId, final PipelineElementType elementType,
-                                    final Fragment fragment, final boolean input, final SteppingController controller) {
+    private Fragment insertRecorder(final String elementId,
+                                    final PipelineElementType elementType,
+                                    final Fragment fragment,
+                                    final boolean input,
+                                    final SteppingController controller) {
         Fragment result = fragment;
 
         // Get any filter settings that might be applied to XML output.
@@ -574,8 +544,11 @@ public class PipelineFactory {
      *                    include recorders for input and output.
      * @param controller  The stepping controller.
      */
-    private void addMonitor(final String elementId, final PipelineElementType elementType, final Element element,
-                            final Fragment fragment, final SteppingController controller) {
+    private void addMonitor(final String elementId,
+                            final PipelineElementType elementType,
+                            final Element element,
+                            final Fragment fragment,
+                            final SteppingController controller) {
         final ElementMonitor elementMonitor = new ElementMonitor(elementId, elementType, element);
         if (fragment.getIn() == fragment.getOut()) {
             // In some cases we replace the input and output elements with the
@@ -605,8 +578,6 @@ public class PipelineFactory {
      * a record is detected. For XML this is whenever endDocument() is called.
      * For text it it when a new line character is reached.
      *
-     * @param elementId   The id of the element that we might be inserting a record
-     *                    detector before or after.
      * @param elementType The type of the element that we might be inserting a record
      *                    detector before or after.
      * @param fragment    The current pipeline fragment we are modifying.
@@ -616,8 +587,10 @@ public class PipelineFactory {
      * @return A modified pipeline fragment if a record detector was added or
      * the original if it remains unchanged.
      */
-    private Fragment insertRecordDetector(final String elementId, final PipelineElementType elementType,
-                                          final Fragment fragment, final boolean input, final SteppingController controller) {
+    private Fragment insertRecordDetector(final PipelineElementType elementType,
+                                          final Fragment fragment,
+                                          final boolean input,
+                                          final SteppingController controller) {
         Fragment result = fragment;
 
         if (!input) {
@@ -648,12 +621,12 @@ public class PipelineFactory {
         private final Element in;
         private final Element out;
 
-        public Fragment(final Element in, final Element out) {
+        Fragment(final Element in, final Element out) {
             this.in = in;
             this.out = out;
         }
 
-        public Fragment(final Element element) {
+        Fragment(final Element element) {
             this.in = element;
             this.out = element;
         }

@@ -194,7 +194,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
     private void test(final File inputFile, final Feed feed, final File outputDir, final String stem,
                       final boolean compareOutput, final List<Exception> exceptions) throws Exception {
-        LOGGER.info("Testing: " + inputFile.getName());
+        LOGGER.info("Testing input {}, feed {}, output {}, stem {}",
+                inputFile.getName(), feed.getName(), outputDir.getName(), stem);
 
         addStream(inputFile, feed);
 
@@ -218,6 +219,11 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                         processedStreams.add(stream);
                     }
                 }
+
+                // Make sure we have at least one processed stream else it indicates an error in processing somewhere
+                // TODO : If we get an error stream would be good to dump it out to make debugging easier
+                // or you can just run the pipeline in stroom
+                Assert.assertTrue(processedStreams.size() > 0);
 
                 // Copy the contents of the latest written stream to the output.
                 int i = 1;

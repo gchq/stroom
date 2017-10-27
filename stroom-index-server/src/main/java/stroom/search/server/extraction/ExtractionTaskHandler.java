@@ -20,6 +20,7 @@ import net.sf.ehcache.CacheException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
@@ -44,12 +45,9 @@ import stroom.security.SecurityContext;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.fs.serializable.RASegmentInputStream;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
-import stroom.util.shared.UserTokenUtil;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
@@ -59,9 +57,9 @@ import javax.inject.Named;
 import java.io.InputStream;
 import java.util.List;
 
-@TaskHandlerBean(task = ExtractionTask.class)
+@Component
 @Scope(value = StroomScope.TASK)
-public class ExtractionTaskHandler extends AbstractTaskHandler<ExtractionTask, VoidResult> {
+public class ExtractionTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExtractionTaskHandler.class);
 
     private final StreamStore streamStore;
@@ -80,12 +78,18 @@ public class ExtractionTaskHandler extends AbstractTaskHandler<ExtractionTask, V
     private ExtractionTask task;
 
     @Inject
-    public ExtractionTaskHandler(final StreamStore streamStore, final FeedService feedService,
-                                 final FeedHolder feedHolder, final CurrentUserHolder currentUserHolder, final StreamHolder streamHolder,
-                                 final PipelineHolder pipelineHolder, final ErrorReceiverProxy errorReceiverProxy,
-                                 final PipelineFactory pipelineFactory,
-                                 @Named("cachedPipelineEntityService") final PipelineEntityService pipelineEntityService,
-                                 final PipelineDataCache pipelineDataCache, final TaskMonitor taskMonitor, final SecurityContext securityContext) {
+    ExtractionTaskHandler(final StreamStore streamStore,
+                          final FeedService feedService,
+                          final FeedHolder feedHolder,
+                          final CurrentUserHolder currentUserHolder,
+                          final StreamHolder streamHolder,
+                          final PipelineHolder pipelineHolder,
+                          final ErrorReceiverProxy errorReceiverProxy,
+                          final PipelineFactory pipelineFactory,
+                          @Named("cachedPipelineEntityService") final PipelineEntityService pipelineEntityService,
+                          final PipelineDataCache pipelineDataCache,
+                          final TaskMonitor taskMonitor,
+                          final SecurityContext securityContext) {
         this.streamStore = streamStore;
         this.feedService = feedService;
         this.feedHolder = feedHolder;
@@ -100,11 +104,11 @@ public class ExtractionTaskHandler extends AbstractTaskHandler<ExtractionTask, V
         this.securityContext = securityContext;
     }
 
-    @Override
     public VoidResult exec(final ExtractionTask task) {
         try {
             securityContext.elevatePermissions();
 
+            taskMonitor.setName("Search data extraction");
             if (!taskMonitor.isTerminated()) {
                 final String streamId = String.valueOf(task.getStreamId());
                 taskMonitor.info("Extracting " + task.getEventIds().length + " records from stream " + streamId);
@@ -113,8 +117,6 @@ public class ExtractionTaskHandler extends AbstractTaskHandler<ExtractionTask, V
             }
         } finally {
             securityContext.restorePermissions();
-
-            task.getResultReceiver().complete();
         }
 
         return VoidResult.INSTANCE;
@@ -125,7 +127,7 @@ public class ExtractionTaskHandler extends AbstractTaskHandler<ExtractionTask, V
             this.task = task;
 
             // Set the current user.
-            currentUserHolder.setCurrentUser(UserTokenUtil.getUserId(task.getUserToken()));
+            currentUserHolder.setCurrentUser(securityContext.getUserId());
 
             final DocRef pipelineRef = task.getPipelineRef();
 
@@ -203,8 +205,7 @@ public class ExtractionTaskHandler extends AbstractTaskHandler<ExtractionTask, V
                 try {
                     // This is a valid stream so try and extract as many
                     // segments as we are allowed.
-                    final RASegmentInputStream segmentInputStream = new RASegmentInputStream(streamSource);
-                    try {
+                    try (final RASegmentInputStream segmentInputStream = new RASegmentInputStream(streamSource)) {
                         // Include the XML Header and footer.
                         segmentInputStream.include(0);
                         segmentInputStream.include(segmentInputStream.count() - 1);
@@ -223,8 +224,6 @@ public class ExtractionTaskHandler extends AbstractTaskHandler<ExtractionTask, V
                         // stream.
                         error("Unable to extract data from stream source with id: " + streamId + " - " + e.getMessage(),
                                 e);
-                    } finally {
-                        segmentInputStream.close();
                     }
                 } catch (final Exception e) {
                     // Something went wrong extracting data from this stream.

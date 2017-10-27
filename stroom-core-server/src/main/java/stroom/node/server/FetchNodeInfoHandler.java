@@ -88,13 +88,13 @@ class FetchNodeInfoHandler extends AbstractTaskHandler<FetchNodeInfoAction, Resu
             // Set ping from response.
             if (response != null) {
                 if (response.getError() != null) {
-                    result.setPing(EntityServiceExceptionUtil.unwrapMessage(response.getError(), response.getError()));
+                    result.setError(EntityServiceExceptionUtil.unwrapMessage(response.getError(), response.getError()));
 
                 } else {
-                    result.setPing(ModelStringUtil.formatDurationString(response.getTimeMs()));
+                    result.setPing(response.getTimeMs());
                 }
             } else {
-                result.setPing("No response");
+                result.setError("No response");
             }
 
             result.setMaster(node.equals(masterNode));

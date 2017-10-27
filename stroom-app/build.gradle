@@ -14,7 +14,6 @@ def jarName = 'stroom-app.jar'
 def fatJarName = 'stroom-app-all.jar'
 
 apply plugin: 'application'
-apply plugin: 'java'
 mainClassName = 'stroom.startup.App'
 
 jar {

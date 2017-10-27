@@ -33,7 +33,7 @@ import stroom.policy.shared.DataRetentionPolicy;
 import stroom.policy.shared.DataRetentionRule;
 import stroom.policy.shared.FetchDataRetentionPolicyAction;
 import stroom.policy.shared.SaveDataRetentionPolicyAction;
-import stroom.query.api.v2.ExpressionBuilder;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.streamstore.shared.TimeUnit;
@@ -224,7 +224,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
     }
 
     private void add() {
-        final DataRetentionRule newRule = new DataRetentionRule(0, System.currentTimeMillis(), "", true, new ExpressionBuilder(Op.AND).build(), 1, TimeUnit.YEARS, true);
+        final DataRetentionRule newRule = new DataRetentionRule(0, System.currentTimeMillis(), "", true, new ExpressionOperator.Builder(Op.AND).build(), 1, TimeUnit.YEARS, true);
         final DataRetentionRulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(newRule);
 

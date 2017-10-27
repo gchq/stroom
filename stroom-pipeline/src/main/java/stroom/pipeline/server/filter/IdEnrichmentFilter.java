@@ -16,6 +16,8 @@
 
 package stroom.pipeline.server.filter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
@@ -32,7 +34,7 @@ import stroom.streamstore.shared.Stream;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 /**
  * A SAX filter used to count the number of first level elements in an XML
@@ -45,15 +47,15 @@ import javax.annotation.Resource;
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_STEPPING,
         PipelineElementType.ROLE_MUTATOR}, icon = ElementIcons.ID)
 public class IdEnrichmentFilter extends AbstractXMLFilter {
+    private static final Logger LOGGER = LoggerFactory.getLogger(IdEnrichmentFilter.class);
+
     private static final String URI = "";
     private static final String STRING = "string";
     private static final String STREAM_ID = "StreamId";
     private static final String EVENT_ID = "EventId";
 
-    @Resource
-    private StreamHolder streamHolder;
-    @Resource
-    private ErrorReceiverProxy errorReceiverProxy;
+    private final StreamHolder streamHolder;
+    private final ErrorReceiverProxy errorReceiverProxy;
 
     private int depth;
     private long count;
@@ -62,11 +64,15 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
     private String streamId;
     private long[] eventIds;
 
+    @Inject
+    public IdEnrichmentFilter(final StreamHolder streamHolder, final ErrorReceiverProxy errorReceiverProxy) {
+        this.streamHolder = streamHolder;
+        this.errorReceiverProxy = errorReceiverProxy;
+    }
+
     /**
      * This method tells filters that a stream is about to be parsed so that
      * they can complete any setup necessary.
-     *
-     * @throws SAXException Could be thrown by an implementing class.
      */
     @Override
     public void startStream() {
@@ -124,24 +130,27 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
             // Modify the attributes if this is an event element so that a
             // unique ID is inserted.
             if (streamId != null) {
-                String eventId = null;
+                // This is a first level element.
+                count++;
+
+                String eventId;
                 // If we are using this is search result output then we need to
                 // get event ids from a list.
                 if (eventIds != null) {
-                    final int index = (int) count;
-                    if (eventIds.length <= index) {
+                    // Check we haven't found more events than we are expecting to extract.
+                    if (count > eventIds.length) {
+                        LOGGER.debug("Expected " + eventIds.length + " events but extracted " + count);
+
                         final String msg = "Unexpected number of events being extracted";
                         final ProcessException searchException = new ProcessException(msg);
-                        errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), msg, searchException);
-                        throw searchException;
+                        errorReceiverProxy.log(Severity.WARNING, null, getElementId(), msg, searchException);
                     }
+
+                    final int index = (int) (count - 1);
                     eventId = String.valueOf(eventIds[index]);
                 } else {
-                    eventId = String.valueOf(count + 1);
+                    eventId = String.valueOf(count);
                 }
-
-                // This is a first level element.
-                count++;
 
                 final AttributesImpl idAtts = new AttributesImpl(newAtts);
 
