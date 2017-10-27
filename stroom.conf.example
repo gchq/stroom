@@ -30,13 +30,14 @@ stroom.statistics.sql.jdbcDriverUrl=jdbc:mysql://localhost:3308/statistics?useUn
 stroom.statistics.sql.jdbcDriverUsername=stroomuser
 stroom.statistics.sql.jdbcDriverPassword=stroompassword1
 
-#Authentication properties
-stroom.auth.jwt.secret=CHANGE_ME
+stroom.security.apiToken=eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MzgyMDQyMDgsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIn0.H6P2BjLMKKsuSsjG3Yb6yax_KiJI-pJMipneXV-7czo
+stroom.advertisedUrl=http://localhost:8080
+stroom.postLogout.redirectUrl=http://localhost
+stroom.auth.jwt.verificationkey=CHANGE_ME
 stroom.auth.jwt.issuer=stroom
-#STROOM_RESOURCES_ADVERTISED_HOST is the public facing IP of this machine, e.g. the value of
-#ip route get 1 | awk '{print $NF;exit}'
-stroom.security.login.url=http://_____STROOM_RESOURCES_ADVERTISED_HOST_____/authenticationService/v1/checkCertificate
-stroom.security.authentication.url=http://_____STROOM_RESOURCES_ADVERTISED_HOST_____/authenticationService/v1
+stroom.auth.url=http://localhost:8099
+stroom.users.ui.url=http://localhost:3000/userSearch
+stroom.apikeys.ui.url=http://localhost:3000/tokens
 
 #Service discovery
 #Set this to false to local service lookup when you do not have Zookeeper

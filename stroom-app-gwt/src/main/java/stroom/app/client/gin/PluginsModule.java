@@ -18,9 +18,11 @@ package stroom.app.client.gin;
 
 import stroom.about.client.AboutPlugin;
 import stroom.annotations.client.AnnotationsPlugin;
+import stroom.apikeys.client.ApiKeysPlugin;
 import stroom.core.client.gin.PluginModule;
 import stroom.entity.client.EntityPluginEventManager;
 import stroom.help.client.HelpPlugin;
+import stroom.users.client.UsersPlugin;
 
 public class PluginsModule extends PluginModule {
     @Override
@@ -30,5 +32,7 @@ public class PluginsModule extends PluginModule {
         bindPlugin(HelpPlugin.class);
         bindPlugin(AboutPlugin.class);
         bindPlugin(AnnotationsPlugin.class);
+        bindPlugin(UsersPlugin.class);
+        bindPlugin(ApiKeysPlugin.class);
     }
 }
