@@ -31,7 +31,7 @@ public class RollingStreamDestination extends RollingDestination {
     private final StreamTarget streamTarget;
     private final String nodeName;
     private final AtomicLong recordCount = new AtomicLong();
-    private RASegmentOutputStream segmentOutputStream;
+    private final RASegmentOutputStream segmentOutputStream;
 
     public RollingStreamDestination(final StreamKey key,
                                     final long frequency,
@@ -50,35 +50,51 @@ public class RollingStreamDestination extends RollingDestination {
             segmentOutputStream = new RASegmentOutputStream(streamTarget);
             setOutputStream(new ByteCountOutputStream(segmentOutputStream));
         } else {
+            segmentOutputStream = null;
             setOutputStream(new ByteCountOutputStream(streamTarget.getOutputStream()));
         }
     }
 
     @Override
-    protected void onHeaderWritten(final ByteCountOutputStream outputStream,
-                                   final Consumer<Throwable> exceptionConsumer) {
-        if (outputStream != null && outputStream.getBytesWritten() > 0) {
-            // Add a segment marker to the output stream if we are
-            // segmenting.
-            if (segmentOutputStream != null) {
-                try {
-                    segmentOutputStream.addSegment();
-                } catch (IOException e) {
-                    exceptionConsumer.accept(e);
-                }
-            }
-        }
+    void onGetOutputStream(final Consumer<Throwable> exceptionConsumer) {
+        // Insert a segment marker before we write the next record regardless of whether the header has actually
+        // been written. This is because we always make an allowance for the existence of a header in a segmented
+        // stream when viewing data.
+        insertSegmentMarker(exceptionConsumer);
 
         recordCount.incrementAndGet();
+
+        super.onGetOutputStream(exceptionConsumer);
     }
 
     @Override
-    protected void onFooterWritten(final Consumer<Throwable> exceptionConsumer) {
+    void beforeRoll(final Consumer<Throwable> exceptionConsumer) {
+        // Writing a segment marker here ensures there is always a marker written before the footer regardless or
+        // whether a footer is actually written. We do this because we always make an allowance for a footer for data
+        // display purposes.
+        insertSegmentMarker(exceptionConsumer);
+
+        super.beforeRoll(exceptionConsumer);
+    }
+
+    @Override
+    void afterRoll(final Consumer<Throwable> exceptionConsumer) {
         // Write meta data to stream target.
         final MetaMap metaMap = new MetaMap();
         metaMap.put(StreamAttributeConstants.REC_WRITE, recordCount.toString());
         metaMap.put(StreamAttributeConstants.NODE, nodeName);
         streamTarget.getAttributeMap().putAll(metaMap);
         streamStore.closeStreamTarget(streamTarget);
+    }
+
+    private void insertSegmentMarker(final Consumer<Throwable> exceptionConsumer) {
+        try {
+            // Add a segment marker to the output stream if we are segmenting.
+            if (segmentOutputStream != null) {
+                segmentOutputStream.addSegment();
+            }
+        } catch (final IOException e) {
+            exceptionConsumer.accept(e);
+        }
     }
 }

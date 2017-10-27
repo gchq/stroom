@@ -56,7 +56,7 @@ public class TestRandomOutputStreamProvider extends StroomUnitTest {
 
     private FileAppender buildTestObject() {
         final String name = "/${year}-${month}-${day}T${hour}:${minute}:${second}.${millis}Z-${uuid}.xml";
-        final FileAppender provider = new FileAppender();
+        final FileAppender provider = new FileAppender(null, new PathCreator());
         provider.setOutputPaths(
                 getCurrentTestDir().getAbsolutePath() + "/t1" + name + "," + getCurrentTestDir().getAbsolutePath()
                         + "/t2" + name + "," + getCurrentTestDir().getAbsolutePath() + "/t3" + name);

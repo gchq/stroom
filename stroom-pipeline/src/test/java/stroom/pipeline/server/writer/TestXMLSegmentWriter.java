@@ -76,7 +76,7 @@ public class TestXMLSegmentWriter extends StroomUnitTest {
 
         final OutputStream outputStream = new RASegmentOutputStream(new BlockGZIPOutputFile(dataFile),
                 new FileOutputStream(indexFile));
-        final OutputStreamAppender appender = new OutputStreamAppender(outputStream);
+        final OutputStreamAppender appender = new OutputStreamAppender(errorReceiverProxy, outputStream);
         final XMLWriter segmentWriter = new XMLWriter(errorReceiverProxy, null);
         segmentWriter.setTarget(appender);
 

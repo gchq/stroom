@@ -16,23 +16,27 @@
 
 package stroom.search.server.taskqueue;
 
-import stroom.task.server.TaskCallbackAdaptor;
-import stroom.task.server.TaskManager;
-import stroom.util.shared.Task;
+import stroom.task.server.ExecutorProvider;
+import stroom.util.shared.ThreadPool;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class TaskExecutor {
     private static final int DEFAULT_MAX_THREADS = 5;
-    private final TaskManager taskManager;
-    private final AtomicInteger totalThreads = new AtomicInteger();
-    private final ConcurrentSkipListSet<TaskProducer> producers = new ConcurrentSkipListSet<>();
+
     private volatile int maxThreads = DEFAULT_MAX_THREADS;
+
+    private final Executor executor;
+    private final AtomicInteger totalThreads = new AtomicInteger();
+
+    private final ConcurrentSkipListSet<TaskProducer> producers = new ConcurrentSkipListSet<>();
     private volatile TaskProducer lastProducer;
 
-    public TaskExecutor(final TaskManager taskManager) {
-        this.taskManager = taskManager;
+    public TaskExecutor(final ExecutorProvider executorProvider, final ThreadPool threadPool) {
+        executor = executorProvider.getExecutor(threadPool);
     }
 
     public void addProducer(final TaskProducer producer) {
@@ -44,71 +48,51 @@ public class TaskExecutor {
     }
 
     public void exec() {
-        Task<?> task = execNextTask();
+        Runnable task = execNextTask();
         while (task != null) {
             task = execNextTask();
         }
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private Task execNextTask() {
-        Task<?> task = null;
+    private Runnable execNextTask() {
+        TaskProducer producer = null;
+        Runnable task = null;
 
         final int total = totalThreads.getAndIncrement();
-        if (total < maxThreads) {
-            // Try and get a task from usable producers.
-            AtomicInteger producerThreadsUsed = null;
-            final int tries = producers.size();
-            for (int i = 0; i < tries && task == null; i++) {
-                final TaskProducer producer = nextProducer();
-                if (producer != null) {
-                    producerThreadsUsed = producer.getThreadsUsed();
-                    final int count = producerThreadsUsed.incrementAndGet();
-                    if (count > producer.getMaxThreadsPerTask()) {
-                        producerThreadsUsed.decrementAndGet();
-                    } else {
+        boolean executing = false;
+
+        try {
+            if (total < maxThreads) {
+                // Try and get a task from usable producers.
+                final int tries = producers.size();
+                for (int i = 0; i < tries && task == null; i++) {
+                    producer = nextProducer();
+                    if (producer != null) {
                         task = producer.next();
-                        if (task == null) {
-                            producerThreadsUsed.decrementAndGet();
-                        }
                     }
                 }
-            }
 
-            final AtomicInteger currentProducerThreadsUsed = producerThreadsUsed;
-            final Task<?> currentTask = task;
+                final TaskProducer currentProducer = producer;
+                final Runnable currentTask = task;
 
-            if (currentTask != null) {
-                if (currentTask.isTerminated()) {
-                    totalThreads.decrementAndGet();
-                    currentProducerThreadsUsed.decrementAndGet();
-                    exec();
-
-                } else {
-                    taskManager.execAsync(currentTask, new TaskCallbackAdaptor() {
-                        @Override
-                        public void onSuccess(final Object result) {
-                            totalThreads.decrementAndGet();
-                            currentProducerThreadsUsed.decrementAndGet();
-                            exec();
-                        }
-
-                        @Override
-                        public void onFailure(final Throwable t) {
-                            totalThreads.decrementAndGet();
-                            currentProducerThreadsUsed.decrementAndGet();
-                            exec();
-                        }
-                    });
+                if (currentTask != null) {
+                    executing = true;
+                    CompletableFuture.runAsync(currentTask, executor).thenAccept(result -> taskComplete(currentProducer, currentTask));
                 }
-            } else {
+            }
+        } finally {
+            if (!executing) {
                 totalThreads.decrementAndGet();
             }
-        } else {
-            totalThreads.decrementAndGet();
         }
 
         return task;
+    }
+
+    private void taskComplete(final TaskProducer producer, final Runnable task) {
+        totalThreads.decrementAndGet();
+        producer.complete(task);
+        exec();
     }
 
     private synchronized TaskProducer nextProducer() {

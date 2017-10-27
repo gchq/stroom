@@ -107,6 +107,18 @@ public class CommonTestScenarioCreator {
         return feed;
     }
 
+    public Feed createSimpleFeed(final String name, final String uuid) {
+        final DocRef folder = getTestFolder();
+        Feed feed = feedService.create(folder, FileSystemTestUtil.getUniqueTestString());
+        feed.setUuid(uuid);
+        feed.setDescription(name);
+        feed.setStatus(FeedStatus.RECEIVE);
+        feed.setStreamType(StreamType.RAW_EVENTS);
+        feed = feedService.save(feed);
+
+        return feed;
+    }
+
     public void createBasicTranslateStreamProcessor(final Feed feed) {
         final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
         findStreamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS.getId());

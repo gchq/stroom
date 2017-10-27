@@ -18,7 +18,6 @@ package stroom.dashboard.server;
 
 import org.junit.Test;
 import stroom.query.api.v2.Field;
-import stroom.query.api.v2.FieldBuilder;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.OffsetRange;
@@ -47,10 +46,10 @@ public class TestSearchResponseMapper {
 
     private FlatResult getVisResult1() {
         List<Field> structure = new ArrayList<>();
-        structure.add(new FieldBuilder().name("val1").format(Type.GENERAL).build());
-        structure.add(new FieldBuilder().name("val2").format(Type.NUMBER).build());
-        structure.add(new FieldBuilder().name("val3").format(Type.NUMBER).build());
-        structure.add(new FieldBuilder().name("val4").format(Type.GENERAL).build());
+        structure.add(new Field.Builder().name("val1").format(Type.GENERAL).build());
+        structure.add(new Field.Builder().name("val2").format(Type.NUMBER).build());
+        structure.add(new Field.Builder().name("val3").format(Type.NUMBER).build());
+        structure.add(new Field.Builder().name("val4").format(Type.GENERAL).build());
 
         List<List<Object>> data = new ArrayList<>();
         data.add(Arrays.asList("test0", 0.4, 234, "this0"));

@@ -25,7 +25,7 @@ import java.io.IOException;
 public class CloseableUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(CloseableUtil.class);
 
-    public static void closeLogAndIngoreException(Closeable... closeableList) {
+    public static void closeLogAndIgnoreException(Closeable... closeableList) {
         try {
             close(closeableList);
         } catch (Exception ex) {

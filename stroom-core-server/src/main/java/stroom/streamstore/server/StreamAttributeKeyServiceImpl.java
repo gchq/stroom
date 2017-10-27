@@ -21,6 +21,7 @@ import com.googlecode.ehcache.annotations.KeyGenerator;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.SystemEntityServiceImpl;
+import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
 import stroom.security.Insecure;
@@ -55,5 +56,11 @@ public class StreamAttributeKeyServiceImpl
     @Override
     public FindStreamAttributeKeyCriteria createCriteria() {
         return new FindStreamAttributeKeyCriteria();
+    }
+
+    @Override
+    protected FieldMap createFieldMap() {
+        return super.createFieldMap()
+                .add(FindStreamAttributeKeyCriteria.FIELD_NAME, StreamAttributeKey.NAME, "name");
     }
 }

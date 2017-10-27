@@ -29,9 +29,7 @@ import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReentrantLock;
 
 @Component
 public class RollingDestinations {
@@ -41,7 +39,6 @@ public class RollingDestinations {
     private static final int MAX_TRY_COUNT = 1000;
 
     private static final ConcurrentHashMap<Object, RollingDestination> currentDestinations = new ConcurrentHashMap<>();
-    private static final ReentrantLock destCreationLock = new ReentrantLock();
 
     private final StroomPropertyService stroomPropertyService;
 
@@ -70,47 +67,30 @@ public class RollingDestinations {
 
     private RollingDestination getDestination(final Object key,
                                               final RollingDestinationFactory destinationFactory) throws IOException {
-        RollingDestination destination;
-
-        // Try and get an existing destination for the key.
-        destination = currentDestinations.get(key);
-
-        if (destination != null) {
-            destination = lockAndRoll(key, destination);
-        }
-
-        if (destination == null) {
-            destCreationLock.lock();
+        // Try and get an existing destination for the key or create one if necessary.
+        final RollingDestination destination = currentDestinations.computeIfAbsent(key, k -> {
             try {
-                // Try and get an existing destination again under lock.
-                destination = currentDestinations.get(key);
-                if (destination == null) {
-                    final int maxActiveDestinations = getMaxActiveDestinations();
+                final int maxActiveDestinations = getMaxActiveDestinations();
 
-                    // Try and cope with too many active destinations.
+                // Try and cope with too many active destinations.
+                if (currentDestinations.size() > maxActiveDestinations) {
+                    // If the size is still too big then error.
                     if (currentDestinations.size() > maxActiveDestinations) {
-                        // If the size is still too big then error.
-                        if (currentDestinations.size() > maxActiveDestinations) {
-                            throw new ProcessException("Too many active destinations: " + currentDestinations.size());
-                        }
+                        throw new ProcessException("Too many active destinations: " + currentDestinations.size());
                     }
-
-                    // Create a new destination.
-                    destination = destinationFactory.createDestination();
-
-                    currentDestinations.put(key, destination);
                 }
 
-                // Try and roll the destination as there are some cases where a destination needs to be rolled
-                // immediately after creation.
-                destination = lockAndRoll(key, destination);
+                // Create a new destination.
+                return destinationFactory.createDestination();
 
-            } finally {
-                destCreationLock.unlock();
+            } catch (final IOException e) {
+                throw new RuntimeException(e.getMessage(), e);
             }
-        }
+        });
 
-        return destination;
+        // Try and roll the destination as there are some cases where a destination needs to be rolled
+        // immediately after creation.
+        return lockAndRoll(key, destination);
     }
 
     /**
@@ -153,15 +133,13 @@ public class RollingDestinations {
     }
 
     private void removeDestination(final Object key, final RollingDestination destination) {
-        destCreationLock.lock();
-        try {
-            // Only remove the destination if it is the same one that is already in the map.
-            if (destination == currentDestinations.get(key)) {
-                currentDestinations.remove(key);
+        // Only remove the destination if it is the same one that is already in the map.
+        currentDestinations.compute(key, (k, v) -> {
+            if (v == destination) {
+                return null;
             }
-        } finally {
-            destCreationLock.unlock();
-        }
+            return v;
+        });
     }
 
     @StroomFrequencySchedule("1m")
@@ -179,10 +157,7 @@ public class RollingDestinations {
         LOGGER.debug("rollAll()");
 
         final long currentTime = System.currentTimeMillis();
-        for (final Entry<Object, RollingDestination> entry : currentDestinations.entrySet()) {
-            final Object key = entry.getKey();
-            final RollingDestination destination = entry.getValue();
-
+        currentDestinations.forEach(1, (key, destination) -> {
             // Try and lock this destination as we can't flush or roll it if
             // another thread has the lock.
             boolean rolled = false;
@@ -222,7 +197,7 @@ public class RollingDestinations {
                     destination.unlock();
                 }
             }
-        }
+        });
     }
 
     private int getMaxActiveDestinations() {

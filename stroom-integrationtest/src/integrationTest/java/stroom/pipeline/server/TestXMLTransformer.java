@@ -19,6 +19,7 @@ package stroom.pipeline.server;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.DocRefUtil;
+import stroom.io.StreamCloser;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.server.factory.Pipeline;
@@ -84,6 +85,8 @@ public class TestXMLTransformer extends AbstractProcessIntegrationTest {
     private PipelineMarshaller pipelineMarshaller;
     @Resource
     private PipelineDataCache pipelineDataCache;
+    @Resource
+    private StreamCloser streamCloser;
 
     @Test
     public void testDefault() throws Exception {
@@ -192,6 +195,9 @@ public class TestXMLTransformer extends AbstractProcessIntegrationTest {
         pipeline.process(inputStream, encoding);
 
         pipeline.endProcessing();
+
+        // Close all streams that have been written.,
+        streamCloser.close();
 
         Assert.assertTrue(recordCount.getRead() > 0);
         Assert.assertTrue(recordCount.getWritten() > 0);

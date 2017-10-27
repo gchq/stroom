@@ -16,7 +16,10 @@
 
 package stroom.entity.server;
 
+import com.google.common.base.Preconditions;
 import event.logging.BaseAdvancedQueryItem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.HqlBuilder;
@@ -42,6 +45,7 @@ import stroom.entity.shared.PermissionException;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.importexport.server.Config;
 import stroom.importexport.server.ImportExportHelper;
+import stroom.importexport.server.ImportExportSerializerImpl;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -64,6 +68,8 @@ import java.util.stream.Collectors;
 @Transactional
 @AutoMarshal
 public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C extends FindDocumentEntityCriteria> implements DocumentEntityService<E>, FindService<E, C>, SupportsCriteriaLogging<C> {
+
+    protected static final Logger LOGGER = LoggerFactory.getLogger(ImportExportSerializerImpl.class);
     public static final String NAME_PATTERN_PROPERTY = "stroom.namePattern";
     public static final String NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
     public static final String ID = "@ID@";
@@ -72,6 +78,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
     protected static final String[] STANDARD_PERMISSIONS = new String[]{DocumentPermissionNames.USE,
             DocumentPermissionNames.READ, DocumentPermissionNames.UPDATE, DocumentPermissionNames.DELETE, DocumentPermissionNames.OWNER};
+
     private final StroomEntityManager entityManager;
     private final SecurityContext securityContext;
     private final EntityServiceHelper<E> entityServiceHelper;
@@ -518,7 +525,13 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     }
 
     @Override
-    public DocRef importDocument(final Folder folder, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
+    public DocRef importDocument(final Folder folder,
+                                 final Map<String, String> dataMap,
+                                 final ImportState importState,
+                                 final ImportMode importMode) {
+
+        LOGGER.debug("importDocument: folder [%s]",
+                (folder != null ? folder.getName() + " - " + folder.getUuid() : "null"));
         E entity = null;
 
         try {
@@ -556,8 +569,14 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
                     importState.setState(State.UPDATE);
                 }
             }
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Import state is %s for uuid %s", importState.getState(), uuid);
+            }
+
 
             importExportHelper.performImport(entity, dataMap, mainConfigPath, importState, importMode);
+
+            validateNameUniqueness(folder, importState, importMode, config, uuid);
 
             // We don't want to overwrite any marshaled data so disable marshalling on creation.
             setFolder(entity, DocRefUtil.create(folder));
@@ -570,9 +589,39 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
         } catch (final Exception e) {
             importState.addMessage(Severity.ERROR, e.getMessage());
+            LOGGER.error("Error while importing document entity %s",
+                    (entity != null ? entity.getName() : "null"), e);
         }
 
         return DocRefUtil.create(entity);
+    }
+
+    private void validateNameUniqueness(final Folder folder,
+                                        final ImportState importState,
+                                        final ImportMode importMode,
+                                        final Config config,
+                                        final String uuid) {
+        if (folder == null) {
+            //this is a root level folder so make sure the name is unique at this level
+            //as mysql cannot enforce uniqueness at root level because the unique key
+            //cannot enforce uniqueness on nulls
+            String entityName = config.getString("name");
+            Preconditions.checkNotNull(entityName, "Unable to get name from configuration");
+            DocumentEntity existingEntity = loadByName(null, entityName);
+
+            if (existingEntity != null && !uuid.equals(existingEntity.getUuid())) {
+                String msg = String.format("A %s entity already exists at this level with the same name [%s], existing uuid [%s]. This entity cannot be imported",
+                        existingEntity.getType(),
+                        existingEntity.getName(),
+                        existingEntity.getUuid());
+                if (importMode == ImportMode.CREATE_CONFIRMATION) {
+                    importState.addMessage(Severity.ERROR, msg);
+                } else {
+                    //must fail the import at this point
+                    throw new RuntimeException(msg);
+                }
+            }
+        }
     }
 
     @Override
@@ -594,6 +643,9 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     }
 
     private String getDocReference(BaseEntity entity) {
+        if (entity == null) {
+            return "";
+        }
         return "(" + DocRefUtil.create(entity).toString() + ")";
     }
 
@@ -632,34 +684,34 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         // Only allow administrators to create documents with no folder.
         if (folder == null) {
             if (!securityContext.isAdmin()) {
-                throw new PermissionException("Only administrators can create root level entries");
+                throw new PermissionException(securityContext.getUserId(), "Only administrators can create root level entries");
             }
         } else {
             if (!securityContext.hasDocumentPermission(Folder.ENTITY_TYPE, folder.getUuid(), DocumentPermissionNames.getDocumentCreatePermission(getEntityType()))) {
-                throw new PermissionException("You do not have permission to create " + getDocReference(entity) + " in folder " + folder);
+                throw new PermissionException(securityContext.getUserId(), "You do not have permission to create " + getDocReference(entity) + " in folder " + folder);
             }
         }
     }
 
     protected void checkUpdatePermission(final E entity) {
         if (!entity.isPersistent()) {
-            throw new EntityServiceException("You cannot update an entity that has not been created");
+            throw new PermissionException(securityContext.getUserId(), "You cannot update an entity that has not been created " + getDocReference(entity));
         }
 
         if (!securityContext.hasDocumentPermission(entity.getType(), entity.getUuid(), DocumentPermissionNames.UPDATE)) {
-            throw new PermissionException("You do not have permission to update " + getDocReference(entity));
+            throw new PermissionException(securityContext.getUserId(), "You do not have permission to update " + getDocReference(entity));
         }
     }
 
     protected final void checkReadPermission(final E entity) {
         if (!securityContext.hasDocumentPermission(entity.getType(), entity.getUuid(), DocumentPermissionNames.READ)) {
-            throw new PermissionException("You do not have permission to read " + getDocReference(entity));
+            throw new PermissionException(securityContext.getUserId(), "You do not have permission to read " + getDocReference(entity));
         }
     }
 
     protected final void checkDeletePermission(final E entity) {
         if (!securityContext.hasDocumentPermission(entity.getType(), entity.getUuid(), DocumentPermissionNames.DELETE)) {
-            throw new PermissionException("You do not have permission to delete " + getDocReference(entity));
+            throw new PermissionException(securityContext.getUserId(), "You do not have permission to delete " + getDocReference(entity));
         }
     }
 

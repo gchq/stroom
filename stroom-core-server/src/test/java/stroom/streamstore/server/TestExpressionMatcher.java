@@ -19,7 +19,7 @@ package stroom.streamstore.server;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.query.api.v2.ExpressionBuilder;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -57,7 +57,7 @@ public class TestExpressionMatcher extends StroomUnitTest {
     }
 
     private ExpressionOperator createExpression(final Op op, final String feedName) {
-        final ExpressionBuilder builder = new ExpressionBuilder(true, op);
+        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, op);
         builder.addTerm("Feed", Condition.CONTAINS, feedName);
         return builder.build();
     }

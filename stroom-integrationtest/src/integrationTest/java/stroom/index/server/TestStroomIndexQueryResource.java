@@ -15,7 +15,7 @@ import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
 import stroom.query.api.v2.DocRef;
-import stroom.query.api.v2.ExpressionBuilder;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.Query;
@@ -58,7 +58,7 @@ public class TestStroomIndexQueryResource {
         QueryKey queryKey = new QueryKey("Some UUID");
         Query query = new Query(
                 new DocRef("docRefType", "docRefUuid", "docRefName"),
-                new ExpressionBuilder(ExpressionOperator.Op.AND)
+                new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                         .addTerm("field1", ExpressionTerm.Condition.EQUALS, "value1")
                         .addOperator(ExpressionOperator.Op.AND)
                         .addTerm("field2", ExpressionTerm.Condition.BETWEEN, "value2")

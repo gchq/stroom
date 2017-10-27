@@ -139,7 +139,7 @@ public final class StreamUtil {
             // Wrap it
             throw new RuntimeException(ioEx);
         } finally {
-            CloseableUtil.closeLogAndIngoreException(os);
+            CloseableUtil.closeLogAndIgnoreException(os);
         }
     }
 

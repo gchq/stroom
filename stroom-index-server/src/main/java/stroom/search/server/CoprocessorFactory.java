@@ -22,18 +22,18 @@ import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.TableCoprocessor;
 import stroom.query.common.v2.TableCoprocessorSettings;
-import stroom.util.task.TaskMonitor;
+import stroom.util.shared.HasTerminate;
 
 import java.util.Map;
 
 @Component
 public class CoprocessorFactory {
     public Coprocessor create(final CoprocessorSettings settings,
-                              final FieldIndexMap fieldIndexMap, final Map<String, String> paramMap, final TaskMonitor taskMonitor) {
+                              final FieldIndexMap fieldIndexMap, final Map<String, String> paramMap, final HasTerminate monitor) {
         if (settings instanceof TableCoprocessorSettings) {
             final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) settings;
             final TableCoprocessor tableCoprocessor = new TableCoprocessor(tableCoprocessorSettings,
-                    fieldIndexMap, taskMonitor, paramMap);
+                    fieldIndexMap, monitor, paramMap);
             return tableCoprocessor;
         } else if (settings instanceof EventCoprocessorSettings) {
             final EventCoprocessorSettings eventCoprocessorSettings = (EventCoprocessorSettings) settings;

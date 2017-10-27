@@ -27,6 +27,7 @@ import stroom.pipeline.server.factory.Pipeline;
 import stroom.pipeline.server.factory.PipelineFactory;
 import stroom.pipeline.server.parser.CombinedParser;
 import stroom.pipeline.server.writer.TestAppender;
+import stroom.pipeline.shared.PipelineDataMerger;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
@@ -74,17 +75,7 @@ public class F2XTestUtil {
     private StreamStore streamStore;
 
     /**
-     * <p>
      * Run a XML and XSLT transform.
-     * </p>
-     *
-     * @param resourceFinder NA
-     * @param xmlValidator   NA
-     * @param parserFactory  NA
-     * @param formatLocation NA
-     * @param xsltLocation   NA
-     * @param dataLocation   NA
-     * @return xml
      */
     public String runFullTest(final Feed feed, final TextConverterType textConverterType,
                               final String textConverterLocation, final String xsltLocation, final String dataLocation,
@@ -96,17 +87,7 @@ public class F2XTestUtil {
     }
 
     /**
-     * <p>
      * Run a XML and XSLT transform.
-     * </p>
-     *
-     * @param resourceFinder NA
-     * @param xmlValidator   NA
-     * @param parserFactory  NA
-     * @param formatLocation NA
-     * @param xsltLocation   NA
-     * @param dataStream     NA
-     * @return xml
      */
     public String runFullTest(final Feed feed, final TextConverterType textConverterType,
                               final String textConverterLocation, final String xsltLocation, final InputStream dataStream,
@@ -187,16 +168,7 @@ public class F2XTestUtil {
     }
 
     /**
-     * <p>
      * Run a XML transform.
-     * </p>
-     *
-     * @param resourceFinder NA
-     * @param xmlValidator   NA
-     * @param parserFactory  NA
-     * @param formatLocation NA
-     * @param dataStream     NA
-     * @return dataStream
      */
     public String runF2XTest(final TextConverterType textConverterType, final String textConverterLocation,
                              final InputStream inputStream) {
@@ -229,7 +201,8 @@ public class F2XTestUtil {
 
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        final Pipeline pipeline = pipelineFactory.create(pipelineData);
+        final PipelineData mergedPipelineData = new PipelineDataMerger().merge(pipelineData).createMergedData();
+        final Pipeline pipeline = pipelineFactory.create(mergedPipelineData);
 
         final List<TestAppender> filters = pipeline.findFilters(TestAppender.class);
         final TestAppender testAppender = filters.get(0);
