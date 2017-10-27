@@ -19,7 +19,7 @@ package stroom.index.server;
 import org.apache.lucene.store.LockObtainFailedException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-import stroom.entity.shared.DocRefUtil;
+import stroom.entity.shared.DocRef;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
@@ -82,11 +82,12 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private final Map<Long, IndexShardWriter> openWritersByShardId = new ConcurrentHashMap<>();
 
     private final Map<IndexShardKey, IndexShardWriter> openWritersByShardKey = new ConcurrentHashMap<>();
+    private volatile Settings settings;
+
     private final AtomicLong closing = new AtomicLong();
     private final Runner asyncRunner;
     private final Runner syncRunner;
     private final TaskContext taskContext;
-    private volatile Settings settings;
 
     @Inject
     public IndexShardWriterCacheImpl(final NodeCache nodeCache,
@@ -118,6 +119,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     @Override
     public IndexShardWriter getWriterByShardKey(final IndexShardKey indexShardKey) {
         return openWritersByShardKey.compute(indexShardKey, (k, v) -> {
+            // If there is already a value in this map for the provided key just return the value.
             if (v != null) {
                 return v;
             }
@@ -181,7 +183,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         final Index index = indexShard.getIndex();
 
         // Get the index fields.
-        final IndexConfig indexConfig = indexConfigCache.getOrCreate(DocRefUtil.create(index));
+        final IndexConfig indexConfig = indexConfigCache.getOrCreate(DocRef.create(index));
 
         // Create the writer.
         final int ramBufferSizeMB = getRamBufferSize();
@@ -354,23 +356,30 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         });
     }
 
-    private CompletableFuture<IndexShardWriter> close(final IndexShardWriter indexShardWriter, final Runner exec) {
-        // Set the status of the shard to closing so it won't be used again immediately if removed from the map.
-        indexShardManager.setStatus(indexShardWriter.getIndexShardId(), IndexShardStatus.CLOSING);
-        closing.incrementAndGet();
+    private void close(final IndexShardWriter indexShardWriter, final Runner exec) {
+        final long indexShardId = indexShardWriter.getIndexShardId();
 
-        final CompletableFuture<IndexShardWriter> completableFuture = exec.exec(() -> {
-            // Remove the shard from the map.
-            openWritersByShardKey.compute(indexShardWriter.getIndexShardKey(), (k, v) -> {
-                if (v != null) {
+        // Remove the shard from the map.
+        openWritersByShardKey.compute(indexShardWriter.getIndexShardKey(), (k, v) -> {
+            // If there is no value associated with the key or the value is not the one we expect it to be then just return the current value.
+            if (v == null || v != indexShardWriter) {
+                return v;
+            }
+
+            try {
+                // Set the status of the shard to closing so it won't be used again immediately when removed from the map.
+                indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSING);
+
+                // Close the shard.
+                closing.incrementAndGet();
+                final CompletableFuture<IndexShardWriter> completableFuture = exec.exec(() -> {
                     try {
-                        final long indexShardId = v.getIndexShardId();
                         try {
                             taskContext.setName("Closing writer");
                             taskContext.info("Closing writer for index shard " + indexShardId);
 
                             // Close the shard.
-                            v.close();
+                            indexShardWriter.close();
                         } finally {
                             // Remove the writer from ones that can be used by readers.
                             openWritersByShardId.remove(indexShardId);
@@ -381,21 +390,22 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                     } catch (final Exception e) {
                         LOGGER.error(e::getMessage, e);
                     }
-                }
 
-                return null;
-            });
+                    return null;
+                });
+                completableFuture.thenApply(result -> closing.decrementAndGet());
+                completableFuture.exceptionally(t -> {
+                    LOGGER.error(t::getMessage, t);
+                    closing.decrementAndGet();
+                    return null;
+                });
+            } catch (final Exception e) {
+                LOGGER.error(e::getMessage, e);
+            }
 
-            return indexShardWriter;
-        });
-        completableFuture.thenApply(result -> closing.decrementAndGet());
-        completableFuture.exceptionally(t -> {
-            LOGGER.error(t::getMessage, t);
-            closing.decrementAndGet();
+            // Return null to remove the writer from the map.
             return null;
         });
-
-        return completableFuture;
     }
 
     @StroomStartup
@@ -428,7 +438,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
         try {
             LOGGER.info(() -> "Clearing any lingering locks (" + indexShard + ")");
-            final Path dir = IndexShardUtil.getIndexPath(indexShard);
+            final Path dir = IndexShardUtil.getIndexDir(indexShard).toPath();
             LockFactoryUtil.clean(dir);
         } catch (final Exception e) {
             LOGGER.error(e::getMessage, e);
