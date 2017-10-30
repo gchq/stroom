@@ -5,9 +5,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+
 ### Added
 
 ### Changed
+
+* Issue **425** : Changed string replacement in pipeline migration code to use a literal match
 
 ## [v5.0-beta.55] - 2017-10-26
 
