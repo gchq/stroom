@@ -16,33 +16,32 @@
 
 package stroom.search.server.shard;
 
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-
-import stroom.util.logging.StroomLogger;
 import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.Scorer;
-
 import stroom.pipeline.server.errorhandler.TerminatedException;
+import stroom.task.server.TaskContext;
+import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.Monitor;
+
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class IndexShardHitCollector extends Collector {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(IndexShardHitCollector.class);
     private static final long ONE_SECOND = TimeUnit.SECONDS.toNanos(1);
 
-    private final Monitor taskMonitor;
+    private final TaskContext taskContext;
     private final TransferList<Integer> docIdStore;
     private final AtomicLong hitCount;
     private int docBase;
     private Long pauseTime;
 
-    public IndexShardHitCollector(final Monitor taskMonitor, final TransferList<Integer> docIdStore,
-            final AtomicLong hitCount) {
+    public IndexShardHitCollector(final TaskContext taskContext, final TransferList<Integer> docIdStore,
+                                  final AtomicLong hitCount) {
         this.docIdStore = docIdStore;
-        this.taskMonitor = taskMonitor;
+        this.taskContext = taskContext;
         this.hitCount = hitCount;
     }
 
@@ -52,7 +51,7 @@ public class IndexShardHitCollector extends Collector {
         final int docId = docBase + doc;
 
         try {
-            while (!docIdStore.offer(docId, ONE_SECOND) && !taskMonitor.isTerminated()) {
+            while (!docIdStore.offer(docId, ONE_SECOND) && !taskContext.isTerminated()) {
                 if (isProvidingInfo()) {
                     if (pauseTime == null) {
                         pauseTime = System.currentTimeMillis();
@@ -70,7 +69,7 @@ public class IndexShardHitCollector extends Collector {
         hitCount.incrementAndGet();
 
         // Quit searching if the task monitor is set to stop.
-        if (taskMonitor.isTerminated()) {
+        if (taskContext.isTerminated()) {
             if (isProvidingInfo()) {
                 if (pauseTime != null) {
                     final long elapsed = System.currentTimeMillis() - pauseTime;
@@ -98,7 +97,7 @@ public class IndexShardHitCollector extends Collector {
     }
 
     private void provideInfo(final String message) {
-        taskMonitor.info(message);
+        taskContext.info(message);
         LOGGER.debug(message);
     }
 

@@ -142,7 +142,7 @@ public class IndexShardSearcherCacheImpl extends AbstractCacheBean<IndexShardSea
             executor.execute(() -> {
                 try {
                     taskContext.setName("Closing searcher");
-                    taskContext.setInfo("Closing searcher for index shard " + key.indexShardId);
+                    taskContext.info("Closing searcher for index shard " + key.indexShardId);
 
                     indexShardSearcher.destroy();
                 } finally {

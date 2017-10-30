@@ -47,16 +47,6 @@ public class MockIndexShardWriter implements IndexShardWriter {
         this.maxDocumentCount = maxDocumentCount;
         this.creationTime = System.currentTimeMillis();
         this.lastUsedTime = creationTime;
-
-//
-//        switch (indexShard.getStatus()) {
-//            case DELETED:
-//                throw new IndexException("Attempt to open an index shard that is deleted");
-//            case CORRUPT:
-//                throw new IndexException("Attempt to open an index shard that is corrupt");
-//            case FINAL:
-//                throw new IndexException("Attempt to open an index shard that is final");
-//        }
     }
 
     @Override

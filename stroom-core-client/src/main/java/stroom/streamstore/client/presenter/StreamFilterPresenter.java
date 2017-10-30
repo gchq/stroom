@@ -80,9 +80,7 @@ public class StreamFilterPresenter extends MyPresenterWidget<StreamFilterPresent
                         .addAllEntities(template.getStreamType(streamTypeUiManager));
                 read();
             }
-
         });
-
     }
 
     public static void stringToIdSet(final String val, final EntityIdSet<?> idSet) {

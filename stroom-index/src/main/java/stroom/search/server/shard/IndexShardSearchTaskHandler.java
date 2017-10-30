@@ -22,69 +22,66 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.util.Version;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import stroom.index.server.LuceneVersionUtil;
 import stroom.index.shared.IndexShard;
 import stroom.node.server.StroomPropertyService;
 import stroom.pipeline.server.errorhandler.TerminatedException;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.GenericServerTask;
-import stroom.task.server.TaskHandlerBean;
-import stroom.task.server.TaskManager;
-import stroom.util.logging.StroomLogger;
+import stroom.task.server.ExecutorProvider;
+import stroom.task.server.TaskContext;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
-import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-@TaskHandlerBean(task = IndexShardSearchTask.class)
+@Component
 @Scope(StroomScope.TASK)
-public class IndexShardSearchTaskHandler extends AbstractTaskHandler<IndexShardSearchTask, VoidResult> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(IndexShardSearchTaskHandler.class);
+public class IndexShardSearchTaskHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardSearchTaskHandler.class);
     private static final long ONE_SECOND = TimeUnit.SECONDS.toNanos(1);
 
     private final IndexShardSearcherCache indexShardSearcherCache;
     private final StroomPropertyService propertyService;
-    private final TaskManager taskManager;
-    private final TaskMonitor taskMonitor;
+    private final ExecutorProvider executorProvider;
+    private final TaskContext taskContext;
 
     @Inject
-    public IndexShardSearchTaskHandler(final IndexShardSearcherCache indexShardSearcherCache,
-                                       final StroomPropertyService propertyService, final TaskManager taskManager, final TaskMonitor taskMonitor) {
+    IndexShardSearchTaskHandler(final IndexShardSearcherCache indexShardSearcherCache,
+                                final StroomPropertyService propertyService,
+                                final ExecutorProvider executorProvider,
+                                final TaskContext taskContext) {
         this.indexShardSearcherCache = indexShardSearcherCache;
         this.propertyService = propertyService;
-        this.taskManager = taskManager;
-        this.taskMonitor = taskMonitor;
+        this.executorProvider = executorProvider;
+        this.taskContext = taskContext;
     }
 
-    @Override
     public VoidResult exec(final IndexShardSearchTask task) {
         try {
-            if (!taskMonitor.isTerminated()) {
-                taskMonitor.info("Searching shard " + task.getShardNumber() + " of " + task.getShardTotal() + " (id="
+            taskContext.setName("Index shard search");
+            if (!taskContext.isTerminated()) {
+                taskContext.info("Searching shard " + task.getShardNumber() + " of " + task.getShardTotal() + " (id="
                         + task.getIndexShardId() + ")");
-                searchPool(task);
+
+                // Borrow a searcher from the pool.
+                final IndexShardSearcher indexShardSearcher = indexShardSearcherCache.get(task.getIndexShardId());
+
+                // Start searching.
+                searchShard(task, indexShardSearcher);
             }
-        } finally {
-            task.getResultReceiver().complete(task.getIndexShardId());
-        }
-
-        return VoidResult.INSTANCE;
-    }
-
-    private void searchPool(final IndexShardSearchTask task) {
-        try {
-            // Borrow a searcher from this pool.
-            final IndexShardSearcher indexShardSearcher = indexShardSearcherCache.get(task.getIndexShardId());
-            searchShard(task, indexShardSearcher);
         } catch (final Throwable t) {
             error(task, t.getMessage(), t);
         }
+
+        return VoidResult.INSTANCE;
     }
 
     private void searchShard(final IndexShardSearchTask task, final IndexShardSearcher indexShardSearcher) {
@@ -99,34 +96,31 @@ public class IndexShardSearchTaskHandler extends AbstractTaskHandler<IndexShardS
         if (query != null) {
             final int maxDocIdQueueSize = getIntProperty("stroom.search.shard.maxDocIdQueueSize", 1000);
             final TransferList<Integer> docIdStore = new TransferList<>(maxDocIdQueueSize);
-            final AtomicBoolean completedSearch = new AtomicBoolean();
 
             // Create a collector.
-            final IndexShardHitCollector collector = new IndexShardHitCollector(task.getMonitor(), docIdStore,
+            final IndexShardHitCollector collector = new IndexShardHitCollector(taskContext, docIdStore,
                     task.getHitCount());
 
             try {
                 final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
                 final IndexSearcher searcher = searcherManager.acquire();
                 try {
-                    final GenericServerTask searchingTask = GenericServerTask.create(task, "Index Searcher", "");
-                    searchingTask.setRunnable(() -> {
+                    final Executor executor = executorProvider.getExecutor(IndexShardSearchTaskExecutor.THREAD_POOL);
+                    final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(() -> {
                         try {
+                            taskContext.setName("Index Searcher");
                             searcher.search(query, collector);
                         } catch (final Throwable t) {
                             error(task, t.getMessage(), t);
-                        } finally {
-                            completedSearch.set(true);
                         }
-                    });
-                    taskManager.execAsync(searchingTask, IndexShardSearchTask.THREAD_POOL);
+                    }, executor);
 
                     // Start retrieving stored data from the shard.
                     boolean complete = false;
                     List<Integer> list = null;
 
-                    while (!complete && !task.isTerminated()) {
-                        complete = completedSearch.get();
+                    while (!complete && !taskContext.isTerminated()) {
+                        complete = completableFuture.isDone();
 
                         if (complete) {
                             // If we are finished then we don't need to wait for
@@ -145,7 +139,7 @@ public class IndexShardSearchTaskHandler extends AbstractTaskHandler<IndexShardS
                         // Get stored data for every doc id in the list.
                         if (list != null && list.size() > 0) {
                             for (final Integer docId : list) {
-                                if (task.isTerminated()) {
+                                if (taskContext.isTerminated()) {
                                     throw new TerminatedException();
                                 }
 

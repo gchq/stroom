@@ -127,7 +127,7 @@ public class IndexShardServiceImpl
     public Boolean delete(final IndexShard entity) throws RuntimeException {
         final Index index = entity.getIndex();
         if (!securityContext.hasDocumentPermission(index.getType(), index.getUuid(), DocumentPermissionNames.DELETE)) {
-            throw new PermissionException("You do not have permission to delete index shard");
+            throw new PermissionException(securityContext.getUserId(), "You do not have permission to delete index shard");
         }
 
         return super.delete(entity);

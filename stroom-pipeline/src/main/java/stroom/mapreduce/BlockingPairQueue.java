@@ -16,21 +16,21 @@
 
 package stroom.mapreduce;
 
+import stroom.util.shared.HasTerminate;
+import stroom.util.thread.ThreadUtil;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
-import stroom.util.shared.Monitor;
-import stroom.util.thread.ThreadUtil;
-
 public class BlockingPairQueue<K, V> implements PairQueue<K, V> {
     private static final long serialVersionUID = 3205692727588879153L;
 
     private static final int MAX_SIZE = 1000000;
 
-    private final Monitor monitor;
+    private final HasTerminate monitor;
 
     private volatile List<Pair<K, V>> queue;
     private final AtomicInteger size = new AtomicInteger();
@@ -38,7 +38,7 @@ public class BlockingPairQueue<K, V> implements PairQueue<K, V> {
 
     private transient Iterator<Pair<K, V>> emptyIter;
 
-    public BlockingPairQueue(final Monitor monitor) {
+    public BlockingPairQueue(final HasTerminate monitor) {
         this.monitor = monitor;
     }
 

@@ -78,20 +78,29 @@ public class TextWriter extends AbstractWriter {
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
         super.characters(ch, start, length);
         try {
-            int lastStart = start;
+            int pos = start;
             for (int i = start; i < start + length; i++) {
                 final char c = ch[i];
                 if (c == '\n') {
+                    final int nextPos = i + 1;
+                    final int len = nextPos - pos;
+
+//                    final String str = new String(ch, pos, len);
+
                     borrowDestinations(header, footer);
-                    getWriter().write(ch, lastStart, i - start);
-                    lastStart = i;
+                    getWriter().write(ch, pos, len);
+                    pos = nextPos;
                     returnDestinations();
                 }
             }
 
-            if (lastStart < start + length) {
+            final int len = length - pos;
+            if (len > 0) {
                 borrowDestinations(header, footer);
-                getWriter().write(ch, lastStart, length - lastStart);
+
+//                final String str = new String(ch, pos, len);
+
+                getWriter().write(ch, pos, len);
             }
 
         } catch (final IOException e) {

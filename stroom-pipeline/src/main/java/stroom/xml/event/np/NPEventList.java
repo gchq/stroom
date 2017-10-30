@@ -239,7 +239,7 @@ public final class NPEventList implements EventList {
                     break;
                 case CHARACTERS:
                     final int pos = charPosArr[charPosIndex++];
-                    sb.append(charArr, lastPos, pos);
+                    sb.append(charArr, lastPos, pos - lastPos);
                     lastPos = pos;
                     break;
                 }

@@ -16,25 +16,22 @@
 
 package stroom.cache;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import javax.annotation.Resource;
-
+import net.sf.ehcache.CacheManager;
+import net.sf.ehcache.Ehcache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-
 import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.FindCacheInfoCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.PageRequest;
-import net.sf.ehcache.Cache;
-import net.sf.ehcache.CacheManager;
-import net.sf.ehcache.Ehcache;
-import net.sf.ehcache.Statistics;
+import stroom.util.spring.StroomFrequencySchedule;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 @Component
 public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
@@ -92,6 +89,21 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
             }
         }
         return list;
+    }
+
+    @Override
+    @StroomFrequencySchedule("1m")
+    public void evictExpiredElements() {
+        final String[] cacheNames = cacheManager.getCacheNames();
+        for (final String cacheName : cacheNames) {
+            LOGGER.debug("Evicting cache entries for " + cacheName);
+            try {
+                final Ehcache cache = cacheManager.getEhcache(cacheName);
+                cache.evictExpiredElements();
+            } catch (final Exception e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        }
     }
 
     /**

@@ -24,6 +24,6 @@ import org.junit.Test;
 public class TestFullTranslationTask extends TranslationTest {
     @Test
     public void test() {
-        testTranslationTask(false, true);
+        testTranslationTask(true);
     }
 }

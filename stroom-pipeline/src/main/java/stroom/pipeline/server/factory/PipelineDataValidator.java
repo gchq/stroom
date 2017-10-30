@@ -16,6 +16,7 @@
 
 package stroom.pipeline.server.factory;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -90,7 +91,9 @@ public class PipelineDataValidator {
 
     private void validatePropertiesList(final ElementRegistry registry, final SourcePipeline source,
             final List<PipelineProperty> propertiesList, final Map<String, PipelineElementType> elementMap) {
-        for (final PipelineProperty property : propertiesList) {
+        final Iterator<PipelineProperty> iterator = propertiesList.iterator();
+        while (iterator.hasNext()) {
+            final PipelineProperty property = iterator.next();
             if (property.getElement() == null) {
                 throw new PipelineFactoryException(
                         "No element id has been declared for property: " + property.getName());
@@ -101,24 +104,28 @@ public class PipelineDataValidator {
 
             final PipelineElementType elementType = elementMap.get(property.getElement());
             if (elementType == null) {
-                throw new PipelineFactoryException(
-                        "Attempt to set property on unknown element \"" + property.getElement() + "\"");
-            }
+                iterator.remove();
+//                throw new PipelineFactoryException(
+//                        "Attempt to set property on unknown element \"" + property.getElement() + "\"");
 
-            final PipelinePropertyType propertyType = registry.getPropertyType(elementType, property.getName());
-            if (propertyType == null) {
-                throw new PipelineFactoryException("Attempt to set property \"" + property.getName()
-                        + "\" on element \"" + property.getElement() + "\" but property is unknown.");
-            }
+            } else {
+                final PipelinePropertyType propertyType = registry.getPropertyType(elementType, property.getName());
+                if (propertyType == null) {
+                    throw new PipelineFactoryException("Attempt to set property \"" + property.getName()
+                            + "\" on element \"" + property.getElement() + "\" but property is unknown.");
+                }
 
-            property.setPropertyType(propertyType);
-            property.setSource(source);
+                property.setPropertyType(propertyType);
+                property.setSource(source);
+            }
         }
     }
 
     private void validatePipelineReferencesList(final ElementRegistry registry, final SourcePipeline source,
             final List<PipelineReference> pipelineReferencesList, final Map<String, PipelineElementType> elementMap) {
-        for (final PipelineReference pipelineReference : pipelineReferencesList) {
+        final Iterator<PipelineReference> iterator = pipelineReferencesList.iterator();
+        while (iterator.hasNext()) {
+            final PipelineReference pipelineReference = iterator.next();
             if (pipelineReference.getElement() == null) {
                 throw new PipelineFactoryException(
                         "No element id has been declared for pipeline reference: " + pipelineReference.getName());
@@ -130,35 +137,40 @@ public class PipelineDataValidator {
 
             final PipelineElementType elementType = elementMap.get(pipelineReference.getElement());
             if (elementType == null) {
-                throw new PipelineFactoryException("Attempt to set pipeline reference on unknown element \""
-                        + pipelineReference.getElement() + "\"");
-            }
+                iterator.remove();
+//                throw new PipelineFactoryException("Attempt to set pipeline reference on unknown element \""
+//                        + pipelineReference.getElement() + "\"");
 
-            final PipelinePropertyType propertyType = registry.getPropertyType(elementType,
-                    pipelineReference.getName());
-            if (propertyType == null) {
-                throw new PipelineFactoryException("Attempt to set pipeline reference \"" + pipelineReference.getName()
-                        + "\" on element \"" + pipelineReference.getElement() + "\" but property is unknown.");
-            }
+            } else {
+                final PipelinePropertyType propertyType = registry.getPropertyType(elementType,
+                        pipelineReference.getName());
+                if (propertyType == null) {
+                    throw new PipelineFactoryException("Attempt to set pipeline reference \"" + pipelineReference.getName()
+                            + "\" on element \"" + pipelineReference.getElement() + "\" but property is unknown.");
+                }
 
-            pipelineReference.setPropertyType(propertyType);
-            pipelineReference.setSource(source);
+                pipelineReference.setPropertyType(propertyType);
+                pipelineReference.setSource(source);
+            }
         }
     }
 
     private void validateLinksList(final SourcePipeline source, final List<PipelineLink> linksList,
             final Map<String, PipelineElementType> elementMap) {
-        for (final PipelineLink link : linksList) {
+        final Iterator<PipelineLink> iterator = linksList.iterator();
+        while (iterator.hasNext()) {
+            final PipelineLink link = iterator.next();
             if (!elementMap.containsKey(link.getFrom())) {
-                throw new PipelineFactoryException("Attempt to link from \"" + link.getFrom() + "\" to \""
-                        + link.getTo() + "\" but \"" + link.getFrom() + "\" is unknown");
+                iterator.remove();
+//                throw new PipelineFactoryException("Attempt to link from \"" + link.getFrom() + "\" to \""
+//                        + link.getTo() + "\" but \"" + link.getFrom() + "\" is unknown");
+            } else if (!elementMap.containsKey(link.getTo())) {
+                iterator.remove();
+//                throw new PipelineFactoryException("Attempt to link from \"" + link.getFrom() + "\" to \""
+//                        + link.getTo() + "\" but \"" + link.getTo() + "\" is unknown");
+            } else {
+                link.setSource(source);
             }
-            if (!elementMap.containsKey(link.getTo())) {
-                throw new PipelineFactoryException("Attempt to link from \"" + link.getFrom() + "\" to \""
-                        + link.getTo() + "\" but \"" + link.getTo() + "\" is unknown");
-            }
-
-            link.setSource(source);
         }
     }
 }

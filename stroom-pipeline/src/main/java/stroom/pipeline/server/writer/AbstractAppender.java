@@ -16,27 +16,24 @@
 
 package stroom.pipeline.server.writer;
 
-import java.io.IOException;
-import java.io.OutputStream;
-
-import javax.annotation.Resource;
-
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.streamstore.server.fs.serializable.SegmentOutputStream;
 import stroom.util.shared.Severity;
 
+import java.io.IOException;
+import java.io.OutputStream;
+
 public abstract class AbstractAppender extends AbstractDestinationProvider implements Destination {
-    @Resource
-    private ErrorReceiverProxy errorReceiverProxy;
+    private final ErrorReceiverProxy errorReceiverProxy;
 
     private OutputStream outputStream;
     private SegmentOutputStream segmentOutputStream;
-    private byte[] header;
     private byte[] footer;
 
-    @Resource
-    private PathCreator pathCreator;
+    AbstractAppender(final ErrorReceiverProxy errorReceiverProxy) {
+        this.errorReceiverProxy = errorReceiverProxy;
+    }
 
     @Override
     public void endProcessing() {
@@ -64,9 +61,12 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
 
     @Override
     public void returnDestination(final Destination destination) throws IOException {
-        // We assume that the parent will only return a destination after
-        // writing an entire segment so add a segment
-        // marker here.
+        // We assume that the parent will write an entire segment when it borrows a destination so add a segment marker
+        // here after a segment is written.
+
+        // Writing a segment marker here ensures there is always a marker written before the footer regardless or
+        // whether a footer is actually written. We do this because we always make an allowance for a footer for data
+        // display purposes.
         insertSegmentMarker();
     }
 
@@ -77,7 +77,6 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
 
     @Override
     public final OutputStream getOutputStream(final byte[] header, final byte[] footer) throws IOException {
-        this.header = header;
         this.footer = footer;
 
         if (outputStream == null) {
@@ -86,40 +85,37 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
                 segmentOutputStream = (SegmentOutputStream) outputStream;
             }
 
-            writeHeader();
+            // If we haven't written yet then create the output stream and
+            // write a header if we have one.
+            if (header != null && header.length > 0) {
+                // Write the header.
+                write(header);
+            }
+
+            // Insert a segment marker before we write the next record regardless of whether the header has actually
+            // been written. This is because we always make an allowance for the existence of a header in a segmented
+            // stream when viewing data.
+            insertSegmentMarker();
         }
 
         return outputStream;
     }
 
-    protected final boolean writeHeader() throws IOException {
-        final boolean writtenHeader = write(header);
-
-        if (writtenHeader) {
-            // Insert a segment marker after the header.
-            insertSegmentMarker();
+    private void writeFooter() throws IOException {
+        if (footer != null && footer.length > 0) {
+            // Write the footer.
+            write(footer);
         }
-
-        return writtenHeader;
     }
 
-    protected final boolean writeFooter() throws IOException {
-        return write(footer);
+    private void write(final byte[] bytes) throws IOException {
+        outputStream.write(bytes, 0, bytes.length);
     }
 
-    protected final boolean write(final byte[] bytes) throws IOException {
-        if (outputStream != null && bytes != null && bytes.length > 0) {
-            outputStream.write(bytes, 0, bytes.length);
-
-            return true;
-        }
-
-        return false;
-    }
-
-    private final void insertSegmentMarker() throws IOException {
+    private void insertSegmentMarker() throws IOException {
+        // Add a segment marker to the output stream if we are segmenting.
         if (segmentOutputStream != null) {
-            segmentOutputStream.addSegment(segmentOutputStream.getPosition());
+            segmentOutputStream.addSegment();
         }
     }
 

@@ -29,8 +29,6 @@ import stroom.util.spring.StroomScope;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -68,7 +66,7 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
 
         // Create an asynchronous search task.
         final String searchName = "Event Search";
-        final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(task.getUserToken(), searchName,
+        final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(task, task.getUserToken(), searchName,
                 search, node, task.getResultSendFrequency(), coprocessorMap, nowEpochMilli);
 
         // Create a collector to store search results.
