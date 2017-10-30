@@ -225,17 +225,12 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
                 idToken = authenticationServiceClient.getAuthServiceApi().getIdTokenWithPost(idTokenRequest);
             } catch (ApiException e) {
                 if (e.getCode() == Response.Status.UNAUTHORIZED.getStatusCode()) {
+                    LOGGER.error("The accessCode used to obtain an idToken was rejected. Has it already been used?", e);
                     // If we can't exchange the accessCode for an idToken then this probably means the
-                    // accessCode doesn't exist any more, or has already been used.
-                    // We can't proceed and need to throw an exception. We don't want to leave the user
-                    // staring at a blank screen so we'll also redirect them back to the main page so
-                    // we can start the login flow again.
-                    HttpServletResponse httpResponse = WebUtils.toHttp(response);
-                    httpResponse.sendRedirect(advertisedStroomUrl);
-                    // Our access code isn't valid, so we need to redirect and start the flow again.
-                    String errorMessage = "The accessCode used to obtain an idToken was rejected. Has it already been used?";
-                    LOGGER.error(errorMessage, e);
-                    throw new RuntimeException(errorMessage);
+                    // accessCode doesn't exist any more, or has already been used. so we can't proceed.
+                    // But we still need to return a token. We'll return an empty one and it'll end up being judged
+                    // invalid and the authentication flow will begin again, leading to a fresh, correct token.
+                    return new JWTAuthenticationToken("","");
                 }
             }
 
@@ -244,12 +239,12 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
             String nonceHash = (String) claims.getClaimsMap().get("nonce");
             boolean doNoncesMatch = nonceManager.match(stroomSessionId, nonceHash);
             if (!doNoncesMatch) {
+                LOGGER.info("Received a bad nonce!");
                 // If the nonces don't match we need to redirect to log in again.
                 // Maybe the request uses an out-of-date stroomSessionId?
-                LOGGER.info("Received a bad nonce!");
-                HttpServletResponse httpResponse = WebUtils.toHttp(response);
-                httpResponse.sendRedirect(advertisedStroomUrl);
-                return null;
+                // We still need to return a token. We'll return an empty one and it'll end up being judged
+                // invalid and the authentication flow will begin again, leading to a fresh, correct token.
+                return new JWTAuthenticationToken("","");
             }
 
             LOGGER.info("User is authenticated for sessionId " + sessionId);
@@ -258,7 +253,9 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
             return new JWTAuthenticationToken(claims.getSubject(), idToken);
         } else {
             LOGGER.error("Attempted access without an access code!");
-            return null;
+            // We still need to return a token. We'll return an empty one and it'll end up being judged
+            // invalid and the authentication flow will begin again, leading to a fresh, correct token.
+            return new JWTAuthenticationToken("","");
         }
     }
 
