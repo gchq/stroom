@@ -261,25 +261,22 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             return null;
         }
 
-        return UserRefFactory.create(updatePassword(user, password));
-    }
-
-    private User updatePassword(final User user, final String newPassword) {
         // Hash the new password.
-        final String newHash = passwordEncoder.encode(newPassword);
+        final String newHash = passwordEncoder.encode(password);
 
         // Set the new password hash.
         user.setPasswordHash(newHash);
 
-        // Make sure it gets reset next time
-        user.setPasswordExpiryMs(System.currentTimeMillis());
+        // Set the expiry.
+        user.setPasswordExpiryMs(getNextPasswordExpiryMs());
 
+        // Unlock the account.
         if (UserStatus.LOCKED.equals(user.getStatus())) {
             user.updateStatus(UserStatus.ENABLED);
         }
 
-        // Save the system user.
-        return userService.save(user);
+        // Save the user.
+        return UserRefFactory.create(userService.save(user));
     }
 
     @Override
@@ -321,7 +318,24 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             final User user = userService.loadByUuid(userRef.getUuid());
             if (user != null) {
                 final String password = PasswordGenerator.generatePassword();
-                final User updatedUser = updatePassword(user, password);
+
+                // Hash the new password.
+                final String newHash = passwordEncoder.encode(password);
+
+                // Set the new password hash.
+                user.setPasswordHash(newHash);
+
+                // Make sure it gets reset next time as this is a system generated password.
+                user.setPasswordExpiryMs(System.currentTimeMillis());
+
+                // Enable the account.
+                if (UserStatus.LOCKED.equals(user.getStatus())) {
+                    user.updateStatus(UserStatus.ENABLED);
+                }
+
+                // Save the user.
+                final User updatedUser = userService.save(user);
+
                 mailSenderProvider.get().emailPasswordReset(UserRefFactory.create(updatedUser), password);
             }
         }

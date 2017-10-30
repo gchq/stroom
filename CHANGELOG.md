@@ -34,6 +34,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
+## [v5.0-beta.54] - 2017-10-25
+
+* Issue **#448** : Some search related tasks never seem to complete, presumably because an error is thrown at some point and so their callbacks do not get called normally. This fix changes the way task completion is recorded so that it isn't dependant on the callbacks being called correctly.
+
+* Issue **#464** : When a user resets a password, the password now has an expiry date set in the future determined by the password expiry policy. Password that are reset by email still expire immediately as expected.
+
+* Issue **#462** : Permission exceptions now carry details of the user that the exception applies to. This change allows error logging to record the user id in the message where appropriate.
+
+* Issue **#463** : Many index shards are being corrupted which may be caused by insufficient locking of the shard writers and readers. This fix changes the locking mechanism to use the file system.
+
 ## [v5.0-beta.53] - 2017-10-18
 
 * Issue **#451** : Data paging was allowing the user to jump beyond the end of a stream whereby just the XML root elements were displayed. This is now fixed by adding a constraint to the page offset so that the user cannot jump beyond the last record. Because data paging assumes that segmented streams have a header and footer, text streams now include segments after a header and before a footer, even if neither are added, so that paging always works correctly regardless of the presence of a header or footer.
@@ -44,7 +54,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#442** : Remove 'Old Internal Statistics' folder, improve import exception handling
 
-* Issue **#457** : Add check to import to preventy duplicate root level entities
+* Issue **#457** : Add check to import to prevent duplicate root level entities
 
 ## [v5.0-beta.52] - 2017-10-17
 
@@ -640,6 +650,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
 [v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
 
+[v5.0-beta.54]: https://github.com/gchq/stroom/compare/v5.0-beta.53...v5.0-beta.54
 [v5.0-beta.53]: https://github.com/gchq/stroom/compare/v5.0-beta.52...v5.0-beta.53
 [v5.0-beta.52]: https://github.com/gchq/stroom/compare/v5.0-beta.51...v5.0-beta.52
 [v5.0-beta.51]: https://github.com/gchq/stroom/compare/v5.0-beta.50...v5.0-beta.51

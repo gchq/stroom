@@ -16,8 +16,10 @@
 
 package stroom.task.server;
 
-public interface TaskContext {
+import stroom.util.shared.HasTerminate;
+
+public interface TaskContext extends HasTerminate {
     void setName(String name);
 
-    void setInfo(Object... args);
+    void info(Object... args);
 }

@@ -26,8 +26,8 @@ import stroom.search.server.extraction.ExtractionTask.ResultReceiver;
 import stroom.search.server.shard.TransferList;
 import stroom.search.server.taskqueue.AbstractTaskProducer;
 import stroom.util.shared.Severity;
-import stroom.util.shared.Task;
 
+import javax.inject.Provider;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +35,6 @@ import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ExtractionTaskProducer extends AbstractTaskProducer {
     private final ClusterSearchTask clusterSearchTask;
@@ -44,15 +43,18 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
     private final FieldIndexMap extractionFieldIndexMap;
     private final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap;
     private final ErrorReceiver errorReceiver;
+    private final Provider<ExtractionTaskHandler> handlerProvider;
 
-    private final Queue<Task<?>> taskQueue = new ConcurrentLinkedQueue<>();
-    private final AtomicInteger tasksCreated = new AtomicInteger();
-    private final AtomicInteger tasksCompleted = new AtomicInteger();
+    private final Queue<ExtractionRunnable> taskQueue = new ConcurrentLinkedQueue<>();
 
-    public ExtractionTaskProducer(final ClusterSearchTask clusterSearchTask, final StreamMapCreator streamMapCreator,
-                                  final TransferList<String[]> storedData, final FieldIndexMap extractionFieldIndexMap,
-                                  final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap, final ErrorReceiver errorReceiver,
-                                  final int maxThreadsPerTask) {
+    public ExtractionTaskProducer(final ClusterSearchTask clusterSearchTask,
+                                  final StreamMapCreator streamMapCreator,
+                                  final TransferList<String[]> storedData,
+                                  final FieldIndexMap extractionFieldIndexMap,
+                                  final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap,
+                                  final ErrorReceiver errorReceiver,
+                                  final int maxThreadsPerTask,
+                                  final Provider<ExtractionTaskHandler> handlerProvider) {
         super(maxThreadsPerTask);
 
         this.clusterSearchTask = clusterSearchTask;
@@ -61,21 +63,22 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
         this.extractionFieldIndexMap = extractionFieldIndexMap;
         this.extractionCoprocessorsMap = extractionCoprocessorsMap;
         this.errorReceiver = errorReceiver;
+        this.handlerProvider = handlerProvider;
     }
 
     public boolean isComplete() {
         synchronized (taskQueue) {
-            if (tasksCreated.get() != tasksCompleted.get()) {
+            if (getTasksTotal().get() != getTasksCompleted().get()) {
                 return false;
             }
             fillTaskQueue();
-            return tasksCreated.get() == tasksCompleted.get();
+            return getTasksTotal().get() == getTasksCompleted().get();
 
         }
     }
 
     public int remainingTasks() {
-        return tasksCreated.get()  - tasksCompleted.get();
+        return getTasksTotal().get() - getTasksCompleted().get();
     }
 
     private int fillTaskQueue() {
@@ -107,21 +110,13 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
             if (pipelineRef != null) {
                 // This set of coprocessors require result extraction so invoke
                 // the extraction service.
-                final ResultReceiver resultReceiver = new ResultReceiver() {
-                    @Override
-                    public void receive(final String[] values) {
-                        for (final Coprocessor coprocessor : coprocessors) {
-                            try {
-                                coprocessor.receive(values);
-                            } catch (final Exception e) {
-                                error(e.getMessage(), e);
-                            }
+                final ResultReceiver resultReceiver = values -> {
+                    for (final Coprocessor coprocessor : coprocessors) {
+                        try {
+                            coprocessor.receive(values);
+                        } catch (final Exception e) {
+                            error(e.getMessage(), e);
                         }
-                    }
-
-                    @Override
-                    public void complete() {
-                        tasksCompleted.incrementAndGet();
                     }
                 };
 
@@ -136,10 +131,9 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
                     Arrays.sort(eventIds);
                 }
 
-                tasksCreated.incrementAndGet();
-                final ExtractionTask task = new ExtractionTask(clusterSearchTask, streamId, eventIds, pipelineRef,
-                        extractionFieldIndexMap, resultReceiver, errorReceiver);
-                taskQueue.add(task);
+                getTasksTotal().incrementAndGet();
+                final ExtractionTask task = new ExtractionTask(streamId, eventIds, pipelineRef, extractionFieldIndexMap, resultReceiver, errorReceiver);
+                taskQueue.add(new ExtractionRunnable(task, handlerProvider));
                 created++;
 
             } else {
@@ -157,12 +151,12 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
     }
 
     @Override
-    public Task<?> next() {
+    protected Runnable getNext() {
         if (clusterSearchTask.isTerminated()) {
             return null;
         }
 
-        Task<?> task = null;
+        ExtractionRunnable task = null;
         synchronized (taskQueue) {
             if (!clusterSearchTask.isTerminated()) {
                 if (taskQueue.size() == 0) {
@@ -185,5 +179,25 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
 
     private void error(final String message, final Throwable t) {
         errorReceiver.log(Severity.ERROR, null, null, message, t);
+    }
+
+    private static class ExtractionRunnable implements Runnable {
+        private final ExtractionTask task;
+        private final Provider<ExtractionTaskHandler> handlerProvider;
+
+        ExtractionRunnable(final ExtractionTask task, final Provider<ExtractionTaskHandler> handlerProvider) {
+            this.task = task;
+            this.handlerProvider = handlerProvider;
+        }
+
+        @Override
+        public void run() {
+            final ExtractionTaskHandler handler = handlerProvider.get();
+            handler.exec(task);
+        }
+
+        public ExtractionTask getTask() {
+            return task;
+        }
     }
 }

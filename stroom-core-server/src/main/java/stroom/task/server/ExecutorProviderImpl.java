@@ -38,8 +38,8 @@ public class ExecutorProviderImpl implements ExecutorProvider {
 
     @Override
     public Executor getExecutor() {
+        final Task<?> parentTask = CurrentTaskState.currentTask();
         return command -> {
-            final Task<?> parentTask = CurrentTaskState.currentTask();
             final GenericServerTask genericServerTask = GenericServerTask.create(parentTask, getUserToken(parentTask), getTaskName(parentTask, "Generic Task"), null);
             genericServerTask.setRunnable(command);
             taskManager.execAsync(genericServerTask);
@@ -48,8 +48,8 @@ public class ExecutorProviderImpl implements ExecutorProvider {
 
     @Override
     public Executor getExecutor(final ThreadPool threadPool) {
+        final Task<?> parentTask = CurrentTaskState.currentTask();
         return command -> {
-            final Task<?> parentTask = CurrentTaskState.currentTask();
             final GenericServerTask genericServerTask = GenericServerTask.create(parentTask, getUserToken(parentTask), getTaskName(parentTask, threadPool.getName()), null);
             genericServerTask.setRunnable(command);
             taskManager.execAsync(genericServerTask, threadPool);

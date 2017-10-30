@@ -22,10 +22,10 @@ import org.apache.lucene.search.SearcherFactory;
 import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
-import org.apache.lucene.store.NoLockFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.index.server.IndexShardUtil;
+import stroom.index.server.LockFactoryUtil;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.search.server.SearchException;
@@ -79,7 +79,7 @@ public class IndexShardSearcherImpl implements IndexShardSearcher {
                     throw new SearchException("Index directory not found for searching: " + FileUtil.getCanonicalPath(dir));
                 }
 
-                directory = new NIOFSDirectory(dir, NoLockFactory.INSTANCE);
+                directory = new NIOFSDirectory(dir, LockFactoryUtil.get(dir));
 //                indexReader = DirectoryReader.open(directory);
                 searcherManager = new SearcherManager(directory, new SearcherFactory());
 
