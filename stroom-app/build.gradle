@@ -45,6 +45,7 @@ dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-core-server')
     compile project(':stroom-pipeline')
+    compile project(':stroom-proxy')
     compile project(':stroom-explorer-server')
     compile project(':stroom-security-server')
     compile project(':stroom-index-server')

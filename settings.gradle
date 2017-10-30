@@ -17,8 +17,8 @@ rootProject.name = 'stroom'
  *
  */
 
-// Proxy projects.
-include 'stroom-proxy-app'
+// Proxy project.
+include 'stroom-proxy'
 
 // Shared projects.
 include 'stroom-util-shared'
