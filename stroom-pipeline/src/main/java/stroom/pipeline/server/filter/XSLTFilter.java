@@ -54,6 +54,7 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.PipelineContext;
 import stroom.pool.PoolItem;
+import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Severity;
@@ -93,7 +94,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     private ErrorListener errorListener;
 
     private boolean suppressXSLTNotFoundWarnings;
-    private XSLT xsltRef;
+    private DocRef xsltRef;
     private String xsltNamePattern;
 
     /**
@@ -137,15 +138,9 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         try {
             errorListener = new ErrorListenerAdaptor(getElementId(), locationFactory, errorReceiverProxy);
             maxElementCount = getMaxElements();
+            XSLT xslt = null;
 
             // Load XSLT from a name pattern if one has been specified.
-            XSLT xslt = xsltRef;
-            String xsltName = null;
-
-            if (xslt != null) {
-                xsltName = xslt.getName();
-            }
-
             if (xsltNamePattern != null && xsltNamePattern.trim().length() > 0) {
                 // Resolve replacement variables.
                 final String resolvedName = pathCreator.replaceContextVars(xsltNamePattern.trim());
@@ -178,9 +173,9 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                         sb.append("' from pattern '");
                         sb.append(xsltNamePattern);
 
-                        if (xslt != null) {
+                        if (xsltRef != null) {
                             sb.append("' - using default '");
-                            sb.append(xsltName);
+                            sb.append(xsltRef.getName());
                             sb.append("'");
                         } else {
                             sb.append("' - no default specified");
@@ -190,39 +185,35 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                     }
                 } else {
                     xslt = xsltList.get(0);
-                    xsltName = xslt.getName();
 
                     if (xsltList.size() > 1) {
-                        final StringBuilder sb = new StringBuilder();
-                        sb.append("Multiple XSLT found with name '");
-                        sb.append(resolvedName);
-                        sb.append("' from pattern '");
-                        sb.append(xsltNamePattern);
-                        sb.append("' - using XSLT with lowest id (");
-                        sb.append(xslt.getId());
-                        sb.append(")");
-                        errorReceiverProxy.log(Severity.WARNING, null, getElementId(), sb.toString(), null);
+                        final String message = "" +
+                                "Multiple XSLT found with name '" +
+                                resolvedName +
+                                "' from pattern '" +
+                                xsltNamePattern +
+                                "' - using XSLT with lowest id (" +
+                                xslt.getId() +
+                                ")";
+                        errorReceiverProxy.log(Severity.WARNING, null, getElementId(), message, null);
                     }
                 }
             }
 
-            // If we have found XSLT then load it and get a template.
-            if (xslt != null) {
-                // Load the latest XSLT to get round the issue of the pipeline
-                // being cached and therefore holding onto stale XSLT.
-
-                // TODO: We need to use the cached XSLT service ideally but
-                // before we do it needs to be aware cluster wide when XSLT has
-                // been updated.
-                xslt = xsltService.load(xslt);
+            // Load the XSLT from a reference if we haven't found it by name.
+            if (xslt == null && xsltRef != null) {
+                xslt = xsltService.loadByUuid(xsltRef.getUuid());
                 if (xslt == null) {
-                    final StringBuilder sb = new StringBuilder();
-                    sb.append("XSLT \"");
-                    sb.append(xsltName);
-                    sb.append("\" appears to have been deleted");
-                    throw new ProcessException(sb.toString());
+                    final String message = "" +
+                            "XSLT \"" +
+                            xsltRef.getName() +
+                            "\" appears to have been deleted";
+                    throw new ProcessException(message);
                 }
+            }
 
+            // If we have found XSLT then get a template.
+            if (xslt != null) {
                 // If we are in stepping mode and have made code changes then we
                 // want to add them to the newly loaded XSLT.
 
@@ -470,12 +461,11 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         if (handler != null) {
             elementCount++;
             if (elementCount > maxElementCount) {
-                final StringBuilder sb = new StringBuilder();
-                sb.append("Max element count of ");
-                sb.append(maxElementCount);
-                sb.append(
-                        " has been exceeded. Please ensure a split filter is present and is configured correctly for this pipeline.");
-                final String message = sb.toString();
+                final String message = "" +
+                        "Max element count of " +
+                        maxElementCount +
+                        " has been exceeded. Please ensure a split filter is present and is configured correctly for this pipeline.";
+
                 final ProcessException exception = new ProcessException(message);
                 if (pipelineContext.isStepping()) {
                     errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), exception.getMessage(),
@@ -625,7 +615,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     }
 
     @PipelineProperty(description = "The XSLT to use.")
-    public void setXslt(final XSLT xsltRef) {
+    public void setXslt(final DocRef xsltRef) {
         this.xsltRef = xsltRef;
     }
 

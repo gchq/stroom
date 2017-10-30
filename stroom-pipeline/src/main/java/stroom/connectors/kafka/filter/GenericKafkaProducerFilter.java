@@ -27,6 +27,7 @@ import stroom.pipeline.server.writer.PathCreator;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.util.spring.StroomScope;
+import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
 

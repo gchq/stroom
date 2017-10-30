@@ -53,7 +53,7 @@ public class TestXPathFilter extends StroomUnitTest {
         final Path input = StroomPipelineTestFileUtil.getTestResourcesFile(INPUT);
         final SAXParser parser = PARSER_FACTORY.newSAXParser();
         final XMLReader xmlReader = parser.getXMLReader();
-        final SAXEventRecorder steppingFilter = new SAXEventRecorder();
+        final SAXEventRecorder steppingFilter = new SAXEventRecorder(null, null);
         steppingFilter.clear();
         xmlReader.setContentHandler(steppingFilter);
 

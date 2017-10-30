@@ -33,6 +33,7 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaData;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
+import stroom.query.api.v2.DocRef;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.StreamTypeService;
@@ -62,20 +63,20 @@ public class StreamAppender extends AbstractAppender {
     private final MetaData metaData;
     private final StreamCloser streamCloser;
 
-    private Feed feed;
+    private DocRef feedRef;
     private String streamType;
     private boolean segmentOutput = true;
     private StreamTarget streamTarget;
 
     @Inject
     public StreamAppender(final ErrorReceiverProxy errorReceiverProxy,
-                   final StreamStore streamStore,
-                   final StreamHolder streamHolder,
-                   final FeedService feedService,
-                   final StreamTypeService streamTypeService,
-                   final StreamProcessorHolder streamProcessorHolder,
-                   final MetaData metaData,
-                   final StreamCloser streamCloser) {
+                          final StreamStore streamStore,
+                          final StreamHolder streamHolder,
+                          final FeedService feedService,
+                          final StreamTypeService streamTypeService,
+                          final StreamProcessorHolder streamProcessorHolder,
+                          final MetaData metaData,
+                          final StreamCloser streamCloser) {
         super(errorReceiverProxy);
         this.errorReceiverProxy = errorReceiverProxy;
         this.streamStore = streamStore;
@@ -91,7 +92,10 @@ public class StreamAppender extends AbstractAppender {
     protected OutputStream createOutputStream() throws IOException {
         final Stream parentStream = streamHolder.getStream();
 
-        if (feed == null) {
+        Feed feed;
+        if (feedRef != null) {
+            feed = feedService.loadByUuid(feedRef.getUuid());
+        } else {
             if (parentStream == null) {
                 throw new ProcessException("Unable to determine feed as no parent stream set");
             }
@@ -114,7 +118,7 @@ public class StreamAppender extends AbstractAppender {
                 streamProcessorHolder.getStreamProcessor(), streamProcessorHolder.getStreamTask());
 
         streamTarget = streamStore.openStreamTarget(stream);
-        OutputStream targetOutputStream = null;
+        OutputStream targetOutputStream;
 
         // Let the stream closer handle closing it
         streamCloser.add(streamTarget);
@@ -155,8 +159,8 @@ public class StreamAppender extends AbstractAppender {
     }
 
     @PipelineProperty(description = "The feed that output stream should be written to. If not specified the feed the input stream belongs to will be used.")
-    public void setFeed(final Feed feed) {
-        this.feed = feed;
+    public void setFeed(final DocRef feedRef) {
+        this.feedRef = feedRef;
     }
 
     @PipelineProperty(description = "The stream type that the output stream should be written as. This must be specified.")

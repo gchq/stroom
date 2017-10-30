@@ -24,7 +24,7 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
 
     @Override
     public DocRef createDocument(final String name, final String parentFolderUUID) {
-        throw new PermissionException("You cannot create the System node");
+        throw new PermissionException(securityContext.getUserId(), "You cannot create the System node");
     }
 
     @Override
@@ -35,26 +35,26 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
         }
 
         if (!securityContext.hasDocumentPermission(FOLDER, uuid, DocumentPermissionNames.READ)) {
-            throw new PermissionException("You do not have permission to read (" + FOLDER + ")");
+            throw new PermissionException(securityContext.getUserId(), "You do not have permission to read (" + FOLDER + ")");
         }
         if (!securityContext.hasDocumentPermission(FOLDER, parentFolderUUID, DocumentPermissionNames.getDocumentCreatePermission(FOLDER))) {
-            throw new PermissionException("You do not have permission to create (" + FOLDER + ") in folder " + parentFolderUUID);
+            throw new PermissionException(securityContext.getUserId(), "You do not have permission to create (" + FOLDER + ") in folder " + parentFolderUUID);
         }
         return new DocRef(FOLDER, UUID.randomUUID().toString(), "Copy of " + explorerTreeNode.getName());
     }
 
     @Override
     public DocRef moveDocument(final String uuid, final String parentFolderUUID) {
-        throw new PermissionException("You cannot move the System node");
+        throw new PermissionException(securityContext.getUserId(), "You cannot move the System node");
     }
 
     @Override
     public DocRef renameDocument(final String uuid, final String name) {
-        throw new PermissionException("You cannot rename the System node");
+        throw new PermissionException(securityContext.getUserId(), "You cannot rename the System node");
     }
 
     @Override
     public void deleteDocument(final String uuid) {
-        throw new PermissionException("You cannot delete the System node");
+        throw new PermissionException(securityContext.getUserId(), "You cannot delete the System node");
     }
 }

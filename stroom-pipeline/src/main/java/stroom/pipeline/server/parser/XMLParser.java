@@ -57,7 +57,7 @@ public class XMLParser extends AbstractParser {
 
     @Override
     protected XMLReader createReader() throws SAXException {
-        SAXParser parser = null;
+        SAXParser parser;
         try {
             parser = PARSER_FACTORY.newSAXParser();
         } catch (final ParserConfigurationException e) {

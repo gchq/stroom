@@ -20,6 +20,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import stroom.pipeline.server.factory.Processor;
+import stroom.pipeline.server.factory.Terminator;
 
 import java.util.Collections;
 import java.util.List;
@@ -98,5 +99,9 @@ public class XMLFilterAdaptor implements XMLFilter {
 
     @Override
     public void setElementId(final String elementId) {
+    }
+
+    @Override
+    public void setTerminator(final Terminator terminator) {
     }
 }

@@ -515,7 +515,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
             // Save directly so there is no marshalling of objects that would destroy imported data.
             if (importState.ok(importMode)) {
-                entity = entityServiceHelper.save(entity, queryAppender);
+                entity = internalSave(entity);
             }
 
         } catch (final Exception e) {
@@ -523,6 +523,10 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         }
 
         return DocRefUtil.create(entity);
+    }
+
+    protected E internalSave(final E entity) {
+        return entityManager.saveEntity(entity);
     }
 
     @Override

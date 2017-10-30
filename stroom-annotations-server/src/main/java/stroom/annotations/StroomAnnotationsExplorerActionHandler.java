@@ -29,26 +29,26 @@ public class StroomAnnotationsExplorerActionHandler implements ExplorerActionHan
 //            throw new PermissionException("You do not have permission to create (" + FOLDER + ") in folder " + parentFolderUUID);
 //        }
 //        return new DocRef(ANNOTATIONS, UUID.randomUUID().toString(), "Annotations Service");
-        throw new PermissionException("You cannot create the Annotations node");
+        throw new PermissionException(securityContext.getUserId(), "You cannot create the Annotations node");
     }
 
     @Override
     public DocRef copyDocument(String uuid, String parentFolderUUID) {
-        throw new PermissionException("You cannot copy the Annotations node");
+        throw new PermissionException(securityContext.getUserId(), "You cannot copy the Annotations node");
     }
 
     @Override
     public DocRef moveDocument(String uuid, String parentFolderUUID) {
-        throw new PermissionException("You cannot move the Annotations node");
+        throw new PermissionException(securityContext.getUserId(), "You cannot move the Annotations node");
     }
 
     @Override
     public DocRef renameDocument(String uuid, String name) {
-        throw new PermissionException("You cannot rename the Annotations node");
+        throw new PermissionException(securityContext.getUserId(), "You cannot rename the Annotations node");
     }
 
     @Override
     public void deleteDocument(String uuid) {
-        throw new PermissionException("You cannot delete the Annotations node");
+        throw new PermissionException(securityContext.getUserId(), "You cannot delete the Annotations node");
     }
 }

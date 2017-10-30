@@ -273,9 +273,9 @@ public final class FSDocumentStore<D extends Document> implements ExplorerAction
         try {
             // Check that the user has permission to read this item.
             if (!securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.READ)) {
-                throw new PermissionException("You are not authorised to read this document " + docRef);
+                throw new PermissionException(securityContext.getUserId(), "You are not authorised to read this document " + docRef);
             } else if (!securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.EXPORT)) {
-                throw new PermissionException("You are not authorised to export this document " + docRef);
+                throw new PermissionException(securityContext.getUserId(), "You are not authorised to export this document " + docRef);
             } else {
                 D document = read(uuid);
                 if (document == null) {

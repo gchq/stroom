@@ -23,6 +23,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.entity.server.MockDocumentEntityService;
+import stroom.entity.shared.DocRefUtil;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
@@ -102,7 +103,7 @@ public class TestStatisticsFilter implements Statistics {
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
                 new LocationFactoryProxy(), this, statisticsDataSourceService);
 
-        statisticsFilter.setStatisticsDataSource(statisticsDataSource);
+        statisticsFilter.setStatisticsDataSource(DocRefUtil.create(statisticsDataSource));
 
         ProcessorUtil.processXml(input, errorReceiverProxy, statisticsFilter, new LocationFactoryProxy());
 
@@ -178,7 +179,7 @@ public class TestStatisticsFilter implements Statistics {
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
                 new LocationFactoryProxy(), this, statisticsDataSourceService);
 
-        statisticsFilter.setStatisticsDataSource(statisticsDataSource);
+        statisticsFilter.setStatisticsDataSource(DocRefUtil.create(statisticsDataSource));
 
         ProcessorUtil.processXml(input, errorReceiverProxy, statisticsFilter, new LocationFactoryProxy());
 
@@ -228,7 +229,7 @@ public class TestStatisticsFilter implements Statistics {
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
                 new LocationFactoryProxy(), this, statisticsDataSourceService);
 
-        statisticsFilter.setStatisticsDataSource(statisticsDataSource);
+        statisticsFilter.setStatisticsDataSource(DocRefUtil.create(statisticsDataSource));
 
         // will throw an error as the type in the xml doesn't match the type in
         // the SDS
@@ -255,7 +256,7 @@ public class TestStatisticsFilter implements Statistics {
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
                 new LocationFactoryProxy(), this, statisticsDataSourceService);
 
-        statisticsFilter.setStatisticsDataSource(statisticsDataSource);
+        statisticsFilter.setStatisticsDataSource(DocRefUtil.create(statisticsDataSource));
 
         // will throw an error as the type in the xml doesn't match the type in
         // the SDS
@@ -287,7 +288,7 @@ public class TestStatisticsFilter implements Statistics {
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
                 new LocationFactoryProxy(), this, statisticsDataSourceService);
 
-        statisticsFilter.setStatisticsDataSource(statisticsDataSource);
+        statisticsFilter.setStatisticsDataSource(DocRefUtil.create(statisticsDataSource));
 
         // will throw an error as the type in the xml doesn't match the type in
         // the SDS
@@ -314,7 +315,7 @@ public class TestStatisticsFilter implements Statistics {
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
                 new LocationFactoryProxy(), this, statisticsDataSourceService);
 
-        statisticsFilter.setStatisticsDataSource(statisticsDataSource);
+        statisticsFilter.setStatisticsDataSource(DocRefUtil.create(statisticsDataSource));
 
         // will throw an error as the type in the xml doesn't match the type in
         // the SDS
@@ -341,7 +342,7 @@ public class TestStatisticsFilter implements Statistics {
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
                 new LocationFactoryProxy(), this, statisticsDataSourceService);
 
-        statisticsFilter.setStatisticsDataSource(statisticsDataSource);
+        statisticsFilter.setStatisticsDataSource(DocRefUtil.create(statisticsDataSource));
 
         // will throw an error as the type in the xml doesn't match the type in
         // the SDS
@@ -368,7 +369,7 @@ public class TestStatisticsFilter implements Statistics {
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
                 new LocationFactoryProxy(), this, statisticsDataSourceService);
 
-        statisticsFilter.setStatisticsDataSource(statisticsDataSource);
+        statisticsFilter.setStatisticsDataSource(DocRefUtil.create(statisticsDataSource));
 
         // will throw an error as the type in the xml doesn't match the type in
         // the SDS
@@ -399,7 +400,7 @@ public class TestStatisticsFilter implements Statistics {
         final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
                 new LocationFactoryProxy(), this, statisticsDataSourceService);
 
-        statisticsFilter.setStatisticsDataSource(statisticsDataSource);
+        statisticsFilter.setStatisticsDataSource(DocRefUtil.create(statisticsDataSource));
 
         // will throw an error as the type in the xml doesn't match the type in
         // the SDS

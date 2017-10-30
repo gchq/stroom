@@ -32,7 +32,7 @@ import stroom.xml.event.simple.SimpleEventList;
 import stroom.xml.event.simple.StartElement;
 import stroom.xml.event.simple.StartPrefixMapping;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.List;
 
 /**
@@ -43,14 +43,18 @@ import java.util.List;
 @ConfigurableElement(type = "RecordOutputFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS}, icon = ElementIcons.RECORD_OUTPUT)
 public class RecordOutputFilter extends BufferFilter {
-    @Resource
-    private ErrorReceiverProxy errorReceiverProxy;
+    private final ErrorReceiverProxy errorReceiverProxy;
 
     private int depth;
     private long count;
 
     private SimpleEventList rootEvents;
     private boolean hasOutputRoot;
+
+    @Inject
+    public RecordOutputFilter(final ErrorReceiverProxy errorReceiverProxy) {
+        this.errorReceiverProxy = errorReceiverProxy;
+    }
 
     @Override
     public void startDocument() throws SAXException {
