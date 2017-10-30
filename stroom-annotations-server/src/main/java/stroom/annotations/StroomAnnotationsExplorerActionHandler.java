@@ -6,12 +6,6 @@ import stroom.explorer.server.ExplorerActionHandler;
 import stroom.explorer.server.ExplorerTreeDao;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
-
-import java.util.UUID;
-
-import static stroom.explorer.shared.ExplorerConstants.ANNOTATIONS;
-import static stroom.explorer.shared.ExplorerConstants.FOLDER;
 
 @Component
 public class StroomAnnotationsExplorerActionHandler implements ExplorerActionHandler {
@@ -25,10 +19,6 @@ public class StroomAnnotationsExplorerActionHandler implements ExplorerActionHan
 
     @Override
     public DocRef createDocument(String name, String parentFolderUUID) {
-//        if (!securityContext.hasDocumentPermission(FOLDER, parentFolderUUID, DocumentPermissionNames.getDocumentCreatePermission(FOLDER))) {
-//            throw new PermissionException("You do not have permission to create (" + FOLDER + ") in folder " + parentFolderUUID);
-//        }
-//        return new DocRef(ANNOTATIONS, UUID.randomUUID().toString(), "Annotations Service");
         throw new PermissionException("You cannot create the Annotations node");
     }
 

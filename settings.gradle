@@ -76,4 +76,5 @@ include 'stroom-headless'
 // Integration tests.
 include 'stroom-integrationtest'
 include 'stroom-annotations-server'
+include 'stroom-elastic-server'
 
