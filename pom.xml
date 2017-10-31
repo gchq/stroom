@@ -48,6 +48,7 @@
     <!-- STROOM LIBS -->
     <!-- ******** -->
     <commons-compress.version>1.12</commons-compress.version>
+    <commons-exec.version>1.3</commons-exec.version>
     <commons-lang.version>2.6</commons-lang.version>
     <commons-pool2.version>2.4.2</commons-pool2.version>
     <commons-io.version>2.5</commons-io.version>
@@ -545,6 +546,13 @@
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-compress</artifactId>
         <version>${commons-compress.version}</version>
+      </dependency>
+
+      <!-- Apache Commons Exec -->
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-exec</artifactId>
+        <version>${commons-exec.version}</version>
       </dependency>
 
       <!-- Apache Commons Lang -->
