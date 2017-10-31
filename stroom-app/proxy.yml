@@ -1,0 +1,35 @@
+server:
+  type: simple
+  applicationContextPath: /
+  adminContextPath: /admin
+  connector:
+    type: http
+    port: 8080
+  #The following two lines stop the logging of requests to the web server as this gets quite noisy with
+  #lots of background rpc calls going on
+  requestLog:
+    appenders: []
+
+logging:
+  level: ERROR
+  loggers:
+    stroom: INFO
+    io.dropwizard: INFO
+    org.ehcache: INFO
+    org.eclipse.jetty: INFO
+    org.flywaydb: INFO
+  appenders:
+    - type: console
+      logFormat: "%-6level [%d{HH:mm:ss.SSS}] [%t] %logger{5} - %X{code} %msg %n"
+      timeZone: UTC
+
+mode: "proxy"
+proxyConfig:
+  forwardRequestConfig:
+    forwardUrl: "http://localhost:8899/datafeed"
+  proxyRepositoryConfig:
+    repoDir: "/Users/stroomdev66/tmp/stroom-proxy"
+    repositoryFormat: "${pathId}/${id}"
+    rollCron: "* * *"
+  proxyRepositoryReaderConfig:
+    readCron: "* * *"

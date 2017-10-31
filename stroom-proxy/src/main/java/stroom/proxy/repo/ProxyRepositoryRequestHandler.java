@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
 import stroom.proxy.handler.RequestHandler;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -21,6 +22,7 @@ public class ProxyRepositoryRequestHandler implements RequestHandler {
     private OutputStream entryStream;
     private boolean doneOne = false;
 
+    @Inject
     public ProxyRepositoryRequestHandler(final ProxyRepositoryManager proxyRepositoryManager) {
         this.proxyRepositoryManager = proxyRepositoryManager;
     }

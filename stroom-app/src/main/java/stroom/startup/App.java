@@ -17,15 +17,19 @@
 package stroom.startup;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.dropwizard.Application;
 import io.dropwizard.Configuration;
 import io.dropwizard.assets.AssetsBundle;
+import io.dropwizard.lifecycle.Managed;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.apache.shiro.web.servlet.AbstractShiroFilter;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +50,10 @@ import stroom.index.spring.IndexConfiguration;
 import stroom.lifecycle.LifecycleService;
 import stroom.logging.spring.EventLoggingConfiguration;
 import stroom.pipeline.spring.PipelineConfiguration;
+import stroom.proxy.guice.ProxyModule;
+import stroom.proxy.repo.ProxyLifecycle;
+import stroom.proxy.repo.ProxyRepositoryManager;
+import stroom.proxy.repo.ProxyRepositoryReader;
 import stroom.script.server.ScriptServlet;
 import stroom.script.spring.ScriptConfiguration;
 import stroom.search.spring.SearchConfiguration;
@@ -78,9 +86,10 @@ import stroom.visualisation.spring.VisualisationConfiguration;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
+import javax.servlet.Servlet;
 import java.util.EnumSet;
 
-public class App extends Application<Configuration> {
+public class App extends Application<Config> {
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
     public static void main(final String[] args) throws Exception {
@@ -90,12 +99,12 @@ public class App extends Application<Configuration> {
     }
 
     @Override
-    public void initialize(final Bootstrap<Configuration> bootstrap) {
+    public void initialize(final Bootstrap<Config> bootstrap) {
         bootstrap.addBundle(new AssetsBundle("/ui", "/", "stroom.jsp", "ui"));
     }
 
     @Override
-    public void run(final Configuration configuration, final Environment environment) throws Exception {
+    public void run(final Config configuration, final Environment environment) throws Exception {
         // Add useful logging setup.
         registerLogConfiguration(environment);
         environment.healthChecks().register(LogLevelInspector.class.getName(), new LogLevelInspector());
@@ -110,6 +119,30 @@ public class App extends Application<Configuration> {
         // Configure Cross-Origin Resource Sharing.
         configureCors(environment);
 
+        if ("proxy".equalsIgnoreCase(configuration.getMode())) {
+            startProxy(configuration, environment);
+        } else {
+            startApp(configuration, environment);
+        }
+    }
+
+    private void startProxy(final Config configuration, final Environment environment) throws Exception {
+        final ProxyModule proxyModule = new ProxyModule(configuration.getProxyConfig());
+        final Injector injector = Guice.createInjector(proxyModule);
+
+        final ServletContextHandler servletContextHandler = environment.getApplicationContext();
+
+        // Add servlets
+        GuiceUtil.addServlet(servletContextHandler, injector, stroom.proxy.servlet.DataFeedServlet.class, "/datafeed");
+        GuiceUtil.addServlet(servletContextHandler, injector, stroom.proxy.servlet.DataFeedServlet.class, "/datafeed/*");
+        GuiceUtil.addServlet(servletContextHandler, injector, stroom.proxy.servlet.StatusServlet.class, "/status");
+        GuiceUtil.addServlet(servletContextHandler, injector, stroom.proxy.servlet.DebugServlet.class, "/debug");
+
+        // Listen to the lifecycle of the Dropwizard app.
+        GuiceUtil.manage(environment.lifecycle(), injector, ProxyLifecycle.class);
+    }
+
+    private void startApp(final Config configuration, final Environment environment) throws Exception {
         // Start the spring context.
         LOGGER.info("Loading Spring context");
         final ApplicationContext applicationContext = loadApplcationContext(configuration, environment);

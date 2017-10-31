@@ -11,9 +11,8 @@ import stroom.util.io.StreamProgressMonitor;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.Monitor;
-import stroom.util.spring.StroomShutdown;
-import stroom.util.spring.StroomStartup;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.file.Path;
@@ -61,6 +60,7 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
 
     private volatile String hostName = null;
 
+    @Inject
     ProxyRepositoryReader(final Monitor monitor, final ProxyRepositoryManager proxyRepositoryManager, final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig, final HandlerFactory handlerFactory) {
         super(monitor, proxyRepositoryReaderConfig.getForwardThreadCount());
         this.proxyRepositoryReaderConfig = proxyRepositoryReaderConfig;
@@ -232,7 +232,7 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
                 if (sequenceId > proxyRepositoryReaderConfig.getMaxAggregation()
                         || (streamProgress.getTotalBytes() > nextBatchBreak)) {
                     batch++;
-                    LOGGER.info("processFeedFiles() - Starting new batch %s as sequence %s > %s or size %s > %s", batch,
+                    LOGGER.info("processFeedFiles() - Starting new batch {} as sequence {} > {} or size {} > {}", batch,
                             sequenceId, proxyRepositoryReaderConfig.getMaxAggregation(), streamProgress.getTotalBytes(), nextBatchBreak);
 
                     sequenceId = 1;
@@ -278,7 +278,6 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
         }
     }
 
-    @StroomShutdown
     public void stop() {
         finish.set(true);
         LOGGER.info("stop() - Stopping Executor");
@@ -289,7 +288,6 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
         LOGGER.info("stop() - Stopped  Reader Thread");
     }
 
-    @StroomStartup
     public void start() {
         startReading();
     }

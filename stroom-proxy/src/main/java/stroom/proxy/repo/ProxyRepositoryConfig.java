@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class ProxyRepositoryConfig {
     private String repoDir;
     private String repositoryFormat = "${pathId}/${id}";
-    private String simpleCron;
+    private String rollCron;
 
     /**
      * Optional Repository DIR. If set any incoming request will be written to the file system.
@@ -47,13 +47,13 @@ public class ProxyRepositoryConfig {
      * Interval to roll any writing repositories.
      */
     @JsonProperty
-    public String getSimpleCron() {
-        return simpleCron;
+    public String getRollCron() {
+        return rollCron;
     }
 
     @JsonProperty
-    public void setSimpleCron(final String simpleCron) {
-        this.simpleCron = simpleCron;
+    public void setRollCron(final String rollCron) {
+        this.rollCron = rollCron;
     }
 
 

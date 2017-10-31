@@ -65,7 +65,7 @@ public class StroomZipRepository {
     /**
      * Name of the repository while open
      */
-    private Path baseLockDir;
+    private final Path baseLockDir;
 
     /**
      * Final name once finished (may be null)
@@ -254,7 +254,7 @@ public class StroomZipRepository {
         return getStroomZipOutputStream(null);
     }
 
-    public StroomZipOutputStream getStroomZipOutputStream(final MetaMap metaMap)
+    StroomZipOutputStream getStroomZipOutputStream(final MetaMap metaMap)
             throws IOException {
         if (finish.get()) {
             throw new RuntimeException("No longer allowed to write new streams to a finished repository");
@@ -291,7 +291,7 @@ public class StroomZipRepository {
     }
 
     @SuppressWarnings(value = "DM_DEFAULT_ENCODING")
-    public void addErrorMessage(final StroomZipFile zipFile, final String msg, final boolean bad) {
+    void addErrorMessage(final StroomZipFile zipFile, final String msg, final boolean bad) {
         final Path file = zipFile.getFile();
 
         try {
@@ -324,7 +324,7 @@ public class StroomZipRepository {
     }
 
     void clean() {
-        LOGGER.debug("clean() " + baseLockDir);
+        LOGGER.info("clean() " + baseLockDir);
         clean(baseLockDir);
     }
 
@@ -388,16 +388,16 @@ public class StroomZipRepository {
                 throw new RuntimeException("Unable to rename directory " + baseLockDir + " to " + baseResultantDir);
             }
             baseResultantDir = null;
-            // No-longer locked
-            baseLockDir = null;
         }
     }
 
     boolean deleteIfEmpty() {
         if (deleteEmptyDir(baseLockDir)) {
             LOGGER.debug("deleteIfEmpty() - Removed " + baseLockDir);
-            return true;
+
+            return baseResultantDir == null || deleteEmptyDir(baseResultantDir);
         }
+
         return false;
     }
 

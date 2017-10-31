@@ -74,7 +74,7 @@ public class ForwardRequestHandler implements RequestHandler, HostnameVerifier {
         bytesSent += length;
         zipOutputStream.write(buffer, off, length);
         if (forwardDelayMs != null) {
-            LOGGER.debug("handleEntryData() - adding delay %s", forwardDelayMs);
+            LOGGER.debug("handleEntryData() - adding delay {}", forwardDelayMs);
             ThreadUtil.sleep(forwardDelayMs);
         }
     }
@@ -92,7 +92,7 @@ public class ForwardRequestHandler implements RequestHandler, HostnameVerifier {
             try {
                 responseCode = StroomStreamException.checkConnectionResponse(connection);
             } finally {
-                LOGGER.info("handleFooter() - %s took %s to forward %s response %s - %s", guid,
+                LOGGER.info("handleFooter() - {} took {} to forward {} response {} - {}", guid,
                         ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTimeMs),
                         ModelStringUtil.formatIECByteSizeString(bytesSent), responseCode, metaMap);
                 connection.disconnect();

@@ -8,6 +8,7 @@ import stroom.proxy.handler.RequestHandler;
 import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.proxy.repo.ProxyRepositoryRequestHandler;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.util.ArrayList;
@@ -26,8 +27,8 @@ public class ProxyHandlerFactory {
     private final ForwardRequestHandlerFactory forwardRequestHandlerFactory;
 
     @Inject
-    ProxyHandlerFactory(final LogRequestConfig logRequestConfig,
-                        final ProxyRepositoryConfig proxyRepositoryConfig,
+    ProxyHandlerFactory(@Nullable final LogRequestConfig logRequestConfig,
+                        @Nullable final ProxyRepositoryConfig proxyRepositoryConfig,
                         final Provider<ProxyRepositoryRequestHandler> proxyRepositoryRequestHandlerProxider,
                         final Provider<LogRequestHandler> logRequestHandlerProvider,
                         final ForwardRequestHandlerFactory forwardRequestHandlerFactory) {
@@ -43,10 +44,10 @@ public class ProxyHandlerFactory {
      */
     public List<RequestHandler> createIncomingHandlers() {
         final List<RequestHandler> handlerList = new ArrayList<>();
-        if (StringUtils.isNotBlank(logRequestConfig.getLogRequest())) {
+        if (logRequestConfig != null && StringUtils.isNotBlank(logRequestConfig.getLogRequest())) {
             handlerList.add(logRequestHandlerProvider.get());
         }
-        if (StringUtils.isNotBlank(proxyRepositoryConfig.getRepoDir())) {
+        if (proxyRepositoryConfig != null && StringUtils.isNotBlank(proxyRepositoryConfig.getRepoDir())) {
             handlerList.add(proxyRepositoryRequestHandlerProxider.get());
         } else {
             handlerList.addAll(forwardRequestHandlerFactory.create());
@@ -61,10 +62,10 @@ public class ProxyHandlerFactory {
     public List<RequestHandler> createOutgoingHandlers() {
         final List<RequestHandler> handlerList = new ArrayList<>();
 
-        if (StringUtils.isNotBlank(logRequestConfig.getLogRequest())) {
+        if (logRequestConfig != null && StringUtils.isNotBlank(logRequestConfig.getLogRequest())) {
             handlerList.add(logRequestHandlerProvider.get());
         }
-        if (StringUtils.isNotBlank(proxyRepositoryConfig.getRepoDir())) {
+        if (proxyRepositoryConfig != null && StringUtils.isNotBlank(proxyRepositoryConfig.getRepoDir())) {
             handlerList.addAll(forwardRequestHandlerFactory.create());
         }
 

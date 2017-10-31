@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import io.dropwizard.Configuration;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.assertj.core.api.Assertions;
 import org.glassfish.jersey.client.ClientConfig;
@@ -15,7 +14,6 @@ import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
 import stroom.query.api.v2.DocRef;
-
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.Query;
@@ -27,6 +25,7 @@ import stroom.security.server.AuthorizationHelper;
 import stroom.servicediscovery.RegisteredService;
 import stroom.servicediscovery.ResourcePaths;
 import stroom.startup.App;
+import stroom.startup.Config;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -45,7 +44,7 @@ import java.util.List;
 public class TestStroomIndexQueryResource {
 
     @ClassRule
-    public static final DropwizardAppRule<Configuration> RULE = new DropwizardAppRule<>(App.class, "dev.yml");
+    public static final DropwizardAppRule<Config> RULE = new DropwizardAppRule<>(App.class, "dev.yml");
 
     public static final String SEARCH_TARGET = "http://localhost:8080" +
             ResourcePaths.ROOT_PATH +

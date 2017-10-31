@@ -80,14 +80,14 @@ public class DataFeedServlet extends HttpServlet {
                     while (inputStream.read(buffer) >= 0) ;
                     CloseableUtil.close(inputStream);
                     resp.setStatus(HttpServletResponse.SC_OK);
-                    LOGGER.warn("\"handleException() - Dropped stream\",%s", CSVFormatter.format(metaMap));
+                    LOGGER.warn("\"handleException() - Dropped stream\",{}", CSVFormatter.format(metaMap));
                     error = false;
                 } else {
                     if (ex instanceof StroomStreamException) {
-                        LOGGER.warn("\"handleException()\",%s,\"%s\"", CSVFormatter.format(metaMap),
+                        LOGGER.warn("\"handleException()\",{},\"{}\"", CSVFormatter.format(metaMap),
                                 CSVFormatter.escape(ex.getMessage()));
                     } else {
-                        LOGGER.error("\"handleException()\",%s", CSVFormatter.format(metaMap), ex);
+                        LOGGER.error("\"handleException()\",{}", CSVFormatter.format(metaMap), ex);
                     }
                 }
                 for (final RequestHandler requestHandler : handlers) {
@@ -110,7 +110,7 @@ public class DataFeedServlet extends HttpServlet {
 
         if (LOGGER.isInfoEnabled()) {
             final long time = System.currentTimeMillis() - startTime;
-            LOGGER.info("\"doPost() - Took %s to process (concurrentRequestCount=%s) %s\",%s",
+            LOGGER.info("\"doPost() - Took {} to process (concurrentRequestCount={}) {}\",{}",
                     ModelStringUtil.formatDurationString(time), concurrentRequestCount, returnCode,
                     CSVFormatter.format(metaMap));
         }

@@ -1,6 +1,7 @@
 package stroom.proxy.repo;
 
 import com.google.inject.Singleton;
+import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.date.DateUtil;
@@ -8,8 +9,6 @@ import stroom.util.io.FileNameUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
-import stroom.util.spring.StroomShutdown;
-import stroom.util.spring.StroomStartup;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
@@ -20,6 +19,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
@@ -32,24 +32,21 @@ public class ProxyRepositoryManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryManager.class);
 
     private final AtomicReference<StroomZipRepository> activeRepository = new AtomicReference<>();
-    private final List<StroomZipRepository> rolledRepository = new ArrayList<>();
-
-    private volatile boolean finish = false;
-
+    private final LinkedBlockingDeque<StroomZipRepository> rolledRepository = new LinkedBlockingDeque<>();
     private final Path rootRepoDir;
     private final String repositoryFormat;
     private final Scheduler scheduler;
-
     private final int lockDeleteAgeMs = 1000 * 60 * 60;
+    private volatile boolean finish = false;
 
     @Inject
     public ProxyRepositoryManager(final ProxyRepositoryConfig proxyRepositoryConfig) {
-        this(getPath(proxyRepositoryConfig.getRepoDir()), getFormat(proxyRepositoryConfig.getRepositoryFormat()), createScheduler(proxyRepositoryConfig.getSimpleCron()));
+        this(getPath(proxyRepositoryConfig.getRepoDir()), getFormat(proxyRepositoryConfig.getRepositoryFormat()), createScheduler(proxyRepositoryConfig.getRollCron()));
     }
 
     ProxyRepositoryManager(final Path repoDir,
-                                  final String repositoryFormat,
-                                  final Scheduler scheduler) {
+                           final String repositoryFormat,
+                           final Scheduler scheduler) {
         this.rootRepoDir = repoDir;
         this.repositoryFormat = repositoryFormat;
         this.scheduler = scheduler;
@@ -84,9 +81,17 @@ public class ProxyRepositoryManager {
         return null;
     }
 
-    @StroomStartup(priority = 100)
     public synchronized void start() {
         LOGGER.info("Using repository format: " + repositoryFormat);
+
+        // Create the repo root dir.
+        if (!Files.isDirectory(rootRepoDir)) {
+            try {
+                Files.createDirectories(rootRepoDir);
+            } catch (final IOException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        }
 
         scanForOldRepositories();
 
@@ -109,6 +114,11 @@ public class ProxyRepositoryManager {
                     }
             );
         }
+    }
+
+    public void stop() {
+        finish = true;
+        rollCurrentRepo();
     }
 
     private void scanForOldRepositories() {
@@ -160,7 +170,7 @@ public class ProxyRepositoryManager {
         }
     }
 
-    public StroomZipRepository getActiveRepository() {
+    StroomZipRepository getActiveRepository() {
         if (activeRepository.get() == null) {
             synchronized (ProxyRepositoryManager.class) {
                 if (activeRepository.get() == null) {
@@ -180,23 +190,14 @@ public class ProxyRepositoryManager {
         return activeRepository.get();
     }
 
-    public List<StroomZipRepository> getReadableRepository() {
-        final List<StroomZipRepository> rtnList = new ArrayList<>();
-        if (rolledRepository != null) {
-            rtnList.addAll(rolledRepository);
-        }
-        if (scheduler == null && activeRepository.get() != null) {
-            rtnList.add(activeRepository.get());
+    List<StroomZipRepository> getReadableRepository() {
+        final List<StroomZipRepository> rtnList = new ArrayList<>(rolledRepository);
+
+        final StroomZipRepository proxyRepository = activeRepository.get();
+        if (scheduler == null && proxyRepository != null) {
+            rtnList.add(proxyRepository);
         }
         return rtnList;
-    }
-
-    public synchronized void removeIfEmpty(final StroomZipRepository repository) {
-        if (repository != activeRepository.get()) {
-            if (repository.deleteIfEmpty()) {
-                rolledRepository.remove(repository);
-            }
-        }
     }
 
     void doRunWork() {
@@ -204,29 +205,25 @@ public class ProxyRepositoryManager {
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info("run() - Cron Match at " + DateUtil.createNormalDateTimeString());
             }
-            // Create a new one
-            // Do this with a lock on this object so no one can call finish
-            synchronized (this) {
-                if (activeRepository != null) {
-                    if (LOGGER.isInfoEnabled()) {
-                        LOGGER.info("run() rolling repository");
-                    }
-                    // Swap them
-                    final StroomZipRepository lastActiveProxyRepository = activeRepository.getAndSet(null);
-                    // Tell the last one to finish
-                    lastActiveProxyRepository.finish();
-                    rolledRepository.add(lastActiveProxyRepository);
-                }
-            }
+
+            rollCurrentRepo();
         }
     }
 
-    @StroomShutdown
-    public synchronized void stop() {
-        finish = true;
+
+    private synchronized void rollCurrentRepo() {
         final StroomZipRepository proxyRepository = activeRepository.getAndSet(null);
         if (proxyRepository != null) {
+            if (LOGGER.isInfoEnabled()) {
+                LOGGER.info("run() rolling repository");
+            }
+
+            // Tell the current repo to finish.
             proxyRepository.finish();
+            rolledRepository.add(proxyRepository);
         }
+
+        // Delete empty repos.
+        rolledRepository.removeIf(StroomZipRepository::deleteIfEmpty);
     }
 }
