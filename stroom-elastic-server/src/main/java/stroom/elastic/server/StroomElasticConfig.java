@@ -1,4 +1,4 @@
-package stroom.elastic;
+package stroom.elastic.server;
 
 import stroom.explorer.server.ExplorerActionHandlers;
 import stroom.explorer.shared.ExplorerConstants;

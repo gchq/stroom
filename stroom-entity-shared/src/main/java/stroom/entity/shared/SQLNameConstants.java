@@ -78,6 +78,8 @@ public final class SQLNameConstants {
     public static final String HASH = "HASH";
     public static final String HOUR = "HR";
     public static final String INDEX = "IDX";
+    public static final String INDEX_NAME = "INDEX_NAME";
+    public static final String INDEXED_TYPE = "INDEXED_TYPE";
     public static final String JOB = "JB";
     public static final String KEY = "KEY";
     public static final String LAST = "LAST";

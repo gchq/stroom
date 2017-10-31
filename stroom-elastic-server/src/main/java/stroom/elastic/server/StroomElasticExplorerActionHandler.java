@@ -1,4 +1,4 @@
-package stroom.elastic;
+package stroom.elastic.server;
 
 import stroom.entity.shared.PermissionException;
 import stroom.explorer.server.ExplorerActionHandler;

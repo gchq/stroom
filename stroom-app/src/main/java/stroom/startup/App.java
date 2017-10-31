@@ -38,8 +38,10 @@ import stroom.dashboard.spring.DashboardConfiguration;
 import stroom.datafeed.server.DataFeedServlet;
 import stroom.dictionary.spring.DictionaryConfiguration;
 import stroom.dispatch.shared.DispatchService;
-import stroom.elastic.StroomElasticConfig;
-import stroom.elastic.StroomElasticExplorerActionHandler;
+import stroom.elastic.server.ElasticIndexResource;
+import stroom.elastic.server.StroomElasticConfig;
+import stroom.elastic.server.StroomElasticExplorerActionHandler;
+import stroom.elastic.spring.ElasticIndexConfiguration;
 import stroom.entity.server.SpringRequestFactoryServlet;
 import stroom.explorer.server.ExplorerConfiguration;
 import stroom.feed.server.RemoteFeedServiceRPC;
@@ -151,6 +153,7 @@ public class App extends Application<Configuration> {
         SpringUtil.addServletListener(environment.servlets(), applicationContext, SessionListListener.class);
 
         // Add resources.
+        SpringUtil.addResource(environment.jersey(), applicationContext, ElasticIndexResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, StroomIndexQueryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, SqlStatisticsQueryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, AuthenticationResource.class);
@@ -184,8 +187,9 @@ public class App extends Application<Configuration> {
                 SecurityConfiguration.class,
                 StroomAnnotationsConfig.class,
                 StroomAnnotationsExplorerActionHandler.class,
-                StroomElasticConfig.class,
-                StroomElasticExplorerActionHandler.class
+                //StroomElasticConfig.class,
+                //StroomElasticExplorerActionHandler.class, // replaced by ElasticIndexConfiguration
+                ElasticIndexConfiguration.class // Sort this
         );
         applicationContext.refresh();
         return applicationContext;
