@@ -1,25 +1,25 @@
 package stroom.proxy.guice;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.proxy.handler.ForwardRequestConfig;
-import stroom.proxy.handler.LogRequestConfig;
+import stroom.proxy.handler.ForwardStreamConfig;
+import stroom.proxy.handler.LogStreamConfig;
 import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.proxy.repo.ProxyRepositoryReaderConfig;
 
 public class ProxyConfig {
-    private ForwardRequestConfig forwardRequestConfig;
+    private ForwardStreamConfig forwardStreamConfig;
     private ProxyRepositoryConfig proxyRepositoryConfig;
     private ProxyRepositoryReaderConfig proxyRepositoryReaderConfig;
-    private LogRequestConfig logRequestConfig;
+    private LogStreamConfig logStreamConfig;
 
     @JsonProperty
-    public ForwardRequestConfig getForwardRequestConfig() {
-        return forwardRequestConfig;
+    public ForwardStreamConfig getForwardStreamConfig() {
+        return forwardStreamConfig;
     }
 
     @JsonProperty
-    public void setForwardRequestConfig(final ForwardRequestConfig forwardRequestConfig) {
-        this.forwardRequestConfig = forwardRequestConfig;
+    public void setForwardStreamConfig(final ForwardStreamConfig forwardStreamConfig) {
+        this.forwardStreamConfig = forwardStreamConfig;
     }
 
     @JsonProperty
@@ -43,12 +43,12 @@ public class ProxyConfig {
     }
 
     @JsonProperty
-    public LogRequestConfig getLogRequestConfig() {
-        return logRequestConfig;
+    public LogStreamConfig getLogStreamConfig() {
+        return logStreamConfig;
     }
 
     @JsonProperty
-    public void setLogRequestConfig(final LogRequestConfig logRequestConfig) {
-        this.logRequestConfig = logRequestConfig;
+    public void setLogStreamConfig(final LogStreamConfig logStreamConfig) {
+        this.logStreamConfig = logStreamConfig;
     }
 }

@@ -3,7 +3,7 @@ package stroom.proxy.repo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
-import stroom.proxy.handler.RequestHandler;
+import stroom.proxy.handler.StreamHandler;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -12,8 +12,8 @@ import java.io.OutputStream;
 /**
  * Factory to return back handlers for incoming and outgoing requests.
  */
-public class ProxyRepositoryRequestHandler implements RequestHandler {
-    private static Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryRequestHandler.class);
+public class ProxyRepositoryStreamHandler implements StreamHandler {
+    private static Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryStreamHandler.class);
 
     private final ProxyRepositoryManager proxyRepositoryManager;
 
@@ -23,7 +23,7 @@ public class ProxyRepositoryRequestHandler implements RequestHandler {
     private boolean doneOne = false;
 
     @Inject
-    public ProxyRepositoryRequestHandler(final ProxyRepositoryManager proxyRepositoryManager) {
+    public ProxyRepositoryStreamHandler(final ProxyRepositoryManager proxyRepositoryManager) {
         this.proxyRepositoryManager = proxyRepositoryManager;
     }
 

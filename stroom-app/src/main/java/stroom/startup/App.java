@@ -22,7 +22,6 @@ import com.google.inject.Injector;
 import io.dropwizard.Application;
 import io.dropwizard.Configuration;
 import io.dropwizard.assets.AssetsBundle;
-import io.dropwizard.lifecycle.Managed;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
@@ -52,8 +51,9 @@ import stroom.logging.spring.EventLoggingConfiguration;
 import stroom.pipeline.spring.PipelineConfiguration;
 import stroom.proxy.guice.ProxyModule;
 import stroom.proxy.repo.ProxyLifecycle;
-import stroom.proxy.repo.ProxyRepositoryManager;
-import stroom.proxy.repo.ProxyRepositoryReader;
+import stroom.proxy.servlet.ConfigServlet;
+import stroom.proxy.servlet.ProxyStatusServlet;
+import stroom.proxy.servlet.ProxyWelcomeServlet;
 import stroom.script.server.ScriptServlet;
 import stroom.script.spring.ScriptConfiguration;
 import stroom.search.spring.SearchConfiguration;
@@ -86,13 +86,18 @@ import stroom.visualisation.spring.VisualisationConfiguration;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
-import javax.servlet.Servlet;
 import java.util.EnumSet;
 
 public class App extends Application<Config> {
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
+    private static String configPath;
+
     public static void main(final String[] args) throws Exception {
+        if (args.length > 0) {
+            configPath = args[args.length - 1];
+        }
+
         // Hibernate requires JBoss Logging. The SLF4J API jar wasn't being detected so this sets it manually.
         System.setProperty("org.jboss.logging.provider", "slf4j");
         new App().run(args);
@@ -100,7 +105,7 @@ public class App extends Application<Config> {
 
     @Override
     public void initialize(final Bootstrap<Config> bootstrap) {
-        bootstrap.addBundle(new AssetsBundle("/ui", "/", "stroom.jsp", "ui"));
+//        bootstrap.addBundle(new AssetsBundle("/ui", "/", "stroom.jsp", "ui"));
     }
 
     @Override
@@ -122,6 +127,8 @@ public class App extends Application<Config> {
         if ("proxy".equalsIgnoreCase(configuration.getMode())) {
             startProxy(configuration, environment);
         } else {
+            // Adding asset bundles this way is not normal but it is done so that proxy can serve it's own root page for now.
+            new AssetsBundle("/ui", "/", "stroom.jsp", "ui").run(environment);
             startApp(configuration, environment);
         }
     }
@@ -133,10 +140,12 @@ public class App extends Application<Config> {
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
 
         // Add servlets
-        GuiceUtil.addServlet(servletContextHandler, injector, stroom.proxy.servlet.DataFeedServlet.class, "/datafeed");
-        GuiceUtil.addServlet(servletContextHandler, injector, stroom.proxy.servlet.DataFeedServlet.class, "/datafeed/*");
-        GuiceUtil.addServlet(servletContextHandler, injector, stroom.proxy.servlet.StatusServlet.class, "/status");
-        GuiceUtil.addServlet(servletContextHandler, injector, stroom.proxy.servlet.DebugServlet.class, "/debug");
+        servletContextHandler.addServlet(new ServletHolder(new ConfigServlet(configPath)), "/config");
+        GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, "/datafeed");
+        GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, "/datafeed/*");
+        GuiceUtil.addServlet(servletContextHandler, injector, ProxyWelcomeServlet.class, "/");
+        GuiceUtil.addServlet(servletContextHandler, injector, ProxyStatusServlet.class, "/status");
+        GuiceUtil.addServlet(servletContextHandler, injector, DebugServlet.class, "/debug");
 
         // Listen to the lifecycle of the Dropwizard app.
         GuiceUtil.manage(environment.lifecycle(), injector, ProxyLifecycle.class);

@@ -3,9 +3,9 @@ package stroom.proxy.repo;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.feed.MetaMap;
-import stroom.proxy.handler.HandlerFactory;
-import stroom.proxy.handler.MockRequestHandler;
-import stroom.proxy.handler.RequestHandler;
+import stroom.proxy.handler.StreamHandlerFactory;
+import stroom.proxy.handler.MockStreamHandler;
+import stroom.proxy.handler.StreamHandler;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.task.MonitorImpl;
@@ -27,7 +27,7 @@ import java.util.zip.ZipException;
 public class TestProxyRepositoryReader extends StroomUnitTest {
     private ProxyRepositoryReaderConfig proxyRepositoryReaderConfig;
     private ProxyRepositoryManager proxyRepositoryManager;
-    private MockRequestHandler mockRequestHandler;
+    private MockStreamHandler mockRequestHandler;
     private ProxyRepositoryReader proxyRepositoryReader;
 
     private void init() throws IOException {
@@ -38,10 +38,10 @@ public class TestProxyRepositoryReader extends StroomUnitTest {
         final Path repoDir = Files.createTempDirectory("stroom");
         proxyRepositoryReaderConfig = new ProxyRepositoryReaderConfig();
         proxyRepositoryManager = new ProxyRepositoryManager(repoDir, repoFormat, null);
-        mockRequestHandler = new MockRequestHandler();
+        mockRequestHandler = new MockStreamHandler();
 
-        final HandlerFactory handlerFactory = () -> {
-            final List<RequestHandler> list = new ArrayList<>();
+        final StreamHandlerFactory handlerFactory = () -> {
+            final List<StreamHandler> list = new ArrayList<>();
             list.add(mockRequestHandler);
             return list;
         };

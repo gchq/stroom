@@ -25,7 +25,7 @@ logging:
 
 mode: "proxy"
 proxyConfig:
-  forwardRequestConfig:
+  forwardStreamConfig:
     forwardUrl: "http://localhost:8899/datafeed"
   proxyRepositoryConfig:
     repoDir: "/Users/stroomdev66/tmp/stroom-proxy"

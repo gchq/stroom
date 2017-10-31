@@ -5,7 +5,7 @@ import stroom.proxy.repo.StroomStreamHandler;
 
 import java.io.IOException;
 
-public interface RequestHandler extends StroomStreamHandler {
+public interface StreamHandler extends StroomStreamHandler {
     void setMetaMap(MetaMap metaMap);
 
     void handleHeader() throws IOException;

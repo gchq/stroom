@@ -2,15 +2,16 @@ package stroom.proxy.datafeed;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.proxy.handler.ForwardRequestConfig;
-import stroom.proxy.handler.ForwardRequestHandler;
-import stroom.proxy.handler.ForwardRequestHandlerFactory;
-import stroom.proxy.handler.LogRequestConfig;
-import stroom.proxy.handler.LogRequestHandler;
-import stroom.proxy.handler.RequestHandler;
+import stroom.proxy.handler.ForwardStreamConfig;
+import stroom.proxy.handler.ForwardStreamHandler;
+import stroom.proxy.handler.ForwardStreamHandlerFactory;
+import stroom.proxy.handler.LogStreamConfig;
+import stroom.proxy.handler.LogStreamHandler;
+import stroom.proxy.handler.StreamHandler;
+import stroom.proxy.handler.StreamHandlerFactoryImpl;
 import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.proxy.repo.ProxyRepositoryManager;
-import stroom.proxy.repo.ProxyRepositoryRequestHandler;
+import stroom.proxy.repo.ProxyRepositoryStreamHandler;
 import stroom.util.io.FileUtil;
 import stroom.util.test.StroomUnitTest;
 
@@ -21,33 +22,33 @@ public class TestProxyHandlerFactory extends StroomUnitTest {
     @SuppressWarnings("unchecked")
     @Test
     public void testStoreAndForward() throws Exception {
-        final ProxyHandlerFactory proxyHandlerFactory = getProxyHandlerFactory(FileUtil.getCanonicalPath(getCurrentTestDir()),
+        final StreamHandlerFactoryImpl proxyHandlerFactory = getProxyHandlerFactory(FileUtil.getCanonicalPath(getCurrentTestDir()),
                 "https://url1,https://url2");
-        final List<RequestHandler> incomingHandlers = proxyHandlerFactory.createIncomingHandlers();
+        final List<StreamHandler> incomingHandlers = proxyHandlerFactory.createIncomingHandlers();
 
         Assert.assertTrue("Expecting 1 handler that saves to the repository",
-                incomingHandlers.size() == 1 && incomingHandlers.get(0) instanceof ProxyRepositoryRequestHandler);
+                incomingHandlers.size() == 1 && incomingHandlers.get(0) instanceof ProxyRepositoryStreamHandler);
 
-        final List<RequestHandler> outgoingHandlers = proxyHandlerFactory.createOutgoingHandlers();
+        final List<StreamHandler> outgoingHandlers = proxyHandlerFactory.createOutgoingHandlers();
         Assert.assertTrue("Expecting 2 handler that forward to other URLS",
-                outgoingHandlers.size() == 2 && outgoingHandlers.get(0) instanceof ForwardRequestHandler
-                        && outgoingHandlers.get(1) instanceof ForwardRequestHandler);
+                outgoingHandlers.size() == 2 && outgoingHandlers.get(0) instanceof ForwardStreamHandler
+                        && outgoingHandlers.get(1) instanceof ForwardStreamHandler);
     }
 
     @Test
     public void testForward() throws Exception {
-        final ProxyHandlerFactory proxyHandlerFactory = getProxyHandlerFactory(null, "https://url1,https://url2");
+        final StreamHandlerFactoryImpl proxyHandlerFactory = getProxyHandlerFactory(null, "https://url1,https://url2");
 
         for (int i = 0; i < 2; i++) {
-            final List<RequestHandler> incomingHandlers = proxyHandlerFactory.createIncomingHandlers();
+            final List<StreamHandler> incomingHandlers = proxyHandlerFactory.createIncomingHandlers();
             Assert.assertTrue("Expecting 2 handler that forward to other URLS",
-                    incomingHandlers.size() == 2 && incomingHandlers.get(0) instanceof ForwardRequestHandler
-                            && incomingHandlers.get(1) instanceof ForwardRequestHandler);
+                    incomingHandlers.size() == 2 && incomingHandlers.get(0) instanceof ForwardStreamHandler
+                            && incomingHandlers.get(1) instanceof ForwardStreamHandler);
 
-            Assert.assertEquals("https://url1", ((ForwardRequestHandler) incomingHandlers.get(0)).getForwardUrl());
-            Assert.assertEquals("https://url2", ((ForwardRequestHandler) incomingHandlers.get(1)).getForwardUrl());
+            Assert.assertEquals("https://url1", ((ForwardStreamHandler) incomingHandlers.get(0)).getForwardUrl());
+            Assert.assertEquals("https://url2", ((ForwardStreamHandler) incomingHandlers.get(1)).getForwardUrl());
 
-            final List<RequestHandler> outgoingHandlers = proxyHandlerFactory.createOutgoingHandlers();
+            final List<StreamHandler> outgoingHandlers = proxyHandlerFactory.createOutgoingHandlers();
             Assert.assertTrue("Expecting 0 handler that forward to other URLS", outgoingHandlers.size() == 0);
         }
     }
@@ -55,20 +56,20 @@ public class TestProxyHandlerFactory extends StroomUnitTest {
     @SuppressWarnings("unchecked")
     @Test
     public void testStore() throws Exception {
-        final ProxyHandlerFactory proxyHandlerFactory = getProxyHandlerFactory(FileUtil.getCanonicalPath(getCurrentTestDir()), null);
+        final StreamHandlerFactoryImpl proxyHandlerFactory = getProxyHandlerFactory(FileUtil.getCanonicalPath(getCurrentTestDir()), null);
 
-        final List<RequestHandler> incomingHandlers = proxyHandlerFactory.createIncomingHandlers();
+        final List<StreamHandler> incomingHandlers = proxyHandlerFactory.createIncomingHandlers();
         Assert.assertTrue("Expecting 1 handler that stores incoming data",
-                incomingHandlers.size() == 1 && incomingHandlers.get(0) instanceof ProxyRepositoryRequestHandler);
+                incomingHandlers.size() == 1 && incomingHandlers.get(0) instanceof ProxyRepositoryStreamHandler);
 
-        final List<RequestHandler> outgoingHandlers = proxyHandlerFactory.createOutgoingHandlers();
+        final List<StreamHandler> outgoingHandlers = proxyHandlerFactory.createOutgoingHandlers();
         Assert.assertTrue("Expecting 0 handlers that forward to other URLS", outgoingHandlers.size() == 0);
     }
 
-    private ProxyHandlerFactory getProxyHandlerFactory(final String repoDir, final String forwardUrl) {
-        final LogRequestConfig logRequestConfig = new LogRequestConfig();
+    private StreamHandlerFactoryImpl getProxyHandlerFactory(final String repoDir, final String forwardUrl) {
+        final LogStreamConfig logRequestConfig = new LogStreamConfig();
         final ProxyRepositoryConfig proxyRepositoryConfig = new ProxyRepositoryConfig();
-        final ForwardRequestConfig forwardRequestConfig = new ForwardRequestConfig();
+        final ForwardStreamConfig forwardRequestConfig = new ForwardStreamConfig();
 
         logRequestConfig.setLogRequest("");
         proxyRepositoryConfig.setRepoDir(repoDir);
@@ -76,13 +77,13 @@ public class TestProxyHandlerFactory extends StroomUnitTest {
 
         final ProxyRepositoryManager proxyRepositoryManager = new ProxyRepositoryManager(proxyRepositoryConfig);
 
-        final Provider<ProxyRepositoryRequestHandler> proxyRepositoryRequestHandlerProvider = () -> new ProxyRepositoryRequestHandler(proxyRepositoryManager);
+        final Provider<ProxyRepositoryStreamHandler> proxyRepositoryRequestHandlerProvider = () -> new ProxyRepositoryStreamHandler(proxyRepositoryManager);
 
-        final Provider<LogRequestHandler> logRequestHandlerProvider = () -> new LogRequestHandler(logRequestConfig);
+        final Provider<LogStreamHandler> logRequestHandlerProvider = () -> new LogStreamHandler(logRequestConfig);
 
-        final ForwardRequestHandlerFactory forwardRequestHandlerFactory = new ForwardRequestHandlerFactory(forwardRequestConfig);
+        final ForwardStreamHandlerFactory forwardRequestHandlerFactory = new ForwardStreamHandlerFactory(forwardRequestConfig);
 
-        return new ProxyHandlerFactory(logRequestConfig,
+        return new StreamHandlerFactoryImpl(logRequestConfig,
                 proxyRepositoryConfig,
                 proxyRepositoryRequestHandlerProvider,
                 logRequestHandlerProvider,

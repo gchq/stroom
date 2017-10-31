@@ -4,8 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
-import stroom.proxy.handler.HandlerFactory;
-import stroom.proxy.handler.RequestHandler;
+import stroom.proxy.handler.StreamHandlerFactory;
+import stroom.proxy.handler.StreamHandler;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamProgressMonitor;
 import stroom.util.scheduler.Scheduler;
@@ -40,7 +40,7 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
     private final Condition condition = lock.newCondition();
 
     private final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig;
-    private final HandlerFactory handlerFactory;
+    private final StreamHandlerFactory handlerFactory;
 
     /**
      * Our worker thread
@@ -61,7 +61,7 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
     private volatile String hostName = null;
 
     @Inject
-    ProxyRepositoryReader(final Monitor monitor, final ProxyRepositoryManager proxyRepositoryManager, final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig, final HandlerFactory handlerFactory) {
+    ProxyRepositoryReader(final Monitor monitor, final ProxyRepositoryManager proxyRepositoryManager, final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig, final StreamHandlerFactory handlerFactory) {
         super(monitor, proxyRepositoryReaderConfig.getForwardThreadCount());
         this.proxyRepositoryReaderConfig = proxyRepositoryReaderConfig;
         this.handlerFactory = handlerFactory;
@@ -173,7 +173,7 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
             }
 
             // Only process the thing if we have some outgoing handlers.
-            final List<RequestHandler> handlers = handlerFactory.create();
+            final List<StreamHandler> handlers = handlerFactory.create();
             if (handlers.size() > 0) {
                 process(readyToProcess);
             }
@@ -182,7 +182,7 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
         }
     }
 
-//    public List<RequestHandler> createOutgoingRequestHandlerList() {
+//    public List<StreamHandler> createOutgoingStreamHandlerList() {
 //        return new ArrayList<>();
 //    }
 
@@ -206,13 +206,13 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
             metaMap.put(PROXY_FORWARD_ID, String.valueOf(thisPostId));
         }
 
-        final List<RequestHandler> handlers = handlerFactory.create();
+        final List<StreamHandler> handlers = handlerFactory.create();
 
         try {
             // Start the post
-            for (final RequestHandler requestHandler : handlers) {
-                requestHandler.setMetaMap(metaMap);
-                requestHandler.handleHeader();
+            for (final StreamHandler streamHandler : handlers) {
+                streamHandler.setMetaMap(metaMap);
+                streamHandler.handleHeader();
             }
 
             long sequenceId = 1;
@@ -239,16 +239,16 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
                     nextBatchBreak = streamProgress.getTotalBytes() + proxyRepositoryReaderConfig.getMaxStreamSize();
 
                     // Start a new batch
-                    for (final RequestHandler requestHandler : handlers) {
-                        requestHandler.handleFooter();
+                    for (final StreamHandler streamHandler : handlers) {
+                        streamHandler.handleFooter();
                     }
                     deleteFiles(stroomZipRepository, deleteList);
                     deleteList.clear();
 
                     // Start the post
-                    for (final RequestHandler requestHandler : handlers) {
-                        requestHandler.setMetaMap(metaMap);
-                        requestHandler.handleHeader();
+                    for (final StreamHandler streamHandler : handlers) {
+                        streamHandler.setMetaMap(metaMap);
+                        streamHandler.handleHeader();
                     }
                 }
 
@@ -257,8 +257,8 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
                 deleteList.add(file);
 
             }
-            for (final RequestHandler requestHandler : handlers) {
-                requestHandler.handleFooter();
+            for (final StreamHandler streamHandler : handlers) {
+                streamHandler.handleFooter();
             }
 
             deleteFiles(stroomZipRepository, deleteList);
@@ -268,9 +268,9 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("processFeedFiles() - Debug trace " + feed, ex);
             }
-            for (final RequestHandler requestHandler : handlers) {
+            for (final StreamHandler streamHandler : handlers) {
                 try {
-                    requestHandler.handleError();
+                    streamHandler.handleError();
                 } catch (final IOException ioEx) {
                     LOGGER.error("fileSend()", ioEx);
                 }

@@ -1,4 +1,4 @@
-package stroom.proxy.datafeed;
+package stroom.proxy.handler;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -24,8 +24,8 @@ import java.util.zip.ZipOutputStream;
 /**
  * Handler class that forwards the request to a URL.
  */
-public class ForwardRequestHandler implements RequestHandler, HostnameVerifier {
-    private static Logger LOGGER = LoggerFactory.getLogger(ForwardRequestHandler.class);
+public class ForwardStreamHandler implements StreamHandler, HostnameVerifier {
+    private static Logger LOGGER = LoggerFactory.getLogger(ForwardStreamHandler.class);
 
     private final String forwardUrl;
     private final Integer forwardTimeoutMs;
@@ -40,10 +40,10 @@ public class ForwardRequestHandler implements RequestHandler, HostnameVerifier {
 
     private MetaMap metaMap;
 
-    public ForwardRequestHandler(final String forwardUrl,
-                                 final Integer forwardTimeoutMs,
-                                 final Integer forwardDelayMs,
-                                 final Integer forwardChunkSize) {
+    public ForwardStreamHandler(final String forwardUrl,
+                                final Integer forwardTimeoutMs,
+                                final Integer forwardDelayMs,
+                                final Integer forwardChunkSize) {
         this.forwardUrl = forwardUrl;
         this.forwardTimeoutMs = forwardTimeoutMs;
         this.forwardDelayMs = forwardDelayMs;

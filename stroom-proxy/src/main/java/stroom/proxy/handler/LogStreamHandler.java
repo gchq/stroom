@@ -12,16 +12,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class LogRequestHandler implements RequestHandler {
-    private static Logger LOGGER = LoggerFactory.getLogger(LogRequestHandler.class);
+public class LogStreamHandler implements StreamHandler {
+    private static Logger LOGGER = LoggerFactory.getLogger(LogStreamHandler.class);
 
     private final List<String> logConfigList;
     private MetaMap metaMap;
 
     @Inject
-    public LogRequestHandler(final LogRequestConfig logRequestConfig) {
-        if (logRequestConfig.getLogRequest() != null && logRequestConfig.getLogRequest().length() > 0) {
-            logConfigList = Arrays.stream(logRequestConfig.getLogRequest().split(",")).collect(Collectors.toList());
+    public LogStreamHandler(final LogStreamConfig logStreamConfig) {
+        if (logStreamConfig.getLogRequest() != null && logStreamConfig.getLogRequest().length() > 0) {
+            logConfigList = Arrays.stream(logStreamConfig.getLogRequest().split(",")).collect(Collectors.toList());
         } else {
             logConfigList = Collections.emptyList();
         }
@@ -52,27 +52,27 @@ public class LogRequestHandler implements RequestHandler {
 
     @Override
     public void handleEntryStart(StroomZipEntry stroomZipEntry) throws IOException {
-        // NA for LogRequestHandler
+        // NA for LogStreamHandler
     }
 
     @Override
     public void handleEntryEnd() throws IOException {
-        // NA for LogRequestHandler
+        // NA for LogStreamHandler
     }
 
     @Override
     public void handleEntryData(byte[] buffer, int off, int len) throws IOException {
-        // NA for LogRequestHandler
+        // NA for LogStreamHandler
     }
 
     @Override
     public void handleError() throws IOException {
-        // NA for LogRequestHandler
+        // NA for LogStreamHandler
     }
 
     @Override
     public void handleFooter() throws IOException {
-        // NA for LogRequestHandler
+        // NA for LogStreamHandler
     }
 
     @Override

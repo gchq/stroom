@@ -2,7 +2,7 @@ package stroom.proxy.handler;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class ForwardRequestConfig {
+public class ForwardStreamConfig {
     private String forwardUrl;
     private Integer forwardTimeoutMs = 30000;
     private Integer forwardDelayMs;
