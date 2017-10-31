@@ -26,6 +26,7 @@ import stroom.entity.server.GenericEntityService;
 import stroom.entity.shared.BaseEntity;
 import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.server.SupportsCodeInjection;
+import stroom.pipeline.server.errorhandler.TerminatedException;
 import stroom.pipeline.server.filter.SAXEventRecorder;
 import stroom.pipeline.server.filter.SAXRecordDetector;
 import stroom.pipeline.server.filter.SplitFilter;
@@ -51,6 +52,7 @@ import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.query.api.v2.DocRef;
 import stroom.util.spring.StroomScope;
+import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
 import java.lang.reflect.InvocationTargetException;
@@ -70,17 +72,17 @@ public class PipelineFactory {
     private final ElementRegistryFactory pipelineElementRegistryFactory;
     private final ElementFactory elementFactory;
     private final ProcessorFactory processorFactory;
-    private final GenericEntityService genericEntityService;
+    private final TaskMonitor taskMonitor;
 
     @Inject
     public PipelineFactory(final ElementRegistryFactory pipelineElementRegistryFactory,
                            final ElementFactory elementFactory,
                            final ProcessorFactory processorFactory,
-                           final GenericEntityService genericEntityService) {
+                           final TaskMonitor taskMonitor) {
         this.pipelineElementRegistryFactory = pipelineElementRegistryFactory;
         this.elementFactory = elementFactory;
         this.processorFactory = processorFactory;
-        this.genericEntityService = genericEntityService;
+        this.taskMonitor = taskMonitor;
 
         if (processorFactory == null) {
             throw new NullPointerException("processorFactory is null");
@@ -97,6 +99,12 @@ public class PipelineFactory {
     public Pipeline create(final PipelineData pipelineData,
                            final SteppingController controller) {
         final ElementRegistry pipelineElementRegistry = pipelineElementRegistryFactory.get();
+
+        final Terminator terminator = () -> {
+            if (taskMonitor.isTerminated()) {
+                throw new TerminatedException();
+            }
+        };
 
         // If we are stepping then we don't want to use the cache.
         // Create an instance of each element.
@@ -122,6 +130,9 @@ public class PipelineFactory {
             // Set the id on the pipeline element for use in tracing
             // errors, intercepting input/output etc.
             elementInstance.setElementId(element.getId());
+
+            // Set an object to provide quick processing termination if needed.
+            elementInstance.setTerminator(terminator);
 
             // Set the properties on this instance.
             setProperties(pipelineElementRegistry, element.getId(), element.getType(), elementInstance, pipelineData,
@@ -222,24 +233,15 @@ public class PipelineFactory {
                         obj = value.getLong();
                     } else if (String.class.isAssignableFrom(paramType)) {
                         obj = value.getString();
-                    } else if (BaseEntity.class.isAssignableFrom(paramType)) {
+                    } else if (DocRef.class.isAssignableFrom(paramType)) {
                         // Load an entity by id.
                         final DocRef docRef = value.getEntity();
                         if (docRef != null) {
-                            BaseEntity entity = null;
-                            if (genericEntityService != null) {
-                                entity = genericEntityService.loadByUuid(docRef.getType(), docRef.getUuid());
-                                if (entity == null) {
-                                    throw new PipelineFactoryException(
-                                            "Unable to resolve entity reference from element '" + id + "' to "
-                                                    + docRef.toString());
-                                }
-                                obj = entity;
-                            }
+                            obj = docRef;
 
                             // Modify properties of element instance if we are
                             // stepping and have code to insert.
-                            if (controller != null && entity != null) {
+                            if (controller != null) {
                                 final SteppingTask request = controller.getRequest();
                                 if (request.getCode() != null && request.getCode().size() > 0) {
                                     final String code = request.getCode().get(id);
@@ -252,6 +254,8 @@ public class PipelineFactory {
                                 }
                             }
                         }
+                    } else {
+                        throw new PipelineFactoryException("Unknown param type: " + paramType);
                     }
                 }
 

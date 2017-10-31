@@ -17,6 +17,7 @@
 package stroom.pipeline.server.factory;
 
 public abstract class AbstractElement implements Element {
+    private Terminator terminator = Terminator.DEFAULT;
     private String elementId;
 
     @Override
@@ -43,5 +44,14 @@ public abstract class AbstractElement implements Element {
     @Override
     public void setElementId(final String elementId) {
         this.elementId = elementId;
+    }
+
+    protected void terminationCheck() {
+        terminator.check();
+    }
+
+    @Override
+    public void setTerminator(final Terminator terminator) {
+        this.terminator = terminator;
     }
 }

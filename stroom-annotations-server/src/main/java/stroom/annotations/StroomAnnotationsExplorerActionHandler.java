@@ -3,18 +3,12 @@ package stroom.annotations;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.PermissionException;
 import stroom.explorer.server.ExplorerActionHandler;
-import stroom.explorer.server.ExplorerTreeDao;
 import stroom.query.api.v2.DocRef;
-import stroom.security.SecurityContext;
 
 @Component
 public class StroomAnnotationsExplorerActionHandler implements ExplorerActionHandler {
-    private final SecurityContext securityContext;
-    private final ExplorerTreeDao explorerTreeDao;
 
-    StroomAnnotationsExplorerActionHandler(final SecurityContext securityContext, final ExplorerTreeDao explorerTreeDao) {
-        this.securityContext = securityContext;
-        this.explorerTreeDao = explorerTreeDao;
+    public StroomAnnotationsExplorerActionHandler() {
     }
 
     @Override
@@ -24,21 +18,21 @@ public class StroomAnnotationsExplorerActionHandler implements ExplorerActionHan
 
     @Override
     public DocRef copyDocument(String uuid, String parentFolderUUID) {
-        throw new PermissionException("You cannot copy the Annotations node");
+        throw new PermissionException(securityContext.getUserId(), "You cannot copy the Annotations node");
     }
 
     @Override
     public DocRef moveDocument(String uuid, String parentFolderUUID) {
-        throw new PermissionException("You cannot move the Annotations node");
+        throw new PermissionException(securityContext.getUserId(), "You cannot move the Annotations node");
     }
 
     @Override
     public DocRef renameDocument(String uuid, String name) {
-        throw new PermissionException("You cannot rename the Annotations node");
+        throw new PermissionException(securityContext.getUserId(), "You cannot rename the Annotations node");
     }
 
     @Override
     public void deleteDocument(String uuid) {
-        throw new PermissionException("You cannot delete the Annotations node");
+        throw new PermissionException(securityContext.getUserId(), "You cannot delete the Annotations node");
     }
 }

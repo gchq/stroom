@@ -145,8 +145,7 @@ public class TestXMLSegmentWriter extends StroomUnitTest {
                 // is valid and that the number of records matches what we
                 // expect.
                 final RecordCount recordCount = new RecordCount();
-                final RecordCountFilter recordCountFilter = new RecordCountFilter();
-                recordCountFilter.setRecordCount(recordCount);
+                final RecordCountFilter recordCountFilter = new RecordCountFilter(null, recordCount);
 
                 ProcessorUtil.processXml(new ByteArrayInputStream(baos.toByteArray()),
                         new ErrorReceiverProxy(new FatalErrorReceiver()), recordCountFilter,

@@ -41,6 +41,7 @@ import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pool.PoolItem;
+import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.util.spring.StroomScope;
 import stroom.xml.converter.ParserFactory;
@@ -69,7 +70,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
 
     private String injectedCode;
     private boolean usePool = true;
-    private TextConverter textConverter;
+    private DocRef textConverterRef;
     private PoolItem<VersionedEntityDecorator<TextConverter>, StoredParserFactory> poolItem;
 
     @Inject
@@ -86,7 +87,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
 
     @Override
     protected XMLReader createReader() throws SAXException {
-        if (textConverter == null) {
+        if (textConverterRef == null) {
             throw new ProcessException(
                     "No XML fragment wrapper has been assigned to the parser but XML fragment parsers require one");
         }
@@ -98,10 +99,10 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
         // TODO: We need to use the cached TextConverter service ideally but
         // before we do it needs to be aware cluster
         // wide when TextConverter has been updated.
-        final TextConverter tc = textConverterService.load(textConverter);
+        final TextConverter tc = textConverterService.loadByUuid(textConverterRef.getUuid());
         if (tc == null) {
             throw new ProcessException(
-                    "TextConverter \"" + textConverter.getName() + "\" appears to have been deleted");
+                    "TextConverter \"" + textConverterRef.getName() + "\" appears to have been deleted");
         }
         if (!TextConverterType.XML_FRAGMENT.equals(tc.getConverterType())) {
             throw new ProcessException("The assigned text converter is not an XML fragment.");
@@ -164,7 +165,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
     }
 
     @PipelineProperty(description = "The XML fragment wrapper that should be used to wrap the input XML.")
-    public void setTextConverter(final TextConverter textConverter) {
-        this.textConverter = textConverter;
+    public void setTextConverter(final DocRef textConverterRef) {
+        this.textConverterRef = textConverterRef;
     }
 }

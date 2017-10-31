@@ -32,6 +32,7 @@ import stroom.pipeline.server.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.query.api.v2.DocRef;
 import stroom.statistics.server.sql.SQLStatisticsEventValidator;
 import stroom.statistics.server.sql.StatisticEvent;
 import stroom.statistics.server.sql.StatisticTag;
@@ -82,7 +83,8 @@ public class StatisticsFilter extends AbstractXMLFilter {
     private final List<StatisticEvent> statisticEventList = new ArrayList<>(EVENT_BUFFER_SIZE);
     private final StringBuilder textBuffer = new StringBuilder();
     private final Map<String, String> emptyTagToValueMap = new HashMap<>();
-    private StatisticStoreEntity statisticsDataSource;
+    private DocRef statisticStoreRef;
+    private StatisticStoreEntity statisticStoreEntity;
     private Statistics statisticEventStore;
     /**
      * Events attributes
@@ -108,27 +110,27 @@ public class StatisticsFilter extends AbstractXMLFilter {
 
     @Override
     public void startProcessing() {
-        if (statisticsDataSource == null) {
+        if (statisticStoreRef == null) {
             log(Severity.FATAL_ERROR, "Statistics data source has not been set", null);
             throw new LoggedException("Statistics data source has not been set");
         }
 
         // Reload the data source as we might have new fields.
-        statisticsDataSource = statisticsDataSourceService.load(statisticsDataSource);
+        statisticStoreEntity = statisticsDataSourceService.loadByUuid(statisticStoreRef.getUuid());
 
-        if (statisticsDataSource == null) {
+        if (statisticStoreEntity == null) {
             log(Severity.FATAL_ERROR, "Unable to load Statistics data source ", null);
             throw new LoggedException("Unable to load Statistics data source ");
         }
 
-        if (!statisticsDataSource.isEnabled()) {
-            final String msg = "Statistics data source with name [" + statisticsDataSource.getName() + "] is disabled";
+        if (!statisticStoreEntity.isEnabled()) {
+            final String msg = "Statistics data source with name [" + statisticStoreEntity.getName() + "] is disabled";
             log(Severity.FATAL_ERROR, msg, null);
             throw new LoggedException(msg);
         }
 
         // clean out the map of field names to values
-        for (final String fieldName : statisticsDataSource.getFieldNames()) {
+        for (final String fieldName : statisticStoreEntity.getFieldNames()) {
             emptyTagToValueMap.put(fieldName, null);
         }
     }
@@ -153,7 +155,7 @@ public class StatisticsFilter extends AbstractXMLFilter {
                 statisticEventStore = getStatisticEventStore();
             }
             LOGGER.debug("Flushing {} stats from the statisticfilter", statisticEventList.size());
-            statisticEventStore.putEvents(statisticEventList, statisticsDataSource);
+            statisticEventStore.putEvents(statisticEventList, statisticStoreEntity);
             statisticEventList.clear();
         }
     }
@@ -205,10 +207,10 @@ public class StatisticsFilter extends AbstractXMLFilter {
                     final String attValue = atts.getValue(i);
                     if (TAG_NAME.equals(attLocalName)) {
                         currentTagName = attValue;
-                        if (!statisticsDataSource.isValidField(currentTagName)) {
+                        if (!statisticStoreEntity.isValidField(currentTagName)) {
                             throw new RuntimeException(String.format(
                                     "Statistic record contains a tag name [%s] that is not valid for this statistic data source [%s]",
-                                    currentTagName, statisticsDataSource.getName()));
+                                    currentTagName, statisticStoreEntity.getName()));
                         }
                     } else if (TAG_VALUE.equals(attLocalName)) {
                         currentTagValue = attValue;
@@ -269,9 +271,9 @@ public class StatisticsFilter extends AbstractXMLFilter {
                 currentTagToValueMap.put(currentTagName, currentTagValue);
                 clearCurrentTagNameAndValue();
             } else if (VALUE.equals(localName)) {
-                if (!StatisticType.VALUE.equals(statisticsDataSource.getStatisticType())) {
+                if (!StatisticType.VALUE.equals(statisticStoreEntity.getStatisticType())) {
                     throw new RuntimeException(String.format("Found <%s> XML element for a statistic type of %s", VALUE,
-                            statisticsDataSource.getStatisticType()));
+                            statisticStoreEntity.getStatisticType()));
                 }
                 try {
                     currentStatisticValue = Double.valueOf(textBuffer.toString());
@@ -280,9 +282,9 @@ public class StatisticsFilter extends AbstractXMLFilter {
                             textBuffer.toString()), e);
                 }
             } else if (COUNT.equals(localName)) {
-                if (!StatisticType.COUNT.equals(statisticsDataSource.getStatisticType())) {
+                if (!StatisticType.COUNT.equals(statisticStoreEntity.getStatisticType())) {
                     throw new RuntimeException(String.format("Found <%s> XML element for a statistic type of %s", COUNT,
-                            statisticsDataSource.getStatisticType()));
+                            statisticStoreEntity.getStatisticType()));
                 }
                 if (textBuffer.length() == 0) {
                     // no value supplied so assume 1
@@ -299,28 +301,28 @@ public class StatisticsFilter extends AbstractXMLFilter {
                 StatisticEvent statisticEvent;
 
                 final List<StatisticTag> tagList = new ArrayList<>(
-                        statisticsDataSource.getStatisticFieldCount());
+                        statisticStoreEntity.getStatisticFieldCount());
 
                 // construct a list of stat tags in the correct order, as
                 // defined by the SDS
-                for (final StatisticField statisticField : statisticsDataSource.getStatisticFields()) {
+                for (final StatisticField statisticField : statisticStoreEntity.getStatisticFields()) {
                     final String tagName = statisticField.getFieldName();
                     tagList.add(new StatisticTag(tagName, currentTagToValueMap.get(tagName)));
                 }
 
-                if (currentTagToValueMap.size() != statisticsDataSource.getFieldNames().size()) {
+                if (currentTagToValueMap.size() != statisticStoreEntity.getFieldNames().size()) {
                     throw new RuntimeException(String.format(
                             "Number of tags in the data source [%s] does not agree with the number in the record passed to the filter [%s]",
-                            statisticsDataSource.getFieldNames().size(), currentTagToValueMap.size()));
+                            statisticStoreEntity.getFieldNames().size(), currentTagToValueMap.size()));
                 }
 
-                if (statisticsDataSource.getStatisticType().equals(StatisticType.COUNT)) {
+                if (statisticStoreEntity.getStatisticType().equals(StatisticType.COUNT)) {
                     if (currentStatisticCount == null) {
                         // assume count of 1 if element was omitted
                         currentStatisticCount = 1L;
                     }
 
-                    statisticEvent = StatisticEvent.createCount(currentEventTimeMs, statisticsDataSource.getName(),
+                    statisticEvent = StatisticEvent.createCount(currentEventTimeMs, statisticStoreEntity.getName(),
                             new ArrayList<>(tagList), currentStatisticCount);
 
                 } else {
@@ -328,7 +330,7 @@ public class StatisticsFilter extends AbstractXMLFilter {
                         throw new RuntimeException(
                                 "No <value> element was found. Value statistics must have a valid value");
                     }
-                    statisticEvent = StatisticEvent.createValue(currentEventTimeMs, statisticsDataSource.getName(),
+                    statisticEvent = StatisticEvent.createValue(currentEventTimeMs, statisticStoreEntity.getName(),
                             new ArrayList<>(tagList), currentStatisticValue);
                 }
 
@@ -353,8 +355,8 @@ public class StatisticsFilter extends AbstractXMLFilter {
     }
 
     @PipelineProperty(description = "The statistics data source to record statistics against.")
-    public void setStatisticsDataSource(final StatisticStoreEntity statisticsDataSource) {
-        this.statisticsDataSource = statisticsDataSource;
+    public void setStatisticsDataSource(final DocRef statisticStoreRef) {
+        this.statisticStoreRef = statisticStoreRef;
     }
 
     private void log(final Severity severity, final String message, final Exception e) {

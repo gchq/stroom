@@ -33,6 +33,7 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.StreamHolder;
+import stroom.query.api.v2.DocRef;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.StreamTypeService;
@@ -59,6 +60,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     private final StreamTypeService streamTypeService;
     private final NodeCache nodeCache;
 
+    private DocRef feedRef;
     private Feed feed;
     private String streamType;
     private boolean segmentOutput = true;
@@ -112,8 +114,17 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     @Override
     void validateSpecificSettings() {
         if (feed == null) {
-            // Use current feed if none other has been specified.
-            feed = feedService.load(streamHolder.getStream().getFeed());
+            if (feedRef != null) {
+                feed = feedService.loadByUuid(feedRef.getUuid());
+            } else {
+                final Stream parentStream = streamHolder.getStream();
+                if (parentStream == null) {
+                    throw new ProcessException("Unable to determine feed as no parent stream set");
+                }
+
+                // Use current feed if none other has been specified.
+                feed = feedService.load(parentStream.getFeed());
+            }
         }
 
         if (streamType == null) {
@@ -122,8 +133,8 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     }
 
     @PipelineProperty(description = "The feed that output stream should be written to. If not specified the feed the input stream belongs to will be used.")
-    public void setFeed(final Feed feed) {
-        this.feed = feed;
+    public void setFeed(final DocRef feedRef) {
+        this.feedRef = feedRef;
     }
 
     @PipelineProperty(description = "The stream type that the output stream should be written as. This must be specified.")

@@ -515,7 +515,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
             // Save directly so there is no marshalling of objects that would destroy imported data.
             if (importState.ok(importMode)) {
-                entity = entityServiceHelper.save(entity, queryAppender);
+                entity = internalSave(entity);
             }
 
         } catch (final Exception e) {
@@ -523,6 +523,10 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         }
 
         return DocRefUtil.create(entity);
+    }
+
+    protected E internalSave(final E entity) {
+        return entityManager.saveEntity(entity);
     }
 
     @Override
@@ -541,6 +545,13 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     @Override
     public String getNamePattern() {
         return StroomProperties.getProperty(NAME_PATTERN_PROPERTY, NAME_PATTERN_VALUE);
+    }
+
+    private String getDocReference(BaseEntity entity) {
+        if (entity == null) {
+            return "";
+        }
+        return "(" + DocRefUtil.create(entity).toString() + ")";
     }
 
     public abstract Class<E> getEntityClass();
@@ -645,11 +656,11 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         // Only allow administrators to create documents with no folder.
         if (folderUUID == null) {
             if (!securityContext.isAdmin()) {
-                throw new PermissionException("Only administrators can create root level entries");
+                throw new PermissionException(securityContext.getUserId(), "Only administrators can create root level entries");
             }
         } else {
             if (!securityContext.hasDocumentPermission(FOLDER, folderUUID, DocumentPermissionNames.getDocumentCreatePermission(getEntityType()))) {
-                throw new PermissionException("You do not have permission to create (" + getEntityType() + ") in folder " + folderUUID);
+                throw new PermissionException(securityContext.getUserId(), "You do not have permission to create (" + getEntityType() + ") in folder " + folderUUID);
             }
         }
     }
@@ -670,14 +681,14 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     protected void checkUpdatePermission(final E entity) {
 
         if (!entity.isPersistent()) {
-            throw new EntityServiceException("You cannot update an entity that has not been created");
+            throw new PermissionException(securityContext.getUserId(), "You cannot update an entity that has not been created " + getDocReference(entity));
         }
         checkUpdatePermission(DocRefUtil.create(entity));
     }
 
     private void checkUpdatePermission(final DocRef docRef) {
         if (!securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.UPDATE)) {
-            throw new PermissionException("You do not have permission to update (" + docRef + ")");
+            throw new PermissionException(securityContext.getUserId(), "You do not have permission to update (" + docRef + ")");
         }
     }
 
@@ -687,7 +698,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
     protected final void checkReadPermission(final DocRef docRef) {
         if (!securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ)) {
-            throw new PermissionException("You do not have permission to read (" + docRef + ")");
+            throw new PermissionException(securityContext.getUserId(), "You do not have permission to read (" + docRef + ")");
         }
     }
 
@@ -697,7 +708,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
     protected void checkDeletePermission(final DocRef docRef) {
         if (!securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.DELETE)) {
-            throw new PermissionException("You do not have permission to delete (" + docRef + ")");
+            throw new PermissionException(securityContext.getUserId(), "You do not have permission to delete (" + docRef + ")");
         }
     }
 

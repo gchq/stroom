@@ -25,7 +25,7 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
     @Override
     public DocRef createDocument(final String name, final String parentFolderUUID) {
         if (!securityContext.hasDocumentPermission(FOLDER, parentFolderUUID, DocumentPermissionNames.getDocumentCreatePermission(FOLDER))) {
-            throw new PermissionException("You do not have permission to create (" + FOLDER + ") in folder " + parentFolderUUID);
+            throw new PermissionException(securityContext.getUserId(), "You do not have permission to create (" + FOLDER + ") in folder " + parentFolderUUID);
         }
         NameValidationUtil.validate(NAME_PATTERN_VALUE, name);
         return new DocRef(FOLDER, UUID.randomUUID().toString(), name);
@@ -39,10 +39,10 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
         }
 
         if (!securityContext.hasDocumentPermission(FOLDER, uuid, DocumentPermissionNames.READ)) {
-            throw new PermissionException("You do not have permission to read (" + FOLDER + ")");
+            throw new PermissionException(securityContext.getUserId(), "You do not have permission to read (" + FOLDER + ")");
         }
         if (!securityContext.hasDocumentPermission(FOLDER, parentFolderUUID, DocumentPermissionNames.getDocumentCreatePermission(FOLDER))) {
-            throw new PermissionException("You do not have permission to create (" + FOLDER + ") in folder " + parentFolderUUID);
+            throw new PermissionException(securityContext.getUserId(), "You do not have permission to create (" + FOLDER + ") in folder " + parentFolderUUID);
         }
         return new DocRef(FOLDER, UUID.randomUUID().toString(), "Copy of " + explorerTreeNode.getName());
     }
@@ -55,10 +55,10 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
         }
 
         if (!securityContext.hasDocumentPermission(FOLDER, uuid, DocumentPermissionNames.READ)) {
-            throw new PermissionException("You do not have permission to read (" + FOLDER + ")");
+            throw new PermissionException(securityContext.getUserId(), "You do not have permission to read (" + FOLDER + ")");
         }
         if (!securityContext.hasDocumentPermission(FOLDER, parentFolderUUID, DocumentPermissionNames.getDocumentCreatePermission(FOLDER))) {
-            throw new PermissionException("You do not have permission to create (" + FOLDER + ") in folder " + parentFolderUUID);
+            throw new PermissionException(securityContext.getUserId(), "You do not have permission to create (" + FOLDER + ") in folder " + parentFolderUUID);
         }
         return explorerTreeNode.getDocRef();
     }
@@ -70,7 +70,7 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
             throw new RuntimeException("Unable to find tree node to rename");
         }
         if (!securityContext.hasDocumentPermission(FOLDER, uuid, DocumentPermissionNames.UPDATE)) {
-            throw new PermissionException("You do not have permission to update (" + FOLDER + ")");
+            throw new PermissionException(securityContext.getUserId(), "You do not have permission to update (" + FOLDER + ")");
         }
         NameValidationUtil.validate(NAME_PATTERN_VALUE, name);
         return explorerTreeNode.getDocRef();
@@ -83,7 +83,7 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
             throw new RuntimeException("Unable to find tree node to delete");
         }
         if (!securityContext.hasDocumentPermission(FOLDER, uuid, DocumentPermissionNames.DELETE)) {
-            throw new PermissionException("You do not have permission to delete (" + FOLDER + ")");
+            throw new PermissionException(securityContext.getUserId(), "You do not have permission to delete (" + FOLDER + ")");
         }
     }
 }

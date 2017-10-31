@@ -51,7 +51,8 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
     private TransformerHandler handler;
     private ErrorListener errorListener;
 
-    public AbstractSamplingFilter(final ErrorReceiverProxy errorReceiverProxy, final LocationFactoryProxy locationFactory) {
+    public AbstractSamplingFilter(final ErrorReceiverProxy errorReceiverProxy,
+                                  final LocationFactoryProxy locationFactory) {
         this.errorReceiverProxy = errorReceiverProxy;
         this.locationFactory = locationFactory;
     }

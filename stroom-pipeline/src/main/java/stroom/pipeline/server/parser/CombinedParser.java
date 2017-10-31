@@ -41,6 +41,7 @@ import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pool.PoolItem;
+import stroom.query.api.v2.DocRef;
 import stroom.resource.server.BOMRemovalInputStream;
 import stroom.security.SecurityContext;
 import stroom.util.io.StreamUtil;
@@ -81,7 +82,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
     private boolean fixInvalidChars = false;
     private String injectedCode;
     private boolean usePool = true;
-    private TextConverter textConverter;
+    private DocRef textConverterRef;
     private PoolItem<VersionedEntityDecorator<TextConverter>, StoredParserFactory> poolItem;
 
     @Inject
@@ -119,7 +120,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
             // To support legacy usage that did not provide a value for parser
             // type we need to make choice based on the presence of an assigned
             // text converter.
-            if (textConverter == null) {
+            if (textConverterRef == null) {
                 // Make an XML reader that produces SAX events.
                 xmlReader = createXMLReader();
             } else {
@@ -145,7 +146,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
     }
 
     private XMLReader createTextConverter() throws SAXException {
-        if (textConverter == null) {
+        if (textConverterRef == null) {
             throw new ProcessException(
                     "No text converter has been assigned to the parser but parsers of type '" + type + "' require one");
         }
@@ -156,10 +157,10 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
         // TODO: We need to use the cached TextConverter service ideally but
         // before we do it needs to be aware cluster wide when TextConverter has
         // been updated.
-        final TextConverter tc = textConverterService.loadByUuid(textConverter.getUuid());
+        final TextConverter tc = textConverterService.loadByUuid(textConverterRef.getUuid());
         if (tc == null) {
             throw new ProcessException(
-                    "TextConverter \"" + textConverter.getName() + "\" appears to have been deleted");
+                    "TextConverter \"" + textConverterRef.getName() + "\" appears to have been deleted");
         }
 
         // If we are in stepping mode and have made code changes then we want to
@@ -246,8 +247,8 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
     }
 
     @PipelineProperty(description = "The text converter configuration that should be used to parse the input data.")
-    public void setTextConverter(final TextConverter textConverter) {
-        this.textConverter = textConverter;
+    public void setTextConverter(final DocRef textConverterRef) {
+        this.textConverterRef = textConverterRef;
     }
 
     @PipelineProperty(description = "Fix invalid XML characters from the input stream.", defaultValue = "false")

@@ -115,6 +115,20 @@ public class FeedServiceImpl extends DocumentEntityServiceImpl<Feed, FindFeedCri
     }
 
     @Override
+    protected Feed internalSave(final Feed entity) {
+        if (entity != null) {
+            if (entity.getStreamType() == null) {
+                if (entity.isReference()) {
+                    entity.setStreamType(StreamType.RAW_REFERENCE);
+                } else {
+                    entity.setStreamType(StreamType.RAW_EVENTS);
+                }
+            }
+        }
+        return super.internalSave(entity);
+    }
+
+    @Override
     protected QueryAppender<Feed, FindFeedCriteria> createQueryAppender(final StroomEntityManager entityManager) {
         return new FeedQueryAppender(entityManager);
     }

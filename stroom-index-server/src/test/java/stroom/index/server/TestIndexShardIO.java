@@ -143,6 +143,145 @@ public class TestIndexShardIO extends StroomUnitTest {
     }
 
     @Test
+    public void testShardCorruption() throws IOException {
+//        final Executor executor = Executors.newCachedThreadPool();
+//
+//        final Index index = new Index();
+//        index.setName("Test");
+//
+//        final Volume volume = new Volume();
+//        volume.setPath(getCurrentTestDir().getAbsolutePath());
+//        final IndexShard idx1 = new IndexShard();
+//        idx1.setIndex(index);
+//        idx1.setPartition("all");
+//        idx1.setId(1L);
+//        idx1.setVolume(volume);
+//        idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
+//
+//        final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
+//
+//        // Clean up from previous tests.
+//        final File dir = IndexShardUtil.getIndexDir(idx1);
+//        FileSystemUtil.deleteDirectory(dir);
+//
+//        final Map<IndexShardKey, IndexShardWriter> map = new ConcurrentHashMap<>();
+//
+//        final List<CompletableFuture> futures = new ArrayList<>();
+//
+//        final CompletableFuture writerFuture = CompletableFuture.runAsync(() -> {
+//            for (int i = 1; i < 1000000; i++) {
+//                try {
+//                    final IndexShardWriter writer = map.compute(indexShardKey, (k, v) -> {
+//                        if (v != null) {
+//                            return v;
+//                        }
+//
+//                        IndexShardWriter result = null;
+//                        try {
+//                            result = new IndexShardWriterImpl(null, INDEX_CONFIG, indexShardKey, idx1);
+//                        } catch (final IOException e) {
+//                            System.err.println(e.getMessage());
+//                        }
+//                        return result;
+//                    });
+//
+//                    if (writer != null) {
+//                        //                        System.out.println("Adding doc " + i);
+//                        writer.addDocument(buildDocument(i));
+//                        ThreadUtil.sleep(1);
+//                    }
+//                } catch (final AlreadyClosedException e) {
+//                    System.out.println(e.getMessage());
+//                } catch (final Exception e) {
+//                    System.err.println(e.getMessage());
+//                }
+//            }
+//        }, executor);
+//        futures.add(writerFuture);
+//
+//        final CompletableFuture closerFuture = CompletableFuture.runAsync(() -> {
+//            while (!writerFuture.isDone()) {
+//                try {
+//                    map.compute(indexShardKey, (k, v) -> {
+//                        if (v != null) {
+//                            ThreadUtil.sleep(10);
+//                            v.close();
+//                        }
+//                        return null;
+//                    });
+//                    ThreadUtil.sleep(100);
+//                } catch (final Exception e) {
+//                    System.err.println(e.getMessage());
+//                }
+//            }
+//        }, executor);
+//        futures.add(closerFuture);
+
+//        for (int i = 0; i < 100; i++) {
+//            final CompletableFuture readerFuture = CompletableFuture.runAsync(() -> {
+//                while (!writerFuture.isDone()) {
+//                    try {
+//                        final IndexShardWriter indexShardWriter = map.get(indexShardKey);
+//                        IndexWriter writer = null;
+//                        if (indexShardWriter != null) {
+//                            writer = indexShardWriter.getWriter();
+//                        }
+//
+//                        if (writer != null) {
+//                            final IndexShardSearcher indexShardSearcher = new IndexShardSearcherImpl(idx1, writer);
+//                            final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
+//                            final IndexSearcher searcher = searcherManager.acquire();
+//                            //                final Query query = NumericRangeQuery.newLongRange("Id", 3L, 100L, true, true);
+//
+//                            final Query query = new TermQuery(new Term("Test", "Test"));
+//
+//                            final TotalHitCountCollector collector = new TotalHitCountCollector();
+//                            searcher.search(query, collector);
+////                        System.out.println(collector.getTotalHits());
+//                            ThreadUtil.sleep(10);
+//                        }
+//                    } catch (final SearchException e) {
+//                        System.out.println(e.getMessage());
+//                    } catch (final Throwable e) {
+//                        System.err.println(e.getMessage());
+//                    }
+//                }
+//            }, executor);
+//            futures.add(readerFuture);
+//        }
+//
+//
+//        CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()])).join();
+//
+//        final IndexShardSearcher indexShardSearcher = new IndexShardSearcherImpl(idx1, writer1.getWriter());
+//        final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
+//        final IndexSearcher searcher = searcherManager.acquire();
+////        try {
+//            Assert.assertEquals(1, searcher.getIndexReader().maxDoc());
+////        } finally {
+////            searcherManager.release(searcher);
+////        }
+//
+//        writer1.close();
+//
+//        final IndexShardWriter writer2 = new IndexShardWriterImpl(null, INDEX_CONFIG, indexShardKey, idx1);
+//        writer2.addDocument(buildDocument(2));
+//
+
+//
+//            final IndexShardSearcher indexShardSearcher = new IndexShardSearcherImpl(idx1);
+//            final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
+//            final IndexSearcher searcher = searcherManager.acquire();
+//            try {
+//                Assert.assertEquals(i, searcher.getIndexReader().maxDoc());
+//            } finally {
+//                searcherManager.release(searcher);
+//            }
+//            indexShardSearcher.destroy();
+
+    }
+
+    @Test
     public void testFailToCloseAndReopen() throws IOException {
         final Index index = new Index();
         index.setName("Test");

@@ -24,18 +24,44 @@ public abstract class AbstractTaskProducer implements TaskProducer {
     private final AtomicInteger threadsUsed = new AtomicInteger();
     private final int maxThreadsPerTask;
 
+    private final AtomicInteger tasksTotal = new AtomicInteger();
+    private final AtomicInteger tasksCompleted = new AtomicInteger();
+
     public AbstractTaskProducer(final int maxThreadsPerTask) {
         this.maxThreadsPerTask = maxThreadsPerTask;
     }
 
     @Override
-    public AtomicInteger getThreadsUsed() {
-        return threadsUsed;
+    public final Runnable next() {
+        Runnable task = null;
+
+        final int count = threadsUsed.incrementAndGet();
+        if (count > maxThreadsPerTask) {
+            threadsUsed.decrementAndGet();
+        } else {
+            task = getNext();
+            if (task == null) {
+                threadsUsed.decrementAndGet();
+            }
+        }
+
+        return task;
     }
 
     @Override
-    public int getMaxThreadsPerTask() {
-        return maxThreadsPerTask;
+    public final void complete(final Runnable task) {
+        threadsUsed.decrementAndGet();
+        tasksCompleted.incrementAndGet();
+    }
+
+    protected abstract Runnable getNext();
+
+    protected final AtomicInteger getTasksTotal() {
+        return tasksTotal;
+    }
+
+    protected final AtomicInteger getTasksCompleted() {
+        return tasksCompleted;
     }
 
     @Override

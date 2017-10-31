@@ -16,12 +16,12 @@
 
 package stroom.pipeline.server.factory;
 
-import stroom.entity.shared.BaseEntity;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.XSLT;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
+import stroom.query.api.v2.DocRef;
 import stroom.util.shared.HasType;
 
 import java.lang.reflect.Method;
@@ -101,9 +101,12 @@ public class ElementRegistry {
 
                     final Class<?> clazz = parameters[0];
                     // Make sure the class type is one we know how to deal with.
-                    if (!String.class.isAssignableFrom(clazz) && !BaseEntity.class.isAssignableFrom(clazz)
-                            && !PipelineReference.class.isAssignableFrom(clazz) && !boolean.class.equals(clazz)
-                            && !int.class.equals(clazz) && !long.class.equals(clazz)) {
+                    if (!String.class.isAssignableFrom(clazz) &&
+                            !boolean.class.equals(clazz) &&
+                            !int.class.equals(clazz) &&
+                            !long.class.equals(clazz) &&
+                            !DocRef.class.isAssignableFrom(clazz) &&
+                            !PipelineReference.class.isAssignableFrom(clazz)) {
                         throw new PipelineFactoryException("PipelineProperty \"" + name + "\" on \"" + elementTypeName
                                 + "\" has an unexpected type of \"" + clazz.getName() + "\"");
                     }

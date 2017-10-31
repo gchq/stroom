@@ -27,6 +27,7 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSpringProfiles;
+import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -50,7 +51,8 @@ public class TestFilter extends AbstractSamplingFilter {
     private final List<String> outputs;
 
     @Inject
-    public TestFilter(final ErrorReceiverProxy errorReceiverProxy, final LocationFactoryProxy locationFactory) {
+    public TestFilter(final ErrorReceiverProxy errorReceiverProxy,
+                      final LocationFactoryProxy locationFactory) {
         super(errorReceiverProxy, locationFactory);
         outputs = new ArrayList<>();
     }

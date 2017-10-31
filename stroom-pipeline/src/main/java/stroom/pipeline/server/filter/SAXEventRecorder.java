@@ -39,7 +39,7 @@ import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
@@ -52,16 +52,23 @@ import java.util.Set;
 @Scope(StroomScope.PROTOTYPE)
 public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, SteppingFilter {
     private final NamespaceContextImpl namespaceContext = new NamespaceContextImpl();
-    @Resource
-    private StreamHolder streamHolder;
-    @Resource
-    private ErrorReceiverProxy errorReceiverProxy;
+
+    private final StreamHolder streamHolder;
+    private final ErrorReceiverProxy errorReceiverProxy;
+
     private boolean filterApplied;
     private SteppingFilterSettings settings;
     private Set<CompiledXPathFilter> xPathFilters;
     private int currentElementDepth;
     private int maxElementDepth;
     private String elementId;
+
+    @Inject
+    public SAXEventRecorder(final StreamHolder streamHolder,
+                            final ErrorReceiverProxy errorReceiverProxy) {
+        this.streamHolder = streamHolder;
+        this.errorReceiverProxy = errorReceiverProxy;
+    }
 
     public void setSettings(final SteppingFilterSettings settings) {
         this.settings = settings;

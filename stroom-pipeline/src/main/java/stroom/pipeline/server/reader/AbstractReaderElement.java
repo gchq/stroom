@@ -21,6 +21,7 @@ import stroom.pipeline.server.factory.PipelineFactoryException;
 import stroom.pipeline.server.factory.TakesInput;
 import stroom.pipeline.server.factory.TakesReader;
 import stroom.pipeline.server.factory.Target;
+import stroom.pipeline.server.factory.Terminator;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,5 +52,9 @@ public abstract class AbstractReaderElement extends AbstractIOElement implements
 
     protected Reader insertFilter(final Reader reader) {
         return reader;
+    }
+
+    @Override
+    public void setTerminator(final Terminator terminator) {
     }
 }
