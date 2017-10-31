@@ -37,6 +37,8 @@ import stroom.dashboard.client.vis.gin.VisModule;
 import stroom.dictionary.client.gin.DictionaryGinjector;
 import stroom.dictionary.client.gin.DictionaryModule;
 import stroom.dispatch.client.ClientDispatchModule;
+import stroom.elastic.client.gin.ElasticIndexGinjector;
+import stroom.elastic.client.gin.ElasticIndexModule;
 import stroom.entity.client.gin.EntityGinjector;
 import stroom.entity.client.gin.EntityModule;
 import stroom.explorer.client.presenter.ExplorerTabPanePresenter;
@@ -86,6 +88,7 @@ import stroom.xmlschema.client.gin.XMLSchemaModule;
         DashboardModule.class,
         DictionaryModule.class,
         EntityModule.class,
+        ElasticIndexModule.class,
         FeedModule.class,
         FolderModule.class,
         ImportExportConfigModule.class,
@@ -113,6 +116,7 @@ public interface AppGinjector extends
         DashboardGinjector,
         DictionaryGinjector,
         EntityGinjector,
+        ElasticIndexGinjector,
         FeedGinjector,
         FolderGinjector,
         Ginjector,

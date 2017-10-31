@@ -1,4 +1,4 @@
-package stroom.elastic.server;
+package stroom.elastic.shared;
 
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.SQLNameConstants;

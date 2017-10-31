@@ -39,8 +39,6 @@ import stroom.datafeed.server.DataFeedServlet;
 import stroom.dictionary.spring.DictionaryConfiguration;
 import stroom.dispatch.shared.DispatchService;
 import stroom.elastic.server.ElasticIndexResource;
-import stroom.elastic.server.StroomElasticConfig;
-import stroom.elastic.server.StroomElasticExplorerActionHandler;
 import stroom.elastic.spring.ElasticIndexConfiguration;
 import stroom.entity.server.SpringRequestFactoryServlet;
 import stroom.explorer.server.ExplorerConfiguration;

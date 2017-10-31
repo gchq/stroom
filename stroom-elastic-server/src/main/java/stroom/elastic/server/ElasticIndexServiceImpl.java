@@ -2,6 +2,8 @@ package stroom.elastic.server;
 
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import stroom.elastic.shared.ElasticIndex;
+import stroom.elastic.shared.FindElasticIndexCriteria;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.importexport.server.ImportExportHelper;

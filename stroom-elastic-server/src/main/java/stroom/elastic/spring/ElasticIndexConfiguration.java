@@ -3,8 +3,8 @@ package stroom.elastic.spring;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
-import stroom.elastic.server.ElasticIndex;
 import stroom.elastic.server.ElasticIndexService;
+import stroom.elastic.shared.ElasticIndex;
 import stroom.explorer.server.ExplorerActionHandlers;
 import stroom.importexport.server.ImportExportActionHandlers;
 

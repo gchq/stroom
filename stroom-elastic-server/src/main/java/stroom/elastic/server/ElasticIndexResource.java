@@ -5,13 +5,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import io.swagger.annotations.Api;
+import stroom.elastic.shared.ElasticIndex;
 import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.UUID;
 
 @Api(
         value = "elastic-index - /v1",
@@ -29,27 +29,13 @@ public class ElasticIndexResource implements HasHealthCheck {
         this.service = service;
     }
 
-    @POST
-    @Path("/")
-    public Response createIndex(){
-        LOGGER.info("Creating a Random Index");
-
-        final ElasticIndex elasticIndex = this.service.create("Some Name " + UUID.randomUUID().toString());
-        elasticIndex.setIndexName("shakespeare");
-        elasticIndex.setIndexedType("line");
-        elasticIndex.setUuid(UUID.randomUUID().toString());
-        this.service.save(elasticIndex);
-
-        return Response.ok(elasticIndex).build();
-    }
-
     @GET
-    @Path("/{id}")
-    public Response get(@PathParam("id") final long id) {
+    @Path("/{uuid}")
+    public Response get(@PathParam("uuid") final String uuid) {
 
-        LOGGER.info(String.format("Getting an Index with Id: %d", id));
+        LOGGER.debug(String.format("Getting an Index with UUID: %s", uuid));
 
-        final ElasticIndex elasticIndex = this.service.loadById(id);
+        final ElasticIndex elasticIndex = this.service.loadByUuid(uuid);
 
         return Response.ok(elasticIndex).build();
     }

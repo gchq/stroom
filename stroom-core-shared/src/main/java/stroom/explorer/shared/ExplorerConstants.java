@@ -10,7 +10,6 @@ public final class ExplorerConstants {
     public static final DocRef ANNOTATIONS_DOC_REF = new DocRef(ANNOTATIONS, "1", ANNOTATIONS);
 
     public static final String ELASTIC_SEARCH = "ElasticSearch";
-    public static final DocRef ELASTIC_SEARCH_DOC_REF = new DocRef(ELASTIC_SEARCH, "2", ELASTIC_SEARCH);
 
     private ExplorerConstants() {
     }

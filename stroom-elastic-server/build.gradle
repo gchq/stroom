@@ -2,15 +2,15 @@ dependencies {
     compile urlDependencies.get(urlLibs.stroomExpression)
     compile project(':stroom-core-server')
     compile project(':stroom-entity-shared')
-    compile project(':stroom-explorer-server')
     compile project(':stroom-security-api')
+    compile project(':stroom-elastic-shared')
 
     compile libs.swagger_annotations
     compile libs.slf4j_api
     compile libs.spring_context
     compile libs.spring_tx
     compile libs.ws_rs_api
-    compile libs.hibernate_jpa_api
+    compile libs.dropwizard_metrics_healthchecks
 
     compile libs.javax_inject
 }

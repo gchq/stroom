@@ -1,0 +1,11 @@
+dependencies {
+    compile project(':stroom-elastic-shared')
+    compile project(':stroom-core-client')
+    compile project(':stroom-core-client-widget')
+    compile project(':stroom-security-client-api')
+
+    compile libs.gin
+    compile libs.guice
+    compile libs.gwt_servlet
+    compile libs.gwtp_mvp_client
+}
