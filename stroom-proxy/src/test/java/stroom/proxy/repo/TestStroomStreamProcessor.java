@@ -13,6 +13,7 @@ import stroom.util.test.StroomUnitTest;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -132,10 +133,8 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
 
     @Test
     public void testZIPNoEntries() throws Exception {
-        final byte[] fullData = StreamUtil
-                .streamToBuffer(
-                        getClass().getClassLoader().getResourceAsStream("stroom/proxy/repo/BlankZip.zip"))
-                .toByteArray();
+        final InputStream inputStream = getClass().getClassLoader().getResourceAsStream("stroom/proxy/repo/BlankZip.zip");
+        final byte[] fullData = StreamUtil.streamToBuffer(inputStream).toByteArray();
 
         final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(fullData, 0, fullData.length / 2);
 

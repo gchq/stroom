@@ -4,8 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
-import stroom.proxy.handler.StreamHandlerFactory;
 import stroom.proxy.handler.StreamHandler;
+import stroom.proxy.handler.StreamHandlerFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamProgressMonitor;
 import stroom.util.scheduler.Scheduler;
@@ -173,7 +173,7 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
             }
 
             // Only process the thing if we have some outgoing handlers.
-            final List<StreamHandler> handlers = handlerFactory.create();
+            final List<StreamHandler> handlers = handlerFactory.addSendHandlers(new ArrayList<>());
             if (handlers.size() > 0) {
                 process(readyToProcess);
             }
@@ -206,7 +206,7 @@ public class ProxyRepositoryReader extends StroomZipRepositorySimpleExecutorProc
             metaMap.put(PROXY_FORWARD_ID, String.valueOf(thisPostId));
         }
 
-        final List<StreamHandler> handlers = handlerFactory.create();
+        final List<StreamHandler> handlers = handlerFactory.addSendHandlers(new ArrayList<>());
 
         try {
             // Start the post

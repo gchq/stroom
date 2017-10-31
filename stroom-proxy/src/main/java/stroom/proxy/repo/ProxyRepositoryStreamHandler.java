@@ -33,7 +33,7 @@ public class ProxyRepositoryStreamHandler implements StreamHandler {
     }
 
     @Override
-    public void handleEntryStart(StroomZipEntry stroomZipEntry) throws IOException {
+    public void handleEntryStart(final StroomZipEntry stroomZipEntry) throws IOException {
         doneOne = true;
         entryStream = stroomZipOutputStream.addEntry(stroomZipEntry);
     }

@@ -223,7 +223,7 @@ public class ProxyRepositoryManager {
             rolledRepository.add(proxyRepository);
         }
 
-        // Delete empty repos.
-        rolledRepository.removeIf(StroomZipRepository::deleteIfEmpty);
+//        // Delete empty repos.
+//        rolledRepository.removeIf(StroomZipRepository::deleteIfEmpty);
     }
 }

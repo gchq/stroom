@@ -18,6 +18,24 @@ logging:
     org.ehcache: INFO
     org.eclipse.jetty: INFO
     org.flywaydb: INFO
+    "receive":
+      level: INFO
+      additive: false
+      appenders:
+        - type: file
+          logFormat: "%msg%n"
+          currentLogFilename: receive.log
+          archivedLogFilenamePattern: receive-%d{yyyy-MM-dd}.log
+          timeZone: UTC
+    "send":
+      level: INFO
+      additive: false
+      appenders:
+        - type: file
+          logFormat: "%msg%n"
+          currentLogFilename: send.log
+          archivedLogFilenamePattern: send-%d{yyyy-MM-dd}.log
+          timeZone: UTC
   appenders:
     - type: console
       logFormat: "%-6level [%d{HH:mm:ss.SSS}] [%t] %logger{5} - %X{code} %msg %n"
@@ -33,3 +51,5 @@ proxyConfig:
     rollCron: "* * *"
   proxyRepositoryReaderConfig:
     readCron: "* * *"
+  logStreamConfig:
+    metaKeys: "guid,feed,system,environment,remotehost,remoteaddress"

@@ -7,7 +7,6 @@ import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.StroomStreamException;
 import stroom.proxy.repo.StroomZipEntry;
-import stroom.util.shared.ModelStringUtil;
 import stroom.util.thread.ThreadUtil;
 
 import javax.net.ssl.HostnameVerifier;
@@ -26,7 +25,9 @@ import java.util.zip.ZipOutputStream;
  */
 public class ForwardStreamHandler implements StreamHandler, HostnameVerifier {
     private static Logger LOGGER = LoggerFactory.getLogger(ForwardStreamHandler.class);
+    private static final Logger SEND_LOG = LoggerFactory.getLogger("send");
 
+    private final LogStream logStream;
     private final String forwardUrl;
     private final Integer forwardTimeoutMs;
     private final Integer forwardDelayMs;
@@ -40,10 +41,12 @@ public class ForwardStreamHandler implements StreamHandler, HostnameVerifier {
 
     private MetaMap metaMap;
 
-    public ForwardStreamHandler(final String forwardUrl,
+    public ForwardStreamHandler(final LogStream logStream,
+                                final String forwardUrl,
                                 final Integer forwardTimeoutMs,
                                 final Integer forwardDelayMs,
                                 final Integer forwardChunkSize) {
+        this.logStream = logStream;
         this.forwardUrl = forwardUrl;
         this.forwardTimeoutMs = forwardTimeoutMs;
         this.forwardDelayMs = forwardDelayMs;
@@ -53,53 +56,6 @@ public class ForwardStreamHandler implements StreamHandler, HostnameVerifier {
     @Override
     public void setMetaMap(final MetaMap metaMap) {
         this.metaMap = metaMap;
-    }
-
-    @Override
-    public void handleEntryStart(final StroomZipEntry stroomZipEntry) throws IOException {
-        // First call we set up if we are going to do chuncked streaming
-        zipOutputStream.putNextEntry(new ZipEntry(stroomZipEntry.getFullName()));
-    }
-
-    @Override
-    public void handleEntryEnd() throws IOException {
-        zipOutputStream.closeEntry();
-    }
-
-    /**
-     * Handle some pay load.
-     */
-    @Override
-    public void handleEntryData(final byte[] buffer, final int off, final int length) throws IOException {
-        bytesSent += length;
-        zipOutputStream.write(buffer, off, length);
-        if (forwardDelayMs != null) {
-            LOGGER.debug("handleEntryData() - adding delay {}", forwardDelayMs);
-            ThreadUtil.sleep(forwardDelayMs);
-        }
-    }
-
-    @Override
-    public void handleFooter() throws IOException {
-        zipOutputStream.close();
-
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("handleFooter() - header fields " + connection.getHeaderFields());
-        }
-        int responseCode = -1;
-
-        if (connection != null) {
-            try {
-                responseCode = StroomStreamException.checkConnectionResponse(connection);
-            } finally {
-                LOGGER.info("handleFooter() - {} took {} to forward {} response {} - {}", guid,
-                        ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTimeMs),
-                        ModelStringUtil.formatIECByteSizeString(bytesSent), responseCode, metaMap);
-                connection.disconnect();
-                connection = null;
-            }
-        }
-
     }
 
     @Override
@@ -144,6 +100,53 @@ public class ForwardStreamHandler implements StreamHandler, HostnameVerifier {
         zipOutputStream = new ZipOutputStream(connection.getOutputStream());
     }
 
+    @Override
+    public void handleFooter() throws IOException {
+        zipOutputStream.close();
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("handleFooter() - header fields " + connection.getHeaderFields());
+        }
+        int responseCode = -1;
+
+        if (connection != null) {
+            try {
+                responseCode = StroomStreamException.checkConnectionResponse(connection);
+            } finally {
+                final long duration = System.currentTimeMillis() - startTimeMs;
+                logStream.log(SEND_LOG, metaMap, "SEND", forwardUrl, responseCode, bytesSent, duration);
+
+                connection.disconnect();
+                connection = null;
+            }
+        }
+
+    }
+
+    @Override
+    public void handleEntryStart(final StroomZipEntry stroomZipEntry) throws IOException {
+        // First call we set up if we are going to do chunked streaming
+        zipOutputStream.putNextEntry(new ZipEntry(stroomZipEntry.getFullName()));
+    }
+
+    @Override
+    public void handleEntryEnd() throws IOException {
+        zipOutputStream.closeEntry();
+    }
+
+    /**
+     * Handle some pay load.
+     */
+    @Override
+    public void handleEntryData(final byte[] buffer, final int off, final int length) throws IOException {
+        bytesSent += length;
+        zipOutputStream.write(buffer, off, length);
+        if (forwardDelayMs != null) {
+            LOGGER.debug("handleEntryData() - adding delay {}", forwardDelayMs);
+            ThreadUtil.sleep(forwardDelayMs);
+        }
+    }
+
     private void sslCheck() {
         if (connection instanceof HttpsURLConnection) {
             ((HttpsURLConnection) connection).setHostnameVerifier(this);
@@ -175,28 +178,7 @@ public class ForwardStreamHandler implements StreamHandler, HostnameVerifier {
         }
     }
 
-    public String getForwardUrl() {
+    String getForwardUrl() {
         return forwardUrl;
     }
-
-    //    public void setForwardTimeoutMs(String timeout) {
-//        this.forwardTimeoutMs = getInteger(timeout, forwardTimeoutMs);
-//    }
-//
-//    public void setForwardDelayMs(String forwardDelayMs) {
-//        this.forwardDelayMs = getInteger(forwardDelayMs, this.forwardDelayMs);
-//    }
-//
-//    public void setForwardChunkSize(Integer chunkSize) {
-//        this.forwardChunkSize = chunkSize;
-//    }
-//
-//    private Integer getInteger(String newVal, Integer defVal) {
-//        if (StringUtils.hasText(newVal)) {
-//            return Integer.valueOf(newVal);
-//        } else {
-//            return defVal;
-//        }
-//    }
-
 }

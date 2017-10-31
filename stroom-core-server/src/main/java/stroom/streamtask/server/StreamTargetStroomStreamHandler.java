@@ -142,6 +142,45 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     }
 
     @Override
+    public void handleEntryStart(final StroomZipEntry stroomZipEntry) throws IOException {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("handleEntryStart() - " + stroomZipEntry);
+        }
+
+        currentFileType = stroomZipEntry.getStroomZipFileType();
+
+        // We don't want to aggregate reference feeds.
+        final boolean singleEntry = currentFeed.isReference() || oneByOne;
+
+        final StroomZipEntry nextEntry = stroomZipNameSet.add(stroomZipEntry.getFullName());
+
+        if (singleEntry && currentStroomZipEntry != null && !nextEntry.equalsBaseName(currentStroomZipEntry)) {
+            // Close it if we have opened it.
+            if (feedStreamTarget.containsKey(currentFeed)) {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("handleEntryStart() - Closing due to singleEntry=" + singleEntry + " " + currentFeed
+                            + " currentStroomZipEntry=" + currentStroomZipEntry + " nextEntry=" + nextEntry);
+                }
+                closeCurrentFeed();
+            }
+        }
+
+        currentStroomZipEntry = nextEntry;
+
+        if (StroomZipFileType.Meta.equals(currentFileType)) {
+            // Header we just buffer up
+            currentHeaderByteArrayOutputStream.reset();
+        }
+        if (StroomZipFileType.Data.equals(currentFileType)) {
+            getCurrentNestedStreamTarget().putNextEntry();
+        }
+        if (StroomZipFileType.Context.equals(currentFileType)) {
+            getCurrentNestedStreamTarget().putNextEntry(StreamType.CONTEXT);
+        }
+
+    }
+
+    @Override
     public void handleEntryEnd() throws IOException {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("handleEntryEnd() - " + currentFileType);
@@ -219,45 +258,6 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
         }
         CloseableUtil.closeLogAndIgnoreException(feedNestedStreamTarget.remove(currentFeed));
         streamStore.closeStreamTarget(feedStreamTarget.remove(currentFeed));
-    }
-
-    @Override
-    public void handleEntryStart(final StroomZipEntry stroomZipEntry) throws IOException {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("handleEntryStart() - " + stroomZipEntry);
-        }
-
-        currentFileType = stroomZipEntry.getStroomZipFileType();
-
-        // We don't want to aggregate reference feeds.
-        final boolean singleEntry = currentFeed.isReference() || oneByOne;
-
-        final StroomZipEntry nextEntry = stroomZipNameSet.add(stroomZipEntry.getFullName());
-
-        if (singleEntry && currentStroomZipEntry != null && !nextEntry.equalsBaseName(currentStroomZipEntry)) {
-            // Close it if we have opened it.
-            if (feedStreamTarget.containsKey(currentFeed)) {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("handleEntryStart() - Closing due to singleEntry=" + singleEntry + " " + currentFeed
-                            + " currentStroomZipEntry=" + currentStroomZipEntry + " nextEntry=" + nextEntry);
-                }
-                closeCurrentFeed();
-            }
-        }
-
-        currentStroomZipEntry = nextEntry;
-
-        if (StroomZipFileType.Meta.equals(currentFileType)) {
-            // Header we just buffer up
-            currentHeaderByteArrayOutputStream.reset();
-        }
-        if (StroomZipFileType.Data.equals(currentFileType)) {
-            getCurrentNestedStreamTarget().putNextEntry();
-        }
-        if (StroomZipFileType.Context.equals(currentFileType)) {
-            getCurrentNestedStreamTarget().putNextEntry(StreamType.CONTEXT);
-        }
-
     }
 
     public Set<Stream> getStreamSet() {

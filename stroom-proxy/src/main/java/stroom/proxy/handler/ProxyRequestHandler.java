@@ -7,7 +7,7 @@ import stroom.feed.MetaMap;
 import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomStreamException;
 import stroom.proxy.repo.StroomStreamProcessor;
-import stroom.util.io.CloseableUtil;
+import stroom.util.io.ByteCountInputStream;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.thread.BufferFactory;
 
@@ -15,7 +15,7 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -27,31 +27,47 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class ProxyRequestHandler implements RequestHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRequestHandler.class);
+    private static final Logger RECEIVE_LOG = LoggerFactory.getLogger("receive");
     private static final AtomicInteger concurrentRequestCount = new AtomicInteger(0);
 
-    private final StreamHandlerFactoryImpl proxyHandlerFactory;
+    private final MasterStreamHandlerFactory streamHandlerFactory;
+    private final LogStream logStream;
 
     @Inject
-    public ProxyRequestHandler(final StreamHandlerFactoryImpl proxyHandlerFactory) {
-        this.proxyHandlerFactory = proxyHandlerFactory;
+    public ProxyRequestHandler(final MasterStreamHandlerFactory streamHandlerFactory,
+                               final LogStream logStream) {
+        this.streamHandlerFactory = streamHandlerFactory;
+        this.logStream = logStream;
     }
 
     @Override
     public void handle(final HttpServletRequest request, final HttpServletResponse response) {
         concurrentRequestCount.incrementAndGet();
         try {
-            int returnCode = HttpServletResponse.SC_OK;
+            stream(request, response);
+        } finally {
+            concurrentRequestCount.decrementAndGet();
+        }
+    }
 
-            // Send the data
-            final List<StreamHandler> handlers = proxyHandlerFactory.createIncomingHandlers();
+    private void stream(final HttpServletRequest request, final HttpServletResponse response) {
+        int returnCode = HttpServletResponse.SC_OK;
 
+        try (final ByteCountInputStream inputStream = new ByteCountInputStream(request.getInputStream())) {
             final long startTime = System.currentTimeMillis();
 
+            // Send the data
+            final List<StreamHandler> handlers = streamHandlerFactory.addReceiveHandlers(new ArrayList<>());
+
             final MetaMap metaMap = MetaMapFactory.create(request);
+
+            // Set the meta map for all handlers.
+            for (final StreamHandler streamHandler : handlers) {
+                streamHandler.setMetaMap(metaMap);
+            }
             try {
                 final byte[] buffer = BufferFactory.create();
-                final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlers,
-                        buffer, "DataFeedServlet");
+                final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlers, buffer, "DataFeedServlet");
 
                 stroomStreamProcessor.processRequestHeader(request);
 
@@ -71,10 +87,9 @@ public class ProxyRequestHandler implements RequestHandler {
                     boolean error = true;
                     if (ex instanceof DropStreamException) {
                         // Just read the stream in and ignore it
-                        final InputStream inputStream = request.getInputStream();
+
                         final byte[] buffer = BufferFactory.create();
                         while (inputStream.read(buffer) >= 0) ;
-                        CloseableUtil.close(inputStream);
                         response.setStatus(HttpServletResponse.SC_OK);
                         LOGGER.warn("\"handleException() - Dropped stream\",{}", CSVFormatter.format(metaMap));
                         error = false;
@@ -97,21 +112,26 @@ public class ProxyRequestHandler implements RequestHandler {
                     if (error) {
                         returnCode = StroomStreamException.sendErrorResponse(response, ex);
                     } else {
-                        response.setStatus(returnCode);
+
                     }
                 } catch (final IOException ioEx) {
                     throw new RuntimeException(ioEx);
                 }
             } finally {
                 if (LOGGER.isInfoEnabled()) {
-                    final long time = System.currentTimeMillis() - startTime;
+                    final long duration = System.currentTimeMillis() - startTime;
+                    logStream.log(RECEIVE_LOG, metaMap, "RECEIVE", request.getRemoteAddr(), returnCode, -1, duration);
+
+
                     LOGGER.info("\"doPost() - Took {} to process (concurrentRequestCount={}) {}\",{}",
-                            ModelStringUtil.formatDurationString(time), concurrentRequestCount, returnCode,
+                            ModelStringUtil.formatDurationString(duration), concurrentRequestCount, returnCode,
                             CSVFormatter.format(metaMap));
                 }
             }
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
         } finally {
-            concurrentRequestCount.decrementAndGet();
+            response.setStatus(returnCode);
         }
     }
 }
