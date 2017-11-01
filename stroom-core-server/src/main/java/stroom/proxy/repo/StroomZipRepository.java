@@ -254,7 +254,7 @@ public class StroomZipRepository {
         return getStroomZipOutputStream(null);
     }
 
-    StroomZipOutputStream getStroomZipOutputStream(final MetaMap metaMap)
+    public StroomZipOutputStream getStroomZipOutputStream(final MetaMap metaMap)
             throws IOException {
         if (finish.get()) {
             throw new RuntimeException("No longer allowed to write new streams to a finished repository");

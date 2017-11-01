@@ -1,23 +1,16 @@
 package stroom.proxy.repo;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.stereotype.Component;
+import stroom.util.config.StroomProperties;
 
-public class ProxyRepositoryConfig {
-    private String repoDir;
-    private String repositoryFormat = "${pathId}/${id}";
-    private String rollCron;
-
+@Component
+public class ProxyRepositoryDBConfig implements ProxyRepositoryConfig {
     /**
      * Optional Repository DIR. If set any incoming request will be written to the file system.
      */
-    @JsonProperty
+    @Override
     public String getRepoDir() {
-        return repoDir;
-    }
-
-    @JsonProperty
-    public void setRepoDir(final String repoDir) {
-        this.repoDir = repoDir;
+        return StroomProperties.getProperty("stroom.proxy.store.dir");
     }
 
     /**
@@ -33,28 +26,17 @@ public class ProxyRepositoryConfig {
      * Replacement variables that cannot be resolved will be output as '_'.
      * Please ensure that all templates include the '${id}' replacement variable at the start of the file name, failure to do this will result in an invalid repository.
      */
-    @JsonProperty
+    @Override
     public String getRepositoryFormat() {
-        return repositoryFormat;
+        return StroomProperties.getProperty("stroom.proxy.store.format", false);
     }
 
-    @JsonProperty
-    public void setRepositoryFormat(final String repositoryFormat) {
-        this.repositoryFormat = repositoryFormat;
-    }
 
     /**
      * Interval to roll any writing repositories.
      */
-    @JsonProperty
+    @Override
     public String getRollCron() {
-        return rollCron;
+        return StroomProperties.getProperty("stroom.proxy.store.rollCron");
     }
-
-    @JsonProperty
-    public void setRollCron(final String rollCron) {
-        this.rollCron = rollCron;
-    }
-
-
 }

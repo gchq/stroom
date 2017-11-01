@@ -3,12 +3,12 @@ package stroom.proxy.guice;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.proxy.handler.ForwardStreamConfig;
 import stroom.proxy.handler.LogStreamConfig;
-import stroom.proxy.repo.ProxyRepositoryConfig;
+import stroom.proxy.repo.ProxyRepositoryConfigImpl;
 import stroom.proxy.repo.ProxyRepositoryReaderConfig;
 
 public class ProxyConfig {
     private ForwardStreamConfig forwardStreamConfig;
-    private ProxyRepositoryConfig proxyRepositoryConfig;
+    private ProxyRepositoryConfigImpl proxyRepositoryConfig;
     private ProxyRepositoryReaderConfig proxyRepositoryReaderConfig;
     private LogStreamConfig logStreamConfig;
 
@@ -23,12 +23,12 @@ public class ProxyConfig {
     }
 
     @JsonProperty
-    public ProxyRepositoryConfig getProxyRepositoryConfig() {
+    public ProxyRepositoryConfigImpl getProxyRepositoryConfig() {
         return proxyRepositoryConfig;
     }
 
     @JsonProperty
-    public void setProxyRepositoryConfig(final ProxyRepositoryConfig proxyRepositoryConfig) {
+    public void setProxyRepositoryConfig(final ProxyRepositoryConfigImpl proxyRepositoryConfig) {
         this.proxyRepositoryConfig = proxyRepositoryConfig;
     }
 

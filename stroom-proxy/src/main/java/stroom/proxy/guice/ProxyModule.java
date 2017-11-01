@@ -4,13 +4,13 @@ import com.google.inject.AbstractModule;
 import stroom.datafeed.server.RequestHandler;
 import stroom.proxy.handler.ForwardStreamConfig;
 import stroom.proxy.handler.ForwardStreamHandlerFactory;
-import stroom.proxy.handler.StreamHandlerFactory;
 import stroom.proxy.handler.LogStreamConfig;
+import stroom.proxy.handler.ProxyRequestHandler;
+import stroom.proxy.handler.StreamHandlerFactory;
 import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.proxy.repo.ProxyRepositoryManager;
 import stroom.proxy.repo.ProxyRepositoryReader;
 import stroom.proxy.repo.ProxyRepositoryReaderConfig;
-import stroom.proxy.handler.ProxyRequestHandler;
 import stroom.util.shared.Monitor;
 import stroom.util.task.MonitorImpl;
 

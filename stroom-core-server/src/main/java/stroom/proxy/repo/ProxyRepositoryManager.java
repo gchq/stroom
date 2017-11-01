@@ -1,17 +1,19 @@
 package stroom.proxy.repo;
 
-import com.google.inject.Singleton;
-import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileNameUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
+import stroom.util.spring.StroomShutdown;
+import stroom.util.spring.StroomStartup;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,6 +30,7 @@ import java.util.stream.Stream;
  * old rolled repositories.
  */
 @Singleton
+@Component
 public class ProxyRepositoryManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryManager.class);
 
@@ -81,6 +84,7 @@ public class ProxyRepositoryManager {
         return null;
     }
 
+    @StroomStartup
     public synchronized void start() {
         LOGGER.info("Using repository format: " + repositoryFormat);
 
@@ -116,6 +120,7 @@ public class ProxyRepositoryManager {
         }
     }
 
+    @StroomShutdown
     public void stop() {
         finish = true;
         rollCurrentRepo();
@@ -170,7 +175,7 @@ public class ProxyRepositoryManager {
         }
     }
 
-    StroomZipRepository getActiveRepository() {
+    public StroomZipRepository getActiveRepository() {
         if (activeRepository.get() == null) {
             synchronized (ProxyRepositoryManager.class) {
                 if (activeRepository.get() == null) {

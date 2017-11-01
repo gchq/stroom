@@ -2,7 +2,7 @@ package stroom.proxy.handler;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.proxy.repo.ProxyRepositoryConfig;
+import stroom.proxy.repo.ProxyRepositoryConfigImpl;
 import stroom.proxy.repo.ProxyRepositoryManager;
 import stroom.proxy.repo.ProxyRepositoryStreamHandler;
 import stroom.proxy.repo.ProxyRepositoryStreamHandlerFactory;
@@ -63,7 +63,7 @@ public class TestProxyHandlerFactory extends StroomUnitTest {
 
     private MasterStreamHandlerFactory getProxyHandlerFactory(final String repoDir, final String forwardUrl) {
         final LogStreamConfig logRequestConfig = null;
-        final ProxyRepositoryConfig proxyRepositoryConfig = new ProxyRepositoryConfig();
+        final ProxyRepositoryConfigImpl proxyRepositoryConfig = new ProxyRepositoryConfigImpl();
         final ForwardStreamConfig forwardRequestConfig = new ForwardStreamConfig();
 
         proxyRepositoryConfig.setRepoDir(repoDir);
