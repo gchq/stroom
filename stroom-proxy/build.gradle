@@ -12,7 +12,7 @@ dependencies {
 //    compile libs.spring_beans
 //    compile libs.spring_context
 //    compile libs.spring_core
-    compile libs.guice
+    compile libs.guice4
     compile libs.javax_inject
 
     compile libs.javax_servlet_api

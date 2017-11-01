@@ -5,7 +5,7 @@ dependencies {
     compile project(':stroom-security-client-api')
 
     compile libs.gin
-    compile libs.guice
+    compile libs.guice3
     compile libs.gwt_servlet
     compile libs.gwtp_mvp_client
 }
