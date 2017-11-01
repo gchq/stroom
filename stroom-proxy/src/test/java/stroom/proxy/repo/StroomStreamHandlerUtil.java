@@ -16,7 +16,7 @@ public final class StroomStreamHandlerUtil {
 
             @Override
             public void handleEntryStart(StroomZipEntry stroomZipEntry) throws IOException {
-                outputStream = stroomZipOutputStream.addEntry(stroomZipEntry);
+                outputStream = stroomZipOutputStream.addEntry(stroomZipEntry.getFullName());
             }
 
             @Override
