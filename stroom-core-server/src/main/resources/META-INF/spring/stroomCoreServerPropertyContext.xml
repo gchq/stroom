@@ -879,8 +879,6 @@
         </bean>
 
 
-
-
         <!-- External Service properties, including DocRef.type name mappings-->
         <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~START~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
@@ -889,7 +887,7 @@
             <property name="name" value="stroom.services.stroomIndex.name"/>
             <property name="value" value="stroom-index"/>
             <property name="description"
-                      value="Name of the index service" />
+                      value="Name of the index service"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -897,7 +895,7 @@
             <property name="name" value="stroom.services.stroomIndex.version"/>
             <property name="value" value="1"/>
             <property name="description"
-                      value="Version of the index service" />
+                      value="Version of the index service"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -905,7 +903,7 @@
             <property name="name" value="stroom.services.stroomIndex.docRefType"/>
             <property name="value" value="Index"/>
             <property name="description"
-                      value="The entity type for the index service" />
+                      value="The entity type for the index service"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -915,7 +913,7 @@
             <property name="name" value="stroom.services.authentication.name"/>
             <property name="value" value="authentication"/>
             <property name="description"
-                      value="Name of the authentication service" />
+                      value="Name of the authentication service"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -923,7 +921,7 @@
             <property name="name" value="stroom.services.authentication.version"/>
             <property name="value" value="1"/>
             <property name="description"
-                      value="Version of the authentication service" />
+                      value="Version of the authentication service"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -931,7 +929,7 @@
             <property name="name" value="stroom.services.authentication.docRefType"/>
             <property name="value" value="authentication"/>
             <property name="description"
-                      value="The entity type for the authentication service" />
+                      value="The entity type for the authentication service"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -941,7 +939,7 @@
             <property name="name" value="stroom.services.authorisation.name"/>
             <property name="value" value="authorisation"/>
             <property name="description"
-                      value="Name of the authorisation service" />
+                      value="Name of the authorisation service"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -949,7 +947,7 @@
             <property name="name" value="stroom.services.authorisation.version"/>
             <property name="value" value="1"/>
             <property name="description"
-                      value="Version of the authorisation service" />
+                      value="Version of the authorisation service"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -957,7 +955,7 @@
             <property name="name" value="stroom.services.authorisation.docRefType"/>
             <property name="value" value="authorisation"/>
             <property name="description"
-                      value="The entity type for the authorisation service" />
+                      value="The entity type for the authorisation service"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -967,7 +965,7 @@
             <property name="name" value="stroom.services.stroomStats.name"/>
             <property name="value" value="stroom-stats"/>
             <property name="description"
-                      value="The name of the stroom-stats service" />
+                      value="The name of the stroom-stats service"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -975,7 +973,7 @@
             <property name="name" value="stroom.services.stroomStats.version"/>
             <property name="value" value="2"/>
             <property name="description"
-                      value="The version of the stroom-stats service" />
+                      value="The version of the stroom-stats service"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -983,7 +981,7 @@
             <property name="name" value="stroom.services.stroomStats.docRefType"/>
             <property name="value" value="StroomStatsStore"/>
             <property name="description"
-                      value="The entity type for the stroom-stats service" />
+                      value="The entity type for the stroom-stats service"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -992,7 +990,7 @@
             <property name="value"
                       value="statisticEvents-Count"/>
             <property name="description"
-                      value="The kafka topic to send Count type stroom-stats statistic events to" />
+                      value="The kafka topic to send Count type stroom-stats statistic events to"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -1001,7 +999,7 @@
             <property name="value"
                       value="statisticEvents-Value"/>
             <property name="description"
-                      value="The kafka topic to send Value type stroom-stats statistic events to" />
+                      value="The kafka topic to send Value type stroom-stats statistic events to"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -1011,7 +1009,7 @@
             <property name="name" value="stroom.services.sqlStatistics.name"/>
             <property name="value" value="sql_statistics"/>
             <property name="description"
-                      value="The name of the built-in sql statistics service" />
+                      value="The name of the built-in sql statistics service"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -1019,7 +1017,7 @@
             <property name="name" value="stroom.services.sqlStatistics.version"/>
             <property name="value" value="1"/>
             <property name="description"
-                      value="The version of the built-in sql statistics service" />
+                      value="The version of the built-in sql statistics service"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -1027,14 +1025,12 @@
             <property name="name" value="stroom.services.sqlStatistics.docRefType"/>
             <property name="value" value="StatisticStore"/>
             <property name="description"
-                      value="The entity type for the sql statistics service" />
+                      value="The entity type for the sql statistics service"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
 
         <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-
 
 
         <!-- Kafka properties -->
@@ -1043,7 +1039,7 @@
             <property name="name" value="stroom.kafka.bootstrap.servers"/>
             <property name="value" value="localhost:9092"/>
             <property name="description"
-                      value="The list of kafka brokers to initially connect to to obtain the full set of kafka brokers, in the form `host1:port,host2:port,etc'" />
+                      value="The list of kafka brokers to initially connect to to obtain the full set of kafka brokers, in the form `host1:port,host2:port,etc'"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -1077,7 +1073,7 @@
             <property name="value"
                       value="localhost:2181"/>
             <property name="description"
-                      value="The Zookeeper quorum connection string, required for service discovery, in the form 'host1:port1,host2:port2,host3:port3'. The root znode to use in Zookeeper is defined in the property stroom.serviceDiscovery.zookeeperBasePath" />
+                      value="The Zookeeper quorum connection string, required for service discovery, in the form 'host1:port1,host2:port2,host3:port3'. The root znode to use in Zookeeper is defined in the property stroom.serviceDiscovery.zookeeperBasePath"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -1087,7 +1083,7 @@
             <property name="value"
                       value="localhost"/>
             <property name="description"
-                      value="The external facing address that stroom will register its services with service discovery. If this property is empty stroom will try to establish the hostname. Recommended to be left blank in production to avoid having host specific configuration, unless the hostname is that of a load balancer in front of stroom instances." />
+                      value="The external facing address that stroom will register its services with service discovery. If this property is empty stroom will try to establish the hostname. Recommended to be left blank in production to avoid having host specific configuration, unless the hostname is that of a load balancer in front of stroom instances."/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -1097,7 +1093,7 @@
             <property name="value"
                       value="8080"/>
             <property name="description"
-                      value="The external facing port that stroom will register its services with service discovery" />
+                      value="The external facing port that stroom will register its services with service discovery"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -1107,7 +1103,7 @@
             <property name="value"
                       value="5000"/>
             <property name="description"
-                      value="Initial time in ms between retries to establish a connection to zookeeper" />
+                      value="Initial time in ms between retries to establish a connection to zookeeper"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -1117,7 +1113,7 @@
             <property name="value"
                       value="300000"/>
             <property name="description"
-                      value="Maximum time in ms between retries to establish a connection to zookeeper" />
+                      value="Maximum time in ms between retries to establish a connection to zookeeper"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -1127,7 +1123,7 @@
             <property name="value"
                       value="100"/>
             <property name="description"
-                      value="Maximum number of retries to establish a connection to zookeeper before giving up" />
+                      value="Maximum number of retries to establish a connection to zookeeper before giving up"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -1137,13 +1133,11 @@
             <property name="value"
                       value="/stroom-services"/>
             <property name="description"
-                      value="The base path to use in zookeeper for Curator service discover. All services registering or querying discoverable services must use the same value for this base path. Must start with a '/'" />
+                      value="The base path to use in zookeeper for Curator service discover. All services registering or querying discoverable services must use the same value for this base path. Must start with a '/'"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
         <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-
 
 
         <!-- Internal statistics definitions
@@ -1160,7 +1154,7 @@
             <property name="value"
                       value="docRef(StatisticStore,946a88c6-a59a-11e6-bdc4-0242ac110002,Benchmark-Cluster Test),docRef(StroomStatsStore,2503f703-5ce0-4432-b9d4-e3272178f47e,Benchmark-Cluster Test)"/>
             <property name="description"
-                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
+                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..."/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -1170,7 +1164,7 @@
             <property name="value"
                       value="docRef(StatisticStore,946a80fc-a59a-11e6-bdc4-0242ac110002,PipelineStreamProcessor),docRef(StroomStatsStore,efd9bad4-0bab-460f-ae98-79e9717deeaf,PipelineStreamProcessor)"/>
             <property name="description"
-                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
+                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..."/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -1180,7 +1174,7 @@
             <property name="value"
                       value="docRef(StatisticStore,946a8814-a59a-11e6-bdc4-0242ac110002,Meta Data-Stream Size),docRef(StroomStatsStore,3b25d63b-5472-44d0-80e8-8eea94f40f14,Meta Data-Stream Size)"/>
             <property name="description"
-                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
+                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..."/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -1190,7 +1184,7 @@
             <property name="value"
                       value="docRef(StatisticStore,a9936548-2572-448b-9d5b-8543052c4d92,EPS),docRef(StroomStatsStore,cde67df0-0f77-45d3-b2c0-ee8bb7b3c9c6,EPS)"/>
             <property name="description"
-                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
+                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..."/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -1200,7 +1194,7 @@
             <property name="value"
                       value="docRef(StatisticStore,af08c4a7-ee7c-44e4-8f5e-e9c6be280434,CPU),docRef(StroomStatsStore,1edfd582-5e60-413a-b91c-151bd544da47,CPU)"/>
             <property name="description"
-                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
+                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..."/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -1210,7 +1204,7 @@
             <property name="value"
                       value="docRef(StatisticStore,946a87bc-a59a-11e6-bdc4-0242ac110002,Meta Data-Streams Received),docRef(StroomStatsStore,5535f493-29ae-4ee6-bba6-735aa3104136,Meta Data-Streams Received)"/>
             <property name="description"
-                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
+                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..."/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -1220,7 +1214,7 @@
             <property name="value"
                       value="docRef(StatisticStore,946a7f0f-a59a-11e6-bdc4-0242ac110002,Stream Task Queue Size),docRef(StroomStatsStore,4ce8d6e7-94be-40e1-8294-bf29dd089962,Stream Task Queue Size)"/>
             <property name="description"
-                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
+                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..."/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -1230,7 +1224,7 @@
             <property name="value"
                       value="docRef(StatisticStore,ac4d8d10-6f75-4946-9708-18b8cb42a5a3,Volumes),docRef(StroomStatsStore,60f4f5f0-4cc3-42d6-8fe7-21a7cec30f8e,Volumes)"/>
             <property name="description"
-                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..." />
+                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),..."/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
@@ -1240,12 +1234,36 @@
             <property name="value"
                       value="docRef(StatisticStore,77c09ccb-e251-4ca5-bca0-56a842654397,Memory),docRef(StroomStatsStore,d8a7da4f-ef6d-47e0-b16a-af26367a2798,Memory)"/>
             <property name="description"
-                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),...'" />
+                      value="Comma delimited list of zero to many DocRefs in the form 'docRef(type,uuid,name),docRef(type,uuid,name),...'"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
-        <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
+        <!-- Stroom Proxy Store for Pipeline Use -->
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.proxy.store.dir"/>
+            <property name="value" value="${stroom.temp}/stroom-proxy"/>
+            <property name="description" value="The stroom proxy dir to write data to from a pipeline"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.proxy.store.format"/>
+            <property name="value" value="#{'$'}{pathId}/#{'$'}{id}"/>
+            <property name="description" value="The format to use for the stroom proxy store"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.proxy.store.rollCron"/>
+            <property name="value" value=""/>
+            <property name="description" value="How often should the stroom proxy store be rolled"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+            <property name="requireUiRestart" value="false"/>
+        </bean>
 
 
     </util:list>

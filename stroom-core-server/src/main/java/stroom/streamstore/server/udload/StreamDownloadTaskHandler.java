@@ -201,7 +201,7 @@ public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloa
                     // Write out the manifest
                     if (part == 1 || part == -1) {
                         dataSource.getAttributeMap().write(stroomZipOutputStream
-                                .addEntry(new StroomZipEntry(null, basePartName, StroomZipFileType.Manifest)), true);
+                                .addEntry(new StroomZipEntry(null, basePartName, StroomZipFileType.Manifest).getFullName()), true);
                     }
 
                     // False here as the loop does the next next next
@@ -232,7 +232,7 @@ public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloa
             }
 
             final StroomZipEntry stroomZipEntry = new StroomZipEntry(null, basePartName, fileType);
-            final OutputStream outputStream = zipOutputStream.addEntry(stroomZipEntry);
+            final OutputStream outputStream = zipOutputStream.addEntry(stroomZipEntry.getFullName());
             final byte[] buffer = BufferFactory.create();
 
             int len;

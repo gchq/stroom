@@ -1,7 +1,6 @@
 package stroom.security.server;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import io.dropwizard.Configuration;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientResponse;
@@ -11,6 +10,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import stroom.startup.App;
+import stroom.startup.Config;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -22,7 +22,7 @@ public class TestAuthenticationResource {
     private static App app;
 
     @ClassRule
-    public static final DropwizardAppRule<Configuration> RULE = new DropwizardAppRule<>(App.class, "dev.yml");
+    public static final DropwizardAppRule<Config> RULE = new DropwizardAppRule<>(App.class, "dev.yml");
 
     @BeforeClass
     public static void setupClass() {

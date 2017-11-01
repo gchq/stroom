@@ -122,6 +122,10 @@ public class DataFeedRequestHandler implements RequestHandler {
                 // Drop the data.
                 debug("Dropping data", metaMap);
             }
+
+            // Set the response status.
+            response.setStatus(StroomStatusCode.OK.getHttpCode());
+            LOGGER.info("handleRequest response " + StroomStatusCode.OK);
         } finally {
             securityContext.popUser();
         }

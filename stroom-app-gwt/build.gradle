@@ -20,7 +20,7 @@ dependencies {
     compile project(':stroom-security-client')
 
     compile libs.gin
-    compile libs.guice
+    compile libs.guice3
     compile libs.gwt_dev
     permitUnusedDeclared libs.gwt_dev
     compile libs.gwt_user

@@ -82,7 +82,7 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
     }
 
     @Override
-    public OutputStream addEntry(final StroomZipEntry entry) throws IOException {
+    public OutputStream addEntry(final String name) throws IOException {
         if (inEntry) {
             throw new RuntimeException("Failed to close last entry");
         }
@@ -94,19 +94,19 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
             }
         }
         if (LOGGER.isTraceEnabled()) {
-            LOGGER.trace("addEntry() - " + file + " - " + entry + " - adding");
+            LOGGER.trace("addEntry() - " + file + " - " + name + " - adding");
         }
         if (stroomZipNameSet != null) {
-            stroomZipNameSet.add(entry.getFullName());
+            stroomZipNameSet.add(name);
         }
-        zipOutputStream.putNextEntry(new ZipEntry(entry.getFullName()));
+        zipOutputStream.putNextEntry(new ZipEntry(name));
         return new WrappedOutputStream(zipOutputStream) {
             @Override
             public void close() throws IOException {
                 zipOutputStream.closeEntry();
                 inEntry = false;
                 if (LOGGER.isTraceEnabled()) {
-                    LOGGER.trace("addEntry() - " + file + " - " + entry + " - closed");
+                    LOGGER.trace("addEntry() - " + file + " - " + name + " - closed");
                 }
             }
         };
@@ -152,7 +152,7 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
     public void closeDelete() throws IOException {
         // ZIP's don't like to be empty !
         if (entryCount == 0) {
-            final OutputStream os = addEntry(new StroomZipEntry("NULL.DAT", "NULL", StroomZipFileType.Data));
+            final OutputStream os = addEntry(new StroomZipEntry("NULL.DAT", "NULL", StroomZipFileType.Data).getFullName());
             os.write("NULL".getBytes(CharsetConstants.DEFAULT_CHARSET));
             os.close();
         }

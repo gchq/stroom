@@ -76,7 +76,7 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
     }
 
     @Override
-    public final OutputStream getOutputStream(final byte[] header, final byte[] footer) throws IOException {
+    public OutputStream getOutputStream(final byte[] header, final byte[] footer) throws IOException {
         this.footer = footer;
 
         if (outputStream == null) {

@@ -11,7 +11,7 @@ class StroomZipOutputStreamUtil {
             throws IOException {
         OutputStream outputStream = null;
         try {
-            outputStream = stroomZipOutputStream.addEntry(entry);
+            outputStream = stroomZipOutputStream.addEntry(entry.getFullName());
             outputStream.write(data);
         } finally {
             CloseableUtil.close(outputStream);
