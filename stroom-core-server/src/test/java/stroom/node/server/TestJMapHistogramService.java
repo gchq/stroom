@@ -13,10 +13,20 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.Semaphore;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class TestJMapHistogramService {
+
+    public static final String EXCLUSION_REGEX = "^(sun\\..*|org\\.junit\\..*)$";
+
+    public static final Semaphore semaphore = new Semaphore(0);
 
 
     @Test
@@ -49,6 +59,9 @@ public class TestJMapHistogramService {
         executeResultHandler.waitFor();
 
 
+        semaphore.acquire();
+
+
     }
 
     private static class JMapResultHandler extends DefaultExecuteResultHandler {
@@ -77,6 +90,8 @@ public class TestJMapHistogramService {
             }
             System.out.println(result);
             processResult(result);
+
+            TestJMapHistogramService.semaphore.release();
         }
 
         @Override
@@ -93,16 +108,88 @@ public class TestJMapHistogramService {
 
         public static void processResult(final String result) {
 
-            Pattern pattern = Pattern.compile("\\s+\\d+:\\s+\\d+\\s+(?<bytes>\\d+)\\s+(?<class>.*)");
+
+            try {
+                Pattern matchPattern = Pattern.compile("\\s+\\d+:\\s+(?<instances>\\d+)\\s+(?<bytes>\\d+)\\s+(?<class>.*)");
+                Predicate<String> matchPredicate = matchPattern.asPredicate();
+
+                Pattern excludePattern = Pattern.compile(EXCLUSION_REGEX);
+                Predicate<String> excludePredicate = excludePattern.asPredicate().negate();
+
+                String[] lines = result.split("\\r?\\n");
+
+                System.out.println("Line count: " + lines.length);
+
+                List<HistogramEntry> histogramEntries = Arrays.stream(lines)
+//                        .peek(line -> System.out.printf("Line:   %s\n", line))
+                        .map(line -> {
+                            Matcher matcher = matchPattern.matcher(line);
+                            if (matcher.matches()) {
+                                long instances = Long.parseLong(matcher.group("instances"));
+                                long bytes = Long.parseLong(matcher.group("bytes"));
+                                String className = matcher.group("class");
+                                return new HistogramEntry(className, instances, bytes);
+                            } else {
+                                return null;
+                            }
+                        })
+                        .filter(Objects::nonNull)
+//                        .peek(line -> System.out.printf("Match:  %s\n", line))
+                        .filter(histogramEntry -> excludePredicate.test(histogramEntry.getClassName()))
+//                        .peek(histogramEntry -> System.out.printf("Kept:   %s\n", histogramEntry))
+                        .collect(Collectors.toList());
+
+
+                System.out.println("List size: " + histogramEntries.size());
+
+
+
+
 //            Pattern pattern = Pattern.compile(".*");
 
-            Matcher matcher = pattern.matcher(result);
-
-            while (matcher.find()) {
-                long bytes = Long.parseLong(matcher.group("bytes"));
-                String clazz = matcher.group("class");
-                System.out.printf("%s: %s\n", clazz, bytes);
+//            Matcher matcher = pattern.matcher(result);
+//
+//            while (matcher.find()) {
+//                long bytes = Long.parseLong(matcher.group("bytes"));
+//                String clazz = matcher.group("class");
+//                System.out.printf("%s: %s\n", clazz, bytes);
+//            }
+            } catch (Exception e) {
+                throw new RuntimeException(String.format("Error processing result string"), e);
             }
+        }
+    }
+
+    private static class HistogramEntry {
+       private final String className;
+       private final long instances;
+       private final long bytes;
+
+        public HistogramEntry(final String className, final long instances, final long bytes) {
+            this.className = className;
+            this.instances = instances;
+            this.bytes = bytes;
+        }
+
+        public String getClassName() {
+            return className;
+        }
+
+        public long getInstances() {
+            return instances;
+        }
+
+        public long getBytes() {
+            return bytes;
+        }
+
+        @Override
+        public String toString() {
+            return "HistogramEntry{" +
+                    "className='" + className + '\'' +
+                    ", instances=" + instances +
+                    ", bytes=" + bytes +
+                    '}';
         }
     }
 
