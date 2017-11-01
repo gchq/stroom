@@ -26,8 +26,8 @@ public class HeapHistogramStatisticsExecutor {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(HeapHistogramStatisticsExecutor.class);
 
     private static final String HEAP_HISTOGRAM_BYTES_STAT_NAME_BASE = "Heap Histogram ";
-    static final String HEAP_HISTOGRAM_BYTES_STAT_NAME = HEAP_HISTOGRAM_BYTES_STAT_NAME_BASE + "(Bytes)";
-    static final String HEAP_HISTOGRAM_INSTANCES_STAT_NAME = HEAP_HISTOGRAM_BYTES_STAT_NAME_BASE + "(Instances)";
+    static final String HEAP_HISTOGRAM_BYTES_STAT_NAME = HEAP_HISTOGRAM_BYTES_STAT_NAME_BASE + "Bytes";
+    static final String HEAP_HISTOGRAM_INSTANCES_STAT_NAME = HEAP_HISTOGRAM_BYTES_STAT_NAME_BASE + "Instances";
     static final String NODE_TAG_NAME = "Node";
     static final String CLASS_NAME_TAG_NAME = "Class Name";
 
