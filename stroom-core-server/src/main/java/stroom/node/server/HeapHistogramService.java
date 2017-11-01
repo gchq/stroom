@@ -7,6 +7,7 @@ import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.exec.ExecuteWatchdog;
 import org.apache.commons.exec.PumpStreamHandler;
+import org.apache.commons.exec.ShutdownHookProcessDestroyer;
 import org.springframework.stereotype.Component;
 import stroom.util.logging.StroomLogger;
 
@@ -17,6 +18,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -46,6 +48,7 @@ public class HeapHistogramService {
     /**
      * Asynchronous method to build a heap histogram using the 'jmap' binary. Once the jmap command has been
      * executed, the method will return.
+     *
      * @param entriesConsumer A consumer of the heap histogram entries that will be called once the full histogram has
      *                        been produced
      */
@@ -61,6 +64,9 @@ public class HeapHistogramService {
         ExecuteWatchdog watchdog = new ExecuteWatchdog(120000);
         executor.setWatchdog(watchdog);
 
+        //ensure the process is killed if stroom is shutting down
+        executor.setProcessDestroyer(new ShutdownHookProcessDestroyer());
+
         ByteArrayOutputStream stdOut = new ByteArrayOutputStream();
         ByteArrayOutputStream stdErr = new ByteArrayOutputStream();
         PumpStreamHandler pumpStreamHandler = new PumpStreamHandler(stdOut, stdErr);
@@ -74,6 +80,161 @@ public class HeapHistogramService {
             executor.execute(command, executeResultHandler);
         } catch (IOException e) {
             throw new RuntimeException(String.format("Error executing command %s", command.toString()), e);
+        }
+    }
+
+    public List<HeapHistogramEntry> buildHeapHistogram() {
+        String pid = ManagementFactory.getRuntimeMXBean().getName().split("@")[0];
+
+        CommandLine command = new CommandLine("jmap");
+        command.addArguments(new String[]{"-histo:live", pid}, false);
+
+        DefaultExecutor executor = new DefaultExecutor();
+        executor.setExitValue(0);
+        ExecuteWatchdog watchdog = new ExecuteWatchdog(120000);
+        executor.setWatchdog(watchdog);
+        //ensure the process is killed if stroom is shutting down
+        executor.setProcessDestroyer(new ShutdownHookProcessDestroyer());
+
+        ByteArrayOutputStream stdOut = new ByteArrayOutputStream();
+        ByteArrayOutputStream stdErr = new ByteArrayOutputStream();
+        PumpStreamHandler pumpStreamHandler = new PumpStreamHandler(stdOut, stdErr);
+        executor.setStreamHandler(pumpStreamHandler);
+
+        List<HeapHistogramEntry> heapHistogramEntries = null;
+        try {
+            LOGGER.debug("Executing a heap histogram using command [%s]", command.toString());
+            int exitCode = executor.execute(command);
+            if (executor.isFailure(exitCode) && watchdog.killedProcess()) {
+                // it was killed on purpose by the watchdog
+            } else if (exitCode == 0) {
+                heapHistogramEntries = processSuccess(stdOut, stdErr);
+            } else {
+                logError(stdOut, stdErr, watchdog);
+               heapHistogramEntries = Collections.emptyList();
+            }
+        } catch (Exception e) {
+            logError(stdOut, stdErr, watchdog);
+            throw new RuntimeException(String.format("Error executing command %s", command.toString()), e);
+        }
+        return heapHistogramEntries;
+    }
+
+    private void logError(final ByteArrayOutputStream stdOut,
+                          final ByteArrayOutputStream stdErr,
+                          final ExecuteWatchdog watchdog) {
+        if (watchdog != null && watchdog.killedProcess()) {
+            LOGGER.error("The jmap call timed out");
+        } else {
+            String stdOutStr;
+            String stdErrStr;
+            try {
+                stdOutStr = getTruncatedStr(getStringOutput(stdOut));
+            } catch (Exception e) {
+                stdOutStr = "Unable to get stdOut str due to error " + e.getMessage();
+            }
+            try {
+                stdErrStr = getTruncatedStr(getStringOutput(stdErr));
+            } catch (Exception e) {
+                stdErrStr = "Unable to get stdErr str due to error " + e.getMessage();
+            }
+            LOGGER.error("The jmap call failed with stdout [%s] and stderr [%s]", stdOutStr, stdErrStr);
+        }
+
+    }
+
+    private List<HeapHistogramEntry> processSuccess(final ByteArrayOutputStream stdOut,
+                                                    final ByteArrayOutputStream stdErr) {
+        String result;
+        String error;
+        List<HeapHistogramEntry> heapHistogramEntries = null;
+        try {
+            result = getStringOutput(stdOut);
+            error = getStringOutput(stdErr);
+
+            if (error != null && !error.isEmpty()) {
+                throw new RuntimeException(String.format("jmap completed with exit code 0 but stderr is not empty [%s]",
+                        getTruncatedStr(error)));
+            } else if (result == null || result.isEmpty()) {
+                throw new RuntimeException("jmap completed with exit code 0 but stdout is empty");
+            }
+            heapHistogramEntries = processStdOut(result);
+
+        } catch (RuntimeException e) {
+            LOGGER.error("Error handling result of jmap call", e);
+        }
+        return heapHistogramEntries;
+    }
+
+    private String getStringOutput(final ByteArrayOutputStream outputStream) {
+        try {
+            return outputStream.toString(StandardCharsets.UTF_8.name());
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException("Error extracting stream output as UTF-8", e);
+        }
+    }
+
+    private static String getTruncatedStr(final String str) {
+        if (str != null && str.length() > STRING_TRUNCATE_LIMIT) {
+            return str.substring(0, STRING_TRUNCATE_LIMIT) + "...TRUNCATED...";
+        } else {
+            return str;
+        }
+    }
+
+    private static Predicate<String> getClassNameMatchPredicate(final StroomPropertyService stroomPropertyService) {
+        String classNameRegexStr = stroomPropertyService.getProperty(CLASS_NAME_MATCH_REGEX_PROP_KEY);
+
+        if (classNameRegexStr == null || classNameRegexStr.isEmpty()) {
+            //no prop value so return an always true predicate
+            return str -> true;
+        } else {
+            try {
+                return Pattern.compile(classNameRegexStr).asPredicate();
+            } catch (Exception e) {
+                throw new RuntimeException(String.format("Error compiling regex string [%s]", classNameRegexStr), e);
+            }
+        }
+    }
+
+    private List<HeapHistogramEntry> processStdOut(final String stdOut) {
+        Preconditions.checkNotNull(stdOut);
+
+        try {
+            Pattern matchPattern = Pattern.compile("\\s+\\d+:\\s+(?<instances>\\d+)\\s+(?<bytes>\\d+)\\s+(?<class>.*)");
+            Predicate<String> classNamePredicate = getClassNameMatchPredicate(stroomPropertyService);
+
+            String[] lines = stdOut.split("\\r?\\n");
+
+            LOGGER.debug("processing %s lines of stdout", lines.length);
+
+            List<HeapHistogramService.HeapHistogramEntry> histogramEntries = Arrays.stream(lines)
+                    .map(line -> {
+                        Matcher matcher = matchPattern.matcher(line);
+                        if (matcher.matches()) {
+                            //if this is a data row then extract the values of interest
+                            final long instances = Long.parseLong(matcher.group("instances"));
+                            final long bytes = Long.parseLong(matcher.group("bytes"));
+                            final String className = matcher.group("class");
+                            return new HeapHistogramService.HeapHistogramEntry(className, instances, bytes);
+                        } else {
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .filter(heapHistogramEntry -> classNamePredicate.test(heapHistogramEntry.getClassName()))
+                    .collect(Collectors.toList());
+
+            LOGGER.debug("histogramEntries size [%s]", histogramEntries.size());
+            if (histogramEntries.size() == 0) {
+                LOGGER.error("Something has gone wrong filtering the heap histogram, zero entries returned");
+            }
+
+            return histogramEntries;
+
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("Error processing stdOut string [%s]",
+                    getTruncatedStr(stdOut)), e);
         }
     }
 
@@ -105,6 +266,7 @@ public class HeapHistogramService {
                 throw new RuntimeException("Error extracting stdOut as UTF-8", e);
             }
         }
+
         private String getStdErrStr() {
             try {
                 return stdErr.toString(StandardCharsets.UTF_8.name());
@@ -158,28 +320,6 @@ public class HeapHistogramService {
             }
         }
 
-        private static String getTruncatedStr(final String str) {
-            if (str != null && str.length() > STRING_TRUNCATE_LIMIT) {
-                return str.substring(0, STRING_TRUNCATE_LIMIT) + "...TRUNCATED...";
-            } else {
-                return str;
-            }
-        }
-
-        private static Predicate<String> getClassNameMatchPredicate(final StroomPropertyService stroomPropertyService) {
-            String classNameRegexStr = stroomPropertyService.getProperty(CLASS_NAME_MATCH_REGEX_PROP_KEY);
-
-            if (classNameRegexStr == null || classNameRegexStr.isEmpty()) {
-                //no prop value so return an always true predicate
-                return str -> true;
-            } else {
-                try {
-                    return Pattern.compile(classNameRegexStr).asPredicate();
-                } catch (Exception e) {
-                    throw new RuntimeException(String.format("Error compiling regex string [%s]", classNameRegexStr), e);
-                }
-            }
-        }
 
         private List<HeapHistogramEntry> processStdOut(final String stdOut) {
             Preconditions.checkNotNull(stdOut);
@@ -224,9 +364,9 @@ public class HeapHistogramService {
     }
 
     static class HeapHistogramEntry {
-       private final String className;
-       private final long instances;
-       private final long bytes;
+        private final String className;
+        private final long instances;
+        private final long bytes;
 
         public HeapHistogramEntry(final String className, final long instances, final long bytes) {
             this.className = Preconditions.checkNotNull(className);

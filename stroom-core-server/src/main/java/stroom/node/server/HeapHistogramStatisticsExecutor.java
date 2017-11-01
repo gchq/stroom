@@ -12,11 +12,12 @@ import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 
 import javax.inject.Inject;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @SuppressWarnings("unused")
 @Component
@@ -46,15 +47,21 @@ public class HeapHistogramStatisticsExecutor {
     }
 
 
-    //hourly by default
+    //hourly  and disabled by default
     @StroomSimpleCronSchedule(cron = "0 * *")
     @JobTrackedSchedule(
             jobName = "Heap Histogram Statistics",
             advanced = false,
-            description = "Job to record statistic events for a Java heap histogram")
+            description = "Job to record statistic events for a Java heap histogram",
+            enabled = false)
     public void exec() {
-        heapHistogramService.buildHeapHistogram(this::consumeHistogramEntries);
-        LOGGER.debug("Heap histogram job completed, results will be processed asynchronously");
+        Instant startTme = Instant.now();
+        LOGGER.info("Heap histogram job started");
+//        heapHistogramService.buildHeapHistogram(this::consumeHistogramEntries);
+        List<HeapHistogramService.HeapHistogramEntry> heapHistogramEntries = heapHistogramService.buildHeapHistogram();
+        consumeHistogramEntries(heapHistogramEntries);
+//        LOGGER.debug("Heap histogram job completed, results will be processed asynchronously");
+        LOGGER.info("Heap histogram job completed in %s", Duration.between(startTme, Instant.now()).toString());
     }
 
     private void consumeHistogramEntries(List<HeapHistogramService.HeapHistogramEntry> heapHistogramEntries) {
@@ -65,18 +72,26 @@ public class HeapHistogramStatisticsExecutor {
         //immutable so can be reused for all events
         final StatisticTag nodeTag = new StatisticTag(NODE_TAG_NAME, nodeName);
 
+        mapAndSend(heapHistogramEntries,
+                entry -> buildBytesEvent(statTimeMs, nodeTag, entry),
+                "Bytes");
+
+        mapAndSend(heapHistogramEntries,
+                entry -> buildInstancesEvent(statTimeMs, nodeTag, entry),
+                "Instances");
+    }
+
+    private void mapAndSend(final List<HeapHistogramService.HeapHistogramEntry> heapHistogramEntries,
+                            final Function<HeapHistogramService.HeapHistogramEntry, StatisticEvent> mapper,
+                            final String type) {
         List<StatisticEvent> statisticEvents = heapHistogramEntries.stream()
-                .flatMap(heapHistogramEntry ->
-                        //each histogram entry spawns two stat events
-                        Stream.of(
-                                buildBytesEvent(statTimeMs, nodeTag, heapHistogramEntry),
-                                buildInstancesEvent(statTimeMs, nodeTag, heapHistogramEntry)
-                        ))
+                .map(mapper)
                 .collect(Collectors.toList());
 
-        LOGGER.info("Sending %s heap histogram stat events", statisticEvents.size());
+        LOGGER.info("Sending %s %s histogram stat events", statisticEvents.size(), type);
 
         statisticsFactory.instance().putEvents(statisticEvents);
+
     }
 
     private static StatisticEvent buildBytesEvent(final long statTimeMs,
