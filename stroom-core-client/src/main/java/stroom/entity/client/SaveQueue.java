@@ -19,7 +19,7 @@ package stroom.entity.client;
 
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocumentServiceWriteAction;
+import stroom.entity.shared.EntityServiceSaveAction;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,7 +53,7 @@ public class SaveQueue<E extends BaseEntity> {
             task.setValue(entity);
         }
 
-        dispatcher.exec(new DocumentServiceWriteAction<E>(entity))
+        dispatcher.exec(new EntityServiceSaveAction<>(entity))
                 .onSuccess(result -> {
                     if (result != null) {
                         // Get all of the tasks that are queued for this
