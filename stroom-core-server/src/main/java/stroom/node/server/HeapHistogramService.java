@@ -160,7 +160,7 @@ public class HeapHistogramService {
 
         private static String getTruncatedStr(final String str) {
             if (str != null && str.length() > STRING_TRUNCATE_LIMIT) {
-                return str.substring(0, STRING_TRUNCATE_LIMIT - 1) + "...TRUNCATED...";
+                return str.substring(0, STRING_TRUNCATE_LIMIT) + "...TRUNCATED...";
             } else {
                 return str;
             }

@@ -26,10 +26,10 @@ public class HeapHistogramStatisticsExecutor {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(HeapHistogramStatisticsExecutor.class);
 
     private static final String HEAP_HISTOGRAM_BYTES_STAT_NAME_BASE = "Heap Histogram ";
-    private static final String HEAP_HISTOGRAM_BYTES_STAT_NAME = HEAP_HISTOGRAM_BYTES_STAT_NAME_BASE + "(Bytes)";
-    private static final String HEAP_HISTOGRAM_INSTANCES_STAT_NAME = HEAP_HISTOGRAM_BYTES_STAT_NAME_BASE + "(Instances)";
-    private static final String NODE_TAG_NAME = "Node";
-    private static final String CLASS_NAME_TAG_NAME = "Class Name";
+    static final String HEAP_HISTOGRAM_BYTES_STAT_NAME = HEAP_HISTOGRAM_BYTES_STAT_NAME_BASE + "(Bytes)";
+    static final String HEAP_HISTOGRAM_INSTANCES_STAT_NAME = HEAP_HISTOGRAM_BYTES_STAT_NAME_BASE + "(Instances)";
+    static final String NODE_TAG_NAME = "Node";
+    static final String CLASS_NAME_TAG_NAME = "Class Name";
 
     private final HeapHistogramService heapHistogramService;
     private final StatisticsFactory statisticsFactory;
@@ -94,7 +94,7 @@ public class HeapHistogramStatisticsExecutor {
                                                       final HeapHistogramService.HeapHistogramEntry heapHistogramEntry) {
         return StatisticEvent.createValue(
                 statTimeMs,
-                HEAP_HISTOGRAM_BYTES_STAT_NAME,
+                HEAP_HISTOGRAM_INSTANCES_STAT_NAME,
                 buildTags(nodeTag, heapHistogramEntry),
                 (double) heapHistogramEntry.getInstances());
     }
