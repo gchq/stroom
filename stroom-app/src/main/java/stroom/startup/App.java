@@ -185,9 +185,7 @@ public class App extends Application<Configuration> {
                 SecurityConfiguration.class,
                 StroomAnnotationsConfig.class,
                 StroomAnnotationsExplorerActionHandler.class,
-                //StroomElasticConfig.class,
-                //StroomElasticExplorerActionHandler.class, // replaced by ElasticIndexConfiguration
-                ElasticIndexConfiguration.class // Sort this
+                ElasticIndexConfiguration.class
         );
         applicationContext.refresh();
         return applicationContext;
