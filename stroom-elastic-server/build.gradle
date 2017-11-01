@@ -13,6 +13,7 @@ dependencies {
     compile libs.spring_tx
     compile libs.ws_rs_api
     compile libs.dropwizard_metrics_healthchecks
+    compile libs.ehcache_core
 
     compile libs.javax_inject
 }

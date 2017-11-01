@@ -66,6 +66,8 @@ dependencies {
 
     compile libs.dropwizard_lifecycle
     compile libs.guava
+    compile libs.guice3
+    compile libs.jackson_annotations
     compile libs.javax_inject
     compile libs.jetty_servlet
     compile libs.shiro_web
