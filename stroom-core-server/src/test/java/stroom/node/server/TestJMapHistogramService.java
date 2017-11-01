@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 
 public class TestJMapHistogramService {
 
-    public static final String EXCLUSION_REGEX = "^(sun\\..*|org\\.junit\\..*)$";
+    public static final String CLASS_NAME_MATCH_REGEX = "^(sun\\..*|org\\.junit\\..*)$";
 
     public static final Semaphore semaphore = new Semaphore(0);
 
@@ -113,32 +113,29 @@ public class TestJMapHistogramService {
                 Pattern matchPattern = Pattern.compile("\\s+\\d+:\\s+(?<instances>\\d+)\\s+(?<bytes>\\d+)\\s+(?<class>.*)");
                 Predicate<String> matchPredicate = matchPattern.asPredicate();
 
-                Pattern excludePattern = Pattern.compile(EXCLUSION_REGEX);
-                Predicate<String> excludePredicate = excludePattern.asPredicate().negate();
+                Pattern classNamePattern = Pattern.compile(CLASS_NAME_MATCH_REGEX);
+                Predicate<String> classNamePredicate = classNamePattern.asPredicate();
 
                 String[] lines = result.split("\\r?\\n");
 
                 System.out.println("Line count: " + lines.length);
 
-                List<HistogramEntry> histogramEntries = Arrays.stream(lines)
-//                        .peek(line -> System.out.printf("Line:   %s\n", line))
+                List<HeapHistogramService.HeapHistogramEntry> histogramEntries = Arrays.stream(lines)
                         .map(line -> {
                             Matcher matcher = matchPattern.matcher(line);
                             if (matcher.matches()) {
-                                long instances = Long.parseLong(matcher.group("instances"));
-                                long bytes = Long.parseLong(matcher.group("bytes"));
-                                String className = matcher.group("class");
-                                return new HistogramEntry(className, instances, bytes);
+                                //if this is a data row then extract the values of interest
+                                final long instances = Long.parseLong(matcher.group("instances"));
+                                final long bytes = Long.parseLong(matcher.group("bytes"));
+                                final String className = matcher.group("class");
+                                return new HeapHistogramService.HeapHistogramEntry(className, instances, bytes);
                             } else {
                                 return null;
                             }
                         })
                         .filter(Objects::nonNull)
-//                        .peek(line -> System.out.printf("Match:  %s\n", line))
-                        .filter(histogramEntry -> excludePredicate.test(histogramEntry.getClassName()))
-//                        .peek(histogramEntry -> System.out.printf("Kept:   %s\n", histogramEntry))
+                        .filter(heapHistogramEntry -> classNamePredicate.test(heapHistogramEntry.getClassName()))
                         .collect(Collectors.toList());
-
 
                 System.out.println("List size: " + histogramEntries.size());
 
@@ -157,39 +154,6 @@ public class TestJMapHistogramService {
             } catch (Exception e) {
                 throw new RuntimeException(String.format("Error processing result string"), e);
             }
-        }
-    }
-
-    private static class HistogramEntry {
-       private final String className;
-       private final long instances;
-       private final long bytes;
-
-        public HistogramEntry(final String className, final long instances, final long bytes) {
-            this.className = className;
-            this.instances = instances;
-            this.bytes = bytes;
-        }
-
-        public String getClassName() {
-            return className;
-        }
-
-        public long getInstances() {
-            return instances;
-        }
-
-        public long getBytes() {
-            return bytes;
-        }
-
-        @Override
-        public String toString() {
-            return "HistogramEntry{" +
-                    "className='" + className + '\'' +
-                    ", instances=" + instances +
-                    ", bytes=" + bytes +
-                    '}';
         }
     }
 
