@@ -79,6 +79,10 @@ public class MetaDataHolder extends AbstractHolder<MetaDataHolder> implements Ho
             return getPipeline();
         }
 
+        return getMetaData().get(key);
+    }
+
+    public MetaMap getMetaData() throws IOException {
         // Determine if we need to read the meta stream.
         if (metaData == null || lastMetaStreamNo != streamHolder.getStreamNo()) {
             metaData = new MetaMap();
@@ -100,8 +104,7 @@ public class MetaDataHolder extends AbstractHolder<MetaDataHolder> implements Ho
                 }
             }
         }
-
-        return metaData.get(key);
+        return metaData;
     }
 
     private String getFeed() {
