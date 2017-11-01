@@ -31,15 +31,15 @@ public class HeapHistogramService {
 
     private static final StroomLogger LOGGER = StroomLogger.getLogger(HeapHistogramService.class);
 
-    private static final String CLASS_NAME_MATCH_REGEX_PROP_KEY = "stroom.node.status.heapHistogram.classNameMatchRegex";
+    static final String CLASS_NAME_MATCH_REGEX_PROP_KEY = "stroom.node.status.heapHistogram.classNameMatchRegex";
+
     public static final int STRING_TRUNCATE_LIMIT = 200;
 
     private final StroomPropertyService stroomPropertyService;
 
     @SuppressWarnings("unused")
     @Inject
-    public HeapHistogramService(final NodeCache nodeCache,
-                                final StroomPropertyService stroomPropertyService) {
+    public HeapHistogramService(final StroomPropertyService stroomPropertyService) {
         this.stroomPropertyService = stroomPropertyService;
     }
 
