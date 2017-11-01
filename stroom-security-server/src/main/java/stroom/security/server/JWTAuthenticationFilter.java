@@ -147,25 +147,25 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
             }
             else {
                 // We have a a new request so we're going to redirect with an AuthenticationRequest.
-                String authenticationUrl = authenticationServiceUrl + "/authentication/v1/authenticate";
+                String authenticationRequestBaseUrl = authenticationServiceUrl + "/authentication/v1/authenticate";
                 String nonceHash = nonceManager.createNonce(stroomSessionId);
 
-                StringBuilder redirectionParams = new StringBuilder();
-                redirectionParams.append("?scope=openid");
-                redirectionParams.append("&response_type=code");
-                redirectionParams.append("&client_id=stroom");
-                redirectionParams.append("&redirect_url=");
-                redirectionParams.append(advertisedStroomUrl);
-                redirectionParams.append("&state="); //TODO Not yet sure what's needed here
-                redirectionParams.append("&nonce=");
-                redirectionParams.append(nonceHash);
+                StringBuilder authenticationRequestParams = new StringBuilder();
+                authenticationRequestParams.append("?scope=openid");
+                authenticationRequestParams.append("&response_type=code");
+                authenticationRequestParams.append("&client_id=stroom");
+                authenticationRequestParams.append("&redirect_url=");
+                authenticationRequestParams.append(advertisedStroomUrl);
+                authenticationRequestParams.append("&state="); //TODO Not yet sure what's needed here
+                authenticationRequestParams.append("&nonce=");
+                authenticationRequestParams.append(nonceHash);
 
-                String redirectionUrl = authenticationUrl + redirectionParams.toString();
-                LOGGER.info("Redirecting with an AuthenticationRequest to: {}", redirectionUrl);
+                String authenticationRequestUrl = authenticationRequestBaseUrl + authenticationRequestParams.toString();
+                LOGGER.info("Redirecting with an AuthenticationRequest to: {}", authenticationRequestUrl);
                 HttpServletResponse httpResponse = WebUtils.toHttp(response);
                 // We want to make sure that the client has the cookie.
                 httpResponse.addCookie(new Cookie(STROOM_SESSION_COOKIE, stroomSessionId));
-                httpResponse.sendRedirect(redirectionUrl);
+                httpResponse.sendRedirect(authenticationRequestUrl);
                 return false;
             }
         }
