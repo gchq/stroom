@@ -131,6 +131,19 @@ public class TimeAgnosticStatisticEvent implements Serializable {
         return tagPositionMap.get(tagName);
     }
 
+    public String getTagValue(final String tagName) {
+        Integer tagPos = tagPositionMap.get(tagName);
+        if (tagPos == null) {
+            throw new RuntimeException(String.format("Tag with name [%s] could not be found", tagName));
+        }
+        try {
+            return tagList.get(tagPos).getValue();
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("Error extracting value for tag [%s] at position [%s]",
+                    tagName, tagPos), e);
+        }
+    }
+
     @Override
     public String toString() {
         return "TimeAgnosticStatisticEvent [name=" + name + ", tagList=" + tagList + ", count=" + count + ", value="

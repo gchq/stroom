@@ -55,13 +55,18 @@ public class HeapHistogramStatisticsExecutor {
             description = "Job to record statistic events for a Java heap histogram",
             enabled = false)
     public void exec() {
-        Instant startTme = Instant.now();
-        LOGGER.info("Heap histogram job started");
+        try {
+            Instant startTme = Instant.now();
+            LOGGER.info("Heap histogram job started");
 //        heapHistogramService.buildHeapHistogram(this::consumeHistogramEntries);
-        List<HeapHistogramService.HeapHistogramEntry> heapHistogramEntries = heapHistogramService.buildHeapHistogram();
-        consumeHistogramEntries(heapHistogramEntries);
+            List<HeapHistogramService.HeapHistogramEntry> heapHistogramEntries = heapHistogramService.buildHeapHistogram();
+            consumeHistogramEntries(heapHistogramEntries);
 //        LOGGER.debug("Heap histogram job completed, results will be processed asynchronously");
-        LOGGER.info("Heap histogram job completed in %s", Duration.between(startTme, Instant.now()).toString());
+            LOGGER.info("Heap histogram job completed in %s", Duration.between(startTme, Instant.now()).toString());
+        } catch (Exception e) {
+            LOGGER.error("Error executing scheduled Heap Histogram job", e);
+            throw e;
+        }
     }
 
     private void consumeHistogramEntries(List<HeapHistogramService.HeapHistogramEntry> heapHistogramEntries) {

@@ -34,6 +34,7 @@ public class HeapHistogramService {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(HeapHistogramService.class);
 
     static final String CLASS_NAME_MATCH_REGEX_PROP_KEY = "stroom.node.status.heapHistogram.classNameMatchRegex";
+    static final String JMAP_EXECUTABLE_PROP_KEY = "stroom.node.status.heapHistogram.jMapExecutable";
 
     public static final int STRING_TRUNCATE_LIMIT = 200;
 
@@ -56,7 +57,9 @@ public class HeapHistogramService {
         //get stroom's pid
         String pid = ManagementFactory.getRuntimeMXBean().getName().split("@")[0];
 
-        CommandLine command = new CommandLine("jmap");
+        String executable = getExecutable();
+
+        CommandLine command = new CommandLine(executable);
         command.addArguments(new String[]{"-histo:live", pid}, false);
 
         DefaultExecutor executor = new DefaultExecutor();
@@ -86,7 +89,8 @@ public class HeapHistogramService {
     public List<HeapHistogramEntry> buildHeapHistogram() {
         String pid = ManagementFactory.getRuntimeMXBean().getName().split("@")[0];
 
-        CommandLine command = new CommandLine("jmap");
+        String executable = getExecutable();
+        CommandLine command = new CommandLine(executable);
         command.addArguments(new String[]{"-histo:live", pid}, false);
 
         DefaultExecutor executor = new DefaultExecutor();
@@ -118,6 +122,15 @@ public class HeapHistogramService {
             throw new RuntimeException(String.format("Error executing command %s", command.toString()), e);
         }
         return heapHistogramEntries;
+    }
+
+    private String getExecutable() {
+        String executable = stroomPropertyService.getProperty(JMAP_EXECUTABLE_PROP_KEY);
+
+        if (executable == null || executable.isEmpty()) {
+            throw new RuntimeException(String.format("Property %s has no value", JMAP_EXECUTABLE_PROP_KEY));
+        }
+        return executable;
     }
 
     private void logError(final ByteArrayOutputStream stdOut,
