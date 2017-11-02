@@ -40,6 +40,7 @@ import stroom.streamtask.server.StreamProcessorTaskFactory;
  */
 @Configuration
 @ComponentScan(basePackages = {
+        "stroom.apiclients",
         "stroom.cache",
         "stroom.cluster",
         "stroom.datafeed",

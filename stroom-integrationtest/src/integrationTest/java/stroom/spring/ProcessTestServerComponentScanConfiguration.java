@@ -77,6 +77,7 @@ import stroom.xmlschema.server.XMLSchemaServiceImpl;
  */
 @Configuration
 @ComponentScan(basePackages = {
+        "stroom.apiclients",
         "stroom.cache",
         "stroom.cluster",
         "stroom.datafeed",
