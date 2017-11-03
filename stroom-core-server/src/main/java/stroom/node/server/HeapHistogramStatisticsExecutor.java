@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 @SuppressWarnings("unused")
 @Component
 @Scope(value = StroomScope.TASK)
-class HeapHistogramStatisticsExecutor {
+public class HeapHistogramStatisticsExecutor {
 
     private static final StroomLogger LOGGER = StroomLogger.getLogger(HeapHistogramStatisticsExecutor.class);
 
@@ -38,9 +38,9 @@ class HeapHistogramStatisticsExecutor {
 
 
     @Inject
-    HeapHistogramStatisticsExecutor(final HeapHistogramService heapHistogramService,
-                                    final StatisticsFactory statisticsFactory,
-                                    final NodeCache nodeCache) {
+    public HeapHistogramStatisticsExecutor(final HeapHistogramService heapHistogramService,
+                                           final StatisticsFactory statisticsFactory,
+                                           final NodeCache nodeCache) {
         this.heapHistogramService = heapHistogramService;
         this.statisticsFactory = statisticsFactory;
         this.nodeCache = nodeCache;
