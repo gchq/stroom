@@ -17,11 +17,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Class for generating a java heap map histogram using the 'jmap' tool supplied with the JDK. Requires that
@@ -176,7 +176,7 @@ class HeapHistogramService {
         Preconditions.checkNotNull(stdOut);
 
         try {
-            Pattern matchPattern = Pattern.compile("\\s+\\d+:\\s+(?<instances>\\d+)\\s+(?<bytes>\\d+)\\s+(?<class>.*)");
+            Pattern matchPattern = Pattern.compile("\\s*\\d+:\\s+(?<instances>\\d+)\\s+(?<bytes>\\d+)\\s+(?<class>.*)");
             Predicate<String> classNamePredicate = getClassNameMatchPredicate(stroomPropertyService);
 
             String[] lines = stdOut.split("\\r?\\n");
@@ -184,19 +184,20 @@ class HeapHistogramService {
             LOGGER.debug("processing %s lines of stdout", lines.length);
 
             List<HeapHistogramService.HeapHistogramEntry> histogramEntries = Arrays.stream(lines)
-                    .map(line -> {
+                    .flatMap(line -> {
                         Matcher matcher = matchPattern.matcher(line);
                         if (matcher.matches()) {
                             //if this is a data row then extract the values of interest
                             final long instances = Long.parseLong(matcher.group("instances"));
                             final long bytes = Long.parseLong(matcher.group("bytes"));
                             final String className = matcher.group("class");
-                            return new HeapHistogramService.HeapHistogramEntry(className, instances, bytes);
+                            return Stream.of(new HeapHistogramEntry(className, instances, bytes));
                         } else {
-                            return null;
+                            LOGGER.debug("Ignoring jamp histogram line [%s]", line);
+                            //return null so we can filter out the
+                            return Stream.empty();
                         }
                     })
-                    .filter(Objects::nonNull)
                     .filter(heapHistogramEntry -> classNamePredicate.test(heapHistogramEntry.getClassName()))
                     .collect(Collectors.toList());
 
