@@ -14,10 +14,11 @@ import stroom.util.spring.StroomSimpleCronSchedule;
 import javax.inject.Inject;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SuppressWarnings("unused")
 @Component
@@ -123,9 +124,13 @@ public class HeapHistogramStatisticsExecutor {
                 (double) heapHistogramEntry.getInstances());
     }
 
-    private static List<StatisticTag> buildTags(StatisticTag nodeTag, HeapHistogramService.HeapHistogramEntry heapHistogramEntry) {
-        return Arrays.asList(
-                nodeTag,
-                new StatisticTag(CLASS_NAME_TAG_NAME, heapHistogramEntry.getClassName()));
+    private static List<StatisticTag> buildTags(final StatisticTag nodeTag,
+                                                final HeapHistogramService.HeapHistogramEntry heapHistogramEntry) {
+
+        //tags need to be in name order else we will get problems with rollups
+        //We could manually order them here but if the names change in the static strings the order may then be wrong
+        return Stream.of(nodeTag, new StatisticTag(CLASS_NAME_TAG_NAME, heapHistogramEntry.getClassName()))
+                .sorted(Comparator.comparing(StatisticTag::getTag))
+                .collect(Collectors.toList());
     }
 }

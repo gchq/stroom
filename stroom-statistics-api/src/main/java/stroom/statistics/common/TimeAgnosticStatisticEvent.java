@@ -40,7 +40,6 @@ public class TimeAgnosticStatisticEvent implements Serializable {
     private TimeAgnosticStatisticEvent(final String name, final List<StatisticTag> tagList, final Long count, final Double value, final StatisticType statisticType) {
         this.name = name;
         this.tagList = buildTagList(tagList);
-        ;
         this.count = count;
         this.value = value;
         this.statisticType = statisticType;
@@ -73,7 +72,7 @@ public class TimeAgnosticStatisticEvent implements Serializable {
     }
 
     private List<StatisticTag> buildTagList(final List<StatisticTag> tagList) {
-        // build a new list object, sort it and make it unmodifiable
+        // build a new list object and make it unmodifiable
         // or just return an unmodifiable empty list
         if (tagList != null) {
             final List<StatisticTag> tempTagList = new ArrayList<StatisticTag>(tagList);
