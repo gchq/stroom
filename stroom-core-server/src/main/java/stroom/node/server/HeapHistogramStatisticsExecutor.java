@@ -22,14 +22,14 @@ import java.util.stream.Collectors;
 @SuppressWarnings("unused")
 @Component
 @Scope(value = StroomScope.TASK)
-public class HeapHistogramStatisticsExecutor {
+class HeapHistogramStatisticsExecutor {
 
     private static final StroomLogger LOGGER = StroomLogger.getLogger(HeapHistogramStatisticsExecutor.class);
 
     private static final String HEAP_HISTOGRAM_BYTES_STAT_NAME_BASE = "Heap Histogram ";
-    static final String HEAP_HISTOGRAM_BYTES_STAT_NAME = HEAP_HISTOGRAM_BYTES_STAT_NAME_BASE + "Bytes";
-    static final String HEAP_HISTOGRAM_INSTANCES_STAT_NAME = HEAP_HISTOGRAM_BYTES_STAT_NAME_BASE + "Instances";
-    static final String NODE_TAG_NAME = "Node";
+    private static final String HEAP_HISTOGRAM_BYTES_STAT_NAME = HEAP_HISTOGRAM_BYTES_STAT_NAME_BASE + "Bytes";
+    private static final String HEAP_HISTOGRAM_INSTANCES_STAT_NAME = HEAP_HISTOGRAM_BYTES_STAT_NAME_BASE + "Instances";
+    private static final String NODE_TAG_NAME = "Node";
     static final String CLASS_NAME_TAG_NAME = "Class Name";
 
     private final HeapHistogramService heapHistogramService;
@@ -38,38 +38,39 @@ public class HeapHistogramStatisticsExecutor {
 
 
     @Inject
-    public HeapHistogramStatisticsExecutor(final HeapHistogramService heapHistogramService,
-                                           final StatisticsFactory statisticsFactory,
-                                           final NodeCache nodeCache) {
+    HeapHistogramStatisticsExecutor(final HeapHistogramService heapHistogramService,
+                                    final StatisticsFactory statisticsFactory,
+                                    final NodeCache nodeCache) {
         this.heapHistogramService = heapHistogramService;
         this.statisticsFactory = statisticsFactory;
         this.nodeCache = nodeCache;
     }
 
 
-    //hourly  and disabled by default
+    //hourly and disabled by default
     @StroomSimpleCronSchedule(cron = "0 * *")
     @JobTrackedSchedule(
-            jobName = "Heap Histogram Statistics",
+            jobName = "Java Heap Histogram Statistics",
             advanced = false,
-            description = "Job to record statistic events for a Java heap histogram",
+            description = "Generate Java heap map histogram ('jmap -histo:live') and record statistic events " +
+                    "for the entries. CAUTION: this will pause the JVM, only enable this if you understand the " +
+                    "consequences!",
             enabled = false)
     public void exec() {
         try {
             Instant startTme = Instant.now();
-            LOGGER.info("Heap histogram job started");
-//        heapHistogramService.buildHeapHistogram(this::consumeHistogramEntries);
-            List<HeapHistogramService.HeapHistogramEntry> heapHistogramEntries = heapHistogramService.buildHeapHistogram();
-            consumeHistogramEntries(heapHistogramEntries);
-//        LOGGER.debug("Heap histogram job completed, results will be processed asynchronously");
-            LOGGER.info("Heap histogram job completed in %s", Duration.between(startTme, Instant.now()).toString());
+            LOGGER.info("Java Heap Histogram Statistics job started");
+            List<HeapHistogramService.HeapHistogramEntry> heapHistogramEntries = heapHistogramService.generateHeapHistogram();
+            processHistogramEntries(heapHistogramEntries);
+            LOGGER.info("Java Heap Histogram Statistics job completed in %s",
+                    Duration.between(startTme, Instant.now()).toString());
         } catch (Exception e) {
             LOGGER.error("Error executing scheduled Heap Histogram job", e);
             throw e;
         }
     }
 
-    private void consumeHistogramEntries(List<HeapHistogramService.HeapHistogramEntry> heapHistogramEntries) {
+    private void processHistogramEntries(List<HeapHistogramService.HeapHistogramEntry> heapHistogramEntries) {
         Preconditions.checkNotNull(heapHistogramService);
 
         final long statTimeMs = Instant.now().toEpochMilli();
@@ -77,23 +78,26 @@ public class HeapHistogramStatisticsExecutor {
         //immutable so can be reused for all events
         final StatisticTag nodeTag = new StatisticTag(NODE_TAG_NAME, nodeName);
 
-        mapAndSend(heapHistogramEntries,
+        mapToStatEventAndSend(
+                heapHistogramEntries,
                 entry -> buildBytesEvent(statTimeMs, nodeTag, entry),
                 "Bytes");
 
-        mapAndSend(heapHistogramEntries,
+        mapToStatEventAndSend(
+                heapHistogramEntries,
                 entry -> buildInstancesEvent(statTimeMs, nodeTag, entry),
                 "Instances");
     }
 
-    private void mapAndSend(final List<HeapHistogramService.HeapHistogramEntry> heapHistogramEntries,
-                            final Function<HeapHistogramService.HeapHistogramEntry, StatisticEvent> mapper,
-                            final String type) {
+    private void mapToStatEventAndSend(final List<HeapHistogramService.HeapHistogramEntry> heapHistogramEntries,
+                                       final Function<HeapHistogramService.HeapHistogramEntry, StatisticEvent> mapper,
+                                       final String type) {
+
         List<StatisticEvent> statisticEvents = heapHistogramEntries.stream()
                 .map(mapper)
                 .collect(Collectors.toList());
 
-        LOGGER.info("Sending %s %s histogram stat events", statisticEvents.size(), type);
+        LOGGER.info("Sending %s '%s' histogram stat events", statisticEvents.size(), type);
 
         statisticsFactory.instance().putEvents(statisticEvents);
 

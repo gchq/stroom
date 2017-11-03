@@ -3,7 +3,6 @@ package stroom.node.server;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -14,40 +13,43 @@ import stroom.node.shared.Rack;
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.Statistics;
 import stroom.statistics.common.StatisticsFactory;
-import stroom.util.test.StroomJUnit4ClassRunner;
-import stroom.util.test.StroomUnitTest;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestHeapHistogramStatisticsExecutor extends StroomUnitTest {
+public class TestHeapHistogramStatisticsExecutor {
 
     @Mock
-    StatisticsFactory statisticsFactory;
+    private StatisticsFactory statisticsFactory;
 
     @Mock
+    private
     Statistics statistics;
 
     @Captor
+    private
     ArgumentCaptor<List<StatisticEvent>> eventsCaptor;
 
-    NodeCache nodeCache;
-    MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
-    HeapHistogramService heapHistogramService = new HeapHistogramService(mockStroomPropertyService);
-    HeapHistogramStatisticsExecutor executor;
+    private MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
+    private HeapHistogramService heapHistogramService = new HeapHistogramService(mockStroomPropertyService);
+    private HeapHistogramStatisticsExecutor executor;
 
     @Before
     public void setup() {
-        MockitoAnnotations.initMocks(this);
-        final Rack rack1 = Rack.create("rack1");
-        final Node node1a = Node.create(rack1, "1a");
-        nodeCache = new NodeCache(node1a);
-        mockStroomPropertyService.setProperty(HeapHistogramService.CLASS_NAME_MATCH_REGEX_PROP_KEY, "^stroom\\..*$");
-        mockStroomPropertyService.setProperty(HeapHistogramService.JMAP_EXECUTABLE_PROP_KEY, "jmap");
-        executor = new HeapHistogramStatisticsExecutor(heapHistogramService, statisticsFactory, nodeCache);
+        try {
+            MockitoAnnotations.initMocks(this);
+            final Rack rack1 = Rack.create("rack1");
+            final Node node1a = Node.create(rack1, "1a");
+            final NodeCache nodeCache = new NodeCache(node1a);
+
+            mockStroomPropertyService.setProperty(HeapHistogramService.CLASS_NAME_MATCH_REGEX_PROP_KEY, "^stroom\\..*$");
+            mockStroomPropertyService.setProperty(HeapHistogramService.JMAP_EXECUTABLE_PROP_KEY, "jmap");
+
+            executor = new HeapHistogramStatisticsExecutor(heapHistogramService, statisticsFactory, nodeCache);
+        } catch (Exception e) {
+            throw new RuntimeException("Error during test setup", e);
+        }
     }
 
     private static Function<StatisticEvent, String> STAT_TO_CLASS_NAME_MAPPER = statisticEvent ->
@@ -133,7 +135,7 @@ public class TestHeapHistogramStatisticsExecutor extends StroomUnitTest {
         //When
         executor.exec();
 
-        //Then
+        //should never get here due to exception
         Mockito.verify(statistics, Mockito.times(0));
     }
 }
