@@ -16,80 +16,102 @@
 
 package stroom.pipeline.server.factory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.TimeUnit;
-
-import javax.inject.Inject;
-
+import org.ehcache.Cache;
+import org.ehcache.config.CacheConfiguration;
+import org.ehcache.config.builders.CacheConfigurationBuilder;
+import org.ehcache.config.builders.ResourcePoolsBuilder;
+import org.ehcache.expiry.Duration;
+import org.ehcache.expiry.Expirations;
 import org.springframework.stereotype.Component;
-
-import stroom.security.Insecure;
-import stroom.cache.AbstractCacheBean;
-import stroom.entity.shared.VersionedEntityDecorator;
+import stroom.cache.Loader;
+import stroom.entity.server.DocumentPermissionCache;
+import stroom.entity.shared.DocRef;
+import stroom.entity.shared.PermissionException;
 import stroom.pipeline.shared.PipelineDataMerger;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.data.PipelineData;
-import net.sf.ehcache.CacheManager;
+import stroom.pool.VersionedEntityDecorator;
+import stroom.security.Insecure;
 import stroom.security.SecurityContext;
-import stroom.util.shared.Task;
+import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.cache.CentralCacheManager;
+import stroom.util.task.ServerTask;
+
+import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Insecure
 @Component
-public class PipelineDataCacheImpl extends AbstractCacheBean<VersionedEntityDecorator<PipelineEntity>, PipelineData>
-        implements PipelineDataCache {
-    private static final int MAX_CACHE_ENTRIES = 1000000;
+public class PipelineDataCacheImpl implements PipelineDataCache {
+    private static final int MAX_CACHE_ENTRIES = 1000;
 
     private final PipelineStackLoader pipelineStackLoader;
+    private final Cache<VersionedEntityDecorator, PipelineData> cache;
     private final SecurityContext securityContext;
+    private final DocumentPermissionCache documentPermissionCache;
 
     @Inject
-    public PipelineDataCacheImpl(final CacheManager cacheManager,
+    public PipelineDataCacheImpl(final CentralCacheManager cacheManager,
                                  final PipelineStackLoader pipelineStackLoader,
-                                 final SecurityContext securityContext) {
-        super(cacheManager, "Pipeline Structure Cache", MAX_CACHE_ENTRIES);
+                                 final SecurityContext securityContext,
+                                 final DocumentPermissionCache documentPermissionCache) {
         this.pipelineStackLoader = pipelineStackLoader;
         this.securityContext = securityContext;
+        this.documentPermissionCache = documentPermissionCache;
 
-        setMaxIdleTime(10, TimeUnit.MINUTES);
-        setMaxLiveTime(10, TimeUnit.MINUTES);
+        final Loader<VersionedEntityDecorator, PipelineData> loader = new Loader<VersionedEntityDecorator, PipelineData>() {
+            @Override
+            public PipelineData load(final VersionedEntityDecorator key) throws Exception {
+                return create(key);
+            }
+        };
+
+        final CacheConfiguration<VersionedEntityDecorator, PipelineData> cacheConfiguration = CacheConfigurationBuilder.newCacheConfigurationBuilder(VersionedEntityDecorator.class, PipelineData.class,
+                ResourcePoolsBuilder.heap(MAX_CACHE_ENTRIES))
+                .withExpiry(Expirations.timeToIdleExpiration(Duration.of(10, TimeUnit.MINUTES)))
+                .withLoaderWriter(loader)
+                .build();
+
+        cache = cacheManager.createCache("Pipeline Structure Cache", cacheConfiguration);
     }
 
     @Override
-    public PipelineData getOrCreate(final PipelineEntity pipelineEntity) {
-        final VersionedEntityDecorator<PipelineEntity> key = new VersionedEntityDecorator<>(pipelineEntity, getUser());
-        return computeIfAbsent(key, this::create);
-    }
-
-    private String getUser() {
-        if (securityContext == null) {
-            return null;
-        }
-        return securityContext.getUserId();
-    }
-
-    private PipelineData create(final VersionedEntityDecorator<PipelineEntity> key) {
-        final PipelineEntity pipelineEntity = key.getEntity();
-        final List<PipelineEntity> pipelines = pipelineStackLoader.loadPipelineStack(pipelineEntity);
-        // Iterate over the pipeline list reading the deepest ancestor first.
-        final List<PipelineData> configStack = new ArrayList<>(pipelines.size());
-
-        for (final PipelineEntity pipe : pipelines) {
-            final PipelineData pipelineData = pipe.getPipelineData();
-            if (pipelineData != null) {
-                configStack.add(pipelineData);
-            }
+    public PipelineData get(final PipelineEntity pipelineEntity) {
+        if (!documentPermissionCache.hasDocumentPermission(pipelineEntity.getType(), pipelineEntity.getUuid(), DocumentPermissionNames.USE)) {
+            throw new PermissionException(securityContext.getUserId(), "You do not have permission to use " + DocRef.create(pipelineEntity));
         }
 
-        final PipelineDataMerger pipelineDataMerger = new PipelineDataMerger();
+        return cache.get(new VersionedEntityDecorator<>(pipelineEntity));
+    }
+
+    private PipelineData create(final VersionedEntityDecorator key) {
+        securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
         try {
-            pipelineDataMerger.merge(configStack);
-        } catch (final PipelineModelException e) {
-            throw new PipelineFactoryException(e);
-        }
+            final PipelineEntity pipelineEntity = (PipelineEntity) key.getEntity();
+            final List<PipelineEntity> pipelines = pipelineStackLoader.loadPipelineStack(pipelineEntity);
+            // Iterate over the pipeline list reading the deepest ancestor first.
+            final List<PipelineData> configStack = new ArrayList<>(pipelines.size());
 
-        return pipelineDataMerger.createMergedData();
+            for (final PipelineEntity pipe : pipelines) {
+                final PipelineData pipelineData = pipe.getPipelineData();
+                if (pipelineData != null) {
+                    configStack.add(pipelineData);
+                }
+            }
+
+            final PipelineDataMerger pipelineDataMerger = new PipelineDataMerger();
+            try {
+                pipelineDataMerger.merge(configStack);
+            } catch (final PipelineModelException e) {
+                throw new PipelineFactoryException(e);
+            }
+
+            return pipelineDataMerger.createMergedData();
+        } finally {
+            securityContext.popUser();
+        }
     }
 }

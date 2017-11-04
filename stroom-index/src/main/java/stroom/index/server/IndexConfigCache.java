@@ -16,9 +16,10 @@
 
 package stroom.index.server;
 
-import stroom.cache.CacheBean;
 import stroom.entity.shared.DocRef;
 
-public interface IndexConfigCache extends CacheBean<DocRef, IndexConfig> {
-    IndexConfig getOrCreate(DocRef key);
+public interface IndexConfigCache {
+    IndexConfig get(DocRef key);
+
+    void remove(DocRef key);
 }

@@ -16,48 +16,73 @@
 
 package stroom.refdata;
 
-import stroom.cache.AbstractCacheBean;
+import org.ehcache.Cache;
+import org.ehcache.config.CacheConfiguration;
+import org.ehcache.config.builders.CacheConfigurationBuilder;
+import org.ehcache.config.builders.ResourcePoolsBuilder;
+import org.ehcache.expiry.Duration;
+import org.ehcache.expiry.Expirations;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+import stroom.cache.Loader;
 import stroom.entity.shared.Period;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.streamstore.server.EffectiveMetaDataCriteria;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.Stream;
-import stroom.util.logging.StroomLogger;
-import net.sf.ehcache.CacheManager;
-import org.springframework.stereotype.Component;
+import stroom.util.cache.CentralCacheManager;
 
 import javax.inject.Inject;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Component
-public class EffectiveStreamCache extends AbstractCacheBean<EffectiveStreamKey, TreeSet<EffectiveStream>> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(EffectiveStreamCache.class);
+public class EffectiveStreamCache {
+    private static final Logger LOGGER = LoggerFactory.getLogger(EffectiveStreamCache.class);
 
-    // = 86 400 000
-    public static final long ONE_DAY = 1000 * 60 * 60 * 24;
-    // round up one day to 100000000
-    public static final long APPROX_DAY = 100000000;
+    //    // = 86 400 000
+//    private static final long ONE_DAY = 1000 * 60 * 60 * 24;
+//    // round up one day to 100000000
+//    private static final long APPROX_DAY = 100000000;
     // actually 11.5 days but this is fine for the purposes of reference data.
-    public static final long APPROX_TEN_DAYS = 1000000000;
+    private static final long APPROX_TEN_DAYS = 1000000000;
 
     private static final int MAX_CACHE_ENTRIES = 1000000;
 
+    private final Cache<EffectiveStreamKey, TreeSet> cache;
     private final StreamStore streamStore;
     private final EffectiveStreamInternPool internPool;
 
     @Inject
-    public EffectiveStreamCache(final CacheManager cacheManager, final StreamStore streamStore,
-            final EffectiveStreamInternPool internPool) {
-        super(cacheManager, "Reference Data - Effective Stream Cache", MAX_CACHE_ENTRIES);
+    EffectiveStreamCache(final CentralCacheManager cacheManager,
+                         final StreamStore streamStore,
+                         final EffectiveStreamInternPool internPool) {
         this.streamStore = streamStore;
         this.internPool = internPool;
-        setMaxIdleTime(10, TimeUnit.MINUTES);
-        setMaxLiveTime(10, TimeUnit.MINUTES);
+
+        final Loader<EffectiveStreamKey, TreeSet> loader = new Loader<EffectiveStreamKey, TreeSet>() {
+            @Override
+            public TreeSet load(final EffectiveStreamKey key) throws Exception {
+                return create(key);
+            }
+        };
+
+        final CacheConfiguration<EffectiveStreamKey, TreeSet> cacheConfiguration = CacheConfigurationBuilder.newCacheConfigurationBuilder(EffectiveStreamKey.class, TreeSet.class,
+                ResourcePoolsBuilder.heap(MAX_CACHE_ENTRIES))
+                .withExpiry(Expirations.timeToIdleExpiration(Duration.of(10, TimeUnit.MINUTES)))
+                .withLoaderWriter(loader)
+                .build();
+
+        cache = cacheManager.createCache("Reference Data - Effective Stream Cache", cacheConfiguration);
+
+
     }
 
-    public TreeSet<EffectiveStream> getOrCreate(final EffectiveStreamKey effectiveStreamKey) {
+    @SuppressWarnings("unchecked")
+    public TreeSet<EffectiveStream> get(final EffectiveStreamKey effectiveStreamKey) {
         if (effectiveStreamKey.getFeed() == null) {
             throw new ProcessException("No feed has been specified for reference data lookup");
         }
@@ -65,10 +90,10 @@ public class EffectiveStreamCache extends AbstractCacheBean<EffectiveStreamKey, 
             throw new ProcessException("No stream type has been specified for reference data lookup");
         }
 
-        return computeIfAbsent(effectiveStreamKey, this::create);
+        return cache.get(effectiveStreamKey);
     }
 
-    TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
+    protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
         TreeSet<EffectiveStream> effectiveStreamSet = null;
 
         try {
@@ -96,7 +121,7 @@ public class EffectiveStreamCache extends AbstractCacheBean<EffectiveStreamKey, 
             if (streams != null && streams.size() > 0) {
                 effectiveStreamSet = new TreeSet<>();
                 for (final Stream stream : streams) {
-                    EffectiveStream effectiveStream = null;
+                    EffectiveStream effectiveStream;
 
                     if (stream.getEffectiveMs() != null) {
                         effectiveStream = new EffectiveStream(stream.getId(), stream.getEffectiveMs());
@@ -125,7 +150,7 @@ public class EffectiveStreamCache extends AbstractCacheBean<EffectiveStreamKey, 
                 LOGGER.debug("Created effective stream set: " + key.toString());
             }
         } catch (final Throwable e) {
-            LOGGER.error(e, e);
+            LOGGER.error(e.getMessage(), e);
         }
 
         // Make sure this pool always returns some kind of effective stream set
@@ -140,13 +165,15 @@ public class EffectiveStreamCache extends AbstractCacheBean<EffectiveStreamKey, 
     /**
      * Gets a time less than the supplied time, rounded down to the nearest 11.5
      * days (one billion milliseconds).
-     *
-     * @param time
-     * @return
      */
-    public long getBaseTime(final long time) {
+    long getBaseTime(final long time) {
         final long multiple = time / APPROX_TEN_DAYS;
-        final long periodStart = multiple * APPROX_TEN_DAYS;
-        return periodStart;
+        return multiple * APPROX_TEN_DAYS;
+    }
+
+    long size() {
+        final AtomicLong count = new AtomicLong();
+        cache.forEach(e -> count.getAndIncrement());
+        return count.get();
     }
 }

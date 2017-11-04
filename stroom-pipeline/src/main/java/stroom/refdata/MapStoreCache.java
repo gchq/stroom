@@ -16,10 +16,17 @@
 
 package stroom.refdata;
 
-import net.sf.ehcache.CacheManager;
+import org.ehcache.Cache;
+import org.ehcache.config.CacheConfiguration;
+import org.ehcache.config.builders.CacheConfigurationBuilder;
+import org.ehcache.config.builders.ResourcePoolsBuilder;
+import org.ehcache.expiry.Duration;
+import org.ehcache.expiry.Expirations;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.cache.AbstractCacheBean;
-import stroom.util.logging.StroomLogger;
+import stroom.cache.Loader;
+import stroom.util.cache.CentralCacheManager;
 
 import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;
@@ -30,26 +37,39 @@ import java.util.concurrent.TimeUnit;
  * </p>
  */
 @Component
-public final class MapStoreCache extends AbstractCacheBean<MapStoreCacheKey, MapStore> {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(MapStoreCache.class);
+public final class MapStoreCache {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MapStoreCache.class);
 
     private static final int MAX_CACHE_ENTRIES = 1000000;
 
+    private final Cache<MapStoreCacheKey, MapStore> cache;
     private final ReferenceDataLoader referenceDataLoader;
     private final MapStoreInternPool internPool;
 
     @Inject
-    public MapStoreCache(final CacheManager cacheManager, final ReferenceDataLoader referenceDataLoader,
+    public MapStoreCache(final CentralCacheManager cacheManager, final ReferenceDataLoader referenceDataLoader,
                          final MapStoreInternPool internPool) {
-        super(cacheManager, "Reference Data - Map Store Cache", MAX_CACHE_ENTRIES);
         this.referenceDataLoader = referenceDataLoader;
         this.internPool = internPool;
-        setMaxIdleTime(10, TimeUnit.MINUTES);
-        setMaxLiveTime(10, TimeUnit.MINUTES);
+
+        final Loader<MapStoreCacheKey, MapStore> loader = new Loader<MapStoreCacheKey, MapStore>() {
+            @Override
+            public MapStore load(final MapStoreCacheKey key) throws Exception {
+                return create(key);
+            }
+        };
+
+        final CacheConfiguration<MapStoreCacheKey, MapStore> cacheConfiguration = CacheConfigurationBuilder.newCacheConfigurationBuilder(MapStoreCacheKey.class, MapStore.class,
+                ResourcePoolsBuilder.heap(MAX_CACHE_ENTRIES))
+                .withExpiry(Expirations.timeToIdleExpiration(Duration.of(10, TimeUnit.MINUTES)))
+                .withLoaderWriter(loader)
+                .build();
+
+        cache = cacheManager.createCache("Reference Data - Map Store Cache", cacheConfiguration);
     }
 
-    public MapStore getOrCreate(final MapStoreCacheKey key) {
-        return computeIfAbsent(key, this::create);
+    public MapStore get(final MapStoreCacheKey key) {
+        return cache.get(key);
     }
 
     private MapStore create(final MapStoreCacheKey mapStoreCacheKey) {
@@ -72,7 +92,7 @@ public final class MapStoreCache extends AbstractCacheBean<MapStoreCacheKey, Map
                 LOGGER.debug("Created reference data map store: " + mapStoreCacheKey.toString());
             }
         } catch (final Throwable e) {
-            LOGGER.error(e, e);
+            LOGGER.error(e.getMessage(), e);
         }
 
         // Make sure this pool always returns some kind of map store even if an

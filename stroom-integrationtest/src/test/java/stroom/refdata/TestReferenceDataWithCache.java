@@ -16,8 +16,10 @@
 
 package stroom.refdata;
 
+import org.junit.Assert;
+import org.junit.Test;
+import org.xml.sax.SAXException;
 import stroom.AbstractCoreIntegrationTest;
-import stroom.cache.CacheManagerAutoCloseable;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.FolderService;
 import stroom.feed.shared.Feed;
@@ -28,15 +30,13 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.streamstore.shared.StreamType;
+import stroom.util.cache.CentralCacheManager;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomBeanStore;
 import stroom.xml.event.EventList;
 import stroom.xml.event.EventListBuilder;
 import stroom.xml.event.EventListBuilderFactory;
-import org.junit.Assert;
-import org.junit.Test;
-import org.xml.sax.SAXException;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -93,7 +93,7 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
         streamSet.add(new EffectiveStream(2, DateUtil.parseNormalDateTimeString("2009-01-01T09:47:00.000Z")));
         streamSet.add(new EffectiveStream(3, DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.000Z")));
 
-        try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
+        try (final CentralCacheManager cacheManager = new CentralCacheManager()) {
             final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null) {
                 @Override
                 public TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
@@ -114,8 +114,8 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
 
             // Add multiple reference data items to prove that looping over maps
             // works.
-            addData(referenceData, pipeline1, new String[] { "SID_TO_PF_1", "SID_TO_PF_2" });
-            addData(referenceData, pipeline2, new String[] { "SID_TO_PF_3", "SID_TO_PF_4" });
+            addData(referenceData, pipeline1, new String[]{"SID_TO_PF_1", "SID_TO_PF_2"});
+            addData(referenceData, pipeline2, new String[]{"SID_TO_PF_3", "SID_TO_PF_4"});
             checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_1");
             checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_2");
             checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_3");
@@ -149,7 +149,7 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     }
 
     private void checkData(final ReferenceData data, final List<PipelineReference> referenceFeedSet,
-            final ErrorReceiver errorReceiver, final String mapName) {
+                           final ErrorReceiver errorReceiver, final String mapName) {
         Assert.assertEquals("B1111", getStringFromEvents(data.getValue(referenceFeedSet, errorReceiver,
                 DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.111Z"), mapName, "user1")));
         Assert.assertEquals("B1111", getStringFromEvents(data.getValue(referenceFeedSet, errorReceiver,
@@ -189,7 +189,7 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
         final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
         streamSet.add(new EffectiveStream(0, 0L));
 
-        try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
+        try (final CentralCacheManager cacheManager = new CentralCacheManager()) {
             final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null) {
                 @Override
                 public TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {

@@ -43,6 +43,9 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
+import java.util.Comparator;
+import java.util.Map;
+
 public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<CacheNodeRow>> implements HasRead<CacheRow> {
     private static final int SMALL_COL = 90;
     private static final int MEDIUM_COL = 150;
@@ -70,30 +73,6 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
                 return row.getNode().getName();
             }
         }, "Node", MEDIUM_COL);
-
-        // Hits.
-        getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final CacheNodeRow row) {
-                return Long.toString(row.getCacheInfo().getCacheHits());
-            }
-        }, "Hits", SMALL_COL);
-
-        // Misses.
-        getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final CacheNodeRow row) {
-                return Long.toString(row.getCacheInfo().getCacheMisses());
-            }
-        }, "Misses", SMALL_COL);
-
-        // Objects.
-        getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final CacheNodeRow row) {
-                return Long.toString(row.getCacheInfo().getObjectCount());
-            }
-        }, "Objects", SMALL_COL);
 
         // Clear.
         final Column<CacheNodeRow, String> clearColumn = new Column<CacheNodeRow, String>(new ButtonCell()) {
@@ -130,41 +109,19 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
 
     private String getInfoHtml(final CacheNodeRow row) {
         final CacheInfo cacheInfo = row.getCacheInfo();
-        
+
         final StringBuilder sb = new StringBuilder();
         TooltipUtil.addHeading(sb, row.getNode().getName());
 
-        TooltipUtil.addBreak(sb);
+        cacheInfo.getDetails().keySet().stream().sorted(Comparator.naturalOrder()).forEach(heading -> {
+            TooltipUtil.addBreak(sb);
+            TooltipUtil.addHeading(sb, heading);
 
-        TooltipUtil.addHeading(sb, "Cache Hits");
-        TooltipUtil.addRowData(sb, "Memory", cacheInfo.getInMemoryHits());
-        TooltipUtil.addRowData(sb, "Off Heap", cacheInfo.getOffHeapHits());
-        TooltipUtil.addRowData(sb, "Disk", cacheInfo.getOnDiskHits());
-        TooltipUtil.addRowData(sb, "Total", cacheInfo.getCacheHits());
-
-        TooltipUtil.addBreak(sb);
-
-        TooltipUtil.addHeading(sb, "Cache Misses");
-        TooltipUtil.addRowData(sb, "Memory", cacheInfo.getInMemoryMisses());
-        TooltipUtil.addRowData(sb, "Off Heap", cacheInfo.getOffHeapMisses());
-        TooltipUtil.addRowData(sb, "Disk", cacheInfo.getOnDiskMisses());
-        TooltipUtil.addRowData(sb, "Total", cacheInfo.getCacheMisses());
-
-        TooltipUtil.addBreak(sb);
-
-        TooltipUtil.addHeading(sb, "Objects");
-        TooltipUtil.addRowData(sb, "Memory", cacheInfo.getMemoryStoreObjectCount());
-        TooltipUtil.addRowData(sb, "Off Heap", cacheInfo.getOffHeapStoreObjectCount());
-        TooltipUtil.addRowData(sb, "Disk", cacheInfo.getDiskStoreObjectCount());
-        TooltipUtil.addRowData(sb, "Total", cacheInfo.getObjectCount());
-
-        TooltipUtil.addBreak(sb);
-
-        TooltipUtil.addRowData(sb, "Average Get Time", cacheInfo.getAverageGetTime());
-        TooltipUtil.addRowData(sb, "Eviction Count", cacheInfo.getEvictionCount());
-        TooltipUtil.addRowData(sb, "Searches Per Second", cacheInfo.getSearchesPerSecond());
-        TooltipUtil.addRowData(sb, "Average Search Time", cacheInfo.getAverageSearchTime());
-        TooltipUtil.addRowData(sb, "Writer Queue Size", cacheInfo.getWriterQueueSize());
+            final Map<String, String> details = cacheInfo.getDetails().get(heading);
+            details.keySet().stream().sorted(Comparator.naturalOrder()).forEach(key -> {
+                TooltipUtil.addRowData(sb, key, details.get(key));
+            });
+        });
 
         return sb.toString();
     }

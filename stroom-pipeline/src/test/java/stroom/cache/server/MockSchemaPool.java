@@ -26,11 +26,11 @@ public class MockSchemaPool implements SchemaPool {
     }
 
     @Override
-    public PoolItem<SchemaKey, StoredSchema> borrowObject(final SchemaKey key, final boolean usePool) {
+    public PoolItem<StoredSchema> borrowObject(final SchemaKey key, final boolean usePool) {
         return new PoolItem<>(key, schemaLoader.load(key.getSchemaLanguage(), key.getData(), key.getFindXMLSchemaCriteria()));
     }
 
     @Override
-    public void returnObject(final PoolItem<SchemaKey, StoredSchema> poolItem, final boolean usePool) {
+    public void returnObject(final PoolItem<StoredSchema> poolItem, final boolean usePool) {
     }
 }

@@ -16,9 +16,14 @@
 
 package stroom.security.server;
 
-import net.sf.ehcache.CacheManager;
+import org.ehcache.Cache;
+import org.ehcache.config.CacheConfiguration;
+import org.ehcache.config.builders.CacheConfigurationBuilder;
+import org.ehcache.config.builders.ResourcePoolsBuilder;
+import org.ehcache.expiry.Duration;
+import org.ehcache.expiry.Expirations;
 import org.springframework.stereotype.Component;
-import stroom.cache.AbstractCacheBean;
+import stroom.cache.Loader;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventBus;
 import stroom.entity.server.event.EntityEventHandler;
@@ -26,48 +31,59 @@ import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityAction;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
+import stroom.util.cache.CentralCacheManager;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Component
 @EntityEventHandler(type = User.ENTITY_TYPE, action = {EntityAction.CLEAR_CACHE})
-public class UserAppPermissionsCache extends AbstractCacheBean<UserRef, UserAppPermissions> implements EntityEvent.Handler {
+public class UserAppPermissionsCache implements EntityEvent.Handler {
     private static final int MAX_CACHE_ENTRIES = 1000;
 
-    private final UserAppPermissionService userAppPermissionService;
     private final Provider<EntityEventBus> eventBusProvider;
+    private final Cache<UserRef, UserAppPermissions> cache;
 
     @Inject
-    UserAppPermissionsCache(final CacheManager cacheManager,
-                                   final UserAppPermissionService userAppPermissionService, final Provider<EntityEventBus> eventBusProvider) {
-        super(cacheManager, "User App Permissions Cache", MAX_CACHE_ENTRIES);
-        this.userAppPermissionService = userAppPermissionService;
+    UserAppPermissionsCache(final CentralCacheManager cacheManager,
+                            final UserAppPermissionService userAppPermissionService, final Provider<EntityEventBus> eventBusProvider) {
         this.eventBusProvider = eventBusProvider;
-        setMaxIdleTime(30, TimeUnit.MINUTES);
-        setMaxLiveTime(30, TimeUnit.MINUTES);
+
+        final Loader<UserRef, UserAppPermissions> loader = new Loader<UserRef, UserAppPermissions>() {
+            @Override
+            public UserAppPermissions load(final UserRef key) throws Exception {
+                return userAppPermissionService.getPermissionsForUser(key);
+            }
+        };
+
+        final CacheConfiguration<UserRef, UserAppPermissions> cacheConfiguration = CacheConfigurationBuilder.newCacheConfigurationBuilder(UserRef.class, UserAppPermissions.class,
+                ResourcePoolsBuilder.heap(MAX_CACHE_ENTRIES))
+                .withExpiry(Expirations.timeToIdleExpiration(Duration.of(30, TimeUnit.MINUTES)))
+                .withLoaderWriter(loader)
+                .build();
+
+        cache = cacheManager.createCache("User App Permissions Cache", cacheConfiguration);
     }
 
-    UserAppPermissions getOrCreate(final UserRef key) {
-        return computeIfAbsent(key, this::create);
+    UserAppPermissions get(final UserRef key) {
+        return cache.get(key);
     }
 
-    private UserAppPermissions create(final UserRef user) {
-        return userAppPermissionService.getPermissionsForUser(user);
-    }
-
-    @Override
-    public void remove(final UserRef docRef) {
+    void remove(final UserRef userRef) {
+        cache.remove(userRef);
         final EntityEventBus entityEventBus = eventBusProvider.get();
-        EntityEvent.fire(entityEventBus, docRef, EntityAction.CLEAR_CACHE);
+        EntityEvent.fire(entityEventBus, userRef, EntityAction.CLEAR_CACHE);
+    }
+
+    void clear() {
+        cache.clear();
     }
 
     @Override
     public void onChange(final EntityEvent event) {
         final DocRef docRef = event.getDocRef();
         final UserRef userRef = new UserRef(docRef.getType(), docRef.getUuid(), docRef.getName(), false, false);
-        super.remove(userRef);
+        remove(userRef);
     }
 }

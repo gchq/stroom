@@ -16,33 +16,44 @@
 
 package stroom.dashboard.server;
 
-import net.sf.ehcache.CacheManager;
+import org.ehcache.Cache;
+import org.ehcache.config.CacheConfiguration;
+import org.ehcache.config.builders.CacheConfigurationBuilder;
+import org.ehcache.config.builders.ResourcePoolsBuilder;
+import org.ehcache.expiry.Duration;
+import org.ehcache.expiry.Expirations;
 import org.springframework.stereotype.Component;
-import stroom.cache.AbstractCacheBean;
-import stroom.util.spring.StroomFrequencySchedule;
+import stroom.cache.Loader;
+import stroom.util.cache.CentralCacheManager;
 
 import javax.inject.Inject;
+import java.util.concurrent.TimeUnit;
 
 @Component
-public class ActiveQueriesManager extends AbstractCacheBean<String, ActiveQueries> {
-    private static final int MAX_ACTIVE_QUERIES = 10000;
+public class ActiveQueriesManager {
+    private static final int MAX_ACTIVE_QUERIES = 1000;
+
+    private final Cache<String, ActiveQueries> cache;
 
     @Inject
-    public ActiveQueriesManager(final CacheManager cacheManager) {
-        super(cacheManager, "Active Queries", MAX_ACTIVE_QUERIES);
+    public ActiveQueriesManager(final CentralCacheManager cacheManager) {
+        final Loader<String, ActiveQueries> loader = new Loader<String, ActiveQueries>() {
+            @Override
+            public ActiveQueries load(final String key) throws Exception {
+                return new ActiveQueries();
+            }
+        };
+
+        final CacheConfiguration<String, ActiveQueries> cacheConfiguration = CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, ActiveQueries.class,
+                ResourcePoolsBuilder.heap(MAX_ACTIVE_QUERIES))
+                .withExpiry(Expirations.timeToIdleExpiration(Duration.of(1, TimeUnit.MINUTES)))
+                .withLoaderWriter(loader)
+                .build();
+
+        cache = cacheManager.createCache("Active Queries", cacheConfiguration);
     }
 
-    public ActiveQueries getOrCreate(final String key) {
-        return computeIfAbsent(key, this::create);
-    }
-
-    private ActiveQueries create(final String key) {
-        return new ActiveQueries();
-    }
-
-    @Override
-    @StroomFrequencySchedule("10s")
-    public void evictExpiredElements() {
-        super.evictExpiredElements();
+    public ActiveQueries get(final String key) {
+        return cache.get(key);
     }
 }

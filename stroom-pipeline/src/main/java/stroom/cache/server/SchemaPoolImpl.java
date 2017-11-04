@@ -16,34 +16,55 @@
 
 package stroom.cache.server;
 
-import net.sf.ehcache.CacheManager;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventHandler;
-import stroom.pool.AbstractPoolCacheBean;
+import stroom.pool.AbstractPoolCache;
+import stroom.pool.PoolItem;
 import stroom.security.Insecure;
+import stroom.security.SecurityContext;
+import stroom.util.cache.CentralCacheManager;
+import stroom.util.task.ServerTask;
 import stroom.xmlschema.server.XMLSchemaCache;
 import stroom.xmlschema.shared.XMLSchema;
 
-import javax.annotation.Resource;
 import javax.inject.Inject;
 
 @Insecure
 @Component
 @EntityEventHandler(type = XMLSchema.ENTITY_TYPE)
-public class SchemaPoolImpl extends AbstractPoolCacheBean<SchemaKey, StoredSchema>
+class SchemaPoolImpl extends AbstractPoolCache<SchemaKey, StoredSchema>
         implements SchemaPool, EntityEvent.Handler {
     private final SchemaLoader schemaLoader;
+    private final SecurityContext securityContext;
 
     @Inject
-    public SchemaPoolImpl(final CacheManager cacheManager, final SchemaLoader schemaLoader) {
+    SchemaPoolImpl(final CentralCacheManager cacheManager, final SchemaLoader schemaLoader, final XMLSchemaCache xmlSchemaCache, final SecurityContext securityContext) {
         super(cacheManager, "Schema Pool");
         this.schemaLoader = schemaLoader;
+        this.securityContext = securityContext;
+        xmlSchemaCache.addClearHandler(this::clear);
     }
 
     @Override
-    protected StoredSchema createValue(final SchemaKey key) {
-        return schemaLoader.load(key.getSchemaLanguage(), key.getData(), key.getFindXMLSchemaCriteria());
+    public PoolItem<StoredSchema> borrowObject(final SchemaKey key, final boolean usePool) {
+        return internalBorrowObject(key, usePool);
+    }
+
+    @Override
+    public void returnObject(final PoolItem<StoredSchema> poolItem, final boolean usePool) {
+        internalReturnObject(poolItem, usePool);
+    }
+
+    @Override
+    protected StoredSchema internalCreateValue(final Object key) {
+        securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
+        try {
+            final SchemaKey schemaKey = (SchemaKey) key;
+            return schemaLoader.load(schemaKey.getSchemaLanguage(), schemaKey.getData(), schemaKey.getFindXMLSchemaCriteria());
+        } finally {
+            securityContext.popUser();
+        }
     }
 
     /**
@@ -52,10 +73,5 @@ public class SchemaPoolImpl extends AbstractPoolCacheBean<SchemaKey, StoredSchem
     @Override
     public void onChange(final EntityEvent event) {
         clear();
-    }
-
-    @Resource
-    public void setXMLSchemaCache(final XMLSchemaCache xmlSchemaCache) {
-        xmlSchemaCache.addClearHandler(() -> clear());
     }
 }

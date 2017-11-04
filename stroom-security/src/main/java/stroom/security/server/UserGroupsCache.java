@@ -16,17 +16,21 @@
 
 package stroom.security.server;
 
-import net.sf.ehcache.CacheManager;
+import org.ehcache.Cache;
+import org.ehcache.config.CacheConfiguration;
+import org.ehcache.config.builders.CacheConfigurationBuilder;
+import org.ehcache.config.builders.ResourcePoolsBuilder;
+import org.ehcache.expiry.Duration;
+import org.ehcache.expiry.Expirations;
 import org.springframework.stereotype.Component;
-import stroom.cache.AbstractCacheBean;
+import stroom.cache.Loader;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventBus;
 import stroom.entity.server.event.EntityEventHandler;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityAction;
-import stroom.refdata.MapStore;
-import stroom.refdata.MapStoreCacheKey;
 import stroom.security.shared.UserRef;
+import stroom.util.cache.CentralCacheManager;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -35,40 +39,52 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 @EntityEventHandler(type = User.ENTITY_TYPE, action = EntityAction.CLEAR_CACHE)
-public class UserGroupsCache extends AbstractCacheBean<UserRef, List<UserRef>> implements EntityEvent.Handler {
+public class UserGroupsCache implements EntityEvent.Handler {
     private static final int MAX_CACHE_ENTRIES = 1000;
 
-    private final UserService userService;
     private final Provider<EntityEventBus> eventBusProvider;
+    private final Cache<UserRef, List> cache;
 
     @Inject
-    UserGroupsCache(final CacheManager cacheManager,
-                           final UserService userService, final Provider<EntityEventBus> eventBusProvider) {
-        super(cacheManager, "User Groups Cache", MAX_CACHE_ENTRIES);
-        this.userService = userService;
+    UserGroupsCache(final CentralCacheManager cacheManager,
+                    final UserService userService, final Provider<EntityEventBus> eventBusProvider) {
         this.eventBusProvider = eventBusProvider;
-        setMaxIdleTime(30, TimeUnit.MINUTES);
-        setMaxLiveTime(30, TimeUnit.MINUTES);
+
+        final Loader<UserRef, List> loader = new Loader<UserRef, List>() {
+            @Override
+            public List load(final UserRef key) throws Exception {
+                return userService.findGroupsForUser(key);
+            }
+        };
+
+        final CacheConfiguration<UserRef, List> cacheConfiguration = CacheConfigurationBuilder.newCacheConfigurationBuilder(UserRef.class, List.class,
+                ResourcePoolsBuilder.heap(MAX_CACHE_ENTRIES))
+                .withExpiry(Expirations.timeToIdleExpiration(Duration.of(30, TimeUnit.MINUTES)))
+                .withLoaderWriter(loader)
+                .build();
+
+        cache = cacheManager.createCache("User Groups Cache", cacheConfiguration);
     }
 
-    List<UserRef> getOrCreate(final UserRef key) {
-        return computeIfAbsent(key, this::create);
+    @SuppressWarnings("unchecked")
+    List<UserRef> get(final UserRef key) {
+        return cache.get(key);
     }
 
-    private List<UserRef> create(final UserRef user) {
-        return userService.findGroupsForUser(user);
-    }
-
-    @Override
-    public void remove(final UserRef docRef) {
+    void remove(final UserRef userRef) {
+        cache.remove(userRef);
         final EntityEventBus entityEventBus = eventBusProvider.get();
-        EntityEvent.fire(entityEventBus, docRef, EntityAction.CLEAR_CACHE);
+        EntityEvent.fire(entityEventBus, userRef, EntityAction.CLEAR_CACHE);
+    }
+
+    void clear() {
+        cache.clear();
     }
 
     @Override
     public void onChange(final EntityEvent event) {
         final DocRef docRef = event.getDocRef();
         final UserRef userRef = new UserRef(docRef.getType(), docRef.getUuid(), docRef.getName(), false, false);
-        super.remove(userRef);
+        remove(userRef);
     }
 }

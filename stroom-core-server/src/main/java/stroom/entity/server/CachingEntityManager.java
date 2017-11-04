@@ -16,10 +16,12 @@
 
 package stroom.entity.server;
 
-import net.sf.ehcache.CacheManager;
-import net.sf.ehcache.Ehcache;
-import net.sf.ehcache.Element;
-import org.springframework.beans.factory.InitializingBean;
+import org.ehcache.Cache;
+import org.ehcache.config.CacheConfiguration;
+import org.ehcache.config.builders.CacheConfigurationBuilder;
+import org.ehcache.config.builders.ResourcePoolsBuilder;
+import org.ehcache.expiry.Duration;
+import org.ehcache.expiry.Expirations;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.SqlBuilder;
@@ -29,23 +31,41 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Entity;
 import stroom.entity.shared.SummaryDataRow;
+import stroom.util.cache.CentralCacheManager;
 
 import javax.inject.Inject;
 import javax.persistence.FlushModeType;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Component
-public class CachingEntityManager implements StroomEntityManager, InitializingBean, Clearable {
+public class CachingEntityManager implements StroomEntityManager, Clearable {
     private final StroomEntityManager stroomEntityManager;
-    private final CacheManager cacheManager;
 
-    private Ehcache cache;
+    private Cache<Object, Object> cache;
 
     @Inject
-    public CachingEntityManager(final StroomEntityManager stroomEntityManager, final CacheManager cacheManager) {
+    public CachingEntityManager(final StroomEntityManager stroomEntityManager, final CentralCacheManager cacheManager) {
         this.stroomEntityManager = stroomEntityManager;
-        this.cacheManager = cacheManager;
+
+
+//        ResourcePoolsBuilder.newResourcePoolsBuilder()
+//                .heap(10, EntryUnit.ENTRIES)
+//                .offheap(1, MemoryUnit.MB)
+//                .disk(20, MemoryUnit.MB, true)
+//            )
+
+
+        //	<cache name="serviceCache" maxElementsInMemory="1000" eternal="false"
+//    overflowToDisk="false" timeToIdleSeconds="60" timeToLiveSeconds="60" />
+
+        final CacheConfiguration<Object, Object> cacheConfiguration = CacheConfigurationBuilder.newCacheConfigurationBuilder(Object.class, Object.class,
+                ResourcePoolsBuilder.heap(1000))
+                .withExpiry(Expirations.timeToLiveExpiration(Duration.of(1, TimeUnit.MINUTES)))
+                .build();
+
+        cache = cacheManager.createCache("serviceCache", cacheConfiguration);
     }
 
     @Override
@@ -61,14 +81,14 @@ public class CachingEntityManager implements StroomEntityManager, InitializingBe
             final List<Object> key = Arrays.asList("loadEntity", clazz, entity.getPrimaryKey());
 
             // Try and get a cached method result from the cache.
-            final Element element = cache.get(key);
-            if (element == null) {
+            final Object cached = cache.get(key);
+            if (cached == null) {
                 // We didn't find a cached result so get one and put it in the
                 // cache.
                 result = stroomEntityManager.loadEntity(clazz, entity);
-                cache.put(new Element(key, result));
+                cache.put(key, result);
             } else {
-                result = (T) element.getObjectValue();
+                result = (T) cached;
             }
 
         } else {
@@ -85,14 +105,14 @@ public class CachingEntityManager implements StroomEntityManager, InitializingBe
         final List<Object> key = Arrays.asList("loadEntityById", clazz, id);
 
         // Try and get a cached method result from the cache.
-        final Element element = cache.get(key);
-        if (element == null) {
+        final Object cached = cache.get(key);
+        if (cached == null) {
             // We didn't find a cached result so get one and put it in the
             // cache.
             result = stroomEntityManager.loadEntityById(clazz, id);
-            cache.put(new Element(key, result));
+            cache.put(key, result);
         } else {
-            result = (T) element.getObjectValue();
+            result = (T) cached;
         }
 
         return result;
@@ -153,14 +173,14 @@ public class CachingEntityManager implements StroomEntityManager, InitializingBe
         final List<Object> key = Arrays.asList("executeCachedQueryResultList", sql.toString(), sql.getArgs(), criteria);
 
         // Try and get a cached method result from the cache.
-        final Element element = cache.get(key);
-        if (element == null) {
+        final Object cached = cache.get(key);
+        if (cached == null) {
             // We didn't find a cached result so get one and put it in the
             // cache.
             result = stroomEntityManager.executeQueryResultList(sql, criteria, allowCaching);
-            cache.put(new Element(key, result));
+            cache.put(key, result);
         } else {
-            result = (List) element.getObjectValue();
+            result = (List) cached;
         }
 
         return result;
@@ -208,12 +228,7 @@ public class CachingEntityManager implements StroomEntityManager, InitializingBe
     }
 
     @Override
-    public void afterPropertiesSet() throws Exception {
-        cache = cacheManager.getEhcache("serviceCache");
-    }
-
-    @Override
     public void clear() {
-        cache.removeAll();
+        cache.clear();
     }
 }

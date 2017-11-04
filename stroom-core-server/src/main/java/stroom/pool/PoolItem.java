@@ -18,22 +18,22 @@ package stroom.pool;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class PoolItem<K, V> {
-    final K key;
+public class PoolItem<V> {
+    final Object key;
     final V value;
     final long creationTime;
     final AtomicInteger inUse = new AtomicInteger();
 
     volatile long lastUsed;
 
-    public PoolItem(final K key, final V value) {
+    public PoolItem(final Object key, final V value) {
         this.key = key;
         this.value = value;
         this.creationTime = System.currentTimeMillis();
         this.lastUsed = creationTime;
     }
 
-    public K getKey() {
+    Object getKey() {
         return key;
     }
 

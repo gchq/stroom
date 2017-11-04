@@ -16,13 +16,14 @@
 
 package stroom.refdata;
 
-import stroom.cache.CacheManagerAutoCloseable;
-import stroom.entity.server.GenericEntityService;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.xml.sax.SAXException;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.Range;
 import stroom.feed.server.MockFeedService;
 import stroom.feed.shared.Feed;
-import stroom.importexport.server.EntityPathResolver;
 import stroom.pipeline.server.MockPipelineEntityService;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
@@ -30,19 +31,15 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.refdata.impl.MockReferenceDataLoader;
 import stroom.streamstore.shared.StreamType;
+import stroom.util.cache.CentralCacheManager;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.StroomLogger;
-import stroom.util.test.StroomUnitTest;
 import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.util.test.StroomUnitTest;
 import stroom.xml.event.EventList;
 import stroom.xml.event.EventListBuilder;
 import stroom.xml.event.EventListBuilderFactory;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.xml.sax.SAXException;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
@@ -71,10 +68,10 @@ public class TestReferenceData extends StroomUnitTest {
         streamSet.add(new EffectiveStream(1, DateUtil.parseNormalDateTimeString("2008-01-01T09:47:00.000Z")));
         streamSet.add(new EffectiveStream(2, DateUtil.parseNormalDateTimeString("2009-01-01T09:47:00.000Z")));
         streamSet.add(new EffectiveStream(3, DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.000Z")));
-        try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
+        try (CentralCacheManager cacheManager = new CentralCacheManager()) {
             final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null) {
                 @Override
-                TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
+                protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                     return streamSet;
                 }
             };
@@ -87,8 +84,8 @@ public class TestReferenceData extends StroomUnitTest {
 
             // Add multiple reference data items to prove that looping over maps
             // works.
-            addData(referenceData, pipeline1, new String[] { "SID_TO_PF_1", "SID_TO_PF_2" });
-            addData(referenceData, pipeline2, new String[] { "SID_TO_PF_3", "SID_TO_PF_4" });
+            addData(referenceData, pipeline1, new String[]{"SID_TO_PF_1", "SID_TO_PF_2"});
+            addData(referenceData, pipeline2, new String[]{"SID_TO_PF_3", "SID_TO_PF_4"});
             checkData(referenceData, pipelineReferences, "SID_TO_PF_1");
             checkData(referenceData, pipelineReferences, "SID_TO_PF_2");
             checkData(referenceData, pipelineReferences, "SID_TO_PF_3");
@@ -122,7 +119,7 @@ public class TestReferenceData extends StroomUnitTest {
     }
 
     private void checkData(final ReferenceData data, final List<PipelineReference> pipelineReferences,
-            final String mapName) {
+                           final String mapName) {
         final ErrorReceiver errorReceiver = new FatalErrorReceiver();
 
         Assert.assertEquals("B1111", getStringFromEvents(data.getValue(pipelineReferences, errorReceiver,
@@ -160,10 +157,10 @@ public class TestReferenceData extends StroomUnitTest {
 
         final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
         streamSet.add(new EffectiveStream(0, 0L));
-        try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
+        try (CentralCacheManager cacheManager = new CentralCacheManager()) {
             final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null) {
                 @Override
-                public TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
+                protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                     return streamSet;
                 }
             };
@@ -205,10 +202,10 @@ public class TestReferenceData extends StroomUnitTest {
 
         final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
         streamSet.add(new EffectiveStream(0, 0L));
-        try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
+        try (CentralCacheManager cacheManager = new CentralCacheManager()) {
             final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null) {
                 @Override
-                public TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
+                protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                     return streamSet;
                 }
             };

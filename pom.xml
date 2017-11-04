@@ -53,7 +53,7 @@
     <commons-io.version>2.5</commons-io.version>
     <commons-logging.version>1.1.1</commons-logging.version>
     <mail.version>1.4.7</mail.version>
-    <ehcache.version>2.6.11</ehcache.version>
+    <ehcache.version>3.4.0</ehcache.version>
     <joda.version>2.3</joda.version>
     <junit.version>4.12</junit.version>
     <log4j.version>1.2.17</log4j.version>
@@ -575,8 +575,8 @@
 
       <!-- EHCache -->
       <dependency>
-        <groupId>net.sf.ehcache</groupId>
-        <artifactId>ehcache-core</artifactId>
+        <groupId>org.ehcache</groupId>
+        <artifactId>ehcache</artifactId>
         <version>${ehcache.version}</version>
       </dependency>
 

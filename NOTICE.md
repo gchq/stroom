@@ -47,7 +47,7 @@ The table below includes licences for all Maven dependencies. Not included in th
 | org.apache.curator                        | curator-framework                            | 2.6.0            | APL 2.0       |         |               |
 | org.apache.curator                        | curator-recipes                              | 2.6.0            | APL 2.0       |         |               |
 | com.lmax                                  | disruptor                                    | 3.3.0            | APL 2.0       |         |               |
-| net.sf.ehcache                            | ehcache-core                                 | 2.6.11           | APL 2.0       |         |               |
+| org.ehcache                               | ehcache                                      | 3.4.0            | APL 2.0       |         |               |
 | com.googlecode.ehcache-spring-annotations | ehcache-spring-annotations                   | 1.2.0            | APL 2.0       |         |               |
 | org.flywaydb                              | flyway-core                                  | 4.0.3            | APL 2.0       |         |               |
 | com.google.gwt.inject                     | gin                                          | 1.5.0            | APL 2.0       |         |               |

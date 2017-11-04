@@ -16,52 +16,41 @@
 
 package stroom.task.cluster;
 
-import javax.annotation.Resource;
-
-import stroom.util.spring.StroomShutdown;
-import org.springframework.beans.factory.InitializingBean;
+import org.ehcache.Cache;
+import org.ehcache.config.CacheConfiguration;
+import org.ehcache.config.builders.CacheConfigurationBuilder;
+import org.ehcache.config.builders.ResourcePoolsBuilder;
+import org.ehcache.expiry.Duration;
+import org.ehcache.expiry.Expirations;
 import org.springframework.stereotype.Component;
-
 import stroom.entity.shared.Clearable;
-import net.sf.ehcache.Cache;
-import net.sf.ehcache.CacheManager;
-import net.sf.ehcache.Element;
-import net.sf.ehcache.config.CacheConfiguration;
+import stroom.util.cache.CentralCacheManager;
+import stroom.util.spring.StroomShutdown;
 
-import java.util.List;
+import javax.inject.Inject;
+import java.util.concurrent.TimeUnit;
 
 @Component
-public class ClusterResultCollectorCache implements Clearable, InitializingBean {
+public class ClusterResultCollectorCache implements Clearable {
     private static final int MAX_CACHE_ENTRIES = 1000000;
 
-    @Resource
-    private CacheManager cacheManager;
+    private final Cache<CollectorId, ClusterResultCollector> cache;
 
-    private final Cache cache;
     private volatile boolean shutdown;
 
-    public ClusterResultCollectorCache() {
-        final CacheConfiguration cacheConfiguration = new CacheConfiguration("Cluster Result Collector Cache",
-                MAX_CACHE_ENTRIES);
-        cacheConfiguration.setEternal(false);
-        // Allow collectors to idle for 10 minutes.
-        cacheConfiguration.setTimeToIdleSeconds(600);
-        // Allow collectors to live for a maximum of 24 hours.
-        cacheConfiguration.setTimeToLiveSeconds(86400);
+    @Inject
+    public ClusterResultCollectorCache(final CentralCacheManager cacheManager) {
+        final CacheConfiguration<CollectorId, ClusterResultCollector> cacheConfiguration = CacheConfigurationBuilder.newCacheConfigurationBuilder(CollectorId.class, ClusterResultCollector.class,
+                ResourcePoolsBuilder.heap(MAX_CACHE_ENTRIES))
+                .withExpiry(Expirations.timeToIdleExpiration(Duration.of(1, TimeUnit.MINUTES)))
+                .build();
 
-        cache = new Cache(cacheConfiguration);
+        cache = cacheManager.createCache("Cluster Result Collector Cache", cacheConfiguration);
     }
 
     @StroomShutdown
     public void shutdown() {
         shutdown = true;
-        final List<Object> keys = cache.getKeys();
-        for (final Object key : keys) {
-            final Element element = cache.get(key);
-            if (element != null) {
-                final ClusterResultCollector<?> collector = (ClusterResultCollector<?>) element.getObjectValue();
-            }
-        }
     }
 
     public void put(final CollectorId collectorId, final ClusterResultCollector<?> clusterResultCollector) {
@@ -69,8 +58,7 @@ public class ClusterResultCollectorCache implements Clearable, InitializingBean 
             throw new RuntimeException("Stroom is shutting down");
         }
 
-        final Element element = new Element(collectorId, clusterResultCollector);
-        final Element existing = cache.putIfAbsent(element);
+        final ClusterResultCollector existing = cache.putIfAbsent(collectorId, clusterResultCollector);
         if (existing != null) {
             throw new RuntimeException(
                     "Existing item found in cluster result collector cache for key '" + collectorId.toString() + "'");
@@ -78,24 +66,15 @@ public class ClusterResultCollectorCache implements Clearable, InitializingBean 
     }
 
     public ClusterResultCollector<?> get(final CollectorId collectorId) {
-        final Element element = cache.get(collectorId);
-        if (element == null) {
-            return null;
-        }
-        return (ClusterResultCollector<?>) element.getObjectValue();
+        return cache.get(collectorId);
     }
 
-    public boolean remove(final CollectorId id) {
-        return cache.remove(id);
+    public void remove(final CollectorId id) {
+        cache.remove(id);
     }
 
     @Override
     public void clear() {
-        cache.removeAll();
-    }
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        cacheManager.addCache(cache);
+        cache.clear();
     }
 }

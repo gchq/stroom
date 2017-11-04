@@ -96,7 +96,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
             }
 
             final String searchSessionId = action.getUserToken() + "_" + action.getApplicationInstanceId();
-            final ActiveQueries searchSession = activeQueriesManager.getOrCreate(searchSessionId);
+            final ActiveQueries searchSession = activeQueriesManager.get(searchSessionId);
             final Map<QueryKey, SearchResult> searchResultMap = new HashMap<>();
 
             // First kill off any queries that are no longer required by the UI.
