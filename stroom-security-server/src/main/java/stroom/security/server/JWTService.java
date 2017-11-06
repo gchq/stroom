@@ -2,8 +2,9 @@ package stroom.security.server;
 
 import com.google.common.base.Strings;
 import org.apache.shiro.web.util.WebUtils;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.ClientResponse;
+import org.jose4j.jwt.JwtClaims;
+import org.jose4j.jwt.MalformedClaimException;
+import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.keys.HmacKey;
@@ -11,13 +12,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import stroom.apiclients.AuthenticationServiceClients;
+import stroom.auth.service.ApiException;
 
 import javax.inject.Inject;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.Response;
 import java.util.Optional;
 
 @Component
@@ -30,18 +30,21 @@ public class JWTService {
     private final String authenticationServiceUrl;
     private final String authJwtVerificationKey;
     private final String authJwtIssuer;
+    private AuthenticationServiceClients authenticationServiceClients;
 
     @Inject
     public JWTService(
-        @Value("#{propertyConfigurer.getProperty('stroom.auth.url')}")
+            @Value("#{propertyConfigurer.getProperty('stroom.auth.url')}")
         final String authenticationServiceUrl,
-        @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.verificationkey')}")
+            @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.verificationkey')}")
         final String authJwtVerificationKey,
-        @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.issuer')}")
-        final String authJwtIssuer){
+            @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.issuer')}")
+        final String authJwtIssuer,
+            final AuthenticationServiceClients authenticationServiceClients){
         this.authenticationServiceUrl = authenticationServiceUrl;
         this.authJwtVerificationKey = authJwtVerificationKey;
         this.authJwtIssuer = authJwtIssuer;
+        this.authenticationServiceClients = authenticationServiceClients;
 
         if (authenticationServiceUrl == null) {
             throw new SecurityException("No authentication service URL is defined");
@@ -69,7 +72,7 @@ public class JWTService {
         }
 
         try {
-            JWTAuthenticationToken jwtAuthenticationToken = verifyToken(jws);
+            JWTAuthenticationToken jwtAuthenticationToken = checkToken(jws);
             return jwtAuthenticationToken.getUserId() != null;
         } catch (Exception e){
             LOGGER.error("Unable to verify token:", e.getMessage(), e);
@@ -98,15 +101,25 @@ public class JWTService {
         return jws;
     }
 
-    public JWTAuthenticationToken verifyToken(String token) {
-        //TODO: refactor to use Swagger API
-        Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
-        Response response = client
-            .target(this.authenticationServiceUrl + "/verify/" + token)
-            .request()
-            .get();
-        String usersEmail = response.readEntity(String.class);
-        return new JWTAuthenticationToken(usersEmail, token);
+    public JWTAuthenticationToken checkToken(String token) {
+        try {
+            LOGGER.info("Checking with the Authentication Service that a token is valid.");
+            String usersEmail = authenticationServiceClients.newAuthenticationApi().verifyToken(token);
+            return new JWTAuthenticationToken(usersEmail, token);
+        } catch (ApiException e) {
+            throw new RuntimeException("Unable to verify token remotely!", e);
+        }
+    }
+
+    public Optional<String> verifyToken(String token){
+        try {
+            JwtConsumer jwtConsumer = newJwsConsumer();
+            JwtClaims claims = jwtConsumer.processToClaims(token);
+            return Optional.of(claims.getSubject());
+        } catch (InvalidJwtException | MalformedClaimException e) {
+            LOGGER.warn("Unable to verify token!");
+            return Optional.empty();
+        }
     }
 
     public JwtConsumer newJwsConsumer(){

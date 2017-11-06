@@ -33,7 +33,6 @@ dependencies {
     compile libs.javax_annotation_api
     compile libs.javax_inject
     compile libs.javax_servlet_api
-    compile libs.jersey_client
     compile libs.shiro_core
     compile libs.shiro_spring
     compile libs.shiro_web
