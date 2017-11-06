@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 @EntityEventHandler(action = EntityAction.CLEAR_CACHE)
 public class DocumentPermissionsCache implements EntityEvent.Handler {
-    private static final int MAX_CACHE_ENTRIES = 1000000;
+    private static final int MAX_CACHE_ENTRIES = 10000;
 
     private final Provider<EntityEventBus> eventBusProvider;
 
