@@ -28,10 +28,13 @@ import org.springframework.stereotype.Component;
 import stroom.cache.Loader;
 import stroom.entity.shared.Period;
 import stroom.pipeline.server.errorhandler.ProcessException;
+import stroom.pool.SecurityHelper;
+import stroom.security.SecurityContext;
 import stroom.streamstore.server.EffectiveMetaDataCriteria;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.util.cache.CentralCacheManager;
+import stroom.util.task.ServerTask;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -55,13 +58,16 @@ public class EffectiveStreamCache {
     private final Cache<EffectiveStreamKey, TreeSet> cache;
     private final StreamStore streamStore;
     private final EffectiveStreamInternPool internPool;
+    private final SecurityContext securityContext;
 
     @Inject
     EffectiveStreamCache(final CentralCacheManager cacheManager,
                          final StreamStore streamStore,
-                         final EffectiveStreamInternPool internPool) {
+                         final EffectiveStreamInternPool internPool,
+                         final SecurityContext securityContext) {
         this.streamStore = streamStore;
         this.internPool = internPool;
+        this.securityContext = securityContext;
 
         final Loader<EffectiveStreamKey, TreeSet> loader = new Loader<EffectiveStreamKey, TreeSet>() {
             @Override
@@ -94,72 +100,74 @@ public class EffectiveStreamCache {
     }
 
     protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
-        TreeSet<EffectiveStream> effectiveStreamSet = null;
+        try (SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+            TreeSet<EffectiveStream> effectiveStreamSet = null;
 
-        try {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Creating effective time set: " + key.toString());
-            }
+            try {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Creating effective time set: " + key.toString());
+                }
 
-            // Only find streams for the supplied feed and stream type.
-            final EffectiveMetaDataCriteria criteria = new EffectiveMetaDataCriteria();
-            criteria.setFeed(key.getFeed());
-            criteria.setStreamType(key.getStreamType());
+                // Only find streams for the supplied feed and stream type.
+                final EffectiveMetaDataCriteria criteria = new EffectiveMetaDataCriteria();
+                criteria.setFeed(key.getFeed());
+                criteria.setStreamType(key.getStreamType());
 
-            // Limit the stream set to the day starting from the supplied
-            // effective time.
-            final long effectiveMs = key.getEffectiveMs();
-            // final Period window = new Period(effectiveMs, effectiveMs +
-            // ONE_DAY);
-            final Period window = new Period(effectiveMs, effectiveMs + APPROX_TEN_DAYS);
-            criteria.setEffectivePeriod(window);
+                // Limit the stream set to the day starting from the supplied
+                // effective time.
+                final long effectiveMs = key.getEffectiveMs();
+                // final Period window = new Period(effectiveMs, effectiveMs +
+                // ONE_DAY);
+                final Period window = new Period(effectiveMs, effectiveMs + APPROX_TEN_DAYS);
+                criteria.setEffectivePeriod(window);
 
-            // Locate all streams that fit the supplied criteria.
-            final List<Stream> streams = streamStore.findEffectiveStream(criteria);
+                // Locate all streams that fit the supplied criteria.
+                final List<Stream> streams = streamStore.findEffectiveStream(criteria);
 
-            // Add all streams that we have found to the effective stream set.
-            if (streams != null && streams.size() > 0) {
-                effectiveStreamSet = new TreeSet<>();
-                for (final Stream stream : streams) {
-                    EffectiveStream effectiveStream;
+                // Add all streams that we have found to the effective stream set.
+                if (streams != null && streams.size() > 0) {
+                    effectiveStreamSet = new TreeSet<>();
+                    for (final Stream stream : streams) {
+                        EffectiveStream effectiveStream;
 
-                    if (stream.getEffectiveMs() != null) {
-                        effectiveStream = new EffectiveStream(stream.getId(), stream.getEffectiveMs());
-                    } else {
-                        effectiveStream = new EffectiveStream(stream.getId(), stream.getCreateMs());
-                    }
+                        if (stream.getEffectiveMs() != null) {
+                            effectiveStream = new EffectiveStream(stream.getId(), stream.getEffectiveMs());
+                        } else {
+                            effectiveStream = new EffectiveStream(stream.getId(), stream.getCreateMs());
+                        }
 
-                    final boolean success = effectiveStreamSet.add(effectiveStream);
+                        final boolean success = effectiveStreamSet.add(effectiveStream);
 
-                    // Warn if there are more than one effective stream for
-                    // exactly the same time.
-                    if (!success) {
-                        LOGGER.warn("Attempt to insert effective stream with id=" + effectiveStream.getStreamId()
-                                + ". Duplicate match found with effectiveMs=" + effectiveStream.getEffectiveMs());
+                        // Warn if there are more than one effective stream for
+                        // exactly the same time.
+                        if (!success) {
+                            LOGGER.warn("Attempt to insert effective stream with id=" + effectiveStream.getStreamId()
+                                    + ". Duplicate match found with effectiveMs=" + effectiveStream.getEffectiveMs());
+                        }
                     }
                 }
+
+                // Intern the effective stream set so we only have one identical
+                // copy in memory.
+                if (internPool != null) {
+                    effectiveStreamSet = internPool.intern(effectiveStreamSet);
+                }
+
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Created effective stream set: " + key.toString());
+                }
+            } catch (final Throwable e) {
+                LOGGER.error(e.getMessage(), e);
             }
 
-            // Intern the effective stream set so we only have one identical
-            // copy in memory.
-            if (internPool != null) {
-                effectiveStreamSet = internPool.intern(effectiveStreamSet);
+            // Make sure this pool always returns some kind of effective stream set
+            // even if an exception was thrown during load.
+            if (effectiveStreamSet == null) {
+                effectiveStreamSet = new TreeSet<>();
             }
 
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Created effective stream set: " + key.toString());
-            }
-        } catch (final Throwable e) {
-            LOGGER.error(e.getMessage(), e);
+            return effectiveStreamSet;
         }
-
-        // Make sure this pool always returns some kind of effective stream set
-        // even if an exception was thrown during load.
-        if (effectiveStreamSet == null) {
-            effectiveStreamSet = new TreeSet<>();
-        }
-
-        return effectiveStreamSet;
     }
 
     /**

@@ -23,6 +23,7 @@ import stroom.feed.remote.RemoteFeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
 import stroom.feed.shared.FeedService;
+import stroom.pool.SecurityHelper;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.util.task.ServerTask;
@@ -42,8 +43,7 @@ public class RemoteFeedServiceImpl implements RemoteFeedService {
     @Override
     @Insecure
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest request) {
-        securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
-        try {
+        try (SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             final Feed feed = feedService.loadByName(request.getFeedName());
 
             if (feed == null) {
@@ -92,8 +92,6 @@ public class RemoteFeedServiceImpl implements RemoteFeedService {
 //
             return GetFeedStatusResponse.createOKRecieveResponse();
 
-        } finally {
-            securityContext.popUser();
         }
     }
 }

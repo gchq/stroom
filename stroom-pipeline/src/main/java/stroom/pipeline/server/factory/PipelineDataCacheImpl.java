@@ -31,6 +31,7 @@ import stroom.pipeline.shared.PipelineDataMerger;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.pool.SecurityHelper;
 import stroom.pool.VersionedEntityDecorator;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
@@ -88,8 +89,7 @@ public class PipelineDataCacheImpl implements PipelineDataCache {
     }
 
     private PipelineData create(final VersionedEntityDecorator key) {
-        securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
-        try {
+        try (SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             final PipelineEntity pipelineEntity = (PipelineEntity) key.getEntity();
             final List<PipelineEntity> pipelines = pipelineStackLoader.loadPipelineStack(pipelineEntity);
             // Iterate over the pipeline list reading the deepest ancestor first.
@@ -110,8 +110,6 @@ public class PipelineDataCacheImpl implements PipelineDataCache {
             }
 
             return pipelineDataMerger.createMergedData();
-        } finally {
-            securityContext.popUser();
         }
     }
 }

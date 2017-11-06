@@ -26,6 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.cache.Loader;
+import stroom.pool.SecurityHelper;
+import stroom.security.SecurityContext;
 import stroom.util.cache.CentralCacheManager;
 
 import javax.inject.Inject;
@@ -45,12 +47,16 @@ public final class MapStoreCache {
     private final Cache<MapStoreCacheKey, MapStore> cache;
     private final ReferenceDataLoader referenceDataLoader;
     private final MapStoreInternPool internPool;
+    private final SecurityContext securityContext;
 
     @Inject
-    public MapStoreCache(final CentralCacheManager cacheManager, final ReferenceDataLoader referenceDataLoader,
-                         final MapStoreInternPool internPool) {
+    public MapStoreCache(final CentralCacheManager cacheManager,
+                         final ReferenceDataLoader referenceDataLoader,
+                         final MapStoreInternPool internPool,
+                         final SecurityContext securityContext) {
         this.referenceDataLoader = referenceDataLoader;
         this.internPool = internPool;
+        this.securityContext = securityContext;
 
         final Loader<MapStoreCacheKey, MapStore> loader = new Loader<MapStoreCacheKey, MapStore>() {
             @Override
@@ -73,34 +79,36 @@ public final class MapStoreCache {
     }
 
     private MapStore create(final MapStoreCacheKey mapStoreCacheKey) {
-        MapStore mapStore = null;
+        try (SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+            MapStore mapStore = null;
 
-        try {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Creating reference data map store: " + mapStoreCacheKey.toString());
+            try {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Creating reference data map store: " + mapStoreCacheKey.toString());
+                }
+
+                // Load the data into the map store.
+                mapStore = referenceDataLoader.load(mapStoreCacheKey);
+                // Intern the map store so we only have one identical copy in
+                // memory.
+                if (internPool != null) {
+                    mapStore = internPool.intern(mapStore);
+                }
+
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Created reference data map store: " + mapStoreCacheKey.toString());
+                }
+            } catch (final Throwable e) {
+                LOGGER.error(e.getMessage(), e);
             }
 
-            // Load the data into the map store.
-            mapStore = referenceDataLoader.load(mapStoreCacheKey);
-            // Intern the map store so we only have one identical copy in
-            // memory.
-            if (internPool != null) {
-                mapStore = internPool.intern(mapStore);
+            // Make sure this pool always returns some kind of map store even if an
+            // exception was thrown during load.
+            if (mapStore == null) {
+                mapStore = new MapStoreImpl();
             }
 
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Created reference data map store: " + mapStoreCacheKey.toString());
-            }
-        } catch (final Throwable e) {
-            LOGGER.error(e.getMessage(), e);
+            return mapStore;
         }
-
-        // Make sure this pool always returns some kind of map store even if an
-        // exception was thrown during load.
-        if (mapStore == null) {
-            mapStore = new MapStoreImpl();
-        }
-
-        return mapStore;
     }
 }

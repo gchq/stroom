@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
+import stroom.pool.SecurityHelper;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.statistic.server.MetaDataStatistic;
@@ -71,8 +72,7 @@ public class DefaultDataFeedRequest implements DataFeedRequest {
     @Override
     @Insecure
     public void processRequest() {
-        securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
-        try {
+        try (SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             final String feedName = headerMap.get(StroomHeaderArguments.FEED);
 
             if (!StringUtils.hasText(feedName)) {
@@ -109,8 +109,6 @@ public class DefaultDataFeedRequest implements DataFeedRequest {
                     handlers.get(0).closeDelete();
                 }
             }
-        } finally {
-            securityContext.popUser();
         }
     }
 
