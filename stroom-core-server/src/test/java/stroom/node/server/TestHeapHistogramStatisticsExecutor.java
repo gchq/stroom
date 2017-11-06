@@ -3,6 +3,7 @@ package stroom.node.server;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -13,11 +14,15 @@ import stroom.node.shared.Rack;
 import stroom.statistics.common.StatisticEvent;
 import stroom.statistics.common.Statistics;
 import stroom.statistics.common.StatisticsFactory;
+import stroom.util.test.StroomExpectedException;
+import stroom.util.test.StroomJUnit4ClassRunner;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
+@RunWith(StroomJUnit4ClassRunner.class)
 public class TestHeapHistogramStatisticsExecutor {
 
     @Mock
@@ -127,17 +132,23 @@ public class TestHeapHistogramStatisticsExecutor {
         }
     }
 
-    @Test(expected = Exception.class)
+    @Test
+    @StroomExpectedException(exception = { RuntimeException.class, IOException.class})
     public void testExecBadExecutable() throws InterruptedException {
         //Given
         mockStroomPropertyService.setProperty(HeapHistogramService.JMAP_EXECUTABLE_PROP_KEY, "badNameForJmapExecutable");
 
         //When
-        executor.exec();
+        boolean thrownException = false;
+        try {
+            executor.exec();
+        } catch (Exception e) {
+            thrownException = true;
+        }
 
-        //should never get here due to exception
-        Mockito.verify(statistics, Mockito.times(0));
+        Assert.assertTrue(thrownException);
     }
+
 }
 
 
