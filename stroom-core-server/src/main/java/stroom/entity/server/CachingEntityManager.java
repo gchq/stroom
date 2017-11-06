@@ -65,7 +65,7 @@ public class CachingEntityManager implements StroomEntityManager, Clearable {
                 .withExpiry(Expirations.timeToLiveExpiration(Duration.of(1, TimeUnit.MINUTES)))
                 .build();
 
-        cache = cacheManager.createCache("serviceCache", cacheConfiguration);
+        cache = cacheManager.createCache("Entity Cache", cacheConfiguration);
     }
 
     @Override
