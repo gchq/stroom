@@ -100,6 +100,16 @@ public class StatisticEvent {
         return timeAgnosticStatisticEvent.getTagPosition(tagName);
     }
 
+
+    /**
+     * Convenience method for extracting the value of a tag in this statistic event
+     * @param tagName The name of the tag to extract
+     * @return The value of the named tag
+     */
+    public String getTagValue(final String tagName) {
+        return timeAgnosticStatisticEvent.getTagValue(tagName);
+    }
+
     @Override
     public String toString() {
         return "StatisticEvent [timeMs=" + DateUtil.createNormalDateTimeString(timeMs) + ", timeAgnosticStatisticEvent="
