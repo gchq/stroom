@@ -20,7 +20,7 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.apiclients.AuthenticationServiceClient;
+import stroom.apiclients.AuthenticationServiceClients;
 import stroom.datasource.api.v2.DataSource;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.QueryKey;
@@ -47,14 +47,14 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
 
     private final SecurityContext securityContext;
     private final String url;
-    private AuthenticationServiceClient authenticationServiceClient;
+    private AuthenticationServiceClients authenticationServiceClients;
 
     public RemoteDataSourceProvider(final SecurityContext securityContext,
                                     final String url,
-                                    final AuthenticationServiceClient authenticationServiceClient) {
+                                    final AuthenticationServiceClients authenticationServiceClients) {
         this.securityContext = securityContext;
         this.url = url;
-        this.authenticationServiceClient = authenticationServiceClient;
+        this.authenticationServiceClients = authenticationServiceClients;
         LOGGER.trace("Creating RemoteDataSourceProvider for url {}", url);
     }
 
@@ -84,7 +84,7 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
             WebTarget webTarget = client.target(url).path(path);
 
             String requestingUser = securityContext.getUserId();
-            String usersApiToken = authenticationServiceClient.getUsersApiToken(requestingUser);
+            String usersApiToken = authenticationServiceClients.getUsersApiToken(requestingUser);
 
             Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
             invocationBuilder.header(HttpHeaders.AUTHORIZATION, "Bearer " + usersApiToken);

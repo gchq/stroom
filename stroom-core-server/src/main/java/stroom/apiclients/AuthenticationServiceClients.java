@@ -22,7 +22,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import stroom.auth.service.ApiClient;
 import stroom.auth.service.ApiException;
+import stroom.auth.service.api.ApiKeyApi;
+import stroom.auth.service.api.AuthenticationApi;
 import stroom.auth.service.api.DefaultApi;
+import stroom.auth.service.api.UserApi;
 import stroom.auth.service.api.model.CreateTokenRequest;
 import stroom.auth.service.api.model.SearchRequest;
 import stroom.auth.service.api.model.SearchResponse;
@@ -41,24 +44,39 @@ import java.util.Optional;
  * If a logged-in user's API token is ever needed elsewhere then this class should be refactored accordingly.
  */
 @Component
-public class AuthenticationServiceClient {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationServiceClient.class);
-    private DefaultApi authServiceApi;
+public class AuthenticationServiceClients {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationServiceClients.class);
     private final String ourApiToken;
     private final String tokenServiceUrl;
+    private final ApiClient authServiceClient;
 
     @Inject
-    public AuthenticationServiceClient(
+    public AuthenticationServiceClients(
         @Value("#{propertyConfigurer.getProperty('stroom.security.apiToken')}")
         final String ourApiToken,
         @Value("#{propertyConfigurer.getProperty('stroom.auth.url')}")
         final String tokenServiceUrl) {
         this.ourApiToken = ourApiToken;
         this.tokenServiceUrl = tokenServiceUrl;
-        ApiClient authServiceClient = new ApiClient();
+        authServiceClient = new ApiClient();
         authServiceClient.setBasePath(tokenServiceUrl);
         authServiceClient.addDefaultHeader("Authorization", "Bearer " + ourApiToken);
-        authServiceApi = new DefaultApi(authServiceClient);
+    }
+
+    public AuthenticationApi newAuthenticationApi(){
+        return new AuthenticationApi(authServiceClient);
+    }
+
+    public ApiKeyApi newApiKeyApi(){
+        return new ApiKeyApi(authServiceClient);
+    }
+
+    public UserApi newUserApi(){
+        return new UserApi(authServiceClient);
+    }
+
+    public DefaultApi newDefaultApi(){
+        return new DefaultApi(authServiceClient);
     }
 
     public String getUsersApiToken(String userId) {
@@ -87,8 +105,8 @@ public class AuthenticationServiceClient {
         createTokenRequest.setTokenType("api");
         createTokenRequest.setUserEmail(userId);
         createTokenRequest.setComments(
-                "Created by Stroom's AuthenticationServiceClient because the user did not have an existing API token.");
-        String token = authServiceApi.create(createTokenRequest);
+                "Created by Stroom's AuthenticationServiceClients because the user did not have an existing API token.");
+        String token = newDefaultApi().create(createTokenRequest);
         return token;
     }
 
@@ -105,7 +123,7 @@ public class AuthenticationServiceClient {
 
         Optional<String> usersApiToken;
         try {
-            SearchResponse authSearchResponse = authServiceApi.search(authSearchRequest);
+            SearchResponse authSearchResponse = newDefaultApi().search(authSearchRequest);
             if (authSearchResponse.getTokens().isEmpty()) {
                 // User doesn't have an API token and cannot make this request.
                 LOGGER.warn("Tried to get a user's API key but they don't have one! User was: " +
@@ -122,9 +140,5 @@ public class AuthenticationServiceClient {
         }
 
         return usersApiToken;
-    }
-
-    public DefaultApi getAuthServiceApi(){
-        return this.authServiceApi;
     }
 }

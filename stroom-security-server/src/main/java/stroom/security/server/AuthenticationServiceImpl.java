@@ -25,7 +25,7 @@ import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.apiclients.AuthenticationServiceClient;
+import stroom.apiclients.AuthenticationServiceClients;
 import stroom.auth.service.ApiException;
 import stroom.dashboard.server.logging.AuthenticationEventLog;
 import stroom.entity.shared.EntityServiceException;
@@ -66,7 +66,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final SecurityContext securityContext;
-    private AuthenticationServiceClient authenticationServiceClient;
+    private AuthenticationServiceClients authenticationServiceClients;
 
     @Inject
     AuthenticationServiceImpl(
@@ -77,7 +77,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             final UserService userService,
             final PasswordEncoder passwordEncoder,
             final SecurityContext securityContext,
-            final AuthenticationServiceClient authenticationServiceClient) {
+            final AuthenticationServiceClients authenticationServiceClients) {
         this.stroomPropertyService = stroomPropertyService;
         this.httpServletRequestHolder = httpServletRequestHolder;
         this.eventLog = eventLog;
@@ -85,7 +85,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
         this.securityContext = securityContext;
-        this.authenticationServiceClient = authenticationServiceClient;
+        this.authenticationServiceClients = authenticationServiceClients;
     }
 
     private void checkLoginAllowed(final UserRef userRef) {
@@ -200,7 +200,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         else {
             String sessionId = optionalSessionId.get();
             try {
-                authenticationServiceClient.getAuthServiceApi().logout(sessionId);
+                authenticationServiceClients.newDefaultApi().logout(sessionId);
             } catch (ApiException e) {
                 LOGGER.error("Unable to log user out!", e);
             }

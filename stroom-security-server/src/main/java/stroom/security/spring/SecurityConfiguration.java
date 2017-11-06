@@ -32,7 +32,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
-import stroom.apiclients.AuthenticationServiceClient;
+import stroom.apiclients.AuthenticationServiceClients;
 import stroom.security.server.JWTAuthenticationFilter;
 import stroom.security.server.JWTService;
 import stroom.security.server.NonceManager;
@@ -82,10 +82,10 @@ public class SecurityConfiguration {
             final String jwtIssuer,
             JWTService jwtService,
             NonceManager nonceManager,
-            AuthenticationServiceClient authenticationServiceClient) {
+            AuthenticationServiceClients authenticationServiceClients) {
         return new JWTAuthenticationFilter(
                 authenticationServiceUrl, advertisedStroomUrl, jwtVerificationKey, jwtIssuer,
-                jwtService, nonceManager, authenticationServiceClient);
+                jwtService, nonceManager, authenticationServiceClients);
     }
 
     @Bean(name = "shiroFilter")

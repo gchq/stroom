@@ -25,11 +25,9 @@ import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
-import org.jose4j.jwt.consumer.JwtConsumerBuilder;
-import org.jose4j.keys.HmacKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.apiclients.AuthenticationServiceClient;
+import stroom.apiclients.AuthenticationServiceClients;
 import stroom.auth.service.ApiException;
 import stroom.auth.service.api.model.IdTokenRequest;
 
@@ -67,7 +65,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
     private final String jwtIssuer;
     private final JWTService jwtService;
     private final NonceManager nonceManager;
-    private final AuthenticationServiceClient authenticationServiceClient;
+    private final AuthenticationServiceClients authenticationServiceClients;
 
     public JWTAuthenticationFilter(
             final String authenticationServiceUrl,
@@ -76,14 +74,14 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
             final String jwtIssuer,
             final JWTService jwtService,
             final NonceManager nonceManager,
-            final AuthenticationServiceClient authenticationServiceClient) {
+            final AuthenticationServiceClients authenticationServiceClients) {
         this.authenticationServiceUrl = authenticationServiceUrl;
         this.advertisedStroomUrl = advertisedStroomUrl;
         this.jwtVerificationKey = jwtVerificationKey;
         this.jwtIssuer = jwtIssuer;
         this.jwtService = jwtService;
         this.nonceManager = nonceManager;
-        this.authenticationServiceClient = authenticationServiceClient;
+        this.authenticationServiceClients = authenticationServiceClients;
     }
 
     @Override
@@ -222,7 +220,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
             idTokenRequest.setRequestingClientId("stroom");
             String idToken = null;
             try {
-                idToken = authenticationServiceClient.getAuthServiceApi().getIdTokenWithPost(idTokenRequest);
+                idToken = authenticationServiceClients.newAuthenticationApi().getIdTokenWithPost(idTokenRequest);
             } catch (ApiException e) {
                 if (e.getCode() == Response.Status.UNAUTHORIZED.getStatusCode()) {
                     LOGGER.error("The accessCode used to obtain an idToken was rejected. Has it already been used?", e);

@@ -20,7 +20,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.apiclients.AuthenticationServiceClient;
+import stroom.apiclients.AuthenticationServiceClients;
 import stroom.node.server.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
@@ -37,13 +37,13 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
     private final ImmutableMap<String, String> urlMap;
 
     private final SecurityContext securityContext;
-    private final AuthenticationServiceClient authenticationServiceClient;
+    private final AuthenticationServiceClients authenticationServiceClients;
 
     public SimpleDataSourceProviderRegistry(final SecurityContext securityContext,
                                             final StroomPropertyService stroomPropertyService,
-                                            AuthenticationServiceClient authenticationServiceClient) {
+                                            AuthenticationServiceClients authenticationServiceClients) {
         this.securityContext = securityContext;
-        this.authenticationServiceClient = authenticationServiceClient;
+        this.authenticationServiceClients = authenticationServiceClients;
 
         final String basePath = stroomPropertyService.getProperty(PROP_KEY_BASE_PATH);
 
@@ -83,7 +83,7 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
      */
     private Optional<DataSourceProvider> getDataSourceProvider(final String docRefType) {
         return Optional.ofNullable(urlMap.get(docRefType))
-                .map(url -> new RemoteDataSourceProvider(securityContext, url, authenticationServiceClient));
+                .map(url -> new RemoteDataSourceProvider(securityContext, url, authenticationServiceClients));
     }
 
     /**
