@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Migrated to ehcache 3.4.0 to add options for off-heap and disk based caching to reduce memory overhead.
 
+* Caches of pooled items no longer use Apache Commons Pool.
+
 ## [v5.0-beta.55] - 2017-10-26
 
 * Issue **#463** : Made further improvements to the index shard writer cache to improve performance.
