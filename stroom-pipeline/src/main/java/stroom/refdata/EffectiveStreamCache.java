@@ -20,6 +20,7 @@ import org.ehcache.Cache;
 import org.ehcache.config.CacheConfiguration;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
+import org.ehcache.config.units.MemoryUnit;
 import org.ehcache.expiry.Duration;
 import org.ehcache.expiry.Expirations;
 import org.slf4j.Logger;
@@ -34,7 +35,6 @@ import stroom.streamstore.server.EffectiveMetaDataCriteria;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.util.cache.CentralCacheManager;
-import stroom.util.task.ServerTask;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -53,7 +53,7 @@ public class EffectiveStreamCache {
     // actually 11.5 days but this is fine for the purposes of reference data.
     private static final long APPROX_TEN_DAYS = 1000000000;
 
-    private static final int MAX_CACHE_ENTRIES = 1000000;
+    private static final int MAX_CACHE_ENTRIES = 1000;
 
     private final Cache<EffectiveStreamKey, TreeSet> cache;
     private final StreamStore streamStore;
@@ -76,15 +76,17 @@ public class EffectiveStreamCache {
             }
         };
 
+        final ResourcePoolsBuilder resourcePoolsBuilder = ResourcePoolsBuilder.heap(MAX_CACHE_ENTRIES)
+                .offheap(100, MemoryUnit.MB)
+                .disk(1, MemoryUnit.GB);
+
         final CacheConfiguration<EffectiveStreamKey, TreeSet> cacheConfiguration = CacheConfigurationBuilder.newCacheConfigurationBuilder(EffectiveStreamKey.class, TreeSet.class,
-                ResourcePoolsBuilder.heap(MAX_CACHE_ENTRIES))
+                resourcePoolsBuilder.build())
                 .withExpiry(Expirations.timeToIdleExpiration(Duration.of(10, TimeUnit.MINUTES)))
                 .withLoaderWriter(loader)
                 .build();
 
         cache = cacheManager.createCache("Reference Data - Effective Stream Cache", cacheConfiguration);
-
-
     }
 
     @SuppressWarnings("unchecked")

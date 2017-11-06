@@ -20,7 +20,9 @@ import stroom.entity.shared.DocRef;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 
-public class EffectiveStreamKey {
+import java.io.Serializable;
+
+public class EffectiveStreamKey implements Serializable {
     private final DocRef feed;
     private final String streamType;
     private final long effectiveMs;

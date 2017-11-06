@@ -20,17 +20,24 @@ import org.ehcache.Cache;
 import org.ehcache.CacheManager;
 import org.ehcache.config.CacheConfiguration;
 import org.ehcache.config.builders.CacheManagerBuilder;
+import org.ehcache.impl.config.persistence.CacheManagerPersistenceConfiguration;
 import org.springframework.stereotype.Component;
+import stroom.util.io.FileUtil;
 import stroom.util.spring.StroomShutdown;
 import stroom.util.spring.StroomStartup;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 public class CentralCacheManager implements AutoCloseable {
-    private CacheManager cacheManager;
+    private volatile CacheManager cacheManager;
     private final Map<String, Cache> caches = new ConcurrentHashMap<>();
+    private static final AtomicInteger sequence = new AtomicInteger(0);
 
     @StroomStartup
     public void start() {
@@ -50,9 +57,22 @@ public class CentralCacheManager implements AutoCloseable {
 
     private synchronized CacheManager getCacheManager() {
         if (cacheManager == null) {
-            cacheManager = CacheManagerBuilder.newCacheManagerBuilder()
-//                .withCache(alias, cacheConfiguration)
-                    .build(true);
+            try {
+                final int no = sequence.incrementAndGet();
+                final Path dir = FileUtil.getTempDir()
+                        .toPath()
+                        .resolve("cache")
+                        .resolve(String.valueOf(no));
+                if (!Files.isDirectory(dir)) {
+                    Files.createDirectories(dir);
+                }
+
+                cacheManager = CacheManagerBuilder.newCacheManagerBuilder()
+                        .with(new CacheManagerPersistenceConfiguration(dir.toFile()))
+                        .build(true);
+            } catch (final IOException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
         }
         return cacheManager;
     }
@@ -64,29 +84,6 @@ public class CentralCacheManager implements AutoCloseable {
             cacheManager = null;
         }
     }
-
-
-
-    //    public CentralCacheManager() {
-//        CacheManager cacheManager = CacheManagerBuilder.newCacheManagerBuilder()
-//                .withCache("preConfigured",
-//                        CacheConfigurationBuilder.newCacheConfigurationBuilder(Long.class, String.class,
-//                                ResourcePoolsBuilder.heap(100))
-//                                .build())
-//                .build(true);
-//
-//        Cache<Long, String> preConfigured
-//                = cacheManager.getCache("preConfigured", Long.class, String.class);
-//
-//        Cache<Long, String> myCache = cacheManager.createCache("myCache",
-//                CacheConfigurationBuilder.newCacheConfigurationBuilder(Long.class, String.class,
-//                        ResourcePoolsBuilder.heap(100)).build());
-//
-//        myCache.put(1L, "da one!");
-//        String value = myCache.get(1L);
-//
-//        cacheManager.close();
-//    }
 
     public <K, V> Cache<K, V> createCache(final String alias, final CacheConfiguration<K, V> cacheConfiguration) {
         if (caches.containsKey(alias)) {
@@ -101,34 +98,4 @@ public class CentralCacheManager implements AutoCloseable {
     public Map<String, Cache> getCaches() {
         return caches;
     }
-
-    //    	<defaultCache eternal="true" maxElementsInMemory="100"
-//    overflowToDisk="false" />
-//
-//
-//	<!-- Cache where nothing much changes ... 10min old -->
-//	<cache name="serviceCacheLong" maxElementsInMemory="1000"
-//    eternal="false" overflowToDisk="false" timeToIdleSeconds="600"
-//    timeToLiveSeconds="600" />
-//
-//	<!-- The following caches are all for Statistics -->
-//
-//	<cache name="UIDCacheGetOrCreateId" eternal="false"
-//    maxElementsInMemory="100000" overflowToDisk="false" timeToIdleSeconds="600"
-//    timeToLiveSeconds="600" />
-//
-//	<cache name="UIDCacheGetName" eternal="false"
-//    maxElementsInMemory="100000" overflowToDisk="false" timeToIdleSeconds="600"
-//    timeToLiveSeconds="600" />
-//
-//	<cache name="RowKeyCache" eternal="false" maxElementsInMemory="100000"
-//    overflowToDisk="false" timeToIdleSeconds="600" timeToLiveSeconds="600" />
-//
-//	<cache name="StatisticDataSourceCacheById" eternal="false"
-//    maxElementsInMemory="1000" overflowToDisk="false" timeToIdleSeconds="600"
-//    timeToLiveSeconds="600" />
-//
-//	<cache name="StatisticDataSourceCacheByNameEngine" eternal="false"
-//    maxElementsInMemory="1000" overflowToDisk="false" timeToIdleSeconds="600"
-//    timeToLiveSeconds="600" />
 }
