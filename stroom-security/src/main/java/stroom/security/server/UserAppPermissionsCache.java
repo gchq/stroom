@@ -29,6 +29,7 @@ import stroom.entity.server.event.EntityEventBus;
 import stroom.entity.server.event.EntityEventHandler;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityAction;
+import stroom.pool.CacheUtil;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
 import stroom.util.cache.CentralCacheManager;
@@ -77,7 +78,7 @@ public class UserAppPermissionsCache implements EntityEvent.Handler {
     }
 
     void clear() {
-        cache.clear();
+        CacheUtil.removeAll(cache);
     }
 
     @Override

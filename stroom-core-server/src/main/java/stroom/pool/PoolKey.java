@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,14 @@
 
 package stroom.pool;
 
-public class PoolItem<V> {
-    private final PoolKey key;
-    private final V value;
+public class PoolKey<K> {
+    private final K key;
 
-    public PoolItem(final PoolKey key, final V value) {
+    public PoolKey(final K key) {
         this.key = key;
-        this.value = value;
     }
 
-    PoolKey getKey() {
+    public K getKey() {
         return key;
-    }
-
-    public V getValue() {
-        return value;
     }
 }

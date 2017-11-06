@@ -34,6 +34,7 @@ import stroom.index.server.IndexShardWriterCache;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardService;
 import stroom.jobsystem.server.JobTrackedSchedule;
+import stroom.pool.CacheUtil;
 import stroom.search.server.SearchException;
 import stroom.task.server.ExecutorProvider;
 import stroom.task.server.TaskContext;
@@ -161,7 +162,7 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache {
 
         try {
             // Close any remaining writers.
-            cache.clear();
+            CacheUtil.removeAll(cache);
 
             // Report on closing progress.
             if (closing.get() > 0) {

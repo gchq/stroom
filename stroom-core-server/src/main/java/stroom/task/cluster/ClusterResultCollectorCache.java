@@ -24,6 +24,7 @@ import org.ehcache.expiry.Duration;
 import org.ehcache.expiry.Expirations;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.Clearable;
+import stroom.pool.CacheUtil;
 import stroom.util.cache.CentralCacheManager;
 import stroom.util.spring.StroomShutdown;
 
@@ -75,6 +76,6 @@ public class ClusterResultCollectorCache implements Clearable {
 
     @Override
     public void clear() {
-        cache.clear();
+        CacheUtil.removeAll(cache);
     }
 }

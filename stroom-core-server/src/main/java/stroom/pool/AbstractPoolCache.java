@@ -16,50 +16,52 @@
 
 package stroom.pool;
 
-import org.apache.commons.pool2.BasePooledObjectFactory;
-import org.apache.commons.pool2.ObjectPool;
-import org.apache.commons.pool2.PooledObject;
-import org.apache.commons.pool2.impl.AbandonedConfig;
-import org.apache.commons.pool2.impl.DefaultPooledObject;
-import org.apache.commons.pool2.impl.GenericObjectPool;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.ehcache.Cache;
 import org.ehcache.config.CacheConfiguration;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
+import org.ehcache.config.builders.CacheEventListenerConfigurationBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
+import org.ehcache.event.CacheEventListener;
+import org.ehcache.event.EventType;
+import org.ehcache.expiry.Duration;
+import org.ehcache.expiry.Expirations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.Loader;
 import stroom.util.cache.CentralCacheManager;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class AbstractPoolCache<K, V> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractPoolCache.class);
 
     private static final int MAX_CACHE_ENTRIES = 1000;
 
-    private final Cache<Object, ObjectPool> cache;
+    private final Cache<PoolKey, PoolItem> cache;
+    private final Map<K, LinkedBlockingDeque<PoolKey<K>>> keyMap = new ConcurrentHashMap<>();
 
+    @SuppressWarnings("unchecked")
     public AbstractPoolCache(final CentralCacheManager cacheManager, final String name) {
-        final Loader<Object, ObjectPool> loader = new Loader<Object, ObjectPool>() {
+        final Loader<PoolKey, PoolItem> loader = new Loader<PoolKey, PoolItem>() {
             @Override
-            public ObjectPool load(final Object key) throws Exception {
-                final GenericObjectPoolConfig config = new GenericObjectPoolConfig();
-                config.setMaxTotal(1000);
-                config.setMaxIdle(1000);
-                config.setBlockWhenExhausted(false);
-
-                final GenericObjectPool<PoolItem<V>> pool = new GenericObjectPool<>(new ObjectFactory<>(AbstractPoolCache.this, key), config);
-                pool.setAbandonedConfig(new AbandonedConfig());
-
-                return pool;
+            public PoolItem load(final PoolKey key) throws Exception {
+                final V value = internalCreateValue(key.getKey());
+                return new PoolItem<>(key, value);
             }
         };
 
-        final CacheConfiguration<Object, ObjectPool> cacheConfiguration = CacheConfigurationBuilder.newCacheConfigurationBuilder(Object.class, ObjectPool.class,
+        final CacheEventListener<PoolKey, PoolItem> cacheEventListener = event -> destroy(event.getKey());
+        final CacheEventListenerConfigurationBuilder cacheEventListenerConfigurationBuilder = CacheEventListenerConfigurationBuilder.newEventListenerConfiguration(cacheEventListener, EventType.EVICTED, EventType.EXPIRED, EventType.REMOVED);
+
+        final CacheConfiguration<PoolKey, PoolItem> cacheConfiguration = CacheConfigurationBuilder.newCacheConfigurationBuilder(PoolKey.class, PoolItem.class,
                 ResourcePoolsBuilder.heap(MAX_CACHE_ENTRIES))
-//                .withExpiry(Expirations.timeToIdleExpiration(Duration.of(1, TimeUnit.MINUTES)))
-//                .withExpiry(Expirations.timeToLiveExpiration(Duration.of(24, TimeUnit.HOURS)))
+                .withExpiry(Expirations.timeToIdleExpiration(Duration.of(10, TimeUnit.MINUTES)))
                 .withLoaderWriter(loader)
+                .add(cacheEventListenerConfigurationBuilder.build())
                 .build();
 
         cache = cacheManager.createCache(name, cacheConfiguration);
@@ -70,12 +72,31 @@ public abstract class AbstractPoolCache<K, V> {
     @SuppressWarnings("unchecked")
     protected PoolItem<V> internalBorrowObject(final K key, final boolean usePool) {
         try {
-            if (!usePool) {
-                return new PoolItem<>(key, internalCreateValue(key));
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Borrow Object\n" + getKeySizes());
             }
 
-            final ObjectPool<PoolItem<V>> pool = cache.get(key);
-            return pool.borrowObject();
+            PoolKey<K> poolKey = null;
+
+            if (!usePool) {
+                return new PoolItem<>(new PoolKey<>(key), internalCreateValue(key));
+            }
+
+            // Get the current deque associated with the key.
+            final LinkedBlockingDeque<PoolKey<K>> deque = keyMap.get(key);
+            if (deque != null) {
+                // Pull a pool key off the deque if there is one.
+                poolKey = deque.poll();
+            }
+
+            // If there isn't a pool key on the deque then create a new one.
+            if (poolKey == null) {
+                poolKey = new PoolKey<>(key);
+            }
+
+            // Get an item from the cache using the pool key.
+            return cache.get(poolKey);
+
         } catch (final Exception e) {
             LOGGER.debug(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
@@ -83,14 +104,27 @@ public abstract class AbstractPoolCache<K, V> {
     }
 
     @SuppressWarnings("unchecked")
-    protected void internalReturnObject(final PoolItem<V> poolItem, final boolean usePool) {
+    protected void internalReturnObject(final PoolItem<V> item, final boolean usePool) {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Return Object\n" + getKeySizes());
+        }
+
         if (usePool) {
             try {
-                final Object key = poolItem.getKey();
-                final ObjectPool pool = cache.get(key);
-                if (pool != null) {
-                    pool.returnObject(poolItem);
-                }
+                final PoolKey<K> poolKey = item.getKey();
+
+                // Make this key available again to other threads.
+                // Get the current deque associated with the key.
+                keyMap.compute(poolKey.getKey(), (k, v) -> {
+                    LinkedBlockingDeque deque = v;
+                    if (deque == null) {
+                        deque = new LinkedBlockingDeque<>();
+                    }
+                    // Put the returned item onto the deque.
+                    deque.offer(poolKey);
+                    return deque;
+                });
+
             } catch (final Exception e) {
                 LOGGER.debug(e.getMessage(), e);
                 throw new RuntimeException(e.getMessage(), e);
@@ -98,27 +132,43 @@ public abstract class AbstractPoolCache<K, V> {
         }
     }
 
-    private static class ObjectFactory<K, V> extends BasePooledObjectFactory<PoolItem<V>> {
-        private final AbstractPoolCache<K, V> parent;
-        private final Object key;
+    private void destroy(final PoolKey<K> poolKey) {
+        if (poolKey != null) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Destroy\n" + getKeySizes());
+            }
 
-        ObjectFactory(final AbstractPoolCache<K, V> parent, final Object key) {
-            this.parent = parent;
-            this.key = key;
-        }
-
-        @Override
-        public PoolItem<V> create() throws Exception {
-            return new PoolItem<>(key, parent.internalCreateValue(key));
-        }
-
-        @Override
-        public PooledObject<PoolItem<V>> wrap(final PoolItem<V> obj) {
-            return new DefaultPooledObject<>(obj);
+            keyMap.compute(poolKey.getKey(), (k, v) -> {
+                if (v == null || v.size() == 0) {
+                    return null;
+                }
+                v.remove(poolKey);
+                if (v.size() == 0) {
+                    return null;
+                }
+                return v;
+            });
         }
     }
 
     protected void clear() {
-        cache.clear();
+        CacheUtil.removeAll(cache);
+    }
+
+    private String getKeySizes() {
+        final StringBuilder sb = new StringBuilder();
+        final AtomicLong size = new AtomicLong();
+        keyMap.forEach((k, v) -> {
+            sb.append("\t");
+            sb.append(k);
+            sb.append(" = ");
+            sb.append(v.size());
+            sb.append("\n");
+            size.getAndAdd(v.size());
+        });
+        sb.append("total = ");
+        sb.append(size.get());
+
+        return sb.toString();
     }
 }

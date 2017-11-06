@@ -31,6 +31,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Entity;
 import stroom.entity.shared.SummaryDataRow;
+import stroom.pool.CacheUtil;
 import stroom.util.cache.CentralCacheManager;
 
 import javax.inject.Inject;
@@ -229,6 +230,6 @@ public class CachingEntityManager implements StroomEntityManager, Clearable {
 
     @Override
     public void clear() {
-        cache.clear();
+        CacheUtil.removeAll(cache);
     }
 }

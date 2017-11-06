@@ -29,6 +29,7 @@ import stroom.cache.shared.FindCacheInfoCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.PageRequest;
+import stroom.pool.CacheUtil;
 import stroom.util.cache.CentralCacheManager;
 
 import javax.inject.Inject;
@@ -146,7 +147,7 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
         cacheManager.getCaches().forEach((k, v) -> {
             LOGGER.debug("Clearing cache entries for " + k);
             try {
-                v.clear();
+                CacheUtil.removeAll(v);
             } catch (final Exception e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -171,7 +172,7 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
             final String cacheName = cacheInfo.getName();
             final Cache cache = cacheManager.getCaches().get(cacheName);
             if (cache != null) {
-                cache.clear();
+                CacheUtil.removeAll(cache);
             } else {
                 LOGGER.error("Unable to find cache with name '" + cacheName + "'");
             }
