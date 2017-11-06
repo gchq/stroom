@@ -16,31 +16,32 @@
 
 package stroom.statistics.server.common;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
-import stroom.util.test.StroomUnitTest;
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.statistics.shared.CustomRollUpMask;
 import stroom.statistics.shared.StatisticField;
 import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.util.test.StroomUnitTest;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public class TestStatisticsDataSourceMarshaller extends StroomUnitTest {
     @Test
     public void testUnmarshall() {
         StatisticStoreEntity statisticsDataSource = new StatisticStoreEntity();
 
+        //put the fields in the xml out of order to check that they are stored in order
+        //in the object
         String str = "";
         str += "<?xml version=\"1.1\" encoding=\"UTF-8\"?>";
         str += "<data>";
         str += " <field>";
-        str += "  <fieldName>feed</fieldName>";
+        str += "  <fieldName>user</fieldName>";
         str += " </field>";
         str += " <field>";
-        str += "  <fieldName>user</fieldName>";
+        str += "  <fieldName>feed</fieldName>";
         str += " </field>";
         str += " <customRollUpMask>";
         str += " </customRollUpMask>";

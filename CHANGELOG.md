@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
+* Issue **469** : Add Heap Histogram internal statistics for memory use monitoring
+
 ### Changed
 
 * Issue **425** : Changed string replacement in pipeline migration code to use a literal match
