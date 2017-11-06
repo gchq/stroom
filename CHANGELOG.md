@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Caches of pooled items no longer use Apache Commons Pool.
 
+* Issue **#401** : Reference data was being cached per user to ensure a user centric view of reference data was being used. This required more memory so now reference data is built in the context of the internal processing user and then filtered during processing by user access to streams.
+
 ## [v5.0-beta.55] - 2017-10-26
 
 * Issue **#463** : Made further improvements to the index shard writer cache to improve performance.
