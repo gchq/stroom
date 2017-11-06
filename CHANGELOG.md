@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **425** : Changed string replacement in pipeline migration code to use a literal match
 
+* Migrated to ehcache 3.4.0 to add options for off-heap and disk based caching to reduce memory overhead.
+
 ## [v5.0-beta.55] - 2017-10-26
 
 * Issue **#463** : Made further improvements to the index shard writer cache to improve performance.
