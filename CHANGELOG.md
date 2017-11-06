@@ -8,11 +8,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
-* Issue **469** : Add Heap Histogram internal statistics for memory use monitoring
-
 ### Changed
 
+## [v5.0-beta.56] - 2017-11-06
+
 * Issue **425** : Changed string replacement in pipeline migration code to use a literal match
+
+* Issue **469** : Add Heap Histogram internal statistics for memory use monitoring
 
 ## [v5.0-beta.55] - 2017-10-26
 
@@ -630,7 +632,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.55...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.56...HEAD
+[v5.0-beta.56]: https://github.com/gchq/stroom/compare/v5.0-beta.55...v5.0-beta.56
 [v5.0-beta.55]: https://github.com/gchq/stroom/compare/v5.0-beta.54...v5.0-beta.55
 [v5.0-beta.54]: https://github.com/gchq/stroom/compare/v5.0-beta.53...v5.0-beta.54
 [v5.0-beta.53]: https://github.com/gchq/stroom/compare/v5.0-beta.52...v5.0-beta.53
