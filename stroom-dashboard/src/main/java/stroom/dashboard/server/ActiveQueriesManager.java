@@ -19,7 +19,10 @@ package stroom.dashboard.server;
 import org.ehcache.Cache;
 import org.ehcache.config.CacheConfiguration;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
+import org.ehcache.config.builders.CacheEventListenerConfigurationBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
+import org.ehcache.event.CacheEventListener;
+import org.ehcache.event.EventType;
 import org.ehcache.expiry.Duration;
 import org.ehcache.expiry.Expirations;
 import org.springframework.stereotype.Component;
@@ -31,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 public class ActiveQueriesManager {
-    private static final int MAX_ACTIVE_QUERIES = 1000;
+    private static final int MAX_ACTIVE_QUERIES = 100;
 
     private final Cache<String, ActiveQueries> cache;
 
@@ -44,8 +47,22 @@ public class ActiveQueriesManager {
             }
         };
 
+        final ResourcePoolsBuilder resourcePoolsBuilder = ResourcePoolsBuilder
+                .heap(MAX_ACTIVE_QUERIES);
+
+        final CacheEventListener<String, ActiveQueries> cacheEventListener = event -> {
+            if (event.getOldValue() != null) {
+                event.getOldValue().destroy();
+            }
+            if (event.getNewValue() != null) {
+                event.getNewValue().destroy();
+            }
+        };
+        final CacheEventListenerConfigurationBuilder cacheEventListenerConfigurationBuilder = CacheEventListenerConfigurationBuilder.newEventListenerConfiguration(cacheEventListener, EventType.EVICTED, EventType.EXPIRED, EventType.REMOVED);
+
         final CacheConfiguration<String, ActiveQueries> cacheConfiguration = CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, ActiveQueries.class,
-                ResourcePoolsBuilder.heap(MAX_ACTIVE_QUERIES))
+                resourcePoolsBuilder)
+                .add(cacheEventListenerConfigurationBuilder.build())
                 .withExpiry(Expirations.timeToIdleExpiration(Duration.of(1, TimeUnit.MINUTES)))
                 .withLoaderWriter(loader)
                 .build();
