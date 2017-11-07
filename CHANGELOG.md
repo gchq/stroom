@@ -18,11 +18,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * The effective stream cache now holds 1000 items, puts 100MB of data into off-heap memory and stores up to 1GB to disk.
 
+* Reduced the amount of cached reference data to 100 streams.
+
 ## [v5.0-beta.56] - 2017-11-06
 
-* Issue **425** : Changed string replacement in pipeline migration code to use a literal match
+* Issue **#425** : Changed string replacement in pipeline migration code to use a literal match
 
-* Issue **469** : Add Heap Histogram internal statistics for memory use monitoring
+* Issue **#469** : Add Heap Histogram internal statistics for memory use monitoring
 
 ## [v5.0-beta.55] - 2017-10-26
 
