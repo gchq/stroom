@@ -8,11 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
-* Issue **469** : Add Heap Histogram internal statistics for memory use monitoring
-
 ### Changed
-
-* Issue **425** : Changed string replacement in pipeline migration code to use a literal match
 
 * Migrated to ehcache 3.4.0 to add options for off-heap and disk based caching to reduce memory overhead.
 
@@ -21,6 +17,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#401** : Reference data was being cached per user to ensure a user centric view of reference data was being used. This required more memory so now reference data is built in the context of the internal processing user and then filtered during processing by user access to streams.
 
 * The effective stream cache now holds 1000 items, puts 100MB of data into off-heap memory and stores up to 1GB to disk.
+
+## [v5.0-beta.56] - 2017-11-06
+
+* Issue **425** : Changed string replacement in pipeline migration code to use a literal match
+
+* Issue **469** : Add Heap Histogram internal statistics for memory use monitoring
 
 ## [v5.0-beta.55] - 2017-10-26
 
@@ -638,7 +640,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.55...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.56...HEAD
+[v5.0-beta.56]: https://github.com/gchq/stroom/compare/v5.0-beta.55...v5.0-beta.56
 [v5.0-beta.55]: https://github.com/gchq/stroom/compare/v5.0-beta.54...v5.0-beta.55
 [v5.0-beta.54]: https://github.com/gchq/stroom/compare/v5.0-beta.53...v5.0-beta.54
 [v5.0-beta.53]: https://github.com/gchq/stroom/compare/v5.0-beta.52...v5.0-beta.53
