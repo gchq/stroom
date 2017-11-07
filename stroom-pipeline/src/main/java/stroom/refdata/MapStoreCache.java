@@ -42,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 public final class MapStoreCache {
     private static final Logger LOGGER = LoggerFactory.getLogger(MapStoreCache.class);
 
-    private static final int MAX_CACHE_ENTRIES = 1000000;
+    private static final int MAX_CACHE_ENTRIES = 100;
 
     private final Cache<MapStoreCacheKey, MapStore> cache;
     private final ReferenceDataLoader referenceDataLoader;
@@ -67,7 +67,7 @@ public final class MapStoreCache {
 
         final CacheConfiguration<MapStoreCacheKey, MapStore> cacheConfiguration = CacheConfigurationBuilder.newCacheConfigurationBuilder(MapStoreCacheKey.class, MapStore.class,
                 ResourcePoolsBuilder.heap(MAX_CACHE_ENTRIES))
-                .withExpiry(Expirations.timeToIdleExpiration(Duration.of(10, TimeUnit.MINUTES)))
+                .withExpiry(Expirations.timeToIdleExpiration(Duration.of(1, TimeUnit.HOURS)))
                 .withLoaderWriter(loader)
                 .build();
 

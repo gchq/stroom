@@ -20,7 +20,6 @@ import org.ehcache.Cache;
 import org.ehcache.config.CacheConfiguration;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
-import org.ehcache.config.units.MemoryUnit;
 import org.ehcache.expiry.Duration;
 import org.ehcache.expiry.Expirations;
 import org.slf4j.Logger;
@@ -76,12 +75,8 @@ public class EffectiveStreamCache {
             }
         };
 
-        final ResourcePoolsBuilder resourcePoolsBuilder = ResourcePoolsBuilder.heap(MAX_CACHE_ENTRIES)
-                .offheap(100, MemoryUnit.MB)
-                .disk(1, MemoryUnit.GB);
-
         final CacheConfiguration<EffectiveStreamKey, TreeSet> cacheConfiguration = CacheConfigurationBuilder.newCacheConfigurationBuilder(EffectiveStreamKey.class, TreeSet.class,
-                resourcePoolsBuilder.build())
+                ResourcePoolsBuilder.heap(MAX_CACHE_ENTRIES))
                 .withExpiry(Expirations.timeToIdleExpiration(Duration.of(10, TimeUnit.MINUTES)))
                 .withLoaderWriter(loader)
                 .build();
