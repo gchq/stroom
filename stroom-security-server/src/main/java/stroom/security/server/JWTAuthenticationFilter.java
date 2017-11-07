@@ -51,13 +51,8 @@ import java.util.UUID;
 public class JWTAuthenticationFilter extends AuthenticatingFilter {
     private static final Logger LOGGER = LoggerFactory.getLogger(JWTAuthenticationFilter.class);
 
-    // This cookie contains the SSO session ID
+    // This cookie contains the SSO session ID. It is created here so we can track the nonce.
     private static final String SESSION_COOKIE = "sessionId";
-
-    // This cookie contains Stroom's session ID - we need this so we know what nonce to check.
-    // We create the nonce when we send the AuthenticationRequest, but at that point
-    // we don't have an SSO sessionId. And JSESSIONIDs change too frequently.
-    private static final String STROOM_SESSION_COOKIE = "stroomSessionId";
 
     private final String authenticationServiceUrl;
     private final String advertisedStroomUrl;
@@ -110,7 +105,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
         Optional<String> optionalStroomSessionId = Optional.empty();
         if(((ShiroHttpServletRequest) request).getCookies() != null) {
             optionalStroomSessionId = Arrays.stream(((ShiroHttpServletRequest) request).getCookies())
-                    .filter(cookie -> cookie.getName().equals(STROOM_SESSION_COOKIE))
+                    .filter(cookie -> cookie.getName().equals(SESSION_COOKIE))
                     .findFirst()
                     .map(cookie -> cookie.getValue());
         }
@@ -162,7 +157,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
                 LOGGER.info("Redirecting with an AuthenticationRequest to: {}", authenticationRequestUrl);
                 HttpServletResponse httpResponse = WebUtils.toHttp(response);
                 // We want to make sure that the client has the cookie.
-                httpResponse.addCookie(new Cookie(STROOM_SESSION_COOKIE, stroomSessionId));
+                httpResponse.addCookie(new Cookie(SESSION_COOKIE, stroomSessionId));
                 httpResponse.sendRedirect(authenticationRequestUrl);
                 return false;
             }
@@ -198,12 +193,6 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
         // We expect the accessCode in the query parameters...
         String accessCode = request.getParameter("accessCode");
         // ... and we expect a stroomSessionId cookie.
-        Optional<String> optionalStroomSessionId = Arrays.stream(((ShiroHttpServletRequest) request).getCookies())
-                .filter(cookie -> cookie.getName().equals(STROOM_SESSION_COOKIE))
-                .findFirst()
-                .map(cookie -> cookie.getValue());
-        String stroomSessionId = optionalStroomSessionId.get();
-
         // We need the sessionId cookie so we can identify this session to the remote AuthenticationService.
         Optional<String> optionalSessionId = Arrays.stream(((ShiroHttpServletRequest) request).getCookies())
                 .filter(cookie -> cookie.getName().equals(SESSION_COOKIE))
@@ -235,7 +224,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
             JwtConsumer consumer = jwtService.newJwsConsumer();
             final JwtClaims claims = consumer.processToClaims(idToken);
             String nonceHash = (String) claims.getClaimsMap().get("nonce");
-            boolean doNoncesMatch = nonceManager.match(stroomSessionId, nonceHash);
+            boolean doNoncesMatch = nonceManager.match(sessionId, nonceHash);
             if (!doNoncesMatch) {
                 LOGGER.info("Received a bad nonce!");
                 // If the nonces don't match we need to redirect to log in again.

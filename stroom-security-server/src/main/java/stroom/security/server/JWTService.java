@@ -31,6 +31,7 @@ public class JWTService {
     private final String authJwtVerificationKey;
     private final String authJwtIssuer;
     private AuthenticationServiceClients authenticationServiceClients;
+    private final boolean checkTokenRevocation;
 
     @Inject
     public JWTService(
@@ -40,11 +41,14 @@ public class JWTService {
         final String authJwtVerificationKey,
             @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.issuer')}")
         final String authJwtIssuer,
+            @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.enabletokenrevocationcheck')}")
+        final boolean enableTokenRevocationCheck,
             final AuthenticationServiceClients authenticationServiceClients){
         this.authenticationServiceUrl = authenticationServiceUrl;
         this.authJwtVerificationKey = authJwtVerificationKey;
         this.authJwtIssuer = authJwtIssuer;
         this.authenticationServiceClients = authenticationServiceClients;
+        this.checkTokenRevocation = enableTokenRevocationCheck;
 
         if (authenticationServiceUrl == null) {
             throw new SecurityException("No authentication service URL is defined");
@@ -72,8 +76,16 @@ public class JWTService {
         }
 
         try {
-            JWTAuthenticationToken jwtAuthenticationToken = checkToken(jws);
-            return jwtAuthenticationToken.getUserId() != null;
+            if(checkTokenRevocation) {
+                LOGGER.info("Checking token revocation status in remote auth service...");
+                JWTAuthenticationToken jwtAuthenticationToken = checkToken(jws);
+                return jwtAuthenticationToken.getUserId() != null;
+            } else {
+                LOGGER.info("Verifying token...");
+                Optional<String> usersEmail = verifyToken(jws);
+                return usersEmail.isPresent();
+            }
+
         } catch (Exception e){
             LOGGER.error("Unable to verify token:", e.getMessage(), e);
             // If we get an exception verifying the token then we need to log the message
