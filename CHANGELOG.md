@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#401** : Reference data was being cached per user to ensure a user centric view of reference data was being used. This required more memory so now reference data is built in the context of the internal processing user and then filtered during processing by user access to streams.
 
-* The effective stream cache now holds 1000 items, puts 100MB of data into off-heap memory and stores up to 1GB to disk.
+* The effective stream cache now holds 1000 items.
 
 * Reduced the amount of cached reference data to 100 streams.
 
