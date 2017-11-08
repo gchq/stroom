@@ -25,9 +25,9 @@ import stroom.entity.server.event.EntityEventBus;
 import stroom.entity.server.event.EntityEventHandler;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityAction;
-import stroom.util.cache.CacheUtil;
 import stroom.security.shared.DocumentPermissions;
 import stroom.util.cache.CacheManager;
+import stroom.util.cache.CacheUtil;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -43,17 +43,18 @@ public class DocumentPermissionsCache implements EntityEvent.Handler {
     private final LoadingCache<DocRef, DocumentPermissions> cache;
 
     @Inject
+    @SuppressWarnings("unchecked")
     public DocumentPermissionsCache(final CacheManager cacheManager,
                                     final DocumentPermissionService documentPermissionService,
                                     final Provider<EntityEventBus> eventBusProvider) {
         this.eventBusProvider = eventBusProvider;
 
         final CacheLoader<DocRef, DocumentPermissions> cacheLoader = CacheLoader.from(documentPermissionService::getPermissionsForDocument);
-        cache = CacheBuilder.newBuilder()
+        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterAccess(30, TimeUnit.MINUTES)
-                .build(cacheLoader);
-        cacheManager.registerCache("Document Permissions Cache", cache);
+                .expireAfterAccess(30, TimeUnit.MINUTES);
+        cache = cacheBuilder.build(cacheLoader);
+        cacheManager.registerCache("Document Permissions Cache", cacheBuilder, cache);
     }
 
     DocumentPermissions get(final DocRef key) {

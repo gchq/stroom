@@ -46,20 +46,21 @@ public final class MapStoreCache {
     private final SecurityContext securityContext;
 
     @Inject
-    public MapStoreCache(final CacheManager cacheManager,
-                         final ReferenceDataLoader referenceDataLoader,
-                         final MapStoreInternPool internPool,
-                         final SecurityContext securityContext) {
+    @SuppressWarnings("unchecked")
+    MapStoreCache(final CacheManager cacheManager,
+                  final ReferenceDataLoader referenceDataLoader,
+                  final MapStoreInternPool internPool,
+                  final SecurityContext securityContext) {
         this.referenceDataLoader = referenceDataLoader;
         this.internPool = internPool;
         this.securityContext = securityContext;
 
         final CacheLoader<MapStoreCacheKey, MapStore> cacheLoader = CacheLoader.from(this::create);
-        cache = CacheBuilder.newBuilder()
+        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterAccess(1, TimeUnit.HOURS)
-                .build(cacheLoader);
-        cacheManager.registerCache("Reference Data - Map Store Cache", cache);
+                .expireAfterAccess(1, TimeUnit.HOURS);
+        cache = cacheBuilder.build(cacheLoader);
+        cacheManager.registerCache("Reference Data - Map Store Cache", cacheBuilder, cache);
     }
 
     public MapStore get(final MapStoreCacheKey key) {

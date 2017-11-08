@@ -79,6 +79,7 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache {
         this.taskContext = taskContext;
     }
 
+    @SuppressWarnings("unchecked")
     private LoadingCache<Key, IndexShardSearcher> getCache() {
         LoadingCache<Key, IndexShardSearcher> result = cache;
         if (result == null) {
@@ -105,12 +106,12 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache {
                         }
                     });
 
-                    result = CacheBuilder.newBuilder()
+                    final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                             .maximumSize(maxOpenShards)
                             .expireAfterAccess(1, TimeUnit.MINUTES)
-                            .removalListener(removalListener)
-                            .build(cacheLoader);
-                    cacheManager.replaceCache("Index Shard Searcher Cache", result);
+                            .removalListener(removalListener);
+                    result = cacheBuilder.build(cacheLoader);
+                    cacheManager.replaceCache("Index Shard Searcher Cache", cacheBuilder, result);
                     this.cache = result;
                 }
             }

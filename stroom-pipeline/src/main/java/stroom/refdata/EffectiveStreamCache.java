@@ -57,6 +57,7 @@ public class EffectiveStreamCache {
     private final SecurityContext securityContext;
 
     @Inject
+    @SuppressWarnings("unchecked")
     EffectiveStreamCache(final CacheManager cacheManager,
                          final StreamStore streamStore,
                          final EffectiveStreamInternPool internPool,
@@ -66,11 +67,11 @@ public class EffectiveStreamCache {
         this.securityContext = securityContext;
 
         final CacheLoader<EffectiveStreamKey, NavigableSet> cacheLoader = CacheLoader.from(this::create);
-        cache = CacheBuilder.newBuilder()
+        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterAccess(10, TimeUnit.MINUTES)
-                .build(cacheLoader);
-        cacheManager.registerCache("Reference Data - Effective Stream Cache", cache);
+                .expireAfterAccess(10, TimeUnit.MINUTES);
+        cache = cacheBuilder.build(cacheLoader);
+        cacheManager.registerCache("Reference Data - Effective Stream Cache", cacheBuilder, cache);
     }
 
     @SuppressWarnings("unchecked")

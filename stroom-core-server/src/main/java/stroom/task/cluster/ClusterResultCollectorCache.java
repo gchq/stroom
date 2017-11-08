@@ -20,8 +20,8 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.Clearable;
-import stroom.util.cache.CacheUtil;
 import stroom.util.cache.CacheManager;
+import stroom.util.cache.CacheUtil;
 import stroom.util.spring.StroomShutdown;
 
 import javax.inject.Inject;
@@ -36,12 +36,13 @@ public class ClusterResultCollectorCache implements Clearable {
     private volatile boolean shutdown;
 
     @Inject
+    @SuppressWarnings("unchecked")
     public ClusterResultCollectorCache(final CacheManager cacheManager) {
-        cache = CacheBuilder.newBuilder()
+        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterAccess(1, TimeUnit.MINUTES)
-                .build();
-        cacheManager.registerCache("Cluster Result Collector Cache", cache);
+                .expireAfterAccess(1, TimeUnit.MINUTES);
+        cache = cacheBuilder.build();
+        cacheManager.registerCache("Cluster Result Collector Cache", cacheBuilder, cache);
     }
 
     @StroomShutdown

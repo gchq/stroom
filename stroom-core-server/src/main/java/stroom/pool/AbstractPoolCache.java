@@ -46,12 +46,12 @@ public abstract class AbstractPoolCache<K, V> {
             final V value = internalCreateValue(k.getKey());
             return new PoolItem<>(k, value);
         });
-        cache = CacheBuilder.newBuilder()
+        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_CACHE_ENTRIES)
                 .expireAfterAccess(10, TimeUnit.MINUTES)
-                .removalListener(removalListener)
-                .build(cacheLoader);
-        cacheManager.registerCache(name, cache);
+                .removalListener(removalListener);
+        cache = cacheBuilder.build(cacheLoader);
+        cacheManager.registerCache(name, cacheBuilder, cache);
     }
 
     protected abstract V internalCreateValue(Object key);

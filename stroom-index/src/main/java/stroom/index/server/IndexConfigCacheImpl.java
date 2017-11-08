@@ -37,6 +37,7 @@ public class IndexConfigCacheImpl implements IndexConfigCache {
     private final LoadingCache<DocRef, IndexConfig> cache;
 
     @Inject
+    @SuppressWarnings("unchecked")
     IndexConfigCacheImpl(final CacheManager cacheManager,
                          final IndexService indexService) {
         final CacheLoader<DocRef, IndexConfig> cacheLoader = CacheLoader.from(k -> {
@@ -59,11 +60,11 @@ public class IndexConfigCacheImpl implements IndexConfigCache {
             return new IndexConfig(loaded, indexFields, indexFieldsMap);
         });
 
-        cache = CacheBuilder.newBuilder()
+        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterAccess(10, TimeUnit.MINUTES)
-                .build(cacheLoader);
-        cacheManager.registerCache("Index Config Cache", cache);
+                .expireAfterAccess(10, TimeUnit.MINUTES);
+        cache = cacheBuilder.build(cacheLoader);
+        cacheManager.registerCache("Index Config Cache", cacheBuilder, cache);
     }
 
     @Override

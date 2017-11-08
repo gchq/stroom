@@ -50,6 +50,7 @@ public class PipelineDataCacheImpl implements PipelineDataCache {
     private final DocumentPermissionCache documentPermissionCache;
 
     @Inject
+    @SuppressWarnings("unchecked")
     public PipelineDataCacheImpl(final CacheManager cacheManager,
                                  final PipelineStackLoader pipelineStackLoader,
                                  final SecurityContext securityContext,
@@ -59,11 +60,11 @@ public class PipelineDataCacheImpl implements PipelineDataCache {
         this.documentPermissionCache = documentPermissionCache;
 
         final CacheLoader<VersionedEntityDecorator<PipelineEntity>, PipelineData> cacheLoader = CacheLoader.from(this::create);
-        cache = CacheBuilder.newBuilder()
+        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterAccess(10, TimeUnit.MINUTES)
-                .build(cacheLoader);
-        cacheManager.registerCache("Pipeline Structure Cache", cache);
+                .expireAfterAccess(10, TimeUnit.MINUTES);
+        cache = cacheBuilder.build(cacheLoader);
+        cacheManager.registerCache("Pipeline Structure Cache", cacheBuilder, cache);
     }
 
     @Override

@@ -43,6 +43,9 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
+import java.util.Comparator;
+import java.util.Map;
+
 public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<CacheNodeRow>> implements HasRead<CacheRow> {
     private static final int SMALL_COL = 90;
     private static final int MEDIUM_COL = 150;
@@ -70,6 +73,34 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
                 return row.getNode().getName();
             }
         }, "Node", MEDIUM_COL);
+
+        // Entries.
+        getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
+            @Override
+            public String getValue(final CacheNodeRow row) {
+                return row.getCacheInfo().getMap().get("Entries");
+            }
+        }, "Entries", SMALL_COL);
+
+        // Max Entries.
+        getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
+            @Override
+            public String getValue(final CacheNodeRow row) {
+                return row.getCacheInfo().getMap().get("MaximumSize");
+            }
+        }, "Max Entries", SMALL_COL);
+
+        // Expiry.
+        getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
+            @Override
+            public String getValue(final CacheNodeRow row) {
+                String expiry = row.getCacheInfo().getMap().get("ExpireAfterAccess");
+                if (expiry == null) {
+                    expiry = row.getCacheInfo().getMap().get("ExpireAfterWrite");
+                }
+                return expiry;
+            }
+        }, "Expiry", SMALL_COL);
 
         // Clear.
         final Column<CacheNodeRow, String> clearColumn = new Column<CacheNodeRow, String>(new ButtonCell()) {
@@ -109,9 +140,12 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
 
         final StringBuilder sb = new StringBuilder();
         TooltipUtil.addHeading(sb, row.getNode().getName());
-        TooltipUtil.addRowData(sb, "Config", cacheInfo.getConfig());
-        TooltipUtil.addRowData(sb, "Stats", cacheInfo.getStats());
-        TooltipUtil.addRowData(sb, "Entries", cacheInfo.getSize());
+
+        final Map<String, String> map = cacheInfo.getMap();
+        map.keySet().stream().sorted(Comparator.naturalOrder()).forEachOrdered(k -> {
+            final String v = map.get(k);
+            TooltipUtil.addRowData(sb, k, v);
+        });
 
         return sb.toString();
     }

@@ -36,16 +36,17 @@ public class DocumentPermissionCacheImpl implements DocumentPermissionCache {
     private final LoadingCache<DocumentPermission, Boolean> cache;
 
     @Inject
+    @SuppressWarnings("unchecked")
     public DocumentPermissionCacheImpl(final CacheManager cacheManager,
                                        final SecurityContext securityContext) {
         this.securityContext = securityContext;
 
         final CacheLoader<DocumentPermission, Boolean> cacheLoader = CacheLoader.from(k -> securityContext.hasDocumentPermission(k.documentType, k.documentUuid, k.permission));
-        cache = CacheBuilder.newBuilder()
+        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterAccess(10, TimeUnit.MINUTES)
-                .build(cacheLoader);
-        cacheManager.registerCache("Document Permission Cache", cache);
+                .expireAfterAccess(10, TimeUnit.MINUTES);
+        cache = cacheBuilder.build(cacheLoader);
+        cacheManager.registerCache("Document Permission Cache", cacheBuilder, cache);
     }
 
 

@@ -33,16 +33,17 @@ public class ActiveQueriesManager {
     private final LoadingCache<String, ActiveQueries> cache;
 
     @Inject
+    @SuppressWarnings("unchecked")
     public ActiveQueriesManager(final CacheManager cacheManager) {
         final RemovalListener<String, ActiveQueries> removalListener = notification -> notification.getValue().destroy();
 
         final CacheLoader<String, ActiveQueries> cacheLoader = CacheLoader.from(k -> new ActiveQueries());
-        cache = CacheBuilder.newBuilder()
+        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_ACTIVE_QUERIES)
                 .expireAfterAccess(1, TimeUnit.MINUTES)
-                .removalListener(removalListener)
-                .build(cacheLoader);
-        cacheManager.registerCache("Active Queries", cache);
+                .removalListener(removalListener);
+        cache = cacheBuilder.build(cacheLoader);
+        cacheManager.registerCache("Active Queries", cacheBuilder, cache);
     }
 
     public ActiveQueries get(final String key) {

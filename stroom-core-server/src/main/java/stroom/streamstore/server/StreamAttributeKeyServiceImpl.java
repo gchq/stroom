@@ -45,15 +45,16 @@ public class StreamAttributeKeyServiceImpl
     private final LoadingCache<String, BaseResultList<StreamAttributeKey>> cache;
 
     @Inject
+    @SuppressWarnings("unchecked")
     StreamAttributeKeyServiceImpl(final StroomEntityManager entityManager,
                                   final CacheManager cacheManager) {
         super(entityManager);
         final CacheLoader<String, BaseResultList<StreamAttributeKey>> cacheLoader = CacheLoader.from(k -> find(new FindStreamAttributeKeyCriteria()));
-        cache = CacheBuilder.newBuilder()
+        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterAccess(10, TimeUnit.MINUTES)
-                .build(cacheLoader);
-        cacheManager.registerCache("Stream Attribute Key Cache", cache);
+                .expireAfterAccess(10, TimeUnit.MINUTES);
+        cache = cacheBuilder.build(cacheLoader);
+        cacheManager.registerCache("Stream Attribute Key Cache", cacheBuilder, cache);
     }
 
     @Override

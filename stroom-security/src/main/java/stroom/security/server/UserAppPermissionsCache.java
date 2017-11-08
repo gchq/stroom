@@ -25,10 +25,10 @@ import stroom.entity.server.event.EntityEventBus;
 import stroom.entity.server.event.EntityEventHandler;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityAction;
-import stroom.util.cache.CacheUtil;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
 import stroom.util.cache.CacheManager;
+import stroom.util.cache.CacheUtil;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -43,16 +43,17 @@ public class UserAppPermissionsCache implements EntityEvent.Handler {
     private final LoadingCache<UserRef, UserAppPermissions> cache;
 
     @Inject
+    @SuppressWarnings("unchecked")
     UserAppPermissionsCache(final CacheManager cacheManager,
                             final UserAppPermissionService userAppPermissionService,
                             final Provider<EntityEventBus> eventBusProvider) {
         this.eventBusProvider = eventBusProvider;
         final CacheLoader<UserRef, UserAppPermissions> cacheLoader = CacheLoader.from(userAppPermissionService::getPermissionsForUser);
-        cache = CacheBuilder.newBuilder()
+        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterAccess(30, TimeUnit.MINUTES)
-                .build(cacheLoader);
-        cacheManager.registerCache("User App Permissions Cache", cache);
+                .expireAfterAccess(30, TimeUnit.MINUTES);
+        cache = cacheBuilder.build(cacheLoader);
+        cacheManager.registerCache("User App Permissions Cache", cacheBuilder, cache);
     }
 
     UserAppPermissions get(final UserRef key) {

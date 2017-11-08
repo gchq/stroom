@@ -29,8 +29,8 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Entity;
 import stroom.entity.shared.SummaryDataRow;
-import stroom.util.cache.CacheUtil;
 import stroom.util.cache.CacheManager;
+import stroom.util.cache.CacheUtil;
 
 import javax.inject.Inject;
 import javax.persistence.FlushModeType;
@@ -49,14 +49,15 @@ public class CachingEntityManager implements StroomEntityManager, Clearable {
     private Cache<Object, Optional<Object>> cache;
 
     @Inject
+    @SuppressWarnings("unchecked")
     public CachingEntityManager(final StroomEntityManager stroomEntityManager, final CacheManager cacheManager) {
         this.stroomEntityManager = stroomEntityManager;
 
-        cache = CacheBuilder.newBuilder()
+        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(1000)
-                .expireAfterWrite(1, TimeUnit.MINUTES)
-                .build();
-        cacheManager.registerCache("Entity Cache", cache);
+                .expireAfterWrite(1, TimeUnit.MINUTES);
+        cache = cacheBuilder.build();
+        cacheManager.registerCache("Entity Cache", cacheBuilder, cache);
     }
 
     @Override

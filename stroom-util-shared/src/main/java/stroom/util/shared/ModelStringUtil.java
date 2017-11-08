@@ -127,9 +127,27 @@ public final class ModelStringUtil {
             if (nextNumber < 10) {
                 String str = String.valueOf(nextNumber);
                 final int decPt = str.indexOf(".");
-                if (decPt > 0 && decPt + 2 < str.length()) {
-                    str = str.substring(0, decPt + 2);
+                if (decPt != -1) {
+                    String p1 = str.substring(0, decPt);
+                    String p2 = str.substring(decPt + 1);
+
+                    if (p1.length() == 0) {
+                        p1 = "0";
+                    }
+
+                    if (p2.length() > 2) {
+                        p2 = p2.substring(0, 2);
+                    }
+                    if ("0".equals(p2) || "00".equals(p2)) {
+                        str = p1;
+                    } else {
+                        str = p1 + "." + p2;
+                    }
                 }
+
+//                if (decPt > 0 && decPt + 2 < str.length()) {
+//                    str = str.substring(0, decPt + 2);
+//                }
                 return str + lastDivider.unit[0];
             } else {
                 return (long) nextNumber + lastDivider.unit[0];

@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class CacheManager implements AutoCloseable {
-    private final Map<String, Cache> caches = new ConcurrentHashMap<>();
+    private final Map<String, CacheHolder> caches = new ConcurrentHashMap<>();
 
     @StroomShutdown
     public void stop() {
@@ -41,42 +41,42 @@ public class CacheManager implements AutoCloseable {
 
     @Override
     public synchronized void close() {
-        caches.forEach((k, v) -> CacheUtil.clear(v));
+        caches.forEach((k, v) -> CacheUtil.clear(v.getCache()));
     }
 
-    public void registerCache(final String alias, final Cache cache) {
+    public void registerCache(final String alias, final CacheBuilder cacheBuilder, final Cache cache) {
         if (caches.containsKey(alias)) {
             throw new RuntimeException("A cache called '" + alias + "' already exists");
         }
 
-        caches.put(alias, cache);
+        replaceCache(alias, cacheBuilder, cache);
     }
 
-    public void replaceCache(final String alias, final Cache cache) {
-        final Cache existing = caches.put(alias, cache);
+    public void replaceCache(final String alias, final CacheBuilder cacheBuilder, final Cache cache) {
+        final CacheHolder existing = caches.put(alias, new CacheHolder(cacheBuilder, cache));
         if (existing != null) {
-            CacheUtil.clear(existing);
+            CacheUtil.clear(existing.getCache());
         }
     }
 
-    public Map<String, Cache> getCaches() {
+    public Map<String, CacheHolder> getCaches() {
         return caches;
     }
 
     public static class CacheHolder {
-        private final CacheBuilder<?, ?> cacheBuilder;
-        private final Cache<?, ?> cache;
+        private final CacheBuilder cacheBuilder;
+        private final Cache cache;
 
-        public CacheHolder(final CacheBuilder<?, ?> cacheBuilder, final Cache<?, ?> cache) {
+        CacheHolder(final CacheBuilder cacheBuilder, final Cache cache) {
             this.cacheBuilder = cacheBuilder;
             this.cache = cache;
         }
 
-        public CacheBuilder<?, ?> getCacheBuilder() {
+        public CacheBuilder getCacheBuilder() {
             return cacheBuilder;
         }
 
-        public Cache<?, ?> getCache() {
+        public Cache getCache() {
             return cache;
         }
     }

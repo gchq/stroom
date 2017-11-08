@@ -16,7 +16,6 @@
 
 package stroom.cache;
 
-import com.google.common.cache.Cache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -25,14 +24,19 @@ import stroom.cache.shared.FindCacheInfoCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.PageRequest;
-import stroom.util.cache.CacheUtil;
 import stroom.util.cache.CacheManager;
+import stroom.util.cache.CacheManager.CacheHolder;
+import stroom.util.cache.CacheUtil;
+import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomFrequencySchedule;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -90,38 +94,56 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
             }
 
             if (include) {
-                final Cache cache = cacheManager.getCaches().get(cacheName);
+                final CacheHolder cacheHolder = cacheManager.getCaches().get(cacheName);
 
 
-                if (cache != null) {
-//                    final Map<String, Map<String, String>> resourcePoolDetails = new HashMap<>();
-//                    final Map<String, String> details = resourcePoolDetails.computeIfAbsent("Details", k -> new HashMap<>());
-//                    details.put("Entries", String.valueOf(cache.size()));
-//
-//                    final ResourcePools resourcePools = cache.getRuntimeConfiguration().getResourcePools();
-//                    resourcePools.getResourceTypeSet().forEach(resourceType -> {
-//                        final Map<String, String> details = resourcePoolDetails.computeIfAbsent("Tier " + resourceType.getTierHeight(), k -> new HashMap<>());
-//
-//                        final ResourcePool resourcePool = resourcePools.getPoolForResource(resourceType);
-//                        details.put("Name", resourceType.getResourcePoolClass().getSimpleName());
-//                        details.put("Persistable", String.valueOf(resourceType.isPersistable()));
-//                        details.put("Required Serialisation", String.valueOf(resourceType.requiresSerialization()));
-//
-//                        if (resourcePool instanceof SizedResourcePool) {
-//                            final SizedResourcePool sizedResourcePool = (SizedResourcePool) resourcePool;
-//                            details.put("Size", String.valueOf(sizedResourcePool.getSize()) + " " + sizedResourcePool.getUnit().toString());
-//                        }
-//                    });
-//
-//                    resourcePoolDetails.computeIfAbsent("Expiry", k -> new HashMap<>())
-//                    .put("Expiry", cache.getRuntimeConfiguration().getExpiry().toString());
+                if (cacheHolder != null) {
+                    final Map<String, String> map = new HashMap<>();
+                    map.put("Entries", String.valueOf(cacheHolder.getCache().size()));
+                    addEntries(map, cacheHolder.getCacheBuilder().toString());
+                    addEntries(map, cacheHolder.getCache().stats().toString());
 
-                    final CacheInfo info = new CacheInfo(cacheName, cache.toString(), cache.stats().toString(), cache.size());
+                    map.forEach((k, v) -> {
+                        if (k.startsWith("Expire")) {
+                            try {
+                                final long nanos = Long.valueOf(v);
+                                map.put(k, ModelStringUtil.formatDurationString(nanos / 1000000));
+
+                            } catch (final Exception e) {
+                                // Ignore.
+                            }
+                        }
+                    });
+
+                    final CacheInfo info = new CacheInfo(cacheName, map);
                     list.add(info);
                 }
             }
         }
         return list;
+    }
+
+    private void addEntries(final Map<String, String> map, String string) {
+        if (string != null && string.length() > 0) {
+
+            string = string.replaceAll("^[^{]*\\{", "");
+            string = string.replaceAll("}.*", "");
+
+            Arrays.stream(string.split(",")).forEach(pair -> {
+                final String[] kv = pair.split("=");
+                if (kv.length == 2) {
+                    String key = kv[0].replaceAll("\\W", "");
+                    String value = kv[1].replaceAll("\\D", "");
+                    if (key.length() > 0) {
+                        final char[] chars = key.toCharArray();
+                        chars[0] = Character.toUpperCase(chars[0]);
+                        key = new String(chars, 0, chars.length);
+                    }
+
+                    map.put(key, value);
+                }
+            });
+        }
     }
 
     @Override
@@ -130,7 +152,7 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
         cacheManager.getCaches().forEach((k, v) -> {
             LOGGER.debug("Evicting cache entries for " + k);
             try {
-                v.cleanUp();
+                v.getCache().cleanUp();
             } catch (final Exception e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -145,7 +167,7 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
         cacheManager.getCaches().forEach((k, v) -> {
             LOGGER.debug("Clearing cache entries for " + k);
             try {
-                CacheUtil.clear(v);
+                CacheUtil.clear(v.getCache());
             } catch (final Exception e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -160,9 +182,9 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
         final List<CacheInfo> caches = findCaches(criteria);
         for (final CacheInfo cacheInfo : caches) {
             final String cacheName = cacheInfo.getName();
-            final Cache cache = cacheManager.getCaches().get(cacheName);
-            if (cache != null) {
-                CacheUtil.clear(cache);
+            final CacheHolder cacheHolder = cacheManager.getCaches().get(cacheName);
+            if (cacheHolder != null) {
+                CacheUtil.clear(cacheHolder.getCache());
             } else {
                 LOGGER.error("Unable to find cache with name '" + cacheName + "'");
             }

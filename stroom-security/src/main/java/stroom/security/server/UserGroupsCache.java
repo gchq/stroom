@@ -43,16 +43,17 @@ public class UserGroupsCache implements EntityEvent.Handler {
     private final LoadingCache<UserRef, List> cache;
 
     @Inject
+    @SuppressWarnings("unchecked")
     UserGroupsCache(final CacheManager cacheManager,
                     final UserService userService,
                     final Provider<EntityEventBus> eventBusProvider) {
         this.eventBusProvider = eventBusProvider;
         final CacheLoader<UserRef, List> cacheLoader = CacheLoader.from(userService::findGroupsForUser);
-        cache = CacheBuilder.newBuilder()
+        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterAccess(30, TimeUnit.MINUTES)
-                .build(cacheLoader);
-        cacheManager.registerCache("User Groups Cache", cache);
+                .expireAfterAccess(30, TimeUnit.MINUTES);
+        cache = cacheBuilder.build(cacheLoader);
+        cacheManager.registerCache("User Groups Cache", cacheBuilder, cache);
     }
 
     @SuppressWarnings("unchecked")
