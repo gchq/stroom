@@ -107,7 +107,7 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
                         if (k.startsWith("Expire")) {
                             try {
                                 final long nanos = Long.valueOf(v);
-                                map.put(k, ModelStringUtil.formatDurationString(nanos / 1000000));
+                                map.put(k, ModelStringUtil.formatDurationString(nanos / 1000000, true));
 
                             } catch (final Exception e) {
                                 // Ignore.
