@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.57] - 2017-11-08
+
 * Issue **#477** : Search sub tasks are now correctly linked to their parent task and can therefore be terminated by terminating parent tasks.
 
 ## [v5.0-beta.56] - 2017-11-06
@@ -634,7 +636,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.56...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.57...HEAD
+[v5.0-beta.57]: https://github.com/gchq/stroom/compare/v5.0-beta.56...v5.0-beta.57
 [v5.0-beta.56]: https://github.com/gchq/stroom/compare/v5.0-beta.55...v5.0-beta.56
 [v5.0-beta.55]: https://github.com/gchq/stroom/compare/v5.0-beta.54...v5.0-beta.55
 [v5.0-beta.54]: https://github.com/gchq/stroom/compare/v5.0-beta.53...v5.0-beta.54
