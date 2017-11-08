@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Reduced the number of active queries to 100.
 
+* Removed Ehcache and switched to Guava cache.
+
 ## [v5.0-beta.56] - 2017-11-06
 
 * Issue **#425** : Changed string replacement in pipeline migration code to use a literal match
