@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +58,6 @@ public abstract class StroomZipRepositoryProcessor {
      * Flag set to stop things
      */
     private final Monitor monitor;
-    private final Map<String, List<File>> feedToFileMap = new ConcurrentHashMap<>();
     /**
      * The max number of parts to send in a zip file
      */
@@ -98,6 +96,7 @@ public abstract class StroomZipRepositoryProcessor {
      */
     public boolean process(final StroomZipRepository stroomZipRepository) {
         boolean completedAllFiles = true;
+        final Map<String, List<File>> feedToFileMap = new ConcurrentHashMap<>();
 
         TaskScopeContextHolder.addContext();
         try {
@@ -126,7 +125,8 @@ public abstract class StroomZipRepositoryProcessor {
                         break;
                     }
 
-                    execute(file.getAbsolutePath(), createJobFileScan(stroomZipRepository, file));
+                    execute(file.getAbsolutePath(),
+                            createJobFileScan(stroomZipRepository, file, feedToFileMap));
                 }
             }
 
@@ -141,28 +141,28 @@ public abstract class StroomZipRepositoryProcessor {
             while (iter.hasNext() && !monitor.isTerminated()) {
                 final Entry<String, List<File>> entry = iter.next();
                 final String feedName = entry.getKey();
-                final List<File> fileList = entry.getValue();
 
-                synchronized (fileList) {
-                    // Sort the map so the items are processed in order
-                    fileList.sort((f1, f2) -> {
-                        if (f1 == null || f2 == null || f1.getName() == null || f2.getName() == null) {
-                            return 0;
-                        }
+                //copy the items to a new list to avoid carrying any unwanted references
+                final List<File> fileList = new ArrayList<>(entry.getValue());
 
-                        return f1.getName().compareTo(f2.getName());
-                    });
-                }
+                // Sort the map so the items are processed in order
+                fileList.sort((f1, f2) -> {
+                    if (f1 == null || f2 == null || f1.getName() == null || f2.getName() == null) {
+                        return 0;
+                    }
 
-                final StringBuilder msg = new StringBuilder();
-                msg.append(feedName);
-                msg.append(" ");
-                msg.append(ModelStringUtil.formatCsv(fileList.size()));
-                msg.append(" files (");
-                msg.append(fileList.get(0));
-                msg.append("...");
-                msg.append(fileList.get(fileList.size() - 1));
-                msg.append(")");
+                    return f1.getName().compareTo(f2.getName());
+                });
+
+                final StringBuilder msg = new StringBuilder()
+                        .append(feedName)
+                        .append(" ")
+                        .append(ModelStringUtil.formatCsv(fileList.size()))
+                        .append(" files (")
+                        .append(fileList.get(0))
+                        .append("...")
+                        .append(fileList.get(fileList.size() - 1))
+                        .append(")");
 
                 execute(msg.toString(), createJobProcessFeedFiles(stroomZipRepository, feedName, fileList));
             }
@@ -178,11 +178,13 @@ public abstract class StroomZipRepositoryProcessor {
         return completedAllFiles;
     }
 
-    private Runnable createJobFileScan(final StroomZipRepository stroomZipRepository, final File file) {
+    private Runnable createJobFileScan(final StroomZipRepository stroomZipRepository,
+                                       final File file,
+                                       final Map<String, List<File>> feedToFileMap) {
         return () -> {
             if (!monitor.isTerminated()) {
                 if (file != null) {
-                    fileScan(stroomZipRepository, file);
+                    fileScan(stroomZipRepository, file, feedToFileMap);
                 }
             } else {
                 LOGGER.info("run() - Quit File Scan %s", file);
@@ -190,7 +192,8 @@ public abstract class StroomZipRepositoryProcessor {
         };
     }
 
-    private Runnable createJobProcessFeedFiles(final StroomZipRepository stroomZipRepository, final String feed,
+    private Runnable createJobProcessFeedFiles(final StroomZipRepository stroomZipRepository,
+                                               final String feed,
                                                final List<File> fileList) {
         return () -> {
             if (!monitor.isTerminated()) {
@@ -204,7 +207,9 @@ public abstract class StroomZipRepositoryProcessor {
     /**
      * Peek at the stream to get the header file feed
      */
-    private void fileScan(final StroomZipRepository stroomZipRepository, final File file) {
+    private void fileScan(final StroomZipRepository stroomZipRepository,
+                          final File file, Map<String, List<File>> feedToFileMap) {
+
         StroomZipFile stroomZipFile = null;
         try {
             stroomZipFile = new StroomZipFile(file);
