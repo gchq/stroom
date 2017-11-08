@@ -26,12 +26,12 @@ import javax.inject.Inject;
 import java.util.concurrent.Executor;
 
 @Component
-public class ExecutorProviderImpl implements ExecutorProvider {
+class ExecutorProviderImpl implements ExecutorProvider {
     private final TaskManager taskManager;
     private final SecurityContext securityContext;
 
     @Inject
-    public ExecutorProviderImpl(final TaskManager taskManager, final SecurityContext securityContext) {
+    ExecutorProviderImpl(final TaskManager taskManager, final SecurityContext securityContext) {
         this.taskManager = taskManager;
         this.securityContext = securityContext;
     }
@@ -39,21 +39,21 @@ public class ExecutorProviderImpl implements ExecutorProvider {
     @Override
     public Executor getExecutor() {
         final Task<?> parentTask = CurrentTaskState.currentTask();
-        return command -> {
-            final GenericServerTask genericServerTask = GenericServerTask.create(parentTask, getUserToken(parentTask), getTaskName(parentTask, "Generic Task"), null);
-            genericServerTask.setRunnable(command);
-            taskManager.execAsync(genericServerTask);
-        };
+        return new TaskExecutor(taskManager, null, parentTask, getUserToken(parentTask), getTaskName(parentTask, "Generic Task"));
     }
 
     @Override
     public Executor getExecutor(final ThreadPool threadPool) {
         final Task<?> parentTask = CurrentTaskState.currentTask();
-        return command -> {
-            final GenericServerTask genericServerTask = GenericServerTask.create(parentTask, getUserToken(parentTask), getTaskName(parentTask, threadPool.getName()), null);
-            genericServerTask.setRunnable(command);
-            taskManager.execAsync(genericServerTask, threadPool);
-        };
+        return new TaskExecutor(taskManager, threadPool, parentTask, getUserToken(parentTask), threadPool.getName());
+    }
+
+    private String getUserToken(final Task<?> parentTask) {
+        if (parentTask != null && parentTask.getUserToken() != null) {
+            return parentTask.getUserToken();
+        }
+
+        return ServerTask.INTERNAL_PROCESSING_USER_TOKEN;
     }
 
     private String getTaskName(final Task<?> parentTask, final String defaultName) {
@@ -64,11 +64,34 @@ public class ExecutorProviderImpl implements ExecutorProvider {
         return defaultName;
     }
 
-    private String getUserToken(final Task<?> parentTask) {
-        if (parentTask != null && parentTask.getUserToken() != null) {
-            return parentTask.getUserToken();
+    private static class TaskExecutor implements Executor {
+        private final TaskManager taskManager;
+        private final ThreadPool threadPool;
+        private final Task<?> parentTask;
+        private final String userToken;
+        private final String taskName;
+
+        TaskExecutor(final TaskManager taskManager, final ThreadPool threadPool, final Task<?> parentTask, final String userToken, final String taskName) {
+            this.taskManager = taskManager;
+            this.threadPool = threadPool;
+            this.parentTask = parentTask;
+            this.userToken = userToken;
+            this.taskName = taskName;
         }
 
-        return ServerTask.INTERNAL_PROCESSING_USER_TOKEN;
+        @Override
+        public void execute(final Runnable command) {
+            if (parentTask != null && parentTask.isTerminated()) {
+                return;
+            }
+
+            final GenericServerTask genericServerTask = GenericServerTask.create(parentTask, userToken, taskName, null);
+            genericServerTask.setRunnable(command);
+            if (threadPool == null) {
+                taskManager.execAsync(genericServerTask);
+            } else {
+                taskManager.execAsync(genericServerTask, threadPool);
+            }
+        }
     }
 }

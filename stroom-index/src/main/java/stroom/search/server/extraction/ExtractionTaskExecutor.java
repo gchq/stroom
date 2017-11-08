@@ -16,15 +16,18 @@
 
 package stroom.search.server.extraction;
 
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.search.server.taskqueue.TaskExecutor;
 import stroom.task.server.ExecutorProvider;
 import stroom.task.server.ThreadPoolImpl;
 import stroom.util.shared.ThreadPool;
+import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @Component
+@Scope(StroomScope.PROTOTYPE)
 public class ExtractionTaskExecutor extends TaskExecutor {
     private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Stroom Data Extraction", 5, 0, Integer.MAX_VALUE);
 

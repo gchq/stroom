@@ -288,6 +288,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
             final boolean searchComplete = ClusterSearchTaskHandler.this.searchComplete.get();
 
             if (!taskContext.isTerminated()) {
+                taskContext.setName("Search result sender");
                 taskContext.info("Creating search result");
 
                 // Produce payloads for each coprocessor.
