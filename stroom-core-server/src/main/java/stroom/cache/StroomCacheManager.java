@@ -28,5 +28,5 @@ import stroom.entity.shared.FindService;
  */
 public interface StroomCacheManager
         extends Clearable, FindClearService<FindCacheInfoCriteria>, FindService<CacheInfo, FindCacheInfoCriteria> {
-//    void evictExpiredElements();
+    void evictExpiredElements();
 }

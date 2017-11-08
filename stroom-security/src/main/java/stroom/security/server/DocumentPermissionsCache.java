@@ -16,22 +16,18 @@
 
 package stroom.security.server;
 
-import org.ehcache.Cache;
-import org.ehcache.config.CacheConfiguration;
-import org.ehcache.config.builders.CacheConfigurationBuilder;
-import org.ehcache.config.builders.ResourcePoolsBuilder;
-import org.ehcache.expiry.Duration;
-import org.ehcache.expiry.Expirations;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.springframework.stereotype.Component;
-import stroom.cache.Loader;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventBus;
 import stroom.entity.server.event.EntityEventHandler;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityAction;
-import stroom.pool.CacheUtil;
+import stroom.util.cache.CacheUtil;
 import stroom.security.shared.DocumentPermissions;
-import stroom.util.cache.CentralCacheManager;
+import stroom.util.cache.CacheManager;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -44,46 +40,38 @@ public class DocumentPermissionsCache implements EntityEvent.Handler {
 
     private final Provider<EntityEventBus> eventBusProvider;
 
-    private final Cache<DocRef, DocumentPermissions> cache;
+    private final LoadingCache<DocRef, DocumentPermissions> cache;
 
     @Inject
-    public DocumentPermissionsCache(final CentralCacheManager cacheManager,
+    public DocumentPermissionsCache(final CacheManager cacheManager,
                                     final DocumentPermissionService documentPermissionService,
                                     final Provider<EntityEventBus> eventBusProvider) {
         this.eventBusProvider = eventBusProvider;
 
-        final Loader<DocRef, DocumentPermissions> loader = new Loader<DocRef, DocumentPermissions>() {
-            @Override
-            public DocumentPermissions load(final DocRef key) throws Exception {
-                return documentPermissionService.getPermissionsForDocument(key);
-            }
-        };
-
-        final CacheConfiguration<DocRef, DocumentPermissions> cacheConfiguration = CacheConfigurationBuilder.newCacheConfigurationBuilder(DocRef.class, DocumentPermissions.class,
-                ResourcePoolsBuilder.heap(MAX_CACHE_ENTRIES))
-                .withExpiry(Expirations.timeToIdleExpiration(Duration.of(30, TimeUnit.MINUTES)))
-                .withLoaderWriter(loader)
-                .build();
-
-        cache = cacheManager.createCache("Document Permissions Cache", cacheConfiguration);
+        final CacheLoader<DocRef, DocumentPermissions> cacheLoader = CacheLoader.from(documentPermissionService::getPermissionsForDocument);
+        cache = CacheBuilder.newBuilder()
+                .maximumSize(MAX_CACHE_ENTRIES)
+                .expireAfterAccess(30, TimeUnit.MINUTES)
+                .build(cacheLoader);
+        cacheManager.registerCache("Document Permissions Cache", cache);
     }
 
     DocumentPermissions get(final DocRef key) {
-        return cache.get(key);
+        return cache.getUnchecked(key);
     }
 
     void remove(final DocRef docRef) {
-        cache.remove(docRef);
+        cache.invalidate(docRef);
         final EntityEventBus entityEventBus = eventBusProvider.get();
         EntityEvent.fire(entityEventBus, docRef, EntityAction.CLEAR_CACHE);
     }
 
     void clear() {
-        CacheUtil.removeAll(cache);
+        CacheUtil.clear(cache);
     }
 
     @Override
     public void onChange(final EntityEvent event) {
-        remove(event.getDocRef());
+        cache.invalidate(event.getDocRef());
     }
 }

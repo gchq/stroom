@@ -16,14 +16,10 @@
 
 package stroom.pipeline.server.factory;
 
-import org.ehcache.Cache;
-import org.ehcache.config.CacheConfiguration;
-import org.ehcache.config.builders.CacheConfigurationBuilder;
-import org.ehcache.config.builders.ResourcePoolsBuilder;
-import org.ehcache.expiry.Duration;
-import org.ehcache.expiry.Expirations;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.springframework.stereotype.Component;
-import stroom.cache.Loader;
 import stroom.entity.server.DocumentPermissionCache;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.PermissionException;
@@ -36,8 +32,7 @@ import stroom.pool.VersionedEntityDecorator;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.cache.CentralCacheManager;
-import stroom.util.task.ServerTask;
+import stroom.util.cache.CacheManager;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -50,12 +45,12 @@ public class PipelineDataCacheImpl implements PipelineDataCache {
     private static final int MAX_CACHE_ENTRIES = 1000;
 
     private final PipelineStackLoader pipelineStackLoader;
-    private final Cache<VersionedEntityDecorator, PipelineData> cache;
+    private final LoadingCache<VersionedEntityDecorator<PipelineEntity>, PipelineData> cache;
     private final SecurityContext securityContext;
     private final DocumentPermissionCache documentPermissionCache;
 
     @Inject
-    public PipelineDataCacheImpl(final CentralCacheManager cacheManager,
+    public PipelineDataCacheImpl(final CacheManager cacheManager,
                                  final PipelineStackLoader pipelineStackLoader,
                                  final SecurityContext securityContext,
                                  final DocumentPermissionCache documentPermissionCache) {
@@ -63,20 +58,12 @@ public class PipelineDataCacheImpl implements PipelineDataCache {
         this.securityContext = securityContext;
         this.documentPermissionCache = documentPermissionCache;
 
-        final Loader<VersionedEntityDecorator, PipelineData> loader = new Loader<VersionedEntityDecorator, PipelineData>() {
-            @Override
-            public PipelineData load(final VersionedEntityDecorator key) throws Exception {
-                return create(key);
-            }
-        };
-
-        final CacheConfiguration<VersionedEntityDecorator, PipelineData> cacheConfiguration = CacheConfigurationBuilder.newCacheConfigurationBuilder(VersionedEntityDecorator.class, PipelineData.class,
-                ResourcePoolsBuilder.heap(MAX_CACHE_ENTRIES))
-                .withExpiry(Expirations.timeToIdleExpiration(Duration.of(10, TimeUnit.MINUTES)))
-                .withLoaderWriter(loader)
-                .build();
-
-        cache = cacheManager.createCache("Pipeline Structure Cache", cacheConfiguration);
+        final CacheLoader<VersionedEntityDecorator<PipelineEntity>, PipelineData> cacheLoader = CacheLoader.from(this::create);
+        cache = CacheBuilder.newBuilder()
+                .maximumSize(MAX_CACHE_ENTRIES)
+                .expireAfterAccess(10, TimeUnit.MINUTES)
+                .build(cacheLoader);
+        cacheManager.registerCache("Pipeline Structure Cache", cache);
     }
 
     @Override
@@ -85,7 +72,7 @@ public class PipelineDataCacheImpl implements PipelineDataCache {
             throw new PermissionException(securityContext.getUserId(), "You do not have permission to use " + DocRef.create(pipelineEntity));
         }
 
-        return cache.get(new VersionedEntityDecorator<>(pipelineEntity));
+        return cache.getUnchecked(new VersionedEntityDecorator<>(pipelineEntity));
     }
 
     private PipelineData create(final VersionedEntityDecorator key) {

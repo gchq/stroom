@@ -31,7 +31,7 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.refdata.impl.MockReferenceDataLoader;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.cache.CentralCacheManager;
+import stroom.util.cache.CacheManager;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.StroomLogger;
 import stroom.util.test.StroomJUnit4ClassRunner;
@@ -68,7 +68,7 @@ public class TestReferenceData extends StroomUnitTest {
         streamSet.add(new EffectiveStream(1, DateUtil.parseNormalDateTimeString("2008-01-01T09:47:00.000Z")));
         streamSet.add(new EffectiveStream(2, DateUtil.parseNormalDateTimeString("2009-01-01T09:47:00.000Z")));
         streamSet.add(new EffectiveStream(3, DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.000Z")));
-        try (CentralCacheManager cacheManager = new CentralCacheManager()) {
+        try (CacheManager cacheManager = new CacheManager()) {
             final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null) {
                 @Override
                 protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
@@ -155,7 +155,7 @@ public class TestReferenceData extends StroomUnitTest {
 
         final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
         streamSet.add(new EffectiveStream(0, 0L));
-        try (CentralCacheManager cacheManager = new CentralCacheManager()) {
+        try (CacheManager cacheManager = new CacheManager()) {
             final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null) {
                 @Override
                 protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
@@ -198,7 +198,7 @@ public class TestReferenceData extends StroomUnitTest {
 
         final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
         streamSet.add(new EffectiveStream(0, 0L));
-        try (CentralCacheManager cacheManager = new CentralCacheManager()) {
+        try (CacheManager cacheManager = new CacheManager()) {
             final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null) {
                 @Override
                 protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {

@@ -24,7 +24,7 @@ import stroom.entity.shared.ResultList;
 import stroom.security.Secured;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.cache.CentralCacheManager;
+import stroom.util.cache.CacheManager;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
@@ -36,10 +36,10 @@ import java.util.stream.Collectors;
 @Scope(StroomScope.TASK)
 @Secured(CacheRow.MANAGE_CACHE_PERMISSION)
 class FetchCacheRowHandler extends AbstractTaskHandler<FetchCacheRowAction, ResultList<CacheRow>> {
-    private final CentralCacheManager cacheManager;
+    private final CacheManager cacheManager;
 
     @Inject
-    FetchCacheRowHandler(final CentralCacheManager cacheManager) {
+    FetchCacheRowHandler(final CacheManager cacheManager) {
         this.cacheManager = cacheManager;
     }
 

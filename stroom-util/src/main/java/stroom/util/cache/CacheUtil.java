@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.pool;
+package stroom.util.cache;
 
-import org.ehcache.Cache;
+import com.google.common.cache.Cache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,19 +27,14 @@ public class CacheUtil {
         // Utility class.
     }
 
-    public static <K, V> void removeAll(final Cache<K, V> cache) {
+    public static void clear(final Cache cache) {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Removing all items from cache " + cache);
         }
 
         try {
-            cache.forEach(entry -> {
-                try {
-                    cache.remove(entry.getKey());
-                } catch (final Exception e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
-            });
+            cache.invalidateAll();
+            cache.cleanUp();
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
         }

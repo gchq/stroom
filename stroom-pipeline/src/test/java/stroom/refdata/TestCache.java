@@ -22,7 +22,7 @@ import org.junit.runner.RunWith;
 import stroom.entity.shared.DocRef;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.util.cache.CentralCacheManager;
+import stroom.util.cache.CacheManager;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 import stroom.xml.event.EventList;
@@ -33,7 +33,7 @@ public class TestCache extends StroomUnitTest {
 
     @Test
     public void testReferenceDataCache() {
-        try (CentralCacheManager cacheManager = new CentralCacheManager()) {
+        try (CacheManager cacheManager = new CacheManager()) {
             final ReferenceDataLoader referenceDataLoader = new ReferenceDataLoader() {
                 @Override
                 public MapStore load(final MapStoreCacheKey effectiveFeed) {

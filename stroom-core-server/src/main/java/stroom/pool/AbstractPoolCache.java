@@ -16,19 +16,14 @@
 
 package stroom.pool;
 
-import org.ehcache.Cache;
-import org.ehcache.config.CacheConfiguration;
-import org.ehcache.config.builders.CacheConfigurationBuilder;
-import org.ehcache.config.builders.CacheEventListenerConfigurationBuilder;
-import org.ehcache.config.builders.ResourcePoolsBuilder;
-import org.ehcache.event.CacheEventListener;
-import org.ehcache.event.EventType;
-import org.ehcache.expiry.Duration;
-import org.ehcache.expiry.Expirations;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.cache.Loader;
-import stroom.util.cache.CentralCacheManager;
+import stroom.util.cache.CacheManager;
+import stroom.util.cache.CacheUtil;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,35 +36,27 @@ public abstract class AbstractPoolCache<K, V> {
 
     private static final int MAX_CACHE_ENTRIES = 1000;
 
-    private final Cache<PoolKey, PoolItem> cache;
+    private final LoadingCache<PoolKey<K>, PoolItem<V>> cache;
     private final Map<K, LinkedBlockingDeque<PoolKey<K>>> keyMap = new ConcurrentHashMap<>();
 
     @SuppressWarnings("unchecked")
-    public AbstractPoolCache(final CentralCacheManager cacheManager, final String name) {
-        final Loader<PoolKey, PoolItem> loader = new Loader<PoolKey, PoolItem>() {
-            @Override
-            public PoolItem load(final PoolKey key) throws Exception {
-                final V value = internalCreateValue(key.getKey());
-                return new PoolItem<>(key, value);
-            }
-        };
-
-        final CacheEventListener<PoolKey, PoolItem> cacheEventListener = event -> destroy(event.getKey());
-        final CacheEventListenerConfigurationBuilder cacheEventListenerConfigurationBuilder = CacheEventListenerConfigurationBuilder.newEventListenerConfiguration(cacheEventListener, EventType.EVICTED, EventType.EXPIRED, EventType.REMOVED);
-
-        final CacheConfiguration<PoolKey, PoolItem> cacheConfiguration = CacheConfigurationBuilder.newCacheConfigurationBuilder(PoolKey.class, PoolItem.class,
-                ResourcePoolsBuilder.heap(MAX_CACHE_ENTRIES))
-                .withExpiry(Expirations.timeToIdleExpiration(Duration.of(10, TimeUnit.MINUTES)))
-                .withLoaderWriter(loader)
-                .add(cacheEventListenerConfigurationBuilder.build())
-                .build();
-
-        cache = cacheManager.createCache(name, cacheConfiguration);
+    public AbstractPoolCache(final CacheManager cacheManager, final String name) {
+        final RemovalListener<PoolKey<K>, PoolItem<V>> removalListener = notification -> destroy(notification.getKey());
+        final CacheLoader<PoolKey<K>, PoolItem<V>> cacheLoader = CacheLoader.from(k -> {
+            final V value = internalCreateValue(k.getKey());
+            return new PoolItem<>(k, value);
+        });
+        cache = CacheBuilder.newBuilder()
+                .maximumSize(MAX_CACHE_ENTRIES)
+                .expireAfterAccess(10, TimeUnit.MINUTES)
+                .removalListener(removalListener)
+                .build(cacheLoader);
+        cacheManager.registerCache(name, cache);
     }
 
     protected abstract V internalCreateValue(Object key);
 
-    @SuppressWarnings("unchecked")
+
     protected PoolItem<V> internalBorrowObject(final K key, final boolean usePool) {
         try {
             if (LOGGER.isDebugEnabled()) {
@@ -95,7 +82,7 @@ public abstract class AbstractPoolCache<K, V> {
             }
 
             // Get an item from the cache using the pool key.
-            return cache.get(poolKey);
+            return cache.getUnchecked(poolKey);
 
         } catch (final Exception e) {
             LOGGER.debug(e.getMessage(), e);
@@ -152,7 +139,7 @@ public abstract class AbstractPoolCache<K, V> {
     }
 
     protected void clear() {
-        CacheUtil.removeAll(cache);
+        CacheUtil.clear(cache);
     }
 
     private String getKeySizes() {

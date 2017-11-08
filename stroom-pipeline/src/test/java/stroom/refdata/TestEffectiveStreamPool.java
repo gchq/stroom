@@ -26,7 +26,7 @@ import stroom.streamstore.server.EffectiveMetaDataCriteria;
 import stroom.streamstore.server.MockStreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.cache.CentralCacheManager;
+import stroom.util.cache.CacheManager;
 import stroom.util.date.DateUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
@@ -64,7 +64,7 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
 
         DocRef feedRef = DocRef.create(referenceFeed);
 
-        try (CentralCacheManager cacheManager = new CentralCacheManager()) {
+        try (CacheManager cacheManager = new CacheManager()) {
             final EffectiveStreamCache effectiveStreamPool = new EffectiveStreamCache(cacheManager, mockStreamStore,
                     null, null);
 

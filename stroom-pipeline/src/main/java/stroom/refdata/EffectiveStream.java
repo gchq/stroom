@@ -19,9 +19,7 @@ package stroom.refdata;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 
-import java.io.Serializable;
-
-public class EffectiveStream implements Comparable<EffectiveStream>, Serializable {
+public class EffectiveStream implements Comparable<EffectiveStream> {
     private final long streamId;
     private final long effectiveMs;
     private final int hashCode;

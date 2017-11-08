@@ -16,16 +16,12 @@
 
 package stroom.task.cluster;
 
-import org.ehcache.Cache;
-import org.ehcache.config.CacheConfiguration;
-import org.ehcache.config.builders.CacheConfigurationBuilder;
-import org.ehcache.config.builders.ResourcePoolsBuilder;
-import org.ehcache.expiry.Duration;
-import org.ehcache.expiry.Expirations;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.Clearable;
-import stroom.pool.CacheUtil;
-import stroom.util.cache.CentralCacheManager;
+import stroom.util.cache.CacheUtil;
+import stroom.util.cache.CacheManager;
 import stroom.util.spring.StroomShutdown;
 
 import javax.inject.Inject;
@@ -40,13 +36,12 @@ public class ClusterResultCollectorCache implements Clearable {
     private volatile boolean shutdown;
 
     @Inject
-    public ClusterResultCollectorCache(final CentralCacheManager cacheManager) {
-        final CacheConfiguration<CollectorId, ClusterResultCollector> cacheConfiguration = CacheConfigurationBuilder.newCacheConfigurationBuilder(CollectorId.class, ClusterResultCollector.class,
-                ResourcePoolsBuilder.heap(MAX_CACHE_ENTRIES))
-                .withExpiry(Expirations.timeToIdleExpiration(Duration.of(1, TimeUnit.MINUTES)))
+    public ClusterResultCollectorCache(final CacheManager cacheManager) {
+        cache = CacheBuilder.newBuilder()
+                .maximumSize(MAX_CACHE_ENTRIES)
+                .expireAfterAccess(1, TimeUnit.MINUTES)
                 .build();
-
-        cache = cacheManager.createCache("Cluster Result Collector Cache", cacheConfiguration);
+        cacheManager.registerCache("Cluster Result Collector Cache", cache);
     }
 
     @StroomShutdown
@@ -59,23 +54,25 @@ public class ClusterResultCollectorCache implements Clearable {
             throw new RuntimeException("Stroom is shutting down");
         }
 
-        final ClusterResultCollector existing = cache.putIfAbsent(collectorId, clusterResultCollector);
+        final ClusterResultCollector existing = cache.getIfPresent(collectorId);
         if (existing != null) {
             throw new RuntimeException(
                     "Existing item found in cluster result collector cache for key '" + collectorId.toString() + "'");
         }
+
+        cache.put(collectorId, clusterResultCollector);
     }
 
     public ClusterResultCollector<?> get(final CollectorId collectorId) {
-        return cache.get(collectorId);
+        return cache.getIfPresent(collectorId);
     }
 
     public void remove(final CollectorId id) {
-        cache.remove(id);
+        cache.invalidate(id);
     }
 
     @Override
     public void clear() {
-        CacheUtil.removeAll(cache);
+        CacheUtil.clear(cache);
     }
 }

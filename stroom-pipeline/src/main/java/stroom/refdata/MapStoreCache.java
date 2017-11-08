@@ -16,19 +16,15 @@
 
 package stroom.refdata;
 
-import org.ehcache.Cache;
-import org.ehcache.config.CacheConfiguration;
-import org.ehcache.config.builders.CacheConfigurationBuilder;
-import org.ehcache.config.builders.ResourcePoolsBuilder;
-import org.ehcache.expiry.Duration;
-import org.ehcache.expiry.Expirations;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.cache.Loader;
 import stroom.pool.SecurityHelper;
 import stroom.security.SecurityContext;
-import stroom.util.cache.CentralCacheManager;
+import stroom.util.cache.CacheManager;
 
 import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;
@@ -44,13 +40,13 @@ public final class MapStoreCache {
 
     private static final int MAX_CACHE_ENTRIES = 100;
 
-    private final Cache<MapStoreCacheKey, MapStore> cache;
+    private final LoadingCache<MapStoreCacheKey, MapStore> cache;
     private final ReferenceDataLoader referenceDataLoader;
     private final MapStoreInternPool internPool;
     private final SecurityContext securityContext;
 
     @Inject
-    public MapStoreCache(final CentralCacheManager cacheManager,
+    public MapStoreCache(final CacheManager cacheManager,
                          final ReferenceDataLoader referenceDataLoader,
                          final MapStoreInternPool internPool,
                          final SecurityContext securityContext) {
@@ -58,24 +54,16 @@ public final class MapStoreCache {
         this.internPool = internPool;
         this.securityContext = securityContext;
 
-        final Loader<MapStoreCacheKey, MapStore> loader = new Loader<MapStoreCacheKey, MapStore>() {
-            @Override
-            public MapStore load(final MapStoreCacheKey key) throws Exception {
-                return create(key);
-            }
-        };
-
-        final CacheConfiguration<MapStoreCacheKey, MapStore> cacheConfiguration = CacheConfigurationBuilder.newCacheConfigurationBuilder(MapStoreCacheKey.class, MapStore.class,
-                ResourcePoolsBuilder.heap(MAX_CACHE_ENTRIES))
-                .withExpiry(Expirations.timeToIdleExpiration(Duration.of(1, TimeUnit.HOURS)))
-                .withLoaderWriter(loader)
-                .build();
-
-        cache = cacheManager.createCache("Reference Data - Map Store Cache", cacheConfiguration);
+        final CacheLoader<MapStoreCacheKey, MapStore> cacheLoader = CacheLoader.from(this::create);
+        cache = CacheBuilder.newBuilder()
+                .maximumSize(MAX_CACHE_ENTRIES)
+                .expireAfterAccess(1, TimeUnit.HOURS)
+                .build(cacheLoader);
+        cacheManager.registerCache("Reference Data - Map Store Cache", cache);
     }
 
     public MapStore get(final MapStoreCacheKey key) {
-        return cache.get(key);
+        return cache.getUnchecked(key);
     }
 
     private MapStore create(final MapStoreCacheKey mapStoreCacheKey) {

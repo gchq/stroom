@@ -16,23 +16,19 @@
 
 package stroom.security.server;
 
-import org.ehcache.Cache;
-import org.ehcache.config.CacheConfiguration;
-import org.ehcache.config.builders.CacheConfigurationBuilder;
-import org.ehcache.config.builders.ResourcePoolsBuilder;
-import org.ehcache.expiry.Duration;
-import org.ehcache.expiry.Expirations;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.springframework.stereotype.Component;
-import stroom.cache.Loader;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventBus;
 import stroom.entity.server.event.EntityEventHandler;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityAction;
-import stroom.pool.CacheUtil;
+import stroom.util.cache.CacheUtil;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
-import stroom.util.cache.CentralCacheManager;
+import stroom.util.cache.CacheManager;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -44,47 +40,46 @@ public class UserAppPermissionsCache implements EntityEvent.Handler {
     private static final int MAX_CACHE_ENTRIES = 1000;
 
     private final Provider<EntityEventBus> eventBusProvider;
-    private final Cache<UserRef, UserAppPermissions> cache;
+    private final LoadingCache<UserRef, UserAppPermissions> cache;
 
     @Inject
-    UserAppPermissionsCache(final CentralCacheManager cacheManager,
-                            final UserAppPermissionService userAppPermissionService, final Provider<EntityEventBus> eventBusProvider) {
+    UserAppPermissionsCache(final CacheManager cacheManager,
+                            final UserAppPermissionService userAppPermissionService,
+                            final Provider<EntityEventBus> eventBusProvider) {
         this.eventBusProvider = eventBusProvider;
-
-        final Loader<UserRef, UserAppPermissions> loader = new Loader<UserRef, UserAppPermissions>() {
-            @Override
-            public UserAppPermissions load(final UserRef key) throws Exception {
-                return userAppPermissionService.getPermissionsForUser(key);
-            }
-        };
-
-        final CacheConfiguration<UserRef, UserAppPermissions> cacheConfiguration = CacheConfigurationBuilder.newCacheConfigurationBuilder(UserRef.class, UserAppPermissions.class,
-                ResourcePoolsBuilder.heap(MAX_CACHE_ENTRIES))
-                .withExpiry(Expirations.timeToIdleExpiration(Duration.of(30, TimeUnit.MINUTES)))
-                .withLoaderWriter(loader)
-                .build();
-
-        cache = cacheManager.createCache("User App Permissions Cache", cacheConfiguration);
+        final CacheLoader<UserRef, UserAppPermissions> cacheLoader = CacheLoader.from(userAppPermissionService::getPermissionsForUser);
+        cache = CacheBuilder.newBuilder()
+                .maximumSize(MAX_CACHE_ENTRIES)
+                .expireAfterAccess(30, TimeUnit.MINUTES)
+                .build(cacheLoader);
+        cacheManager.registerCache("User App Permissions Cache", cache);
     }
 
     UserAppPermissions get(final UserRef key) {
-        return cache.get(key);
+        return cache.getUnchecked(key);
     }
 
     void remove(final UserRef userRef) {
-        cache.remove(userRef);
+        cache.invalidate(userRef);
         final EntityEventBus entityEventBus = eventBusProvider.get();
         EntityEvent.fire(entityEventBus, userRef, EntityAction.CLEAR_CACHE);
     }
 
     void clear() {
-        CacheUtil.removeAll(cache);
+        CacheUtil.clear(cache);
     }
 
     @Override
     public void onChange(final EntityEvent event) {
         final DocRef docRef = event.getDocRef();
-        final UserRef userRef = new UserRef(docRef.getType(), docRef.getUuid(), docRef.getName(), false, false);
-        remove(userRef);
+        if (docRef != null) {
+            if (docRef instanceof UserRef) {
+                UserRef userRef = (UserRef) docRef;
+                cache.invalidate(userRef);
+            } else {
+                final UserRef userRef = new UserRef(docRef.getType(), docRef.getUuid(), docRef.getName(), false, false);
+                cache.invalidate(userRef);
+            }
+        }
     }
 }

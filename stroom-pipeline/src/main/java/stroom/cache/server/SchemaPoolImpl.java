@@ -24,8 +24,7 @@ import stroom.pool.PoolItem;
 import stroom.pool.SecurityHelper;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
-import stroom.util.cache.CentralCacheManager;
-import stroom.util.task.ServerTask;
+import stroom.util.cache.CacheManager;
 import stroom.xmlschema.server.XMLSchemaCache;
 import stroom.xmlschema.shared.XMLSchema;
 
@@ -40,7 +39,7 @@ class SchemaPoolImpl extends AbstractPoolCache<SchemaKey, StoredSchema>
     private final SecurityContext securityContext;
 
     @Inject
-    SchemaPoolImpl(final CentralCacheManager cacheManager, final SchemaLoader schemaLoader, final XMLSchemaCache xmlSchemaCache, final SecurityContext securityContext) {
+    SchemaPoolImpl(final CacheManager cacheManager, final SchemaLoader schemaLoader, final XMLSchemaCache xmlSchemaCache, final SecurityContext securityContext) {
         super(cacheManager, "Schema Pool");
         this.schemaLoader = schemaLoader;
         this.securityContext = securityContext;

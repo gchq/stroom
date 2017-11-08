@@ -16,17 +16,13 @@
 
 package stroom.entity.server;
 
-import org.ehcache.Cache;
-import org.ehcache.config.CacheConfiguration;
-import org.ehcache.config.builders.CacheConfigurationBuilder;
-import org.ehcache.config.builders.ResourcePoolsBuilder;
-import org.ehcache.expiry.Duration;
-import org.ehcache.expiry.Expirations;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.springframework.stereotype.Component;
-import stroom.cache.Loader;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
-import stroom.util.cache.CentralCacheManager;
+import stroom.util.cache.CacheManager;
 
 import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;
@@ -37,34 +33,26 @@ public class DocumentPermissionCacheImpl implements DocumentPermissionCache {
     private static final int MAX_CACHE_ENTRIES = 1000;
 
     private final SecurityContext securityContext;
-    private final Cache<DocumentPermission, Boolean> cache;
+    private final LoadingCache<DocumentPermission, Boolean> cache;
 
     @Inject
-    public DocumentPermissionCacheImpl(final CentralCacheManager cacheManager,
+    public DocumentPermissionCacheImpl(final CacheManager cacheManager,
                                        final SecurityContext securityContext) {
         this.securityContext = securityContext;
 
-        final Loader<DocumentPermission, Boolean> loader = new Loader<DocumentPermission, Boolean>() {
-            @Override
-            public Boolean load(final DocumentPermission key) throws Exception {
-                return securityContext.hasDocumentPermission(key.documentType, key.documentUuid, key.permission);
-            }
-        };
-
-        final CacheConfiguration<DocumentPermission, Boolean> cacheConfiguration = CacheConfigurationBuilder.newCacheConfigurationBuilder(DocumentPermission.class, Boolean.class,
-                ResourcePoolsBuilder.heap(MAX_CACHE_ENTRIES))
-                .withExpiry(Expirations.timeToIdleExpiration(Duration.of(10, TimeUnit.MINUTES)))
-                .withLoaderWriter(loader)
-                .build();
-
-        cache = cacheManager.createCache("Document Permission Cache", cacheConfiguration);
+        final CacheLoader<DocumentPermission, Boolean> cacheLoader = CacheLoader.from(k -> securityContext.hasDocumentPermission(k.documentType, k.documentUuid, k.permission));
+        cache = CacheBuilder.newBuilder()
+                .maximumSize(MAX_CACHE_ENTRIES)
+                .expireAfterAccess(10, TimeUnit.MINUTES)
+                .build(cacheLoader);
+        cacheManager.registerCache("Document Permission Cache", cache);
     }
 
 
     @Override
     public boolean hasDocumentPermission(final String documentType, final String documentUuid, final String permission) {
         final DocumentPermission documentPermission = new DocumentPermission(securityContext.getUserId(), documentType, documentUuid, permission);
-        return cache.get(documentPermission);
+        return cache.getUnchecked(documentPermission);
     }
 
     private static class DocumentPermission {

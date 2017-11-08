@@ -16,18 +16,12 @@
 
 package stroom.dashboard.server;
 
-import org.ehcache.Cache;
-import org.ehcache.config.CacheConfiguration;
-import org.ehcache.config.builders.CacheConfigurationBuilder;
-import org.ehcache.config.builders.CacheEventListenerConfigurationBuilder;
-import org.ehcache.config.builders.ResourcePoolsBuilder;
-import org.ehcache.event.CacheEventListener;
-import org.ehcache.event.EventType;
-import org.ehcache.expiry.Duration;
-import org.ehcache.expiry.Expirations;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
 import org.springframework.stereotype.Component;
-import stroom.cache.Loader;
-import stroom.util.cache.CentralCacheManager;
+import stroom.util.cache.CacheManager;
 
 import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;
@@ -36,41 +30,22 @@ import java.util.concurrent.TimeUnit;
 public class ActiveQueriesManager {
     private static final int MAX_ACTIVE_QUERIES = 100;
 
-    private final Cache<String, ActiveQueries> cache;
+    private final LoadingCache<String, ActiveQueries> cache;
 
     @Inject
-    public ActiveQueriesManager(final CentralCacheManager cacheManager) {
-        final Loader<String, ActiveQueries> loader = new Loader<String, ActiveQueries>() {
-            @Override
-            public ActiveQueries load(final String key) throws Exception {
-                return new ActiveQueries();
-            }
-        };
+    public ActiveQueriesManager(final CacheManager cacheManager) {
+        final RemovalListener<String, ActiveQueries> removalListener = notification -> notification.getValue().destroy();
 
-        final ResourcePoolsBuilder resourcePoolsBuilder = ResourcePoolsBuilder
-                .heap(MAX_ACTIVE_QUERIES);
-
-        final CacheEventListener<String, ActiveQueries> cacheEventListener = event -> {
-            if (event.getOldValue() != null) {
-                event.getOldValue().destroy();
-            }
-            if (event.getNewValue() != null) {
-                event.getNewValue().destroy();
-            }
-        };
-        final CacheEventListenerConfigurationBuilder cacheEventListenerConfigurationBuilder = CacheEventListenerConfigurationBuilder.newEventListenerConfiguration(cacheEventListener, EventType.EVICTED, EventType.EXPIRED, EventType.REMOVED);
-
-        final CacheConfiguration<String, ActiveQueries> cacheConfiguration = CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, ActiveQueries.class,
-                resourcePoolsBuilder)
-                .add(cacheEventListenerConfigurationBuilder.build())
-                .withExpiry(Expirations.timeToIdleExpiration(Duration.of(1, TimeUnit.MINUTES)))
-                .withLoaderWriter(loader)
-                .build();
-
-        cache = cacheManager.createCache("Active Queries", cacheConfiguration);
+        final CacheLoader<String, ActiveQueries> cacheLoader = CacheLoader.from(k -> new ActiveQueries());
+        cache = CacheBuilder.newBuilder()
+                .maximumSize(MAX_ACTIVE_QUERIES)
+                .expireAfterAccess(1, TimeUnit.MINUTES)
+                .removalListener(removalListener)
+                .build(cacheLoader);
+        cacheManager.registerCache("Active Queries", cache);
     }
 
     public ActiveQueries get(final String key) {
-        return cache.get(key);
+        return cache.getUnchecked(key);
     }
 }

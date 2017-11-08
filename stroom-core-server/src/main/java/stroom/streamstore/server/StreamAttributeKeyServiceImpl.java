@@ -16,8 +16,9 @@
 
 package stroom.streamstore.server;
 
-import com.googlecode.ehcache.annotations.Cacheable;
-import com.googlecode.ehcache.annotations.KeyGenerator;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.SystemEntityServiceImpl;
@@ -28,8 +29,10 @@ import stroom.security.Insecure;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeKeyService;
+import stroom.util.cache.CacheManager;
 
 import javax.inject.Inject;
+import java.util.concurrent.TimeUnit;
 
 @Transactional
 @Component
@@ -37,9 +40,20 @@ import javax.inject.Inject;
 public class StreamAttributeKeyServiceImpl
         extends SystemEntityServiceImpl<StreamAttributeKey, FindStreamAttributeKeyCriteria>
         implements StreamAttributeKeyService {
+    private static final int MAX_CACHE_ENTRIES = 1000;
+
+    private final LoadingCache<String, BaseResultList<StreamAttributeKey>> cache;
+
     @Inject
-    StreamAttributeKeyServiceImpl(final StroomEntityManager entityManager) {
+    StreamAttributeKeyServiceImpl(final StroomEntityManager entityManager,
+                                  final CacheManager cacheManager) {
         super(entityManager);
+        final CacheLoader<String, BaseResultList<StreamAttributeKey>> cacheLoader = CacheLoader.from(k -> find(new FindStreamAttributeKeyCriteria()));
+        cache = CacheBuilder.newBuilder()
+                .maximumSize(MAX_CACHE_ENTRIES)
+                .expireAfterAccess(10, TimeUnit.MINUTES)
+                .build(cacheLoader);
+        cacheManager.registerCache("Stream Attribute Key Cache", cache);
     }
 
     @Override
@@ -48,9 +62,8 @@ public class StreamAttributeKeyServiceImpl
     }
 
     @Override
-    @Cacheable(cacheName = "serviceCache", keyGenerator = @KeyGenerator(name = "ListCacheKeyGenerator"))
     public BaseResultList<StreamAttributeKey> findAll() throws RuntimeException {
-        return find(new FindStreamAttributeKeyCriteria());
+        return cache.getUnchecked("findAll");
     }
 
     @Override

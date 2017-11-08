@@ -43,9 +43,6 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
-import java.util.Comparator;
-import java.util.Map;
-
 public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<CacheNodeRow>> implements HasRead<CacheRow> {
     private static final int SMALL_COL = 90;
     private static final int MEDIUM_COL = 150;
@@ -112,16 +109,9 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
 
         final StringBuilder sb = new StringBuilder();
         TooltipUtil.addHeading(sb, row.getNode().getName());
-
-        cacheInfo.getDetails().keySet().stream().sorted(Comparator.naturalOrder()).forEach(heading -> {
-            TooltipUtil.addBreak(sb);
-            TooltipUtil.addHeading(sb, heading);
-
-            final Map<String, String> details = cacheInfo.getDetails().get(heading);
-            details.keySet().stream().sorted(Comparator.naturalOrder()).forEach(key -> {
-                TooltipUtil.addRowData(sb, key, details.get(key));
-            });
-        });
+        TooltipUtil.addRowData(sb, "Config", cacheInfo.getConfig());
+        TooltipUtil.addRowData(sb, "Stats", cacheInfo.getStats());
+        TooltipUtil.addRowData(sb, "Entries", cacheInfo.getSize());
 
         return sb.toString();
     }

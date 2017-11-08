@@ -41,7 +41,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
+import java.util.NavigableSet;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
@@ -213,7 +213,7 @@ public class ReferenceData {
             final EffectiveStreamKey effectiveStreamKey = new EffectiveStreamKey(pipelineReference.getFeed(),
                     pipelineReference.getStreamType(), baseTime);
             // Try and fetch a tree set of effective streams for this key.
-            final TreeSet<EffectiveStream> streamSet = effectiveStreamCache.get(effectiveStreamKey);
+            final NavigableSet<EffectiveStream> streamSet = effectiveStreamCache.get(effectiveStreamKey);
 
             if (streamSet != null && streamSet.size() > 0) {
                 // Try and find the stream before the requested time that is less

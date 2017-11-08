@@ -22,13 +22,13 @@ import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.PermissionException;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.cache.CentralCacheManager;
+import stroom.util.cache.CacheManager;
 
 public abstract class AbstractEntityPool<K extends DocumentEntity, V> extends AbstractPoolCache<VersionedEntityDecorator<K>, V> implements Pool<K, V> {
     private final DocumentPermissionCache documentPermissionCache;
     private final SecurityContext securityContext;
 
-    public AbstractEntityPool(final CentralCacheManager cacheManager, final String name, final DocumentPermissionCache documentPermissionCache, final SecurityContext securityContext) {
+    public AbstractEntityPool(final CacheManager cacheManager, final String name, final DocumentPermissionCache documentPermissionCache, final SecurityContext securityContext) {
         super(cacheManager, name);
         this.documentPermissionCache = documentPermissionCache;
         this.securityContext = securityContext;

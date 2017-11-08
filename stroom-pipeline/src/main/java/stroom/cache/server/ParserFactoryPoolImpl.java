@@ -30,7 +30,7 @@ import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.pool.AbstractEntityPool;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
-import stroom.util.cache.CentralCacheManager;
+import stroom.util.cache.CacheManager;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 import stroom.xml.converter.ParserFactory;
@@ -48,7 +48,7 @@ class ParserFactoryPoolImpl
     private final DSChooser dsChooser;
 
     @Inject
-    ParserFactoryPoolImpl(final CentralCacheManager cacheManager, final DocumentPermissionCache documentPermissionCache, final SecurityContext securityContext, final DSChooser dsChooser) {
+    ParserFactoryPoolImpl(final CacheManager cacheManager, final DocumentPermissionCache documentPermissionCache, final SecurityContext securityContext, final DSChooser dsChooser) {
         super(cacheManager, "Parser Factory Pool", documentPermissionCache, securityContext);
         this.dsChooser = dsChooser;
     }

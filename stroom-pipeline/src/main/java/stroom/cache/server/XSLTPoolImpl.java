@@ -36,7 +36,7 @@ import stroom.pool.AbstractEntityPool;
 import stroom.pool.PoolItem;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
-import stroom.util.cache.CentralCacheManager;
+import stroom.util.cache.CacheManager;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomBeanStore;
@@ -56,7 +56,7 @@ class XSLTPoolImpl extends AbstractEntityPool<XSLT, StoredXsltExecutable> implem
     private final StroomBeanStore beanStore;
 
     @Inject
-    XSLTPoolImpl(final CentralCacheManager cacheManager,
+    XSLTPoolImpl(final CacheManager cacheManager,
                  final DocumentPermissionCache documentPermissionCache,
                  final SecurityContext securityContext,
                  final URIResolver uriResolver,

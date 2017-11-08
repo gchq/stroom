@@ -16,11 +16,7 @@
 
 package stroom.cache;
 
-import org.ehcache.Cache;
-import org.ehcache.config.ResourcePool;
-import org.ehcache.config.ResourcePools;
-import org.ehcache.config.SizedResourcePool;
-import org.ehcache.core.HumanReadable;
+import com.google.common.cache.Cache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -29,25 +25,24 @@ import stroom.cache.shared.FindCacheInfoCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.PageRequest;
-import stroom.pool.CacheUtil;
-import stroom.util.cache.CentralCacheManager;
+import stroom.util.cache.CacheUtil;
+import stroom.util.cache.CacheManager;
+import stroom.util.spring.StroomFrequencySchedule;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
 public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomCacheManagerImpl.class);
 
-    private final CentralCacheManager cacheManager;
+    private final CacheManager cacheManager;
 
     @Inject
-    public StroomCacheManagerImpl(final CentralCacheManager cacheManager) {
+    public StroomCacheManagerImpl(final CacheManager cacheManager) {
         this.cacheManager = cacheManager;
     }
 
@@ -99,26 +94,29 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
 
 
                 if (cache != null) {
-                    final Map<String, Map<String, String>> resourcePoolDetails = new HashMap<>();
-                    final ResourcePools resourcePools = cache.getRuntimeConfiguration().getResourcePools();
-                    resourcePools.getResourceTypeSet().forEach(resourceType -> {
-                        final Map<String, String> details = resourcePoolDetails.computeIfAbsent("Tier " + resourceType.getTierHeight(), k -> new HashMap<>());
+//                    final Map<String, Map<String, String>> resourcePoolDetails = new HashMap<>();
+//                    final Map<String, String> details = resourcePoolDetails.computeIfAbsent("Details", k -> new HashMap<>());
+//                    details.put("Entries", String.valueOf(cache.size()));
+//
+//                    final ResourcePools resourcePools = cache.getRuntimeConfiguration().getResourcePools();
+//                    resourcePools.getResourceTypeSet().forEach(resourceType -> {
+//                        final Map<String, String> details = resourcePoolDetails.computeIfAbsent("Tier " + resourceType.getTierHeight(), k -> new HashMap<>());
+//
+//                        final ResourcePool resourcePool = resourcePools.getPoolForResource(resourceType);
+//                        details.put("Name", resourceType.getResourcePoolClass().getSimpleName());
+//                        details.put("Persistable", String.valueOf(resourceType.isPersistable()));
+//                        details.put("Required Serialisation", String.valueOf(resourceType.requiresSerialization()));
+//
+//                        if (resourcePool instanceof SizedResourcePool) {
+//                            final SizedResourcePool sizedResourcePool = (SizedResourcePool) resourcePool;
+//                            details.put("Size", String.valueOf(sizedResourcePool.getSize()) + " " + sizedResourcePool.getUnit().toString());
+//                        }
+//                    });
+//
+//                    resourcePoolDetails.computeIfAbsent("Expiry", k -> new HashMap<>())
+//                    .put("Expiry", cache.getRuntimeConfiguration().getExpiry().toString());
 
-                        final ResourcePool resourcePool = resourcePools.getPoolForResource(resourceType);
-                        details.put("Name", resourceType.getResourcePoolClass().getSimpleName());
-                        details.put("Persistable", String.valueOf(resourceType.isPersistable()));
-                        details.put("Required Serialisation", String.valueOf(resourceType.requiresSerialization()));
-
-                        if (resourcePool instanceof SizedResourcePool) {
-                            final SizedResourcePool sizedResourcePool = (SizedResourcePool) resourcePool;
-                            details.put("Size", String.valueOf(sizedResourcePool.getSize()) + " " + sizedResourcePool.getUnit().toString());
-                        }
-                    });
-
-                    resourcePoolDetails.computeIfAbsent("Expiry", k -> new HashMap<>())
-                    .put("Expiry", cache.getRuntimeConfiguration().getExpiry().toString());
-
-                    final CacheInfo info = new CacheInfo(cacheName, resourcePoolDetails);
+                    final CacheInfo info = new CacheInfo(cacheName, cache.toString(), cache.stats().toString(), cache.size());
                     list.add(info);
                 }
             }
@@ -126,18 +124,18 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
         return list;
     }
 
-//    @Override
-//    @StroomFrequencySchedule("1m")
-//    public void evictExpiredElements() {
-//        cacheManager.getCaches().forEach((k, v) -> {
-//            LOGGER.debug("Evicting cache entries for " + k);
-//            try {
-//                v.evictExpiredElements();
-//            } catch (final Exception e) {
-//                LOGGER.error(e.getMessage(), e);
-//            }
-//        });
-//    }
+    @Override
+    @StroomFrequencySchedule("1m")
+    public void evictExpiredElements() {
+        cacheManager.getCaches().forEach((k, v) -> {
+            LOGGER.debug("Evicting cache entries for " + k);
+            try {
+                v.cleanUp();
+            } catch (final Exception e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        });
+    }
 
     /**
      * Removes all items from all caches.
@@ -147,19 +145,11 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
         cacheManager.getCaches().forEach((k, v) -> {
             LOGGER.debug("Clearing cache entries for " + k);
             try {
-                CacheUtil.removeAll(v);
+                CacheUtil.clear(v);
             } catch (final Exception e) {
                 LOGGER.error(e.getMessage(), e);
             }
         });
-
-//        final String[] cacheNames = cacheManager.getCacheNames();
-//        for (final String cacheName : cacheNames) {
-//            final Ehcache cache = cacheManager.getEhcache(cacheName);
-//            if (cache != null) {
-//                CacheUtil.clear(cache);
-//            }
-//        }
     }
 
     /**
@@ -172,7 +162,7 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
             final String cacheName = cacheInfo.getName();
             final Cache cache = cacheManager.getCaches().get(cacheName);
             if (cache != null) {
-                CacheUtil.removeAll(cache);
+                CacheUtil.clear(cache);
             } else {
                 LOGGER.error("Unable to find cache with name '" + cacheName + "'");
             }

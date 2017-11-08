@@ -16,16 +16,12 @@
 
 package stroom.refdata;
 
-import org.ehcache.Cache;
-import org.ehcache.config.CacheConfiguration;
-import org.ehcache.config.builders.CacheConfigurationBuilder;
-import org.ehcache.config.builders.ResourcePoolsBuilder;
-import org.ehcache.expiry.Duration;
-import org.ehcache.expiry.Expirations;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.cache.Loader;
 import stroom.entity.shared.Period;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pool.SecurityHelper;
@@ -33,13 +29,14 @@ import stroom.security.SecurityContext;
 import stroom.streamstore.server.EffectiveMetaDataCriteria;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.Stream;
-import stroom.util.cache.CentralCacheManager;
+import stroom.util.cache.CacheManager;
 
 import javax.inject.Inject;
+import java.util.Collections;
 import java.util.List;
+import java.util.NavigableSet;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Component
 public class EffectiveStreamCache {
@@ -54,13 +51,13 @@ public class EffectiveStreamCache {
 
     private static final int MAX_CACHE_ENTRIES = 1000;
 
-    private final Cache<EffectiveStreamKey, TreeSet> cache;
+    private final LoadingCache<EffectiveStreamKey, NavigableSet> cache;
     private final StreamStore streamStore;
     private final EffectiveStreamInternPool internPool;
     private final SecurityContext securityContext;
 
     @Inject
-    EffectiveStreamCache(final CentralCacheManager cacheManager,
+    EffectiveStreamCache(final CacheManager cacheManager,
                          final StreamStore streamStore,
                          final EffectiveStreamInternPool internPool,
                          final SecurityContext securityContext) {
@@ -68,24 +65,16 @@ public class EffectiveStreamCache {
         this.internPool = internPool;
         this.securityContext = securityContext;
 
-        final Loader<EffectiveStreamKey, TreeSet> loader = new Loader<EffectiveStreamKey, TreeSet>() {
-            @Override
-            public TreeSet load(final EffectiveStreamKey key) throws Exception {
-                return create(key);
-            }
-        };
-
-        final CacheConfiguration<EffectiveStreamKey, TreeSet> cacheConfiguration = CacheConfigurationBuilder.newCacheConfigurationBuilder(EffectiveStreamKey.class, TreeSet.class,
-                ResourcePoolsBuilder.heap(MAX_CACHE_ENTRIES))
-                .withExpiry(Expirations.timeToIdleExpiration(Duration.of(10, TimeUnit.MINUTES)))
-                .withLoaderWriter(loader)
-                .build();
-
-        cache = cacheManager.createCache("Reference Data - Effective Stream Cache", cacheConfiguration);
+        final CacheLoader<EffectiveStreamKey, NavigableSet> cacheLoader = CacheLoader.from(this::create);
+        cache = CacheBuilder.newBuilder()
+                .maximumSize(MAX_CACHE_ENTRIES)
+                .expireAfterAccess(10, TimeUnit.MINUTES)
+                .build(cacheLoader);
+        cacheManager.registerCache("Reference Data - Effective Stream Cache", cache);
     }
 
     @SuppressWarnings("unchecked")
-    public TreeSet<EffectiveStream> get(final EffectiveStreamKey effectiveStreamKey) {
+    public NavigableSet<EffectiveStream> get(final EffectiveStreamKey effectiveStreamKey) {
         if (effectiveStreamKey.getFeed() == null) {
             throw new ProcessException("No feed has been specified for reference data lookup");
         }
@@ -93,12 +82,12 @@ public class EffectiveStreamCache {
             throw new ProcessException("No stream type has been specified for reference data lookup");
         }
 
-        return cache.get(effectiveStreamKey);
+        return cache.getUnchecked(effectiveStreamKey);
     }
 
-    protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
+    protected NavigableSet<EffectiveStream> create(final EffectiveStreamKey key) {
         try (SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
-            TreeSet<EffectiveStream> effectiveStreamSet = null;
+            NavigableSet<EffectiveStream> effectiveStreamSet = Collections.emptyNavigableSet();
 
             try {
                 if (LOGGER.isDebugEnabled()) {
@@ -157,12 +146,6 @@ public class EffectiveStreamCache {
                 LOGGER.error(e.getMessage(), e);
             }
 
-            // Make sure this pool always returns some kind of effective stream set
-            // even if an exception was thrown during load.
-            if (effectiveStreamSet == null) {
-                effectiveStreamSet = new TreeSet<>();
-            }
-
             return effectiveStreamSet;
         }
     }
@@ -177,8 +160,6 @@ public class EffectiveStreamCache {
     }
 
     long size() {
-        final AtomicLong count = new AtomicLong();
-        cache.forEach(e -> count.getAndIncrement());
-        return count.get();
+        return cache.size();
     }
 }
