@@ -52,7 +52,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
     private static final Logger LOGGER = LoggerFactory.getLogger(JWTAuthenticationFilter.class);
 
     // This cookie contains the SSO session ID. It is created here so we can track the nonce.
-    private static final String SESSION_COOKIE = "sessionId";
+    private static final String STROOM_SESSION_COOKIE = "stroomSessionId";
 
     private final String authenticationServiceUrl;
     private final String advertisedStroomUrl;
@@ -105,15 +105,15 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
         Optional<String> optionalStroomSessionId = Optional.empty();
         if(((ShiroHttpServletRequest) request).getCookies() != null) {
             optionalStroomSessionId = Arrays.stream(((ShiroHttpServletRequest) request).getCookies())
-                    .filter(cookie -> cookie.getName().equals(SESSION_COOKIE))
+                    .filter(cookie -> cookie.getName().equals(STROOM_SESSION_COOKIE))
                     .findFirst()
                     .map(cookie -> cookie.getValue());
         }
-        // If we don't have a stroomSessionId then we need to create one.
         if(optionalStroomSessionId.isPresent()){
             stroomSessionId = optionalStroomSessionId.get();
         }
         else {
+            // If we don't have a stroomSessionId then we need to create one.
             stroomSessionId = UUID.randomUUID().toString();
         }
 
@@ -157,7 +157,9 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
                 LOGGER.info("Redirecting with an AuthenticationRequest to: {}", authenticationRequestUrl);
                 HttpServletResponse httpResponse = WebUtils.toHttp(response);
                 // We want to make sure that the client has the cookie.
-                httpResponse.addCookie(new Cookie(SESSION_COOKIE, stroomSessionId));
+                Cookie sessionIdCookie = new Cookie(STROOM_SESSION_COOKIE, stroomSessionId);
+                sessionIdCookie.setPath("/");
+                httpResponse.addCookie(sessionIdCookie);
                 httpResponse.sendRedirect(authenticationRequestUrl);
                 return false;
             }
@@ -195,7 +197,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
         // ... and we expect a stroomSessionId cookie.
         // We need the sessionId cookie so we can identify this session to the remote AuthenticationService.
         Optional<String> optionalSessionId = Arrays.stream(((ShiroHttpServletRequest) request).getCookies())
-                .filter(cookie -> cookie.getName().equals(SESSION_COOKIE))
+                .filter(cookie -> cookie.getName().equals(STROOM_SESSION_COOKIE))
                 .findFirst()
                 .map(cookie -> cookie.getValue());
         String sessionId = optionalSessionId.get();
