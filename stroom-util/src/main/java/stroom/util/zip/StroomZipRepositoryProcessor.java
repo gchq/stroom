@@ -106,8 +106,6 @@ public abstract class StroomZipRepositoryProcessor {
             // Do the threaded work
             startExecutor();
 
-            feedToFileMap.clear();
-
             // Scan all of the zip files in the repository so that we can map
             // zip files to feeds.
             final Iterable<File> zipFiles = stroomZipRepository.getZipFiles();

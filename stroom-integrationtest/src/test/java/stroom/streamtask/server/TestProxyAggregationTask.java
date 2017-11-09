@@ -37,6 +37,7 @@ import stroom.util.io.StreamUtil;
 import stroom.util.spring.DummyTask;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.util.test.StroomExpectedException;
+import stroom.util.thread.ThreadUtil;
 import stroom.util.zip.StroomZipFile;
 
 import javax.annotation.Resource;
@@ -371,13 +372,14 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
     }
 
-    private void writeTestFile(final File testFile, final Feed eventFeed, final String data)
+    private static void writeTestFile(final File testFile, final String feedName, final String data)
             throws IOException {
+
         FileUtil.mkdirs(testFile.getParentFile());
         final ZipOutputStream zipOutputStream = new ZipOutputStream(new FileOutputStream(testFile));
         zipOutputStream.putNextEntry(new ZipEntry(StroomZipFile.SINGLE_META_ENTRY.getFullName()));
         PrintWriter printWriter = new PrintWriter(zipOutputStream);
-        printWriter.println("Feed:" + eventFeed.getName());
+        printWriter.println("Feed:" + feedName);
         printWriter.println("Proxy:ProxyTest");
         printWriter.flush();
         zipOutputStream.closeEntry();
@@ -387,6 +389,11 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         printWriter.flush();
         zipOutputStream.closeEntry();
         zipOutputStream.close();
+    }
+
+    private static void writeTestFile(final File testFile, final Feed eventFeed, final String data)
+            throws IOException {
+        writeTestFile(testFile, eventFeed.getName(), data);
     }
 
     private void writeTestFileWithManyEntries(final File testFile, final Feed eventFeed, final int count)
@@ -458,6 +465,22 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         final FindStreamCriteria findStreamCriteria1 = new FindStreamCriteria();
         findStreamCriteria1.obtainFeeds().obtainInclude().add(eventFeed1);
         Assert.assertEquals(1, streamStore.find(findStreamCriteria1).size());
+
+        while (true) {
+
+        }
+    }
+    public static void main(final String[] args) throws IOException {
+
+        final File proxyDir = new File("/tmp/stroom/dev/proxy");
+
+        FileUtil.mkdirs(proxyDir);
+
+        for (int i = 1; i <= 1000000000; i++) {
+            final File testFile1 = new File(proxyDir, String.format("%08d", i) + ".zip");
+            writeTestFile(testFile1, "TEST_FEED", i + "-data1\n" + i + "-data1\n");
+            ThreadUtil.sleep(100);
+        }
     }
 
     @Test
