@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#477** : Additional changes to ensure search sub tasks use threads fairly between multiple searches.
+
 ## [v5.0-beta.57] - 2017-11-08
 
 * Issue **#477** : Search sub tasks are now correctly linked to their parent task and can therefore be terminated by terminating parent tasks.
