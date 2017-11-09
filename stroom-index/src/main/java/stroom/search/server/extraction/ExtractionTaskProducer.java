@@ -25,7 +25,10 @@ import stroom.search.server.Event;
 import stroom.search.server.extraction.ExtractionTask.ResultReceiver;
 import stroom.search.server.shard.TransferList;
 import stroom.search.server.taskqueue.AbstractTaskProducer;
+import stroom.task.server.ExecutorProvider;
+import stroom.task.server.ThreadPoolImpl;
 import stroom.util.shared.Severity;
+import stroom.util.shared.ThreadPool;
 
 import javax.inject.Provider;
 import java.util.Arrays;
@@ -37,6 +40,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ExtractionTaskProducer extends AbstractTaskProducer {
+    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Stroom Data Extraction", 5, 0, Integer.MAX_VALUE);
+
     private final ClusterSearchTask clusterSearchTask;
     private final StreamMapCreator streamMapCreator;
     private final TransferList<String[]> storedData;
@@ -54,9 +59,9 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
                                   final Map<DocRef, Set<Coprocessor<?>>> extractionCoprocessorsMap,
                                   final ErrorReceiver errorReceiver,
                                   final int maxThreadsPerTask,
+                                  final ExecutorProvider executorProvider,
                                   final Provider<ExtractionTaskHandler> handlerProvider) {
-        super(maxThreadsPerTask);
-
+        super(maxThreadsPerTask, executorProvider.getExecutor(THREAD_POOL));
         this.clusterSearchTask = clusterSearchTask;
         this.streamMapCreator = streamMapCreator;
         this.storedData = storedData;

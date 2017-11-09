@@ -21,7 +21,10 @@ import stroom.search.server.ClusterSearchTask;
 import stroom.search.server.shard.IndexShardSearchTask.IndexShardQueryFactory;
 import stroom.search.server.shard.IndexShardSearchTask.ResultReceiver;
 import stroom.search.server.taskqueue.AbstractTaskProducer;
+import stroom.task.server.ExecutorProvider;
+import stroom.task.server.ThreadPoolImpl;
 import stroom.util.shared.Severity;
+import stroom.util.shared.ThreadPool;
 
 import javax.inject.Provider;
 import java.util.List;
@@ -32,6 +35,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class IndexShardSearchTaskProducer extends AbstractTaskProducer {
+    static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Stroom Search Index Shard", 5, 0, Integer.MAX_VALUE);
+
     private static final long ONE_SECOND = TimeUnit.SECONDS.toNanos(1);
 
     private final ClusterSearchTask clusterSearchTask;
@@ -50,8 +55,9 @@ public class IndexShardSearchTaskProducer extends AbstractTaskProducer {
                                         final ErrorReceiver errorReceiver,
                                         final AtomicLong hitCount,
                                         final int maxThreadsPerTask,
+                                        final ExecutorProvider executorProvider,
                                         final Provider<IndexShardSearchTaskHandler> handlerProvider) {
-        super(maxThreadsPerTask);
+        super(maxThreadsPerTask, executorProvider.getExecutor(THREAD_POOL));
         this.clusterSearchTask = clusterSearchTask;
         this.indexShardSearcherCache = indexShardSearcherCache;
         this.errorReceiver = errorReceiver;
