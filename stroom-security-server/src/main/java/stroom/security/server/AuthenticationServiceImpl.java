@@ -188,36 +188,19 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     @Insecure
     public String logout() {
-        // We have to call the remote AuthenticationService to log us out.
-        final HttpServletRequest request = httpServletRequestHolder.get();
-        Optional<String> optionalSessionId  = Arrays.stream(request.getCookies())
-                .filter(cookie -> cookie.getName().equals("sessionId"))
-                .findFirst()
-                .map(cookie -> cookie.getValue());
-        if(!optionalSessionId.isPresent()){
-            LOGGER.debug("Tried to log a user out but there wasn't a session.");
-        }
-        else {
-            String sessionId = optionalSessionId.get();
-            try {
-                authenticationServiceClients.newDefaultApi().logout(sessionId);
-            } catch (ApiException e) {
-                LOGGER.error("Unable to log user out!", e);
-            }
-        }
-
-        final UserRef user = getCurrentUser();
+        // We don't need to call the authentication service to log out - the login manager will
+        // redirect the user's browser to the authentication service's logout endpoint.
 
         // Remove the user authentication object
         SecurityUtils.getSubject().logout();
 
         // Invalidate the current user session
-        request.getSession().invalidate();
+        httpServletRequestHolder.get().getSession().invalidate();
 
+        final UserRef user = getCurrentUser();
         if (user != null) {
             // Create an event for logout
             eventLog.logoff(user.getName());
-
             return user.getName();
         }
 

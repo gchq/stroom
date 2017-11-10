@@ -79,8 +79,9 @@ public class LoginManager implements HasHandlers {
     private void logout() {
         // Clear everything we know about the current user.
         currentUser.clear();
-        // When we start the application we will try and auto login using a client certificate.
+        // Perform logout on the server
         dispatcher.exec(new LogoutAction(), null);
+        // Send the user's browser to the remote Authentication Service's logout endpoint.
         locationManager.replace(postLogoutRedirectUrl);
     }
 

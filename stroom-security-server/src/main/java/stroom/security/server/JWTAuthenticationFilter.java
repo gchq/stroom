@@ -207,7 +207,6 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
         if (accessCode != null) {
             IdTokenRequest idTokenRequest = new IdTokenRequest();
             idTokenRequest.setAccessCode(accessCode);
-            idTokenRequest.setSessionId(sessionId);
             idTokenRequest.setRequestingClientId("stroom");
             String idToken = null;
             try {

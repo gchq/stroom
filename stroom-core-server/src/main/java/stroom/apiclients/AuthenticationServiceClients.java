@@ -24,11 +24,12 @@ import stroom.auth.service.ApiClient;
 import stroom.auth.service.ApiException;
 import stroom.auth.service.api.ApiKeyApi;
 import stroom.auth.service.api.AuthenticationApi;
-import stroom.auth.service.api.DefaultApi;
+import stroom.auth.service.api.SessionApi;
 import stroom.auth.service.api.UserApi;
 import stroom.auth.service.api.model.CreateTokenRequest;
 import stroom.auth.service.api.model.SearchRequest;
 import stroom.auth.service.api.model.SearchResponse;
+import stroom.auth.service.api.model.Token;
 
 import javax.inject.Inject;
 import java.util.HashMap;
@@ -75,8 +76,8 @@ public class AuthenticationServiceClients {
         return new UserApi(authServiceClient);
     }
 
-    public DefaultApi newDefaultApi(){
-        return new DefaultApi(authServiceClient);
+    public SessionApi newSessionApi(){
+        return new SessionApi(authServiceClient);
     }
 
     public String getUsersApiToken(String userId) {
@@ -106,8 +107,8 @@ public class AuthenticationServiceClients {
         createTokenRequest.setUserEmail(userId);
         createTokenRequest.setComments(
                 "Created by Stroom's AuthenticationServiceClients because the user did not have an existing API token.");
-        String token = newDefaultApi().create(createTokenRequest);
-        return token;
+        Token token = newApiKeyApi().create(createTokenRequest);
+        return token.getToken();
     }
 
     private Optional<String> getTokenFromTokenService(String userId) {
@@ -123,7 +124,7 @@ public class AuthenticationServiceClients {
 
         Optional<String> usersApiToken;
         try {
-            SearchResponse authSearchResponse = newDefaultApi().search(authSearchRequest);
+            SearchResponse authSearchResponse = newApiKeyApi().search(authSearchRequest);
             if (authSearchResponse.getTokens().isEmpty()) {
                 // User doesn't have an API token and cannot make this request.
                 LOGGER.warn("Tried to get a user's API key but they don't have one! User was: " +
