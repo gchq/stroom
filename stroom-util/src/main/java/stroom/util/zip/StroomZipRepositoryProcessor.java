@@ -16,27 +16,34 @@
 
 package stroom.util.zip;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Maps;
 import org.springframework.util.StringUtils;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.InitialByteArrayOutputStream;
 import stroom.util.io.InitialByteArrayOutputStream.BufferPos;
 import stroom.util.io.StreamProgressMonitor;
 import stroom.util.logging.StroomLogger;
+import stroom.util.shared.HasTerminate;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.Monitor;
 import stroom.util.task.TaskScopeContextHolder;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * Class that reads a nested directory tree of stroom zip files.
@@ -57,7 +64,13 @@ public abstract class StroomZipRepositoryProcessor {
     /**
      * Flag set to stop things
      */
-    private final Monitor monitor;
+//    private final Monitor monitor;
+
+    //used for checking if the task has been terminated
+    private final HasTerminate hasTerminate;
+
+    //The executor used to execute the sub-tasks
+    private final Executor executor;
     /**
      * The max number of parts to send in a zip file
      */
@@ -71,21 +84,27 @@ public abstract class StroomZipRepositoryProcessor {
      */
     private Long maxStreamSize = DEFAULT_MAX_STREAM_SIZE;
 
-    public StroomZipRepositoryProcessor(final Monitor monitor) {
-        this.monitor = monitor;
+    public StroomZipRepositoryProcessor(
+//            final Monitor monitor,
+            final Executor executor,
+            final HasTerminate hasTerminate) {
+
+//        this.monitor = monitor;
+        this.hasTerminate = hasTerminate;
+        this.executor = executor;
     }
 
     public abstract void processFeedFiles(StroomZipRepository stroomZipRepository, String feed, List<File> fileList);
 
     public abstract byte[] getReadBuffer();
 
-    public abstract void startExecutor();
+//    public abstract void startExecutor();
 
-    public abstract void stopExecutor(boolean now);
+//    public abstract void stopExecutor(boolean now);
 
-    public abstract void waitForComplete();
+//    public abstract void waitForComplete();
 
-    public abstract void execute(String message, Runnable runnable);
+//    public abstract void execute(String message, Runnable runnable);
 
     /**
      * Process a Stroom zip repository,
@@ -104,88 +123,139 @@ public abstract class StroomZipRepositoryProcessor {
                 LOGGER.debug("process() - Scanning " + stroomZipRepository.getRootDir());
             }
             // Do the threaded work
-            startExecutor();
+//            startExecutor();
 
             // Scan all of the zip files in the repository so that we can map
             // zip files to feeds.
+            final List<CompletableFuture<Map<String, List<File>>>> fileScanFutures = new ArrayList<>();
+
             final Iterable<File> zipFiles = stroomZipRepository.getZipFiles();
-            int scanCount = 0;
-            for (final File file : zipFiles) {
-                if (file != null) {
-                    scanCount++;
 
-                    // Quit once we have hit the max
-                    if (scanCount > maxFileScan) {
-                        completedAllFiles = false;
-                        if (LOGGER.isDebugEnabled()) {
-                            LOGGER.debug("process() - Hit scan limit of " + maxFileScan);
-                        }
-                        break;
-                    }
+            Map<String, List<File>> feedToFilesMap = StreamSupport.stream(zipFiles.spliterator(), false)
+                    .limit(maxFileScan)
+                    .map(file -> CompletableFuture.supplyAsync(
+                            createJobFileScan(stroomZipRepository, file),
+                            executor))
+                    .map(CompletableFuture::join)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(Collectors.groupingBy(
+                            Map.Entry::getKey,
+                            Collectors.mapping(
+                                    Entry::getValue,
+                                    Collectors.toList())));
 
-                    execute(file.getAbsolutePath(),
-                            createJobFileScan(stroomZipRepository, file, feedToFileMap));
-                }
-            }
+//            int scanCount = 0;
+//            for (final File file : zipFiles) {
+//                if (file != null) {
+//                    scanCount++;
+//
+//                    // Quit once we have hit the max
+//                    if (scanCount > maxFileScan) {
+//                        completedAllFiles = false;
+//                        if (LOGGER.isDebugEnabled()) {
+//                            LOGGER.debug("process() - Hit scan limit of " + maxFileScan);
+//                        }
+//                        break;
+//                    }
+//
+//                    LOGGER.debug("Creating fileScanFuture for file", file);
+//                    CompletableFuture<Map<String, File>> fileScanFuture = ;
+//
+//                    fileScanFutures.add(fileScanFuture);
+////                    execute(file.getAbsolutePath(),
+////                            createJobFileScan(stroomZipRepository, file, feedToFileMap));
+//                }
+//            }
 
-            waitForComplete();
+            //wait for all the file scan jobs to complete
+//            CompletableFuture
+//                    .allOf(fileScanFutures.toArray(new CompletableFuture[fileScanFutures.size()]))
+//                    .get();
+
+
+//            waitForComplete();
 
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("process() - Scanned.  Found Feeds " + feedToFileMap.keySet());
             }
 
+            List<CompletableFuture<Void>> loadZipFileFutures = feedToFileMap.entrySet().stream()
+                    .map(entry -> {
+                        final String feedName = entry.getKey();
+                        final List<File> fileList = new ArrayList<>(entry.getValue());
+
+                        // Sort the map so the items are processed in order
+                        fileList.sort((f1, f2) -> {
+                            if (f1 == null || f2 == null || f1.getName() == null || f2.getName() == null) {
+                                return 0;
+                            }
+
+                            return f1.getName().compareTo(f2.getName());
+                        });
+                        return CompletableFuture.runAsync(
+                                createJobProcessFeedFiles(stroomZipRepository, feedName, fileList));
+                    })
+                    .collect(Collectors.toList());
+
+            //wait for all the files to be loaded
+            CompletableFuture.allOf(loadZipFileFutures.toArray(new CompletableFuture[loadZipFileFutures.size()]));
+
             // Now set the batches together
-            final Iterator<Entry<String, List<File>>> iter = feedToFileMap.entrySet().iterator();
-            while (iter.hasNext() && !monitor.isTerminated()) {
-                final Entry<String, List<File>> entry = iter.next();
-                final String feedName = entry.getKey();
-
-                //copy the items to a new list to avoid carrying any unwanted references
-                final List<File> fileList = new ArrayList<>(entry.getValue());
-
-                // Sort the map so the items are processed in order
-                fileList.sort((f1, f2) -> {
-                    if (f1 == null || f2 == null || f1.getName() == null || f2.getName() == null) {
-                        return 0;
-                    }
-
-                    return f1.getName().compareTo(f2.getName());
-                });
-
-                final StringBuilder msg = new StringBuilder()
-                        .append(feedName)
-                        .append(" ")
-                        .append(ModelStringUtil.formatCsv(fileList.size()))
-                        .append(" files (")
-                        .append(fileList.get(0))
-                        .append("...")
-                        .append(fileList.get(fileList.size() - 1))
-                        .append(")");
-
-                execute(msg.toString(), createJobProcessFeedFiles(stroomZipRepository, feedName, fileList));
-            }
+//            final Iterator<Entry<String, List<File>>> iter = feedToFileMap.entrySet().iterator();
+//            while (iter.hasNext() && !hasTerminate.isTerminated()) {
+//                final Entry<String, List<File>> entry = iter.next();
+//                final String feedName = entry.getKey();
+//
+//                //copy the items to a new list to avoid carrying any unwanted references
+//                final List<File> fileList = new ArrayList<>(entry.getValue());
+//
+//                // Sort the map so the items are processed in order
+//                fileList.sort((f1, f2) -> {
+//                    if (f1 == null || f2 == null || f1.getName() == null || f2.getName() == null) {
+//                        return 0;
+//                    }
+//
+//                    return f1.getName().compareTo(f2.getName());
+//                });
+//
+//                final StringBuilder msg = new StringBuilder()
+//                        .append(feedName)
+//                        .append(" ")
+//                        .append(ModelStringUtil.formatCsv(fileList.size()))
+//                        .append(" files (")
+//                        .append(fileList.get(0))
+//                        .append("...")
+//                        .append(fileList.get(fileList.size() - 1))
+//                        .append(")");
+//
+//
+//                execute(msg.toString(), createJobProcessFeedFiles(stroomZipRepository, feedName, fileList));
+//            }
 
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("process() - Completed");
             }
         } finally {
-            TaskScopeContextHolder.removeContext();
-            stopExecutor(false);
+//            TaskScopeContextHolder.removeContext();
+//            stopExecutor(false);
         }
 
         return completedAllFiles;
     }
 
-    private Runnable createJobFileScan(final StroomZipRepository stroomZipRepository,
-                                       final File file,
-                                       final Map<String, List<File>> feedToFileMap) {
+    private Supplier<Optional<Map.Entry<String, File>>> createJobFileScan(final StroomZipRepository stroomZipRepository,
+                                                                          final File file) {
         return () -> {
-            if (!monitor.isTerminated()) {
+            if (!hasTerminate.isTerminated()) {
                 if (file != null) {
-                    fileScan(stroomZipRepository, file, feedToFileMap);
+                    return fileScan(stroomZipRepository, file);
+                } else {
+                    return Optional.empty();
                 }
             } else {
                 LOGGER.info("run() - Quit File Scan %s", file);
+                return Optional.empty();
             }
         };
     }
@@ -194,7 +264,7 @@ public abstract class StroomZipRepositoryProcessor {
                                                final String feed,
                                                final List<File> fileList) {
         return () -> {
-            if (!monitor.isTerminated()) {
+            if (!hasTerminate.isTerminated()) {
                 processFeedFiles(stroomZipRepository, feed, fileList);
             } else {
                 LOGGER.info("run() - Quit Feed Aggregation %s", feed);
@@ -205,8 +275,13 @@ public abstract class StroomZipRepositoryProcessor {
     /**
      * Peek at the stream to get the header file feed
      */
-    private void fileScan(final StroomZipRepository stroomZipRepository,
-                          final File file, Map<String, List<File>> feedToFileMap) {
+//    private Map<String, List<File>> fileScan(final StroomZipRepository stroomZipRepository,
+    private Optional<Entry<String, File>> fileScan(final StroomZipRepository stroomZipRepository,
+                                                   final File file) {
+
+        //only a single thread is working on this file so we don't need any thread safety
+//        Map<String, List<File>> feedToFileMap = new HashMap<>();
+        ListMultimap<String, File> feedToFileMap = ArrayListMultimap.create();
 
         StroomZipFile stroomZipFile = null;
         try {
@@ -216,7 +291,7 @@ public abstract class StroomZipRepositoryProcessor {
 
             if (baseNameSet.isEmpty()) {
                 stroomZipRepository.addErrorMessage(stroomZipFile, "Unable to find any entry??", true);
-                return;
+                return Optional.empty();
             }
 
             final String anyBaseName = baseNameSet.iterator().next();
@@ -225,7 +300,7 @@ public abstract class StroomZipRepositoryProcessor {
 
             if (anyHeaderStream == null) {
                 stroomZipRepository.addErrorMessage(stroomZipFile, "Unable to find header??", true);
-                return;
+                return Optional.empty();
             }
 
             final HeaderMap headerMap = new HeaderMap();
@@ -235,20 +310,25 @@ public abstract class StroomZipRepositoryProcessor {
 
             if (!StringUtils.hasText(feed)) {
                 stroomZipRepository.addErrorMessage(stroomZipFile, "Unable to find feed in header??", true);
-                return;
+                return Optional.empty();
             } else {
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("fileScan() - " + file + " belongs to feed " + feed);
                 }
             }
 
+            return Optional.of(Maps.immutableEntry(feed, file));
+
             //add the file into the map, creating the list if needs be
-            feedToFileMap.computeIfAbsent(feed, k -> Collections.synchronizedList(new ArrayList<>())).add(file);
+//            feedToFileMap
+//                    .computeIfAbsent(feed, k -> new ArrayList<>())
+//                    .add(file);
 
         } catch (final IOException ex) {
             // Unable to open file ... must be bad.
             stroomZipRepository.addErrorMessage(stroomZipFile, ex.getMessage(), true);
             LOGGER.error("fileScan()", ex);
+            return Optional.empty();
 
         } finally {
             CloseableUtil.closeLogAndIgnoreException(stroomZipFile);

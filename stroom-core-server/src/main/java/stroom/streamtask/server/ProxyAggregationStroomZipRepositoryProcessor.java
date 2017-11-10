@@ -5,14 +5,12 @@ import stroom.feed.shared.FeedService;
 import stroom.statistic.server.MetaDataStatistic;
 import stroom.streamstore.server.StreamStore;
 import stroom.task.server.AsyncTaskHelper;
-import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskManager;
 import stroom.util.io.StreamProgressMonitor;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.StroomLogger;
-import stroom.util.shared.Task;
+import stroom.util.shared.HasTerminate;
 import stroom.util.shared.VoidResult;
-import stroom.util.task.TaskMonitor;
 import stroom.util.thread.ThreadLocalBuffer;
 import stroom.util.zip.HeaderMap;
 import stroom.util.zip.StroomHeaderArguments;
@@ -23,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
 
 class ProxyAggregationStroomZipRepositoryProcessor extends StroomZipRepositoryProcessor {
 
@@ -31,33 +30,37 @@ class ProxyAggregationStroomZipRepositoryProcessor extends StroomZipRepositoryPr
     private final StreamStore streamStore;
     private final MetaDataStatistic metaDataStatistic;
     private final TaskManager taskManager;
-    private final TaskMonitor taskMonitor;
+//    private final TaskMonitor taskMonitor;
+    private final Executor executor;
     private final FeedService feedService;
     private final ThreadLocalBuffer proxyAggregationThreadLocalBuffer;
+
     private AsyncTaskHelper<VoidResult> taskPool;
     private final boolean aggregate;
     private boolean stop = false;
     private final int threadCount;
-    private Task<?> task;
+//    private Task<?> task;
 
     public ProxyAggregationStroomZipRepositoryProcessor(final StreamStore streamStore,
                                                         final MetaDataStatistic metaDataStatistic,
                                                         final TaskManager taskManager,
-                                                        final TaskMonitor taskMonitor,
+//                                                        final TaskMonitor taskMonitor,
+                                                        final Executor executor,
                                                         final FeedService feedService,
                                                         final ThreadLocalBuffer proxyAggregationThreadLocalBuffer,
                                                         final int threadCount,
-                                                        final Task<?> task,
+                                                        final HasTerminate hasTerminate,
                                                         final boolean aggregate) {
-        super(taskMonitor);
+        super(executor, hasTerminate);
         this.streamStore = streamStore;
         this.metaDataStatistic = metaDataStatistic;
         this.taskManager = taskManager;
-        this.taskMonitor = taskMonitor;
+//        this.taskMonitor = taskMonitor;
+        this.executor = executor;
         this.feedService = feedService;
         this.proxyAggregationThreadLocalBuffer = proxyAggregationThreadLocalBuffer;
         this.threadCount = threadCount;
-        this.task = task;
+//        this.task = task;
         this.aggregate = aggregate;
     }
 
@@ -138,39 +141,40 @@ class ProxyAggregationStroomZipRepositoryProcessor extends StroomZipRepositoryPr
         return proxyAggregationThreadLocalBuffer.getBuffer();
     }
 
-    @Override
-    public void startExecutor() {
-        taskPool = new AsyncTaskHelper<>(null, taskMonitor, taskManager, threadCount);
-    }
+//    @Override
+//    public void startExecutor() {
 
-    @Override
-    public void stopExecutor(final boolean now) {
-        if (taskPool != null) {
-            if (now) {
-                taskMonitor.terminate();
-                taskPool.clear();
-            }
-            taskPool.join();
-        }
-    }
+//        taskPool = new AsyncTaskHelper<>(null, taskMonitor, taskManager, threadCount);
+//    }
 
-    void stop() {
-        stop = true;
-    }
+//    @Override
+//    public void stopExecutor(final boolean now) {
+//        if (taskPool != null) {
+//            if (now) {
+//                taskMonitor.terminate();
+//                taskPool.clear();
+//            }
+//            taskPool.join();
+//        }
+//    }
 
-    @Override
-    public void waitForComplete() {
-        taskPool.join();
-    }
+//    void stop() {
+//        stop = true;
+//    }
 
-    @Override
-    public void execute(final String message, final Runnable runnable) {
-        if (!stop) {
-            final GenericServerTask genericServerTask = GenericServerTask.create(task, task.getTaskName(), message);
-            genericServerTask.setRunnable(runnable);
-            taskPool.fork(genericServerTask);
-        }
-    }
+//    @Override
+//    public void waitForComplete() {
+//        taskPool.join();
+//    }
+
+//    @Override
+//    public void execute(final String message, final Runnable runnable) {
+//        if (!stop) {
+//            final GenericServerTask genericServerTask = GenericServerTask.create(task, task.getTaskName(), message);
+//            genericServerTask.setRunnable(runnable);
+//            taskPool.fork(genericServerTask);
+//        }
+//    }
 
     private List<StreamTargetStroomStreamHandler> openStreamHandlers(final Feed feed) {
         // We don't want to aggregate reference feeds.
