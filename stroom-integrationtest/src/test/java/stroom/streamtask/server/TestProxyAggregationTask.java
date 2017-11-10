@@ -479,7 +479,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         for (int i = 1; i <= 1000000000; i++) {
             final File testFile1 = new File(proxyDir, String.format("%08d", i) + ".zip");
             writeTestFile(testFile1, "TEST_FEED", i + "-data1\n" + i + "-data1\n");
-            ThreadUtil.sleep(100);
+            ThreadUtil.sleep(250);
         }
     }
 

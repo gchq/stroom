@@ -25,15 +25,12 @@ import stroom.statistic.server.MetaDataStatistic;
 import stroom.streamstore.server.StreamStore;
 import stroom.task.server.ExecutorProvider;
 import stroom.task.server.TaskContext;
-import stroom.task.server.TaskManager;
-import stroom.task.server.ThreadPoolImpl;
 import stroom.util.config.PropertyUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Task;
-import stroom.util.shared.ThreadPool;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.thread.ThreadLocalBuffer;
@@ -56,30 +53,23 @@ public class ProxyAggregationExecutor {
 
     private final StreamStore streamStore;
     private final MetaDataStatistic metaDataStatistic;
-    private final TaskManager taskManager;
     private final TaskContext taskContext;
     private final ExecutorProvider executorProvider;
     private final FeedService feedService;
-//    private final TaskMonitor taskMonitor;
     private final ThreadLocalBuffer proxyAggregationThreadLocalBuffer;
 
-
-    private Task<?> task;
     private String proxyDir;
     private boolean aggregate = true;
     private final int threadCount;
-    private final int maxAggreagtion;
+    private final int maxAggregation;
     private final String maxStreamSizeStr;
     private final int maxFileScan;
-
-    private ProxyAggregationStroomZipRepositoryProcessor stroomZipRepositoryProcessor;
 
     @Inject
     public ProxyAggregationExecutor(final StreamStore streamStore,
                                     @Named("cachedFeedService") final FeedService feedService,
                                     final MetaDataStatistic metaDataStatistic,
                                     final TaskContext taskContext,
-                                    final TaskManager taskManager,
                                     final ExecutorProvider executorProvider,
                                     @Named("prototypeThreadLocalBuffer") final ThreadLocalBuffer proxyAggregationThreadLocalBuffer,
                                     @Value("#{propertyConfigurer.getProperty('stroom.proxyDir')}") final String proxyDir,
@@ -89,7 +79,6 @@ public class ProxyAggregationExecutor {
                                     @Value("#{propertyConfigurer.getProperty('stroom.maxAggregationScan')}") final String maxFileScan) {
         this.feedService = feedService;
         this.taskContext = taskContext;
-        this.taskManager = taskManager;
         this.executorProvider = executorProvider;
         this.metaDataStatistic = metaDataStatistic;
         this.streamStore = streamStore;
@@ -97,7 +86,7 @@ public class ProxyAggregationExecutor {
         this.threadCount = PropertyUtil.toInt(threadCount, 10);
         this.proxyAggregationThreadLocalBuffer = proxyAggregationThreadLocalBuffer;
 
-        this.maxAggreagtion = (PropertyUtil.toInt(maxAggregation, StroomZipRepositoryProcessor.DEFAULT_MAX_AGGREGATION));
+        this.maxAggregation = (PropertyUtil.toInt(maxAggregation, StroomZipRepositoryProcessor.DEFAULT_MAX_AGGREGATION));
         this.maxStreamSizeStr = maxStreamSize;
         this.maxFileScan = PropertyUtil.toInt(maxFileScan, StroomZipRepositoryProcessor.DEFAULT_MAX_FILE_SCAN);
 
@@ -118,32 +107,24 @@ public class ProxyAggregationExecutor {
     public void aggregate(final Task<?> task, final String proxyDir, final Boolean aggregate,
                           final Integer maxAggregation, final Long maxStreamSize) {
 
-        final ThreadPool threadPool = new ThreadPoolImpl(
-                "Proxy Aggregation Processor Pool",
-                3,
-                0,
-                threadCount);
-        Executor executor = executorProvider.getExecutor(threadPool);
+        Executor executor = executorProvider.getExecutor();
 
-        this.stroomZipRepositoryProcessor = new ProxyAggregationStroomZipRepositoryProcessor(
+        ProxyAggregationStroomZipRepositoryProcessor stroomZipRepositoryProcessor = new ProxyAggregationStroomZipRepositoryProcessor(
                 streamStore,
                 metaDataStatistic,
-                taskManager,
-//                taskMonitor,
                 executor,
                 feedService,
                 proxyAggregationThreadLocalBuffer,
                 this.threadCount,
-                task,
+                taskContext,
                 aggregate);
 
         //TODO should be ctor args
-        stroomZipRepositoryProcessor.setMaxAggregation(this.maxAggreagtion);
+        stroomZipRepositoryProcessor.setMaxAggregation(this.maxAggregation);
         stroomZipRepositoryProcessor.setMaxStreamSizeString(this.maxStreamSizeStr);
         stroomZipRepositoryProcessor.setMaxFileScan(this.maxFileScan);
 
         try {
-            this.task = task;
             if (proxyDir != null) {
                 this.proxyDir = proxyDir;
             }
@@ -154,8 +135,6 @@ public class ProxyAggregationExecutor {
             if (maxStreamSize != null) {
                 stroomZipRepositoryProcessor.setMaxStreamSize(maxStreamSize);
             }
-
-//            taskMonitor.addTerminateHandler(() -> stop());
 
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
             LOGGER.info("exec() - started");
@@ -175,25 +154,10 @@ public class ProxyAggregationExecutor {
             LOGGER.info("exec() - completed in %s", logExecutionTime);
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
-        } finally {
-            //dereference to ensure we don't hold on to any copies
-            stroomZipRepositoryProcessor = null;
         }
     }
 
     public void setAggregate(final boolean aggregate) {
         this.aggregate = aggregate;
     }
-
-//    /**
-//     * Stops the task as soon as possible.
-//     */
-//    private void stop() {
-//        LOGGER.info("stop() - Proxy Aggregation - Stopping");
-//        if (stroomZipRepositoryProcessor != null) {
-//            stroomZipRepositoryProcessor.stopExecutor(true);
-//            stroomZipRepositoryProcessor.stop();
-//        }
-//    }
-
 }
