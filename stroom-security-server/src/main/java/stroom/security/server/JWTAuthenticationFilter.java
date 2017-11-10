@@ -29,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.apiclients.AuthenticationServiceClients;
 import stroom.auth.service.ApiException;
-import stroom.auth.service.api.model.IdTokenRequest;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -205,12 +204,9 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
 
         //TODO: check the optionals and handle empties.
         if (accessCode != null) {
-            IdTokenRequest idTokenRequest = new IdTokenRequest();
-            idTokenRequest.setAccessCode(accessCode);
-            idTokenRequest.setRequestingClientId("stroom");
             String idToken = null;
             try {
-                idToken = authenticationServiceClients.newAuthenticationApi().getIdTokenWithPost(idTokenRequest);
+                idToken = authenticationServiceClients.newAuthenticationApi().getIdToken(accessCode);
             } catch (ApiException e) {
                 if (e.getCode() == Response.Status.UNAUTHORIZED.getStatusCode()) {
                     LOGGER.error("The accessCode used to obtain an idToken was rejected. Has it already been used?", e);

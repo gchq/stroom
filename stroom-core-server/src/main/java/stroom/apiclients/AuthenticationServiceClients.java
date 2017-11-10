@@ -24,7 +24,6 @@ import stroom.auth.service.ApiClient;
 import stroom.auth.service.ApiException;
 import stroom.auth.service.api.ApiKeyApi;
 import stroom.auth.service.api.AuthenticationApi;
-import stroom.auth.service.api.SessionApi;
 import stroom.auth.service.api.UserApi;
 import stroom.auth.service.api.model.CreateTokenRequest;
 import stroom.auth.service.api.model.SearchRequest;
@@ -74,10 +73,6 @@ public class AuthenticationServiceClients {
 
     public UserApi newUserApi(){
         return new UserApi(authServiceClient);
-    }
-
-    public SessionApi newSessionApi(){
-        return new SessionApi(authServiceClient);
     }
 
     public String getUsersApiToken(String userId) {
