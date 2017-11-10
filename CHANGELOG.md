@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.59] - 2017-11-10
+
+* Issue **#477** : Additional changes to ensure search sub tasks use threads fairly between multiple searches.
+
 ## [v5.0-beta.58] - 2017-11-09
 
 * Issue **#477** : Additional changes to ensure search sub tasks use threads fairly between multiple searches.
@@ -640,7 +644,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.58...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.59...HEAD
+[v5.0-beta.59]: https://github.com/gchq/stroom/compare/v5.0-beta.58...v5.0-beta.59
 [v5.0-beta.58]: https://github.com/gchq/stroom/compare/v5.0-beta.57...v5.0-beta.58
 [v5.0-beta.57]: https://github.com/gchq/stroom/compare/v5.0-beta.56...v5.0-beta.57
 [v5.0-beta.56]: https://github.com/gchq/stroom/compare/v5.0-beta.55...v5.0-beta.56
