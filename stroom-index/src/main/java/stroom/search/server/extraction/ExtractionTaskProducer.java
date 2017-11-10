@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ExtractionTaskProducer extends AbstractTaskProducer {
@@ -72,14 +73,11 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
     }
 
     public boolean isComplete() {
-        synchronized (taskQueue) {
-            if (getTasksTotal().get() != getTasksCompleted().get()) {
-                return false;
-            }
-            fillTaskQueue();
-            return getTasksTotal().get() == getTasksCompleted().get();
-
+        if (getTasksTotal().get() != getTasksCompleted().get()) {
+            return false;
         }
+        final int added = fillTaskQueue();
+        return added == 0 && getTasksTotal().get() == getTasksCompleted().get();
     }
 
     public int remainingTasks() {
@@ -88,19 +86,22 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
 
     private int fillTaskQueue() {
         synchronized (taskQueue) {
-            int added = 0;
-            final List<String[]> data = storedData.swap();
-            if (data != null && data.size() > 0) {
-                final Map<Long, List<Event>> streamMap = streamMapCreator.createEventMap(data);
-                for (final Entry<Long, List<Event>> entry : streamMap.entrySet()) {
-                    final Long streamId = entry.getKey();
-                    final List<Event> events = entry.getValue();
+            final CompletableFuture<Integer> completableFuture = CompletableFuture.supplyAsync(() -> {
+                int added = 0;
+                final List<String[]> data = storedData.swap();
+                if (data != null && data.size() > 0) {
+                    final Map<Long, List<Event>> streamMap = streamMapCreator.createEventMap(data);
+                    for (final Entry<Long, List<Event>> entry : streamMap.entrySet()) {
+                        final Long streamId = entry.getKey();
+                        final List<Event> events = entry.getValue();
 
-                    added += createTasks(streamId, events);
+                        added += createTasks(streamId, events);
+                    }
                 }
-            }
 
-            return added;
+                return added;
+            }, getExecutor());
+            return completableFuture.join();
         }
     }
 
@@ -138,7 +139,7 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
 
                 getTasksTotal().incrementAndGet();
                 final ExtractionTask task = new ExtractionTask(streamId, eventIds, pipelineRef, extractionFieldIndexMap, resultReceiver, errorReceiver);
-                taskQueue.add(new ExtractionRunnable(task, handlerProvider));
+                taskQueue.offer(new ExtractionRunnable(task, handlerProvider));
                 created++;
 
             } else {
@@ -162,16 +163,11 @@ public class ExtractionTaskProducer extends AbstractTaskProducer {
         }
 
         ExtractionRunnable task = null;
-        synchronized (taskQueue) {
-            if (!clusterSearchTask.isTerminated()) {
-                if (taskQueue.size() == 0) {
-                    final int added = fillTaskQueue();
-                    if (added > 0) {
-                        task = taskQueue.poll();
-                    }
-                } else {
-                    task = taskQueue.poll();
-                }
+        if (!clusterSearchTask.isTerminated()) {
+            task = taskQueue.poll();
+            if (task == null) {
+                fillTaskQueue();
+                task = taskQueue.poll();
             }
         }
 
