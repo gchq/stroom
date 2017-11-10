@@ -1,6 +1,7 @@
 dependencies {
     compile project(':stroom-elastic-shared')
     compile project(':stroom-core-client')
+    compile project(':stroom-core-shared')
     compile project(':stroom-core-client-widget')
     compile project(':stroom-security-client-api')
 

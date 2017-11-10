@@ -46,7 +46,7 @@ public class ElasticPlugin extends Plugin {
         clientPropertyCache.get()
                 .onSuccess(result -> {
                     final IconMenuItem annotationsMenuItem;
-                    final String elasticUiUrl = result.get(ClientProperties.URL_ELASTIC_UI);
+                    final String elasticUiUrl = result.get(ClientProperties.URL_KIBANA_UI);
                     if (elasticUiUrl != null && elasticUiUrl.trim().length() > 0) {
                         annotationsMenuItem = new IconMenuItem(6, SvgPresets.ELASTIC_SEARCH, null, "Elastic Search", null, true, () -> {
                             final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()

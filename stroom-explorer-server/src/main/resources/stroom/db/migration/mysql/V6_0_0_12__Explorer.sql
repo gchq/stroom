@@ -68,8 +68,6 @@ CREATE TABLE ELASTIC_INDEX (
   UPD_USER 			varchar(255) DEFAULT NULL,
   NAME 				varchar(255) NOT NULL,
   UUID              varchar(255) NOT NULL,
-  INDEX_NAME 	    varchar(255),
-  INDEXED_TYPE	    varchar(255),
   PRIMARY KEY       (ID),
   UNIQUE            (UUID)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;

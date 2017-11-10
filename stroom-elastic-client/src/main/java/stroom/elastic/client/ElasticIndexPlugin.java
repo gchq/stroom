@@ -6,17 +6,17 @@ import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.elastic.client.presenter.ElasticIndexPresenter;
+import stroom.elastic.client.presenter.ElasticIndexExternalPresenter;
 import stroom.elastic.shared.ElasticIndex;
 import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 
 public class ElasticIndexPlugin extends EntityPlugin<ElasticIndex> {
-    private final Provider<ElasticIndexPresenter> editorProvider;
+    private final Provider<ElasticIndexExternalPresenter> editorProvider;
 
     @Inject
     public ElasticIndexPlugin(final EventBus eventBus,
-                              final Provider<ElasticIndexPresenter> editorProvider,
+                              final Provider<ElasticIndexExternalPresenter> editorProvider,
                               final ClientDispatchAsync dispatcher,
                               final ContentManager contentManager,
                               final DocumentPluginEventManager entityPluginEventManager) {

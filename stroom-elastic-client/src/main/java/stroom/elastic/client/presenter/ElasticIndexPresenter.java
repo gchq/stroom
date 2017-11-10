@@ -48,14 +48,14 @@ public class ElasticIndexPresenter extends DocumentEditTabPresenter<LinkTabPanel
 
     @Override
     protected void onRead(final ElasticIndex elasticIndex) {
-        settingsPresenter.setIndexName(elasticIndex.getIndexName());
-        settingsPresenter.setIndexedType(elasticIndex.getIndexedType());
+        //settingsPresenter.setIndexName(elasticIndex.getIndexName());
+        //settingsPresenter.setIndexedType(elasticIndex.getIndexedType());
     }
 
     @Override
     protected void onWrite(final ElasticIndex elasticIndex) {
-        elasticIndex.setIndexName(settingsPresenter.getIndexName());
-        elasticIndex.setIndexedType(settingsPresenter.getIndexedType());
+        //elasticIndex.setIndexName(settingsPresenter.getIndexName());
+        //elasticIndex.setIndexedType(settingsPresenter.getIndexedType());
     }
 
     @Override

@@ -43,11 +43,18 @@ stroom.serviceDiscovery.enabled=false
 stroom.connectors.kafka.default.bootstrap.servers=localhost:9092
 stroom.connectors.kafka.default.connector.version=0.10.0.1
 
-stroom.url.list=annotations-ui,annotations-service,annotations-query,elastic-query,elastic-ui,dashboard
+# Elastic
+stroom.connectors.elastic.default.transportHosts=localhost:9300
+stroom.connectors.elastic.default.cluster-name=docker-cluster
+stroom.connectors.elastic.default.connector.version=5.6.4
+
+stroom.url.list=annotations-ui,annotations-service,annotations-query,elastic-query,elastic-query-ui,kibana-ui,dashboard
 stroom.url.annotations-ui=http://localhost:5001/
 stroom.url.annotations-service=http://localhost/annotationsService/v1/
 stroom.url.annotations-query=http://localhost:8199/annotationsQuery/v1
+stroom.url.elastic-explorer=http://localhost:8299/explorerAction/v1
 stroom.url.elastic-query=http://localhost:8299/elasticQuery/v1
-stroom.url.elastic-ui=http://localhost:5601/
+stroom.url.elastic-query-ui=http://localhost:3000
+stroom.url.kibana-ui=http://localhost:5601/
 stroom.url.dashboard=http://localhost:8080/dashboard.jsp
-stroom.plugins.lib.dir=/home/joe/.stroom/plugins
+

@@ -41,7 +41,6 @@ import stroom.dashboard.spring.DashboardConfiguration;
 import stroom.datafeed.server.DataFeedServlet;
 import stroom.dictionary.spring.DictionaryConfiguration;
 import stroom.dispatch.shared.DispatchService;
-import stroom.elastic.server.ElasticIndexResource;
 import stroom.elastic.spring.ElasticIndexConfiguration;
 import stroom.entity.server.SpringRequestFactoryServlet;
 import stroom.explorer.server.ExplorerConfiguration;
@@ -193,7 +192,6 @@ public class App extends Application<Config> {
         SpringUtil.addServletListener(environment.servlets(), applicationContext, SessionListListener.class);
 
         // Add resources.
-        SpringUtil.addResource(environment.jersey(), applicationContext, ElasticIndexResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, StroomIndexQueryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, SqlStatisticsQueryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, AuthenticationResource.class);

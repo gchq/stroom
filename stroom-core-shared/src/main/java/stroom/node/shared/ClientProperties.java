@@ -44,7 +44,9 @@ public class ClientProperties implements SharedObject {
     public static final String URL_LIST = "stroom.url.list";
     public static final String URL_BASE = "stroom.url.";
     public static final String URL_ANNOTATIONS_UI = URL_BASE + "annotations-ui";
-    public static final String URL_ELASTIC_UI = URL_BASE + "elastic-ui";
+    public static final String URL_KIBANA_UI = URL_BASE + "elastic-ui";
+    public static final String URL_ELASTIC_EXPLORER = URL_BASE + "elastic-explorer";
+    public static final String URL_ELASTIC_QUERY_UI = URL_BASE + "elastic-query-ui";
     public static final String URL_ANNOTATIONS_SERVICE = URL_BASE + "annotations-service";
     public static final String URL_DASHBOARD = URL_BASE + "annotations-dashboard";
 

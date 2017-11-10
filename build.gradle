@@ -73,6 +73,7 @@ ext.versions = [
     slf4j: '1.7.24', //in line with dropwizard 1.1.0
     spring: '4.3.4.RELEASE',
     swagger: '1.5.16',
+    unirest: '1.4.9',
     zzDUMMYzz: 'makes sorting easier'
 ]
 
@@ -182,6 +183,7 @@ ext.libs = [
     spring_tx: "org.springframework:spring-tx:$versions.spring",
     stax_api: "stax:stax-api:1.0.1",
     swagger_annotations: "io.swagger:swagger-annotations:$versions.swagger",
+    unirest: "com.mashape.unirest:unirest-java:$versions.unirest",
     validation_api: "javax.validation:validation-api:1.0.0.GA", //GWT 2.8.0 throws errors on gwtCompile if validation-api 1.1.0.Final is used
     vavr: "io.vavr:vavr:0.9.0",
     ws_rs_api: "javax.ws.rs:javax.ws.rs-api:2.0.1",
