@@ -9,7 +9,7 @@ import java.util.function.Consumer;
  * Allows us to only bind to Kafka libraries at runtime. This is proving desirable because those libraries
  * come with a fair bit of heft in transitive dependencies.
  */
-public interface  StroomKafkaProducer extends StroomConnector {
+public interface StroomKafkaProducer extends StroomConnector {
     /**
      * This is the one config item that must be present, everything else can be default
      */

@@ -38,7 +38,7 @@ public class RuleSetServiceImpl implements RuleSetService {
 
     @Inject
     public RuleSetServiceImpl(final SecurityContext securityContext) throws IOException {
-        documentStore = new FSDocumentStore<>(Paths.get("/Users/stroomdev66/tmp/config/" + RuleSet.DOCUMENT_TYPE), RuleSet.DOCUMENT_TYPE, RuleSet.class, securityContext);
+        documentStore = new FSDocumentStore<>(Paths.get("/tmp/" + RuleSet.DOCUMENT_TYPE), RuleSet.DOCUMENT_TYPE, RuleSet.class, securityContext);
     }
 
     ////////////////////////////////////////////////////////////////////////

@@ -21,6 +21,7 @@ import stroom.about.client.AboutPlugin;
 import stroom.annotations.client.AnnotationsPlugin;
 import stroom.core.client.gin.PluginModule;
 import stroom.document.client.DocumentPluginEventManager;
+import stroom.elastic.client.ElasticPlugin;
 import stroom.help.client.HelpPlugin;
 
 public class PluginsModule extends PluginModule {
@@ -31,5 +32,6 @@ public class PluginsModule extends PluginModule {
         bindPlugin(HelpPlugin.class);
         bindPlugin(AboutPlugin.class);
         bindPlugin(AnnotationsPlugin.class);
+        bindPlugin(ElasticPlugin.class);
     }
 }

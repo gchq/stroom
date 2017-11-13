@@ -9,13 +9,16 @@ dependencies {
     compile libs.commons_lang
     compile libs.jackson_annotations
 
+    compile 'com.google.code.findbugs:jsr305:3.0.1'
+
 //    compile libs.spring_beans
 //    compile libs.spring_context
 //    compile libs.spring_core
-    compile libs.guice
+    compile libs.guice4
     compile libs.javax_inject
 
     compile libs.javax_servlet_api
+    compile libs.dropwizard_lifecycle
 
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile libs.junit

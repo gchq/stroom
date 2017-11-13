@@ -1,0 +1,21 @@
+dependencies {
+    compile urlDependencies.get(urlLibs.stroomExpression)
+    compile project(':stroom-core-server')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-security-api')
+    compile project(':stroom-elastic-shared')
+    compile project(':stroom-pipeline')
+    compile project(':stroom-connectors')
+
+    compile libs.slf4j_api
+    compile libs.spring_context
+    compile libs.spring_tx
+    compile libs.ehcache_core
+    compile libs.unirest
+    compile libs.jackson_databind
+    compile libs.xml_apis
+
+    compile libs.javax_inject
+}

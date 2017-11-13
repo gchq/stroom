@@ -41,6 +41,7 @@ import stroom.dashboard.spring.DashboardConfiguration;
 import stroom.datafeed.server.DataFeedServlet;
 import stroom.dictionary.spring.DictionaryConfiguration;
 import stroom.dispatch.shared.DispatchService;
+import stroom.elastic.spring.ElasticIndexConfiguration;
 import stroom.entity.server.SpringRequestFactoryServlet;
 import stroom.explorer.server.ExplorerConfiguration;
 import stroom.feed.server.RemoteFeedServiceRPC;
@@ -223,7 +224,8 @@ public class App extends Application<Config> {
                 StatisticsConfiguration.class,
                 SecurityConfiguration.class,
                 StroomAnnotationsConfig.class,
-                StroomAnnotationsExplorerActionHandler.class
+                StroomAnnotationsExplorerActionHandler.class,
+                ElasticIndexConfiguration.class
         );
         applicationContext.refresh();
         return applicationContext;
