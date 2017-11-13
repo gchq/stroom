@@ -445,33 +445,6 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testmaxScan_ManyFiles() throws IOException {
-        // commonTestControl.deleteAll();
-        StroomProperties.setIntProperty("stroom.maxAggregationScan", 5, StroomProperties.Source.TEST);
-
-        final File proxyDir = new File(getCurrentTestDir(), "proxy" + FileSystemTestUtil.getUniqueTestString());
-
-        final Feed eventFeed1 = commonTestScenarioCreator.createSimpleFeed();
-
-        FileUtil.mkdirs(proxyDir);
-
-        for (int i = 1; i <= 1; i++) {
-            final File testFile1 = new File(proxyDir, "sample" + i + ".zip");
-            writeTestFile(testFile1, eventFeed1, "data1\ndata1\n");
-        }
-
-        proxyAggregationExecutor.aggregate(new DummyTask(), proxyDir.getAbsolutePath(), true, 50, 1000L);
-
-        final FindStreamCriteria findStreamCriteria1 = new FindStreamCriteria();
-        findStreamCriteria1.obtainFeeds().obtainInclude().add(eventFeed1);
-        Assert.assertEquals(1, streamStore.find(findStreamCriteria1).size());
-
-        while (true) {
-
-        }
-    }
-
-    @Test
     public void testAggregationLimits_SmallCount() throws IOException {
         // commonTestControl.deleteAll();
 
@@ -495,19 +468,4 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         Assert.assertEquals(2, streamStore.find(findStreamCriteria1).size());
     }
 
-    //manin method for manually testing proxy aggregation with a running stroom instance
-    public static void main(final String[] args) throws IOException {
-
-//        final File proxyDir = new File("/home/dev/tmp/dev/proxy");
-        final File proxyDir = new File("/tmp/stroom/dev/proxy");
-
-        FileUtil.mkdirs(proxyDir);
-
-        for (int i = 1; i <= 1000000000; i++) {
-            final File testFile1 = new File(proxyDir, String.format("%08d", i) + ".zip");
-            int feedNo = (i % 2) + 1;
-            writeTestFile(testFile1, "TEST_FEED_" + feedNo, i + "-data1\n" + i + "-data1\n");
-            ThreadUtil.sleep(250);
-        }
-    }
 }
