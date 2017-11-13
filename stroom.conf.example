@@ -32,7 +32,6 @@ stroom.statistics.sql.jdbcDriverPassword=stroompassword1
 
 stroom.security.apiToken=eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MzgyMDQyMDgsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIn0.H6P2BjLMKKsuSsjG3Yb6yax_KiJI-pJMipneXV-7czo
 stroom.advertisedUrl=http://localhost:8080
-stroom.postLogout.redirectUrl=http://localhost
 stroom.auth.jwt.verificationkey=CHANGE_ME
 stroom.auth.jwt.issuer=stroom
 stroom.auth.jwt.enableTokenRevocationCheck=true

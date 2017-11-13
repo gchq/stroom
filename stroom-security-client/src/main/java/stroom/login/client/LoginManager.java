@@ -36,7 +36,7 @@ public class LoginManager implements HasHandlers {
     private final EventBus eventBus;
     private final CurrentUser currentUser;
     private final ClientDispatchAsync dispatcher;
-    private String postLogoutRedirectUrl;
+    private String authServiceUrl;
     private LocationManager locationManager;
 
     @Inject
@@ -56,7 +56,7 @@ public class LoginManager implements HasHandlers {
 
         clientPropertyCache.get()
                 .onSuccess(result -> {
-                    this.postLogoutRedirectUrl = result.get(ClientProperties.POST_LOGOUT_REDIRECT_URL);
+                    this.authServiceUrl = result.get(ClientProperties.AUTH_SERVICE_URL);
                 });
     }
 
@@ -82,7 +82,7 @@ public class LoginManager implements HasHandlers {
         // Perform logout on the server
         dispatcher.exec(new LogoutAction(), null);
         // Send the user's browser to the remote Authentication Service's logout endpoint.
-        locationManager.replace(postLogoutRedirectUrl);
+        locationManager.replace(authServiceUrl + "/authentication/v1/logout");
     }
 
     @Override

@@ -45,7 +45,7 @@ public class ClientPropertiesServiceImpl implements ClientPropertiesService {
         addProperty(props, ClientProperties.STATISTIC_ENGINES);
         addProperty(props, ClientProperties.LABEL_COLOURS);
         addProperty(props, ClientProperties.HELP_URL);
-        addProperty(props, ClientProperties.POST_LOGOUT_REDIRECT_URL);
+        addProperty(props, ClientProperties.AUTH_SERVICE_URL);
         addProperty(props, ClientProperties.USERS_UI_URL);
         addProperty(props, ClientProperties.API_KEYS_UI);
         addProperty(props, ClientProperties.CHANGE_PASSWORD_UI);
