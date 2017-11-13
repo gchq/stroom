@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **475** : Fix memory leak of java.io.File references when proxy aggregation runs
+
 ## [v5.0-beta.56] - 2017-11-06
 
 * Issue **425** : Changed string replacement in pipeline migration code to use a literal match
