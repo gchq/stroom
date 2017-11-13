@@ -470,18 +470,6 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         }
     }
-    public static void main(final String[] args) throws IOException {
-
-        final File proxyDir = new File("/home/dev/tmp/dev/proxy");
-
-        FileUtil.mkdirs(proxyDir);
-
-        for (int i = 1; i <= 1000000000; i++) {
-            final File testFile1 = new File(proxyDir, String.format("%08d", i) + ".zip");
-            writeTestFile(testFile1, "TEST_FEED", i + "-data1\n" + i + "-data1\n");
-            ThreadUtil.sleep(250);
-        }
-    }
 
     @Test
     public void testAggregationLimits_SmallCount() throws IOException {
@@ -505,5 +493,21 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         final FindStreamCriteria findStreamCriteria1 = new FindStreamCriteria();
         findStreamCriteria1.obtainFeeds().obtainInclude().add(eventFeed1);
         Assert.assertEquals(2, streamStore.find(findStreamCriteria1).size());
+    }
+
+    //manin method for manually testing proxy aggregation with a running stroom instance
+    public static void main(final String[] args) throws IOException {
+
+//        final File proxyDir = new File("/home/dev/tmp/dev/proxy");
+        final File proxyDir = new File("/tmp/stroom/dev/proxy");
+
+        FileUtil.mkdirs(proxyDir);
+
+        for (int i = 1; i <= 1000000000; i++) {
+            final File testFile1 = new File(proxyDir, String.format("%08d", i) + ".zip");
+            int feedNo = (i % 2) + 1;
+            writeTestFile(testFile1, "TEST_FEED_" + feedNo, i + "-data1\n" + i + "-data1\n");
+            ThreadUtil.sleep(250);
+        }
     }
 }

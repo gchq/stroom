@@ -25,12 +25,14 @@ import stroom.statistic.server.MetaDataStatistic;
 import stroom.streamstore.server.StreamStore;
 import stroom.task.server.ExecutorProvider;
 import stroom.task.server.TaskContext;
+import stroom.task.server.ThreadPoolImpl;
 import stroom.util.config.PropertyUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Task;
+import stroom.util.shared.ThreadPool;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.thread.ThreadLocalBuffer;
@@ -39,6 +41,7 @@ import stroom.util.zip.StroomZipRepositoryProcessor;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.Optional;
 import java.util.concurrent.Executor;
 
 /**
@@ -107,7 +110,7 @@ public class ProxyAggregationExecutor {
     public void aggregate(final Task<?> task, final String proxyDir, final Boolean aggregate,
                           final Integer maxAggregation, final Long maxStreamSize) {
 
-        Executor executor = executorProvider.getExecutor();
+        Executor executor = getExecutor(task);
 
         ProxyAggregationStroomZipRepositoryProcessor stroomZipRepositoryProcessor = new ProxyAggregationStroomZipRepositoryProcessor(
                 streamStore,
@@ -115,7 +118,6 @@ public class ProxyAggregationExecutor {
                 executor,
                 feedService,
                 proxyAggregationThreadLocalBuffer,
-                this.threadCount,
                 taskContext,
                 aggregate);
 
@@ -155,6 +157,19 @@ public class ProxyAggregationExecutor {
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
+    }
+
+    private Executor getExecutor(Task<?> task) {
+        int priority = Optional.ofNullable(task)
+                .flatMap(t -> Optional.ofNullable(t.getThreadPool()))
+                .map(ThreadPool::getPriority)
+                .orElse(3);
+
+        final ThreadPool threadPool = new ThreadPoolImpl("Proxy Aggregation Thread Pool",
+                priority,
+                0,
+                threadCount);
+        return executorProvider.getExecutor(threadPool);
     }
 
     public void setAggregate(final boolean aggregate) {

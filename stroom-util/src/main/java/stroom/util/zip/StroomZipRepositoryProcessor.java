@@ -107,7 +107,7 @@ public abstract class StroomZipRepositoryProcessor {
             //only scan a limited number of files
             Map<String, List<File>> feedToFilesMap = StreamSupport.stream(zipFiles.spliterator(), true)
                     .limit(maxFileScan)
-                    .filter(file -> !hasTerminate.isTerminated())
+                    .filter(file -> !hasTerminate.isTerminated()) //do no more work if we are terminated
                     .map(file -> fileScan(stroomZipRepository, file))
                     .filter(Optional::isPresent)
                     .map(Optional::get)
@@ -126,7 +126,7 @@ public abstract class StroomZipRepositoryProcessor {
 
             //spawn a task for each feed->files entry to load the data into a stream
             List<CompletableFuture<Void>> loadZipFileFutures = feedToFilesMap.entrySet().stream()
-                    .filter(entry -> !hasTerminate.isTerminated())
+                    .filter(entry -> !hasTerminate.isTerminated()) //do no more work if we are terminated
                     .map(entry -> {
                         final String feedName = entry.getKey();
                         final List<File> fileList = new ArrayList<>(entry.getValue());
@@ -139,6 +139,7 @@ public abstract class StroomZipRepositoryProcessor {
 
                             return f1.getName().compareTo(f2.getName());
                         });
+                        //get the future for loading a list of files into a feed
                         return CompletableFuture.runAsync(
                                 createJobProcessFeedFiles(stroomZipRepository, feedName, fileList),
                                 executor);

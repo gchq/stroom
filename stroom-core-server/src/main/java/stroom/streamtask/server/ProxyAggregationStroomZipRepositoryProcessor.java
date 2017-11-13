@@ -28,25 +28,23 @@ class ProxyAggregationStroomZipRepositoryProcessor extends StroomZipRepositoryPr
     private final MetaDataStatistic metaDataStatistic;
     private final FeedService feedService;
     private final ThreadLocalBuffer proxyAggregationThreadLocalBuffer;
+    private final TaskContext taskContext;
 
     private final boolean aggregate;
-    private boolean stop = false;
-    private final int threadCount;
 
-    public ProxyAggregationStroomZipRepositoryProcessor(final StreamStore streamStore,
-                                                        final MetaDataStatistic metaDataStatistic,
-                                                        final Executor executor,
-                                                        final FeedService feedService,
-                                                        final ThreadLocalBuffer proxyAggregationThreadLocalBuffer,
-                                                        final int threadCount,
-                                                        final TaskContext taskContext,
-                                                        final boolean aggregate) {
+    ProxyAggregationStroomZipRepositoryProcessor(final StreamStore streamStore,
+                                                 final MetaDataStatistic metaDataStatistic,
+                                                 final Executor executor,
+                                                 final FeedService feedService,
+                                                 final ThreadLocalBuffer proxyAggregationThreadLocalBuffer,
+                                                 final TaskContext taskContext,
+                                                 final boolean aggregate) {
         super(executor, taskContext);
+        this.taskContext = taskContext;
         this.streamStore = streamStore;
         this.metaDataStatistic = metaDataStatistic;
         this.feedService = feedService;
         this.proxyAggregationThreadLocalBuffer = proxyAggregationThreadLocalBuffer;
-        this.threadCount = threadCount;
         this.aggregate = aggregate;
     }
 
@@ -86,7 +84,7 @@ class ProxyAggregationStroomZipRepositoryProcessor extends StroomZipRepositoryPr
         final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor("ProxyAggregationTask");
 
         for (final File file : fileList) {
-            if (stop) {
+            if (taskContext.isTerminated()) {
                 break;
             }
             try {
