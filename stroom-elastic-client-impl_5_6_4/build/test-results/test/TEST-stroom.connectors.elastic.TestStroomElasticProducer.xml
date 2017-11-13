@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="stroom.connectors.elastic.TestStroomElasticProducer" tests="1" skipped="1" failures="0" errors="0" timestamp="2017-11-10T11:43:25" hostname="gchq11-VirtualBox" time="0.001">
-  <properties/>
-  <testcase name="testManualSend" classname="stroom.connectors.elastic.TestStroomElasticProducer" time="0.001">
-    <skipped/>
-  </testcase>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>
