@@ -10,13 +10,25 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
-* Issue **475** : Fix memory leak of java.io.File references when proxy aggregation runs
+* Issue **#475** : Fix memory leak of java.io.File references when proxy aggregation runs
+
+## [v5.0-beta.59] - 2017-11-10
+
+* Issue **#477** : Additional changes to ensure search sub tasks use threads fairly between multiple searches.
+
+## [v5.0-beta.58] - 2017-11-09
+
+* Issue **#477** : Additional changes to ensure search sub tasks use threads fairly between multiple searches.
+
+## [v5.0-beta.57] - 2017-11-08
+
+* Issue **#477** : Search sub tasks are now correctly linked to their parent task and can therefore be terminated by terminating parent tasks.
 
 ## [v5.0-beta.56] - 2017-11-06
 
-* Issue **425** : Changed string replacement in pipeline migration code to use a literal match
+* Issue **#425** : Changed string replacement in pipeline migration code to use a literal match
 
-* Issue **469** : Add Heap Histogram internal statistics for memory use monitoring
+* Issue **#469** : Add Heap Histogram internal statistics for memory use monitoring
 
 ## [v5.0-beta.55] - 2017-10-26
 
@@ -634,7 +646,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.56...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.59...HEAD
+[v5.0-beta.59]: https://github.com/gchq/stroom/compare/v5.0-beta.58...v5.0-beta.59
+[v5.0-beta.58]: https://github.com/gchq/stroom/compare/v5.0-beta.57...v5.0-beta.58
+[v5.0-beta.57]: https://github.com/gchq/stroom/compare/v5.0-beta.56...v5.0-beta.57
 [v5.0-beta.56]: https://github.com/gchq/stroom/compare/v5.0-beta.55...v5.0-beta.56
 [v5.0-beta.55]: https://github.com/gchq/stroom/compare/v5.0-beta.54...v5.0-beta.55
 [v5.0-beta.54]: https://github.com/gchq/stroom/compare/v5.0-beta.53...v5.0-beta.54

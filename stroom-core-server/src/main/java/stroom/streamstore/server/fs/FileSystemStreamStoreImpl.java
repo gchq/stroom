@@ -326,7 +326,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         if (entity != null) {
             final Feed feed = entity.getFeed();
             if (!securityContext.hasDocumentPermission(feed.getType(), feed.getUuid(), DocumentPermissionNames.READ)) {
-                throw new StreamPermissionException("You do not have permission to read stream with id=" + id);
+                throw new StreamPermissionException(securityContext.getUserId(), "You do not have permission to read stream with id=" + id);
             }
         }
 
@@ -583,7 +583,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         // Ensure the user has permission to delete this stream.
         final Feed feed = loaded.getFeed();
         if (!securityContext.hasDocumentPermission(feed.getType(), feed.getUuid(), DocumentPermissionNames.DELETE)) {
-            throw new StreamPermissionException("You do not have permission to delete stream with id=" + loaded.getId());
+            throw new StreamPermissionException(securityContext.getUserId(), "You do not have permission to delete stream with id=" + loaded.getId());
         }
 
         loaded.updateStatus(StreamStatus.DELETED);

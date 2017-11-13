@@ -97,7 +97,7 @@ public class IndexShardSearcherCacheImpl extends AbstractCacheBean<IndexShardSea
         setMaxIdleTime(60, TimeUnit.SECONDS);
         setMaxLiveTime(120, TimeUnit.SECONDS);
 
-        final ThreadPool threadPool = new ThreadPoolImpl("Index Shard Writer Cache", 3, 0, Integer.MAX_VALUE);
+        final ThreadPool threadPool = new ThreadPoolImpl("Index Shard Searcher Cache", 3, 0, Integer.MAX_VALUE);
         executor = executorProvider.getExecutor(threadPool);
 
         this.taskContext = taskContext;
