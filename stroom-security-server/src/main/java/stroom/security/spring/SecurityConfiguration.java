@@ -72,7 +72,7 @@ public class SecurityConfiguration {
 
     @Bean(name = "jwtFilter")
     public JWTAuthenticationFilter jwtAuthenticationFilter(
-            @Value("#{propertyConfigurer.getProperty('stroom.auth.url')}")
+            @Value("#{propertyConfigurer.getProperty('stroom.auth.service.url')}")
             final String authenticationServiceUrl,
             @Value("#{propertyConfigurer.getProperty('stroom.advertisedUrl')}")
             final String advertisedStroomUrl,

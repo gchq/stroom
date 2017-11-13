@@ -48,7 +48,7 @@ public class UsersPlugin extends Plugin {
                 .onSuccess(result -> {
                     final IconMenuItem usersMenuItem;
                     final SvgPreset icon = SvgPresets.USER_GROUP;
-                    final String usersUiUrl = result.get(ClientProperties.USERS_UI_URL);
+                    final String usersUiUrl = result.get(ClientProperties.AUTH_UI_URL) + "/userSearch";
                     if (usersUiUrl != null && usersUiUrl.trim().length() > 0) {
                         usersMenuItem = new IconMenuItem(5, icon, null, "Users", null, true, () -> {
                             final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()

@@ -952,7 +952,7 @@
             <property name="requireUiRestart" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.auth.url"/>
+            <property name="name" value="stroom.auth.service.url"/>
             <property name="value" value="localhost:8099"/>
             <property name="description"
                       value="The URL of the auth service" />
@@ -960,10 +960,10 @@
             <property name="requireUiRestart" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.auth.url"/>
-            <property name="value" value="localhost:8099"/>
+            <property name="name" value="stroom.auth.ui.url"/>
+            <property name="value" value="localhost:5000"/>
             <property name="description"
-                      value="The URL of the auth service" />
+                      value="The URL of the auth UI" />
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>

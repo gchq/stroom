@@ -46,20 +46,16 @@ import java.util.Optional;
 @Component
 public class AuthenticationServiceClients {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationServiceClients.class);
-    private final String ourApiToken;
-    private final String tokenServiceUrl;
     private final ApiClient authServiceClient;
 
     @Inject
     public AuthenticationServiceClients(
         @Value("#{propertyConfigurer.getProperty('stroom.security.apiToken')}")
         final String ourApiToken,
-        @Value("#{propertyConfigurer.getProperty('stroom.auth.url')}")
-        final String tokenServiceUrl) {
-        this.ourApiToken = ourApiToken;
-        this.tokenServiceUrl = tokenServiceUrl;
+        @Value("#{propertyConfigurer.getProperty('stroom.auth.service.url')}")
+        final String authServiceUrl) {
         authServiceClient = new ApiClient();
-        authServiceClient.setBasePath(tokenServiceUrl);
+        authServiceClient.setBasePath(authServiceUrl);
         authServiceClient.addDefaultHeader("Authorization", "Bearer " + ourApiToken);
     }
 

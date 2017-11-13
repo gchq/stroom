@@ -48,7 +48,7 @@ public class ChangePasswordPlugin extends Plugin {
                 .onSuccess(result -> {
                     final IconMenuItem changePasswordMenuItem;
                     final SvgPreset icon = SvgPresets.PASSWORD;
-                    final String changePasswordUiUrl = result.get(ClientProperties.CHANGE_PASSWORD_UI);
+                    final String changePasswordUiUrl = result.get(ClientProperties.AUTH_UI_URL) + "/changepassword";
                     if (changePasswordUiUrl != null && changePasswordUiUrl.trim().length() > 0) {
                         changePasswordMenuItem = new IconMenuItem(5, icon, null, "Change password", null, true, () -> {
                             final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()

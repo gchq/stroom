@@ -35,7 +35,7 @@ public class JWTService {
 
     @Inject
     public JWTService(
-            @Value("#{propertyConfigurer.getProperty('stroom.auth.url')}")
+            @Value("#{propertyConfigurer.getProperty('stroom.auth.service.url')}")
         final String authenticationServiceUrl,
             @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.verificationkey')}")
         final String authJwtVerificationKey,
