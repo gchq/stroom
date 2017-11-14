@@ -16,18 +16,19 @@
 
 package stroom.statistics.server.common;
 
+import org.springframework.stereotype.Component;
 import stroom.query.shared.Condition;
 import stroom.query.shared.DataSource;
 import stroom.query.shared.IndexField;
 import stroom.query.shared.IndexFieldType;
 import stroom.query.shared.IndexFields;
+import stroom.security.SecurityContext;
 import stroom.statistics.common.StatisticStoreEntityService;
 import stroom.statistics.common.Statistics;
 import stroom.statistics.common.StatisticsFactory;
 import stroom.statistics.shared.StatisticField;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
-import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -37,24 +38,32 @@ import java.util.List;
 public class StatisticsDataSourceProviderImpl implements StatisticsDataSourceProvider {
     private final StatisticStoreEntityService statisticStoreEntityService;
     private final StatisticsFactory statisticsFactory;
+    private final SecurityContext securityContext;
 
     @Inject
-    StatisticsDataSourceProviderImpl(final StatisticStoreEntityService statisticStoreEntityService, final StatisticsFactory statisticsFactory) {
+    StatisticsDataSourceProviderImpl(final StatisticStoreEntityService statisticStoreEntityService,
+                                     final StatisticsFactory statisticsFactory,
+                                     final SecurityContext securityContext) {
         this.statisticStoreEntityService = statisticStoreEntityService;
         this.statisticsFactory = statisticsFactory;
+        this.securityContext = securityContext;
     }
 
     @Override
     public DataSource getDataSource(final String uuid) {
-        final StatisticStoreEntity entity = statisticStoreEntityService.loadByUuid(uuid);
-        if (entity == null) {
-            return null;
-        }
+        securityContext.elevatePermissions();
+        try {
+            final StatisticStoreEntity entity = statisticStoreEntityService.loadByUuid(uuid);
+            if (entity == null) {
+                return null;
+            }
 
-        final IndexFields indexFields = buildIndexFields(entity);
-        final DataSourceImpl statisticsDataSource = new DataSourceImpl(entity.getType(), entity.getId(),
-                entity.getName(), indexFields);
-        return statisticsDataSource;
+            final IndexFields indexFields = buildIndexFields(entity);
+            return new DataSourceImpl(entity.getType(), entity.getId(),
+                    entity.getName(), indexFields);
+        } finally {
+            securityContext.restorePermissions();
+        }
     }
 
     @Override

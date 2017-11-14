@@ -16,44 +16,36 @@
 
 package stroom.index.server;
 
-import javax.annotation.Resource;
-
 import org.springframework.stereotype.Component;
-
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexService;
 import stroom.query.shared.DataSource;
 import stroom.query.shared.DataSourceProvider;
+import stroom.security.SecurityContext;
+
+import javax.inject.Inject;
 
 @Component
 public class LuceneIndexDataSourceProvider implements DataSourceProvider {
     public static final String ENTITY_TYPE = Index.ENTITY_TYPE;
 
-    @Resource
-    private IndexService indexService;
+    private final IndexService indexService;
+    private final SecurityContext securityContext;
+
+    @Inject
+    public LuceneIndexDataSourceProvider(final IndexService indexService, final SecurityContext securityContext) {
+        this.indexService = indexService;
+        this.securityContext = securityContext;
+    }
 
     @Override
     public DataSource getDataSource(final String uuid) {
-        final Index index = indexService.loadByUuid(uuid);
-        return index;
-
-        // TODO : Fix security
-
-        //
-        // // Constrain the folders that the user can see.
-        // HasFolderIdSet criteria = new HasFolderIdSetImpl();
-        // criteria = userSecuritySessionValidator
-        // .constrainCriteria(criteria);
-        // final FolderIdSet folderIdSet = criteria
-        // .obtainFolderIdSet();
-        // Folder folderToCheck = index.getFolder();
-        // if (!folderIdSet.isMatch(folderToCheck)) {
-        // folderToCheck = folderService.load(folderToCheck);
-        // throw PermissionException.createPermissionRequiredException(
-        // folderToCheck, index);
-        // }
-        //
-        // return index.getIndexFieldsObject();
+        securityContext.elevatePermissions();
+        try {
+            return indexService.loadByUuid(uuid);
+        } finally {
+            securityContext.restorePermissions();
+        }
     }
 
     @Override
