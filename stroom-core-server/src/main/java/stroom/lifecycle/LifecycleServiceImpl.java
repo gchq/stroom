@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.jobsystem.server.ScheduledTaskExecutor;
+import stroom.pool.SecurityHelper;
 import stroom.security.SecurityContext;
 import stroom.task.server.StroomThreadGroup;
 import stroom.task.server.TaskCallbackAdaptor;
@@ -145,15 +146,12 @@ public class LifecycleServiceImpl implements ContextAwareService {
             @Override
             protected void exec() {
                 if (lock.tryLock()) {
-
-                    securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
-                    try {
+                    try (SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
                         Thread.currentThread().setName("Stroom Lifecycle - ScheduledExecutor");
                         scheduledTaskExecutor.execute();
                     } catch (final Throwable t) {
                         LOGGER.error(t.getMessage(), t);
                     } finally {
-                        securityContext.popUser();
                         lock.unlock();
                     }
                 } else {

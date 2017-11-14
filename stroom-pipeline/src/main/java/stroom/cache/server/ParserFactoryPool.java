@@ -16,9 +16,8 @@
 
 package stroom.cache.server;
 
-import stroom.entity.shared.VersionedEntityDecorator;
 import stroom.pipeline.shared.TextConverter;
-import stroom.pool.PoolBean;
+import stroom.pool.Pool;
 
-public interface ParserFactoryPool extends PoolBean<VersionedEntityDecorator<TextConverter>, StoredParserFactory> {
+public interface ParserFactoryPool extends Pool<TextConverter, StoredParserFactory> {
 }

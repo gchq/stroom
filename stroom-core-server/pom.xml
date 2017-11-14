@@ -38,7 +38,7 @@
   <parent>
     <groupId>stroom</groupId>
     <artifactId>stroom</artifactId>
-    <version>5.0-beta.59</version>
+    <version>5.0-beta.56-guavacache</version>
   </parent>
 
   <artifactId>stroom-core-server</artifactId>
@@ -93,33 +93,6 @@
       <groupId>com.caucho</groupId>
       <artifactId>hessian</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.googlecode.ehcache-spring-annotations</groupId>
-      <artifactId>ehcache-spring-annotations</artifactId>
-      <!--<exclusions>-->
-        <!--&lt;!&ndash; Exclude guava as the version needed here is older than the one -->
-          <!--needed by HBase, which then causes problems as com.google.common.base.Ticker -->
-          <!--has changed from an interface in this version to an abstract class in later -->
-          <!--versions &ndash;&gt;-->
-        <!--<exclusion>-->
-          <!--<groupId>com.google.guava</groupId>-->
-          <!--<artifactId>guava</artifactId>-->
-        <!--</exclusion>-->
-      <!--</exclusions>-->
-    </dependency>
-
-    <!-- need to explicitly include this as it is need by both hbase and 
-      ehcache-spring-annotations, hbase requiring the later version -->
-    <!--<dependency>-->
-      <!--<groupId>com.google.guava</groupId>-->
-      <!--<artifactId>guava</artifactId>-->
-    <!--</dependency>-->
-
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-pool2</artifactId>
-    </dependency>
-
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-exec</artifactId>

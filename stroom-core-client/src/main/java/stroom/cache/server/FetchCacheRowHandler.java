@@ -16,7 +16,6 @@
 
 package stroom.cache.server;
 
-import net.sf.ehcache.CacheManager;
 import org.springframework.context.annotation.Scope;
 import stroom.cache.shared.CacheRow;
 import stroom.cache.shared.FetchCacheRowAction;
@@ -25,33 +24,33 @@ import stroom.entity.shared.ResultList;
 import stroom.security.Secured;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
+import stroom.util.cache.CacheManager;
 import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import javax.inject.Inject;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @TaskHandlerBean(task = FetchCacheRowAction.class)
 @Scope(StroomScope.TASK)
 @Secured(CacheRow.MANAGE_CACHE_PERMISSION)
-public class FetchCacheRowHandler extends AbstractTaskHandler<FetchCacheRowAction, ResultList<CacheRow>> {
-    @Resource
-    private CacheManager cacheManager;
+class FetchCacheRowHandler extends AbstractTaskHandler<FetchCacheRowAction, ResultList<CacheRow>> {
+    private final CacheManager cacheManager;
+
+    @Inject
+    FetchCacheRowHandler(final CacheManager cacheManager) {
+        this.cacheManager = cacheManager;
+    }
 
     @Override
     public ResultList<CacheRow> exec(final FetchCacheRowAction action) {
-        final List<CacheRow> values = new ArrayList<>();
-
-        final String[] cacheNames = cacheManager.getCacheNames();
-        Arrays.sort(cacheNames);
-        for (final String cacheName : cacheNames) {
-            values.add(new CacheRow(cacheName));
-        }
-
-        // Sort the cache names.
-        Collections.sort(values, (o1, o2) -> o1.getCacheName().compareTo(o2.getCacheName()));
+        final List<CacheRow> values = cacheManager.getCaches()
+                .keySet()
+                .stream()
+                .sorted(Comparator.naturalOrder())
+                .map(CacheRow::new)
+                .collect(Collectors.toList());
 
         return BaseResultList.createUnboundedList(values);
     }

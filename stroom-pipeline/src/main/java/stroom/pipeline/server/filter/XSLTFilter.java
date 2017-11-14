@@ -30,7 +30,6 @@ import org.xml.sax.SAXException;
 import stroom.cache.server.StoredXsltExecutable;
 import stroom.cache.server.XSLTPool;
 import stroom.entity.shared.StringCriteria;
-import stroom.entity.shared.VersionedEntityDecorator;
 import stroom.node.server.StroomPropertyService;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.SupportsCodeInjection;
@@ -53,7 +52,6 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.PipelineContext;
 import stroom.pool.PoolItem;
-import stroom.security.SecurityContext;
 import stroom.util.CharBuffer;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
@@ -87,7 +85,6 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     private final LocationFactoryProxy locationFactory;
     private final PipelineContext pipelineContext;
     private final PathCreator pathCreator;
-    private final SecurityContext securityContext;
 
     private ErrorListener errorListener;
 
@@ -99,7 +96,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
      * We only need a single transformer factory here as it actually doesn't do
      * much internally when creating a transformer handler.
      */
-    private PoolItem<VersionedEntityDecorator<XSLT>, StoredXsltExecutable> poolItem;
+    private PoolItem<StoredXsltExecutable> poolItem;
     private XsltExecutable xsltExecutable;
     private TransformerHandler handler;
     private Locator locator;
@@ -119,8 +116,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                       final StroomPropertyService stroomPropertyService,
                       final LocationFactoryProxy locationFactory,
                       final PipelineContext pipelineContext,
-                      final PathCreator pathCreator,
-                      final SecurityContext securityContext) {
+                      final PathCreator pathCreator) {
         this.xsltPool = xsltPool;
         this.errorReceiverProxy = errorReceiverProxy;
         this.xsltService = xsltService;
@@ -128,7 +124,6 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         this.locationFactory = locationFactory;
         this.pipelineContext = pipelineContext;
         this.pathCreator = pathCreator;
-        this.securityContext = securityContext;
     }
 
     @Override
@@ -236,7 +231,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                     // Get compiled XSLT from the pool.
                     final ErrorReceiver errorReceiver = new ErrorReceiverIdDecorator(getElementId(),
                             errorReceiverProxy);
-                    poolItem = xsltPool.borrowConfiguredTemplate(new VersionedEntityDecorator<>(xslt, getUser()), errorReceiver,
+                    poolItem = xsltPool.borrowConfiguredTemplate(xslt, errorReceiver,
                             locationFactory, pipelineReferences, usePool);
                     final StoredXsltExecutable storedXsltExecutable = poolItem.getValue();
                     // Get the errors.
@@ -614,13 +609,6 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
             }
         }
         return maxElements;
-    }
-
-    private String getUser() {
-        if (securityContext == null) {
-            return null;
-        }
-        return securityContext.getUserId();
     }
 
     @PipelineProperty(description = "The XSLT to use.")

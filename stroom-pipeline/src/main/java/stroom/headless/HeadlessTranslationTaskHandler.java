@@ -60,7 +60,6 @@ import stroom.streamstore.server.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.streamstore.shared.StreamTypeService;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.date.DateUtil;
@@ -167,7 +166,7 @@ public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<Headless
             pipelineHolder.setPipeline(pipelineEntity);
 
             // Create the parser.
-            final PipelineData pipelineData = pipelineDataCache.getOrCreate(pipelineEntity);
+            final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
             final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
             // Find last XSLT filter.

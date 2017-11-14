@@ -37,7 +37,7 @@
   <parent>
     <groupId>stroom</groupId>
     <artifactId>stroom</artifactId>
-    <version>5.0-beta.59</version>
+    <version>5.0-beta.56-guavacache</version>
   </parent>
 
   <artifactId>stroom-remote</artifactId>
@@ -51,6 +51,14 @@
     <dependency>
       <groupId>com.caucho</groupId>
       <artifactId>hessian</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-web</artifactId>
     </dependency>
   </dependencies>
 </project>

@@ -38,7 +38,7 @@
   <parent>
     <groupId>stroom</groupId>
     <artifactId>stroom</artifactId>
-    <version>5.0-beta.59</version>
+    <version>5.0-beta.56-guavacache</version>
   </parent>
 
   <artifactId>stroom-expression</artifactId>
@@ -48,6 +48,11 @@
       <groupId>stroom</groupId>
       <artifactId>stroom-util</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>javax.validation</groupId>
+      <artifactId>validation-api</artifactId>
+      <version>${validation-api.version}</version>
     </dependency>
     <dependency>
       <groupId>stroom</groupId>

@@ -43,7 +43,7 @@ public class UserAndPermissionsHelper {
         addPermissions(appPermissionSet, userRef);
 
         // Get user groups for this user.
-        final List<UserRef> userGroups = userGroupsCache.getOrCreate(userRef);
+        final List<UserRef> userGroups = userGroupsCache.get(userRef);
 
         // Add app permissions set on groups this user belongs to.
         if (userGroups != null) {
@@ -56,7 +56,7 @@ public class UserAndPermissionsHelper {
     }
 
     private void addPermissions(final Set<String> appPermissionSet, final UserRef userRef) {
-        final UserAppPermissions userAppPermissions = userAppPermissionsCache.getOrCreate(userRef);
+        final UserAppPermissions userAppPermissions = userAppPermissionsCache.get(userRef);
         if (userAppPermissions != null && userAppPermissions.getUserPermissons() != null) {
             appPermissionSet.addAll(userAppPermissions.getUserPermissons());
         }

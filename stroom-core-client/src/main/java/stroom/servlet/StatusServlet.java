@@ -28,6 +28,7 @@ import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.Volume.VolumeUseStatus;
 import stroom.node.shared.VolumeService;
 import stroom.node.shared.VolumeState;
+import stroom.pool.SecurityHelper;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.util.task.ServerTask;
@@ -94,8 +95,7 @@ public class StatusServlet extends HttpServlet implements DataFeedService {
     @Override
     protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
             throws ServletException, IOException {
-        securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
-        try {
+        try (SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             response.setContentType("text/plain");
 
             final PrintWriter pw = response.getWriter();
@@ -105,8 +105,6 @@ public class StatusServlet extends HttpServlet implements DataFeedService {
             reportVolumeStatus(pw);
 
             pw.close();
-        } finally {
-            securityContext.popUser();
         }
     }
 

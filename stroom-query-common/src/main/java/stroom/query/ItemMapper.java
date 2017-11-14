@@ -22,12 +22,16 @@ import stroom.mapreduce.MapperBase;
 import stroom.mapreduce.OutputCollector;
 
 public class ItemMapper extends MapperBase<Object, String[], String, Item> {
+    private static final Generator[] PARENT_GENERATORS = new Generator[0];
+
     private final CompiledFields fields;
     private final int maxDepth;
     private final int maxGroupDepth;
 
-    public ItemMapper(final OutputCollector<String, Item> outputCollector, final CompiledFields fields,
-            final int maxDepth, final int maxGroupDepth) {
+    public ItemMapper(final OutputCollector<String, Item> outputCollector,
+                      final CompiledFields fields,
+                      final int maxDepth,
+                      final int maxGroupDepth) {
         super(outputCollector);
         this.fields = fields;
         this.maxDepth = maxDepth;
@@ -37,11 +41,11 @@ public class ItemMapper extends MapperBase<Object, String[], String, Item> {
     @Override
     public void map(final Object key, final String[] values, final OutputCollector<String, Item> output) {
         // Add the item to the output recursively up to the max depth.
-        addItem(values, null, null, 0, maxDepth, maxGroupDepth, output);
+        addItem(values, null, PARENT_GENERATORS, 0, maxDepth, maxGroupDepth, output);
     }
 
     private void addItem(final String[] values, final String parentKey, final Generator[] parentGenerators,
-            final int depth, final int maxDepth, final int maxGroupDepth, final OutputCollector<String, Item> output) {
+                         final int depth, final int maxDepth, final int maxGroupDepth, final OutputCollector<String, Item> output) {
         // Process values into fields.
         final Generator[] generators = new Generator[fields.size()];
 
@@ -120,11 +124,9 @@ public class ItemMapper extends MapperBase<Object, String[], String, Item> {
 
         // If the parent row has child group key sets then add this child group
         // key to them.
-        if (parentGenerators != null) {
-            for (final Generator parent : parentGenerators) {
-                if (parent != null && parent instanceof Generator) {
-                    parent.addChildKey(groupKey);
-                }
+        for (final Generator parent : parentGenerators) {
+            if (parent != null) {
+                parent.addChildKey(groupKey);
             }
         }
 

@@ -16,18 +16,17 @@
 
 package stroom.cache.server;
 
-import stroom.entity.shared.VersionedEntityDecorator;
 import stroom.pipeline.server.LocationFactory;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.XSLT;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.pool.PoolBean;
+import stroom.pool.Pool;
 import stroom.pool.PoolItem;
 
 import java.util.List;
 
-public interface XSLTPool extends PoolBean<VersionedEntityDecorator<XSLT>, StoredXsltExecutable> {
-    PoolItem<VersionedEntityDecorator<XSLT>, StoredXsltExecutable> borrowConfiguredTemplate(
-            VersionedEntityDecorator<XSLT> k, ErrorReceiver errorReceiver, LocationFactory locationFactory,
+public interface XSLTPool extends Pool<XSLT, StoredXsltExecutable> {
+    PoolItem<StoredXsltExecutable> borrowConfiguredTemplate(
+            XSLT k, ErrorReceiver errorReceiver, LocationFactory locationFactory,
             List<PipelineReference> pipelineReferences, boolean usePool);
 }

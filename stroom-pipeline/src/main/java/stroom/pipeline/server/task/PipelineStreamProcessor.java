@@ -222,7 +222,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             feedHolder.setFeed(feed);
 
             // Process the streams.
-            final PipelineData pipelineData = pipelineDataCache.getOrCreate(pipelineEntity);
+            final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
             final Pipeline pipeline = pipelineFactory.create(pipelineData);
             processNestedStreams(pipeline, stream, streamSource, feed, stream.getStreamType());
 

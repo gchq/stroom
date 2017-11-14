@@ -20,6 +20,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#488** : Permissions are now elevated to 'Use' for the purposes of reporting the data source being queried.
 
+* Migrated to ehcache 3.4.0 to add options for off-heap and disk based caching to reduce memory overhead.
+
+* Caches of pooled items no longer use Apache Commons Pool.
+
+* Issue **#401** : Reference data was being cached per user to ensure a user centric view of reference data was being used. This required more memory so now reference data is built in the context of the internal processing user and then filtered during processing by user access to streams.
+
+* The effective stream cache now holds 1000 items.
+
+* Reduced the amount of cached reference data to 100 streams.
+
+* Reduced the number of active queries to 100.
+
+* Removed Ehcache and switched to Guava cache.
+
 ## [v5.0-beta.59] - 2017-11-10
 
 * Issue **#477** : Additional changes to ensure search sub tasks use threads fairly between multiple searches.

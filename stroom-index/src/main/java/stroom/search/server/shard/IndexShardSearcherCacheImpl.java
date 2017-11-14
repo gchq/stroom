@@ -16,10 +16,12 @@
 
 package stroom.search.server.shard;
 
-import net.sf.ehcache.CacheManager;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
 import org.apache.lucene.index.IndexWriter;
 import org.springframework.stereotype.Component;
-import stroom.cache.AbstractCacheBean;
 import stroom.index.server.IndexShardWriter;
 import stroom.index.server.IndexShardWriterCache;
 import stroom.index.shared.IndexShard;
@@ -29,6 +31,8 @@ import stroom.search.server.SearchException;
 import stroom.task.server.ExecutorProvider;
 import stroom.task.server.TaskContext;
 import stroom.task.server.ThreadPoolImpl;
+import stroom.util.cache.CacheManager;
+import stroom.util.cache.CacheUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -38,7 +42,6 @@ import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -46,43 +49,19 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Component
-public class IndexShardSearcherCacheImpl extends AbstractCacheBean<IndexShardSearcherCacheImpl.Key, IndexShardSearcherImpl> implements IndexShardSearcherCache {
+public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearcherCacheImpl.class);
     private static final int MAX_CACHE_ENTRIES = 2;
 
+    private final CacheManager cacheManager;
     private final IndexShardService indexShardService;
     private final IndexShardWriterCache indexShardWriterCache;
     private final Executor executor;
     private final AtomicLong closing = new AtomicLong();
     private final TaskContext taskContext;
 
-    public static class Key {
-        private final long indexShardId;
-        private final IndexWriter indexWriter;
-
-        public Key(final long indexShardId, final IndexWriter indexWriter) {
-            this.indexShardId = indexShardId;
-            this.indexWriter = indexWriter;
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            final Key key = (Key) o;
-
-            if (indexShardId != key.indexShardId) return false;
-            return indexWriter != null ? indexWriter.equals(key.indexWriter) : key.indexWriter == null;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = (int) (indexShardId ^ (indexShardId >>> 32));
-            result = 31 * result + (indexWriter != null ? indexWriter.hashCode() : 0);
-            return result;
-        }
-    }
+    private volatile long maxOpenShards = MAX_CACHE_ENTRIES;
+    private volatile LoadingCache<Key, IndexShardSearcher> cache;
 
     @Inject
     IndexShardSearcherCacheImpl(final CacheManager cacheManager,
@@ -90,12 +69,9 @@ public class IndexShardSearcherCacheImpl extends AbstractCacheBean<IndexShardSea
                                 final IndexShardWriterCache indexShardWriterCache,
                                 final ExecutorProvider executorProvider,
                                 final TaskContext taskContext) {
-        super(cacheManager, "Index Shard Searcher Cache", MAX_CACHE_ENTRIES);
+        this.cacheManager = cacheManager;
         this.indexShardService = indexShardService;
         this.indexShardWriterCache = indexShardWriterCache;
-
-        setMaxIdleTime(60, TimeUnit.SECONDS);
-        setMaxLiveTime(120, TimeUnit.SECONDS);
 
         final ThreadPool threadPool = new ThreadPoolImpl("Index Shard Searcher Cache", 3, 0, Integer.MAX_VALUE);
         executor = executorProvider.getExecutor(threadPool);
@@ -103,38 +79,62 @@ public class IndexShardSearcherCacheImpl extends AbstractCacheBean<IndexShardSea
         this.taskContext = taskContext;
     }
 
+    @SuppressWarnings("unchecked")
+    private LoadingCache<Key, IndexShardSearcher> getCache() {
+        LoadingCache<Key, IndexShardSearcher> result = cache;
+        if (result == null) {
+            synchronized (this) {
+                result = cache;
+                if (result == null) {
+                    final RemovalListener<Key, IndexShardSearcher> removalListener = notification -> destroy(notification.getKey(), notification.getValue());
+
+                    final CacheLoader<Key, IndexShardSearcher> cacheLoader = CacheLoader.from(k -> {
+                        if (k == null) {
+                            throw new NullPointerException("Null key supplied");
+                        }
+
+                        try {
+                            final IndexShard indexShard = indexShardService.loadById(k.indexShardId);
+                            if (indexShard == null) {
+                                throw new SearchException("Unable to find index shard with id = " + k.indexShardId);
+                            }
+
+                            return new IndexShardSearcherImpl(indexShard, k.indexWriter);
+                        } catch (final RuntimeException e) {
+                            LOGGER.error(e::getMessage, e);
+                            throw e;
+                        }
+                    });
+
+                    final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
+                            .maximumSize(maxOpenShards)
+                            .expireAfterAccess(1, TimeUnit.MINUTES)
+                            .removalListener(removalListener);
+                    result = cacheBuilder.build(cacheLoader);
+                    cacheManager.replaceCache("Index Shard Searcher Cache", cacheBuilder, result);
+                    this.cache = result;
+                }
+            }
+        }
+
+        return result;
+    }
+
     @Override
     public IndexShardSearcher get(final Long indexShardId) {
         final IndexWriter indexWriter = getWriter(indexShardId);
         final Key key = new Key(indexShardId, indexWriter);
-        return computeIfAbsent(key, this::create);
+        return getCache().getUnchecked(key);
     }
 
     @Override
     public boolean isCached(final Long indexShardId) {
         final IndexWriter indexWriter = getWriter(indexShardId);
         final Key key = new Key(indexShardId, indexWriter);
-        IndexShardSearcherImpl result = getQuiet(key);
-
-        return result != null;
+        return getCache().getIfPresent(key) != null;
     }
 
-    private IndexShardSearcherImpl create(final Key key) {
-        try {
-            final IndexShard indexShard = indexShardService.loadById(key.indexShardId);
-            if (indexShard == null) {
-                throw new SearchException("Unable to find index shard with id = " + key.indexShardId);
-            }
-
-            return new IndexShardSearcherImpl(indexShard, key.indexWriter);
-        } catch (final RuntimeException e) {
-            LOGGER.error(e::getMessage, e);
-            throw e;
-        }
-    }
-
-    @Override
-    protected void destroy(final Key key, final Object value) {
+    private void destroy(final Key key, final Object value) {
         if (value != null && value instanceof IndexShardSearcherImpl) {
             final IndexShardSearcherImpl indexShardSearcher = (IndexShardSearcherImpl) value;
 
@@ -173,7 +173,7 @@ public class IndexShardSearcherCacheImpl extends AbstractCacheBean<IndexShardSea
 
         try {
             // Close any remaining writers.
-            super.clear();
+            CacheUtil.clear(getCache());
 
             // Report on closing progress.
             if (closing.get() > 0) {
@@ -199,12 +199,23 @@ public class IndexShardSearcherCacheImpl extends AbstractCacheBean<IndexShardSea
 
     @Override
     public long getMaxOpenShards() {
-        return getMaxCacheEntries();
+        return maxOpenShards;
     }
 
     @Override
     public void setMaxOpenShards(final long maxOpenShards) {
-        setMaxCacheEntries(maxOpenShards);
+        if (this.maxOpenShards != maxOpenShards) {
+            synchronized (this) {
+                final LoadingCache<Key, IndexShardSearcher> result = cache;
+                this.maxOpenShards = maxOpenShards;
+                cache = null;
+
+                if (result != null) {
+                    // Clean up.
+                    CacheUtil.clear(result);
+                }
+            }
+        }
     }
 
     /**
@@ -215,12 +226,10 @@ public class IndexShardSearcherCacheImpl extends AbstractCacheBean<IndexShardSea
     public void refresh() {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-        final List<Key> keys = getKeysWithExpiryCheck();
-        keys.forEach(key -> {
-            final IndexShardSearcher indexShardSearcher = getQuiet(key);
-            if (indexShardSearcher != null) {
+        getCache().asMap().values().forEach(v -> {
+            if (v != null) {
                 try {
-                    indexShardSearcher.getSearcherManager().maybeRefresh();
+                    v.getSearcherManager().maybeRefresh();
                 } catch (final IOException e) {
                     LOGGER.error(e::getMessage, e);
                 }
@@ -228,5 +237,33 @@ public class IndexShardSearcherCacheImpl extends AbstractCacheBean<IndexShardSea
         });
 
         LOGGER.debug(() -> "refresh() - Completed in " + logExecutionTime);
+    }
+
+    public static class Key {
+        private final long indexShardId;
+        private final IndexWriter indexWriter;
+
+        Key(final long indexShardId, final IndexWriter indexWriter) {
+            this.indexShardId = indexShardId;
+            this.indexWriter = indexWriter;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            final Key key = (Key) o;
+
+            if (indexShardId != key.indexShardId) return false;
+            return indexWriter != null ? indexWriter.equals(key.indexWriter) : key.indexWriter == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = (int) (indexShardId ^ (indexShardId >>> 32));
+            result = 31 * result + (indexWriter != null ? indexWriter.hashCode() : 0);
+            return result;
+        }
     }
 }
