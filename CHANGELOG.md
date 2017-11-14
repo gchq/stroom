@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.60] - 2017-11-14
+
 * Issue **#484** : Remove custom finalize() methods to reduce memory overhead
 
 * Issue **#475** : Fix memory leak of java.io.File references when proxy aggregation runs
