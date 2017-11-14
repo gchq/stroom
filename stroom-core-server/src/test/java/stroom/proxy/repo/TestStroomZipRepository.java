@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.util.zip;
+package stroom.proxy.repo;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
@@ -25,6 +25,12 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
+import stroom.util.zip.HeaderMap;
+import stroom.util.zip.StroomZipEntry;
+import stroom.util.zip.StroomZipFile;
+import stroom.util.zip.StroomZipFileType;
+import stroom.util.zip.StroomZipOutputStream;
+import stroom.util.zip.StroomZipOutputStreamUtil;
 
 import java.io.File;
 import java.io.IOException;

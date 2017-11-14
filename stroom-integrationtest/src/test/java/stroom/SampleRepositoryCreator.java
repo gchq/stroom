@@ -30,7 +30,7 @@ import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.spring.StroomSpringProfiles;
-import stroom.util.zip.StroomZipRepository;
+import stroom.proxy.repo.StroomZipRepository;
 
 /**
  * Script to create some base data for testing.

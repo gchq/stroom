@@ -14,13 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.util.zip;
+package stroom.proxy.repo;
 
 import stroom.util.config.StroomProperties;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileSystemIterator;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.StroomLogger;
+import stroom.util.zip.HeaderMap;
+import stroom.util.zip.StroomFileNameUtil;
+import stroom.util.zip.StroomZipFile;
+import stroom.util.zip.StroomZipOutputStream;
 
 import java.io.File;
 import java.io.IOException;
