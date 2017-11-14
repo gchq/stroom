@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#487** : Search result list trimming was throwing an illegal argument exception `Comparison method violates its general contract`, this should now be fixed.
 
+* Issue **#488** : Permissions are now elevated to 'Use' for the purposes of reporting the data source being queried.
+
 ## [v5.0-beta.59] - 2017-11-10
 
 * Issue **#477** : Additional changes to ensure search sub tasks use threads fairly between multiple searches.
