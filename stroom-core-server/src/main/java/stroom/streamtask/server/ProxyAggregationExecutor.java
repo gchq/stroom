@@ -36,8 +36,8 @@ import stroom.util.shared.ThreadPool;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.thread.ThreadLocalBuffer;
-import stroom.util.zip.StroomZipRepository;
-import stroom.util.zip.StroomZipRepositoryProcessor;
+import stroom.proxy.repo.StroomZipRepository;
+import stroom.proxy.repo.StroomZipRepositoryProcessor;
 
 import javax.inject.Inject;
 import javax.inject.Named;

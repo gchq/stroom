@@ -11,8 +11,8 @@ import stroom.util.logging.StroomLogger;
 import stroom.util.thread.ThreadLocalBuffer;
 import stroom.util.zip.HeaderMap;
 import stroom.util.zip.StroomHeaderArguments;
-import stroom.util.zip.StroomZipRepository;
-import stroom.util.zip.StroomZipRepositoryProcessor;
+import stroom.proxy.repo.StroomZipRepository;
+import stroom.proxy.repo.StroomZipRepositoryProcessor;
 
 import java.io.File;
 import java.io.IOException;

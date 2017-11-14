@@ -39,8 +39,8 @@ public class ProxyAggregationLoader {
     //main method for manually testing proxy aggregation with a running stroom instance
     public static void main(final String[] args) throws IOException {
 
-//        final File proxyDir = new File("/home/dev/tmp/dev/proxy");
-        final File proxyDir = new File("/tmp/stroom/dev/proxy");
+        final File proxyDir = new File("/home/dev/tmp/dev/proxy");
+//        final File proxyDir = new File("/tmp/stroom/dev/proxy");
 
         FileUtil.mkdirs(proxyDir);
 
