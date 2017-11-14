@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#484** : Remove custom finalize() methods to reduce memory overhead
+
 * Issue **#475** : Fix memory leak of java.io.File references when proxy aggregation runs
 
 * Issue **#470** : You can now correctly add destinations directly to the pipeline 'Source' element to enable raw streaming.

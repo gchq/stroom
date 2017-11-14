@@ -41,7 +41,6 @@ public class StroomZipFile implements Closeable {
 
     private final File file;
     private ZipFile zipFile;
-    private RuntimeException openStack;
     private StroomZipNameSet stroomZipNameSet;
     private long totalSize = 0;
 
@@ -52,7 +51,6 @@ public class StroomZipFile implements Closeable {
 
     public StroomZipFile(File file) {
         this.file = file;
-        openStack = new RuntimeException();
     }
 
     private ZipFile getZipFile() throws IOException {
@@ -109,14 +107,6 @@ public class StroomZipFile implements Closeable {
         }
         stroomZipNameSet = null;
 
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-        if (zipFile != null) {
-            LOGGER.error("finalize() - Failed to close stream opened here", openStack);
-        }
     }
 
     public InputStream getInputStream(String baseName, StroomZipFileType fileType) throws IOException {

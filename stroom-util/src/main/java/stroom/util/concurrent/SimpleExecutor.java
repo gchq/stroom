@@ -48,15 +48,9 @@ public class SimpleExecutor {
      */
     private final AtomicInteger executorCompleteCount = new AtomicInteger(0);
 
-    /**
-     * Debug stack trace
-     */
-    private Throwable createStack;
-
     public SimpleExecutor(int threadCount) {
         this.threadCount = threadCount;
         this.executorService = Executors.newFixedThreadPool(threadCount);
-        this.createStack = new RuntimeException();
     }
 
     /**
@@ -153,16 +147,6 @@ public class SimpleExecutor {
 
     public int getExecutorSubmitCount() {
         return executorSubmitCount.get();
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-        if (!executorService.isShutdown()) {
-            LOGGER.error(
-                    "finalize() - SimpleExecutor was never stopped and thus thread pool still running.  Create called here",
-                    createStack);
-        }
     }
 
     @Override
