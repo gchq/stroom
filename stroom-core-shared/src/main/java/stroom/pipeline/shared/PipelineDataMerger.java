@@ -64,185 +64,190 @@ public class PipelineDataMerger {
     }
 
     public PipelineDataMerger merge(final List<PipelineData> configStack) throws PipelineModelException {
-        final Map<String, PipelineElement> allElementMap = new HashMap<>();
-        boolean sourceProvided = false;
+        if (configStack != null && configStack.size() > 0) {
+            final Map<String, PipelineElement> allElementMap = new HashMap<>();
+            boolean sourceProvided = false;
 
-        // Merge elements.
-        for (final PipelineData pipelineData : configStack) {
-            if (pipelineData != null) {
+            // Merge elements.
+            for (final PipelineData pipelineData : configStack) {
+                if (pipelineData != null) {
 
-                // Add elements.
-                for (final PipelineElement element : pipelineData.getElements().getAdd()) {
-                    // If source is provided by a pipeline then remember this.
-                    if (SOURCE.equals(element.getId())) {
-                        sourceProvided = true;
-                    }
+                    // Add elements.
+                    for (final PipelineElement element : pipelineData.getElements().getAdd()) {
+                        // If source is provided by a pipeline then remember this.
+                        if (SOURCE.equals(element.getId())) {
+                            sourceProvided = true;
+                        }
 
-                    final PipelineElement existing = allElementMap.get(element.getId());
-                    if (existing == null) {
-                        allElementMap.put(element.getId(), element);
-                        elementMap.put(element.getId(), element);
-                    } else if (!existing.getType().equals(element.getType())) {
-                        throw new PipelineModelException("Attempt to add element with id=" + existing.getId()
-                                + " but element already exists with the same id but different type");
-                    }
-                }
-
-                // Remove elements.
-                for (final PipelineElement element : pipelineData.getElements().getRemove()) {
-                    elementMap.remove(element.getId());
-                }
-            }
-        }
-
-        // Merge properties.
-        for (final PipelineData pipelineData : configStack) {
-            if (pipelineData != null) {
-
-                // Add properties.
-                for (final PipelineProperty property : pipelineData.getProperties().getAdd()) {
-                    final PipelineElement element = elementMap.get(property.getElement());
-                    if (element != null) {
-                        final String elementType = element.getType();
-                        if (elementType != null) {
-                            propertyMap.computeIfAbsent(property.getElement(), k -> new HashMap<>()).put(property.getName(), property);
+                        final PipelineElement existing = allElementMap.get(element.getId());
+                        if (existing == null) {
+                            allElementMap.put(element.getId(), element);
+                            elementMap.put(element.getId(), element);
+                        } else if (!existing.getType().equals(element.getType())) {
+                            throw new PipelineModelException("Attempt to add element with id=" + existing.getId()
+                                    + " but element already exists with the same id but different type");
                         }
                     }
-                }
 
-                // Remove properties.
-                for (final PipelineProperty property : pipelineData.getProperties().getRemove()) {
-                    propertyMap.compute(property.getElement(), (elementId, map) -> {
-                        if (map != null) {
-                            map.remove(property.getName());
-                            if (map.size() == 0) {
-                                return null;
-                            }
-                        }
-                        return map;
-                    });
+                    // Remove elements.
+                    for (final PipelineElement element : pipelineData.getElements().getRemove()) {
+                        elementMap.remove(element.getId());
+                    }
                 }
             }
-        }
 
-        // Merge pipeline references.
-        for (final PipelineData pipelineData : configStack) {
-            if (pipelineData != null) {
+            // If there is no source provided then we need to add a source.
+            if (!sourceProvided) {
+                // Ensure that there is always a source element.
+                elementMap.put(SOURCE, SOURCE_ELEMENT);
+            }
 
-                // Add pipeline references.
-                for (final PipelineReference reference : pipelineData.getPipelineReferences().getAdd()) {
-                    final PipelineElement element = elementMap.get(reference.getElement());
-                    if (element != null) {
-                        final String elementType = element.getType();
-                        if (elementType != null) {
-                            final List<PipelineReference> list = pipelineReferenceMap
-                                    .computeIfAbsent(reference.getElement(), k -> new HashMap<>())
-                                    .computeIfAbsent(reference.getName(), k -> new ArrayList<>());
-                            if (!list.contains(reference)) {
-                                list.add(reference);
+            // Merge properties.
+            for (final PipelineData pipelineData : configStack) {
+                if (pipelineData != null) {
+
+                    // Add properties.
+                    for (final PipelineProperty property : pipelineData.getProperties().getAdd()) {
+                        final PipelineElement element = elementMap.get(property.getElement());
+                        if (element != null) {
+                            final String elementType = element.getType();
+                            if (elementType != null) {
+                                propertyMap.computeIfAbsent(property.getElement(), k -> new HashMap<>()).put(property.getName(), property);
                             }
                         }
                     }
-                }
 
-                // Remove pipeline references.
-                for (final PipelineReference reference : pipelineData.getPipelineReferences().getRemove()) {
-                    pipelineReferenceMap.compute(reference.getElement(), (elementId, map) -> {
-                        if (map != null) {
-                            map.compute(reference.getName(), (name, list) -> {
-                                if (list != null) {
-                                    list.remove(reference);
-                                    if (list.size() == 0) {
-                                        return null;
-                                    }
+                    // Remove properties.
+                    for (final PipelineProperty property : pipelineData.getProperties().getRemove()) {
+                        propertyMap.compute(property.getElement(), (elementId, map) -> {
+                            if (map != null) {
+                                map.remove(property.getName());
+                                if (map.size() == 0) {
+                                    return null;
                                 }
-                                return list;
-                            });
-                            if (map.size() == 0) {
-                                return null;
                             }
-                        }
-                        return map;
-                    });
-                }
-            }
-        }
-
-        // Merge links.
-        for (final PipelineData pipelineData : configStack) {
-            if (pipelineData != null) {
-
-                // Add links.
-                for (final PipelineLink link : pipelineData.getLinks().getAdd()) {
-                    final PipelineElement fromElement = elementMap.get(link.getFrom());
-                    final PipelineElement toElement = elementMap.get(link.getTo());
-
-                    // Only add links between elements that have been defined.
-                    if (fromElement != null && toElement != null) {
-                        final String fromType = fromElement.getType();
-                        final String toType = toElement.getType();
-
-                        if (fromType != null && toType != null) {
-                            linkMap.computeIfAbsent(link.getFrom(), k -> new ArrayList<>()).add(link);
-                        }
-                    }
-                }
-
-                // Remove links.
-                for (final PipelineLink link : pipelineData.getLinks().getRemove()) {
-                    linkMap.compute(link.getFrom(), (elementId, list) -> {
-                        if (list != null) {
-                            list.remove(link);
-                            if (list.size() == 0) {
-                                return null;
-                            }
-                        }
-
-                        return list;
-                    });
-                }
-            }
-        }
-
-        // Ensure an element can only be linked to once.
-        final Map<String, PipelineLink> uniqueLinkToMap = new HashMap<>();
-        for (final Entry<String, List<PipelineLink>> entry : linkMap.entrySet()) {
-            final List<PipelineLink> links = entry.getValue();
-            final Iterator<PipelineLink> iter = links.iterator();
-            while (iter.hasNext()) {
-                final PipelineLink link = iter.next();
-                final PipelineLink existing = uniqueLinkToMap.get(link.getTo());
-                if (existing == null) {
-                    // We haven't linked to this element before so just record
-                    // the link.
-                    uniqueLinkToMap.put(link.getTo(), link);
-                } else {
-                    // We already have a link to this element so remove this
-                    // additional link.
-                    iter.remove();
-                }
-            }
-        }
-
-        // If there is no source provided then we need to add a source and attach a parser.
-        if (!sourceProvided) {
-            // Ensure that there is always a source element.
-            elementMap.put(SOURCE, SOURCE_ELEMENT);
-
-            String parserId = null;
-            for (final Entry<String, PipelineElement> entry : elementMap.entrySet()) {
-                if (parserId == null) {
-                    final String elementId = entry.getKey();
-                    final PipelineElement element = entry.getValue();
-                    if (element.getType().toLowerCase().contains("parser")) {
-                        parserId = elementId;
+                            return map;
+                        });
                     }
                 }
             }
 
-            if (parserId != null) {
-                final PipelineLink pipelineLink = new PipelineLink(SOURCE, parserId);
-                linkMap.computeIfAbsent(SOURCE, k -> new ArrayList<>()).add(pipelineLink);
+            // Merge pipeline references.
+            for (final PipelineData pipelineData : configStack) {
+                if (pipelineData != null) {
+
+                    // Add pipeline references.
+                    for (final PipelineReference reference : pipelineData.getPipelineReferences().getAdd()) {
+                        final PipelineElement element = elementMap.get(reference.getElement());
+                        if (element != null) {
+                            final String elementType = element.getType();
+                            if (elementType != null) {
+                                final List<PipelineReference> list = pipelineReferenceMap
+                                        .computeIfAbsent(reference.getElement(), k -> new HashMap<>())
+                                        .computeIfAbsent(reference.getName(), k -> new ArrayList<>());
+                                if (!list.contains(reference)) {
+                                    list.add(reference);
+                                }
+                            }
+                        }
+                    }
+
+                    // Remove pipeline references.
+                    for (final PipelineReference reference : pipelineData.getPipelineReferences().getRemove()) {
+                        pipelineReferenceMap.compute(reference.getElement(), (elementId, map) -> {
+                            if (map != null) {
+                                map.compute(reference.getName(), (name, list) -> {
+                                    if (list != null) {
+                                        list.remove(reference);
+                                        if (list.size() == 0) {
+                                            return null;
+                                        }
+                                    }
+                                    return list;
+                                });
+                                if (map.size() == 0) {
+                                    return null;
+                                }
+                            }
+                            return map;
+                        });
+                    }
+                }
+            }
+
+            // Merge links.
+            for (final PipelineData pipelineData : configStack) {
+                if (pipelineData != null) {
+
+                    // Add links.
+                    for (final PipelineLink link : pipelineData.getLinks().getAdd()) {
+                        final PipelineElement fromElement = elementMap.get(link.getFrom());
+                        final PipelineElement toElement = elementMap.get(link.getTo());
+
+                        // Only add links between elements that have been defined.
+                        if (fromElement != null && toElement != null) {
+                            final String fromType = fromElement.getType();
+                            final String toType = toElement.getType();
+
+                            if (fromType != null && toType != null) {
+                                linkMap.computeIfAbsent(link.getFrom(), k -> new ArrayList<>()).add(link);
+                            }
+                        }
+                    }
+
+                    // Remove links.
+                    for (final PipelineLink link : pipelineData.getLinks().getRemove()) {
+                        linkMap.compute(link.getFrom(), (elementId, list) -> {
+                            if (list != null) {
+                                list.remove(link);
+                                if (list.size() == 0) {
+                                    return null;
+                                }
+                            }
+
+                            return list;
+                        });
+                    }
+                }
+            }
+
+            // Ensure an element can only be linked to once.
+            final Map<String, PipelineLink> uniqueLinkToMap = new HashMap<>();
+            for (final Entry<String, List<PipelineLink>> entry : linkMap.entrySet()) {
+                final List<PipelineLink> links = entry.getValue();
+                final Iterator<PipelineLink> iter = links.iterator();
+                while (iter.hasNext()) {
+                    final PipelineLink link = iter.next();
+                    final PipelineLink existing = uniqueLinkToMap.get(link.getTo());
+                    if (existing == null) {
+                        // We haven't linked to this element before so just record
+                        // the link.
+                        uniqueLinkToMap.put(link.getTo(), link);
+                    } else {
+                        // We already have a link to this element so remove this
+                        // additional link.
+                        iter.remove();
+                    }
+                }
+            }
+
+            // If there is no source provided then we need to attach a parser to source as this is an old pipeline config.
+            if (!sourceProvided) {
+                String parserId = null;
+                for (final Entry<String, PipelineElement> entry : elementMap.entrySet()) {
+                    if (parserId == null) {
+                        final String elementId = entry.getKey();
+                        final PipelineElement element = entry.getValue();
+                        if (element.getType().toLowerCase().contains("parser")) {
+                            parserId = elementId;
+                        }
+                    }
+                }
+
+                if (parserId != null) {
+                    final PipelineLink pipelineLink = new PipelineLink(SOURCE, parserId);
+                    linkMap.computeIfAbsent(SOURCE, k -> new ArrayList<>()).add(pipelineLink);
+                }
             }
         }
 

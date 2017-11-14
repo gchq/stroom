@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#475** : Fix memory leak of java.io.File references when proxy aggregation runs
 
+* Issue **#470** : You can now correctly add destinations directly to the pipeline 'Source' element to enable raw streaming.
+
 ## [v5.0-beta.59] - 2017-11-10
 
 * Issue **#477** : Additional changes to ensure search sub tasks use threads fairly between multiple searches.
