@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import stroom.proxy.repo.StroomZipRepository;
 import stroom.util.zip.*;
 import org.apache.commons.lang.StringUtils;
 

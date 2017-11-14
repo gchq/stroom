@@ -293,7 +293,11 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                 updateShardInfo(startTime);
             }
 
-            LAMBDA_LOGGER.debug(() -> "Finished close in " + ModelStringUtil.formatDurationString((System.currentTimeMillis() - startTime)) + ") " + toString());
+            LAMBDA_LOGGER.debug(
+                    () -> "Finished close in " +
+                            ModelStringUtil.formatDurationString((System.currentTimeMillis() - startTime)) +
+                            ") " +
+                            toString());
         }
     }
 
@@ -337,15 +341,6 @@ public class IndexShardWriterImpl implements IndexShardWriter {
             LAMBDA_LOGGER.debug(e::getMessage, e);
         }
         return fileSize;
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        if (open.get()) {
-            LAMBDA_LOGGER.error(() -> "finalize() - Failed to close index");
-        }
-
-        super.finalize();
     }
 
     @Override
