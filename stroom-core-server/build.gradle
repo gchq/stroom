@@ -51,6 +51,7 @@ dependencies {
     compile libs.hsqldb
     permitUnusedDeclared libs.hsqldb
     compile libs.vavr
+    compile libs.lmdbjava
 
     compile libs.c3p0
     compile libs.spring_tx
