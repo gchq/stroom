@@ -16,20 +16,18 @@
 
 package stroom.statistics.sql;
 
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.locks.ReentrantLock;
-
-import javax.annotation.Resource;
-
-import stroom.util.logging.StroomLogger;
 import org.springframework.stereotype.Component;
-
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.task.server.TaskCallbackAdaptor;
 import stroom.task.server.TaskManager;
+import stroom.util.logging.StroomLogger;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomShutdown;
 import stroom.util.spring.StroomSimpleCronSchedule;
+
+import javax.annotation.Resource;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Component
 public class SQLStatisticCacheImpl implements SQLStatisticCache {
@@ -47,7 +45,7 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
     private volatile SQLStatisticAggregateMap map = new SQLStatisticAggregateMap();
     private final ReentrantLock mapLock = new ReentrantLock();
     // private final ReentrantLock flushLock = new ReentrantLock();
-    private final LinkedBlockingDeque<SQLStatisticAggregateMap> flushQueue = new LinkedBlockingDeque<>(1);
+    private final LinkedBlockingQueue<SQLStatisticAggregateMap> flushQueue = new LinkedBlockingQueue<>(1);
 
     private final int maxSize;
 
@@ -108,12 +106,12 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
         try {
             LOGGER.debug("doFlush() - Locking %s", flushMap);
 
-            flushQueue.putLast(flushMap);
+            flushQueue.put(flushMap);
             if (block) {
                 try {
                     taskManager.exec(new SQLStatisticFlushTask(flushMap));
                 } finally {
-                    flushQueue.pollLast();
+                    flushQueue.poll();
                 }
 
             } else {
@@ -122,13 +120,13 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
                     @Override
                     public void onSuccess(final VoidResult result) {
                         LOGGER.debug("doFlush() - Unlocking");
-                        flushQueue.pollLast();
+                        flushQueue.poll();
                     }
 
                     @Override
                     public void onFailure(final Throwable t) {
                         LOGGER.error("doFlush() - Unlocking", t);
-                        flushQueue.pollLast();
+                        flushQueue.poll();
                     }
                 });
             }
