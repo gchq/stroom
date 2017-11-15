@@ -35,6 +35,7 @@ import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.server.factory.PipelinePropertyDocRef;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
@@ -165,6 +166,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
     }
 
     @PipelineProperty(description = "The XML fragment wrapper that should be used to wrap the input XML.")
+    @PipelinePropertyDocRef(types=TextConverter.ENTITY_TYPE)
     public void setTextConverter(final DocRef textConverterRef) {
         this.textConverterRef = textConverterRef;
     }

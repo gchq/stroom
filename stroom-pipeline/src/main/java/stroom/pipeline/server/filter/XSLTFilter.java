@@ -45,6 +45,7 @@ import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.server.factory.PipelinePropertyDocRef;
 import stroom.pipeline.server.writer.PathCreator;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.FindXSLTCriteria;
@@ -615,6 +616,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     }
 
     @PipelineProperty(description = "The XSLT to use.")
+    @PipelinePropertyDocRef(types=XSLT.ENTITY_TYPE)
     public void setXslt(final DocRef xsltRef) {
         this.xsltRef = xsltRef;
     }

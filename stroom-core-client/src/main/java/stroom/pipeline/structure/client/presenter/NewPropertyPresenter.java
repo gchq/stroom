@@ -29,6 +29,7 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.EntityReferenceFindAction;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.feed.shared.Feed;
 import stroom.item.client.ItemListBox;
 import stroom.item.client.StringListBox;
 import stroom.pipeline.shared.data.PipelineProperty;
@@ -338,7 +339,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
             currentEntity = property.getValue().getEntity();
         }
 
-        entityDropDownPresenter.setIncludedTypes(property.getPropertyType().getType());
+        entityDropDownPresenter.setIncludedTypes(property.getPropertyType().getDocRefTypes());
         entityDropDownPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
         try {
             entityDropDownPresenter.setSelectedEntityReference(currentEntity);

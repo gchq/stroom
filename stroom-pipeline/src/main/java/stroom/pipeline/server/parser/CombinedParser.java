@@ -35,6 +35,7 @@ import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.server.factory.PipelinePropertyDocRef;
 import stroom.pipeline.server.reader.InvalidCharFilterReader;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.TextConverter;
@@ -247,6 +248,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
     }
 
     @PipelineProperty(description = "The text converter configuration that should be used to parse the input data.")
+    @PipelinePropertyDocRef(types=TextConverter.ENTITY_TYPE)
     public void setTextConverter(final DocRef textConverterRef) {
         this.textConverterRef = textConverterRef;
     }
