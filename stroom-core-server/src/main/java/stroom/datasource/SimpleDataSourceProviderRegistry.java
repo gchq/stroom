@@ -20,10 +20,13 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.node.server.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -32,9 +35,10 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleDataSourceProviderRegistry.class);
 
     public static final String PROP_KEY_BASE_PATH = "stroom.serviceDiscovery.simpleLookup.basePath";
-    public static final String PROP_KEY_ANNOTATIONS_PATH = "stroom.serviceDiscovery.simpleLookup.annotationsPath";
+    public static final String PROP_KEY_ANNOTATIONS_PATH = "stroom.url.annotations-query";
+    public static final String PROP_KEY_ELASTIC_PATH = "stroom.url.elastic-query";
 
-    private final ImmutableMap<String, String> urlMap;
+    private final Map<String, String> urlMap;
 
     private final SecurityContext securityContext;
 
@@ -44,18 +48,20 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
 
         final String basePath = stroomPropertyService.getProperty(PROP_KEY_BASE_PATH);
         final String annotationsPath = stroomPropertyService.getProperty(PROP_KEY_ANNOTATIONS_PATH);
+        final String elasticPath = stroomPropertyService.getProperty(PROP_KEY_ELASTIC_PATH);
 
         if (!Strings.isNullOrEmpty(basePath)) {
             //TODO the path strings are defined in ResourcePaths but this is not accessible from here
             //if this code is kept long term then ResourcePaths needs to be mode so that is accessible to all
-            urlMap = ImmutableMap.of(
-                    "Index", basePath + "/api/stroom-index/v2",
-                    "StatisticStore", basePath + "/api/sqlstatistics/v2",
-                    "Annotations", annotationsPath,
+            urlMap = new HashMap<String, String>();
+            urlMap.put("Index", basePath + "/api/stroom-index/v2");
+            urlMap.put("StatisticStore", basePath + "/api/sqlstatistics/v2");
+            urlMap.put(ExplorerConstants.ANNOTATIONS, annotationsPath);
+            urlMap.put(ExplorerConstants.ELASTIC_SEARCH, elasticPath);
                     //strooom-stats is not available as a local service as if you have stroom-stats you have zookeeper so
                     //you can run service discovery
-                    "authentication", basePath + "/api/authentication/v1",
-                    "authorisation", basePath + "/api/authorisation/v1");
+            urlMap.put("authentication", basePath + "/api/authentication/v1");
+            urlMap.put("authorisation", basePath + "/api/authorisation/v1");
 
             LOGGER.info("Using the following local URLs for services:\n" +
                 urlMap.entrySet().stream()

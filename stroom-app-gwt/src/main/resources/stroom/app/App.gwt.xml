@@ -57,6 +57,7 @@
     <!-- Import functional areas -->
     <!--  Minimal -->
     <inherits name="stroom.annotations.Annotations" />
+    <inherits name="stroom.elastic.ElasticIndex" />
     <inherits name="stroom.about.About" />
     <inherits name="stroom.alert.Alert" />
     <inherits name="stroom.content.Content" />

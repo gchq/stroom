@@ -20,6 +20,7 @@ public final class ElementIcons {
     public static final String FILE = "file.svg";
     public static final String FILES = "files.svg";
     public static final String HADOOP = "hadoop-elephant-logo.svg";
+    public static final String ELASTIC_SEARCH = "ElasticSearch.svg";
     public static final String ID = "id.svg";
     public static final String INDEX = "index.svg";
     public static final String JSON = "json.svg";
