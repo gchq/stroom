@@ -55,7 +55,6 @@ cache:
   directories:
     - .autoconf
     - $HOME/.m2
-    - libs
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
 
