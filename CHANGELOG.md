@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.61] - 2017-11-15
+
 * Issue **#490** : Fix errors in proxy aggregation due to a bounded thread pool size
 
 ## [v5.0-beta.60] - 2017-11-14
@@ -672,7 +674,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.59...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.61...HEAD
+[v5.0-beta.61]: https://github.com/gchq/stroom/compare/v5.0-beta.60...v5.0-beta.61
+[v5.0-beta.60]: https://github.com/gchq/stroom/compare/v5.0-beta.59...v5.0-beta.60
 [v5.0-beta.59]: https://github.com/gchq/stroom/compare/v5.0-beta.58...v5.0-beta.59
 [v5.0-beta.58]: https://github.com/gchq/stroom/compare/v5.0-beta.57...v5.0-beta.58
 [v5.0-beta.57]: https://github.com/gchq/stroom/compare/v5.0-beta.56...v5.0-beta.57
