@@ -38,7 +38,6 @@ dependencies {
     compile libs.hibernate_core
     compile libs.javassist
     compile libs.slf4j_api
-    compile libs.spring_aop
     compile libs.spring_beans
     compile libs.spring_context
     compile libs.spring_core
