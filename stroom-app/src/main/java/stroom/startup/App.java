@@ -55,6 +55,7 @@ import stroom.proxy.repo.ProxyLifecycle;
 import stroom.proxy.servlet.ConfigServlet;
 import stroom.proxy.servlet.ProxyStatusServlet;
 import stroom.proxy.servlet.ProxyWelcomeServlet;
+import stroom.ruleset.spring.RuleSetConfiguration;
 import stroom.script.server.ScriptServlet;
 import stroom.script.spring.ScriptConfiguration;
 import stroom.search.spring.SearchConfiguration;
@@ -225,7 +226,8 @@ public class App extends Application<Config> {
                 SecurityConfiguration.class,
                 StroomAnnotationsConfig.class,
                 StroomAnnotationsExplorerActionHandler.class,
-                ElasticIndexConfiguration.class
+                ElasticIndexConfiguration.class,
+                RuleSetConfiguration.class
         );
         applicationContext.refresh();
         return applicationContext;

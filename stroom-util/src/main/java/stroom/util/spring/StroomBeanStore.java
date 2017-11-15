@@ -192,8 +192,12 @@ public class StroomBeanStore implements InitializingBean, BeanFactoryAware, Appl
                 // CGLIB Proxy.
                 if (beanClass.getName().contains("CGLIB")) {
                     beanClass = beanClass.getSuperclass();
+                } else if (beanClass.getName().contains("$")) {
+                    Object bean = applicationContext.getBean(beanName);
+                    beanClass = AopUtils.getTargetClass(bean);
                 }
-                // Only bother with out own code
+
+                // Only bother with our own code
                 if (!beanClass.getName().contains(STROOM_CLASSES)) {
                     continue;
                 }
