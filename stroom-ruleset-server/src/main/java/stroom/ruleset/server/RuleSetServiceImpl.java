@@ -47,7 +47,7 @@ public class RuleSetServiceImpl implements RuleSetService {
 
     @Override
     public DocRef createDocument(final String name, final String parentFolderUUID) {
-        return documentStore.createDocument(parentFolderUUID, name);
+        return documentStore.createDocument(name, parentFolderUUID);
     }
 
     @Override

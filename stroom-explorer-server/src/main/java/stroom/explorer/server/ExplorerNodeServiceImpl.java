@@ -230,8 +230,12 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     private void updateNode(final DocRef docRef) {
         try {
             final ExplorerTreeNode docNode = getNodeForDocRef(docRef);
-            explorerTreeDao.update(docNode);
-
+            if (docNode != null) {
+                docNode.setType(docRef.getType());
+                docNode.setUuid(docRef.getUuid());
+                docNode.setName(docRef.getName());
+                explorerTreeDao.update(docNode);
+            }
         } catch (final Exception e) {
             throw new RuntimeException(e.getMessage());
         }
