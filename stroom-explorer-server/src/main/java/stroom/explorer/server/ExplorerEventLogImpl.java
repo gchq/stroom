@@ -181,8 +181,8 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
     private Event createAction(final String typeId, final String description, final DocRef entity) {
         String desc = description;
         if (entity != null) {
-            desc = description + " " + entity.getType() + " \"" + entity.getName() + "\" id="
-                    + entity.getId();
+            desc = description + " " + entity.getType() + " \"" + entity.getName() + "\" uuid="
+                    + entity.getUuid();
         }
 
         return eventLoggingService.createAction(typeId, desc);
