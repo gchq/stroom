@@ -144,6 +144,7 @@ ext.libs = [
     javax_el: "org.glassfish:javax.el:3.0.1-b08",
     javax_el_api: "javax.el:javax.el-api:3.0.0",
     javax_inject: "javax.inject:javax.inject:1",
+    javax_mail_api: "javax.mail:javax.mail-api:1.6.0",
     javax_servlet_api: "javax.servlet:javax.servlet-api:3.1.0",
     jcl_over_slf4j: "org.slf4j:jcl-over-slf4j:$versions.slf4j",
     jersey_client: "org.glassfish.jersey.core:jersey-client:$versions.jersey",

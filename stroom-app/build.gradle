@@ -60,6 +60,7 @@ dependencies {
     compile project(':stroom-statistics-server')
     compile project(':stroom-annotations-server')
     compile project(':stroom-elastic-server')
+    compile project(':stroom-ruleset-server')
 
     compile urlDependencies.get(urlLibs.stroomQueryApi)
     compile urlDependencies.get(urlLibs.stroomQueryCommon)
