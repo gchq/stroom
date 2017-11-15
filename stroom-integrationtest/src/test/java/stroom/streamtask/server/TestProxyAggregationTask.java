@@ -31,13 +31,11 @@ import stroom.streamstore.server.fs.serializable.RANestedInputStream;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.spring.DummyTask;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.util.test.StroomExpectedException;
-import stroom.util.thread.ThreadUtil;
 import stroom.util.zip.StroomZipFile;
 
 import javax.annotation.Resource;
@@ -62,6 +60,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     private ProxyAggregationExecutor proxyAggregationExecutor;
     @Resource
     private StroomPropertyService stroomPropertyService;
+
 
     @Test
     public void testImport() throws IOException {
