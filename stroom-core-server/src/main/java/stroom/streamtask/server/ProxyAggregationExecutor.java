@@ -167,7 +167,7 @@ public class ProxyAggregationExecutor {
 
         final ThreadPool threadPool = new ThreadPoolImpl("Proxy Aggregation Thread Pool",
                 priority,
-                0,
+                threadCount,
                 threadCount);
         return executorProvider.getExecutor(threadPool);
     }

@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#490** : Fix errors in proxy aggregation due to a bounded thread pool size
+
 ## [v5.0-beta.60] - 2017-11-14
 
 * Issue **#484** : Remove custom finalize() methods to reduce memory overhead

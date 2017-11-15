@@ -46,9 +46,9 @@ public class ProxyAggregationLoader {
 
         for (int i = 1; i <= 1000000000; i++) {
             final File testFile1 = new File(proxyDir, String.format("%08d", i) + ".zip");
-            int feedNo = (i % 2) + 1;
+            int feedNo = (i % 4) + 1;
             writeTestFile(testFile1, "TEST_FEED_" + feedNo, i + "-data1\n" + i + "-data1\n");
-            ThreadUtil.sleep(250);
+            ThreadUtil.sleep(200);
         }
     }
 }
