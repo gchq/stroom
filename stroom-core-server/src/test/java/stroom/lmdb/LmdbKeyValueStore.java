@@ -12,6 +12,8 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class LmdbKeyValueStore implements KeyValueStore, Closeable {
@@ -34,7 +36,7 @@ public class LmdbKeyValueStore implements KeyValueStore, Closeable {
         this.dir = dir;
 
         env = Env.<ByteBuffer>create()
-                .setMapSize(10_485_760)
+                .setMapSize(1024 * 1024 * 1024)
                 .setMaxDbs(1)
                 .open(dir.toFile());
 
@@ -53,6 +55,25 @@ public class LmdbKeyValueStore implements KeyValueStore, Closeable {
     }
 
     @Override
+    public void putBatch(final List<Map.Entry<String, String>> entries) {
+        Preconditions.checkNotNull(entries);
+        try (Txn<ByteBuffer> txn = env.txnWrite()) {
+            entries.forEach(entry -> {
+                String key = entry.getKey();
+                String value = entry.getValue();
+
+                Preconditions.checkNotNull(key);
+                Preconditions.checkNotNull(value);
+
+                final ByteBuffer keyBuf = stringToBuffer(key, env.getMaxKeySize());
+                final ByteBuffer valueBuf = stringToBuffer(value, VALUE_BUFFER_SIZE);
+
+                db.put(txn, keyBuf, valueBuf);
+            });
+        }
+    }
+
+    @Override
     public Optional<String> get(final String key) {
         Preconditions.checkNotNull(key);
         ByteBuffer keyBuf = stringToBuffer(key, env.getMaxKeySize());
@@ -63,6 +84,13 @@ public class LmdbKeyValueStore implements KeyValueStore, Closeable {
             return Optional
                     .ofNullable(valBuffer)
                     .map(this::byteBufferToString);
+        }
+    }
+
+    @Override
+    public void clear() {
+        try (Txn<ByteBuffer> txn = env.txnWrite()) {
+            db.drop(txn);
         }
     }
 

@@ -11,6 +11,8 @@ import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -30,12 +32,19 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class TestLmdbKeyValueStoreJava {
+public class TestLmdbKeyValueStore {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestLmdbKeyValueStore.class);
 
     private static final String DB_NAME = "myLmdb";
 
     @Rule
     public final TemporaryFolder tmpDir = new TemporaryFolder();
+
+    @Test
+    public void test() {
+        LOGGER.error("My Error",new RuntimeException());
+    }
 
     @Test
     public void testStringString_db() throws IOException {
@@ -84,15 +93,21 @@ public class TestLmdbKeyValueStoreJava {
     @Test
     public void perfTest() throws IOException {
 
-        List<Map.Entry<String, String>> entries = IntStream.rangeClosed(0, 1000)
+        LOGGER.info("Generating test data");
+        List<Map.Entry<String, String>> entries = IntStream.rangeClosed(1, 1_000_000)
                 .mapToObj(i -> Maps.immutableEntry(
                         "key" + i + UUID.randomUUID().toString(),
                         UUID.randomUUID().toString()))
                 .collect(Collectors.toList());
 
+        LOGGER.info("Entry count: {}", entries.size());
+
         List<Map.Entry<String, String>> randomEntries = new ArrayList<>(entries);
+
+        LOGGER.info("Shuffling test data");
         Collections.shuffle(randomEntries);
 
+        LOGGER.info("Initialising stores");
         Path dir = tmpDir.newFolder().toPath();
         KeyValueStore lmdbKeyValueStore = new LmdbKeyValueStore("MyDB", dir);
 
@@ -100,24 +115,48 @@ public class TestLmdbKeyValueStoreJava {
 
         List<KeyValueStore> stores = Arrays.asList(lmdbKeyValueStore, inMemoryKeyValueStore);
 
+        //individual puts
         stores.forEach(store -> {
-            Instant start = Instant.now();
+            LOGGER.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+            LOGGER.info("Store: {}", store.getClass().getName());
+            Instant start;
+//            Instant start = Instant.now();
+//
+//            entries.forEach(entry ->
+//                    store.put(entry.getKey(), entry.getValue()));
+//
+//            LOGGER.info("Put duration {}", Duration.between(start, Instant.now()).toString());
+//
+//            //gets
+//            start = Instant.now();
+//
+//            randomEntries.forEach(entry -> {
+//                Optional<String> val = store.get(entry.getKey());
+//                Preconditions.checkNotNull(val);
+//            });
+//
+//            LOGGER.info("Get duration {}", Duration.between(start, Instant.now()).toString());
+//
+//            store.clear();
 
-            entries.forEach(entry ->
-                    store.put(entry.getKey(), entry.getValue()));
+            //putBatch
+            start = Instant.now();
 
-            System.out.println(String.format("Put duration %s", Duration.between(start, Instant.now()).toString()));
-        });
+            store.putBatch(entries);
 
-        stores.forEach(store -> {
-            Instant start = Instant.now();
+            LOGGER.info("PutBatch duration {}", Duration.between(start, Instant.now()).toString());
 
-            randomEntries.forEach(entry -> {
-                Optional<String> val = store.get(entry.getKey());
-                Preconditions.checkNotNull(val);
-            });
+            //gets
+            for (int i=0; i<10; i++) {
+                start = Instant.now();
 
-            System.out.println(String.format("Get duration %s", Duration.between(start, Instant.now()).toString()));
+                randomEntries.forEach(entry -> {
+                    Optional<String> val = store.get(entry.getKey());
+                    Preconditions.checkNotNull(val);
+                });
+
+                LOGGER.info("Get duration {}", Duration.between(start, Instant.now()).toString());
+            }
         });
     }
 }
