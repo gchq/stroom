@@ -10,11 +10,13 @@ import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggedException;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.server.factory.PipelinePropertyDocRef;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.query.api.v2.DocRef;
 import stroom.statistics.server.stroomstats.entity.StroomStatsStoreEntityService;
 import stroom.statistics.server.stroomstats.kafka.TopicNameFactory;
+import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
@@ -88,6 +90,7 @@ public class StroomStatsFilter extends AbstractKafkaProducerFilter {
     }
 
     @PipelineProperty(description = "The stroom-stats data source to record statistics against.")
+    @PipelinePropertyDocRef(types = StatisticStoreEntity.ENTITY_TYPE)
     public void setStatisticsDataSource(final DocRef statisticStoreRef) {
         this.statisticStoreRef = statisticStoreRef;
     }
