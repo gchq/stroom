@@ -76,6 +76,7 @@ public class ElementRegistry {
             final Method[] methods = elementClass.getMethods();
             for (final Method method : methods) {
                 final PipelineProperty property = method.getAnnotation(PipelineProperty.class);
+                final PipelinePropertyDocRef docRefProperty = method.getAnnotation(PipelinePropertyDocRef.class);
                 if (property != null) {
                     String name = method.getName();
                     if (!name.startsWith("set") || name.length() <= 3) {
@@ -93,14 +94,11 @@ public class ElementRegistry {
                                 + "\" must have only 1 parameter");
                     }
 
-                    Map<String, Method> map = propertyMap.get(elementTypeName);
-                    if (map == null) {
-                        map = new HashMap<>();
-                        propertyMap.put(elementTypeName, map);
-                    }
+                    final Map<String, Method> map = propertyMap.computeIfAbsent(elementTypeName, k -> new HashMap<>());
 
                     final Class<?> clazz = parameters[0];
                     // Make sure the class type is one we know how to deal with.
+
                     if (!String.class.isAssignableFrom(clazz) &&
                             !boolean.class.equals(clazz) &&
                             !int.class.equals(clazz) &&
@@ -111,6 +109,13 @@ public class ElementRegistry {
                                 + "\" has an unexpected type of \"" + clazz.getName() + "\"");
                     }
 
+                    if (DocRef.class.isAssignableFrom(clazz)) {
+                        if (null == docRefProperty) {
+                            throw new PipelineFactoryException("PipelineProperty \"" + name + "\" on \"" + elementTypeName
+                                    + "\" is a DocRef, so also needs \"" + PipelinePropertyDocRef.class.getName() + "\"");
+                        }
+                    }
+
                     final Method existing = map.put(name, method);
                     if (existing != null) {
                         throw new PipelineFactoryException(
@@ -119,8 +124,10 @@ public class ElementRegistry {
 
                     // Remember this element and associated properties for UI
                     // purposes.
-                    final PipelinePropertyType propertyType = createPropertyType(elementType, method,
-                            property.description(), property.defaultValue());
+                    final PipelinePropertyType propertyType = createPropertyType(elementType,
+                            method,
+                            property,
+                            docRefProperty);
                     properties.put(propertyType.getName(), propertyType);
                 }
             }
@@ -134,8 +141,10 @@ public class ElementRegistry {
         return new PipelineElementType(element.type(), element.category(), element.roles(), element.icon());
     }
 
-    private PipelinePropertyType createPropertyType(final PipelineElementType elementType, final Method method,
-                                                    final String description, final String defaultValue) {
+    private PipelinePropertyType createPropertyType(final PipelineElementType elementType,
+                                                    final Method method,
+                                                    final PipelineProperty property,
+                                                    final PipelinePropertyDocRef docRefProperty) {
         // Convert the setter to a camel case property name.
         final String propertyName = makePropertyName(method.getName());
         final Class<?> paramType = method.getParameterTypes()[0];
@@ -149,10 +158,16 @@ public class ElementRegistry {
             }
         }
 
-        final PipelinePropertyType propertyType = new PipelinePropertyType(elementType, propertyName, typeName,
-                description, defaultValue, paramType.equals(PipelineReference.class),
-                paramType.equals(XSLT.class) || paramType.equals(TextConverter.class));
-        return propertyType;
+        return new PipelinePropertyType.Builder()
+                .elementType(elementType)
+                .name(propertyName)
+                .type(typeName)
+                .description(property.description())
+                .defaultValue(property.defaultValue())
+                .pipelineReference(paramType.equals(PipelineReference.class))
+                .dataEntity(paramType.equals(XSLT.class) || paramType.equals(TextConverter.class))
+                .docRefTypes((docRefProperty != null) ? docRefProperty.types() : null)
+                .build();
     }
 
     private String makePropertyName(final String methodName) {

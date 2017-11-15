@@ -28,6 +28,7 @@ import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggedException;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.server.factory.PipelinePropertyDocRef;
 import stroom.pipeline.server.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -355,6 +356,7 @@ public class StatisticsFilter extends AbstractXMLFilter {
     }
 
     @PipelineProperty(description = "The statistics data source to record statistics against.")
+    @PipelinePropertyDocRef(types = StatisticStoreEntity.ENTITY_TYPE)
     public void setStatisticsDataSource(final DocRef statisticStoreRef) {
         this.statisticStoreRef = statisticStoreRef;
     }

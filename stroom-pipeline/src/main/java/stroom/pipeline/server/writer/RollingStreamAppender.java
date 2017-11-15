@@ -29,6 +29,7 @@ import stroom.pipeline.destination.StreamKey;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.server.factory.PipelinePropertyDocRef;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
@@ -133,6 +134,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     }
 
     @PipelineProperty(description = "The feed that output stream should be written to. If not specified the feed the input stream belongs to will be used.")
+    @PipelinePropertyDocRef(types=Feed.ENTITY_TYPE)
     public void setFeed(final DocRef feedRef) {
         this.feedRef = feedRef;
     }

@@ -34,14 +34,26 @@ import java.util.List;
 public class TestPipelineModel {
     private static final PipelineElementType ELEM_TYPE = new PipelineElementType("TestElement", null,
             new String[]{PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS}, null);
-    private static final PipelinePropertyType PROP_TYPE1 = new PipelinePropertyType(ELEM_TYPE, "TestProperty1",
-            "String");
-    private static final PipelinePropertyType PROP_TYPE2 = new PipelinePropertyType(ELEM_TYPE, "TestProperty2",
-            "String");
-    private static final PipelinePropertyType PROP_TYPE3 = new PipelinePropertyType(ELEM_TYPE, "TestProperty3",
-            "String");
-    private static final PipelinePropertyType PROP_TYPE4 = new PipelinePropertyType(ELEM_TYPE, "TestProperty4",
-            "String");
+    private static final PipelinePropertyType PROP_TYPE1 = new PipelinePropertyType.Builder()
+            .elementType(ELEM_TYPE)
+            .name("TestProperty1")
+            .type("String")
+            .build();
+    private static final PipelinePropertyType PROP_TYPE2 = new PipelinePropertyType.Builder()
+            .elementType(ELEM_TYPE)
+            .name("TestProperty2")
+            .type("String")
+            .build();
+    private static final PipelinePropertyType PROP_TYPE3 = new PipelinePropertyType.Builder()
+            .elementType(ELEM_TYPE)
+            .name("TestProperty3")
+            .type("String")
+            .build();
+    private static final PipelinePropertyType PROP_TYPE4 = new PipelinePropertyType.Builder()
+            .elementType(ELEM_TYPE)
+            .name("TestProperty4")
+            .type("String")
+            .build();
 
     @Test
     public void testBasic() throws Exception {

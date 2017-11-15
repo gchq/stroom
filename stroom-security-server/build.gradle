@@ -51,6 +51,7 @@ dependencies {
 
     // Do not remove this as it is needed by Spring to send emails.
     compile libs.javax_mail_api
+    permitUnusedDeclared libs.javax_mail_api
 
     compile libs.dropwizard_metrics_annotation
 
