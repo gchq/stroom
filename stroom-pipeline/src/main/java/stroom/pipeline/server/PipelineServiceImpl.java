@@ -18,13 +18,13 @@ package stroom.pipeline.server;
 
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.logging.DocumentEventLog;
 import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.ObjectMarshaller;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.importexport.server.ImportExportHelper;
+import stroom.logging.DocumentEventLog;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
@@ -60,8 +60,8 @@ public class PipelineServiceImpl extends DocumentEntityServiceImpl<PipelineEntit
 
     @Transactional(readOnly = true)
     @Override
-    public PipelineEntity loadByIdWithoutUnmarshal(final long id) {
-        return loadById(id, Collections.emptySet(), null);
+    public PipelineEntity loadByUuidWithoutUnmarshal(final String uuid) {
+        return loadByUuid(uuid, Collections.emptySet(), null);
     }
 
     @Override

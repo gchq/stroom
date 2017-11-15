@@ -25,5 +25,5 @@ public interface PipelineService
         extends DocumentEntityService<PipelineEntity>, FindService<PipelineEntity, FindPipelineEntityCriteria> {
     PipelineEntity saveWithoutMarshal(PipelineEntity pipelineEntity);
 
-    PipelineEntity loadByIdWithoutUnmarshal(long id);
+    PipelineEntity loadByUuidWithoutUnmarshal(String uuid);
 }
