@@ -16,7 +16,6 @@
 
 package stroom.statistics.server.sql.pipeline.filter;
 
-import com.sun.org.glassfish.external.statistics.Statistic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
