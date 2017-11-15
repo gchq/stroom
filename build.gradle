@@ -51,11 +51,12 @@ ext.versions = [
     stroom: getPropertyOrDefault('version', 'SNAPSHOT'),
 
     //------Stroom-repos---------------
-    eventLogging: 'v3.1.0',
+//    stroomProxyRepo: 'v5.1-beta.8',
+    eventLogging: 'v3.1.1_schema-v3.1.2',
     hadoopCommonShaded: 'v2.6.4-3',
     hadoopHdfsShaded: 'v2.6.4',
     stroomExpression: 'v1.0.0', 
-    stroomQuery: 'v2.0.0-alpha.7', //same version for both stroom-query-api and stroom-query-common
+    stroomQuery: 'v2.0.0-alpha.8', //same version for both stroom-query-api and stroom-query-common
     stroomStats: 'v0.6.0-alpha',
 
     //------------3rd-party------------
