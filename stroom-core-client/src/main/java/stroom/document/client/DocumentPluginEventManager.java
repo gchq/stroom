@@ -31,7 +31,6 @@ import stroom.document.client.event.CopyDocumentEvent;
 import stroom.document.client.event.CreateDocumentEvent;
 import stroom.document.client.event.ForkDocumentEvent;
 import stroom.document.client.event.MoveDocumentEvent;
-import stroom.document.client.event.OpenDocumentEvent;
 import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.document.client.event.RenameDocumentEvent;
 import stroom.document.client.event.ShowCopyDocumentDialogEvent;
@@ -219,7 +218,10 @@ public class DocumentPluginEventManager extends Plugin {
                 highlight(docRef);
 
                 // Open the document in the content pane.
-                OpenDocumentEvent.fire(DocumentPluginEventManager.this, docRef, true);
+                final DocumentPlugin<?> plugin = pluginMap.get(docRef.getType());
+                if (plugin != null) {
+                    plugin.open(docRef, true);
+                }
             });
         }));
 
