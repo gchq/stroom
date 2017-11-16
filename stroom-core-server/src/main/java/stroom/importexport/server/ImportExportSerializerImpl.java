@@ -93,9 +93,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         }
 
         // Attempt content migration if possible.
-        if (!ImportMode.ACTION_CONFIRMATION.equals(importMode)) {
-            new ContentMigration().migrate(dir);
-        }
+        new ContentMigration().migrate(dir);
 
         // Key the actionConfirmation's by their key
         final Map<DocRef, ImportState> confirmMap = importStateList.stream().collect(Collectors.toMap(ImportState::getDocRef, Function.identity()));
