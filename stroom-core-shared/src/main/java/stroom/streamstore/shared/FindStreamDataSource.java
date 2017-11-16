@@ -29,7 +29,6 @@ public class FindStreamDataSource {
                 .name(FEED)
                 .addConditions(ExpressionTerm.Condition.EQUALS)
                 .addConditions(ExpressionTerm.Condition.IN)
-                .addConditions(ExpressionTerm.Condition.IN_DICTIONARY)
                 .type(DataSourceField.DataSourceFieldType.FIELD)
                 .build());
         FIELDS.add(new DataSourceField.Builder<>()
@@ -42,14 +41,12 @@ public class FindStreamDataSource {
                 .name(STREAM_ID)
                 .addConditions(ExpressionTerm.Condition.EQUALS)
                 .addConditions(ExpressionTerm.Condition.IN)
-                .addConditions(ExpressionTerm.Condition.IN_DICTIONARY)
                 .type(DataSourceField.DataSourceFieldType.ID)
                 .build());
         FIELDS.add(new DataSourceField.Builder<>()
                 .name(PARENT_STREAM_ID)
                 .addConditions(ExpressionTerm.Condition.EQUALS)
                 .addConditions(ExpressionTerm.Condition.IN)
-                .addConditions(ExpressionTerm.Condition.IN_DICTIONARY)
                 .type(DataSourceField.DataSourceFieldType.ID)
                 .build());
         FIELDS.add(new DataSourceField.Builder<>()

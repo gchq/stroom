@@ -551,15 +551,14 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                                 // if the filter will be used indefinitely.
                                 if (tracker.getMaxStreamCreateMs() == null) {
                                     final long maxStreamId = recentStreamInfo.getMaxStreamId();
-                                    final FindStreamCriteria criteria = loadedFilter.getFindStreamCriteria();
                                     Long streamCreateMaxMs = null;
 
                                     // If the criteria has a stream id set with the
                                     // greatest id that is less than the current max
                                     // stream id then we can bound the max stream
                                     // create time.
-                                    if (criteria.getStreamIdSet() != null) {
-                                        final Long maxId = criteria.getStreamIdSet().getMaxId();
+                                    if (findStreamCriteria.getStreamIdSet() != null) {
+                                        final Long maxId = findStreamCriteria.getStreamIdSet().getMaxId();
                                         if (maxId != null && maxId.longValue() < maxStreamId) {
                                             streamCreateMaxMs = min(streamCreateMaxMs, streamQueryTime);
                                         }
@@ -569,9 +568,9 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                                     // upper limit on stream id that is less than
                                     // the current max stream id then we can bound
                                     // the max stream create time.
-                                    if (criteria.getStreamIdRange() != null) {
-                                        if (criteria.getStreamIdRange().getTo() != null
-                                                && criteria.getStreamIdRange().getTo().longValue() < maxStreamId) {
+                                    if (findStreamCriteria.getStreamIdRange() != null) {
+                                        if (findStreamCriteria.getStreamIdRange().getTo() != null
+                                                && findStreamCriteria.getStreamIdRange().getTo().longValue() < maxStreamId) {
                                             streamCreateMaxMs = min(streamCreateMaxMs, streamQueryTime);
                                         }
                                     }
@@ -579,15 +578,15 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                                     // If the criteria has a stream creation period
                                     // then determine the maximum stream creation
                                     // time from this period.
-                                    if (criteria.getCreatePeriod() != null && criteria.getCreatePeriod().getTo() != null) {
-                                        streamCreateMaxMs = min(streamCreateMaxMs, criteria.getCreatePeriod().getTo());
+                                    if (findStreamCriteria.getCreatePeriod() != null && findStreamCriteria.getCreatePeriod().getTo() != null) {
+                                        streamCreateMaxMs = min(streamCreateMaxMs, findStreamCriteria.getCreatePeriod().getTo());
                                     }
 
                                     // For the time being we will get task
                                     // production for queries to end with the latest
                                     // stream that existed the first time this is
                                     // called.
-                                    if (criteria.getQueryData() != null) {
+                                    if (findStreamCriteria.getQueryData() != null) {
                                         streamCreateMaxMs = min(streamCreateMaxMs, streamQueryTime);
                                     }
 
