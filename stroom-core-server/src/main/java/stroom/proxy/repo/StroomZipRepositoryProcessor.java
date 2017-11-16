@@ -102,6 +102,8 @@ public abstract class StroomZipRepositoryProcessor {
      */
     public boolean process(final StroomZipRepository stroomZipRepository) {
 
+        boolean isComplete = true;
+
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("process() - Scanning " + stroomZipRepository.getRootDir());
         }
@@ -113,10 +115,28 @@ public abstract class StroomZipRepositoryProcessor {
             return true;
         }
 
-        //build the map of feed -> files
-        //only scan a limited number of files
-        Map<String, List<File>> feedToFilesMap = StreamSupport.stream(zipFiles.spliterator(), true)
-                .limit(maxFileScan)
+        final List<File> filesBatch = new ArrayList<>();
+        int scanCount = 0;
+        for (final File file : zipFiles) {
+            if (file != null) {
+                scanCount++;
+
+                // Quit once we have hit the max
+                if (scanCount > maxFileScan) {
+                    isComplete = false;
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("process() - Hit scan limit of " + maxFileScan);
+                    }
+                    break;
+                }
+                filesBatch.add(file);
+            }
+        }
+        LOGGER.info("Processing %s files, isComplete: [%s]",
+                filesBatch.size(), Boolean.valueOf(isComplete).toString());
+
+        //build the map of feed -> files, only scan a limited number of files
+        Map<String, List<File>> feedToFilesMap = filesBatch.parallelStream()
                 .filter(file -> !taskContext.isTerminated()) //do no more work if we are terminated
                 .map(file -> fileScan(stroomZipRepository, file))
                 .filter(Optional::isPresent)
@@ -171,7 +191,7 @@ public abstract class StroomZipRepositoryProcessor {
             LOGGER.debug("process() - Completed");
         }
 
-        return false;
+        return isComplete;
     }
 
     private CompletableFuture<Void> createProcessFeedFilesTask(final StroomZipRepository stroomZipRepository,
