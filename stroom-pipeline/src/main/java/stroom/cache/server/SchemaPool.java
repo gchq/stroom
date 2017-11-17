@@ -16,7 +16,7 @@
 
 package stroom.cache.server;
 
-import stroom.pool.PoolBean;
+import stroom.pool.Pool;
 
-public interface SchemaPool extends PoolBean<SchemaKey, StoredSchema> {
+public interface SchemaPool extends Pool<SchemaKey, StoredSchema> {
 }

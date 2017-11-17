@@ -75,7 +75,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
     private ErrorHandler errorHandler;
     private Map<String, String> schemaLocations;
     private ValidatorHandler validator;
-    private PoolItem<SchemaKey, StoredSchema> poolItem;
+    private PoolItem<StoredSchema> poolItem;
     private FindXMLSchemaCriteria schemaConstraint;
     private int lineNo;
     private int colNo;

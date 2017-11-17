@@ -24,21 +24,18 @@ public class EffectiveStreamKey {
     private final DocRef feed;
     private final String streamType;
     private final long effectiveMs;
-    private final String user;
 
     private final int hashCode;
 
-    public EffectiveStreamKey(final DocRef feed, final String streamType, final long effectiveMs, final String user) {
+    public EffectiveStreamKey(final DocRef feed, final String streamType, final long effectiveMs) {
         this.feed = feed;
         this.streamType = streamType;
         this.effectiveMs = effectiveMs;
-        this.user = user;
 
         final HashCodeBuilder builder = new HashCodeBuilder();
         builder.append(feed);
         builder.append(streamType);
         builder.append(effectiveMs);
-        builder.append(user);
         hashCode = builder.toHashCode();
     }
 
@@ -73,7 +70,6 @@ public class EffectiveStreamKey {
         builder.append(feed, effectiveStreamKey.feed);
         builder.append(streamType, effectiveStreamKey.streamType);
         builder.append(effectiveMs, effectiveStreamKey.effectiveMs);
-        builder.append(user, effectiveStreamKey.user);
         return builder.isEquals();
     }
 

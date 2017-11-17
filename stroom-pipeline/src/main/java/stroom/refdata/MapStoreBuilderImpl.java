@@ -68,12 +68,8 @@ public class MapStoreBuilderImpl implements MapStoreBuilder {
         if (rangeMap == null) {
             rangeMap = new HashMap<>();
         }
-        Map<Range<Long>, EventList> map = rangeMap.get(mapName);
-        if (map == null) {
-            map = new HashMap<>();
-            rangeMap.put(mapName, map);
-        }
 
+        final Map<Range<Long>, EventList> map = rangeMap.computeIfAbsent(mapName, k -> new HashMap<>());
         final EventList existing = map.put(range, eventList);
 
         // Do we have an existing value in the map for this range?

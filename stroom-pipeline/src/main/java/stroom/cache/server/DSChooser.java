@@ -19,9 +19,11 @@ package stroom.cache.server;
 import org.springframework.stereotype.Component;
 import org.xml.sax.ErrorHandler;
 import stroom.pipeline.server.errorhandler.ProcessException;
+import stroom.util.io.StreamUtil;
 import stroom.util.spring.StroomBeanStore;
 import stroom.xml.converter.ParserFactory;
 import stroom.xml.converter.ds3.DS3ParserFactory;
+import stroom.xml.converter.xmlfragment.XMLFragmentParserFactory;
 
 import javax.annotation.Resource;
 import java.io.StringReader;
@@ -59,9 +61,13 @@ public class DSChooser {
                 throw new ProcessException("Unknown data splitter version \"" + version + "\" in XML configuration");
             }
 
-        } else {
-            throw new ProcessException("Unable to determine text converter type from XML configuration");
         }
+//        else {
+//            throw new ProcessException("Unable to determine text converter type from XML configuration");
+
+//        }
+
+        return XMLFragmentParserFactory.create(StreamUtil.stringToStream(xml), errorHandler);
     }
 
     private String getVersion(final String xml) {

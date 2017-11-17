@@ -19,6 +19,11 @@ package stroom.refdata;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.xml.sax.SAXException;
+import stroom.entity.shared.DocRef;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
@@ -34,6 +39,7 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.refdata.impl.MockReferenceDataLoader;
 import stroom.streamstore.shared.StreamType;
+import stroom.util.cache.CacheManager;
 import stroom.util.date.DateUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
@@ -69,19 +75,17 @@ public class TestReferenceData extends StroomUnitTest {
         streamSet.add(new EffectiveStream(1, DateUtil.parseNormalDateTimeString("2008-01-01T09:47:00.000Z")));
         streamSet.add(new EffectiveStream(2, DateUtil.parseNormalDateTimeString("2009-01-01T09:47:00.000Z")));
         streamSet.add(new EffectiveStream(3, DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.000Z")));
-        try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
-            final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null) {
+        try (CacheManager cacheManager = new CacheManager()) {
+            final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null) {
                 @Override
-                TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
+                protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                     return streamSet;
                 }
             };
             final ReferenceDataLoader referenceDataLoader = effectiveFeed -> new MapStoreImpl();
 
-            final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader, null);
-            final ReferenceData referenceData = new ReferenceData();
-            referenceData.setEffectiveStreamCache(effectiveStreamCache);
-            referenceData.setMapStorePool(mapStoreCache);
+            final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader, null, null);
+            final ReferenceData referenceData = new ReferenceData(effectiveStreamCache, mapStoreCache, null, null, null, null);
 
             // Add multiple reference data items to prove that looping over maps
             // works.
@@ -102,21 +106,21 @@ public class TestReferenceData extends StroomUnitTest {
             mapStoreBuilder.setEvents(mapName, "user1", getEventsFromString("1111"), false);
             mapStoreBuilder.setEvents(mapName, "user2", getEventsFromString("2222"), false);
         }
-        referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipeline), 1, null), mapStoreBuilder.getMapStore());
+        referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipeline), 1), mapStoreBuilder.getMapStore());
 
         mapStoreBuilder = new MapStoreBuilderImpl(null);
         for (final String mapName : mapNames) {
             mapStoreBuilder.setEvents(mapName, "user1", getEventsFromString("A1111"), false);
             mapStoreBuilder.setEvents(mapName, "user2", getEventsFromString("A2222"), false);
         }
-        referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipeline), 2, null), mapStoreBuilder.getMapStore());
+        referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipeline), 2), mapStoreBuilder.getMapStore());
 
         mapStoreBuilder = new MapStoreBuilderImpl(null);
         for (final String mapName : mapNames) {
             mapStoreBuilder.setEvents(mapName, "user1", getEventsFromString("B1111"), false);
             mapStoreBuilder.setEvents(mapName, "user2", getEventsFromString("B2222"), false);
         }
-        referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipeline), 3, null), mapStoreBuilder.getMapStore());
+        referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipeline), 3), mapStoreBuilder.getMapStore());
     }
 
     private void checkData(final ReferenceData data, final List<PipelineReference> pipelineReferences,
@@ -158,17 +162,15 @@ public class TestReferenceData extends StroomUnitTest {
 
         final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
         streamSet.add(new EffectiveStream(0, 0L));
-        try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
-            final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null) {
+        try (CacheManager cacheManager = new CacheManager()) {
+            final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null) {
                 @Override
-                public TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
+                protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                     return streamSet;
                 }
             };
-            final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, new MockReferenceDataLoader(), null);
-            final ReferenceData referenceData = new ReferenceData();
-            referenceData.setEffectiveStreamCache(effectiveStreamCache);
-            referenceData.setMapStorePool(mapStoreCache);
+            final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, new MockReferenceDataLoader(), null, null);
+            final ReferenceData referenceData = new ReferenceData(effectiveStreamCache, mapStoreCache, null, null, null, null);
 
             final MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(null);
             mapStoreBuilder.setEvents("CARD_NUMBER_TO_PF_NUMBER", "011111", getEventsFromString("091111"), false);
@@ -203,17 +205,15 @@ public class TestReferenceData extends StroomUnitTest {
 
         final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
         streamSet.add(new EffectiveStream(0, 0L));
-        try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
-            final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null) {
+        try (CacheManager cacheManager = new CacheManager()) {
+            final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null) {
                 @Override
-                public TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
+                protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                     return streamSet;
                 }
             };
-            final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, new MockReferenceDataLoader(), null);
-            final ReferenceData referenceData = new ReferenceData();
-            referenceData.setEffectiveStreamCache(effectiveStreamCache);
-            referenceData.setMapStorePool(mapStoreCache);
+            final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, new MockReferenceDataLoader(), null, null);
+            final ReferenceData referenceData = new ReferenceData(effectiveStreamCache, mapStoreCache, null, null, null, null);
 
             final MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(null);
             mapStoreBuilder.setEvents("IP_TO_LOC", new Range<>(2L, 30L), getEventsFromString("here"), false);

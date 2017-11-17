@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import stroom.entity.server.DocumentPermissionCache;
+import stroom.entity.shared.DocRef;
+import stroom.feed.shared.Feed;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.StreamHolder;
-import stroom.query.api.v2.DocRef;
-import stroom.security.SecurityContext;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.Stream;
@@ -34,12 +36,12 @@ import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 import stroom.xml.event.EventList;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
+import java.util.NavigableSet;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
@@ -52,18 +54,22 @@ public class ReferenceData {
     private final Map<String, CachedMapStore> nestedStreamCache = new HashMap<>();
     private final Map<MapStoreCacheKey, MapStore> localMapStoreCache = new HashMap<>();
 
-    @Resource
     private EffectiveStreamCache effectiveStreamCache;
-    @Resource
     private MapStoreCache mapStoreCache;
-    @Resource
-    private FeedHolder feedHolder;
-    @Resource
-    private StreamHolder streamHolder;
-    @Resource
-    private ContextDataLoader contextDataLoader;
-    @Resource
-    private SecurityContext securityContext;
+    private final FeedHolder feedHolder;
+    private final StreamHolder streamHolder;
+    private final ContextDataLoader contextDataLoader;
+    private final DocumentPermissionCache documentPermissionCache;
+
+    @Inject
+    ReferenceData(final EffectiveStreamCache effectiveStreamCache, final MapStoreCache mapStoreCache, final FeedHolder feedHolder, final StreamHolder streamHolder, final ContextDataLoader contextDataLoader, final DocumentPermissionCache documentPermissionCache) {
+        this.effectiveStreamCache = effectiveStreamCache;
+        this.mapStoreCache = mapStoreCache;
+        this.feedHolder = feedHolder;
+        this.streamHolder = streamHolder;
+        this.contextDataLoader = contextDataLoader;
+        this.documentPermissionCache = documentPermissionCache;
+    }
 
     /**
      * <p>
@@ -100,7 +106,7 @@ public class ReferenceData {
     private EventList doGetValue(final List<PipelineReference> pipelineReferences, final ErrorReceiver errorReceiver,
                                  final long time, final String mapName, final String keyName) {
         for (final PipelineReference pipelineReference : pipelineReferences) {
-            EventList eventList = null;
+            EventList eventList;
 
             // Handle context data differently loading it from the
             // current stream context.
@@ -164,7 +170,7 @@ public class ReferenceData {
                 events = mapStore.getEvents(mapName, keyName);
             }
         } catch (final IOException e) {
-            LOGGER.debug("Unable to get nested stream event list!", e);
+            LOGGER.debug(e.getMessage(), e);
             errorReceiver.log(Severity.ERROR, null, getClass().getSimpleName(), e.getMessage(), e);
         }
 
@@ -201,28 +207,31 @@ public class ReferenceData {
         assert pipelineReference.getFeed() != null && pipelineReference.getFeed().getUuid() != null && pipelineReference.getFeed().getUuid().length() > 0
                 && pipelineReference.getStreamType() != null && pipelineReference.getStreamType().length() > 0;
 
-        // Create a key to find a set of effective times in the pool.
-        final EffectiveStreamKey effectiveStreamKey = new EffectiveStreamKey(pipelineReference.getFeed(),
-                pipelineReference.getStreamType(), baseTime, getUser());
-        // Try and fetch a tree set of effective streams for this key.
-        final TreeSet<EffectiveStream> streamSet = effectiveStreamCache.getOrCreate(effectiveStreamKey);
+        // Check that the current user has permission to read the stream.
+        if (documentPermissionCache == null || documentPermissionCache.hasDocumentPermission(Feed.ENTITY_TYPE, pipelineReference.getFeed().getUuid(), DocumentPermissionNames.USE)) {
+            // Create a key to find a set of effective times in the pool.
+            final EffectiveStreamKey effectiveStreamKey = new EffectiveStreamKey(pipelineReference.getFeed(),
+                    pipelineReference.getStreamType(), baseTime);
+            // Try and fetch a tree set of effective streams for this key.
+            final NavigableSet<EffectiveStream> streamSet = effectiveStreamCache.get(effectiveStreamKey);
 
-        if (streamSet != null && streamSet.size() > 0) {
-            // Try and find the stream before the requested time that is less
-            // than or equal to it.
-            final EffectiveStream effectiveStream = streamSet.floor(new EffectiveStream(0, time));
-            // If we have an effective time then use it.
-            if (effectiveStream != null) {
-                // Now try and get reference data for the feed at this time.
-                final MapStoreCacheKey mapStorePoolKey = new MapStoreCacheKey(pipelineReference.getPipeline(),
-                        effectiveStream.getStreamId(), getUser());
-                // Get the map store associated with this effective feed.
-                final MapStore mapStore = getMapStore(mapStorePoolKey);
-                if (mapStore != null) {
-                    if (mapStore.getErrorReceiver() != null) {
-                        mapStore.getErrorReceiver().replay(errorReceiver);
+            if (streamSet != null && streamSet.size() > 0) {
+                // Try and find the stream before the requested time that is less
+                // than or equal to it.
+                final EffectiveStream effectiveStream = streamSet.floor(new EffectiveStream(0, time));
+                // If we have an effective time then use it.
+                if (effectiveStream != null) {
+                    // Now try and get reference data for the feed at this time.
+                    final MapStoreCacheKey mapStorePoolKey = new MapStoreCacheKey(pipelineReference.getPipeline(),
+                            effectiveStream.getStreamId());
+                    // Get the map store associated with this effective feed.
+                    final MapStore mapStore = getMapStore(mapStorePoolKey);
+                    if (mapStore != null) {
+                        if (mapStore.getErrorReceiver() != null) {
+                            mapStore.getErrorReceiver().replay(errorReceiver);
+                        }
+                        return mapStore.getEvents(mapName, keyName);
                     }
-                    return mapStore.getEvents(mapName, keyName);
                 }
             }
         }
@@ -237,7 +246,7 @@ public class ReferenceData {
         // If we didn't get a local cache then look in the pool.
         if (mapStore == null) {
             // Get the map store cache associated with this effective feed.
-            mapStore = mapStoreCache.getOrCreate(mapStoreCacheKey);
+            mapStore = mapStoreCache.get(mapStoreCacheKey);
             // Cache this item locally for use later on.
             localMapStoreCache.put(mapStoreCacheKey, mapStore);
         }
@@ -262,18 +271,11 @@ public class ReferenceData {
         this.mapStoreCache = mapStorePool;
     }
 
-    private String getUser() {
-        if (securityContext == null) {
-            return null;
-        }
-        return securityContext.getUserId();
-    }
-
     private static class CachedMapStore {
         private final long streamNo;
         private final MapStore mapStore;
 
-        public CachedMapStore(final long streamNo, final MapStore mapStore) {
+        CachedMapStore(final long streamNo, final MapStore mapStore) {
             this.streamNo = streamNo;
             this.mapStore = mapStore;
         }
