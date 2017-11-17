@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#498** : The UI was adding more than one link between 'Source' and 'Parser' elements, this is now fixed.
+
 ## [v5.0-beta.62] - 2017-11-16
 
 * Issue **#494** : Fix problem of proxy aggregation never stopping if more files exist
