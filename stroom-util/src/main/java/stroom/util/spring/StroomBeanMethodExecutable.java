@@ -37,7 +37,7 @@ public class StroomBeanMethodExecutable {
     public StroomBeanMethodExecutable(final StroomBeanMethod stroomBeanMethod, final StroomBeanStore stroomBeanStore,
                                       final String message, final AtomicBoolean running) {
         this.stroomBeanMethod = stroomBeanMethod;
-        this.stroomBeanStore = stroomBeanStore;
+        this.stroomBeanStore = stroomBeanStore; 
         this.message = message;
         this.running = running;
     }

@@ -47,12 +47,10 @@ The table below includes licences for all Maven dependencies. Not included in th
 | org.apache.curator                        | curator-framework                            | 2.6.0            | APL 2.0       |         |               |
 | org.apache.curator                        | curator-recipes                              | 2.6.0            | APL 2.0       |         |               |
 | com.lmax                                  | disruptor                                    | 3.3.0            | APL 2.0       |         |               |
-| net.sf.ehcache                            | ehcache-core                                 | 2.6.11           | APL 2.0       |         |               |
-| com.googlecode.ehcache-spring-annotations | ehcache-spring-annotations                   | 1.2.0            | APL 2.0       |         |               |
 | org.flywaydb                              | flyway-core                                  | 4.0.3            | APL 2.0       |         |               |
 | com.google.gwt.inject                     | gin                                          | 1.5.0            | APL 2.0       |         |               |
 | com.google.code.gson                      | gson                                         | 2.2.4            | APL 2.0       |         |               |
-| com.google.guava                          | guava                                        | 15               | APL 2.0       |         |               |
+| com.google.guava                          | guava                                        | 23.3-jre         | APL 2.0       |         |               |
 | com.google.inject                         | guice                                        | 3                | APL 2.0       |         |               |
 | com.google.inject.extensions              | guice-assistedinject                         | 3.0-rc2          | APL 2.0       |         |               |
 | com.google.inject.extensions              | guice-servlet                                | 3                | APL 2.0       |         |               |

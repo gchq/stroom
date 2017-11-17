@@ -16,17 +16,18 @@
 
 package stroom.security.server;
 
-import net.sf.ehcache.CacheManager;
-import net.sf.ehcache.config.CacheConfiguration;
-import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.springframework.stereotype.Component;
-import stroom.cache.AbstractCacheBean;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventBus;
 import stroom.entity.server.event.EntityEventHandler;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityAction;
 import stroom.security.shared.DocumentPermissions;
+import stroom.util.cache.CacheManager;
+import stroom.util.cache.CacheUtil;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -34,44 +35,44 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 @EntityEventHandler(action = EntityAction.CLEAR_CACHE)
-public class DocumentPermissionsCache extends AbstractCacheBean<DocRef, DocumentPermissions> implements EntityEvent.Handler {
-    private static final int MAX_CACHE_ENTRIES = 1000000;
+public class DocumentPermissionsCache implements EntityEvent.Handler {
+    private static final int MAX_CACHE_ENTRIES = 10000;
 
-    private final DocumentPermissionService documentPermissionService;
     private final Provider<EntityEventBus> eventBusProvider;
 
-    private static final CacheConfiguration CACHE_CONFIGURATION = new CacheConfiguration("Document Permissions Cache", MAX_CACHE_ENTRIES);
-
-    static {
-        CACHE_CONFIGURATION.setMemoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.LFU.toString());
-    }
+    private final LoadingCache<DocRef, DocumentPermissions> cache;
 
     @Inject
+    @SuppressWarnings("unchecked")
     public DocumentPermissionsCache(final CacheManager cacheManager,
-                                    final DocumentPermissionService documentPermissionService, final Provider<EntityEventBus> eventBusProvider) {
-        super(cacheManager, CACHE_CONFIGURATION);
-        this.documentPermissionService = documentPermissionService;
+                                    final DocumentPermissionService documentPermissionService,
+                                    final Provider<EntityEventBus> eventBusProvider) {
         this.eventBusProvider = eventBusProvider;
-        setMaxIdleTime(30, TimeUnit.MINUTES);
-        setMaxLiveTime(30, TimeUnit.MINUTES);
+
+        final CacheLoader<DocRef, DocumentPermissions> cacheLoader = CacheLoader.from(documentPermissionService::getPermissionsForDocument);
+        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
+                .maximumSize(MAX_CACHE_ENTRIES)
+                .expireAfterAccess(30, TimeUnit.MINUTES);
+        cache = cacheBuilder.build(cacheLoader);
+        cacheManager.registerCache("Document Permissions Cache", cacheBuilder, cache);
     }
 
-    DocumentPermissions getOrCreate(final DocRef key) {
-        return computeIfAbsent(key, this::create);
+    DocumentPermissions get(final DocRef key) {
+        return cache.getUnchecked(key);
     }
 
-    private DocumentPermissions create(final DocRef document) {
-        return documentPermissionService.getPermissionsForDocument(document);
-    }
-
-    @Override
-    public void remove(final DocRef docRef) {
+    void remove(final DocRef docRef) {
+        cache.invalidate(docRef);
         final EntityEventBus entityEventBus = eventBusProvider.get();
         EntityEvent.fire(entityEventBus, docRef, EntityAction.CLEAR_CACHE);
     }
 
+    void clear() {
+        CacheUtil.clear(cache);
+    }
+
     @Override
     public void onChange(final EntityEvent event) {
-        super.remove(event.getDocRef());
+        cache.invalidate(event.getDocRef());
     }
 }

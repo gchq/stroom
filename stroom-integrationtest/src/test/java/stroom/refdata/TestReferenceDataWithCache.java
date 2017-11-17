@@ -16,8 +16,10 @@
 
 package stroom.refdata;
 
+import org.junit.Assert;
+import org.junit.Test;
+import org.xml.sax.SAXException;
 import stroom.AbstractCoreIntegrationTest;
-import stroom.cache.CacheManagerAutoCloseable;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.FolderService;
 import stroom.feed.shared.Feed;
@@ -28,15 +30,13 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.streamstore.shared.StreamType;
+import stroom.util.cache.CacheManager;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomBeanStore;
 import stroom.xml.event.EventList;
 import stroom.xml.event.EventListBuilder;
 import stroom.xml.event.EventListBuilderFactory;
-import org.junit.Assert;
-import org.junit.Test;
-import org.xml.sax.SAXException;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -93,20 +93,15 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
         streamSet.add(new EffectiveStream(2, DateUtil.parseNormalDateTimeString("2009-01-01T09:47:00.000Z")));
         streamSet.add(new EffectiveStream(3, DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.000Z")));
 
-        try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
-            final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null) {
+        try (final CacheManager cacheManager = new CacheManager()) {
+            final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null) {
                 @Override
                 public TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                     return streamSet;
                 }
             };
-            final ReferenceDataLoader referenceDataLoader = new ReferenceDataLoader() {
-                @Override
-                public MapStore load(final MapStoreCacheKey effectiveFeed) {
-                    return new MapStoreImpl();
-                }
-            };
-            final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader, null);
+            final ReferenceDataLoader referenceDataLoader = effectiveFeed -> new MapStoreImpl();
+            final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader, null, null);
             referenceData.setEffectiveStreamCache(effectiveStreamCache);
             referenceData.setMapStorePool(mapStoreCache);
 
@@ -114,8 +109,8 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
 
             // Add multiple reference data items to prove that looping over maps
             // works.
-            addData(referenceData, pipeline1, new String[] { "SID_TO_PF_1", "SID_TO_PF_2" });
-            addData(referenceData, pipeline2, new String[] { "SID_TO_PF_3", "SID_TO_PF_4" });
+            addData(referenceData, pipeline1, new String[]{"SID_TO_PF_1", "SID_TO_PF_2"});
+            addData(referenceData, pipeline2, new String[]{"SID_TO_PF_3", "SID_TO_PF_4"});
             checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_1");
             checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_2");
             checkData(referenceData, pipelineReferences, errorReceiver, "SID_TO_PF_3");
@@ -131,25 +126,25 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             mapStoreBuilder.setEvents(mapName, "user1", getEventsFromString("1111"), false);
             mapStoreBuilder.setEvents(mapName, "user2", getEventsFromString("2222"), false);
         }
-        referenceData.put(new MapStoreCacheKey(DocRef.create(pipeline), 1, "admin"), mapStoreBuilder.getMapStore());
+        referenceData.put(new MapStoreCacheKey(DocRef.create(pipeline), 1), mapStoreBuilder.getMapStore());
 
         mapStoreBuilder = new MapStoreBuilderImpl(null);
         for (final String mapName : mapNames) {
             mapStoreBuilder.setEvents(mapName, "user1", getEventsFromString("A1111"), false);
             mapStoreBuilder.setEvents(mapName, "user2", getEventsFromString("A2222"), false);
         }
-        referenceData.put(new MapStoreCacheKey(DocRef.create(pipeline), 2, "admin"), mapStoreBuilder.getMapStore());
+        referenceData.put(new MapStoreCacheKey(DocRef.create(pipeline), 2), mapStoreBuilder.getMapStore());
 
         mapStoreBuilder = new MapStoreBuilderImpl(null);
         for (final String mapName : mapNames) {
             mapStoreBuilder.setEvents(mapName, "user1", getEventsFromString("B1111"), false);
             mapStoreBuilder.setEvents(mapName, "user2", getEventsFromString("B2222"), false);
         }
-        referenceData.put(new MapStoreCacheKey(DocRef.create(pipeline), 3, "admin"), mapStoreBuilder.getMapStore());
+        referenceData.put(new MapStoreCacheKey(DocRef.create(pipeline), 3), mapStoreBuilder.getMapStore());
     }
 
     private void checkData(final ReferenceData data, final List<PipelineReference> referenceFeedSet,
-            final ErrorReceiver errorReceiver, final String mapName) {
+                           final ErrorReceiver errorReceiver, final String mapName) {
         Assert.assertEquals("B1111", getStringFromEvents(data.getValue(referenceFeedSet, errorReceiver,
                 DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.111Z"), mapName, "user1")));
         Assert.assertEquals("B1111", getStringFromEvents(data.getValue(referenceFeedSet, errorReceiver,
@@ -189,20 +184,15 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
         final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
         streamSet.add(new EffectiveStream(0, 0L));
 
-        try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
-            final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null) {
+        try (final CacheManager cacheManager = new CacheManager()) {
+            final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null) {
                 @Override
                 public TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                     return streamSet;
                 }
             };
-            final ReferenceDataLoader referenceDataLoader = new ReferenceDataLoader() {
-                @Override
-                public MapStore load(final MapStoreCacheKey effectiveFeed) {
-                    return new MapStoreImpl();
-                }
-            };
-            final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader, null);
+            final ReferenceDataLoader referenceDataLoader = effectiveFeed -> new MapStoreImpl();
+            final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader, null, null);
             referenceData.setEffectiveStreamCache(effectiveStreamCache);
             referenceData.setMapStorePool(mapStoreCache);
 
@@ -211,7 +201,7 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             final MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(null);
             mapStoreBuilder.setEvents("CARD_NUMBER_TO_PF_NUMBER", "011111", getEventsFromString("091111"), false);
             mapStoreBuilder.setEvents("NUMBER_TO_SID", "091111", getEventsFromString("user1"), false);
-            referenceData.put(new MapStoreCacheKey(DocRef.create(pipelineEntity), 0, "admin"), mapStoreBuilder.getMapStore());
+            referenceData.put(new MapStoreCacheKey(DocRef.create(pipelineEntity), 0), mapStoreBuilder.getMapStore());
 
             Assert.assertEquals("091111", getStringFromEvents(referenceData.getValue(pipelineReferences, errorReceiver,
                     0, "CARD_NUMBER_TO_PF_NUMBER", "011111")));

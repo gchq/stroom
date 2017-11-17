@@ -18,13 +18,14 @@ package stroom.search.server.shard;
 
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.SearcherManager;
-import stroom.cache.AbstractCacheBean.Destroyable;
 import stroom.index.shared.IndexShard;
 
-public interface IndexShardSearcher extends Destroyable {
+public interface IndexShardSearcher {
     IndexWriter getWriter();
 
     SearcherManager getSearcherManager();
 
     IndexShard getIndexShard();
+
+    void destroy();
 }

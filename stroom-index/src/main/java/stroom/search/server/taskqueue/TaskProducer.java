@@ -16,7 +16,15 @@
 
 package stroom.search.server.taskqueue;
 
+import java.util.concurrent.Executor;
+
 public interface TaskProducer extends Comparable<TaskProducer> {
+    /**
+     * Get the executor to use to execute the provided runnable.
+     * @return
+     */
+    Executor getExecutor();
+
     /**
      * Get the next task to execute or null if the producer has reached a concurrent execution limit or no further tasks
      * are available.

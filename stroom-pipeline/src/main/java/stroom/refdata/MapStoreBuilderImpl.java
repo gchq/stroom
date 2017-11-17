@@ -16,16 +16,16 @@
 
 package stroom.refdata;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import stroom.entity.shared.Range;
 import stroom.pipeline.server.errorhandler.StoredErrorReceiver;
 import stroom.refdata.MapStoreImpl.RangeStore;
 import stroom.refdata.MapStoreImpl.RangeStoreComparator;
 import stroom.xml.event.EventList;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class MapStoreBuilderImpl implements MapStoreBuilder {
     private final StoredErrorReceiver storedErrorReceiver;
@@ -40,7 +40,7 @@ public class MapStoreBuilderImpl implements MapStoreBuilder {
 
     @Override
     public void setEvents(final String mapName, final String keyName, final EventList eventList,
-            final boolean overrideExistingValues) {
+                          final boolean overrideExistingValues) {
         this.overrideExistingValues = overrideExistingValues;
 
         final MapStoreKey key = new MapStoreKey(mapName, keyName);
@@ -62,18 +62,14 @@ public class MapStoreBuilderImpl implements MapStoreBuilder {
 
     @Override
     public void setEvents(final String mapName, final Range<Long> range, final EventList eventList,
-            final boolean overrideExistingValues) {
+                          final boolean overrideExistingValues) {
         this.overrideExistingValues = overrideExistingValues;
 
         if (rangeMap == null) {
             rangeMap = new HashMap<>();
         }
-        Map<Range<Long>, EventList> map = rangeMap.get(mapName);
-        if (map == null) {
-            map = new HashMap<>();
-            rangeMap.put(mapName, map);
-        }
 
+        final Map<Range<Long>, EventList> map = rangeMap.computeIfAbsent(mapName, k -> new HashMap<>());
         final EventList existing = map.put(range, eventList);
 
         // Do we have an existing value in the map for this range?

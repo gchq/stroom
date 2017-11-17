@@ -86,7 +86,7 @@ public class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSe
             final Path file = sessionResourceStore.getTempFile(resourceKey);
 
             final String searchSessionId = action.getUserToken() + "_" + action.getApplicationInstanceId();
-            final ActiveQueries searchSession = activeQueriesManager.getOrCreate(searchSessionId);
+            final ActiveQueries searchSession = activeQueriesManager.get(searchSessionId);
             final ActiveQuery activeQuery = searchSession.getExistingQuery(action.getQueryKey());
 
             if (activeQuery == null) {

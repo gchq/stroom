@@ -22,6 +22,7 @@ import stroom.util.io.FileUtil;
 import java.io.File;
 
 public class TestState {
+
     public static class State {
         private File testDir;
         private int classTestCount;

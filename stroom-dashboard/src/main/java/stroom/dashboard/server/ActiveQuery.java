@@ -23,8 +23,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ActiveQuery {
-    private final Map<String, ComponentResultCreator> componentResultCreatorMap = new HashMap<String, ComponentResultCreator>();
-    private final Map<String, SharedObject> lastResults = new HashMap<String, SharedObject>();
+    private final Map<String, ComponentResultCreator> componentResultCreatorMap = new HashMap<>();
+    private final Map<String, SharedObject> lastResults = new HashMap<>();
     private final SearchResultCollector searchResultCollector;
 
     public ActiveQuery(final SearchResultCollector searchResultCollector) {

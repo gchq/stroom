@@ -17,13 +17,12 @@
 package stroom.query;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
 public class ItemsArrayList<E> implements Items<E> {
-    private final List<E> list = new ArrayList<E>();
+    private final List<E> list = new ArrayList<>();
 
     @Override
     public boolean add(final E item) {
@@ -44,7 +43,7 @@ public class ItemsArrayList<E> implements Items<E> {
     public void trim(final int size, final Comparator<E> comparator, final RemoveHandler<E> removeHandler) {
         // Sort the list before trimming if we have a comparator.
         if (comparator != null) {
-            Collections.sort(list, comparator);
+            list.sort(comparator);
         }
 
         while (list.size() > size) {

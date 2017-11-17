@@ -50,6 +50,11 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>javax.validation</groupId>
+      <artifactId>validation-api</artifactId>
+      <version>${validation-api.version}</version>
+    </dependency>
+    <dependency>
       <groupId>stroom</groupId>
       <artifactId>stroom-test-common</artifactId>
       <version>${project.version}</version>

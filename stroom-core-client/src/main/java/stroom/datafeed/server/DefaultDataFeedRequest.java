@@ -25,6 +25,7 @@ import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.proxy.repo.StroomStreamProcessor;
+import stroom.pool.SecurityHelper;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.statistic.server.MetaDataStatistic;
@@ -86,8 +87,7 @@ public class DefaultDataFeedRequest implements DataFeedRequest {
     @Override
     @Insecure
     public void processRequest() {
-        securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
-        try {
+        try (SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             // We need to examine the meta map and ensure we aren't dropping or rejecting this data.
             final DataReceiptAction dataReceiptAction = dataReceiptPolicyChecker.check(metaMap);
 
@@ -135,8 +135,6 @@ public class DefaultDataFeedRequest implements DataFeedRequest {
                 // Drop the data.
                 debug("Dropping data", metaMap);
             }
-        } finally {
-            securityContext.popUser();
         }
     }
 

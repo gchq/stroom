@@ -16,11 +16,9 @@
 
 package stroom.pipeline.server.factory;
 
-import stroom.cache.CacheBean;
-import stroom.entity.shared.VersionedEntityDecorator;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineData;
 
-public interface PipelineDataCache extends CacheBean<VersionedEntityDecorator<PipelineEntity>, PipelineData> {
-    PipelineData getOrCreate(PipelineEntity pipelineEntity);
+public interface PipelineDataCache {
+    PipelineData get(PipelineEntity pipelineEntity);
 }

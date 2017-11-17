@@ -78,6 +78,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -112,7 +113,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     private final SecurityContext securityContext;
     private final int maxBooleanClauseCount;
     private final int maxStoredDataQueueSize;
-    private final LinkedBlockingDeque<String> errors = new LinkedBlockingDeque<>();
+    private final LinkedBlockingQueue<String> errors = new LinkedBlockingQueue<>();
     private final AtomicBoolean searchComplete = new AtomicBoolean();
     private final AtomicBoolean sendingComplete = new AtomicBoolean();
     private final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider;
@@ -288,6 +289,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
             final boolean searchComplete = ClusterSearchTaskHandler.this.searchComplete.get();
 
             if (!taskContext.isTerminated()) {
+                taskContext.setName("Search result sender");
                 taskContext.info("Creating search result");
 
                 // Produce payloads for each coprocessor.
@@ -444,6 +446,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                         this,
                         hitCount,
                         indexShardSearchTaskProperties.getMaxThreadsPerTask(),
+                        executorProvider,
                         indexShardSearchTaskHandlerProvider);
 
                 // Add the task producer to the task executor.
@@ -477,6 +480,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                                 extractionCoprocessorsMap,
                                 this,
                                 extractionTaskProperties.getMaxThreadsPerTask(),
+                                executorProvider,
                                 extractionTaskHandlerProvider);
 
                         // Add the task producer to the task executor.
@@ -567,7 +571,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
         if (e == null || !(e instanceof TaskTerminatedException)) {
             final String msg = MessageUtil.getMessage(message, e);
-            errors.push(msg);
+            errors.offer(msg);
         }
     }
 

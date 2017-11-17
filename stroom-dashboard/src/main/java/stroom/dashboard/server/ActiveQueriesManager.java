@@ -16,33 +16,37 @@
 
 package stroom.dashboard.server;
 
-import net.sf.ehcache.CacheManager;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
 import org.springframework.stereotype.Component;
-import stroom.cache.AbstractCacheBean;
-import stroom.util.spring.StroomFrequencySchedule;
+import stroom.util.cache.CacheManager;
 
 import javax.inject.Inject;
+import java.util.concurrent.TimeUnit;
 
 @Component
-public class ActiveQueriesManager extends AbstractCacheBean<String, ActiveQueries> {
-    private static final int MAX_ACTIVE_QUERIES = 10000;
+public class ActiveQueriesManager {
+    private static final int MAX_ACTIVE_QUERIES = 100;
+
+    private final LoadingCache<String, ActiveQueries> cache;
 
     @Inject
+    @SuppressWarnings("unchecked")
     public ActiveQueriesManager(final CacheManager cacheManager) {
-        super(cacheManager, "Active Queries", MAX_ACTIVE_QUERIES);
+        final RemovalListener<String, ActiveQueries> removalListener = notification -> notification.getValue().destroy();
+
+        final CacheLoader<String, ActiveQueries> cacheLoader = CacheLoader.from(k -> new ActiveQueries());
+        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
+                .maximumSize(MAX_ACTIVE_QUERIES)
+                .expireAfterAccess(1, TimeUnit.MINUTES)
+                .removalListener(removalListener);
+        cache = cacheBuilder.build(cacheLoader);
+        cacheManager.registerCache("Active Queries", cacheBuilder, cache);
     }
 
-    public ActiveQueries getOrCreate(final String key) {
-        return computeIfAbsent(key, this::create);
-    }
-
-    private ActiveQueries create(final String key) {
-        return new ActiveQueries();
-    }
-
-    @Override
-    @StroomFrequencySchedule("10s")
-    public void evictExpiredElements() {
-        super.evictExpiredElements();
+    public ActiveQueries get(final String key) {
+        return cache.getUnchecked(key);
     }
 }

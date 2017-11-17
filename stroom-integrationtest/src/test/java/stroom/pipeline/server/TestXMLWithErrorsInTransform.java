@@ -122,7 +122,7 @@ public class TestXMLWithErrorsInTransform extends AbstractProcessIntegrationTest
                 .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xslt));
         pipelineEntity = pipelineEntityService.save(pipelineEntity);
 
-        final PipelineData pipelineData = pipelineDataCache.getOrCreate(pipelineEntity);
+        final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
         final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
         feedHolder.setFeed(new Feed());

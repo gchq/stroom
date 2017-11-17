@@ -16,20 +16,20 @@
 
 package stroom.refdata;
 
-import stroom.cache.CacheManagerAutoCloseable;
+import org.joda.time.DateTime;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import stroom.entity.shared.DocRef;
 import stroom.feed.shared.Feed;
 import stroom.streamstore.server.EffectiveMetaDataCriteria;
 import stroom.streamstore.server.MockStreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
+import stroom.util.cache.CacheManager;
 import stroom.util.date.DateUtil;
-import stroom.util.test.StroomUnitTest;
 import stroom.util.test.StroomJUnit4ClassRunner;
-import org.joda.time.DateTime;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import stroom.util.test.StroomUnitTest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,38 +64,38 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
 
         DocRef feedRef = DocRef.create(referenceFeed);
 
-        try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
+        try (CacheManager cacheManager = new CacheManager()) {
             final EffectiveStreamCache effectiveStreamPool = new EffectiveStreamCache(cacheManager, mockStreamStore,
-                    null);
+                    null, null);
 
-            Assert.assertEquals("No pooled times yet", 0, effectiveStreamPool.getInfo().getObjectCount());
+            Assert.assertEquals("No pooled times yet", 0, effectiveStreamPool.size());
             Assert.assertEquals("No calls to the database yet", 0, findEffectiveStreamSourceCount);
 
             long time = DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z");
             long baseTime = effectiveStreamPool.getBaseTime(time);
             effectiveStreamPool
-                    .getOrCreate(new EffectiveStreamKey(feedRef, StreamType.REFERENCE.getName(), baseTime, null));
+                    .get(new EffectiveStreamKey(feedRef, StreamType.REFERENCE.getName(), baseTime));
             Assert.assertEquals("Database call", 1, findEffectiveStreamSourceCount);
 
             // Still in window
             time = DateUtil.parseNormalDateTimeString("2010-01-01T13:00:00.000Z");
             baseTime = effectiveStreamPool.getBaseTime(time);
             effectiveStreamPool
-                    .getOrCreate(new EffectiveStreamKey(feedRef, StreamType.REFERENCE.getName(), baseTime, null));
+                    .get(new EffectiveStreamKey(feedRef, StreamType.REFERENCE.getName(), baseTime));
             Assert.assertEquals("Database call", 1, findEffectiveStreamSourceCount);
 
             // After window ...
             time = DateUtil.parseNormalDateTimeString("2010-01-15T13:00:00.000Z");
             baseTime = effectiveStreamPool.getBaseTime(time);
             effectiveStreamPool
-                    .getOrCreate(new EffectiveStreamKey(feedRef, StreamType.REFERENCE.getName(), baseTime, null));
+                    .get(new EffectiveStreamKey(feedRef, StreamType.REFERENCE.getName(), baseTime));
             Assert.assertEquals("Database call", 2, findEffectiveStreamSourceCount);
 
             // Before window ...
             time = DateUtil.parseNormalDateTimeString("2009-12-15T13:00:00.000Z");
             baseTime = effectiveStreamPool.getBaseTime(time);
             effectiveStreamPool
-                    .getOrCreate(new EffectiveStreamKey(feedRef, StreamType.REFERENCE.getName(), baseTime, null));
+                    .get(new EffectiveStreamKey(feedRef, StreamType.REFERENCE.getName(), baseTime));
             Assert.assertEquals("Database call", 3, findEffectiveStreamSourceCount);
         } catch (final Exception e) {
             throw new RuntimeException(e.getMessage(), e);

@@ -49,6 +49,10 @@ import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.task.ExternalShutdownController;
 import stroom.util.task.TaskScopeRunnable;
 import stroom.util.thread.ThreadScopeRunnable;
+import stroom.util.zip.StroomZipFile;
+import stroom.util.zip.StroomZipFileType;
+import stroom.util.zip.StroomZipNameSet;
+import stroom.proxy.repo.StroomZipRepository;
 
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;

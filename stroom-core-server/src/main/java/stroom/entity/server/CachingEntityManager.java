@@ -16,10 +16,10 @@
 
 package stroom.entity.server;
 
-import net.sf.ehcache.CacheManager;
-import net.sf.ehcache.Ehcache;
-import net.sf.ehcache.Element;
-import org.springframework.beans.factory.InitializingBean;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.SqlBuilder;
@@ -29,23 +29,35 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Entity;
 import stroom.entity.shared.SummaryDataRow;
+import stroom.util.cache.CacheManager;
+import stroom.util.cache.CacheUtil;
 
 import javax.inject.Inject;
 import javax.persistence.FlushModeType;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 @Component
-public class CachingEntityManager implements StroomEntityManager, InitializingBean, Clearable {
-    private final StroomEntityManager stroomEntityManager;
-    private final CacheManager cacheManager;
+public class CachingEntityManager implements StroomEntityManager, Clearable {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CachingEntityManager.class);
 
-    private Ehcache cache;
+    private final StroomEntityManager stroomEntityManager;
+
+    private Cache<Object, Optional<Object>> cache;
 
     @Inject
+    @SuppressWarnings("unchecked")
     public CachingEntityManager(final StroomEntityManager stroomEntityManager, final CacheManager cacheManager) {
         this.stroomEntityManager = stroomEntityManager;
-        this.cacheManager = cacheManager;
+
+        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
+                .maximumSize(1000)
+                .expireAfterWrite(1, TimeUnit.MINUTES);
+        cache = cacheBuilder.build();
+        cacheManager.registerCache("Entity Cache", cacheBuilder, cache);
     }
 
     @Override
@@ -56,21 +68,20 @@ public class CachingEntityManager implements StroomEntityManager, InitializingBe
     @SuppressWarnings("unchecked")
     @Override
     public <T extends Entity> T loadEntity(final Class<?> clazz, final T entity) {
-        T result;
+        T result = null;
         if (entity != null && entity.isPersistent() && entity.getPrimaryKey() != null) {
             final List<Object> key = Arrays.asList("loadEntity", clazz, entity.getPrimaryKey());
 
             // Try and get a cached method result from the cache.
-            final Element element = cache.get(key);
-            if (element == null) {
-                // We didn't find a cached result so get one and put it in the
-                // cache.
-                result = stroomEntityManager.loadEntity(clazz, entity);
-                cache.put(new Element(key, result));
-            } else {
-                result = (T) element.getObjectValue();
+            try {
+                final Optional<Object> cached = cache.get(key, () -> Optional.ofNullable(stroomEntityManager.loadEntity(clazz, entity)));
+                if (cached.isPresent()) {
+                    result = (T) cached.get();
+                }
+            } catch (final ExecutionException e) {
+                LOGGER.error(e.getMessage(), e);
+                throw new RuntimeException(e.getMessage(), e);
             }
-
         } else {
             result = stroomEntityManager.loadEntity(clazz, entity);
         }
@@ -81,21 +92,16 @@ public class CachingEntityManager implements StroomEntityManager, InitializingBe
     @SuppressWarnings("unchecked")
     @Override
     public <T extends Entity> T loadEntityById(final Class<?> clazz, final long id) {
-        T result;
         final List<Object> key = Arrays.asList("loadEntityById", clazz, id);
 
         // Try and get a cached method result from the cache.
-        final Element element = cache.get(key);
-        if (element == null) {
-            // We didn't find a cached result so get one and put it in the
-            // cache.
-            result = stroomEntityManager.loadEntityById(clazz, id);
-            cache.put(new Element(key, result));
-        } else {
-            result = (T) element.getObjectValue();
+        try {
+            final Optional<Object> optional = cache.get(key, () -> Optional.ofNullable(stroomEntityManager.loadEntityById(clazz, id)));
+            return (T) optional.orElse(null);
+        } catch (final ExecutionException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
         }
-
-        return result;
     }
 
     @Override
@@ -149,21 +155,16 @@ public class CachingEntityManager implements StroomEntityManager, InitializingBe
             return stroomEntityManager.executeQueryResultList(sql, criteria, allowCaching);
         }
 
-        List result;
         final List<Object> key = Arrays.asList("executeCachedQueryResultList", sql.toString(), sql.getArgs(), criteria);
 
         // Try and get a cached method result from the cache.
-        final Element element = cache.get(key);
-        if (element == null) {
-            // We didn't find a cached result so get one and put it in the
-            // cache.
-            result = stroomEntityManager.executeQueryResultList(sql, criteria, allowCaching);
-            cache.put(new Element(key, result));
-        } else {
-            result = (List) element.getObjectValue();
+        try {
+            final Optional<Object> optional = cache.get(key, () -> Optional.ofNullable(stroomEntityManager.executeQueryResultList(sql, criteria, allowCaching)));
+            return (List) optional.orElse(null);
+        } catch (final ExecutionException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
         }
-
-        return result;
     }
 
     @Override
@@ -208,12 +209,7 @@ public class CachingEntityManager implements StroomEntityManager, InitializingBe
     }
 
     @Override
-    public void afterPropertiesSet() throws Exception {
-        cache = cacheManager.getEhcache("serviceCache");
-    }
-
-    @Override
     public void clear() {
-        cache.removeAll();
+        CacheUtil.clear(cache);
     }
 }

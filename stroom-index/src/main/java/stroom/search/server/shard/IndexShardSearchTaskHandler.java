@@ -105,7 +105,7 @@ public class IndexShardSearchTaskHandler {
                 final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
                 final IndexSearcher searcher = searcherManager.acquire();
                 try {
-                    final Executor executor = executorProvider.getExecutor(IndexShardSearchTaskExecutor.THREAD_POOL);
+                    final Executor executor = executorProvider.getExecutor(IndexShardSearchTaskProducer.THREAD_POOL);
                     final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(() -> {
                         try {
                             taskContext.setName("Index Searcher");

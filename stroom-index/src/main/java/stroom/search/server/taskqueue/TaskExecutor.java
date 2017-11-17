@@ -16,12 +16,8 @@
 
 package stroom.search.server.taskqueue;
 
-import stroom.task.server.ExecutorProvider;
-import stroom.util.shared.ThreadPool;
-
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class TaskExecutor {
@@ -29,15 +25,10 @@ public class TaskExecutor {
 
     private volatile int maxThreads = DEFAULT_MAX_THREADS;
 
-    private final Executor executor;
     private final AtomicInteger totalThreads = new AtomicInteger();
 
     private final ConcurrentSkipListSet<TaskProducer> producers = new ConcurrentSkipListSet<>();
     private volatile TaskProducer lastProducer;
-
-    public TaskExecutor(final ExecutorProvider executorProvider, final ThreadPool threadPool) {
-        executor = executorProvider.getExecutor(threadPool);
-    }
 
     public void addProducer(final TaskProducer producer) {
         producers.add(producer);
@@ -77,7 +68,7 @@ public class TaskExecutor {
 
                 if (currentTask != null) {
                     executing = true;
-                    CompletableFuture.runAsync(currentTask, executor).thenAccept(result -> taskComplete(currentProducer, currentTask));
+                    CompletableFuture.runAsync(currentTask, currentProducer.getExecutor()).thenAccept(result -> taskComplete(currentProducer, currentTask));
                 }
             }
         } finally {
@@ -90,9 +81,12 @@ public class TaskExecutor {
     }
 
     private void taskComplete(final TaskProducer producer, final Runnable task) {
-        totalThreads.decrementAndGet();
-        producer.complete(task);
-        exec();
+        try {
+            totalThreads.decrementAndGet();
+            producer.complete(task);
+        } finally {
+            exec();
+        }
     }
 
     private synchronized TaskProducer nextProducer() {

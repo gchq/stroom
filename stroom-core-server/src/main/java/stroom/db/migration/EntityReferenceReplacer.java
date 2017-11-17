@@ -102,7 +102,7 @@ public class EntityReferenceReplacer {
                                 LOGGER.error("Unable to perform entity replacement for unknown type '" + type + "'");
                         }
 
-                        newData = newData.replaceAll(ref, sb.toString());
+                        newData = newData.replace(ref, sb.toString());
                     }
                 } catch (final Exception e) {
                     LOGGER.error(e.getMessage(), e);
