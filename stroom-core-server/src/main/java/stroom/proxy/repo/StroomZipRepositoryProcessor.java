@@ -18,17 +18,22 @@ package stroom.proxy.repo;
 
 import com.google.common.collect.Maps;
 import org.springframework.util.StringUtils;
-import stroom.feed.MetaMap;
 import stroom.task.server.TaskContext;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamProgressMonitor;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.zip.HeaderMap;
+import stroom.util.zip.StroomFileNameUtil;
 import stroom.util.zip.StroomHeaderArguments;
+import stroom.util.zip.StroomStreamHandler;
+import stroom.util.zip.StroomZipEntry;
+import stroom.util.zip.StroomZipFile;
+import stroom.util.zip.StroomZipFileType;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -40,7 +45,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
@@ -85,7 +89,7 @@ public abstract class StroomZipRepositoryProcessor {
 
     public abstract void processFeedFiles(final StroomZipRepository stroomZipRepository,
                                           final String feed,
-                                          final List<Path> fileList);
+                                          final List<File> fileList);
 
     public abstract byte[] getReadBuffer();
 
@@ -97,80 +101,101 @@ public abstract class StroomZipRepositoryProcessor {
      * file scan limit.
      */
     public boolean process(final StroomZipRepository stroomZipRepository) {
+        boolean isComplete = true;
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("process() - Scanning " + stroomZipRepository.getRootDir());
         }
         // Scan all of the zip files in the repository so that we can map zip files to feeds.
-        try (final Stream<Path> zipFiles = stroomZipRepository.walkZipFiles()) {
-            //build the map of feed -> files
-            //only scan a limited number of files
-            final Map<String, List<Path>> feedToFilesMap = StreamSupport.stream(zipFiles.spliterator(), true)
-                    .limit(maxFileScan)
-                    .filter(file -> !taskContext.isTerminated()) //do no more work if we are terminated
-                    .map(file -> fileScan(stroomZipRepository, file))
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .collect(Collectors.groupingBy(
-                            Map.Entry::getKey,
-                            Collectors.mapping(
-                                    Entry::getValue,
-                                    Collectors.toList())));
+        final Iterable<File> zipFiles = stroomZipRepository.getZipFiles();
 
-            if (LOGGER.isDebugEnabled()) {
-                int fileCount = feedToFilesMap.values().stream()
-                        .mapToInt(List::size)
-                        .sum();
-                LOGGER.debug("Found %s feeds across %s files", feedToFilesMap.keySet().size(), fileCount);
-            }
-
-            final Comparator<Path> fileComparator = (f1, f2) -> {
-                if (f1 == null || f2 == null || f1.getFileName().toString() == null || f2.getFileName().toString() == null) {
-                    return 0;
-                }
-                return f1.getFileName().toString().compareTo(f2.getFileName().toString());
-            };
-
-            //spawn a task for each feed->files entry to load the data into a stream
-            CompletableFuture[] processFeedFilesFutures = feedToFilesMap.entrySet().stream()
-                    .filter(entry -> !taskContext.isTerminated()) //do no more work if we are terminated
-                    .map(entry -> {
-                        final String feedName = entry.getKey();
-                        final List<Path> fileList = new ArrayList<>(entry.getValue());
-
-                        // Sort the map so the items are processed in order
-                        fileList.sort(fileComparator);
-
-                        //get the future for loading a list of files into a feed
-                        return createProcessFeedFilesTask(stroomZipRepository, feedName, fileList);
-                    })
-                    .toArray(CompletableFuture[]::new);
-
-            try {
-                //wait for all the sub-tasks to complete
-                CompletableFuture.allOf(processFeedFilesFutures).get();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                LOGGER.error("Proxy aggregation thread interrupted", e);
-            } catch (ExecutionException e) {
-                throw new RuntimeException(String.format("Error waiting for %s proxy aggregation jobs to complete",
-                        processFeedFilesFutures.length), e);
-            }
-
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("process() - Completed");
-            }
-        } catch (final IOException e) {
-            LOGGER.error(e.getMessage(), e);
+        if (!zipFiles.iterator().hasNext()) {
+            //no files so we are all done
+            return true;
         }
 
+        final List<File> filesBatch = new ArrayList<>();
+        int scanCount = 0;
+        for (final File file : zipFiles) {
+            if (file != null) {
+                scanCount++;
 
-        return false;
+                // Quit once we have hit the max
+                if (scanCount > maxFileScan) {
+                    isComplete = false;
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("process() - Hit scan limit of " + maxFileScan);
+                    }
+                    break;
+                }
+                filesBatch.add(file);
+            }
+        }
+        LOGGER.info("Processing %s files, isComplete: [%s]",
+                filesBatch.size(), Boolean.valueOf(isComplete).toString());
+
+        //build the map of feed -> files, only scan a limited number of files
+        Map<String, List<File>> feedToFilesMap = filesBatch.parallelStream()
+                .filter(file -> !taskContext.isTerminated()) //do no more work if we are terminated
+                .map(file -> fileScan(stroomZipRepository, file))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.groupingBy(
+                        Map.Entry::getKey,
+                        Collectors.mapping(
+                                Entry::getValue,
+                                Collectors.toList())));
+
+        if (LOGGER.isDebugEnabled()) {
+            int fileCount = feedToFilesMap.values().stream()
+                    .mapToInt(List::size)
+                    .sum();
+            LOGGER.debug("Found %s feeds across %s files", feedToFilesMap.keySet().size(), fileCount);
+        }
+
+        final Comparator<File> fileComparator = (f1, f2) -> {
+            if (f1 == null || f2 == null || f1.getName() == null || f2.getName() == null) {
+                return 0;
+            }
+            return f1.getName().compareTo(f2.getName());
+        };
+
+        //spawn a task for each feed->files entry to load the data into a stream
+        CompletableFuture[] processFeedFilesFutures = feedToFilesMap.entrySet().stream()
+                .filter(entry -> !taskContext.isTerminated()) //do no more work if we are terminated
+                .map(entry -> {
+                    final String feedName = entry.getKey();
+                    final List<File> fileList = new ArrayList<>(entry.getValue());
+
+                    // Sort the map so the items are processed in order
+                    fileList.sort(fileComparator);
+
+                    //get the future for loading a list of files into a feed
+                    return createProcessFeedFilesTask(stroomZipRepository, feedName, fileList);
+                })
+                .toArray(CompletableFuture[]::new);
+
+        try {
+            //wait for all the sub-tasks to complete
+            CompletableFuture.allOf(processFeedFilesFutures).get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.error("Proxy aggregation thread interrupted", e);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(String.format("Error waiting for %s proxy aggregation jobs to complete",
+                    processFeedFilesFutures.length), e);
+        }
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("process() - Completed");
+        }
+
+        return isComplete;
     }
 
     private CompletableFuture<Void> createProcessFeedFilesTask(final StroomZipRepository stroomZipRepository,
                                                                final String feed,
-                                                               final List<Path> fileList) {
+                                                               final List<File> fileList) {
         return CompletableFuture.runAsync(
                 () -> {
                     if (!taskContext.isTerminated()) {
@@ -187,7 +212,7 @@ public abstract class StroomZipRepositoryProcessor {
     /**
      * Peek at the stream to get the header file feed
      */
-    private Optional<Entry<String, Path>> fileScan(final StroomZipRepository stroomZipRepository, final Path file) {
+    private Optional<Entry<String, File>> fileScan(final StroomZipRepository stroomZipRepository, final File file) {
 
         //only a single thread is working on this file so we don't need any thread safety
 
@@ -211,7 +236,7 @@ public abstract class StroomZipRepositoryProcessor {
                 return Optional.empty();
             }
 
-            final MetaMap headerMap = new MetaMap();
+            final HeaderMap headerMap = new HeaderMap();
             headerMap.read(anyHeaderStream, false);
 
             final String feed = headerMap.get(StroomHeaderArguments.FEED);
@@ -240,7 +265,7 @@ public abstract class StroomZipRepositoryProcessor {
 
     public Long processFeedFile(final List<? extends StroomStreamHandler> stroomStreamHandlerList,
                                 final StroomZipRepository stroomZipRepository,
-                                final Path file,
+                                final File file,
                                 final StreamProgressMonitor streamProgress,
                                 final long startSequence) throws IOException {
         long entrySequence = startSequence;
@@ -257,7 +282,7 @@ public abstract class StroomZipRepositoryProcessor {
             for (final String sourceName : stroomZipFile.getStroomZipNameSet().getBaseNameSet()) {
                 bad = false;
 
-                final String targetName = StroomFileNameUtil.getIdPath(entrySequence++);
+                final String targetName = StroomFileNameUtil.getFilePathForId(entrySequence++);
 
                 sendEntry(stroomStreamHandlerList, stroomZipFile, sourceName, streamProgress,
                         new StroomZipEntry(null, targetName, StroomZipFileType.Meta));
@@ -334,8 +359,8 @@ public abstract class StroomZipRepositoryProcessor {
         }
     }
 
-    protected void deleteFiles(final StroomZipRepository stroomZipRepository, final List<Path> fileList) {
-        for (final Path file : fileList) {
+    protected void deleteFiles(final StroomZipRepository stroomZipRepository, final List<File> fileList) {
+        for (final File file : fileList) {
             stroomZipRepository.delete(new StroomZipFile(file));
         }
     }

@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
+## [v5.0-beta.62] - 2017-11-16
+
+* Issue **#494** : Fix problem of proxy aggregation never stopping if more files exist
+
 ## [v5.0-beta.61] - 2017-11-15
 
 * Issue **#490** : Fix errors in proxy aggregation due to a bounded thread pool size
@@ -688,6 +692,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
 [v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
 
+[v5.0-beta.62]: https://github.com/gchq/stroom/compare/v5.0-beta.61...v5.0-beta.62
 [v5.0-beta.61]: https://github.com/gchq/stroom/compare/v5.0-beta.60...v5.0-beta.61
 [v5.0-beta.60]: https://github.com/gchq/stroom/compare/v5.0-beta.59...v5.0-beta.60
 [v5.0-beta.59]: https://github.com/gchq/stroom/compare/v5.0-beta.58...v5.0-beta.59
