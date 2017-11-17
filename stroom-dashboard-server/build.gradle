@@ -25,6 +25,7 @@ dependencies {
 
     compile urlDependencies.get(urlLibs.stroomExpression)
 
+    compile libs.guava
     compile libs.jackson_annotations
     compile libs.jackson_databind
     compile libs.javax_annotation_api
