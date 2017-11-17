@@ -298,6 +298,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
             final boolean searchComplete = ClusterSearchTaskHandler.this.searchComplete.get();
 
             if (!taskContext.isTerminated()) {
+                taskContext.setName("Search result sender");
                 taskContext.info("Creating search result");
 
                 // Produce payloads for each coprocessor.
@@ -454,6 +455,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                         this,
                         hitCount,
                         indexShardSearchTaskProperties.getMaxThreadsPerTask(),
+                        executorProvider,
                         indexShardSearchTaskHandlerProvider);
 
                 // Add the task producer to the task executor.
@@ -487,6 +489,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                                 extractionCoprocessorsMap,
                                 this,
                                 extractionTaskProperties.getMaxThreadsPerTask(),
+                                executorProvider,
                                 extractionTaskHandlerProvider);
 
                         // Add the task producer to the task executor.
@@ -579,7 +582,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
         if (e == null || !(e instanceof TaskTerminatedException)) {
             final String msg = MessageUtil.getMessage(message, e);
-            errors.push(msg);
+            errors.offer(msg);
         }
     }
 

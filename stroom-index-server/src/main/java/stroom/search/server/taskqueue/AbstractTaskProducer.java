@@ -16,6 +16,7 @@
 
 package stroom.search.server.taskqueue;
 
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class AbstractTaskProducer implements TaskProducer {
@@ -23,12 +24,20 @@ public abstract class AbstractTaskProducer implements TaskProducer {
 
     private final AtomicInteger threadsUsed = new AtomicInteger();
     private final int maxThreadsPerTask;
+    private final Executor executor;
 
     private final AtomicInteger tasksTotal = new AtomicInteger();
     private final AtomicInteger tasksCompleted = new AtomicInteger();
 
-    public AbstractTaskProducer(final int maxThreadsPerTask) {
+    public AbstractTaskProducer(final int maxThreadsPerTask,
+                                final Executor executor) {
         this.maxThreadsPerTask = maxThreadsPerTask;
+        this.executor = executor;
+    }
+
+    @Override
+    public Executor getExecutor() {
+        return executor;
     }
 
     @Override

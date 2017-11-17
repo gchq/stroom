@@ -16,21 +16,21 @@
 
 package stroom.cache.server;
 
-import net.sf.ehcache.CacheManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.xml.sax.ErrorHandler;
-import stroom.entity.shared.VersionedEntityDecorator;
+import stroom.entity.server.DocumentPermissionCache;
 import stroom.pipeline.server.DefaultLocationFactory;
 import stroom.pipeline.server.LocationFactory;
 import stroom.pipeline.server.errorhandler.ErrorHandlerAdaptor;
-import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
-import stroom.pool.AbstractPoolCacheBean;
+import stroom.pool.AbstractEntityPool;
 import stroom.security.Insecure;
+import stroom.security.SecurityContext;
+import stroom.util.cache.CacheManager;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 import stroom.xml.converter.ParserFactory;
@@ -40,23 +40,21 @@ import javax.inject.Inject;
 
 @Insecure
 @Component
-public class ParserFactoryPoolImpl
-        extends AbstractPoolCacheBean<VersionedEntityDecorator<TextConverter>, StoredParserFactory>
+class ParserFactoryPoolImpl
+        extends AbstractEntityPool<TextConverter, StoredParserFactory>
         implements ParserFactoryPool {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ParserFactoryPoolImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ParserFactoryPool.class);
 
     private final DSChooser dsChooser;
 
     @Inject
-    public ParserFactoryPoolImpl(final CacheManager cacheManager, final DSChooser dsChooser) {
-        super(cacheManager, "Parser Factory Pool");
+    ParserFactoryPoolImpl(final CacheManager cacheManager, final DocumentPermissionCache documentPermissionCache, final SecurityContext securityContext, final DSChooser dsChooser) {
+        super(cacheManager, "Parser Factory Pool", documentPermissionCache, securityContext);
         this.dsChooser = dsChooser;
     }
 
     @Override
-    protected StoredParserFactory createValue(final VersionedEntityDecorator<TextConverter> entity) {
-        final TextConverter textConverter = entity.getEntity();
-
+    protected StoredParserFactory createValue(final TextConverter textConverter) {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Creating parser factory: " + textConverter.toString());
         }
@@ -82,14 +80,13 @@ public class ParserFactoryPoolImpl
                 // parserFactory = javaCCParserFactory;
 
             } else if (textConverter.getConverterType().equals(TextConverterType.XML_FRAGMENT)) {
-                final XMLFragmentParserFactory xmlFragmentParserFactory = XMLFragmentParserFactory
-                        .create(StreamUtil.stringToStream(textConverter.getData()), errorHandler);
-
-                parserFactory = xmlFragmentParserFactory;
+                parserFactory = XMLFragmentParserFactory.create(StreamUtil.stringToStream(textConverter.getData()), errorHandler);
 
             } else {
-                final String message = "Unknown text converter type: " + textConverter.getConverterType().toString();
-                throw new ProcessException(message);
+                parserFactory = dsChooser.configure(textConverter.getData(), errorHandler);
+
+//                    final String message = "Unknown text converter type: " + textConverter.getConverterType().toString();
+//                    throw new ProcessException(message);
             }
 
         } catch (final Throwable e) {

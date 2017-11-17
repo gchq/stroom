@@ -19,10 +19,13 @@ package stroom.refdata;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.cache.CacheManagerAutoCloseable;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.util.cache.CacheManager;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 import stroom.xml.event.EventList;
@@ -33,14 +36,14 @@ public class TestCache extends StroomUnitTest {
 
     @Test
     public void testReferenceDataCache() {
-        try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
+        try (CacheManager cacheManager = new CacheManager()) {
             final ReferenceDataLoader referenceDataLoader = new ReferenceDataLoader() {
                 @Override
                 public MapStore load(final MapStoreCacheKey effectiveFeed) {
                     return MapStoreTestUtil.createMapStore();
                 }
             };
-            final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader, null);
+            final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader, null, null);
 
             String eventString = null;
 
@@ -53,8 +56,8 @@ public class TestCache extends StroomUnitTest {
                 feed.setName("test " + i);
                 feed.setReference(true);
                 feed.setId(i);
-                final MapStoreCacheKey mapStorePoolKey = new MapStoreCacheKey(DocRefUtil.create(pipelineEntity), 1, null);
-                final MapStore mapStore = mapStoreCache.getOrCreate(mapStorePoolKey);
+                final MapStoreCacheKey mapStorePoolKey = new MapStoreCacheKey(DocRefUtil.create(pipelineEntity), 1);
+                final MapStore mapStore = mapStoreCache.get(mapStorePoolKey);
                 final EventList eventList = mapStore.getEvents("TEST_MAP_NAME", "TEST_KEY_NAME");
                 if (eventString == null) {
                     eventString = eventList.toString();
@@ -70,8 +73,8 @@ public class TestCache extends StroomUnitTest {
                 feed.setName("test " + i);
                 feed.setReference(true);
                 feed.setId(i);
-                final MapStoreCacheKey mapStoreCacheKey = new MapStoreCacheKey(DocRefUtil.create(pipelineEntity), 1, null);
-                final MapStore mapStore = mapStoreCache.getOrCreate(mapStoreCacheKey);
+                final MapStoreCacheKey mapStoreCacheKey = new MapStoreCacheKey(DocRefUtil.create(pipelineEntity), 1);
+                final MapStore mapStore = mapStoreCache.get(mapStoreCacheKey);
                 final EventList eventList = mapStore.getEvents("TEST_MAP_NAME", "TEST_KEY_NAME");
                 if (eventString == null) {
                     eventString = eventList.toString();

@@ -17,51 +17,63 @@
 
 package stroom.index.server;
 
-import net.sf.ehcache.CacheManager;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.springframework.stereotype.Component;
-import stroom.cache.AbstractCacheBean;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.query.api.v2.DocRef;
+import stroom.util.cache.CacheManager;
 
 import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;
 
 @Component
-public class IndexConfigCacheImpl extends AbstractCacheBean<DocRef, IndexConfig> implements IndexConfigCache {
+public class IndexConfigCacheImpl implements IndexConfigCache {
     private static final int MAX_CACHE_ENTRIES = 100;
 
-    private final IndexService indexService;
+    private final LoadingCache<DocRef, IndexConfig> cache;
 
     @Inject
+    @SuppressWarnings("unchecked")
     IndexConfigCacheImpl(final CacheManager cacheManager,
                          final IndexService indexService) {
-        super(cacheManager, "Index Config Cache", MAX_CACHE_ENTRIES);
-        this.indexService = indexService;
+        final CacheLoader<DocRef, IndexConfig> cacheLoader = CacheLoader.from(k -> {
+            if (k == null) {
+                throw new NullPointerException("Null key supplied");
+            }
 
-        setMaxIdleTime(10, TimeUnit.MINUTES);
-        setMaxLiveTime(10, TimeUnit.MINUTES);
+            final Index loaded = indexService.loadByUuid(k.getUuid());
+            if (loaded == null) {
+                throw new NullPointerException("No index can be found for: " + k);
+            }
+
+            // Create a map of index fields keyed by name.
+            final IndexFields indexFields = loaded.getIndexFieldsObject();
+            if (indexFields == null || indexFields.getIndexFields() == null || indexFields.getIndexFields().size() == 0) {
+                throw new IndexException("No index fields have been set for: " + k);
+            }
+
+            final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(indexFields);
+            return new IndexConfig(loaded, indexFields, indexFieldsMap);
+        });
+
+        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
+                .maximumSize(MAX_CACHE_ENTRIES)
+                .expireAfterAccess(10, TimeUnit.MINUTES);
+        cache = cacheBuilder.build(cacheLoader);
+        cacheManager.registerCache("Index Config Cache", cacheBuilder, cache);
     }
 
     @Override
-    public IndexConfig getOrCreate(final DocRef key) {
-        return computeIfAbsent(key, this::create);
+    public IndexConfig get(final DocRef key) {
+        return cache.getUnchecked(key);
     }
 
-    private IndexConfig create(final DocRef key) {
-        final Index loaded = indexService.loadByUuid(key.getUuid());
-        if (loaded == null) {
-            throw new NullPointerException("No index can be found for: " + key);
-        }
-
-        // Create a map of index fields keyed by name.
-        final IndexFields indexFields = loaded.getIndexFieldsObject();
-        if (indexFields == null || indexFields.getIndexFields() == null || indexFields.getIndexFields().size() == 0) {
-            throw new IndexException("No index fields have been set for: " + key);
-        }
-
-        final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(indexFields);
-        return new IndexConfig(loaded, indexFields, indexFieldsMap);
+    @Override
+    public void remove(final DocRef key) {
+        cache.invalidate(key);
     }
 }

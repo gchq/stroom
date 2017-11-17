@@ -615,7 +615,7 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
             pipelineHolder.setPipeline(pipelineEntity);
             pipelineContext.setStepping(true);
 
-            final PipelineData pipelineData = pipelineDataCache.getOrCreate(pipelineEntity);
+            final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
             pipeline = pipelineFactory.create(pipelineData, controller);
 
             // Don't return a pipeline if we cannot step with it.

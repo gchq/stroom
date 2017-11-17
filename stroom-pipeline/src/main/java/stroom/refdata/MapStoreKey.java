@@ -16,11 +16,7 @@
 
 package stroom.refdata;
 
-import java.io.Serializable;
-
-public class MapStoreKey implements Serializable {
-    private static final long serialVersionUID = -7153262432069953060L;
-
+public class MapStoreKey {
     private final String mapName;
     private final String keyName;
     private final int hashCode;

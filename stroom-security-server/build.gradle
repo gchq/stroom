@@ -26,7 +26,6 @@ dependencies {
 
     compile libs.aspectjrt
     compile libs.commons_lang
-    compile libs.ehcache_core
     compile libs.guava
     compile libs.hibernate_jpa_api
     compile libs.jBCrypt

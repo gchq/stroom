@@ -17,7 +17,6 @@ dependencies {
     compile libs.c3p0
     compile libs.commons_lang
     compile libs.commons_pool2
-    compile libs.ehcache_core
     compile libs.flyway_core
     compile libs.guava
     compile (libs.hbase) { transitive = false } //hbase-common is currently only used for its Bytes class, so exclude all its deps

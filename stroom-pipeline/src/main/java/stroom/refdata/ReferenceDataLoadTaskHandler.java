@@ -126,7 +126,7 @@ public class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceD
                     pipelineHolder.setPipeline(pipelineEntity);
 
                     // Create the parser.
-                    final PipelineData pipelineData = pipelineDataCache.getOrCreate(pipelineEntity);
+                    final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
                     final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
                     populateMaps(pipeline, stream, streamSource, feed, stream.getStreamType(), mapStoreBuilder);

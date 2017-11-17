@@ -43,6 +43,9 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
+import java.util.Comparator;
+import java.util.Map;
+
 public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<CacheNodeRow>> implements HasRead<CacheRow> {
     private static final int SMALL_COL = 90;
     private static final int MEDIUM_COL = 150;
@@ -71,29 +74,33 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
             }
         }, "Node", MEDIUM_COL);
 
-        // Hits.
+        // Entries.
         getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
             @Override
             public String getValue(final CacheNodeRow row) {
-                return Long.toString(row.getCacheInfo().getCacheHits());
+                return row.getCacheInfo().getMap().get("Entries");
             }
-        }, "Hits", SMALL_COL);
+        }, "Entries", SMALL_COL);
 
-        // Misses.
+        // Max Entries.
         getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
             @Override
             public String getValue(final CacheNodeRow row) {
-                return Long.toString(row.getCacheInfo().getCacheMisses());
+                return row.getCacheInfo().getMap().get("MaximumSize");
             }
-        }, "Misses", SMALL_COL);
+        }, "Max Entries", SMALL_COL);
 
-        // Objects.
+        // Expiry.
         getView().addResizableColumn(new Column<CacheNodeRow, String>(new TextCell()) {
             @Override
             public String getValue(final CacheNodeRow row) {
-                return Long.toString(row.getCacheInfo().getObjectCount());
+                String expiry = row.getCacheInfo().getMap().get("ExpireAfterAccess");
+                if (expiry == null) {
+                    expiry = row.getCacheInfo().getMap().get("ExpireAfterWrite");
+                }
+                return expiry;
             }
-        }, "Objects", SMALL_COL);
+        }, "Expiry", SMALL_COL);
 
         // Clear.
         final Column<CacheNodeRow, String> clearColumn = new Column<CacheNodeRow, String>(new ButtonCell()) {
@@ -134,37 +141,11 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
         final StringBuilder sb = new StringBuilder();
         TooltipUtil.addHeading(sb, row.getNode().getName());
 
-        TooltipUtil.addBreak(sb);
-
-        TooltipUtil.addHeading(sb, "Cache Hits");
-        TooltipUtil.addRowData(sb, "Memory", cacheInfo.getInMemoryHits());
-        TooltipUtil.addRowData(sb, "Off Heap", cacheInfo.getOffHeapHits());
-        TooltipUtil.addRowData(sb, "Disk", cacheInfo.getOnDiskHits());
-        TooltipUtil.addRowData(sb, "Total", cacheInfo.getCacheHits());
-
-        TooltipUtil.addBreak(sb);
-
-        TooltipUtil.addHeading(sb, "Cache Misses");
-        TooltipUtil.addRowData(sb, "Memory", cacheInfo.getInMemoryMisses());
-        TooltipUtil.addRowData(sb, "Off Heap", cacheInfo.getOffHeapMisses());
-        TooltipUtil.addRowData(sb, "Disk", cacheInfo.getOnDiskMisses());
-        TooltipUtil.addRowData(sb, "Total", cacheInfo.getCacheMisses());
-
-        TooltipUtil.addBreak(sb);
-
-        TooltipUtil.addHeading(sb, "Objects");
-        TooltipUtil.addRowData(sb, "Memory", cacheInfo.getMemoryStoreObjectCount());
-        TooltipUtil.addRowData(sb, "Off Heap", cacheInfo.getOffHeapStoreObjectCount());
-        TooltipUtil.addRowData(sb, "Disk", cacheInfo.getDiskStoreObjectCount());
-        TooltipUtil.addRowData(sb, "Total", cacheInfo.getObjectCount());
-
-        TooltipUtil.addBreak(sb);
-
-        TooltipUtil.addRowData(sb, "Average Get Time", cacheInfo.getAverageGetTime());
-        TooltipUtil.addRowData(sb, "Eviction Count", cacheInfo.getEvictionCount());
-        TooltipUtil.addRowData(sb, "Searches Per Second", cacheInfo.getSearchesPerSecond());
-        TooltipUtil.addRowData(sb, "Average Search Time", cacheInfo.getAverageSearchTime());
-        TooltipUtil.addRowData(sb, "Writer Queue Size", cacheInfo.getWriterQueueSize());
+        final Map<String, String> map = cacheInfo.getMap();
+        map.keySet().stream().sorted(Comparator.naturalOrder()).forEachOrdered(k -> {
+            final String v = map.get(k);
+            TooltipUtil.addRowData(sb, k, v);
+        });
 
         return sb.toString();
     }

@@ -97,7 +97,7 @@ public class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataL
 
                 // Create the parser.
                 final PipelineEntity pipelineEntity = pipelineService.loadByUuid(task.getContextPipeline().getUuid());
-                final PipelineData pipelineData = pipelineDataCache.getOrCreate(pipelineEntity);
+                final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
                 final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
                 feedHolder.setFeed(feed);

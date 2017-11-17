@@ -444,7 +444,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
         streamHolder.addProvider(streamSource.getChildStream(StreamType.META));
         streamHolder.addProvider(streamSource.getChildStream(StreamType.CONTEXT));
 
-        final PipelineData pipelineData = pipelineDataCache.getOrCreate(loadedPipeline);
+        final PipelineData pipelineData = pipelineDataCache.get(loadedPipeline);
         if (pipelineData == null) {
             throw new EntityServiceException("Pipeline has no data");
         }

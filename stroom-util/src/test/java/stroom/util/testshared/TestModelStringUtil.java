@@ -52,6 +52,20 @@ public class TestModelStringUtil {
     }
 
     @Test
+    public void testDurationStringStrippingZeros() {
+        Assert.assertEquals("", ModelStringUtil.formatDurationString(null, true));
+        Assert.assertEquals("-10ms", ModelStringUtil.formatDurationString(-10L, true));
+        Assert.assertEquals("0ms", ModelStringUtil.formatDurationString(0L, true));
+        Assert.assertEquals("1ms", ModelStringUtil.formatDurationString(1L, true));
+        Assert.assertEquals("999ms", ModelStringUtil.formatDurationString(999L, true));
+        Assert.assertEquals("1s", ModelStringUtil.formatDurationString(1000L, true));
+        Assert.assertEquals("2s", ModelStringUtil.formatDurationString(2000L, true));
+        Assert.assertEquals("10s", ModelStringUtil.formatDurationString(10000L, true));
+        Assert.assertEquals("1m", ModelStringUtil.formatDurationString(60 * 1000L, true));
+        Assert.assertEquals("1h", ModelStringUtil.formatDurationString(60 * 60 * 1000L, true));
+    }
+
+    @Test
     public void testFormatMetricByteSizeString() {
         Assert.assertEquals("1.0B", ModelStringUtil.formatMetricByteSizeString(1L));
         Assert.assertEquals("999B", ModelStringUtil.formatMetricByteSizeString(999L));
@@ -197,4 +211,59 @@ public class TestModelStringUtil {
 
     }
 
+    @Test
+    public void testTimeSizeDividerNull() {
+        doTest("", null);
+    }
+
+    @Test
+    public void testTimeSizeDivider1() {
+        doTest("1", 1L);
+    }
+
+    @Test
+    public void testTimeSizeDivider1000() {
+        doTest("1000", 1000L);
+    }
+
+    @Test
+    public void testTimeSizeDivider1Ms() {
+        doTest("1MS", 1L);
+    }
+
+    @Test
+    public void testTimeSizeDivider1ms() {
+        doTest("1 ms", 1L);
+    }
+
+    @Test
+    public void testTimeSizeDivider1s() {
+        doTest("1 s", 1000L);
+    }
+
+    @Test
+    public void testTimeSizeDivider1m() {
+        doTest("1 m", 60 * 1000L);
+    }
+
+    @Test
+    public void testTimeSizeDivider1h() {
+        doTest("1 h", 60 * 60 * 1000L);
+    }
+
+    @Test
+    public void testTimeSizeDivider1d() {
+        doTest("1 d", 24 * 60 * 60 * 1000L);
+    }
+
+    private Long doTest(String input, Long expected) {
+        Long output = ModelStringUtil.parseDurationString(input);
+
+        Assert.assertEquals(expected, output);
+
+        System.out.println(input + " = " + output);
+
+        return output;
+
+    }
 }

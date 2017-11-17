@@ -16,7 +16,6 @@ logging:
     stroom: INFO
     stroom.resources.query.v1.SqlStatisticsQueryResource: DEBUG
     io.dropwizard: INFO
-    org.ehcache: INFO
     org.eclipse.jetty: INFO
     org.flywaydb: INFO
   appenders:

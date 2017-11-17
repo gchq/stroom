@@ -116,7 +116,7 @@ public class XMLSchemaCache implements EntityEvent.Handler {
                 // There was a memory leak in XMLSchemaCache due
                 // to schema criteria map keys not implementing equals properly.
                 // This has been fixed but has highlighted the issue that a
-                // proper ehcache cache should be used instead of a map to allow
+                // proper cache should be used instead of a map to allow
                 // this to scale better.
                 schemaSets.put(criteria, schemaSet);
 

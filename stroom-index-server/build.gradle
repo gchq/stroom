@@ -26,7 +26,7 @@ dependencies {
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
-    compile libs.ehcache_core
+    compile libs.guava
     compile libs.javax_inject
     compile libs.lucene_analyzers_common
     compile libs.lucene_core

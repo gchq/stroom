@@ -16,14 +16,20 @@
 
 package stroom.node.server;
 
-import com.googlecode.ehcache.annotations.Cacheable;
-import com.googlecode.ehcache.annotations.KeyGenerator;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.security.Insecure;
+import stroom.util.cache.CacheManager;
 import stroom.util.config.StroomProperties;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A service that can be injected with spring that caches and delegates property
@@ -31,36 +37,83 @@ import java.util.Map;
  */
 @Component
 public class StroomPropertyServiceImpl implements StroomPropertyService {
-    public StroomPropertyServiceImpl() {
-        // Ensure global properties are initialised.
-        GlobalProperties.getInstance();
-    }
+//    private static final Logger LOGGER = LoggerFactory.getLogger(StroomPropertyServiceImpl.class);
+//
+//    private LoadingCache<String, Optional<String>> cache;
+//
+//    @Inject
+//    public StroomPropertyServiceImpl(final CacheManager cacheManager) {
+//        // Ensure global properties are initialised.
+//        GlobalProperties.getInstance();
+//
+//        final CacheLoader<String, Optional<String>> cacheLoader = CacheLoader.from(k -> Optional.ofNullable(StroomProperties.getProperty(k)));
+//        cache = CacheBuilder.newBuilder()
+//                .maximumSize(1000)
+//                .expireAfterWrite(1, TimeUnit.MINUTES)
+//                .build(cacheLoader);
+//        cacheManager.registerCache("Property Cache", cache);
+//    }
 
     @Override
     @Insecure
-    @Cacheable(cacheName = "serviceCache", keyGenerator = @KeyGenerator(name = "ListCacheKeyGenerator"))
     public String getProperty(final String name) {
         return StroomProperties.getProperty(name);
+
+//        return cache.getUnchecked(name).orElse(null);
     }
 
     @Override
     @Insecure
-    @Cacheable(cacheName = "serviceCache", keyGenerator = @KeyGenerator(name = "ListCacheKeyGenerator"))
-    public int getIntProperty(final String propertyName, final int defaultValue) {
-        return StroomProperties.getIntProperty(propertyName, defaultValue);
+    public int getIntProperty(final String name, final int defaultValue) {
+        return StroomProperties.getIntProperty(name, defaultValue);
+
+//        int value = defaultValue;
+//
+//        final String string = getProperty(name);
+//        if (string != null && string.length() > 0) {
+//            try {
+//                value = Integer.parseInt(string);
+//            } catch (final NumberFormatException e) {
+//                LOGGER.error("Unable to parse property '" + name + "' value '" + string + "', using default of '"
+//                        + defaultValue + "' instead", e);
+//            }
+//        }
+//
+//        return value;
     }
 
     @Override
     @Insecure
-    @Cacheable(cacheName = "serviceCache", keyGenerator = @KeyGenerator(name = "ListCacheKeyGenerator"))
-    public long getLongProperty(final String propertyName, final long defaultValue) {
-        return StroomProperties.getLongProperty(propertyName, defaultValue);
+    public long getLongProperty(final String name, final long defaultValue) {
+        return StroomProperties.getLongProperty(name, defaultValue);
+
+//        long value = defaultValue;
+//
+//        final String string = getProperty(name);
+//        if (string != null && string.length() > 0) {
+//            try {
+//                value = Long.parseLong(string);
+//            } catch (final NumberFormatException e) {
+//                LOGGER.error("Unable to parse property '" + name + "' value '" + string + "', using default of '"
+//                        + defaultValue + "' instead", e);
+//            }
+//        }
+//
+//        return value;
     }
 
     @Override
     @Insecure
-    @Cacheable(cacheName = "serviceCache", keyGenerator = @KeyGenerator(name = "ListCacheKeyGenerator"))
-    public boolean getBooleanProperty(final String propertyName, final boolean defaultValue) {
-        return StroomProperties.getBooleanProperty(propertyName, defaultValue);
+    public boolean getBooleanProperty(final String name, final boolean defaultValue) {
+        return StroomProperties.getBooleanProperty(name, defaultValue);
+
+//        boolean value = defaultValue;
+//
+//        final String string = getProperty(name);
+//        if (string != null && string.length() > 0) {
+//            value = Boolean.valueOf(string);
+//        }
+//
+//        return value;
     }
 }

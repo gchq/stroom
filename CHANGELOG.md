@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+
 ### Added
 * Issue **#75** : Upgraded to Lucene 5.
 
@@ -37,6 +38,58 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.1-alpha.1] - 2017-06-07
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
+
+## [v5.0-beta.62] - 2017-11-16
+
+* Issue **#494** : Fix problem of proxy aggregation never stopping if more files exist
+
+## [v5.0-beta.61] - 2017-11-15
+
+* Issue **#490** : Fix errors in proxy aggregation due to a bounded thread pool size
+
+## [v5.0-beta.60] - 2017-11-14
+
+* Issue **#484** : Remove custom finalize() methods to reduce memory overhead
+
+* Issue **#475** : Fix memory leak of java.io.File references when proxy aggregation runs
+
+* Issue **#470** : You can now correctly add destinations directly to the pipeline 'Source' element to enable raw streaming.
+
+* Issue **#487** : Search result list trimming was throwing an illegal argument exception `Comparison method violates its general contract`, this should now be fixed.
+
+* Issue **#488** : Permissions are now elevated to 'Use' for the purposes of reporting the data source being queried.
+
+* Migrated to ehcache 3.4.0 to add options for off-heap and disk based caching to reduce memory overhead.
+
+* Caches of pooled items no longer use Apache Commons Pool.
+
+* Issue **#401** : Reference data was being cached per user to ensure a user centric view of reference data was being used. This required more memory so now reference data is built in the context of the internal processing user and then filtered during processing by user access to streams.
+
+* The effective stream cache now holds 1000 items.
+
+* Reduced the amount of cached reference data to 100 streams.
+
+* Reduced the number of active queries to 100.
+
+* Removed Ehcache and switched to Guava cache.
+
+## [v5.0-beta.59] - 2017-11-10
+
+* Issue **#477** : Additional changes to ensure search sub tasks use threads fairly between multiple searches.
+
+## [v5.0-beta.58] - 2017-11-09
+
+* Issue **#477** : Additional changes to ensure search sub tasks use threads fairly between multiple searches.
+
+## [v5.0-beta.57] - 2017-11-08
+
+* Issue **#477** : Search sub tasks are now correctly linked to their parent task and can therefore be terminated by terminating parent tasks.
+
+## [v5.0-beta.56] - 2017-11-06
+
+* Issue **#425** : Changed string replacement in pipeline migration code to use a literal match
+
+* Issue **#469** : Add Heap Histogram internal statistics for memory use monitoring
 
 ## [v5.0-beta.55] - 2017-10-26
 
@@ -658,6 +711,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
 [v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
 
+[v5.0-beta.62]: https://github.com/gchq/stroom/compare/v5.0-beta.61...v5.0-beta.62
+[v5.0-beta.61]: https://github.com/gchq/stroom/compare/v5.0-beta.60...v5.0-beta.61
+[v5.0-beta.60]: https://github.com/gchq/stroom/compare/v5.0-beta.59...v5.0-beta.60
+[v5.0-beta.59]: https://github.com/gchq/stroom/compare/v5.0-beta.58...v5.0-beta.59
+[v5.0-beta.58]: https://github.com/gchq/stroom/compare/v5.0-beta.57...v5.0-beta.58
+[v5.0-beta.57]: https://github.com/gchq/stroom/compare/v5.0-beta.56...v5.0-beta.57
+[v5.0-beta.56]: https://github.com/gchq/stroom/compare/v5.0-beta.55...v5.0-beta.56
 [v5.0-beta.55]: https://github.com/gchq/stroom/compare/v5.0-beta.54...v5.0-beta.55
 [v5.0-beta.54]: https://github.com/gchq/stroom/compare/v5.0-beta.53...v5.0-beta.54
 [v5.0-beta.53]: https://github.com/gchq/stroom/compare/v5.0-beta.52...v5.0-beta.53
