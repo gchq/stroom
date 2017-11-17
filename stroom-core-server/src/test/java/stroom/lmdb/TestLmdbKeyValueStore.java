@@ -183,7 +183,7 @@ public class TestLmdbKeyValueStore {
         int recCount = 5000;
 
         LOGGER.info("Loading data");
-        try (final Txn<ByteBuffer> txn = env.txnWrite()) {
+//        try (final Txn<ByteBuffer> txn = env.txnWrite()) {
             LongStream.rangeClosed(1, recCount).forEach(i -> {
 
                 final ByteBuffer key = ByteBuffer.allocateDirect(Long.BYTES);
@@ -195,14 +195,17 @@ public class TestLmdbKeyValueStore {
                 value.clear();
                 value.put(valueArr).flip();
 
-                boolean result = db.put(txn, key, value);
+//                boolean result = db.put(txn, key, value);
                 LOGGER.info("Putting {}", i);
-                Assert.assertTrue(result);
+                db.put(key, value);
+                LOGGER.info("Put {}", i);
+//                Assert.assertTrue(result);
+
             });
-            LOGGER.info("Committing");
-            txn.commit();
-            LOGGER.info("Committed");
-        }
+//            LOGGER.info("Committing");
+//            txn.commit();
+//            LOGGER.info("Committed");
+//        }
 
         LOGGER.info("Reading data");
 
@@ -221,6 +224,7 @@ public class TestLmdbKeyValueStore {
                 Assert.assertEquals(MEGA_BYTES, val.remaining());
             });
         }
+        LOGGER.info("Read data");
     }
 
     private void deleteDirRecursive(final Path path) throws IOException {
