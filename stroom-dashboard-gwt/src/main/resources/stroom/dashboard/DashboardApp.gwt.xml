@@ -63,6 +63,7 @@
     <!-- Additional -->
     <inherits name="stroom.dashboard.Dashboard"/>
     <inherits name="stroom.query.Query"/>
+    <inherits name="stroom.ruleset.RuleSet"/>
     <inherits name="stroom.streamstore.StreamStore"/>
     <inherits name="stroom.streamtask.StreamTask"/>
     <inherits name="stroom.task.Task"/>
@@ -71,6 +72,8 @@
     <inherits name="stroom.pipeline.structure.Structure"/>
     <inherits name="stroom.pipeline.stepping.PipelineStepping"/>
     <inherits name="stroom.feed.Feed"/>
+    <inherits name="stroom.monitoring.Monitoring" />
+    <inherits name="stroom.jobsystem.JobSystem" />
 
     <!-- Include new data controls -->
     <inherits name="stroom.data.Data"/>
