@@ -8,7 +8,9 @@ dependencies {
     compile project(':stroom-elastic-shared')
     compile project(':stroom-pipeline')
     compile project(':stroom-connectors')
+    compile project(':stroom-util')
 
+    compile libs.guava
     compile libs.slf4j_api
     compile libs.spring_context
     compile libs.spring_tx
