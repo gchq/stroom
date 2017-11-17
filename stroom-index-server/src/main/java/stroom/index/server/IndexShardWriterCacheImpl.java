@@ -75,12 +75,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private final IndexShardManager indexShardManager;
     private final StroomPropertyService stroomPropertyService;
 
-    // We have to keep a separate map of writers so that readers can get them without touching Ehcache.
-    // Touching Ehcache causes expired elements to be evicted which causes them to be destroyed. Destruction happens in
-    // the same thread and can take a while to commit and close index writers. This can seriously impact searching if
-    // search has to wait for writers to be destroyed.
     private final Map<Long, IndexShardWriter> openWritersByShardId = new ConcurrentHashMap<>();
-
     private final Map<IndexShardKey, IndexShardWriter> openWritersByShardKey = new ConcurrentHashMap<>();
     private final AtomicLong closing = new AtomicLong();
     private final Runner asyncRunner;

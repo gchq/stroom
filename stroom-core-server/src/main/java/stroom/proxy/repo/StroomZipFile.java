@@ -87,14 +87,6 @@ public class StroomZipFile implements Closeable {
 
     }
 
-    @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-        if (zipFile != null) {
-            LOGGER.error("finalize() - Failed to close stream opened here", openStack);
-        }
-    }
-
     public InputStream getInputStream(String baseName, StroomZipFileType fileType) throws IOException {
         String fullName = getStroomZipNameSet().getName(baseName, fileType);
         if (fullName != null) {
