@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import stroom.entity.shared.Res;
 import stroom.script.shared.Script;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.util.task.TaskScopeContextHolder;
 
 import javax.inject.Inject;
@@ -61,10 +62,9 @@ public class ScriptServlet extends HttpServlet {
     protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
             throws ServletException, IOException {
         TaskScopeContextHolder.addContext();
-        try {
-            // Elevate the users permissions for the duration of this task so they can read the script if they have 'use' permission.
-            securityContext.elevatePermissions();
 
+        // Elevate the users permissions for the duration of this task so they can read the script if they have 'use' permission.
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             response.setContentType("text/javascript");
             response.setCharacterEncoding("UTF-8");
 
@@ -84,10 +84,6 @@ public class ScriptServlet extends HttpServlet {
 
                 }
             }
-
-        } finally {
-            securityContext.restorePermissions();
-            TaskScopeContextHolder.removeContext();
         }
     }
 

@@ -29,12 +29,12 @@ import stroom.entity.shared.PermissionException;
 import stroom.explorer.server.ExplorerActionHandler;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.server.ImportExportActionHandler;
+import stroom.security.SecurityHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
-import stroom.util.task.ServerTask;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -419,20 +419,13 @@ public final class FSDocumentStore<D extends Document> implements ExplorerAction
         final Set<D> set = Collections.newSetFromMap(new ConcurrentHashMap<>());
         try (final Stream<Path> stream = Files.list(dir)) {
             stream.filter(p -> p.toString().endsWith(FILE_EXTENSION)).parallel().forEach(p -> {
-
-                securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
-                try {
-
+                try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
                     final String fileName = p.getFileName().toString();
                     final int index = fileName.indexOf(".");
                     final String uuid = fileName.substring(0, index);
                     final D document = read(uuid);
                     set.add(document);
-
-                } finally {
-                    securityContext.popUser();
                 }
-
             });
         } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);

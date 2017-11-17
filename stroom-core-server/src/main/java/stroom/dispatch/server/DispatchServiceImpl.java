@@ -36,7 +36,7 @@ import stroom.task.server.TaskHandlerBeanRegistry;
 import stroom.task.server.TaskManager;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.SharedObject;
-import stroom.util.shared.UserTokenUtil;
+import stroom.security.UserTokenUtil;
 import stroom.util.task.TaskIdFactory;
 
 import javax.inject.Inject;

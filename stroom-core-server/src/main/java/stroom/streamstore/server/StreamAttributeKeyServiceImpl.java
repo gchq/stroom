@@ -28,7 +28,6 @@ import stroom.entity.shared.BaseResultList;
 import stroom.security.Insecure;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.StreamAttributeKey;
-import stroom.streamstore.shared.StreamAttributeKeyService;
 import stroom.util.cache.CacheManager;
 
 import javax.inject.Inject;

@@ -42,7 +42,7 @@ import stroom.security.SecurityContext;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.server.TaskManager;
 import stroom.util.config.PropertyUtil;
-import stroom.util.shared.UserTokenUtil;
+import stroom.security.UserTokenUtil;
 
 import javax.inject.Inject;
 import java.util.Arrays;

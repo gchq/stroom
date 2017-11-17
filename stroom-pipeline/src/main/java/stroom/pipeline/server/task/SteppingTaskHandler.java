@@ -47,6 +47,8 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.security.Secured;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
+import stroom.security.UserTokenUtil;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTypeService;
@@ -61,7 +63,6 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Highlight;
-import stroom.util.shared.UserTokenUtil;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 
@@ -140,8 +141,7 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
     @Override
     public SteppingResult exec(final SteppingTask request) {
         // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
-        securityContext.elevatePermissions();
-        try {
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             // Set the current user so they are visible during translation.
             currentUserHolder.setCurrentUser(UserTokenUtil.getUserId(request.getUserToken()));
 
@@ -202,9 +202,6 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
 
             return new SteppingResult(request.getStepFilterMap(), currentLocation, stepData.convertToShared(),
                     curentStreamOffset, controller.isFound(), generalErrors);
-
-        } finally {
-            securityContext.restorePermissions();
         }
     }
 

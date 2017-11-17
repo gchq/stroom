@@ -24,13 +24,13 @@ import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
+import stroom.feed.StroomHeaderArguments;
+import stroom.security.UserTokenUtil;
 import stroom.task.server.TaskManager;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.TerminateTaskProgressAction;
 import stroom.util.spring.StroomBeanStore;
-import stroom.util.task.ServerTask;
 import stroom.util.task.TaskIdFactory;
-import stroom.feed.StroomHeaderArguments;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -104,7 +104,7 @@ public class SessionListListener implements HttpSessionListener, SessionListServ
             criteria.setSessionId(sessionId);
             final TerminateTaskProgressAction action = new TerminateTaskProgressAction(
                     "Terminate session: " + sessionId, criteria, false);
-            action.setUserToken(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
+            action.setUserToken(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN);
             action.setId(TaskIdFactory.create());
 
             final TaskManager taskManager = getTaskManager();

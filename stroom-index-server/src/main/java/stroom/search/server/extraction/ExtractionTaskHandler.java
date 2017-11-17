@@ -39,6 +39,7 @@ import stroom.pipeline.state.CurrentUserHolder;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
+import stroom.security.SecurityHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.search.server.SearchException;
 import stroom.security.SecurityContext;
@@ -105,9 +106,7 @@ public class ExtractionTaskHandler {
     }
 
     public VoidResult exec(final ExtractionTask task) {
-        try {
-            securityContext.elevatePermissions();
-
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             taskMonitor.setName("Search data extraction");
             if (!taskMonitor.isTerminated()) {
                 final String streamId = String.valueOf(task.getStreamId());
@@ -115,8 +114,6 @@ public class ExtractionTaskHandler {
 
                 extract(task);
             }
-        } finally {
-            securityContext.restorePermissions();
         }
 
         return VoidResult.INSTANCE;

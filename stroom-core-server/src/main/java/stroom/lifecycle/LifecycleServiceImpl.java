@@ -22,7 +22,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.jobsystem.server.ScheduledTaskExecutor;
-import stroom.pool.SecurityHelper;
+import stroom.security.SecurityHelper;
 import stroom.security.SecurityContext;
 import stroom.task.server.StroomThreadGroup;
 import stroom.task.server.TaskCallbackAdaptor;
@@ -143,7 +143,7 @@ public class LifecycleServiceImpl implements LifecycleService {
                 final Runnable runnable =() ->{
                     if (lock.tryLock()) {
 
-                        try (SecurityHelper securityHelper = SecurityHelper.asProcUser(securityContext)) {
+                        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
                             Thread.currentThread().setName("Stroom Lifecycle - ScheduledExecutor");
                             scheduledTaskExecutor.execute();
                         } catch (final Throwable t) {

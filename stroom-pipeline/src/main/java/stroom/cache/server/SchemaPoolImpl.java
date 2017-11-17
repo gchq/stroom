@@ -21,7 +21,7 @@ import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventHandler;
 import stroom.pool.AbstractPoolCache;
 import stroom.pool.PoolItem;
-import stroom.pool.SecurityHelper;
+import stroom.security.SecurityHelper;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.util.cache.CacheManager;
@@ -58,7 +58,7 @@ class SchemaPoolImpl extends AbstractPoolCache<SchemaKey, StoredSchema>
 
     @Override
     protected StoredSchema internalCreateValue(final Object key) {
-        try (SecurityHelper securityHelper = SecurityHelper.asProcUser(securityContext)) {
+        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
             final SchemaKey schemaKey = (SchemaKey) key;
             return schemaLoader.load(schemaKey.getSchemaLanguage(), schemaKey.getData(), schemaKey.getFindXMLSchemaCriteria());
         }

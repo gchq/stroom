@@ -34,7 +34,7 @@ import stroom.util.shared.Monitor;
 import stroom.util.shared.Task;
 import stroom.util.shared.TaskId;
 import stroom.util.shared.ThreadPool;
-import stroom.util.shared.UserTokenUtil;
+import stroom.security.UserTokenUtil;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.task.ExternalShutdownController;
 import stroom.util.task.HasMonitor;

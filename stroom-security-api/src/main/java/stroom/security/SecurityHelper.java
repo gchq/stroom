@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pool;
-
-import stroom.security.SecurityContext;
-import stroom.util.task.ServerTask;
+package stroom.security;
 
 public class SecurityHelper implements AutoCloseable {
     private volatile SecurityContext securityContext;
@@ -30,7 +27,7 @@ public class SecurityHelper implements AutoCloseable {
         if (securityContext != null) {
             switch (action) {
                 case PROC_USER:
-                    securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
+                    securityContext.pushUser(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN);
                     break;
                 case ELEVATE:
                     securityContext.elevatePermissions();
@@ -39,11 +36,11 @@ public class SecurityHelper implements AutoCloseable {
         }
     }
 
-    public static SecurityHelper asProcUser(SecurityContext securityContext) {
+    public static SecurityHelper processingUser(SecurityContext securityContext) {
         return new SecurityHelper(securityContext, Action.PROC_USER);
     }
 
-    public static SecurityHelper elev(SecurityContext securityContext) {
+    public static SecurityHelper elevate(SecurityContext securityContext) {
         return new SecurityHelper(securityContext, Action.ELEVATE);
     }
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.security;
+package stroom.util.shared;
 
 public final class UserTokenUtil {
     public static final String INTERNAL_PROCESSING_USER_TOKEN = createInternal();

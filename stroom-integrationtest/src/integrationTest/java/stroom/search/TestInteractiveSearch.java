@@ -26,20 +26,31 @@ import stroom.index.server.IndexService;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.query.api.v2.*;
-
+import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Format;
+import stroom.query.api.v2.Query;
+import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.Result;
+import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
+import stroom.query.api.v2.Row;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchResponse;
+import stroom.query.api.v2.TableResult;
+import stroom.query.api.v2.TableSettings;
 import stroom.query.shared.v2.ParamUtil;
 import stroom.search.server.EventRef;
 import stroom.search.server.EventRefs;
 import stroom.search.server.EventSearchTask;
+import stroom.security.UserTokenUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.task.server.TaskCallback;
 import stroom.task.server.TaskManager;
 import stroom.util.config.StroomProperties;
-import stroom.util.task.ServerTask;
 
 import javax.annotation.Resource;
 import java.time.ZoneOffset;
@@ -463,7 +474,7 @@ public class TestInteractiveSearch extends AbstractSearchTest {
 
         final CountDownLatch complete = new CountDownLatch(1);
 
-        final EventSearchTask eventSearchTask = new EventSearchTask(ServerTask.INTERNAL_PROCESSING_USER_TOKEN, new FindStreamCriteria(), query,
+        final EventSearchTask eventSearchTask = new EventSearchTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, new FindStreamCriteria(), query,
                 new EventRef(1, 1), new EventRef(Long.MAX_VALUE, Long.MAX_VALUE), 1000, 1000, 1000, 100);
         final AtomicReference<EventRefs> results = new AtomicReference<>();
         taskManager.execAsync(eventSearchTask, new TaskCallback<EventRefs>() {

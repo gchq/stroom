@@ -22,6 +22,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import org.apache.lucene.index.IndexWriter;
 import org.springframework.stereotype.Component;
+import stroom.index.server.IndexShardService;
 import stroom.index.server.IndexShardWriter;
 import stroom.index.server.IndexShardWriterCache;
 import stroom.index.shared.IndexShard;

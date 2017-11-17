@@ -38,7 +38,7 @@ import stroom.security.shared.UserStatus;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.util.cert.CertificateUtil;
 import stroom.util.config.StroomProperties;
-import stroom.util.shared.UserTokenUtil;
+import stroom.security.UserTokenUtil;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

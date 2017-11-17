@@ -38,6 +38,7 @@ import stroom.policy.server.DataRetentionService;
 import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.streamstore.server.fs.FileSystemStreamTypeUtil;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
@@ -111,8 +112,7 @@ public class StreamAttributeMapServiceImpl
             throws RuntimeException {
         BaseResultList<StreamAttributeMap> result;
 
-        securityContext.elevatePermissions();
-        try {
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             // Cache Call
             final List<StreamAttributeMap> streamMDList = new ArrayList<>();
 
@@ -152,8 +152,6 @@ public class StreamAttributeMapServiceImpl
 
             result = new BaseResultList<>(streamMDList, streamList.getPageResponse().getOffset(),
                     streamList.getPageResponse().getTotal(), streamList.getPageResponse().isMore());
-        } finally {
-            securityContext.restorePermissions();
         }
 
         return result;

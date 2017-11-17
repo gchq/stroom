@@ -103,7 +103,7 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
             }
 
             // Get the index and index fields from the cache.
-            indexConfig = elasticIndexCache.getOrCreate(indexRef);
+            indexConfig = elasticIndexCache.get(indexRef);
             if (indexConfig == null) {
                 log(Severity.FATAL_ERROR, "Unable to load index", null);
                 throw new LoggedException("Unable to load index");

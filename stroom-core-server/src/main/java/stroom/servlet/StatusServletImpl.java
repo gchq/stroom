@@ -28,7 +28,7 @@ import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.Volume.VolumeUseStatus;
 import stroom.node.shared.VolumeState;
-import stroom.pool.SecurityHelper;
+import stroom.security.SecurityHelper;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 
@@ -90,7 +90,7 @@ public class StatusServletImpl extends HttpServlet implements StatusServlet {
     @Override
     protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
             throws ServletException, IOException {
-        try (SecurityHelper securityHelper = SecurityHelper.asProcUser(securityContext)) {
+        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
             response.setContentType("text/plain");
 
             final PrintWriter pw = response.getWriter();

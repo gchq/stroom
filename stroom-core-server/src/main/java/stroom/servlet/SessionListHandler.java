@@ -23,6 +23,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.node.shared.Node;
 import stroom.security.Insecure;
+import stroom.security.UserTokenUtil;
 import stroom.task.cluster.ClusterCallEntry;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.DefaultClusterResultCollector;
@@ -30,7 +31,6 @@ import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;
-import stroom.util.task.ServerTask;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -51,7 +51,7 @@ class SessionListHandler extends AbstractTaskHandler<SessionListAction, ResultLi
     public ResultList<SessionDetails> exec(final SessionListAction action) {
         final DefaultClusterResultCollector<ResultList<SessionDetails>> collector = dispatchHelper
                 .execAsync(
-                        new FindServiceClusterTask<BaseCriteria, SessionDetails>(ServerTask.INTERNAL_PROCESSING_USER_TOKEN, "Get session list", SessionListService.class, null),
+                        new FindServiceClusterTask<BaseCriteria, SessionDetails>(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "Get session list", SessionListService.class, null),
                         TargetType.ACTIVE);
 
         final ArrayList<SessionDetails> rtnList = new ArrayList<>();

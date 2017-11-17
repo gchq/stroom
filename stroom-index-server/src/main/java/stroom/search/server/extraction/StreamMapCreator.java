@@ -23,6 +23,7 @@ import stroom.index.shared.IndexField;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.search.server.Event;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamPermissionException;
@@ -78,8 +79,7 @@ public class StreamMapCreator {
     }
 
     HashMap<Long, List<Event>> createEventMap(final List<String[]> storedDataList) {
-        securityContext.elevatePermissions();
-        try {
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             // Put the events into a map to group them by stream id.
             final Map<Long, List<Event>> storedDataMap = new HashMap<>();
             for (final String[] storedData : storedDataList) {
@@ -108,8 +108,6 @@ public class StreamMapCreator {
             }
 
             return filteredDataMap;
-        } finally {
-            securityContext.restorePermissions();
         }
     }
 

@@ -20,8 +20,7 @@ package stroom.feed.server;
 import org.springframework.stereotype.Component;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
-import stroom.feed.shared.FeedService;
-import stroom.pool.SecurityHelper;
+import stroom.security.SecurityHelper;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 
@@ -37,7 +36,7 @@ public class RemoteFeedServiceImpl implements RemoteFeedService {
     @Override
     @Insecure
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest request) {
-        try (SecurityHelper securityHelper = SecurityHelper.asProcUser(securityContext)) {
+        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
             final Feed feed = feedService.loadByName(request.getFeedName());
 
             if (feed == null) {

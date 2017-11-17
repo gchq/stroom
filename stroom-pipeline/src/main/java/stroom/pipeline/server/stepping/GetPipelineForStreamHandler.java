@@ -25,7 +25,7 @@ import stroom.feed.shared.Feed;
 import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
-import stroom.pool.SecurityHelper;
+import stroom.security.SecurityHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.streamstore.server.StreamStore;
@@ -107,7 +107,7 @@ public class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipeline
     private Stream getStream(final Long id) {
         Stream stream = null;
         if (id != null) {
-            try (SecurityHelper securityHelper = SecurityHelper.asProcUser(securityContext)) {
+            try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
                 final FindStreamCriteria criteria = new FindStreamCriteria();
                 criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
                 criteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
@@ -126,7 +126,7 @@ public class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipeline
 
     private Stream getFirstChildStream(final Long id) {
         if (id != null) {
-            try (SecurityHelper securityHelper = SecurityHelper.asProcUser(securityContext)) {
+            try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
                 final FindStreamCriteria criteria = new FindStreamCriteria();
                 criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
                 criteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
