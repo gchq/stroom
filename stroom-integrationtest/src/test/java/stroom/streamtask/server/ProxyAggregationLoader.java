@@ -1,8 +1,8 @@
 package stroom.streamtask.server;
 
+import stroom.proxy.repo.StroomZipFile;
 import stroom.util.io.FileUtil;
 import stroom.util.thread.ThreadUtil;
-import stroom.util.zip.StroomZipFile;
 
 import java.io.File;
 import java.io.FileOutputStream;

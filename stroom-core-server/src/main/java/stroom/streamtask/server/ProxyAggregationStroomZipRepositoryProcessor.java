@@ -1,7 +1,10 @@
 package stroom.streamtask.server;
 
+import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
+import stroom.proxy.repo.StroomZipRepository;
+import stroom.proxy.repo.StroomZipRepositoryProcessor;
 import stroom.statistic.server.MetaDataStatistic;
 import stroom.streamstore.server.StreamStore;
 import stroom.task.server.TaskContext;
@@ -9,13 +12,10 @@ import stroom.util.io.StreamProgressMonitor;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.StroomLogger;
 import stroom.util.thread.ThreadLocalBuffer;
-import stroom.util.zip.HeaderMap;
 import stroom.util.zip.StroomHeaderArguments;
-import stroom.proxy.repo.StroomZipRepository;
-import stroom.proxy.repo.StroomZipRepositoryProcessor;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -51,7 +51,7 @@ class ProxyAggregationStroomZipRepositoryProcessor extends StroomZipRepositoryPr
     @Override
     public void processFeedFiles(final StroomZipRepository stroomZipRepository,
                                  final String feedName,
-                                 final List<File> fileList) {
+                                 final List<Path> fileList) {
 
         final Feed feed = feedService.loadByName(feedName);
 
@@ -71,7 +71,7 @@ class ProxyAggregationStroomZipRepositoryProcessor extends StroomZipRepositoryPr
         final boolean oneByOne = feed.isReference() || !aggregate;
 
         List<StreamTargetStroomStreamHandler> handlers = openStreamHandlers(feed);
-        List<File> deleteFileList = new ArrayList<>();
+        List<Path> deleteFileList = new ArrayList<>();
 
         long sequence = 1;
         long maxAggregation = getMaxAggregation();
@@ -83,7 +83,7 @@ class ProxyAggregationStroomZipRepositoryProcessor extends StroomZipRepositoryPr
 
         final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor("ProxyAggregationTask");
 
-        for (final File file : fileList) {
+        for (final Path file : fileList) {
             if (taskContext.isTerminated()) {
                 break;
             }
@@ -135,11 +135,11 @@ class ProxyAggregationStroomZipRepositoryProcessor extends StroomZipRepositoryPr
 
         streamTargetStroomStreamHandler.setOneByOne(oneByOne);
 
-        final HeaderMap globalHeaderMap = new HeaderMap();
-        globalHeaderMap.put(StroomHeaderArguments.FEED, feed.getName());
+        final MetaMap globalMetaMap = new MetaMap();
+        globalMetaMap.put(StroomHeaderArguments.FEED, feed.getName());
 
         try {
-            streamTargetStroomStreamHandler.handleHeader(globalHeaderMap);
+            streamTargetStroomStreamHandler.handleHeader(globalMetaMap);
         } catch (final IOException ioEx) {
             streamTargetStroomStreamHandler.close();
             throw new RuntimeException(ioEx);
