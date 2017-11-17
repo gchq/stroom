@@ -16,12 +16,16 @@
 
 package stroom.streamtask.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.feed.shared.FeedService;
+import stroom.internalstatistics.MetaDataStatistic;
 import stroom.jobsystem.server.JobTrackedSchedule;
-import stroom.statistic.server.MetaDataStatistic;
+import stroom.proxy.repo.StroomZipRepository;
+import stroom.proxy.repo.StroomZipRepositoryProcessor;
 import stroom.streamstore.server.StreamStore;
 import stroom.task.server.ExecutorProvider;
 import stroom.task.server.TaskContext;
@@ -29,15 +33,11 @@ import stroom.task.server.ThreadPoolImpl;
 import stroom.util.config.PropertyUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Task;
 import stroom.util.shared.ThreadPool;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
-import stroom.util.thread.ThreadLocalBuffer;
-import stroom.proxy.repo.StroomZipRepository;
-import stroom.proxy.repo.StroomZipRepositoryProcessor;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -52,14 +52,13 @@ import java.util.concurrent.Executor;
 @Component
 @Scope(value = StroomScope.TASK)
 public class ProxyAggregationExecutor {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ProxyAggregationExecutor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyAggregationExecutor.class);
 
     private final StreamStore streamStore;
     private final MetaDataStatistic metaDataStatistic;
     private final TaskContext taskContext;
     private final ExecutorProvider executorProvider;
     private final FeedService feedService;
-    private final ThreadLocalBuffer proxyAggregationThreadLocalBuffer;
 
     private String proxyDir;
     private boolean aggregate = true;
@@ -74,7 +73,6 @@ public class ProxyAggregationExecutor {
                                     final MetaDataStatistic metaDataStatistic,
                                     final TaskContext taskContext,
                                     final ExecutorProvider executorProvider,
-                                    @Named("prototypeThreadLocalBuffer") final ThreadLocalBuffer proxyAggregationThreadLocalBuffer,
                                     @Value("#{propertyConfigurer.getProperty('stroom.proxyDir')}") final String proxyDir,
                                     @Value("#{propertyConfigurer.getProperty('stroom.proxyThreads')}") final String threadCount,
                                     @Value("#{propertyConfigurer.getProperty('stroom.maxAggregation')}") final String maxAggregation,
@@ -87,7 +85,6 @@ public class ProxyAggregationExecutor {
         this.streamStore = streamStore;
         this.proxyDir = proxyDir;
         this.threadCount = PropertyUtil.toInt(threadCount, 10);
-        this.proxyAggregationThreadLocalBuffer = proxyAggregationThreadLocalBuffer;
 
         this.maxAggregation = (PropertyUtil.toInt(maxAggregation, StroomZipRepositoryProcessor.DEFAULT_MAX_AGGREGATION));
         this.maxStreamSizeStr = maxStreamSize;
@@ -117,7 +114,6 @@ public class ProxyAggregationExecutor {
                 metaDataStatistic,
                 executor,
                 feedService,
-                proxyAggregationThreadLocalBuffer,
                 taskContext,
                 aggregate);
 

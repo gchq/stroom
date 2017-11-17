@@ -58,7 +58,7 @@ class SchemaPoolImpl extends AbstractPoolCache<SchemaKey, StoredSchema>
 
     @Override
     protected StoredSchema internalCreateValue(final Object key) {
-        try (SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+        try (SecurityHelper securityHelper = SecurityHelper.asProcUser(securityContext)) {
             final SchemaKey schemaKey = (SchemaKey) key;
             return schemaLoader.load(schemaKey.getSchemaLanguage(), schemaKey.getData(), schemaKey.getFindXMLSchemaCriteria());
         }

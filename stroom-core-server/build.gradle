@@ -22,6 +22,7 @@ dependencies {
     compile libs.hessian
     compile libs.guava
     compile libs.gwt_servlet
+    compile libs.commons_exec
     compile libs.commons_lang
     compile libs.commons_compress
     compile libs.javax_annotation_api
@@ -29,8 +30,6 @@ dependencies {
     compile libs.javax_servlet_api
     compile libs.validation_api
     compile libs.ws_rs_api
-    compile libs.ehcache_core
-    compile libs.commons_pool2
     compile libs.curator_x_discovery
     compile libs.aspectjweaver
     compile libs.jersey_client
@@ -44,9 +43,6 @@ dependencies {
     compile libs.spring_context
     compile libs.spring_core
     compile libs.xml_apis
-    compile (libs.ehcache_spring_annotations) {
-        exclude(module: 'guava')
-    }
     compile libs.flyway_core
     compile libs.hsqldb
     permitUnusedDeclared libs.hsqldb

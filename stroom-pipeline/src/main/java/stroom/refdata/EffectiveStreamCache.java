@@ -87,7 +87,7 @@ public class EffectiveStreamCache {
     }
 
     protected NavigableSet<EffectiveStream> create(final EffectiveStreamKey key) {
-        try (SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+        try (SecurityHelper securityHelper = SecurityHelper.asProcUser(securityContext)) {
             NavigableSet<EffectiveStream> effectiveStreamSet = Collections.emptyNavigableSet();
 
             try {

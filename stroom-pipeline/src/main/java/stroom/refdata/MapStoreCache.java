@@ -68,7 +68,7 @@ public final class MapStoreCache {
     }
 
     private MapStore create(final MapStoreCacheKey mapStoreCacheKey) {
-        try (SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+        try (SecurityHelper securityHelper = SecurityHelper.asProcUser(securityContext)) {
             MapStore mapStore = null;
 
             try {

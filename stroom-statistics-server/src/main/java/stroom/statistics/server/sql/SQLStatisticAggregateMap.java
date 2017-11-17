@@ -59,6 +59,9 @@ public class SQLStatisticAggregateMap {
                     v.add(rolledUpStatisticEvent.getCount());
                 }
             } else {
+                //TODO this is flawed. If we get multiple stats with the same key at the same time
+                //(a certainty with rollups) only the last one will be included.
+                //see https://github.com/gchq/stroom/issues/473
                 valueMap.put(key, rolledUpStatisticEvent.getValue());
             }
         }

@@ -46,7 +46,6 @@ import java.util.concurrent.TimeUnit;
 @Scope(StroomScope.TASK)
 public class IndexShardSearchTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardSearchTaskHandler.class);
-
     private static final long ONE_SECOND = TimeUnit.SECONDS.toNanos(1);
 
     private final IndexShardSearcherCache indexShardSearcherCache;
@@ -106,7 +105,7 @@ public class IndexShardSearchTaskHandler {
                 final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
                 final IndexSearcher searcher = searcherManager.acquire();
                 try {
-                    final Executor executor = executorProvider.getExecutor(IndexShardSearchTaskExecutor.THREAD_POOL);
+                    final Executor executor = executorProvider.getExecutor(IndexShardSearchTaskProducer.THREAD_POOL);
                     final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(() -> {
                         try {
                             taskContext.setName("Index Searcher");

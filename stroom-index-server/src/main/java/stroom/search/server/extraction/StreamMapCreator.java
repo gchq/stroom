@@ -46,8 +46,10 @@ public class StreamMapCreator {
     private final SecurityContext securityContext;
     private Map<Long, Stream> fiteredStreamCache;
 
-    public StreamMapCreator(final IndexField[] storedFields, final ErrorReceiver errorReceiver,
-                            final StreamStore streamStore, final SecurityContext securityContext) {
+    public StreamMapCreator(final IndexField[] storedFields,
+                            final ErrorReceiver errorReceiver,
+                            final StreamStore streamStore,
+                            final SecurityContext securityContext) {
         this.errorReceiver = errorReceiver;
         this.streamStore = streamStore;
         this.securityContext = securityContext;
@@ -75,42 +77,40 @@ public class StreamMapCreator {
         return index;
     }
 
-    public HashMap<Long, List<Event>> createEventMap(final List<String[]> storedDataList) {
-        // Put the events into a map to group them by stream id.
-        final Map<Long, List<Event>> storedDataMap = new HashMap<>();
-        for (final String[] storedData : storedDataList) {
-            final Long longStreamId = getLong(storedData, streamIdIndex);
-            final Long longEventId = getLong(storedData, eventIdIndex);
+    HashMap<Long, List<Event>> createEventMap(final List<String[]> storedDataList) {
+        securityContext.elevatePermissions();
+        try {
+            // Put the events into a map to group them by stream id.
+            final Map<Long, List<Event>> storedDataMap = new HashMap<>();
+            for (final String[] storedData : storedDataList) {
+                final Long longStreamId = getLong(storedData, streamIdIndex);
+                final Long longEventId = getLong(storedData, eventIdIndex);
 
-            final boolean include = true;
+                final boolean include = true;
 
-            if (longStreamId != null && longEventId != null && include) {
-                List<Event> events = storedDataMap.get(longStreamId);
-                if (events == null) {
-                    events = new ArrayList<>();
-                    storedDataMap.put(longStreamId, events);
+                if (longStreamId != null && longEventId != null && include) {
+                    storedDataMap.computeIfAbsent(longStreamId, k -> new ArrayList<>()).add(new Event(longEventId, storedData));
                 }
-                events.add(new Event(longEventId, storedData));
             }
-        }
 
-        // Filter the streams by ones that should be visible to the current
-        // user.
-        final HashMap<Long, List<Event>> filteredDataMap = new HashMap<>();
-        for (final Entry<Long, List<Event>> entry : storedDataMap.entrySet()) {
-            final Long streamId = entry.getKey();
-            Stream stream = null;
+            // Filter the streams by ones that should be visible to the current
+            // user.
+            final HashMap<Long, List<Event>> filteredDataMap = new HashMap<>();
+            for (final Entry<Long, List<Event>> entry : storedDataMap.entrySet()) {
+                final Long streamId = entry.getKey();
+                final Stream stream = getStreamById(streamId);
 
-            stream = getStreamById(streamId);
-
-            // If the stream's id is undefined then it is a dummy we either
-            // couldn't find it or are not allowed to use it.
-            if (stream.isPersistent()) {
-                filteredDataMap.put(stream.getId(), entry.getValue());
+                // If the stream's id is undefined then it is a dummy we either
+                // couldn't find it or are not allowed to use it.
+                if (stream.isPersistent()) {
+                    filteredDataMap.put(stream.getId(), entry.getValue());
+                }
             }
-        }
 
-        return filteredDataMap;
+            return filteredDataMap;
+        } finally {
+            securityContext.restorePermissions();
+        }
     }
 
     private Stream getStreamById(final long streamId) {

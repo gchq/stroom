@@ -183,7 +183,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         final Index index = indexShard.getIndex();
 
         // Get the index fields.
-        final IndexConfig indexConfig = indexConfigCache.getOrCreate(DocRefUtil.create(index));
+        final IndexConfig indexConfig = indexConfigCache.get(DocRefUtil.create(index));
 
         // Create the writer.
         final int ramBufferSizeMB = getRamBufferSize();

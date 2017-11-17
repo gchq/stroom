@@ -17,7 +17,7 @@
 package stroom.pool;
 
 import stroom.entity.server.DocumentPermissionCache;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.PermissionException;
 import stroom.security.SecurityContext;
@@ -37,7 +37,7 @@ public abstract class AbstractEntityPool<K extends DocumentEntity, V> extends Ab
     @Override
     public PoolItem<V> borrowObject(final K key, final boolean usePool) {
         if (!documentPermissionCache.hasDocumentPermission(key.getType(), key.getUuid(), DocumentPermissionNames.USE)) {
-            throw new PermissionException(securityContext.getUserId(), "You do not have permission to use " + DocRef.create(key));
+            throw new PermissionException(securityContext.getUserId(), "You do not have permission to use " + DocRefUtil.create(key));
         }
 
         // Get the item from the pool.
@@ -52,7 +52,7 @@ public abstract class AbstractEntityPool<K extends DocumentEntity, V> extends Ab
     @Override
     @SuppressWarnings("unchecked")
     protected V internalCreateValue(final Object key) {
-        try (SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+        try (SecurityHelper securityHelper = SecurityHelper.asProcUser(securityContext)) {
             final VersionedEntityDecorator<K> versionedEntityDecorator = (VersionedEntityDecorator<K>) key;
             return createValue(versionedEntityDecorator.getEntity());
         }

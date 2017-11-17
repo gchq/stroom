@@ -24,7 +24,6 @@ import stroom.feed.shared.FeedService;
 import stroom.pool.SecurityHelper;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
-import stroom.util.task.ServerTask;
 
 import javax.annotation.Resource;
 
@@ -40,7 +39,7 @@ public class RemoteFeedServiceImpl implements RemoteFeedService {
     @Override
     @Insecure
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest request) {
-        try (SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+        try (SecurityHelper securityHelper = SecurityHelper.asProcUser(securityContext)) {
             final Feed feed = feedService.loadByName(request.getFeedName());
 
             if (feed == null) {

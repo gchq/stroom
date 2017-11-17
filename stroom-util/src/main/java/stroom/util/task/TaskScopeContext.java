@@ -16,7 +16,6 @@
 
 package stroom.util.task;
 
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Task;
 
 import java.util.Map;
@@ -26,7 +25,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * Class to hold the spring task bound variables.
  */
 public class TaskScopeContext {
-    public static final StroomLogger LOGGER = StroomLogger.getLogger(TaskScopeContext.class);
     private final Map<String, Object> beanMap;
 
     private final Map<String, Runnable> requestDestructionCallback;
@@ -54,25 +52,15 @@ public class TaskScopeContext {
     }
 
     final Object put(final String name, final Object bean) {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("put called with name %s and bean %s %s",
-                    name, System.identityHashCode(bean), bean.getClass().getName());
-        }
         return beanMap.put(name, bean);
     }
 
     final Object remove(final String name) {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("remove called with name %s", name);
-        }
         requestDestructionCallback.remove(name);
         return beanMap.remove(name);
     }
 
     final void registerDestructionCallback(final String name, final Runnable runnable) {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("registerDestructionCallback called with name %s and runnable", name, runnable);
-        }
         requestDestructionCallback.put(name, runnable);
     }
 

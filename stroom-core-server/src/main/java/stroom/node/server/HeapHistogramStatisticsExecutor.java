@@ -1,13 +1,14 @@
 package stroom.node.server;
 
 import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.jobsystem.server.JobTrackedSchedule;
-import stroom.statistics.common.StatisticEvent;
-import stroom.statistics.common.StatisticTag;
-import stroom.statistics.common.StatisticsFactory;
-import stroom.util.logging.StroomLogger;
+import stroom.statistics.server.sql.StatisticEvent;
+import stroom.statistics.server.sql.StatisticTag;
+import stroom.statistics.server.sql.Statistics;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 
@@ -22,10 +23,10 @@ import java.util.stream.Stream;
 
 @SuppressWarnings("unused")
 @Component
-@Scope(value = StroomScope.TASK)
+@Scope(StroomScope.TASK)
 public class HeapHistogramStatisticsExecutor {
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(HeapHistogramStatisticsExecutor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(HeapHistogramStatisticsExecutor.class);
 
     private static final String HEAP_HISTOGRAM_BYTES_STAT_NAME_BASE = "Heap Histogram ";
     private static final String HEAP_HISTOGRAM_BYTES_STAT_NAME = HEAP_HISTOGRAM_BYTES_STAT_NAME_BASE + "Bytes";
@@ -34,16 +35,16 @@ public class HeapHistogramStatisticsExecutor {
     static final String CLASS_NAME_TAG_NAME = "Class Name";
 
     private final HeapHistogramService heapHistogramService;
-    private final StatisticsFactory statisticsFactory;
+    private final Statistics statistics;
     private final NodeCache nodeCache;
 
 
     @Inject
-    public HeapHistogramStatisticsExecutor(final HeapHistogramService heapHistogramService,
-                                           final StatisticsFactory statisticsFactory,
-                                           final NodeCache nodeCache) {
+    HeapHistogramStatisticsExecutor(final HeapHistogramService heapHistogramService,
+                                    final Statistics statistics,
+                                    final NodeCache nodeCache) {
         this.heapHistogramService = heapHistogramService;
-        this.statisticsFactory = statisticsFactory;
+        this.statistics = statistics;
         this.nodeCache = nodeCache;
     }
 
@@ -99,7 +100,7 @@ public class HeapHistogramStatisticsExecutor {
 
         LOGGER.info("Sending %s '%s' histogram stat events", statisticEvents.size(), type);
 
-        statisticsFactory.instance().putEvents(statisticEvents);
+        statistics.putEvents(statisticEvents);
 
     }
 

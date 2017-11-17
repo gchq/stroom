@@ -16,11 +16,12 @@
 
 package stroom.proxy.repo;
 
+import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.google.common.collect.Maps;
 import org.springframework.util.StringUtils;
 import stroom.feed.MetaMap;
+import stroom.feed.StroomHeaderArguments;
 import stroom.task.server.TaskContext;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamProgressMonitor;

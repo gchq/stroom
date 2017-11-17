@@ -68,7 +68,7 @@ public class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
         shards.forEach(shard -> {
             final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardId(shard.getId());
             if (indexShardWriter != null) {
-                final IndexConfig indexConfig = indexConfigCache.getOrCreate(indexRef);
+                final IndexConfig indexConfig = indexConfigCache.get(indexRef);
                 indexShardWriter.updateIndexConfig(indexConfig);
             }
         });

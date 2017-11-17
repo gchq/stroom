@@ -11,9 +11,8 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
-import stroom.statistics.common.StatisticEvent;
-import stroom.statistics.common.Statistics;
-import stroom.statistics.common.StatisticsFactory;
+import stroom.statistics.server.sql.StatisticEvent;
+import stroom.statistics.server.sql.Statistics;
 import stroom.util.test.StroomExpectedException;
 import stroom.util.test.StroomJUnit4ClassRunner;
 
@@ -24,10 +23,6 @@ import java.util.regex.Pattern;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestHeapHistogramStatisticsExecutor {
-
-    @Mock
-    private StatisticsFactory statisticsFactory;
-
     @Mock
     private
     Statistics statistics;
@@ -51,7 +46,7 @@ public class TestHeapHistogramStatisticsExecutor {
             mockStroomPropertyService.setProperty(HeapHistogramService.CLASS_NAME_MATCH_REGEX_PROP_KEY, "^stroom\\..*$");
             mockStroomPropertyService.setProperty(HeapHistogramService.JMAP_EXECUTABLE_PROP_KEY, "jmap");
 
-            executor = new HeapHistogramStatisticsExecutor(heapHistogramService, statisticsFactory, nodeCache);
+            executor = new HeapHistogramStatisticsExecutor(heapHistogramService, statistics, nodeCache);
         } catch (Exception e) {
             throw new RuntimeException("Error during test setup", e);
         }
@@ -63,9 +58,9 @@ public class TestHeapHistogramStatisticsExecutor {
     @Test
     public void testExec_stroomClasses() throws InterruptedException {
 
-        //Given
-        Mockito.when(statisticsFactory.instance())
-                .thenReturn(statistics);
+//        //Given
+//        Mockito.when(statisticsFactory.instance())
+//                .thenReturn(statistics);
 
         //When
         executor.exec();
@@ -104,8 +99,8 @@ public class TestHeapHistogramStatisticsExecutor {
         //no regex so should get all classes back
         mockStroomPropertyService.setProperty(HeapHistogramService.CLASS_NAME_MATCH_REGEX_PROP_KEY, "");
 
-        Mockito.when(statisticsFactory.instance())
-                .thenReturn(statistics);
+//        Mockito.when(statisticsFactory.instance())
+//                .thenReturn(statistics);
 
         //When
         executor.exec();
@@ -133,7 +128,7 @@ public class TestHeapHistogramStatisticsExecutor {
     }
 
     @Test
-    @StroomExpectedException(exception = { RuntimeException.class, IOException.class})
+    @StroomExpectedException(exception = {RuntimeException.class, IOException.class})
     public void testExecBadExecutable() throws InterruptedException {
         //Given
         mockStroomPropertyService.setProperty(HeapHistogramService.JMAP_EXECUTABLE_PROP_KEY, "badNameForJmapExecutable");

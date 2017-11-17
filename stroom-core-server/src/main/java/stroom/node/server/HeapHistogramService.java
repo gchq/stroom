@@ -6,8 +6,9 @@ import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteWatchdog;
 import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.exec.ShutdownHookProcessDestroyer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.util.logging.StroomLogger;
 
 import javax.inject.Inject;
 import java.io.ByteArrayOutputStream;
@@ -31,7 +32,7 @@ import java.util.stream.Stream;
 @Component
 class HeapHistogramService {
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(HeapHistogramService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(HeapHistogramService.class);
 
     static final String CLASS_NAME_MATCH_REGEX_PROP_KEY = "stroom.node.status.heapHistogram.classNameMatchRegex";
     static final String JMAP_EXECUTABLE_PROP_KEY = "stroom.node.status.heapHistogram.jMapExecutable";

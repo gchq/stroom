@@ -21,23 +21,48 @@ import stroom.util.task.ServerTask;
 
 public class SecurityHelper implements AutoCloseable {
     private volatile SecurityContext securityContext;
+    private final Action action;
 
-    private SecurityHelper(final SecurityContext securityContext) {
+    private SecurityHelper(final SecurityContext securityContext, final Action action) {
         this.securityContext = securityContext;
+        this.action = action;
+
         if (securityContext != null) {
-            securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
+            switch (action) {
+                case PROC_USER:
+                    securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
+                    break;
+                case ELEVATE:
+                    securityContext.elevatePermissions();
+                    break;
+            }
         }
     }
 
-    public static SecurityHelper elevate(SecurityContext securityContext) {
-        return new SecurityHelper(securityContext);
+    public static SecurityHelper asProcUser(SecurityContext securityContext) {
+        return new SecurityHelper(securityContext, Action.PROC_USER);
+    }
+
+    public static SecurityHelper elev(SecurityContext securityContext) {
+        return new SecurityHelper(securityContext, Action.ELEVATE);
     }
 
     @Override
     public synchronized void close() {
         if (securityContext != null) {
-            securityContext.popUser();
+            switch (action) {
+                case PROC_USER:
+                    securityContext.popUser();
+                    break;
+                case ELEVATE:
+                    securityContext.restorePermissions();
+                    break;
+            }
         }
         securityContext = null;
+    }
+
+    private enum Action {
+        PROC_USER, ELEVATE;
     }
 }

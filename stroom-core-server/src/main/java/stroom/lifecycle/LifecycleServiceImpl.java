@@ -33,7 +33,6 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomBeanLifeCycle;
 import stroom.util.spring.StroomBeanMethodExecutable;
-import stroom.util.task.ServerTask;
 import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.ThreadScopeRunnable;
 import stroom.util.thread.ThreadUtil;
@@ -146,7 +145,7 @@ public class LifecycleServiceImpl implements LifecycleService {
             @Override
             protected void exec() {
                 if (lock.tryLock()) {
-                    try (SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+                    try (SecurityHelper securityHelper = SecurityHelper.asProcUser(securityContext)) {
                         Thread.currentThread().setName("Stroom Lifecycle - ScheduledExecutor");
                         scheduledTaskExecutor.execute();
                     } catch (final Throwable t) {

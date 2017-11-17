@@ -32,14 +32,16 @@ public class TestStatisticsDataSourceMarshaller extends StroomUnitTest {
     public void testUnmarshall() {
         StatisticStoreEntity statisticsDataSource = new StatisticStoreEntity();
 
+        //put the fields in the xml out of order to check that they are stored in order
+        //in the object
         String str = "";
         str += "<?xml version=\"1.1\" encoding=\"UTF-8\"?>";
         str += "<data>";
         str += " <field>";
-        str += "  <fieldName>feed</fieldName>";
+        str += "  <fieldName>user</fieldName>";
         str += " </field>";
         str += " <field>";
-        str += "  <fieldName>user</fieldName>";
+        str += "  <fieldName>feed</fieldName>";
         str += " </field>";
         str += " <customRollUpMask>";
         str += " </customRollUpMask>";

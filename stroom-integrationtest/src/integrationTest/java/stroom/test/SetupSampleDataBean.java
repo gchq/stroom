@@ -479,7 +479,7 @@ public final class SetupSampleDataBean {
         return String.valueOf((int) (Math.random() * max) + 1);
     }
 
-    // private Folder getOrCreate(String name) {
+    // private Folder get(String name) {
     // Folder parentGroup = null;
     // Folder folder = null;
     //
@@ -493,7 +493,7 @@ public final class SetupSampleDataBean {
     //
     // private Index addIndex() {
     // try {
-    // final Folder folder = getOrCreate("Indexes/Example index");
+    // final Folder folder = get("Indexes/Example index");
     // final Pipeline indexTranslation = findTranslation("Example index");
     // return setupIndex(folder, "Example index", indexTranslation);
     //
@@ -539,7 +539,7 @@ public final class SetupSampleDataBean {
     // }
     //
     // private void addUserSearch(final Index index) {
-    // final Folder folder = getOrCreate(SEARCH + "/Search Examples");
+    // final Folder folder = get(SEARCH + "/Search Examples");
     // final XSLT resultXSLT = findXSLT("Search Result Table - Show XML");
     //
     // final SearchExpressionTerm content1 = new SearchExpressionTerm();
@@ -562,7 +562,7 @@ public final class SetupSampleDataBean {
     // }
     //
     // private void addDictionarySearch(final Index index) {
-    // final Folder folder = getOrCreate(SEARCH + "/Search Examples");
+    // final Folder folder = get(SEARCH + "/Search Examples");
     // final XSLT resultXSLT = findXSLT("Search Result Table - Show XML");
     //
     // final Dictionary dictionary = new Dictionary();

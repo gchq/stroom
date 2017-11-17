@@ -21,7 +21,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.DocumentPermissionCache;
-import stroom.entity.shared.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.PermissionException;
 import stroom.pipeline.shared.PipelineDataMerger;
 import stroom.pipeline.shared.PipelineEntity;
@@ -70,14 +70,14 @@ public class PipelineDataCacheImpl implements PipelineDataCache {
     @Override
     public PipelineData get(final PipelineEntity pipelineEntity) {
         if (!documentPermissionCache.hasDocumentPermission(pipelineEntity.getType(), pipelineEntity.getUuid(), DocumentPermissionNames.USE)) {
-            throw new PermissionException(securityContext.getUserId(), "You do not have permission to use " + DocRef.create(pipelineEntity));
+            throw new PermissionException(securityContext.getUserId(), "You do not have permission to use " + DocRefUtil.create(pipelineEntity));
         }
 
         return cache.getUnchecked(new VersionedEntityDecorator<>(pipelineEntity));
     }
 
     private PipelineData create(final VersionedEntityDecorator key) {
-        try (SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+        try (SecurityHelper securityHelper = SecurityHelper.asProcUser(securityContext)) {
             final PipelineEntity pipelineEntity = (PipelineEntity) key.getEntity();
             final List<PipelineEntity> pipelines = pipelineStackLoader.loadPipelineStack(pipelineEntity);
             // Iterate over the pipeline list reading the deepest ancestor first.

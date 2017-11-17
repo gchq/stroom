@@ -19,15 +19,9 @@ package stroom.refdata;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.xml.sax.SAXException;
-import stroom.entity.shared.DocRef;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
-import stroom.cache.CacheManagerAutoCloseable;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Range;
 import stroom.feed.server.MockFeedService;
@@ -175,7 +169,7 @@ public class TestReferenceData extends StroomUnitTest {
             final MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(null);
             mapStoreBuilder.setEvents("CARD_NUMBER_TO_PF_NUMBER", "011111", getEventsFromString("091111"), false);
             mapStoreBuilder.setEvents("NUMBER_TO_SID", "091111", getEventsFromString("user1"), false);
-            referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipelineEntity), 0, null), mapStoreBuilder.getMapStore());
+            referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipelineEntity), 0), mapStoreBuilder.getMapStore());
 
             Assert.assertEquals("091111", getStringFromEvents(referenceData.getValue(pipelineReferences, errorReceiver,
                     0, "CARD_NUMBER_TO_PF_NUMBER", "011111")));
@@ -218,7 +212,7 @@ public class TestReferenceData extends StroomUnitTest {
             final MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(null);
             mapStoreBuilder.setEvents("IP_TO_LOC", new Range<>(2L, 30L), getEventsFromString("here"), false);
             mapStoreBuilder.setEvents("IP_TO_LOC", new Range<>(500L, 2000L), getEventsFromString("there"), false);
-            referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipelineEntity), 0, null), mapStoreBuilder.getMapStore());
+            referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipelineEntity), 0), mapStoreBuilder.getMapStore());
 
             Assert.assertEquals("here", getStringFromEvents(
                     referenceData.getValue(pipelineReferences, errorReceiver, 0, "IP_TO_LOC", "10")));

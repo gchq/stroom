@@ -2,8 +2,9 @@ package stroom.task.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
-import stroom.util.logging.StroomLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.shared.ThreadPool;
 import stroom.util.thread.ThreadUtil;
 
@@ -18,17 +19,16 @@ import java.util.stream.IntStream;
 
 public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
 
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestTaskManagerImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestTaskManagerImpl.class);
 
     @Resource
     ExecutorProvider executorProvider;
 
     @Test
     public void testMoreItemsThanThreads_boundedPool() throws ExecutionException, InterruptedException {
-
         LOGGER.info("Starting");
         int poolSize = 4;
-        ThreadPool threadPool = new ThreadPoolImpl(this.getClass().getName(),
+        ThreadPool threadPool = new ThreadPoolImpl(getClass().getName(),
                 3,
                 poolSize,
                 poolSize);

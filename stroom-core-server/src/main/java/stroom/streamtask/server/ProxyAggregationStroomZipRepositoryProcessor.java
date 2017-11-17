@@ -1,18 +1,18 @@
 package stroom.streamtask.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
+import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
+import stroom.internalstatistics.MetaDataStatistic;
 import stroom.proxy.repo.StroomZipRepository;
 import stroom.proxy.repo.StroomZipRepositoryProcessor;
-import stroom.statistic.server.MetaDataStatistic;
 import stroom.streamstore.server.StreamStore;
 import stroom.task.server.TaskContext;
 import stroom.util.io.StreamProgressMonitor;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.logging.StroomLogger;
-import stroom.util.thread.ThreadLocalBuffer;
-import stroom.util.zip.StroomHeaderArguments;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -22,12 +22,11 @@ import java.util.concurrent.Executor;
 
 class ProxyAggregationStroomZipRepositoryProcessor extends StroomZipRepositoryProcessor {
 
-    public static final StroomLogger LOGGER = StroomLogger.getLogger(ProxyAggregationStroomZipRepositoryProcessor.class);
+    public static final Logger LOGGER = LoggerFactory.getLogger(ProxyAggregationStroomZipRepositoryProcessor.class);
 
     private final StreamStore streamStore;
     private final MetaDataStatistic metaDataStatistic;
     private final FeedService feedService;
-    private final ThreadLocalBuffer proxyAggregationThreadLocalBuffer;
     private final TaskContext taskContext;
 
     private final boolean aggregate;
@@ -36,7 +35,6 @@ class ProxyAggregationStroomZipRepositoryProcessor extends StroomZipRepositoryPr
                                                  final MetaDataStatistic metaDataStatistic,
                                                  final Executor executor,
                                                  final FeedService feedService,
-                                                 final ThreadLocalBuffer proxyAggregationThreadLocalBuffer,
                                                  final TaskContext taskContext,
                                                  final boolean aggregate) {
         super(executor, taskContext);
@@ -44,7 +42,6 @@ class ProxyAggregationStroomZipRepositoryProcessor extends StroomZipRepositoryPr
         this.streamStore = streamStore;
         this.metaDataStatistic = metaDataStatistic;
         this.feedService = feedService;
-        this.proxyAggregationThreadLocalBuffer = proxyAggregationThreadLocalBuffer;
         this.aggregate = aggregate;
     }
 
@@ -119,11 +116,6 @@ class ProxyAggregationStroomZipRepositoryProcessor extends StroomZipRepositoryPr
         closeStreamHandlers(handlers);
         deleteFiles(stroomZipRepository, deleteFileList);
         LOGGER.info("processFeedFiles() - Completed %s in %s", feedName, logExecutionTime);
-    }
-
-    @Override
-    public byte[] getReadBuffer() {
-        return proxyAggregationThreadLocalBuffer.getBuffer();
     }
 
     private List<StreamTargetStroomStreamHandler> openStreamHandlers(final Feed feed) {
