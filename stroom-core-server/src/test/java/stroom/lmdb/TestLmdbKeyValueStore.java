@@ -14,6 +14,7 @@ import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -31,12 +32,17 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 public class TestLmdbKeyValueStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestLmdbKeyValueStore.class);
 
     private static final String DB_NAME = "myLmdb";
+
+    public static final long KILO_BYTES = 1024;
+    public static final long MEGA_BYTES = 1024 * KILO_BYTES;
+    public static final long GIGA_BYTES = 1024 * MEGA_BYTES;
 
     @Rule
     public final TemporaryFolder tmpDir = new TemporaryFolder();
@@ -49,11 +55,12 @@ public class TestLmdbKeyValueStore {
     @Test
     public void testStringString_db() throws IOException {
 
-        Path path = Paths.get("/tmp/lmdb");
+        Path path = Paths.get("/tmp/testStringString_db");
+        deleteDirRecursive(path);
         Files.createDirectories(path);
 
         final Env<ByteBuffer> env = Env.<ByteBuffer>create()
-                .setMapSize(10_485_760)
+                .setMapSize(50 * GIGA_BYTES)
                 .setMaxDbs(1)
                 .open(path.toFile());
 
@@ -66,7 +73,7 @@ public class TestLmdbKeyValueStore {
 
         final int valSize = value.remaining();
 
-//        db.put(key, value);
+        db.put(key, value);
 
         try (Txn<ByteBuffer> txn = env.txnRead()) {
             final ByteBuffer found = db.get(txn, key);
@@ -82,11 +89,11 @@ public class TestLmdbKeyValueStore {
         }
 
         // We can also delete. The simplest way is to let Dbi allocate a new Txn...
-//        db.delete(key);
+        db.delete(key);
 
         // Now if we try to fetch the deleted row, it won't be present
         try (Txn<ByteBuffer> txn = env.txnRead()) {
-//            Assert.assertNull(db.get(txn, key));
+            Assert.assertNull(db.get(txn, key));
         }
     }
 
@@ -158,5 +165,70 @@ public class TestLmdbKeyValueStore {
                 LOGGER.info("Get duration {}", Duration.between(start, Instant.now()).toString());
             }
         });
+    }
+
+    @Test
+    public void testLargeDB() throws IOException {
+        Path path = Paths.get("/tmp/testLargeDB");
+        deleteDirRecursive(path);
+        Files.createDirectories(path);
+
+        final Env<ByteBuffer> env = Env.<ByteBuffer>create()
+                .setMapSize(50 * GIGA_BYTES)
+                .setMaxDbs(1)
+                .open(path.toFile());
+
+        final Dbi<ByteBuffer> db = env.openDbi(DB_NAME, DbiFlags.MDB_CREATE);
+
+        int recCount = 5000;
+
+        LOGGER.info("Loading data");
+        try (final Txn<ByteBuffer> txn = env.txnWrite()) {
+            LongStream.rangeClosed(1, recCount).forEach(i -> {
+
+                final ByteBuffer key = ByteBuffer.allocateDirect(Long.BYTES);
+                key.clear();
+                key.putLong(i).flip();
+
+                final byte[] valueArr = new byte[(int) MEGA_BYTES];
+                final ByteBuffer value = ByteBuffer.allocateDirect((int) MEGA_BYTES);
+                value.clear();
+                value.put(valueArr).flip();
+
+                boolean result = db.put(txn, key, value);
+                LOGGER.info("Putting {}", i);
+                Assert.assertTrue(result);
+            });
+            LOGGER.info("Committing");
+            txn.commit();
+            LOGGER.info("Committed");
+        }
+
+        LOGGER.info("Reading data");
+
+        try (Txn<ByteBuffer> txn = env.txnRead()) {
+
+            LongStream.rangeClosed(1, recCount).forEach(i -> {
+                final ByteBuffer key = ByteBuffer.allocateDirect(Long.BYTES);
+//                final ByteBuffer key = ByteBuffer.allocateDirect(env.getMaxKeySize());
+                key.clear();
+                key.putLong(i).flip();
+
+                final ByteBuffer val = db.get(txn, key);
+
+                Assert.assertNotNull(val);
+
+                Assert.assertEquals(MEGA_BYTES, val.remaining());
+            });
+        }
+    }
+
+    private void deleteDirRecursive(final Path path) throws IOException {
+        if (Files.exists(path)) {
+            Files.walk(path)
+                    .map(Path::toFile)
+                    .sorted((o1, o2) -> -o1.compareTo(o2))
+                    .forEach(File::delete);
+        }
     }
 }
