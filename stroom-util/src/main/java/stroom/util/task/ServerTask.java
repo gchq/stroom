@@ -16,16 +16,15 @@
 
 package stroom.util.task;
 
+import stroom.security.UserTokenUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Monitor;
 import stroom.util.shared.SimpleThreadPool;
 import stroom.util.shared.Task;
 import stroom.util.shared.TaskId;
 import stroom.util.shared.ThreadPool;
-import stroom.util.shared.UserTokenUtil;
 
 public abstract class ServerTask<R> implements Task<R>, HasMonitor {
-    public static final String INTERNAL_PROCESSING_USER_TOKEN = UserTokenUtil.createInternal();
     private static final ThreadPool THREAD_POOL = new SimpleThreadPool(2);
     private final TaskId id;
     private final String userToken;
@@ -34,7 +33,7 @@ public abstract class ServerTask<R> implements Task<R>, HasMonitor {
 
     public ServerTask() {
         this.id = TaskIdFactory.create();
-        this.userToken = INTERNAL_PROCESSING_USER_TOKEN;
+        this.userToken = UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN;
         this.monitor = new MonitorImpl();
     }
 

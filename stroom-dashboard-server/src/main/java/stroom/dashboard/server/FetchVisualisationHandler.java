@@ -20,6 +20,7 @@ package stroom.dashboard.server;
 import org.springframework.context.annotation.Scope;
 import stroom.dashboard.shared.FetchVisualisationAction;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;
@@ -42,13 +43,9 @@ class FetchVisualisationHandler extends AbstractTaskHandler<FetchVisualisationAc
 
     @Override
     public Visualisation exec(final FetchVisualisationAction action) {
-        try {
-            // Elevate the users permissions for the duration of this task so they can read the visualisation if they have 'use' permission.
-            securityContext.elevatePermissions();
-
+        // Elevate the users permissions for the duration of this task so they can read the visualisation if they have 'use' permission.
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             return visualisationService.loadByUuid(action.getVisualisation().getUuid());
-        } finally {
-            securityContext.restorePermissions();
         }
     }
 }

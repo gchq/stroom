@@ -38,6 +38,7 @@ import stroom.pipeline.shared.SharedStepData;
 import stroom.pipeline.shared.StepType;
 import stroom.pipeline.shared.SteppingResult;
 import stroom.proxy.repo.StroomStreamProcessor;
+import stroom.security.UserTokenUtil;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
@@ -63,7 +64,6 @@ import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Indicators;
-import stroom.util.task.ServerTask;
 
 import javax.annotation.Resource;
 import java.io.BufferedInputStream;
@@ -353,7 +353,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         streamCriteria.obtainStreamIdSet().setMatchAll(Boolean.TRUE);
         streamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_REFERENCE);
         streamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS);
-        final SteppingTask action = new SteppingTask(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
+        final SteppingTask action = new SteppingTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN);
         action.setPipeline(DocRefUtil.create(pipelineEntity));
         action.setCriteria(streamCriteria);
 

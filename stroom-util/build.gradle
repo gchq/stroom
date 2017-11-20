@@ -1,10 +1,10 @@
 dependencies {
     compile project(':stroom-util-shared')
+    compile project(':stroom-security-api')
 
     compile libs.commons_io
     permitUnusedDeclared libs.commons_io
     compile libs.commons_lang
-    compile libs.ehcache_core
     compile libs.guava
     compile libs.jackson_annotations
     compile libs.jackson_core

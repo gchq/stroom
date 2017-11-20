@@ -23,20 +23,20 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import stroom.feed.MetaMap;
-import stroom.feed.server.FeedService;
 import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.StroomStatusCode;
 import stroom.feed.StroomStreamException;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.internalstatistics.MetaDataStatistic;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamtask.server.StreamTargetStroomStreamHandler;
 import stroom.util.spring.StroomScope;
-import stroom.util.task.ServerTask;
 import stroom.util.thread.BufferFactory;
 
 import javax.inject.Inject;
@@ -80,8 +80,7 @@ public class DataFeedRequestHandler implements RequestHandler {
     @Override
     @Insecure
     public void handle(final HttpServletRequest request, final HttpServletResponse response) {
-        securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
-        try {
+        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
             final MetaMap metaMap = MetaMapFactory.create(request);
             if (metaMapFilter.filter(metaMap)) {
                 debug("Receiving data", metaMap);

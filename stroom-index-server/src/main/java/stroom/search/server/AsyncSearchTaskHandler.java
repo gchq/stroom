@@ -27,6 +27,7 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.node.shared.Node;
+import stroom.security.SecurityHelper;
 import stroom.query.common.v2.ResultHandler;
 import stroom.query.api.v2.Query;
 import stroom.security.SecurityContext;
@@ -86,9 +87,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
 
     @Override
     public VoidResult exec(final AsyncSearchTask task) {
-        try {
-            securityContext.elevatePermissions();
-
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             final ClusterSearchResultCollector resultCollector = task.getResultCollector();
             final ResultHandler resultHandler = resultCollector.getResultHandler();
 
@@ -192,9 +191,6 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
             }
 
             return VoidResult.INSTANCE;
-
-        } finally {
-            securityContext.restorePermissions();
         }
     }
 

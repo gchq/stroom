@@ -34,6 +34,7 @@ import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;
@@ -74,10 +75,8 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
 
     @Override
     public SearchBusPollResult exec(final SearchBusPollAction action) {
-        try {
-            // Elevate the users permissions for the duration of this task so they can read the index if they have 'use' permission.
-            securityContext.elevatePermissions();
-
+        // Elevate the users permissions for the duration of this task so they can read the index if they have 'use' permission.
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             if (LOGGER.isDebugEnabled()) {
                 final StringBuilder sb = new StringBuilder(
                         "Only the following search queries should be active for session '");
@@ -91,7 +90,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
             }
 
             final String searchSessionId = action.getUserToken() + "_" + action.getApplicationInstanceId();
-            final ActiveQueries activeQueries = activeQueriesManager.getOrCreate(searchSessionId);
+            final ActiveQueries activeQueries = activeQueriesManager.get(searchSessionId);
             final Map<DashboardQueryKey, SearchResponse> searchResultMap = new HashMap<>();
 
 //            // Fix query keys so they have session and user info.
@@ -119,8 +118,6 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
             }
 
             return new SearchBusPollResult(searchResultMap);
-        } finally {
-            securityContext.restorePermissions();
         }
     }
 

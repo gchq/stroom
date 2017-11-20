@@ -22,6 +22,7 @@ import stroom.query.api.v2.DocRef;
 import stroom.script.shared.FetchScriptAction;
 import stroom.script.shared.Script;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedList;
@@ -51,10 +52,8 @@ class FetchScriptHandler extends AbstractTaskHandler<FetchScriptAction, SharedLi
 
     @Override
     public SharedList<Script> exec(final FetchScriptAction action) {
-        try {
-            // Elevate the users permissions for the duration of this task so they can read the script if they have 'use' permission.
-            securityContext.elevatePermissions();
-
+        // Elevate the users permissions for the duration of this task so they can read the script if they have 'use' permission.
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             final List<Script> scripts = new ArrayList<>();
 
             Set<DocRef> uiLoadedScripts = action.getLoadedScripts();
@@ -66,8 +65,6 @@ class FetchScriptHandler extends AbstractTaskHandler<FetchScriptAction, SharedLi
             loadScripts(action.getScript(), uiLoadedScripts, new HashSet<>(), scripts, action.getFetchSet());
 
             return new SharedList<>(scripts);
-        } finally {
-            securityContext.restorePermissions();
         }
     }
 

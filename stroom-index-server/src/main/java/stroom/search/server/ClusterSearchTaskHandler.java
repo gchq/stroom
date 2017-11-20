@@ -32,6 +32,7 @@ import stroom.index.shared.IndexFieldsMap;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.MessageUtil;
 import stroom.pipeline.server.errorhandler.TerminatedException;
+import stroom.security.SecurityHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Param;
@@ -163,9 +164,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
     @Override
     public void exec(final ClusterSearchTask task, final TaskCallback<NodeResult> callback) {
-        try {
-            securityContext.elevatePermissions();
-
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             if (!taskContext.isTerminated()) {
                 taskContext.info("Initialising...");
 
@@ -285,8 +284,6 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     ThreadUtil.sleep(1000);
                 }
             }
-        } finally {
-            securityContext.restorePermissions();
         }
     }
 
@@ -298,6 +295,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
             final boolean searchComplete = ClusterSearchTaskHandler.this.searchComplete.get();
 
             if (!taskContext.isTerminated()) {
+                taskContext.setName("Search result sender");
                 taskContext.info("Creating search result");
 
                 // Produce payloads for each coprocessor.
@@ -454,6 +452,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                         this,
                         hitCount,
                         indexShardSearchTaskProperties.getMaxThreadsPerTask(),
+                        executorProvider,
                         indexShardSearchTaskHandlerProvider);
 
                 // Add the task producer to the task executor.
@@ -487,6 +486,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                                 extractionCoprocessorsMap,
                                 this,
                                 extractionTaskProperties.getMaxThreadsPerTask(),
+                                executorProvider,
                                 extractionTaskHandlerProvider);
 
                         // Add the task producer to the task executor.
@@ -579,7 +579,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
         if (e == null || !(e instanceof TaskTerminatedException)) {
             final String msg = MessageUtil.getMessage(message, e);
-            errors.push(msg);
+            errors.offer(msg);
         }
     }
 

@@ -28,7 +28,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class V6_0_0_11__Explorer implements JdbcMigration {
     private static final Logger LOGGER = LoggerFactory.getLogger(V6_0_0_11__Explorer.class);
@@ -43,7 +50,7 @@ public class V6_0_0_11__Explorer implements JdbcMigration {
 
     private void createExplorerTree(final Connection connection) throws Exception {
         // Create a map of document references for all folders.
-        final Map<Long, Set<DocRef>> docRefMap = createDocRefMap(connection, SQLNameConstants.FOLDER, ExplorerConstants.FOLDER);
+        final Map<Long, Set<Ref>> docRefMap = createDocRefMap(connection, SQLNameConstants.FOLDER, ExplorerConstants.FOLDER);
 
         // Insert System root node.
         final DocRef root = ExplorerConstants.ROOT_DOC_REF;
@@ -105,18 +112,18 @@ public class V6_0_0_11__Explorer implements JdbcMigration {
     }
 
     private void addOtherNodes(final Connection connection, final String tableName, final String type, final String tags) throws SQLException {
-        final Map<Long, Set<DocRef>> feedMap = createDocRefMap(connection, tableName, type);
-        for (final Map.Entry<Long, Set<DocRef>> entry : feedMap.entrySet()) {
+        final Map<Long, Set<Ref>> feedMap = createDocRefMap(connection, tableName, type);
+        for (final Map.Entry<Long, Set<Ref>> entry : feedMap.entrySet()) {
             final long folderId = entry.getKey();
-            final Set<DocRef> docRefs = entry.getValue();
+            final Set<Ref> refs = entry.getValue();
             final List<Long> parentAncestorIdList = folderIdToAncestorIDMap.get(folderId);
 
-            for (final DocRef docRef : docRefs) {
-                Long nodeId = getExplorerTreeNodeId(connection, docRef);
+            for (final Ref ref : refs) {
+                Long nodeId = getExplorerTreeNodeId(connection, ref.getDocRef());
 
                 if (nodeId == null) {
-                    createExplorerTreeNode(connection, docRef, tags);
-                    nodeId = getExplorerTreeNodeId(connection, docRef);
+                    createExplorerTreeNode(connection, ref.getDocRef(), tags);
+                    nodeId = getExplorerTreeNodeId(connection, ref.getDocRef());
 
                     final List<Long> ancestorIdList = new ArrayList<>(parentAncestorIdList);
                     ancestorIdList.add(0, nodeId);
@@ -142,18 +149,18 @@ public class V6_0_0_11__Explorer implements JdbcMigration {
         return tagString;
     }
 
-    private void addFolderNodes(final Connection connection, final Long parentId, final List<Long> parentAncestorIdList, final Map<Long, Set<DocRef>> docRefMap) throws SQLException {
-        final Set<DocRef> childNodes = docRefMap.get(parentId);
+    private void addFolderNodes(final Connection connection, final Long parentId, final List<Long> parentAncestorIdList, final Map<Long, Set<Ref>> docRefMap) throws SQLException {
+        final Set<Ref> childNodes = docRefMap.get(parentId);
 
         if (childNodes != null && childNodes.size() > 0) {
             // Add nodes
-            for (final DocRef docRef : childNodes) {
+            for (final Ref ref : childNodes) {
                 final List<Long> ancestorIdList = new ArrayList<>(parentAncestorIdList);
 
-                Long nodeId = getExplorerTreeNodeId(connection, docRef);
+                Long nodeId = getExplorerTreeNodeId(connection, ref.getDocRef());
                 if (nodeId == null) {
-                    createExplorerTreeNode(connection, docRef, null);
-                    nodeId = getExplorerTreeNodeId(connection, docRef);
+                    createExplorerTreeNode(connection, ref.getDocRef(), null);
+                    nodeId = getExplorerTreeNodeId(connection, ref.getDocRef());
                     ancestorIdList.add(0, nodeId);
 
                     // Insert paths.
@@ -164,16 +171,16 @@ public class V6_0_0_11__Explorer implements JdbcMigration {
                 }
 
                 // Store the mapping of folder id to explorer node ancestors.
-                folderIdToAncestorIDMap.put(docRef.getId(), ancestorIdList);
+                folderIdToAncestorIDMap.put(ref.id, ancestorIdList);
 
                 // Recurse to insert child nodes.
-                addFolderNodes(connection, docRef.getId(), ancestorIdList, docRefMap);
+                addFolderNodes(connection, ref.id, ancestorIdList, docRefMap);
             }
         }
     }
 
-    private Map<Long, Set<DocRef>> createDocRefMap(final Connection connection, final String tableName, final String type) throws SQLException {
-        final Map<Long, Set<DocRef>> docRefMap = new HashMap<>();
+    private Map<Long, Set<Ref>> createDocRefMap(final Connection connection, final String tableName, final String type) throws SQLException {
+        final Map<Long, Set<Ref>> refMap = new HashMap<>();
 
         try (final Statement statement = connection.createStatement()) {
             try (final ResultSet resultSet = statement.executeQuery("SELECT ID, UUID, NAME, FK_FOLDER_ID FROM " + tableName)) {
@@ -182,20 +189,16 @@ public class V6_0_0_11__Explorer implements JdbcMigration {
                     final String uuid = resultSet.getString(2);
                     final String name = resultSet.getString(3);
                     Long parentId = resultSet.getLong(4);
-
-                    final DocRef docRef = new DocRef(type, uuid, name);
-                    docRef.setId(id);
-
                     if (parentId == null) {
                         parentId = 0L;
                     }
 
-                    docRefMap.computeIfAbsent(parentId, k -> new HashSet<>()).add(docRef);
+                    final Ref ref = new Ref(id, type, uuid, name);
+                    refMap.computeIfAbsent(parentId, k -> new HashSet<>()).add(ref);
                 }
             }
         }
-
-        return docRefMap;
+        return refMap;
     }
 
     private void createExplorerTreeNode(final Connection connection, final DocRef docRef, final String tags) throws SQLException {
@@ -243,6 +246,24 @@ public class V6_0_0_11__Explorer implements JdbcMigration {
             preparedStatement.setLong(3, depth);
             preparedStatement.setLong(4, -1);
             preparedStatement.executeUpdate();
+        }
+    }
+
+    private static class Ref {
+        private final long id;
+        private final String type;
+        private final String uuid;
+        private final String name;
+
+        public Ref(final long id, final String type, final String uuid, final String name) {
+            this.id = id;
+            this.type = type;
+            this.uuid = uuid;
+            this.name = name;
+        }
+
+        public DocRef getDocRef() {
+            return new DocRef(type, uuid, name);
         }
     }
 }

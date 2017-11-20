@@ -73,8 +73,8 @@ public class MockPipelineService extends MockDocumentEntityService<PipelineEntit
     }
 
     @Override
-    public PipelineEntity loadByIdWithoutUnmarshal(final long id) {
-        return loadById(id);
+    public PipelineEntity loadByUuidWithoutUnmarshal(final String uuid) {
+        return loadByUuid(uuid);
     }
 
     @Override

@@ -37,7 +37,7 @@ class FetchPipelineXMLHandler extends AbstractTaskHandler<FetchPipelineXMLAction
     public SharedString exec(final FetchPipelineXMLAction action) {
         SharedString result = null;
 
-        final PipelineEntity pipelineEntity = pipelineService.loadByIdWithoutUnmarshal(action.getPipeline().getId());
+        final PipelineEntity pipelineEntity = pipelineService.loadByUuidWithoutUnmarshal(action.getPipeline().getUuid());
 
         if (pipelineEntity != null) {
             result = SharedString.wrap(pipelineEntity.getData());

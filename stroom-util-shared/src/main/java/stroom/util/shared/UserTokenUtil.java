@@ -17,6 +17,8 @@
 package stroom.util.shared;
 
 public final class UserTokenUtil {
+    public static final String INTERNAL_PROCESSING_USER_TOKEN = createInternal();
+
     private static final String DELIMITER = "|";
     private static final String INTERNAL = "INTERNAL";
     private static final String USER = "user";
@@ -26,7 +28,7 @@ public final class UserTokenUtil {
         // Utility class.
     }
 
-    public static String createInternal() {
+    private static String createInternal() {
         return create(SYSTEM, INTERNAL, null);
     }
 

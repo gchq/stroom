@@ -27,6 +27,7 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.SourcePipeline;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedList;
@@ -59,9 +60,8 @@ public class FetchPipelineDataHandler extends AbstractTaskHandler<FetchPipelineD
     public SharedList<PipelineData> exec(final FetchPipelineDataAction action) {
         final PipelineEntity pipelineEntity = pipelineService.loadByUuid(action.getPipeline().getUuid());
 
-        try {
-            // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
-            securityContext.elevatePermissions();
+        // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             final List<PipelineEntity> pipelines = pipelineStackLoader.loadPipelineStack(pipelineEntity);
             final SharedList<PipelineData> result = new SharedList<>(pipelines.size());
 
@@ -77,8 +77,6 @@ public class FetchPipelineDataHandler extends AbstractTaskHandler<FetchPipelineD
             }
 
             return result;
-        } finally {
-            securityContext.restorePermissions();
         }
     }
 }

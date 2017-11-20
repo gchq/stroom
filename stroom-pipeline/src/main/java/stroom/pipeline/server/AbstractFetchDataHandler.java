@@ -42,6 +42,7 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
+import stroom.security.SecurityHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.resource.server.BOMRemovalInputStream;
 import stroom.security.SecurityContext;
@@ -126,10 +127,8 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
     protected AbstractFetchDataResult getData(final Long streamId, final StreamType childStreamType,
                                               final OffsetRange<Long> streamsRange, final OffsetRange<Long> pageRange, final boolean markerMode,
                                               final DocRef pipeline, final boolean showAsHtml, final Severity... expandedSeverities) {
-        try {
-            // Allow users with 'Use' permission to read data, pipelines and XSLT.
-            securityContext.elevatePermissions();
-
+        // Allow users with 'Use' permission to read data, pipelines and XSLT.
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             final StreamCloser streamCloser = new StreamCloser();
             List<StreamType> availableChildStreamTypes;
             Feed feed = null;
@@ -227,8 +226,6 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                     }
                 }
             }
-        } finally {
-            securityContext.restorePermissions();
         }
     }
 
@@ -444,7 +441,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
         streamHolder.addProvider(streamSource.getChildStream(StreamType.META));
         streamHolder.addProvider(streamSource.getChildStream(StreamType.CONTEXT));
 
-        final PipelineData pipelineData = pipelineDataCache.getOrCreate(loadedPipeline);
+        final PipelineData pipelineData = pipelineDataCache.get(loadedPipeline);
         if (pipelineData == null) {
             throw new EntityServiceException("Pipeline has no data");
         }

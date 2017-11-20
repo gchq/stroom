@@ -105,7 +105,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
     @Resource
     private LifecycleServiceImpl lifecycleServiceImpl;
     @Resource
-    private StroomCacheManager cacheManager;
+    private StroomCacheManager stroomCacheManager;
     @Resource
     private ExplorerNodeService explorerNodeService;
 
@@ -200,7 +200,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
         deleteEntity(Rack.class);
 
         databaseCommonTestControlTransactionHelper.clearContext();
-        cacheManager.clear();
+        stroomCacheManager.clear();
 
         final Map<String, Clearable> clearableBeanMap = applicationContext.getBeansOfType(Clearable.class, false,
                 false);

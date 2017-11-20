@@ -17,7 +17,6 @@
 
 package stroom.search.server.extraction;
 
-import net.sf.ehcache.CacheException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
@@ -40,6 +39,7 @@ import stroom.pipeline.state.CurrentUserHolder;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
+import stroom.security.SecurityHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.search.server.SearchException;
 import stroom.security.SecurityContext;
@@ -106,9 +106,7 @@ public class ExtractionTaskHandler {
     }
 
     public VoidResult exec(final ExtractionTask task) {
-        try {
-            securityContext.elevatePermissions();
-
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             taskMonitor.setName("Search data extraction");
             if (!taskMonitor.isTerminated()) {
                 final String streamId = String.valueOf(task.getStreamId());
@@ -116,8 +114,6 @@ public class ExtractionTaskHandler {
 
                 extract(task);
             }
-        } finally {
-            securityContext.restorePermissions();
         }
 
         return VoidResult.INSTANCE;
@@ -139,7 +135,7 @@ public class ExtractionTaskHandler {
             }
 
             // Create the parser.
-            final PipelineData pipelineData = pipelineDataCache.getOrCreate(pipelineEntity);
+            final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
             final Pipeline pipeline = pipelineFactory.create(pipelineData);
             if (pipeline == null) {
                 throw new SearchException("Unable to create parser for pipeline: " + pipelineRef);
@@ -165,12 +161,6 @@ public class ExtractionTaskHandler {
             // Process the stream segments.
             processData(task.getStreamId(), task.getEventIds(), pipelineEntity, pipeline);
 
-        } catch (final CacheException e) {
-            if (e.getCause() != null) {
-                error(e.getCause().getMessage(), e.getCause());
-            } else {
-                error(e.getMessage(), e);
-            }
         } catch (final Exception e) {
             error(e.getMessage(), e);
         }

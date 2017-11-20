@@ -166,7 +166,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     }
 
     @SuppressWarnings("unchecked")
-    protected E loadById(final long id, final Set<String> fetchSet, final QueryAppender<E, ?> queryAppender) throws RuntimeException {
+    private E loadById(final long id, final Set<String> fetchSet, final QueryAppender<E, ?> queryAppender) throws RuntimeException {
         E entity = null;
 
         final HqlBuilder sql = new HqlBuilder();
@@ -246,13 +246,19 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     @Transactional(readOnly = true)
     @Override
     public final E loadByUuid(final String uuid, final Set<String> fetchSet) throws RuntimeException {
+        return loadByUuid(uuid, fetchSet, queryAppender);
+    }
+
+    protected E loadByUuid(final String uuid, final Set<String> fetchSet, final QueryAppender<E, ?> queryAppender) throws RuntimeException {
         E entity = null;
 
         final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT e FROM ");
         sql.append(getEntityClass().getName());
         sql.append(" AS e");
-        queryAppender.appendBasicJoin(sql, "e", fetchSet);
+        if (queryAppender != null) {
+            queryAppender.appendBasicJoin(sql, "e", fetchSet);
+        }
         sql.append(" WHERE e.uuid = ");
         sql.arg(uuid);
 
@@ -263,7 +269,9 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
         if (entity != null) {
             try {
-                queryAppender.postLoad(entity);
+                if (queryAppender != null) {
+                    queryAppender.postLoad(entity);
+                }
                 checkReadPermission(DocRefUtil.create(entity));
                 documentEventLog.view(entity);
             } catch (final RuntimeException e) {
