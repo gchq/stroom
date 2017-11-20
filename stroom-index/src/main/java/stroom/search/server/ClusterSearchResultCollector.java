@@ -16,19 +16,11 @@
 
 package stroom.search.server;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
+import stroom.node.shared.Node;
 import stroom.query.Payload;
 import stroom.query.ResultHandler;
 import stroom.query.ResultStore;
 import stroom.query.SearchResultCollector;
-import stroom.node.shared.Node;
 import stroom.task.cluster.ClusterResultCollector;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.cluster.CollectorId;
@@ -40,13 +32,21 @@ import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 public class ClusterSearchResultCollector implements SearchResultCollector, ClusterResultCollector<NodeResult> {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(ClusterSearchResultCollector.class);
 
     private final ClusterResultCollectorCache clusterResultCollectorCache;
     private final CollectorId id;
     private final ConcurrentHashMap<Node, Set<String>> errors = new ConcurrentHashMap<>();
-    private final Set<Node> completedNodes = Collections.synchronizedSet(new HashSet<>());
+    private final Set<Node> completedNodes = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final TaskManager taskManager;
     private final Task<VoidResult> task;
     private final Node node;
@@ -55,9 +55,12 @@ public class ClusterSearchResultCollector implements SearchResultCollector, Clus
 
     private volatile boolean terminated;
 
-    private ClusterSearchResultCollector(final TaskManager taskManager, final Task<VoidResult> task, final Node node,
-            final Set<String> highlights, final ClusterResultCollectorCache clusterResultCollectorCache,
-            final ResultHandler resultHandler) {
+    private ClusterSearchResultCollector(final TaskManager taskManager,
+                                         final Task<VoidResult> task,
+                                         final Node node,
+                                         final Set<String> highlights,
+                                         final ClusterResultCollectorCache clusterResultCollectorCache,
+                                         final ResultHandler resultHandler) {
         this.taskManager = taskManager;
         this.task = task;
         this.node = node;
@@ -70,9 +73,12 @@ public class ClusterSearchResultCollector implements SearchResultCollector, Clus
         clusterResultCollectorCache.put(id, this);
     }
 
-    public static ClusterSearchResultCollector create(final TaskManager taskManager, final Task<VoidResult> task,
-            final Node node, final Set<String> highlights,
-            final ClusterResultCollectorCache clusterResultCollectorCache, final ResultHandler resultHandler) {
+    public static ClusterSearchResultCollector create(final TaskManager taskManager,
+                                                      final Task<VoidResult> task,
+                                                      final Node node,
+                                                      final Set<String> highlights,
+                                                      final ClusterResultCollectorCache clusterResultCollectorCache,
+                                                      final ResultHandler resultHandler) {
         return new ClusterSearchResultCollector(taskManager, task, node, highlights, clusterResultCollectorCache,
                 resultHandler);
     }
@@ -150,7 +156,7 @@ public class ClusterSearchResultCollector implements SearchResultCollector, Clus
         terminated = true;
     }
 
-    public Set<String> getErrorSet(final Node node) {
+    Set<String> getErrorSet(final Node node) {
         Set<String> errorSet = errors.get(node);
         if (errorSet == null) {
             errorSet = new HashSet<>();
@@ -200,11 +206,11 @@ public class ClusterSearchResultCollector implements SearchResultCollector, Clus
         return resultHandler.getResultStore(componentId);
     }
 
-    public Set<Node> getCompletedNodes() {
+    Set<Node> getCompletedNodes() {
         return completedNodes;
     }
 
-    public ResultHandler getResultHandler() {
+    ResultHandler getResultHandler() {
         return resultHandler;
     }
 }
