@@ -24,4 +24,7 @@ import javax.inject.Singleton;
 @Component
 @Singleton
 public class ExtractionTaskExecutor extends TaskExecutor {
+    public ExtractionTaskExecutor() {
+        super("Extraction Task Executor");
+    }
 }

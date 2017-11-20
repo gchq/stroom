@@ -16,9 +16,18 @@
 
 package stroom.search.server.taskqueue;
 
+import stroom.task.server.StroomThreadGroup;
+import stroom.util.spring.StroomShutdown;
+import stroom.util.thread.CustomThreadFactory;
+
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class TaskExecutor {
     private static final int DEFAULT_MAX_THREADS = 5;
@@ -28,20 +37,54 @@ public class TaskExecutor {
     private final AtomicInteger totalThreads = new AtomicInteger();
 
     private final ConcurrentSkipListSet<TaskProducer> producers = new ConcurrentSkipListSet<>();
-    private volatile TaskProducer lastProducer;
+    private final AtomicReference<TaskProducer> lastProducer = new AtomicReference<>();
 
-    public void addProducer(final TaskProducer producer) {
+    private final ReentrantLock taskLock = new ReentrantLock();
+    private final Condition condition = taskLock.newCondition();
+
+    private final ExecutorService executor;
+    private volatile boolean running = true;
+
+    public TaskExecutor(final String name) {
+        final ThreadGroup poolThreadGroup = new ThreadGroup(StroomThreadGroup.instance(), name);
+        final CustomThreadFactory threadFactory = new CustomThreadFactory(name, poolThreadGroup, 5);
+        executor = Executors.newSingleThreadExecutor(threadFactory);
+
+        executor.execute(() -> {
+            while (running) {
+                taskLock.lock();
+                try {
+                    Runnable task = execNextTask();
+                    if (task == null) {
+                        condition.awaitUninterruptibly();
+                    }
+                } finally {
+                    taskLock.unlock();
+                }
+            }
+        });
+    }
+
+    @StroomShutdown
+    public void stop() {
+        running = false;
+        executor.shutdown();
+    }
+
+    void addProducer(final TaskProducer producer) {
         producers.add(producer);
     }
 
-    public void removeProducer(final TaskProducer producer) {
+    void removeProducer(final TaskProducer producer) {
         producers.remove(producer);
     }
 
-    public void exec() {
-        Runnable task = execNextTask();
-        while (task != null) {
-            task = execNextTask();
+    void signalAll() {
+        taskLock.lock();
+        try {
+            condition.signalAll();
+        } finally {
+            taskLock.unlock();
         }
     }
 
@@ -85,25 +128,31 @@ public class TaskExecutor {
             totalThreads.decrementAndGet();
             producer.complete(task);
         } finally {
-            exec();
+            signalAll();
         }
     }
 
-    private synchronized TaskProducer nextProducer() {
-        TaskProducer producer = null;
-        try {
-            if (lastProducer == null) {
-                producer = producers.first();
-            } else {
-                producer = producers.higher(lastProducer);
+    private TaskProducer nextProducer() {
+        TaskProducer current;
+        TaskProducer producer;
+
+        do {
+            current = lastProducer.get();
+            producer = current;
+            try {
                 if (producer == null) {
                     producer = producers.first();
+                } else {
+                    producer = producers.higher(producer);
+                    if (producer == null) {
+                        producer = producers.first();
+                    }
                 }
+            } catch (final Exception e) {
+                // Ignore.
             }
-        } catch (final Exception e) {
-            // Ignore.
-        }
-        lastProducer = producer;
+        } while (!lastProducer.compareAndSet(current, producer));
+
         return producer;
     }
 
