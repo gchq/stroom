@@ -107,7 +107,7 @@ public class ExtractionTaskHandler {
 
     public VoidResult exec(final ExtractionTask task) {
         try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
-            taskMonitor.setName("Search data extraction");
+            taskMonitor.setName("Extraction");
             if (!taskMonitor.isTerminated()) {
                 final String streamId = String.valueOf(task.getStreamId());
                 taskMonitor.info("Extracting " + task.getEventIds().length + " records from stream " + streamId);
