@@ -95,8 +95,6 @@ public class StreamMapCreator {
                     });
                 }
             }
-
-            return filteredDataMap;
         }
     }
 
