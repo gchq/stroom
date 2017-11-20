@@ -16,6 +16,7 @@
 
 package stroom.apiclients;
 
+import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,6 +55,14 @@ public class AuthenticationServiceClients {
         final String ourApiToken,
         @Value("#{propertyConfigurer.getProperty('stroom.auth.service.url')}")
         final String authServiceUrl) {
+        if(Strings.isNullOrEmpty(ourApiToken)){
+            throw new RuntimeException("Missing API key! Please configure using 'stroom.security.apiToken'");
+        }
+
+        if(Strings.isNullOrEmpty(authServiceUrl)){
+            throw new RuntimeException("Missing auth service URL! Please configure using 'stroom.auth.service.url'");
+        }
+
         authServiceClient = new ApiClient();
         authServiceClient.setBasePath(authServiceUrl);
         authServiceClient.addDefaultHeader("Authorization", "Bearer " + ourApiToken);
