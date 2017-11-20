@@ -179,9 +179,13 @@ public class StreamTaskCreatorTransactionHelper {
      * node and available to be handed to workers (i.e. their associated
      * streams are not locked).
      */
-    public CreatedTasks createNewTasks(final StreamProcessorFilter filter, final StreamProcessorFilterTracker tracker,
-                                       final long streamQueryTime, final Map<Stream, InclusiveRanges> streams, final Node thisNode,
-                                       final StreamTaskCreatorRecentStreamDetails recentStreamInfo, final boolean reachedLimit) {
+    public CreatedTasks createNewTasks(final StreamProcessorFilter filter,
+                                       final StreamProcessorFilterTracker tracker,
+                                       final long streamQueryTime,
+                                       final Map<Stream, InclusiveRanges> streams,
+                                       final Node thisNode,
+                                       final StreamTaskCreatorRecentStreamDetails recentStreamInfo,
+                                       final boolean reachedLimit) {
         List<StreamTask> availableTaskList = Collections.emptyList();
         int availableTasksCreated = 0;
         int totalTasksCreated = 0;
