@@ -16,8 +16,9 @@
 
 package stroom.search.server.shard;
 
-import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.search.SimpleCollector;
+import org.apache.lucene.index.AtomicReaderContext;
+import org.apache.lucene.search.Collector;
+import org.apache.lucene.search.Scorer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.server.errorhandler.TerminatedException;
@@ -25,31 +26,24 @@ import stroom.task.server.TaskContext;
 import stroom.util.shared.ModelStringUtil;
 
 import java.io.IOException;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class IndexShardHitCollector extends SimpleCollector {
+public class IndexShardHitCollector extends Collector {
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardHitCollector.class);
 
-    private static final long ONE_SECOND = TimeUnit.SECONDS.toNanos(1);
-
     private final TaskContext taskContext;
-    private final TransferList<Integer> docIdStore;
+    private final LinkedBlockingQueue<Integer> docIdStore;
     private final AtomicLong hitCount;
     private int docBase;
     private Long pauseTime;
 
-    public IndexShardHitCollector(final TaskContext taskContext, final TransferList<Integer> docIdStore,
+    public IndexShardHitCollector(final TaskContext taskContext, final LinkedBlockingQueue<Integer> docIdStore,
                                   final AtomicLong hitCount) {
         this.docIdStore = docIdStore;
         this.taskContext = taskContext;
         this.hitCount = hitCount;
-    }
-
-    @Override
-    protected void doSetNextReader(final LeafReaderContext context) throws IOException {
-        super.doSetNextReader(context);
-        docBase = context.docBase;
     }
 
     @Override
@@ -58,7 +52,7 @@ public class IndexShardHitCollector extends SimpleCollector {
         final int docId = docBase + doc;
 
         try {
-            while (!docIdStore.offer(docId, ONE_SECOND) && !taskContext.isTerminated()) {
+            while (!docIdStore.offer(docId, 1, TimeUnit.SECONDS) && !taskContext.isTerminated()) {
                 if (isProvidingInfo()) {
                     if (pauseTime == null) {
                         pauseTime = System.currentTimeMillis();
@@ -89,8 +83,7 @@ public class IndexShardHitCollector extends SimpleCollector {
             throw new TerminatedException();
         }
 
-        // If we are no longer paused then make sure the client knows we are
-        // still searching.
+        // If we are no longer paused then make sure the client knows we are still searching.
         if (isProvidingInfo()) {
             if (pauseTime != null) {
                 pauseTime = null;
@@ -109,7 +102,17 @@ public class IndexShardHitCollector extends SimpleCollector {
     }
 
     @Override
-    public boolean needsScores() {
-        return false;
+    public boolean acceptsDocsOutOfOrder() {
+        return true;
+    }
+
+    @Override
+    public void setNextReader(final AtomicReaderContext context) throws IOException {
+        this.docBase = context.docBase;
+    }
+
+    @Override
+    public void setScorer(final Scorer scorer) throws IOException {
+        // Not implemented as we don't score docs.
     }
 }

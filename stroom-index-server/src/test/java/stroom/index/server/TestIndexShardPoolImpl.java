@@ -25,19 +25,18 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.index.shared.Index;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
+import stroom.query.shared.IndexField;
+import stroom.query.shared.IndexFields;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.concurrent.SimpleExecutor;
+import stroom.util.logging.StroomLogger;
 import stroom.util.test.StroomUnitTest;
 
 import java.io.File;
@@ -46,7 +45,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TestIndexShardPoolImpl extends StroomUnitTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestIndexShardPoolImpl.class);
+    private static final StroomLogger LOGGER = StroomLogger.getLogger(TestIndexShardPoolImpl.class);
 
     @Mock
     private NodeCache nodeCache;
@@ -87,13 +86,13 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
         Assert.assertTrue("Expected 20 to 22 but was " + size, size >= 20 && size <= 22);
     }
 
-    static AtomicLong indexShardId = new AtomicLong(0);
-    AtomicInteger indexShardsCreated = new AtomicInteger(0);
-    AtomicInteger failedThreads = new AtomicInteger(0);
-
     public static int getRandomNumber(final int size) {
         return (int) Math.floor((Math.random() * size));
     }
+
+    static AtomicLong indexShardId = new AtomicLong(0);
+    AtomicInteger indexShardsCreated = new AtomicInteger(0);
+    AtomicInteger failedThreads = new AtomicInteger(0);
 
     private void doTest(final int threadSize, final int jobSize, final int numberOfIndexes,
                         final int shardsPerPartition, final int maxDocumentsPerIndexShard) throws InterruptedException {
@@ -123,70 +122,40 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
                 indexShard.setVolume(
                         Volume.create(defaultNode, getCurrentTestDir().getAbsolutePath(), VolumeType.PUBLIC));
                 indexShard.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
-                FileSystemUtil.deleteContents(IndexShardUtil.getIndexPath(indexShard));
+                FileSystemUtil.deleteContents(IndexShardUtil.getIndexDir(indexShard));
                 return indexShard;
             }
         };
 
         Mockito.when(nodeCache.getDefaultNode()).thenReturn(defaultNode);
 
-        // final NodeCache nodeCache = new NodeCache();
-        // nodeCache.setNodeService(new NodeServiceImpl() {
-        // @Override
-        // public Node getDefaultNode() {
-        // return defaultNode;
-        // }
-        // });
-
-//        try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
-//            final IndexShardManagerImpl indexShardManager = new IndexShardManagerImpl(mockIndexShardService, cacheManager, null, null,
-//                    mockIndexShardService, nodeCache, null) {
-//                @Override
-//                protected void destroy(final IndexShardKey key, final IndexShardWriter writer) {
-//                    // // checkedLimit.decrement();
-//                    // synchronized (closedSet) {
-//                    // if (writer != null) {
-//                    // if (closedSet.contains(writer.getIndexShard())) {
-//                    // throw new RuntimeException("Closed already called on this
-//                    // item?");
-//                    // }
-//                    // closedSet.add(writer.getIndexShard());
-//                    // }
-//                    // }
-//                    super.destroy(key, writer);
-//                    if (writer != null && IndexShardStatus.OPEN.equals(writer.getStatus())) {
-//                        throw new RuntimeException("Writer should have been closed on destroy!");
-//                    }
-//                }
-//            };
-
         final IndexShardWriterCache indexShardWriterCache = new MockIndexShardWriterCache(mockIndexShardService, maxDocumentsPerIndexShard);
         final Indexer indexer = new IndexerImpl(indexShardWriterCache, null);
 
-        indexShardsCreated.set(0);
-        failedThreads.set(0);
+            indexShardsCreated.set(0);
+            failedThreads.set(0);
 
-        final SimpleExecutor simpleExecutor = new SimpleExecutor(threadSize);
+            final SimpleExecutor simpleExecutor = new SimpleExecutor(threadSize);
 
-        for (int i = 0; i < numberOfIndexes; i++) {
-            final Index index = new Index();
-            index.setName("Index " + i);
-            index.setIndexFieldsObject(indexFields);
-            index.setMaxDocsPerShard(maxDocumentsPerIndexShard);
-            index.setShardsPerPartition(shardsPerPartition);
+            for (int i = 0; i < numberOfIndexes; i++) {
+                final Index index = new Index();
+                index.setName("Index " + i);
+                index.setIndexFieldsObject(indexFields);
+                index.setMaxDocsPerShard(maxDocumentsPerIndexShard);
+                index.setShardsPerPartition(shardsPerPartition);
 
-            for (int j = 0; j < jobSize; j++) {
-                final int testNumber = i;
-                final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
-                simpleExecutor.execute(new IndexThread(indexer, indexShardKey, indexField, testNumber));
+                for (int j = 0; j < jobSize; j++) {
+                    final int testNumber = i;
+                    final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
+                    simpleExecutor.execute(new IndexThread(indexer, indexShardKey, indexField, testNumber));
+                }
             }
-        }
 
-        simpleExecutor.waitForComplete();
-        simpleExecutor.stop(false);
+            simpleExecutor.waitForComplete();
+            simpleExecutor.stop(false);
 //            indexShardManager.shutdown();
 
-        Assert.assertEquals("Not expecting any errored threads", 0, failedThreads.get());
+            Assert.assertEquals("Not expecting any errored threads", 0, failedThreads.get());
 //        } catch (final Exception e) {
 //            throw new RuntimeException(e.getMessage(), e);
 //        }
