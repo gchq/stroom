@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#498** : The UI was adding more than one link between 'Source' and 'Parser' elements, this is now fixed.
 
+* Issue **#492** : Search tasks were waiting for part of the data extraction task to run which was not checking for termination. The code for this has been changed and should now terminate when required.
+
 ## [v5.0-beta.62] - 2017-11-16
 
 * Issue **#494** : Fix problem of proxy aggregation never stopping if more files exist
