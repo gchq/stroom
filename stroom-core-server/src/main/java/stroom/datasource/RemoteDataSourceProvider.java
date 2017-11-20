@@ -98,8 +98,8 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
                     requestingUser);
             }
             else {
-                throw new RuntimeException("There was a problem making this a request! The user was: " +
-                    requestingUser);
+                throw new RuntimeException(String.format("Error %s sending request %s to %s: %s",
+                        response.getStatus(), request, webTarget.getUri(), response.getStatusInfo().getReasonPhrase()));
             }
 
         } catch (RuntimeException e) {
