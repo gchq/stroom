@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,16 @@
 
 package stroom.search.server.extraction;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.index.shared.IndexConstants;
+import stroom.index.shared.IndexField;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
-import stroom.query.shared.IndexConstants;
-import stroom.query.shared.IndexField;
 import stroom.search.server.Event;
 import stroom.security.SecurityContext;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamPermissionException;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Severity;
 
 import java.util.ArrayList;
@@ -34,7 +35,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public class StreamMapCreator {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StreamMapCreator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamMapCreator.class);
 
     private final ErrorReceiver errorReceiver;
     private final StreamStore streamStore;
