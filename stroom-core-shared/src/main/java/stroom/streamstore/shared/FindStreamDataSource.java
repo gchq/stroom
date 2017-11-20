@@ -22,6 +22,8 @@ public class FindStreamDataSource {
     public static final String PARENT_STREAM_ID = "Parent Stream Id";
     public static final String CREATED = "Creation time";
     public static final String EFFECTIVE = "Effective time";
+    public static final String STATUS = "Status";
+    public static final String STATUS_TIME = "Status time";
     public static final String SYSTEM_ATTR_PREFIX = "Stream.";
 
     static {
@@ -56,6 +58,17 @@ public class FindStreamDataSource {
                 .build());
         FIELDS.add(new DataSourceField.Builder<>()
                 .name(EFFECTIVE)
+                .addConditions(ExpressionTerm.Condition.BETWEEN)
+                .type(DataSourceField.DataSourceFieldType.DATE_FIELD)
+                .build());
+        FIELDS.add(new DataSourceField.Builder<>()
+                .name(STATUS_TIME)
+                .addConditions(ExpressionTerm.Condition.EQUALS)
+                .addConditions(ExpressionTerm.Condition.IN)
+                .type(DataSourceField.DataSourceFieldType.FIELD)
+                .build());
+        FIELDS.add(new DataSourceField.Builder<>()
+                .name(STATUS_TIME)
                 .addConditions(ExpressionTerm.Condition.BETWEEN)
                 .type(DataSourceField.DataSourceFieldType.DATE_FIELD)
                 .build());

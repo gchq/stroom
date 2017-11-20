@@ -25,6 +25,8 @@ import stroom.entity.shared.Clearable;
 import stroom.node.shared.Node;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.shared.FindStreamDataSource;
+import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.Stream;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.StreamProcessorFilter;
@@ -46,6 +48,9 @@ public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
     @Resource
     private StreamProcessorFilterService streamProcessorFilterService;
 
+    @Resource
+    private SourceSelectorToFindCriteria sourceSelectorToFindCriteria;
+
     @Override
     public void clear() {
         // NA
@@ -64,7 +69,10 @@ public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
             // Get tasks for each filter.
             taskList = new ArrayList<>();
             for (final StreamProcessorFilter filter : streamProcessorFilters) {
-                final FindStreamCriteria findStreamCriteria = filter.getFindStreamCriteria();
+                final QueryData queryData = filter.getQueryData();
+
+                final FindStreamCriteria findStreamCriteria = sourceSelectorToFindCriteria.convert(queryData);
+
                 final BaseResultList<Stream> streams = streamStore.find(findStreamCriteria);
 
                 BaseEntityUtil.sort(streams);

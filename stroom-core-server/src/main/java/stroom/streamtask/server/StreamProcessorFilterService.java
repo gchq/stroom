@@ -20,15 +20,19 @@ package stroom.streamtask.server;
 import stroom.entity.server.BaseEntityService;
 import stroom.entity.server.FindService;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 
 public interface StreamProcessorFilterService
         extends BaseEntityService<StreamProcessorFilter>, FindService<StreamProcessorFilter, FindStreamProcessorFilterCriteria> {
-    void addFindStreamCriteria(StreamProcessor streamProcessor, int priority, FindStreamCriteria findStreamCriteria);
+    void addFindStreamCriteria(StreamProcessor streamProcessor,
+                               int priority,
+                               QueryData queryData);
 
-    StreamProcessorFilter createNewFilter(PipelineEntity pipeline, FindStreamCriteria findStreamCriteria,
-                                          boolean enabled, int priority);
+    StreamProcessorFilter createNewFilter(PipelineEntity pipeline,
+                                          QueryData queryData,
+                                          boolean enabled,
+                                          int priority);
 }

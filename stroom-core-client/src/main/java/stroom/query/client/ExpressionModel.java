@@ -99,7 +99,7 @@ public class ExpressionModel {
             for (final Item child : children) {
                 if (child instanceof Operator) {
                     final Operator operator = (Operator) child;
-                    final ExpressionOperator.OBuilder<?> childDest = dest.addOperator(operator.getEnabled(), operator.getOp());
+                    final ExpressionOperator.OBuilder<?> childDest = dest.addOperator(operator.enabled(), operator.getOp());
                     addChildrenFromTree(operator, childDest, tree);
                 } else if (child instanceof Term) {
                     final Term term = (Term) child;

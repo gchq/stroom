@@ -40,13 +40,7 @@ import stroom.statistics.server.sql.StatisticTag;
 import stroom.statistics.server.sql.Statistics;
 import stroom.streamstore.server.StreamAttributeMapService;
 import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamAttributeConstants;
-import stroom.streamstore.shared.StreamAttributeMap;
-import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.*;
 import stroom.streamtask.server.StreamProcessorFilterService;
 import stroom.streamtask.server.StreamProcessorService;
 import stroom.streamtask.server.StreamProcessorTask;
@@ -324,8 +318,11 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         return System.currentTimeMillis() + TIME_OUT;
     }
 
-    private void processData(final Feed feed, final StreamType rawStreamType, final StreamType processedStreamType,
-                             final StreamProcessor streamProcessor, final Period createPeriod) {
+    private void processData(final Feed feed,
+                             final StreamType rawStreamType,
+                             final StreamType processedStreamType,
+                             final StreamProcessor streamProcessor,
+                             final Period createPeriod) {
         if (!isTerminated()) {
             final Period processPeriod = new Period(System.currentTimeMillis(), null);
 
@@ -333,10 +330,10 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
             LOGGER.info("Processing data {}", feed.getName());
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-            final FindStreamCriteria rawCriteria = new FindStreamCriteria();
-            rawCriteria.obtainFeeds().obtainInclude().add(feed.getId());
-            rawCriteria.setCreatePeriod(createPeriod);
-            rawCriteria.obtainStreamTypeIdSet().add(rawStreamType);
+            final QueryData rawCriteria = new QueryData(); // TODO - DocRefId actually create expression
+            //rawCriteria.obtainFeeds().obtainInclude().add(feed.getId());
+            //rawCriteria.setCreatePeriod(createPeriod);
+            //rawCriteria.obtainStreamTypeIdSet().add(rawStreamType);
 
             streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, rawCriteria);
             jobManager.setJobEnabled(StreamProcessorTask.JOB_NAME, true);

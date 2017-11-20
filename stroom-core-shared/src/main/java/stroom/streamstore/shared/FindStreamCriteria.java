@@ -69,7 +69,6 @@ public class FindStreamCriteria extends BaseCriteria
     private Period effectivePeriod;
     private Period statusPeriod;
     private List<StreamAttributeCondition> attributeConditionList;
-    private QueryData queryData;
 
     public FindStreamCriteria() {
     }
@@ -398,14 +397,6 @@ public class FindStreamCriteria extends BaseCriteria
             attributeConditionList = new ArrayList<>();
         }
         return attributeConditionList;
-    }
-
-    public QueryData getQueryData() {
-        return queryData;
-    }
-
-    public void setQueryData(final QueryData queryData) {
-        this.queryData = queryData;
     }
 
     @Override

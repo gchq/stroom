@@ -22,11 +22,10 @@ import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.EntityIdSet;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.Secured;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.ReprocessDataAction;
-import stroom.streamstore.shared.ReprocessDataInfo;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.*;
 import stroom.streamtask.server.StreamProcessorFilterService;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.task.server.AbstractTaskHandler;
@@ -102,8 +101,16 @@ public class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataActio
                 for (final StreamProcessor streamProcessor : list) {
                     final EntityIdSet<Stream> streamSet = streamToProcessorSet.get(streamProcessor);
 
-                    final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
-                    findStreamCriteria.setStreamIdSet(streamSet);
+                    final QueryData queryData = new QueryData();
+                    final ExpressionOperator.Builder operator = new ExpressionOperator.Builder(ExpressionOperator.Op.AND);
+
+                    final ExpressionOperator.OBuilder streamIdTerms = operator.addOperator(ExpressionOperator.Op.OR);
+                    streamSet.forEach(streamId -> {
+                        streamIdTerms.addTerm(FindStreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(streamId));
+                    });
+
+                    queryData.setDataSource(QueryData.STREAM_STORE_DOC_REF);
+                    queryData.setExpression(operator.build());
 
                     if (!streamProcessor.isEnabled()) {
                         unableListSB.append(streamProcessor.getPipeline().getName());
@@ -116,7 +123,7 @@ public class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataActio
                         submittedListSB.append(streamSet.size());
                         submittedListSB.append(" streams\n");
 
-                        streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 10, findStreamCriteria);
+                        streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 10, queryData);
                     }
                 }
 

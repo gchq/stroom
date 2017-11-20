@@ -20,7 +20,11 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.entity.shared.Period;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.shared.FindStreamDataSource;
+import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
@@ -31,21 +35,26 @@ public class TestXMLMarshallUtil extends StroomUnitTest {
 
     @Test
     public void testSimple() {
-        final FindStreamCriteria criteria1 = new FindStreamCriteria();
-        criteria1.obtainStreamIdSet().add(999L);
+        final String createdPeriod = String.format("%d%s%d", 1L, ExpressionTerm.Condition.IN_CONDITION_DELIMITER, 2L);
 
-        criteria1.obtainFeeds().obtainInclude().add(88L);
-        criteria1.obtainFeeds().obtainInclude().add(889L);
-
-        criteria1.obtainStreamIdSet().add(7L);
-        criteria1.obtainStreamIdSet().add(77L);
-        criteria1.obtainStreamIdSet().setMatchNull(true);
-
-        criteria1.setCreatePeriod(new Period(1L, 2L));
+        final QueryData queryData1 = new QueryData.Builder()
+                .expression(ExpressionOperator.Op.AND)
+                    .addOperator(ExpressionOperator.Op.OR)
+                        .addTerm(FindStreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(999L))
+                        .addTerm(FindStreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(7L))
+                        .addTerm(FindStreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(77L))
+                        .end()
+                    .addOperator(ExpressionOperator.Op.OR)
+                        .addTerm(FindStreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, Long.toString(88L))
+                        .addTerm(FindStreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, Long.toString(889L))
+                        .end()
+                    .addTerm(FindStreamDataSource.CREATED, ExpressionTerm.Condition.BETWEEN, createdPeriod)
+                    .end()
+                .build();
 
         // Test Writing
         StreamProcessorFilter streamProcessorFilter = new StreamProcessorFilter();
-        streamProcessorFilter.setFindStreamCriteria(criteria1);
+        streamProcessorFilter.setQueryData(queryData1);
         streamProcessorFilter = MARSHALLER.marshal(streamProcessorFilter);
         final String xml1 = streamProcessorFilter.getData();
 
@@ -61,10 +70,10 @@ public class TestXMLMarshallUtil extends StroomUnitTest {
     public void testShort() {
         StreamProcessorFilter streamProcessorFilter = new StreamProcessorFilter();
         streamProcessorFilter.setData(
-                "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><FindStreamCriteria></FindStreamCriteria>");
+                "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><QueryData></QueryData>");
         streamProcessorFilter = MARSHALLER.unmarshal(streamProcessorFilter);
 
-        final FindStreamCriteria criteria = streamProcessorFilter.getFindStreamCriteria();
-        Assert.assertNotNull(criteria);
+        final QueryData queryData = streamProcessorFilter.getQueryData();
+        Assert.assertNotNull(queryData);
     }
 }

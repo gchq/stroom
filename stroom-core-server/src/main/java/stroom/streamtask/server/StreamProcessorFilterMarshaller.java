@@ -17,21 +17,21 @@
 package stroom.streamtask.server;
 
 import stroom.entity.server.EntityMarshaller;
-import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.StreamProcessorFilter;
 
-class StreamProcessorFilterMarshaller extends EntityMarshaller<StreamProcessorFilter, FindStreamCriteria> {
+class StreamProcessorFilterMarshaller extends EntityMarshaller<StreamProcessorFilter, QueryData> {
     StreamProcessorFilterMarshaller() {
     }
 
     @Override
-    public FindStreamCriteria getObject(final StreamProcessorFilter entity) {
-        return entity.getFindStreamCriteria();
+    public QueryData getObject(final StreamProcessorFilter entity) {
+        return entity.getQueryData();
     }
 
     @Override
-    public void setObject(final StreamProcessorFilter entity, final FindStreamCriteria object) {
-        entity.setFindStreamCriteria(object);
+    public void setObject(final StreamProcessorFilter entity, final QueryData object) {
+        entity.setQueryData(object);
     }
 
     @Override
@@ -45,8 +45,8 @@ class StreamProcessorFilterMarshaller extends EntityMarshaller<StreamProcessorFi
     }
 
     @Override
-    protected Class<FindStreamCriteria> getObjectType() {
-        return FindStreamCriteria.class;
+    protected Class<QueryData> getObjectType() {
+        return QueryData.class;
     }
 
     @Override

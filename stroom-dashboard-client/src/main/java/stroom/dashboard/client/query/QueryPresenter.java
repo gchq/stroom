@@ -411,9 +411,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     private void openEditor(final QueryData queryData, final DocRef pipeline) {
         // Now create the processor filter using the find stream criteria.
-        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
-        findStreamCriteria.setQueryData(queryData);
-        dispatcher.exec(new CreateProcessorAction(pipeline, findStreamCriteria, true, 1)).onSuccess(streamProcessorFilter -> CreateProcessorEvent.fire(QueryPresenter.this, streamProcessorFilter));
+        dispatcher.exec(new CreateProcessorAction(pipeline, queryData, true, 1)).onSuccess(streamProcessorFilter -> CreateProcessorEvent.fire(QueryPresenter.this, streamProcessorFilter));
     }
 
     private void showWarnings() {

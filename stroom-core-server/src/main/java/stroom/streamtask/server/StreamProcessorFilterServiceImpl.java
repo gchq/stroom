@@ -29,6 +29,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.security.Secured;
 import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.StreamProcessor;
@@ -63,17 +64,16 @@ public class StreamProcessorFilterServiceImpl
     }
 
     @Override
-    public void addFindStreamCriteria(final StreamProcessor streamProcessor, final int priority,
-                                      final FindStreamCriteria findStreamCriteria) {
-        // This is always NA as we filter by status on during task creation.
-        findStreamCriteria.setStatusSet(null);
+    public void addFindStreamCriteria(final StreamProcessor streamProcessor,
+                                      final int priority,
+                                      final QueryData queryData) {
 
         StreamProcessorFilter filter = new StreamProcessorFilter();
         // Blank tracker
         filter.setStreamProcessorFilterTracker(new StreamProcessorFilterTracker());
         filter.setPriority(priority);
         filter.setStreamProcessor(streamProcessor);
-        filter.setFindStreamCriteria(findStreamCriteria);
+        filter.setQueryData(queryData);
         filter.setEnabled(true);
         filter = marshaller.marshal(filter);
         // Save initial tracker
@@ -84,9 +84,9 @@ public class StreamProcessorFilterServiceImpl
 
     @Override
     public StreamProcessorFilter createNewFilter(final PipelineEntity pipelineEntity,
-                                                 final FindStreamCriteria findStreamCriteria, final boolean enabled, final int priority) {
-        // This is always NA,
-        findStreamCriteria.setStatusSet(null);
+                                                 final QueryData queryData,
+                                                 final boolean enabled,
+                                                 final int priority) {
 
         // First see if we can find a stream processor for this pipeline.
         final FindStreamProcessorCriteria findStreamProcessorCriteria = new FindStreamProcessorCriteria(pipelineEntity);
@@ -107,7 +107,7 @@ public class StreamProcessorFilterServiceImpl
         filter.setPriority(priority);
         filter.setStreamProcessorFilterTracker(new StreamProcessorFilterTracker());
         filter.setStreamProcessor(processor);
-        filter.setFindStreamCriteria(findStreamCriteria);
+        filter.setQueryData(queryData);
         filter = marshaller.marshal(filter);
         // Save initial tracker
         getEntityManager().saveEntity(filter.getStreamProcessorFilterTracker());

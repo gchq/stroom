@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
-import stroom.entity.server.QueryDataLogUtil;
 import stroom.entity.server.util.EntityServiceLogUtil;
 import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.HqlBuilder;
@@ -1450,10 +1449,6 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         CriteriaLoggingUtil.appendRangeTerm(items, "statusPeriod", findStreamCriteria.getStatusPeriod());
         appendStreamAttributeConditionList(items, "attributeConditionList",
                 findStreamCriteria.getAttributeConditionList());
-
-        if (findStreamCriteria.getQueryData() != null) {
-            QueryDataLogUtil.appendExpressionItem(items, null, findStreamCriteria.getQueryData().getExpression());
-        }
 
         CriteriaLoggingUtil.appendPageRequest(items, findStreamCriteria.getPageRequest());
     }

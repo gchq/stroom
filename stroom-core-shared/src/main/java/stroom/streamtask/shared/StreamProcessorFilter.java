@@ -19,7 +19,9 @@ package stroom.streamtask.shared;
 import stroom.entity.shared.AuditedEntity;
 import stroom.entity.shared.ExternalFile;
 import stroom.entity.shared.SQLNameConstants;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.shared.QueryData;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -68,7 +70,7 @@ public class StreamProcessorFilter extends AuditedEntity {
     private String data;
     private StreamProcessor streamProcessor;
     private StreamProcessorFilterTracker streamProcessorFilterTracker;
-    private FindStreamCriteria findStreamCriteria;
+    private QueryData queryData;
 
     /**
      * The higher the number the higher the priority. So 1 is LOW, 10 is medium,
@@ -134,12 +136,12 @@ public class StreamProcessorFilter extends AuditedEntity {
 
     @Transient
     @XmlTransient
-    public FindStreamCriteria getFindStreamCriteria() {
-        return findStreamCriteria;
+    public QueryData getQueryData() {
+        return queryData;
     }
 
-    public void setFindStreamCriteria(final FindStreamCriteria findStreamCriteria) {
-        this.findStreamCriteria = findStreamCriteria;
+    public void setQueryData(final QueryData queryData) {
+        this.queryData = queryData;
     }
 
     @Column(name = ENABLED, nullable = false)
@@ -153,6 +155,6 @@ public class StreamProcessorFilter extends AuditedEntity {
 
     @Override
     public String toString() {
-        return "[" + priority + "] - " + findStreamCriteria.toString();
+        return "[" + priority + "] - " + queryData.toString();
     }
 }

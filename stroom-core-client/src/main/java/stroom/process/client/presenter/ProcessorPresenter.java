@@ -186,73 +186,17 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 
             final StreamProcessorFilterRow row = (StreamProcessorFilterRow) selectedProcessor;
             final StreamProcessorFilter streamProcessorFilter = row.getEntity();
-            final FindStreamCriteria findStreamCriteria = streamProcessorFilter.getFindStreamCriteria();
-            setData(findStreamCriteria);
+            final QueryData queryData = streamProcessorFilter.getQueryData();
+            setData(queryData);
         }
     }
 
-    private void setData(final FindStreamCriteria findStreamCriteria) {
+    private void setData(final QueryData queryData) {
         expressionPresenter.read(null);
         // getView().setDetails("");
 
-        if (findStreamCriteria != null) {
-            if (findStreamCriteria.getQueryData() != null) {
-                final QueryData queryData = findStreamCriteria.getQueryData();
-                final ExpressionOperator expression = queryData.getExpression();
-                final DocRef dataSourceRef = queryData.getDataSource();
-
-                if (expression != null && dataSourceRef != null) {
-                    dispatcher.exec(new DocumentServiceReadAction<NamedEntity>(dataSourceRef)).onSuccess(result -> {
-                        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
-                        builder.addTerm("Data Source", Condition.EQUALS, result.getName());
-
-                        builder.addOperators(expression);
-
-                        expressionPresenter.read(builder.build());
-                    });
-                } else {
-                    expressionPresenter.read(expression);
-                }
-            } else {
-                final SetId feedIncludeSetId = new SetId("Feed Include", Feed.ENTITY_TYPE);
-                final SetId feedExcludeSetId = new SetId("Feed Exclude", Feed.ENTITY_TYPE);
-                final SetId streamTypeSetId = new SetId("Stream Type", StreamType.ENTITY_TYPE);
-
-                final SharedMap<SetId, EntityIdSet<?>> entitySetMap = new SharedMap<>();
-                if (findStreamCriteria.getFeeds() != null) {
-                    if (findStreamCriteria.getFeeds().getInclude() != null) {
-                        entitySetMap.put(feedIncludeSetId, findStreamCriteria.getFeeds().getInclude());
-                    }
-                    if (findStreamCriteria.getFeeds().getExclude() != null) {
-                        entitySetMap.put(feedExcludeSetId, findStreamCriteria.getFeeds().getExclude());
-                    }
-                }
-                entitySetMap.put(streamTypeSetId, findStreamCriteria.getStreamTypeIdSet());
-
-                // Load entities.
-                dispatcher.exec(new LoadEntityIdSetAction(entitySetMap)).onSuccess(result -> {
-                    final DocRefs feedsInclude = result.get(feedIncludeSetId);
-                    final DocRefs feedsExclude = result.get(feedExcludeSetId);
-                    final DocRefs streamTypes = result.get(streamTypeSetId);
-
-                    final ExpressionOperator.Builder operator = new ExpressionOperator.Builder(Op.AND);
-                    addEntityListTerm(operator, feedsInclude, "Feed");
-
-                    if (feedsExclude != null && feedsExclude.iterator().hasNext()) {
-                        final ExpressionOperator.OBuilder<?> not = operator.addOperator(Op.NOT);
-                        addEntityListTerm(not, feedsExclude, "Feed");
-                    }
-
-                    addEntityListTerm(operator, streamTypes, "Stream Type");
-                    addIdTerm(operator, findStreamCriteria.getStreamIdSet(), "Stream Id");
-                    addIdTerm(operator, findStreamCriteria.getParentStreamIdSet(), "Parent Stream Id");
-                    addPeriodTerm(operator, findStreamCriteria.getCreatePeriod(), "Creation time");
-                    addPeriodTerm(operator, findStreamCriteria.getEffectivePeriod(), "Effective time");
-
-                    expressionPresenter.read(operator.build());
-                });
-            }
-        }
+        final ExpressionOperator expression = queryData.getExpression();
+        expressionPresenter.read(expression);
     }
 
     private void addEntityListTerm(final ExpressionOperator.ABuilder<?, ?> operator, final DocRefs entities,
@@ -352,26 +296,22 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         }
     }
 
-    private ExpressionOperator getExpressionFromCriteria(final StreamProcessorFilter filter) {
+    private ExpressionOperator getExpressionFromQueryData(final StreamProcessorFilter filter) {
         if (null != filter) {
-            final FindStreamCriteria criteria = filter.getFindStreamCriteria();
-            if (criteria != null) {
-                final QueryData queryData = criteria.getQueryData();
-                if (null != queryData) {
-                    return queryData.getExpression();
-                }
+            final QueryData queryData = filter.getQueryData();
+            if (null != queryData) {
+                return queryData.getExpression();
             }
         }
 
         return new ExpressionOperator.Builder(Op.AND).build();
     }
 
-    private FindStreamCriteria getCriteriaFromExpression(final ExpressionOperator expressionOperator) {
-        final FindStreamCriteria criteria = new FindStreamCriteria();
+    private QueryData getQueryDataFromExpression(final ExpressionOperator expressionOperator) {
         final QueryData queryData = new QueryData();
         queryData.setExpression(expressionOperator);
-        criteria.setQueryData(queryData);
-        return criteria;
+        queryData.setDataSource(QueryData.STREAM_STORE_DOC_REF);
+        return queryData;
     }
 
     private void addOrEditProcessor(final StreamProcessorFilter filter) {
@@ -379,25 +319,25 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         // Give it a default rule
 
         editExpressionPresenter.init(null, null, FindStreamDataSource.getFields());
-        editExpressionPresenter.read(getExpressionFromCriteria(filter));
+        editExpressionPresenter.read(getExpressionFromQueryData(filter));
 
         final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
                     final ExpressionOperator findStreamExpression = editExpressionPresenter.write();
-                    final FindStreamCriteria findStreamCriteria = getCriteriaFromExpression(findStreamExpression);
+                    final QueryData queryData = getQueryDataFromExpression(findStreamExpression);
 
                     if (filter != null) {
                         ConfirmEvent.fire(ProcessorPresenter.this,
                                 "You are about to update an existing filter. Any streams that might now be included by this filter but are older than the current tracker position will not be processed. Are you sure you wish to do this?",
                                 result -> {
                                     if (result) {
-                                        validateFeed(filter, findStreamCriteria);
+                                        validateFeed(filter, queryData);
                                     }
                                 });
                     } else {
-                        validateFeed(null, findStreamCriteria);
+                        validateFeed(null, queryData);
                     }
 
                 } else {
@@ -422,8 +362,8 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         }
     }
 
-    private void validateFeed(final StreamProcessorFilter filter, final FindStreamCriteria findStreamCriteria) {
-        if (findStreamCriteria.obtainStreamIdSet().size() == 0
+    private void validateFeed(final StreamProcessorFilter filter, final QueryData queryData) {
+        /*if (findStreamCriteria.obtainStreamIdSet().size() == 0
                 && findStreamCriteria.obtainParentStreamIdSet().size() == 0
                 && findStreamCriteria.obtainFeeds().obtainInclude().getSet().size() == 0
                 && findStreamCriteria.obtainFeeds().obtainExclude().getSet().size() == 0) {
@@ -433,32 +373,17 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                             validateStreamType(filter, findStreamCriteria);
                         }
                     });
-        } else {
-            validateStreamType(filter, findStreamCriteria);
-        }
-    }
-
-    private void validateStreamType(final StreamProcessorFilter filter, final FindStreamCriteria findStreamCriteria) {
-        if (findStreamCriteria.obtainStreamIdSet().size() == 0
-                && findStreamCriteria.obtainParentStreamIdSet().size() == 0
-                && findStreamCriteria.obtainStreamTypeIdSet().size() == 0) {
-            ConfirmEvent.fire(ProcessorPresenter.this,
-                    "You are about to process all stream types. Are you sure you wish to do this?",
-                    result -> {
-                        if (result) {
-                            createOrUpdateProcessor(filter, findStreamCriteria);
-                        }
-                    });
-        } else {
-            createOrUpdateProcessor(filter, findStreamCriteria);
-        }
+        } else {*/
+        // TODO I will need to trawl through the expression and check how greedy it is
+        createOrUpdateProcessor(filter, queryData);
+        //}
     }
 
     private void createOrUpdateProcessor(final StreamProcessorFilter filter,
-                                         final FindStreamCriteria findStreamCriteria) {
+                                         final QueryData queryData) {
         if (filter != null) {
             // Now update the processor filter using the find stream criteria.
-            filter.setFindStreamCriteria(findStreamCriteria);
+            filter.setQueryData(queryData);
             dispatcher.exec(new EntityServiceSaveAction<>(filter)).onSuccess(result -> {
                 refresh(result);
                 HidePopupEvent.fire(ProcessorPresenter.this, editExpressionPresenter);
@@ -466,7 +391,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 
         } else {
             // Now create the processor filter using the find stream criteria.
-            dispatcher.exec(new CreateProcessorAction(DocRefUtil.create(pipelineEntity), findStreamCriteria, false, 10)).onSuccess(result -> {
+            dispatcher.exec(new CreateProcessorAction(DocRefUtil.create(pipelineEntity), queryData, false, 10)).onSuccess(result -> {
                 refresh(result);
                 HidePopupEvent.fire(ProcessorPresenter.this, editExpressionPresenter);
             });

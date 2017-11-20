@@ -43,7 +43,7 @@ public class CreateProcessorHandler extends AbstractTaskHandler<CreateProcessorA
     @Override
     public StreamProcessorFilter exec(final CreateProcessorAction action) {
         final PipelineEntity pipelineEntity = pipelineService.loadByUuid(action.getPipeline().getUuid());
-        return streamProcessorFilterService.createNewFilter(pipelineEntity, action.getFindStreamCriteria(),
+        return streamProcessorFilterService.createNewFilter(pipelineEntity, action.getQueryData(),
                 action.isEnabled(), action.getPriority());
     }
 }
