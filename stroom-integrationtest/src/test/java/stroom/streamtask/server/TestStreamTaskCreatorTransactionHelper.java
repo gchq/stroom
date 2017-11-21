@@ -16,13 +16,9 @@
 
 package stroom.streamtask.server;
 
-import javax.annotation.Resource;
-import javax.sql.DataSource;
-
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonTestControl;
 import stroom.CommonTestScenarioCreator;
@@ -35,6 +31,7 @@ import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamTask;
 import stroom.util.logging.StroomLogger;
 
+import javax.annotation.Resource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Duration;
@@ -46,7 +43,9 @@ import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
 public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrationTest {
+
     public static final StroomLogger LOGGER = StroomLogger.getLogger(TestStreamTaskCreatorTransactionHelper.class);
+
     @Resource
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Resource
@@ -57,8 +56,6 @@ public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrat
     private StreamTaskDeleteExecutor streamTaskDeleteExecutor;
     @Resource
     private StroomEntityManager stroomEntityManager;
-//    @Resource
-//    private DataSource dataSource;
 
     @Test
     public void testBasic() {

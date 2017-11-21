@@ -16,13 +16,15 @@
 
 package stroom.entity.server.util;
 
+import com.google.common.base.Preconditions;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
 import stroom.entity.shared.SummaryDataRow;
+import stroom.util.collections.BatchingIterator;
 import stroom.util.config.StroomProperties;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 
 import java.sql.Connection;
@@ -33,7 +35,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ConnectionUtil {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(ConnectionUtil.class);
@@ -42,6 +47,8 @@ public class ConnectionUtil {
     public static final String JDBC_DRIVER_URL = "stroom.jdbcDriverUrl";
     public static final String JDBC_DRIVER_USERNAME = "stroom.jdbcDriverUsername";
     public static final String JDBC_DRIVER_PASSWORD = "stroom.jdbcDriverPassword";
+    public static final String MULTI_INSERT_BATCH_SIZE = "stroom.databaseMultiInsertMaxBatchSize";
+    public static final int MULTI_INSERT_BATCH_SIZE_DEFAULT = 500;
 
     public static final Connection getConnection() throws SQLException {
         final String driverClassname = StroomProperties.getProperty(JDBC_DRIVER_CLASS_NAME);
@@ -66,6 +73,10 @@ public class ConnectionUtil {
         return DriverManager.getConnection(driverUrl, driverUsername, driverPassword);
     }
 
+    public static final int getMultiInsertMaxBatchSize() {
+        return StroomProperties.getIntProperty(MULTI_INSERT_BATCH_SIZE, MULTI_INSERT_BATCH_SIZE_DEFAULT);
+    }
+
     public static final void close(final Connection connection) {
         if (connection != null) {
             try {
@@ -78,7 +89,7 @@ public class ConnectionUtil {
 
     public static boolean tableExists(final Connection connection, final String tableName) throws SQLException {
         final DatabaseMetaData databaseMetaData = connection.getMetaData();
-        final ResultSet resultSet = databaseMetaData.getTables(null, null, tableName, new String[] { "TABLE" });
+        final ResultSet resultSet = databaseMetaData.getTables(null, null, tableName, new String[]{"TABLE"});
         final boolean hasTable = resultSet.next();
         resultSet.close();
         return hasTable;
@@ -130,6 +141,126 @@ public class ConnectionUtil {
         }
     }
 
+    /**
+     * @param connection  The DB Connection
+     * @param tableName   The name of the table, case sensitive if applicable
+     * @param columnNames List of columns to insert values into
+     * @param argsList    A List of args (in columnName order), one list of args for each row, will
+     *                    be inserted in list order
+     * @return The generated IDs for each row inserted
+     */
+    @edu.umd.cs.findbugs.annotations.SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
+    public static List<Long> executeMultiInsert(final Connection connection,
+                                                final String tableName,
+                                                final List<String> columnNames,
+                                                final List<List<Object>> argsList) {
+        Preconditions.checkNotNull(tableName);
+        Preconditions.checkNotNull(columnNames);
+        Preconditions.checkNotNull(argsList);
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("executeMultiInsert %s, [%s], row count: %s", tableName, columnNames, argsList.size());
+        }
+        final int columnCount = columnNames.size();
+
+        if (argsList.size() > 0) {
+            boolean areAllArgsCorrectLength = argsList.stream()
+                    .allMatch(args -> args.size() == columnCount);
+
+            if (!areAllArgsCorrectLength) {
+                String arsSizes = argsList.stream()
+                        .map(args -> String.valueOf(args.size()))
+                        .distinct()
+                        .collect(Collectors.joining(","));
+
+                throw new RuntimeException(String.format("Not all args match the number of columns [%s], distinct args counts: [%s]",
+                        columnCount, arsSizes));
+            }
+
+            int batchSize = getMultiInsertMaxBatchSize();
+
+            //batch up the inserts
+            final List<Long> ids = BatchingIterator.batchedStreamOf(argsList.stream(), batchSize)
+                    .flatMap(argsBatch -> {
+                        List<Long> batchIds = executeMultiInsertBatch(connection,
+                                tableName,
+                                columnNames,
+                                argsBatch);
+
+                        return batchIds.stream();
+                    })
+                    .collect(Collectors.toList());
+
+            return ids;
+
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
+    /**
+     * @param connection  The DB Connection
+     * @param tableName   The name of the table, case sensitive if applicable
+     * @param columnNames List of columns to insert values into
+     * @param argsList    A List of args (in columnName order), one list of args for each row, will
+     *                    be inserted in list order
+     * @return The generated IDs for each row inserted
+     */
+    public static List<Long> executeMultiInsertBatch(final Connection connection,
+                                                     final String tableName,
+                                                     final List<String> columnNames,
+                                                     final List<List<Object>> argsList) {
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("executeMultiInsertBatch %s, [%s], row count: %s", tableName, columnNames, argsList.size());
+        }
+
+        if (argsList.size() > 0) {
+
+            //build up the sql stmt
+            final StringBuilder stringBuilder = new StringBuilder("INSERT INTO ")
+                    .append(tableName)
+                    .append(" VALUES ");
+
+            //build args for one row
+            final String argsStr = "(" + columnNames.stream()
+                    .map(c -> "?")
+                    .collect(Collectors.joining(",")) + ")";
+
+            //combine all row's args together
+            final String argsSection = argsList.stream()
+                    .map(args -> argsStr)
+                    .collect(Collectors.joining(","));
+
+            final String sql = stringBuilder.append(argsSection).toString();
+
+            final List<Object> allArgs = argsList.stream()
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.toList());
+
+            final List<Long> keyList = new ArrayList<>();
+            final LogExecutionTime logExecutionTime = new LogExecutionTime();
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                PreparedStatementUtil.setArguments(preparedStatement, allArgs);
+                final int result = preparedStatement.executeUpdate();
+
+                try (ResultSet keySet = preparedStatement.getGeneratedKeys()) {
+                    while (keySet.next()) {
+                        keyList.add(keySet.getLong(1));
+                    }
+                }
+
+                log(logExecutionTime, result, sql, allArgs);
+
+                return keyList;
+            } catch (final SQLException sqlException) {
+                LOGGER.error("executeUpdate() - " + sql + " " + allArgs, sqlException);
+                throw new RuntimeException(String.format("Error executing sql: %s", sql), sqlException);
+            }
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
     @edu.umd.cs.findbugs.annotations.SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static Long executeQueryLongResult(final Connection connection, final String sql, final List<Object> args)
             throws SQLException {
@@ -156,9 +287,9 @@ public class ConnectionUtil {
 
     @edu.umd.cs.findbugs.annotations.SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static BaseResultList<SummaryDataRow> executeQuerySummaryDataResult(final Connection connection,
-            final String sql, final int numberKeys, final List<Object> args,
-            final List<? extends HasPrimitiveValue> stats,
-            final PrimitiveValueConverter<? extends HasPrimitiveValue> converter) throws SQLException {
+                                                                               final String sql, final int numberKeys, final List<Object> args,
+                                                                               final List<? extends HasPrimitiveValue> stats,
+                                                                               final PrimitiveValueConverter<? extends HasPrimitiveValue> converter) throws SQLException {
         LOGGER.debug(">>> %s", sql);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         final ArrayList<SummaryDataRow> summaryData = new ArrayList<>();
@@ -191,7 +322,7 @@ public class ConnectionUtil {
 
     @edu.umd.cs.findbugs.annotations.SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static ResultSet executeQueryResultSet(final Connection connection, final String sql,
-            final List<Object> args) throws SQLException {
+                                                  final List<Object> args) throws SQLException {
         LOGGER.debug(">>> %s", sql);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         try {
@@ -210,7 +341,7 @@ public class ConnectionUtil {
     }
 
     private static void log(final LogExecutionTime logExecutionTime, final Object result, final String sql,
-            final List<Object> args) {
+                            final List<Object> args) {
         final long time = logExecutionTime.getDuration();
         if (LOGGER.isDebugEnabled() || time > 1000) {
             final String message = "<<< " + sql + " " + args + " took " + ModelStringUtil.formatDurationString(time)
@@ -222,4 +353,5 @@ public class ConnectionUtil {
             }
         }
     }
+
 }
