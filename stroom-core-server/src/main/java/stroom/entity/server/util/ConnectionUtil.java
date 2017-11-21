@@ -205,10 +205,10 @@ public class ConnectionUtil {
      *                    be inserted in list order
      * @return The generated IDs for each row inserted
      */
-    public static List<Long> executeMultiInsertBatch(final Connection connection,
-                                                     final String tableName,
-                                                     final List<String> columnNames,
-                                                     final List<List<Object>> argsList) {
+    private static List<Long> executeMultiInsertBatch(final Connection connection,
+                                                      final String tableName,
+                                                      final List<String> columnNames,
+                                                      final List<List<Object>> argsList) {
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("executeMultiInsertBatch %s, [%s], row count: %s", tableName, columnNames, argsList.size());
