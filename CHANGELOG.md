@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#497** : Change stream task creation to use straight JDBC rather than hibernate for inserts and use a configurable batch size for the inserts
+
 ## [v5.0-beta.62] - 2017-11-16
 
 * Issue **#494** : Fix problem of proxy aggregation never stopping if more files exist
