@@ -22,8 +22,10 @@ public class TestStroomElasticProducer {
     @Ignore("You may use this to test the local instance of Elastic.")
     public void testManualSend() {
         // Given
+        final String recordId = UUID.randomUUID().toString();
         StroomElasticProducerFactoryImpl stroomElasticProducerFactory = new StroomElasticProducerFactoryImpl();
         ConnectorProperties elasticProps = new ConnectorPropertiesEmptyImpl();
+        elasticProps.put(StroomElasticProducer.ELASTIC_HTTP_URL, "http://localhost:9200");
         elasticProps.put(StroomElasticProducer.TRANSPORT_HOSTS, "localhost:9300");
         elasticProps.put(StroomElasticProducer.CLUSTER_NAME, "docker-cluster");
         StroomElasticProducer stroomElasticProducer = stroomElasticProducerFactory.getConnector(ELASTIC_VERSION, elasticProps);
@@ -38,7 +40,7 @@ public class TestStroomElasticProducer {
         record.put(STAT_TIME, new Date().toString());
 
         // When
-        stroomElasticProducer.send("statistics", "line", record, DEFAULT_CALLBACK);
+        stroomElasticProducer.send(recordId, "statistics", "line", record, DEFAULT_CALLBACK);
 
         // Then: manually check your Elastic instances 'statistics' index for 'test'
     }

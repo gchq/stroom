@@ -52,6 +52,7 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
     private final LocationFactoryProxy locationFactory;
     private final ErrorReceiverProxy errorReceiverProxy;
 
+    private String idFieldName;
     private DocRef indexRef;
 
     private final ElasticIndexCache elasticIndexCache;
@@ -72,6 +73,11 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
         this.elasticIndexCache = elasticIndexCache;
         this.errorReceiverProxy = errorReceiverProxy;
         this.elasticProducerFactoryService = elasticProducerFactoryService;
+    }
+
+    @PipelineProperty(description = "The field name to use as the unique ID for records.")
+    public void setIdFieldName(final String value) {
+        this.idFieldName = value;
     }
 
     @PipelineProperty(description = "The elastic index to send records to.")
@@ -142,7 +148,8 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         if (RECORD.equals(localName)) {
-            elasticProducer.send(indexConfig.getIndexName(),
+            elasticProducer.send(idFieldName,
+                    indexConfig.getIndexName(),
                     indexConfig.getIndexedType(),
                     propertiesToIndex,
                     this::error);
@@ -154,8 +161,10 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
 
     @Override
     public void endProcessing() {
-        elasticProducer.shutdown();
-        elasticProducer = null;
+        if (null != elasticProducer) {
+            elasticProducer.shutdown();
+            elasticProducer = null;
+        }
 
         super.endProcessing();
     }

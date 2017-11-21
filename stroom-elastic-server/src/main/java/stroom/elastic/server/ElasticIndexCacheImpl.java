@@ -4,9 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.mashape.unirest.http.HttpResponse;
-import com.mashape.unirest.http.Unirest;
-import com.mashape.unirest.http.exceptions.UnirestException;
 import org.apache.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;
@@ -17,7 +14,11 @@ import stroom.util.cache.CacheManager;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
-import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -37,21 +38,41 @@ public class ElasticIndexCacheImpl implements ElasticIndexCache {
                 String.format("%s/%s", propertyService.getProperty(ClientProperties.URL_ELASTIC_EXPLORER), uuid);
 
         final CacheLoader<DocRef, ElasticIndexConfig> cacheLoader = CacheLoader.from(k -> {
+            HttpURLConnection connection = null;
+
             try {
-                final HttpResponse<String> response = Unirest
-                        .get(explorerFetchUrl.apply(k.getUuid()))
-                        .header("accept", MediaType.APPLICATION_JSON)
-                        .asString();
-                if (response.getStatus() != HttpStatus.SC_OK) {
+                //Create connection
+                URL url = new URL(explorerFetchUrl.apply(k.getUuid()));
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+                connection.setRequestProperty("accept", MediaType.APPLICATION_JSON);
+
+                //Get Response
+                final InputStream is = connection.getInputStream();
+                final BufferedReader rd = new BufferedReader(new InputStreamReader(is));
+                final StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = rd.readLine()) != null) {
+                    response.append(line);
+                    response.append('\r');
+                }
+                rd.close();
+                final String body = response.toString();
+
+                if (connection.getResponseCode() != HttpStatus.SC_OK) {
                     final String msg = String.format("Invalid status returned by Elastic Explorer Service: %d - %s ",
-                            response.getStatus(),
-                            response.getBody());
+                            connection.getResponseCode(),
+                            body);
                     throw new RuntimeException(msg);
                 }
 
-                return objectMapper.readValue(response.getBody(), ElasticIndexConfig.class);
-            } catch (UnirestException | IOException e) {
+                return objectMapper.readValue(body, ElasticIndexConfig.class);
+            } catch (Exception e) {
                 throw new LoggedException(String.format("Failed to retrieve elastic index config for %s", k.getUuid()), e);
+            } finally {
+                if (connection != null) {
+                    connection.disconnect();
+                }
             }
         });
 
