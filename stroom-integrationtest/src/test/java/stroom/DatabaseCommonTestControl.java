@@ -69,11 +69,14 @@ import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterTracker;
 import stroom.streamtask.shared.StreamTask;
 import stroom.test.StroomCoreServerTestFileUtil;
+import stroom.util.logging.StroomLogger;
 import stroom.visualisation.shared.Visualisation;
 import stroom.xmlschema.shared.XMLSchema;
 
 import javax.annotation.Resource;
 import java.io.File;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -85,6 +88,8 @@ import java.util.Map;
  */
 @Component
 public class DatabaseCommonTestControl implements CommonTestControl, ApplicationContextAware {
+    private static final StroomLogger LOGGER = StroomLogger.getLogger(DatabaseCommonTestControl.class);
+
     @Resource
     private VolumeService volumeService;
     @Resource
@@ -117,11 +122,13 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
 
     @Override
     public void setup() {
+        Instant startTime = Instant.now();
         nodeConfig.setup();
         createStreamAttributeKeys();
 
         // Ensure we can create tasks.
         streamTaskCreator.startup();
+        LOGGER.info("test environment setup completed in %s", Duration.between(startTime, Instant.now()));
     }
 
     /**
@@ -129,6 +136,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
      */
     @Override
     public void teardown() {
+        Instant startTime = Instant.now();
         deleteEntity(StreamTask.class);
 
         deleteEntity(StreamVolume.class);
@@ -203,6 +211,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
         for (final Clearable clearable : clearableBeanMap.values()) {
             clearable.clear();
         }
+        LOGGER.info("test environment teardown completed in %s", Duration.between(startTime, Instant.now()));
     }
 
     public void createStreamAttributeKeys() {
