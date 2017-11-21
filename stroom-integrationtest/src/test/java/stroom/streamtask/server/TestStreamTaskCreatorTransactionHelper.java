@@ -101,7 +101,7 @@ public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrat
 
     @Ignore //performance test to compare time
     @Test
-    public void testMultiInsert() throws SQLException {
+    public void testMultiInsertPerformance() throws SQLException {
 
         /*
         create table insert_test (
