@@ -225,6 +225,7 @@ public class StreamTaskCreatorTransactionHelper {
 
                 final List<List<Object>> allArgs = new ArrayList<>();
 
+
                 for (final Entry<Stream, InclusiveRanges> entry : streams.entrySet()) {
                     final Stream stream = entry.getKey();
                     final InclusiveRanges eventRanges = entry.getValue();
@@ -276,14 +277,15 @@ public class StreamTaskCreatorTransactionHelper {
                     allArgs.add(rowArgs);
                 }
 
-
-                // Save them using the existing transaction
+                // Save the stream tasks using the existing transaction
                 final Connection connection = DataSourceUtils.getConnection(dataSource);
-                ConnectionUtil.executeMultiInsert(
+                try (final ConnectionUtil.MultiInsertExecutor multiInsertExecutor = new ConnectionUtil.MultiInsertExecutor(
                         connection,
                         StreamTask.TABLE_NAME,
-                        columnNames,
-                        allArgs);
+                        columnNames)) {
+
+                    multiInsertExecutor.execute(allArgs);
+                }
 
                 totalTasksCreated = allArgs.size();
 

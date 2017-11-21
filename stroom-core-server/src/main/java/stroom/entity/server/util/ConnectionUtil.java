@@ -27,6 +27,7 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -37,8 +38,12 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class ConnectionUtil {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(ConnectionUtil.class);
@@ -147,6 +152,7 @@ public class ConnectionUtil {
      * cache a query plan for each unique query. An insert with two rows is considered different to
      * an insert with three rows so the cache quickly fills up with hugh insert queries, each with
      * MANY param objects.
+     *
      * @param connection  The DB Connection
      * @param tableName   The name of the table, case sensitive if applicable
      * @param columnNames List of columns to insert values into
@@ -221,7 +227,7 @@ public class ConnectionUtil {
 
         if (argsList.size() > 0) {
 
-            String columnNamesStr = columnNames.stream()
+            final String columnNamesStr = columnNames.stream()
                     .collect(Collectors.joining(","));
             //build up the sql stmt
             final StringBuilder stringBuilder = new StringBuilder("INSERT INTO ")
@@ -360,6 +366,193 @@ public class ConnectionUtil {
             } else {
                 LOGGER.debug(message);
             }
+        }
+    }
+
+
+    /**
+     * Class for doing INSERT INTO x VALUES (...), (...), ... (...) type statements,
+     * with a manageable batch size and re-using the prepared statements.
+     * This is to avoid using a hibernate native sql approach that will
+     * cache a query plan for each unique query. An insert with two rows is considered different to
+     * an insert with three rows so the cache quickly fills up with hugh insert queries, each with
+     * MANY param objects.
+     */
+    @NotThreadSafe
+    public static class MultiInsertExecutor implements AutoCloseable {
+
+        private final Map<Integer, PreparedStatement> preparedStatements = new HashMap<>();
+        private final Connection connection;
+        private final int columnCount;
+        private final int maxbatchSize;
+        private final String sqlHeader;
+        private final String argsStr;
+
+        public MultiInsertExecutor(final Connection connection,
+                                   final String tableName,
+                                   final List<String> columnNames) {
+
+            this.connection = Preconditions.checkNotNull(connection);
+            Preconditions.checkNotNull(tableName);
+            Preconditions.checkNotNull(columnNames);
+            this.columnCount = columnNames.size();
+            this.maxbatchSize = getMultiInsertMaxBatchSize();
+
+            final String columnNamesStr = columnNames.stream()
+                    .collect(Collectors.joining(","));
+
+            //build up the sql stmt
+            final StringBuilder stringBuilder = new StringBuilder("INSERT INTO ")
+                    .append(tableName)
+                    .append(" (")
+                    .append(columnNamesStr)
+                    .append(") VALUES ");
+
+            sqlHeader = stringBuilder.toString();
+
+            //build args for one row
+            this.argsStr = "(" + columnNames.stream()
+                    .map(c -> "?")
+                    .collect(Collectors.joining(",")) + ")";
+        }
+
+
+        public void execute(final List<List<Object>> argsList) {
+            execute(argsList, false);
+        }
+
+        public List<Long> executeAndFetchKeys(final List<List<Object>> argsList) {
+            return execute(argsList, true);
+        }
+
+        private List<Long> execute(final List<List<Object>> argsList,
+                                   boolean areKeysRequired) {
+
+            if (argsList.size() > 0) {
+                validateArgsList(argsList);
+
+                //batch up the inserts
+                final List<Long> ids = BatchingIterator.batchedStreamOf(argsList.stream(), maxbatchSize)
+                        .flatMap(argsBatch -> {
+                            List<Long> batchIds = executeBatch(argsBatch, areKeysRequired);
+                            return batchIds.stream();
+                        })
+                        .collect(Collectors.toList());
+
+                return ids;
+
+            } else {
+                return Collections.emptyList();
+            }
+        }
+
+        private PreparedStatement getOrCreatePreparedStatement(final int batchSize,
+                                                               boolean areKeysRequired) {
+
+            PreparedStatement preparedStatement = preparedStatements.get(batchSize);
+            if (preparedStatement == null) {
+                preparedStatement = createPreparedStatement(batchSize, areKeysRequired);
+                preparedStatements.put(batchSize, preparedStatement);
+            } else {
+                //ensure it is cleaned after last use
+                try {
+                    preparedStatement.clearParameters();
+                } catch (SQLException e) {
+                    throw new RuntimeException(String.format("Error clearing parameters on preparedStatement"), e);
+                }
+            }
+            return preparedStatement;
+        }
+
+        private PreparedStatement createPreparedStatement(final int batchSize,
+                                                          boolean areKeysRequired) {
+
+            //combine all row's args together
+            final String argsSection = IntStream.rangeClosed(1, batchSize)
+                    .boxed()
+                    .map(i -> argsStr)
+                    .collect(Collectors.joining(","));
+
+            StringBuilder sql = new StringBuilder(sqlHeader)
+                    .append(argsSection);
+
+            try {
+                if (areKeysRequired) {
+                    return connection.prepareStatement(sql.toString());
+                } else {
+                    return connection.prepareStatement(sql.toString(), Statement.RETURN_GENERATED_KEYS);
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(String.format("Error creating prepared statement for sql: %s",
+                        sql.toString()), e);
+            }
+        }
+
+        List<Long> executeBatch(final List<List<Object>> argsList,
+                                final boolean areKeysRequired) {
+
+            final int batchSize = argsList.size();
+            final PreparedStatement preparedStatement = getOrCreatePreparedStatement(
+                    batchSize,
+                    areKeysRequired);
+
+            final List<Object> allArgs = argsList.stream()
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.toList());
+
+            final List<Long> keyList = new ArrayList<>();
+            final LogExecutionTime logExecutionTime = new LogExecutionTime();
+            try {
+                PreparedStatementUtil.setArguments(preparedStatement, allArgs);
+                final int result = preparedStatement.executeUpdate();
+
+                if (areKeysRequired) {
+                    try (ResultSet keySet = preparedStatement.getGeneratedKeys()) {
+                        while (keySet.next()) {
+                            keyList.add(keySet.getLong(1));
+                        }
+                    }
+
+                    log(logExecutionTime, result, preparedStatement.toString(), allArgs);
+                    return keyList;
+                } else {
+                    log(logExecutionTime, result, preparedStatement.toString(), allArgs);
+                    return Collections.emptyList();
+                }
+            } catch (final SQLException sqlException) {
+                LOGGER.error("executeUpdate() - " + preparedStatement.toString() + " " + allArgs, sqlException);
+                throw new RuntimeException(String.format("Error executing preparedStatement: %s",
+                        preparedStatement), sqlException);
+            }
+
+        }
+
+        private void validateArgsList(final List<List<Object>> argsList) {
+            boolean areAllArgsCorrectLength = argsList.stream()
+                    .allMatch(args -> args.size() == columnCount);
+
+            if (!areAllArgsCorrectLength) {
+                String arsSizes = argsList.stream()
+                        .map(args -> String.valueOf(args.size()))
+                        .distinct()
+                        .collect(Collectors.joining(","));
+
+                throw new RuntimeException(String.format("Not all args match the number of columns [%s], distinct args counts: [%s]",
+                        columnCount, arsSizes));
+            }
+        }
+
+        @Override
+        public void close() throws Exception {
+            preparedStatements.values().stream()
+                    .filter(Objects::nonNull)
+                    .forEach(stmt -> {
+                        try {
+                            stmt.close();
+                        } catch (SQLException e) {
+                            throw new RuntimeException(String.format("Error closing prepareStatement %s", stmt), e);
+                        }
+                    });
         }
     }
 
