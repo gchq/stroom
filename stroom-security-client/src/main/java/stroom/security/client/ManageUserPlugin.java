@@ -37,11 +37,14 @@ public class ManageUserPlugin extends NodeToolsPlugin {
   private final AsyncProvider<UsersAndGroupsPresenter> usersAndGroupsPresenterProvider;
 
   @Inject
-  public ManageUserPlugin(final EventBus eventBus, final ClientSecurityContext securityContext, final AsyncProvider<UsersAndGroupsPresenter> usersAndGroupsPresenterProvider, final AsyncProvider<DocumentPermissionsPresenter> documentPermissionsPresenterProvider) {
+  public ManageUserPlugin(final EventBus eventBus, final ClientSecurityContext securityContext,
+                          final AsyncProvider<UsersAndGroupsPresenter> usersAndGroupsPresenterProvider,
+                          final AsyncProvider<DocumentPermissionsPresenter> documentPermissionsPresenterProvider) {
     super(eventBus, securityContext);
     this.usersAndGroupsPresenterProvider = usersAndGroupsPresenterProvider;
 
-    eventBus.addHandler(ShowPermissionsEntityDialogEvent.getType(), event -> documentPermissionsPresenterProvider.get(new AsyncCallback<DocumentPermissionsPresenter>() {
+    eventBus.addHandler(ShowPermissionsEntityDialogEvent.getType(),
+            event -> documentPermissionsPresenterProvider.get(new AsyncCallback<DocumentPermissionsPresenter>() {
       @Override
       public void onSuccess(final DocumentPermissionsPresenter presenter) {
         presenter.show(event.getExplorerData());
@@ -57,7 +60,8 @@ public class ManageUserPlugin extends NodeToolsPlugin {
   protected void addChildItems(final BeforeRevealMenubarEvent event) {
     if (getSecurityContext().hasAppPermission(FindUserCriteria.MANAGE_USERS_PERMISSION)) {
       event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
-          new IconMenuItem(1, SvgPresets.USER, SvgPresets.USER, "Users And Groups", null, true, () -> usersAndGroupsPresenterProvider.get(new AsyncCallback<UsersAndGroupsPresenter>() {
+          new IconMenuItem(1, SvgPresets.USER, SvgPresets.USER, "Users And Groups", null, true,
+                  () -> usersAndGroupsPresenterProvider.get(new AsyncCallback<UsersAndGroupsPresenter>() {
             @Override
             public void onSuccess(final UsersAndGroupsPresenter presenter) {
               final PopupSize popupSize = new PopupSize(800, 600, true);
