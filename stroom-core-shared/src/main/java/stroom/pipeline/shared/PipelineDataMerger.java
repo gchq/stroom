@@ -190,7 +190,10 @@ public class PipelineDataMerger {
                             final String toType = toElement.getType();
 
                             if (fromType != null && toType != null) {
-                                linkMap.computeIfAbsent(link.getFrom(), k -> new ArrayList<>()).add(link);
+                                final List<PipelineLink> list = linkMap.computeIfAbsent(link.getFrom(), k -> new ArrayList<>());
+                                if (!list.contains(link)) {
+                                    list.add(link);
+                                }
                             }
                         }
                     }
@@ -245,8 +248,11 @@ public class PipelineDataMerger {
                 }
 
                 if (parserId != null) {
-                    final PipelineLink pipelineLink = new PipelineLink(SOURCE, parserId);
-                    linkMap.computeIfAbsent(SOURCE, k -> new ArrayList<>()).add(pipelineLink);
+                    final PipelineLink link = new PipelineLink(SOURCE, parserId);
+                    final List<PipelineLink> list = linkMap.computeIfAbsent(SOURCE, k -> new ArrayList<>());
+                    if (!list.contains(link)) {
+                        list.add(link);
+                    }
                 }
             }
         }

@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#497** : Change stream task creation to use straight JDBC rather than hibernate for inserts and use a configurable batch size (stroom.databaseMultiInsertMaxBatchSize) for the inserts
 
+## [v5.0-beta.63] - 2017-11-20
+
+* Issue **#498** : The UI was adding more than one link between 'Source' and 'Parser' elements, this is now fixed.
+
+* Issue **#492** : Search tasks were waiting for part of the data extraction task to run which was not checking for termination. The code for this has been changed and should now terminate when required.
+
 ## [v5.0-beta.62] - 2017-11-16
 
 * Issue **#494** : Fix problem of proxy aggregation never stopping if more files exist
@@ -680,7 +686,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.62...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.63...HEAD
+[v5.0-beta.63]: https://github.com/gchq/stroom/compare/v5.0-beta.62...v5.0-beta.63
 [v5.0-beta.62]: https://github.com/gchq/stroom/compare/v5.0-beta.61...v5.0-beta.62
 [v5.0-beta.61]: https://github.com/gchq/stroom/compare/v5.0-beta.60...v5.0-beta.61
 [v5.0-beta.60]: https://github.com/gchq/stroom/compare/v5.0-beta.59...v5.0-beta.60

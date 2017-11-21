@@ -19,26 +19,27 @@ package stroom.search.server.shard;
 import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.Scorer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.pipeline.server.errorhandler.TerminatedException;
 import stroom.task.server.TaskContext;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 
 import java.io.IOException;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class IndexShardHitCollector extends Collector {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(IndexShardHitCollector.class);
-    private static final long ONE_SECOND = TimeUnit.SECONDS.toNanos(1);
+    private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardHitCollector.class);
 
     private final TaskContext taskContext;
-    private final TransferList<Integer> docIdStore;
+    private final LinkedBlockingQueue<Integer> docIdStore;
     private final AtomicLong hitCount;
     private int docBase;
     private Long pauseTime;
 
-    public IndexShardHitCollector(final TaskContext taskContext, final TransferList<Integer> docIdStore,
+    public IndexShardHitCollector(final TaskContext taskContext, final LinkedBlockingQueue<Integer> docIdStore,
                                   final AtomicLong hitCount) {
         this.docIdStore = docIdStore;
         this.taskContext = taskContext;
@@ -51,7 +52,7 @@ public class IndexShardHitCollector extends Collector {
         final int docId = docBase + doc;
 
         try {
-            while (!docIdStore.offer(docId, ONE_SECOND) && !taskContext.isTerminated()) {
+            while (!docIdStore.offer(docId, 1, TimeUnit.SECONDS) && !taskContext.isTerminated()) {
                 if (isProvidingInfo()) {
                     if (pauseTime == null) {
                         pauseTime = System.currentTimeMillis();
@@ -82,8 +83,7 @@ public class IndexShardHitCollector extends Collector {
             throw new TerminatedException();
         }
 
-        // If we are no longer paused then make sure the client knows we are
-        // still searching.
+        // If we are no longer paused then make sure the client knows we are still searching.
         if (isProvidingInfo()) {
             if (pauseTime != null) {
                 pauseTime = null;
