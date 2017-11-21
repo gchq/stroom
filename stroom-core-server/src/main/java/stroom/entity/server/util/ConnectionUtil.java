@@ -142,11 +142,16 @@ public class ConnectionUtil {
     }
 
     /**
+     * This method inserts multiple rows into a table, with many rows per statement as controlled
+     * by a batch size property. This is to avoid using a hibernate native sql approach that will
+     * cache a query plan for each unique query. An insert with two rows is considered different to
+     * an insert with three rows so the cache quickly fills up with hugh insert queries, each with
+     * MANY param objects.
      * @param connection  The DB Connection
      * @param tableName   The name of the table, case sensitive if applicable
      * @param columnNames List of columns to insert values into
      * @param argsList    A List of args (in columnName order), one list of args for each row, will
-     *                    be inserted in list order
+     *                    be inserted in list order. Each sub list must have the same size as columnNames
      * @return The generated IDs for each row inserted
      */
     @edu.umd.cs.findbugs.annotations.SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
@@ -216,10 +221,14 @@ public class ConnectionUtil {
 
         if (argsList.size() > 0) {
 
+            String columnNamesStr = columnNames.stream()
+                    .collect(Collectors.joining(","));
             //build up the sql stmt
             final StringBuilder stringBuilder = new StringBuilder("INSERT INTO ")
                     .append(tableName)
-                    .append(" VALUES ");
+                    .append(" (")
+                    .append(columnNamesStr)
+                    .append(") VALUES ");
 
             //build args for one row
             final String argsStr = "(" + columnNames.stream()

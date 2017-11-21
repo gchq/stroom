@@ -276,14 +276,14 @@ public class StreamTaskCreatorTransactionHelper {
                     allArgs.add(rowArgs);
                 }
 
+
                 // Save them using the existing transaction
-                try (Connection connection = DataSourceUtils.getConnection(dataSource)) {
-                    ConnectionUtil.executeMultiInsert(
-                            connection,
-                            StreamTask.TABLE_NAME,
-                            columnNames,
-                            allArgs);
-                }
+                final Connection connection = DataSourceUtils.getConnection(dataSource);
+                ConnectionUtil.executeMultiInsert(
+                        connection,
+                        StreamTask.TABLE_NAME,
+                        columnNames,
+                        allArgs);
 
                 totalTasksCreated = allArgs.size();
 
