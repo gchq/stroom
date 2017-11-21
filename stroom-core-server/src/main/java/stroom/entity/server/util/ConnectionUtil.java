@@ -17,6 +17,7 @@
 package stroom.entity.server.util;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
@@ -114,7 +115,7 @@ public class ConnectionUtil {
 
             preparedStatement.close();
 
-            log(logExecutionTime, result, sql, args);
+            log(logExecutionTime, result, () -> sql, args);
 
             return result;
         } catch (final SQLException sqlException) {
@@ -148,137 +149,6 @@ public class ConnectionUtil {
         }
     }
 
-    /**
-     * This method inserts multiple rows into a table, with many rows per statement as controlled
-     * by a batch size property. This is to avoid using a hibernate native sql approach that will
-     * cache a query plan for each unique query. An insert with two rows is considered different to
-     * an insert with three rows so the cache quickly fills up with hugh insert queries, each with
-     * MANY param objects.
-     *
-     * @param connection  The DB Connection
-     * @param tableName   The name of the table, case sensitive if applicable
-     * @param columnNames List of columns to insert values into
-     * @param argsList    A List of args (in columnName order), one list of args for each row, will
-     *                    be inserted in list order. Each sub list must have the same size as columnNames
-     * @return The generated IDs for each row inserted
-     */
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
-    public static List<Long> executeMultiInsert(final Connection connection,
-                                                final String tableName,
-                                                final List<String> columnNames,
-                                                final List<List<Object>> argsList) {
-        Preconditions.checkNotNull(tableName);
-        Preconditions.checkNotNull(columnNames);
-        Preconditions.checkNotNull(argsList);
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("executeMultiInsert %s, [%s], row count: %s", tableName, columnNames, argsList.size());
-        }
-        final int columnCount = columnNames.size();
-
-        if (argsList.size() > 0) {
-            boolean areAllArgsCorrectLength = argsList.stream()
-                    .allMatch(args -> args.size() == columnCount);
-
-            if (!areAllArgsCorrectLength) {
-                String arsSizes = argsList.stream()
-                        .map(args -> String.valueOf(args.size()))
-                        .distinct()
-                        .collect(Collectors.joining(","));
-
-                throw new RuntimeException(String.format("Not all args match the number of columns [%s], distinct args counts: [%s]",
-                        columnCount, arsSizes));
-            }
-
-            int batchSize = getMultiInsertMaxBatchSize();
-
-            //batch up the inserts
-            final List<Long> ids = BatchingIterator.batchedStreamOf(argsList.stream(), batchSize)
-                    .flatMap(argsBatch -> {
-                        List<Long> batchIds = executeMultiInsertBatch(connection,
-                                tableName,
-                                columnNames,
-                                argsBatch);
-
-                        return batchIds.stream();
-                    })
-                    .collect(Collectors.toList());
-
-            return ids;
-
-        } else {
-            return Collections.emptyList();
-        }
-    }
-
-    /**
-     * @param connection  The DB Connection
-     * @param tableName   The name of the table, case sensitive if applicable
-     * @param columnNames List of columns to insert values into
-     * @param argsList    A List of args (in columnName order), one list of args for each row, will
-     *                    be inserted in list order
-     * @return The generated IDs for each row inserted
-     */
-    private static List<Long> executeMultiInsertBatch(final Connection connection,
-                                                      final String tableName,
-                                                      final List<String> columnNames,
-                                                      final List<List<Object>> argsList) {
-
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("executeMultiInsertBatch %s, [%s], row count: %s", tableName, columnNames, argsList.size());
-        }
-
-        if (argsList.size() > 0) {
-
-            final String columnNamesStr = columnNames.stream()
-                    .collect(Collectors.joining(","));
-            //build up the sql stmt
-            final StringBuilder stringBuilder = new StringBuilder("INSERT INTO ")
-                    .append(tableName)
-                    .append(" (")
-                    .append(columnNamesStr)
-                    .append(") VALUES ");
-
-            //build args for one row
-            final String argsStr = "(" + columnNames.stream()
-                    .map(c -> "?")
-                    .collect(Collectors.joining(",")) + ")";
-
-            //combine all row's args together
-            final String argsSection = argsList.stream()
-                    .map(args -> argsStr)
-                    .collect(Collectors.joining(","));
-
-            final String sql = stringBuilder.append(argsSection).toString();
-
-            final List<Object> allArgs = argsList.stream()
-                    .flatMap(Collection::stream)
-                    .collect(Collectors.toList());
-
-            final List<Long> keyList = new ArrayList<>();
-            final LogExecutionTime logExecutionTime = new LogExecutionTime();
-            try (PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-                PreparedStatementUtil.setArguments(preparedStatement, allArgs);
-
-                final int result = preparedStatement.executeUpdate();
-
-                try (ResultSet keySet = preparedStatement.getGeneratedKeys()) {
-                    while (keySet.next()) {
-                        keyList.add(keySet.getLong(1));
-                    }
-                }
-
-                log(logExecutionTime, result, sql, allArgs);
-
-                return keyList;
-            } catch (final SQLException sqlException) {
-                LOGGER.error("executeUpdate() - " + sql + " " + allArgs, sqlException);
-                throw new RuntimeException(String.format("Error executing sql: %s", sql), sqlException);
-            }
-        } else {
-            return Collections.emptyList();
-        }
-    }
-
     @edu.umd.cs.findbugs.annotations.SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static Long executeQueryLongResult(final Connection connection, final String sql, final List<Object> args)
             throws SQLException {
@@ -305,7 +175,9 @@ public class ConnectionUtil {
 
     @edu.umd.cs.findbugs.annotations.SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static BaseResultList<SummaryDataRow> executeQuerySummaryDataResult(final Connection connection,
-                                                                               final String sql, final int numberKeys, final List<Object> args,
+                                                                               final String sql,
+                                                                               final int numberKeys,
+                                                                               final List<Object> args,
                                                                                final List<? extends HasPrimitiveValue> stats,
                                                                                final PrimitiveValueConverter<? extends HasPrimitiveValue> converter) throws SQLException {
         LOGGER.debug(">>> %s", sql);
@@ -358,11 +230,20 @@ public class ConnectionUtil {
         }
     }
 
-    private static void log(final LogExecutionTime logExecutionTime, final Object result, final String sql,
+    private static void log(final LogExecutionTime logExecutionTime,
+                            final Object result,
+                            final String sql,
+                            final List<Object> args) {
+        log(logExecutionTime, result, () -> sql, args);
+
+    }
+    private static void log(final LogExecutionTime logExecutionTime,
+                            final Object result,
+                            final Supplier<String> sqlSupplier,
                             final List<Object> args) {
         final long time = logExecutionTime.getDuration();
         if (LOGGER.isDebugEnabled() || time > 1000) {
-            final String message = "<<< " + sql + " " + args + " took " + ModelStringUtil.formatDurationString(time)
+            final String message = "<<< " + sqlSupplier.get() + " " + args + " took " + ModelStringUtil.formatDurationString(time)
                     + " with result " + result;
             if (time > 1000) {
                 LOGGER.warn(message);
@@ -391,6 +272,11 @@ public class ConnectionUtil {
         private final String sqlHeader;
         private final String argsStr;
 
+        /**
+         * @param connection  The DB Connection
+         * @param tableName   The name of the table, case sensitive if applicable
+         * @param columnNames List of columns to insert values into, case sensitive if the DB is
+         */
         public MultiInsertExecutor(final Connection connection,
                                    final String tableName,
                                    final List<String> columnNames) {
@@ -420,10 +306,31 @@ public class ConnectionUtil {
         }
 
 
+        /**
+         * This method inserts multiple rows into a table, with many rows per statement as controlled
+         * by a batch size property. This is to avoid using a hibernate native sql approach that will
+         * cache a query plan for each unique query. An insert with two rows is considered different to
+         * an insert with three rows so the cache quickly fills up with hugh insert queries, each with
+         * MANY param objects.
+         *
+         * @param argsList    A List of args (in columnName order), one list of args for each row, will
+         *                    be inserted in list order. Each sub list must have the same size as columnNames
+         */
         public void execute(final List<List<Object>> argsList) {
             execute(argsList, false);
         }
 
+        /**
+         * This method inserts multiple rows into a table, with many rows per statement as controlled
+         * by a batch size property. This is to avoid using a hibernate native sql approach that will
+         * cache a query plan for each unique query. An insert with two rows is considered different to
+         * an insert with three rows so the cache quickly fills up with hugh insert queries, each with
+         * MANY param objects.
+         *
+         * @param argsList    A List of args (in columnName order), one list of args for each row, will
+         *                    be inserted in list order. Each sub list must have the same size as columnNames
+         * @return The generated IDs for each row inserted
+         */
         public List<Long> executeAndFetchKeys(final List<List<Object>> argsList) {
             return execute(argsList, true);
         }
@@ -524,7 +431,7 @@ public class ConnectionUtil {
                     keyList = Collections.emptyList();
                 }
 
-                log(logExecutionTime, result, preparedStatement.toString(), allArgs);
+                log(logExecutionTime, result, preparedStatement::toString, allArgs);
                 return keyList;
 
             } catch (final SQLException sqlException) {
