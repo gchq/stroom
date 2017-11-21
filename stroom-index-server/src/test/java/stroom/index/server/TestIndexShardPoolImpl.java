@@ -130,36 +130,6 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
 
         Mockito.when(nodeCache.getDefaultNode()).thenReturn(defaultNode);
 
-        // final NodeCache nodeCache = new NodeCache();
-        // nodeCache.setNodeService(new NodeServiceImpl() {
-        // @Override
-        // public Node getDefaultNode() {
-        // return defaultNode;
-        // }
-        // });
-
-//        try (CacheManagerAutoCloseable cacheManager = CacheManagerAutoCloseable.create()) {
-//            final IndexShardManagerImpl indexShardManager = new IndexShardManagerImpl(mockIndexShardService, cacheManager, null, null,
-//                    mockIndexShardService, nodeCache, null) {
-//                @Override
-//                protected void destroy(final IndexShardKey key, final IndexShardWriter writer) {
-//                    // // checkedLimit.decrement();
-//                    // synchronized (closedSet) {
-//                    // if (writer != null) {
-//                    // if (closedSet.contains(writer.getIndexShard())) {
-//                    // throw new RuntimeException("Closed already called on this
-//                    // item?");
-//                    // }
-//                    // closedSet.add(writer.getIndexShard());
-//                    // }
-//                    // }
-//                    super.destroy(key, writer);
-//                    if (writer != null && IndexShardStatus.OPEN.equals(writer.getStatus())) {
-//                        throw new RuntimeException("Writer should have been closed on destroy!");
-//                    }
-//                }
-//            };
-
         final IndexShardWriterCache indexShardWriterCache = new MockIndexShardWriterCache(mockIndexShardService, maxDocumentsPerIndexShard);
         final Indexer indexer = new IndexerImpl(indexShardWriterCache, null);
 

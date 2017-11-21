@@ -17,13 +17,36 @@
 package stroom.search.server.taskqueue;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public interface TaskProducer extends Comparable<TaskProducer> {
+public abstract class TaskProducer implements Comparable<TaskProducer> {
+    private final long now = System.currentTimeMillis();
+
+    private final AtomicInteger threadsUsed = new AtomicInteger();
+
+    private final TaskExecutor taskExecutor;
+    private final int maxThreadsPerTask;
+    private final Executor executor;
+
+    private final AtomicInteger tasksTotal = new AtomicInteger();
+    private final AtomicInteger tasksCompleted = new AtomicInteger();
+
+    public TaskProducer(final TaskExecutor taskExecutor,
+                        final int maxThreadsPerTask,
+                        final Executor executor) {
+        this.taskExecutor = taskExecutor;
+        this.maxThreadsPerTask = maxThreadsPerTask;
+        this.executor = executor;
+    }
+
     /**
      * Get the executor to use to execute the provided runnable.
+     *
      * @return
      */
-    Executor getExecutor();
+    final Executor getExecutor() {
+        return executor;
+    }
 
     /**
      * Get the next task to execute or null if the producer has reached a concurrent execution limit or no further tasks
@@ -31,7 +54,28 @@ public interface TaskProducer extends Comparable<TaskProducer> {
      *
      * @return The next task to execute or null if no tasks are available at this time.
      */
-    Runnable next();
+    final Runnable next() {
+        Runnable task = null;
+
+        final int count = threadsUsed.incrementAndGet();
+        if (count > maxThreadsPerTask) {
+            threadsUsed.decrementAndGet();
+        } else {
+            task = getNext();
+            if (task == null) {
+                threadsUsed.decrementAndGet();
+
+                // Auto detach if we are complete.
+                if (isComplete()) {
+                    detach();
+                }
+            }
+        }
+
+        return task;
+    }
+
+    protected abstract Runnable getNext();
 
     /**
      * When an executor has finished executing a task return it to the producer so it can be marked complete and the
@@ -39,5 +83,40 @@ public interface TaskProducer extends Comparable<TaskProducer> {
      *
      * @param task The task that has been completed.
      */
-    void complete(Runnable task);
+    final void complete(final Runnable task) {
+        threadsUsed.decrementAndGet();
+        tasksCompleted.incrementAndGet();
+    }
+
+    /**
+     * Test if this task producer will not issue any further tasks and that all of the tasks it has issued have completed processing.
+     *
+     * @return True if this producer will not issue any further tasks and that all of the tasks it has issued have completed processing.
+     */
+    public abstract boolean isComplete();
+
+    protected void attach() {
+        taskExecutor.addProducer(this);
+    }
+
+    private void detach() {
+        taskExecutor.removeProducer(this);
+    }
+
+    protected void signalAvailable() {
+        taskExecutor.signalAll();
+    }
+
+    protected final AtomicInteger getTasksTotal() {
+        return tasksTotal;
+    }
+
+    protected final AtomicInteger getTasksCompleted() {
+        return tasksCompleted;
+    }
+
+    @Override
+    public int compareTo(final TaskProducer o) {
+        return Long.compare(now, o.now);
+    }
 }
