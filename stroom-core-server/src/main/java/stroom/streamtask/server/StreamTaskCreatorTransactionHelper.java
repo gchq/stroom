@@ -16,6 +16,7 @@
 
 package stroom.streamtask.server;
 
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +48,7 @@ import stroom.streamtask.shared.TaskStatus;
 import stroom.util.logging.StroomLogger;
 
 import javax.annotation.Resource;
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -111,6 +113,9 @@ public class StreamTaskCreatorTransactionHelper {
     private StroomDatabaseInfo stroomDatabaseInfo;
     @Resource
     private StreamProcessorFilterService streamProcessorFilterService;
+    @Resource(name = "dataSource")
+    DataSource dataSource;
+
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
 
@@ -271,8 +276,8 @@ public class StreamTaskCreatorTransactionHelper {
                     allArgs.add(rowArgs);
                 }
 
-                // Save them
-                try (Connection connection = ConnectionUtil.getConnection()) {
+                // Save them using the existing transaction
+                try (Connection connection = DataSourceUtils.getConnection(dataSource)) {
                     ConnectionUtil.executeMultiInsert(
                             connection,
                             StreamTask.TABLE_NAME,
