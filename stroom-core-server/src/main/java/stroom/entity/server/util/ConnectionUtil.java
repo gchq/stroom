@@ -35,6 +35,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -256,6 +258,7 @@ public class ConnectionUtil {
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
             try (PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
                 PreparedStatementUtil.setArguments(preparedStatement, allArgs);
+
                 final int result = preparedStatement.executeUpdate();
 
                 try (ResultSet keySet = preparedStatement.getGeneratedKeys()) {
@@ -384,7 +387,7 @@ public class ConnectionUtil {
         private final Map<Integer, PreparedStatement> preparedStatements = new HashMap<>();
         private final Connection connection;
         private final int columnCount;
-        private final int maxbatchSize;
+        private final int maxBatchSize;
         private final String sqlHeader;
         private final String argsStr;
 
@@ -396,7 +399,7 @@ public class ConnectionUtil {
             Preconditions.checkNotNull(tableName);
             Preconditions.checkNotNull(columnNames);
             this.columnCount = columnNames.size();
-            this.maxbatchSize = getMultiInsertMaxBatchSize();
+            this.maxBatchSize = getMultiInsertMaxBatchSize();
 
             final String columnNamesStr = columnNames.stream()
                     .collect(Collectors.joining(","));
@@ -428,26 +431,30 @@ public class ConnectionUtil {
         private List<Long> execute(final List<List<Object>> argsList,
                                    boolean areKeysRequired) {
 
+            final Instant startTime = Instant.now();
+            final List<Long> ids;
             if (argsList.size() > 0) {
                 validateArgsList(argsList);
 
                 //batch up the inserts
-                final List<Long> ids = BatchingIterator.batchedStreamOf(argsList.stream(), maxbatchSize)
+                ids = BatchingIterator.batchedStreamOf(argsList.stream(), maxBatchSize)
                         .flatMap(argsBatch -> {
                             List<Long> batchIds = executeBatch(argsBatch, areKeysRequired);
                             return batchIds.stream();
                         })
                         .collect(Collectors.toList());
-
-                return ids;
-
             } else {
-                return Collections.emptyList();
+                ids = Collections.emptyList();
             }
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("execute completed in %s for %s rows",
+                        Duration.between(startTime, Instant.now()), argsList.size());
+            }
+            return ids;
         }
 
         private PreparedStatement getOrCreatePreparedStatement(final int batchSize,
-                                                               boolean areKeysRequired) {
+                                                               final boolean areKeysRequired) {
 
             PreparedStatement preparedStatement = preparedStatements.get(batchSize);
             if (preparedStatement == null) {
@@ -458,14 +465,14 @@ public class ConnectionUtil {
                 try {
                     preparedStatement.clearParameters();
                 } catch (SQLException e) {
-                    throw new RuntimeException(String.format("Error clearing parameters on preparedStatement"), e);
+                    throw new RuntimeException("Error clearing parameters on preparedStatement", e);
                 }
             }
             return preparedStatement;
         }
 
         private PreparedStatement createPreparedStatement(final int batchSize,
-                                                          boolean areKeysRequired) {
+                                                          final boolean areKeysRequired) {
 
             //combine all row's args together
             final String argsSection = IntStream.rangeClosed(1, batchSize)
@@ -478,9 +485,9 @@ public class ConnectionUtil {
 
             try {
                 if (areKeysRequired) {
-                    return connection.prepareStatement(sql.toString());
-                } else {
                     return connection.prepareStatement(sql.toString(), Statement.RETURN_GENERATED_KEYS);
+                } else {
+                    return connection.prepareStatement(sql.toString());
                 }
             } catch (SQLException e) {
                 throw new RuntimeException(String.format("Error creating prepared statement for sql: %s",
@@ -488,8 +495,8 @@ public class ConnectionUtil {
             }
         }
 
-        List<Long> executeBatch(final List<List<Object>> argsList,
-                                final boolean areKeysRequired) {
+        private List<Long> executeBatch(final List<List<Object>> argsList,
+                                        final boolean areKeysRequired) {
 
             final int batchSize = argsList.size();
             final PreparedStatement preparedStatement = getOrCreatePreparedStatement(
@@ -500,31 +507,31 @@ public class ConnectionUtil {
                     .flatMap(Collection::stream)
                     .collect(Collectors.toList());
 
-            final List<Long> keyList = new ArrayList<>();
+            final List<Long> keyList;
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
             try {
                 PreparedStatementUtil.setArguments(preparedStatement, allArgs);
                 final int result = preparedStatement.executeUpdate();
 
                 if (areKeysRequired) {
+                    keyList = new ArrayList<>();
                     try (ResultSet keySet = preparedStatement.getGeneratedKeys()) {
                         while (keySet.next()) {
                             keyList.add(keySet.getLong(1));
                         }
                     }
-
-                    log(logExecutionTime, result, preparedStatement.toString(), allArgs);
-                    return keyList;
                 } else {
-                    log(logExecutionTime, result, preparedStatement.toString(), allArgs);
-                    return Collections.emptyList();
+                    keyList = Collections.emptyList();
                 }
+
+                log(logExecutionTime, result, preparedStatement.toString(), allArgs);
+                return keyList;
+
             } catch (final SQLException sqlException) {
                 LOGGER.error("executeUpdate() - " + preparedStatement.toString() + " " + allArgs, sqlException);
                 throw new RuntimeException(String.format("Error executing preparedStatement: %s",
                         preparedStatement), sqlException);
             }
-
         }
 
         private void validateArgsList(final List<List<Object>> argsList) {
@@ -544,15 +551,21 @@ public class ConnectionUtil {
 
         @Override
         public void close() throws Exception {
-            preparedStatements.values().stream()
+            final boolean allClosedWithoutError = preparedStatements.values().stream()
                     .filter(Objects::nonNull)
-                    .forEach(stmt -> {
+                    .allMatch(stmt -> {
                         try {
                             stmt.close();
                         } catch (SQLException e) {
-                            throw new RuntimeException(String.format("Error closing prepareStatement %s", stmt), e);
+                            LOGGER.error(String.format("Error closing prepareStatement %s", stmt), e);
+                            //swallow exception so we can keep closing statements (we will handle it later)
+                            return false;
                         }
+                        return true;
                     });
+            if (!allClosedWithoutError) {
+                throw new RuntimeException("Error closing prepareStatements, see ERRORs in logs");
+            }
         }
     }
 
