@@ -42,6 +42,8 @@ import stroom.node.shared.Volume;
 import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.server.DBRealm;
 import stroom.statistics.server.sql.datasource.FindStatisticsEntityCriteria;
 import stroom.statistics.server.sql.datasource.StatisticStoreEntityService;
@@ -52,11 +54,7 @@ import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.streamstore.server.StreamAttributeKeyService;
 import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.StreamAttributeConstants;
-import stroom.streamstore.shared.StreamAttributeKey;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.*;
 import stroom.streamtask.server.StreamProcessorFilterService;
 import stroom.streamtask.server.StreamProcessorService;
 import stroom.util.io.FileUtil;
@@ -197,8 +195,14 @@ public final class SetupSampleDataBean {
                 final PipelineEntity pipeline = pipelines.getFirst();
 
                 // Create a processor for this index.
-                final FindStreamCriteria criteria = new FindStreamCriteria();
-                criteria.obtainStreamTypeIdSet().add(StreamType.EVENTS);
+                final QueryData criteria = new QueryData.Builder()
+                        .expression(ExpressionOperator.Op.AND)
+                            .addOperator(ExpressionOperator.Op.OR)
+                                .addTerm(FindStreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.EVENTS.getName())
+                                .end()
+                            .end()
+                        .build();
+
                 streamProcessorFilterService.createNewFilter(pipeline, criteria, true, 10);
                 // final StreamProcessorFilter filter =
                 // streamProcessorFilterService.createNewFilter(pipeline,
@@ -245,10 +249,17 @@ public final class SetupSampleDataBean {
                 final PipelineEntity pipeline = pipelines.getFirst();
 
                 // Create a processor for this feed.
-                final FindStreamCriteria criteria = new FindStreamCriteria();
-                criteria.obtainFeeds().obtainInclude().add(feed);
-                criteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS);
-                criteria.obtainStreamTypeIdSet().add(StreamType.RAW_REFERENCE);
+                final QueryData criteria = new QueryData.Builder()
+                        .expression(ExpressionOperator.Op.AND)
+                            .addOperator(ExpressionOperator.Op.OR)
+                                .addTerm(FindStreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
+                                .end()
+                            .addOperator(ExpressionOperator.Op.OR)
+                                .addTerm(FindStreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
+                                .addTerm(FindStreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_REFERENCE.getName())
+                                .end()
+                            .end()
+                        .build();
                 streamProcessorFilterService.createNewFilter(pipeline, criteria, true, 10);
                 // final StreamProcessorFilter filter =
                 // streamProcessorFilterService.createNewFilter(pipeline,

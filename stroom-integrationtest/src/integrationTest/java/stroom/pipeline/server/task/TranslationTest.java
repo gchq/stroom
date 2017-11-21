@@ -38,6 +38,8 @@ import stroom.pipeline.shared.SharedStepData;
 import stroom.pipeline.shared.StepType;
 import stroom.pipeline.shared.SteppingResult;
 import stroom.proxy.repo.StroomStreamProcessor;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.UserTokenUtil;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
@@ -45,9 +47,7 @@ import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.StreamTypeService;
 import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.server.fs.serializable.RawInputSegmentWriter;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.*;
 import stroom.streamtask.server.StreamProcessorFilterService;
 import stroom.streamtask.server.StreamProcessorService;
 import stroom.streamtask.server.StreamProcessorTask;
@@ -153,15 +153,20 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     priority++;
                 }
 
-                final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
-                findStreamCriteria.obtainFeeds().obtainInclude().add(feed.getId());
-                if (feed.isReference()) {
-                    findStreamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_REFERENCE.getId());
-                } else {
-                    findStreamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS.getId());
-                }
+                final String streamType = feed.isReference() ?
+                        StreamType.RAW_REFERENCE.getName() : StreamType.RAW_EVENTS.getName();
+                final QueryData findStreamQueryData = new QueryData.Builder()
+                        .expression(ExpressionOperator.Op.AND)
+                            .addOperator(ExpressionOperator.Op.OR)
+                                .addTerm(FindStreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
+                                .end()
+                            .addOperator(ExpressionOperator.Op.OR)
+                                .addTerm(FindStreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, streamType)
+                                .end()
+                            .end()
+                        .build();
 
-                streamProcessorFilterService.addFindStreamCriteria(streamProcessor, priority, findStreamCriteria);
+                streamProcessorFilterService.addFindStreamCriteria(streamProcessor, priority, findStreamQueryData);
 
                 // Add data.
                 try (final java.util.stream.Stream<Path> stream = Files.list(inputDir)) {

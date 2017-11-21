@@ -32,13 +32,13 @@ import stroom.node.server.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeUseStatus;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.server.fs.serializable.RawInputSegmentWriter;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.*;
 import stroom.streamtask.server.StreamProcessorFilterService;
 import stroom.streamtask.server.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
@@ -115,19 +115,27 @@ public class CommonTestScenarioCreator {
     }
 
     public void createBasicTranslateStreamProcessor(final Feed feed) {
-        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
-        findStreamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS.getId());
-        findStreamCriteria.obtainFeeds().obtainInclude().add(feed.getId());
 
-        createStreamProcessor(findStreamCriteria);
+        final QueryData findStreamQueryData = new QueryData.Builder()
+                .expression(ExpressionOperator.Op.AND)
+                    .addOperator(ExpressionOperator.Op.OR)
+                        .addTerm(FindStreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
+                        .end()
+                    .addOperator(ExpressionOperator.Op.OR)
+                        .addTerm(FindStreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
+                        .end()
+                    .end()
+                .build();
+
+        createStreamProcessor(findStreamQueryData);
     }
 
-    public void createStreamProcessor(final FindStreamCriteria findStreamCriteria) {
+    public void createStreamProcessor(final QueryData queryData) {
         StreamProcessor streamProcessor = new StreamProcessor();
         streamProcessor.setEnabled(true);
         streamProcessor = streamProcessorService.save(streamProcessor);
 
-        streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, findStreamCriteria);
+        streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, queryData);
     }
 
     public Index createIndex(final String name) {

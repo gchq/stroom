@@ -45,14 +45,14 @@ import stroom.pipeline.shared.XSLT;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineReference;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.server.fs.serializable.RawInputSegmentWriter;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.*;
 import stroom.streamtask.server.StreamProcessorFilterService;
 import stroom.streamtask.server.StreamProcessorService;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
@@ -121,14 +121,18 @@ public final class StoreCreationTool {
      * Adds reference data to a stream store.
      *
      * @param feedName          The feed name to use.
-     * @param formatDefLocation The XML conversion to use.
-     * @param xsltLocation      The XSLT location.
+     * @param textConverterType Type of text converter
+     * @param textConverterLocation The Text Converter location
+     * @param xsltLocation      The XSLT location
      * @param dataLocation      The reference data location.
      * @return A reference feed definition.
      * @throws IOException Thrown if files not found.
      */
-    public Feed addReferenceData(final String feedName, final TextConverterType textConverterType,
-                                 final Path textConverterLocation, final Path xsltLocation, final Path dataLocation) throws IOException {
+    public Feed addReferenceData(final String feedName,
+                                 final TextConverterType textConverterType,
+                                 final Path textConverterLocation,
+                                 final Path xsltLocation,
+                                 final Path dataLocation) throws IOException {
         commonTestControl.createRequiredXMLSchemas();
 
         final Feed referenceFeed = getRefFeed(feedName, textConverterType, textConverterLocation, xsltLocation);
@@ -193,10 +197,17 @@ public final class StoreCreationTool {
             }
 
             // Setup the stream processor filter.
-            final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
-            findStreamCriteria.obtainFeeds().obtainInclude().add(referenceFeed.getId());
-            findStreamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_REFERENCE.getId());
-            streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 2, findStreamCriteria);
+            final QueryData findStreamQueryData = new QueryData.Builder()
+                    .expression(ExpressionOperator.Op.AND)
+                        .addOperator(ExpressionOperator.Op.OR)
+                            .addTerm(FindStreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, referenceFeed.getName())
+                            .end()
+                        .addOperator(ExpressionOperator.Op.OR)
+                            .addTerm(FindStreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_REFERENCE.getName())
+                            .end()
+                        .end()
+                    .build();
+            streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 2, findStreamQueryData);
         }
 
         return referenceFeed;
@@ -227,15 +238,19 @@ public final class StoreCreationTool {
      * Adds event data to a stream store.
      *
      * @param feedName          The feed name to use.
-     * @param formatDefLocation The XML conversion to use.
-     * @param xsltLocation      The XSLT location.
+     * @param translationTextConverterType Type of text converter
+     * @param translationTextConverterLocation The Text Converter location
+     * @param translationXsltLocation  The XSLT location
      * @param dataLocation      The event data location.
      * @param referenceFeeds    The reference feeds used.
      * @return An event feed definition.
      * @throws IOException Thrown if files not found.
      */
-    public Feed addEventData(final String feedName, final TextConverterType translationTextConverterType,
-                             final Path translationTextConverterLocation, final Path translationXsltLocation, final Path dataLocation,
+    public Feed addEventData(final String feedName,
+                             final TextConverterType translationTextConverterType,
+                             final Path translationTextConverterLocation,
+                             final Path translationXsltLocation,
+                             final Path dataLocation,
                              final Set<Feed> referenceFeeds) throws IOException {
         return addEventData(feedName, translationTextConverterType, translationTextConverterLocation,
                 translationXsltLocation, null, null, null, null, dataLocation, null, referenceFeeds);
@@ -245,18 +260,25 @@ public final class StoreCreationTool {
      * Adds event data to a stream store.
      *
      * @param feedName          The feed name to use.
-     * @param formatDefLocation The XML conversion to use.
-     * @param xsltLocation      The XSLT location.
+     * @param translationTextConverterType Type of text converter
+     * @param translationTextConverterLocation The Text Converter location
+     * @param translationXsltLocation  The XSLT location
      * @param dataLocation      The event data location.
      * @param referenceFeeds    The reference feeds used.
      * @return An event feed definition.
      * @throws IOException Thrown if files not found.
      */
-    public Feed addEventData(final String feedName, final TextConverterType translationTextConverterType,
-                             final Path translationTextConverterLocation, final Path translationXsltLocation,
-                             final TextConverterType contextTextConverterType, final Path contextTextConverterLocation,
-                             final Path contextXsltLocation, final Path flatteningXsltLocation, final Path dataLocation,
-                             final Path contextLocation, final Set<Feed> referenceFeeds) throws IOException {
+    public Feed addEventData(final String feedName,
+                             final TextConverterType translationTextConverterType,
+                             final Path translationTextConverterLocation,
+                             final Path translationXsltLocation,
+                             final TextConverterType contextTextConverterType,
+                             final Path contextTextConverterLocation,
+                             final Path contextXsltLocation,
+                             final Path flatteningXsltLocation,
+                             final Path dataLocation,
+                             final Path contextLocation,
+                             final Set<Feed> referenceFeeds) throws IOException {
         commonTestControl.createRequiredXMLSchemas();
 
         final Feed eventFeed = getEventFeed(feedName, translationTextConverterType, translationTextConverterLocation,
@@ -343,10 +365,18 @@ public final class StoreCreationTool {
             streamProcessor = streamProcessorService.save(streamProcessor);
 
             // Setup the stream processor filter.
-            final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
-            findStreamCriteria.obtainFeeds().obtainInclude().add(eventFeed.getId());
-            findStreamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS.getId());
-            streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, findStreamCriteria);
+            final QueryData findStreamQueryData = new QueryData.Builder()
+                    .expression(ExpressionOperator.Op.AND)
+                        .addOperator(ExpressionOperator.Op.OR)
+                            .addTerm(FindStreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, eventFeed.getName())
+                            .end()
+                        .addOperator(ExpressionOperator.Op.OR)
+                            .addTerm(FindStreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
+                            .end()
+                        .end()
+                    .build();
+
+            streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, findStreamQueryData);
         }
 
         return eventFeed;
@@ -570,9 +600,15 @@ public final class StoreCreationTool {
             streamProcessor = streamProcessorService.save(streamProcessor);
 
             // Setup the stream processor filter.
-            final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
-            findStreamCriteria.obtainStreamTypeIdSet().add(StreamType.EVENTS.getId());
-            streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, findStreamCriteria);
+
+            final QueryData findStreamQueryData = new QueryData.Builder()
+                    .expression(ExpressionOperator.Op.AND)
+                        .addOperator(ExpressionOperator.Op.OR)
+                            .addTerm(FindStreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.EVENTS.getName())
+                            .end()
+                        .end()
+                    .build();
+            streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, findStreamQueryData);
         }
 
         return index;
