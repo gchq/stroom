@@ -35,6 +35,7 @@ import org.springframework.context.annotation.FilterType;
         "stroom.db",
         "stroom.dispatch",
         "stroom.document.server",
+        "stroom.docstore.server",
         "stroom.entity",
         "stroom.feed.server",
         "stroom.folder",

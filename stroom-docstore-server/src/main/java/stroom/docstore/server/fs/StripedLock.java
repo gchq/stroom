@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.document.server.fs;
+package stroom.docstore.server.fs;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -24,19 +24,19 @@ import java.util.concurrent.locks.ReentrantLock;
  * A striped lock that uses hashCode on the key to give back hopefully non-used
  * lock.
  */
-public class StripedLock {
+final class StripedLock {
     /**
      * We use a number here based on our typical concurrency profile. So 10
      * indexing threads and 2048 locks seems OK.
      */
-    public static final int DEFAULT_NUMBER_OF_MUTEXES = 2048;
+    private static final int DEFAULT_NUMBER_OF_MUTEXES = 2048;
     private static final int DOUG_LEA_BLACK_MAGIC_OPERAND_1 = 20;
     private static final int DOUG_LEA_BLACK_MAGIC_OPERAND_2 = 12;
     private static final int DOUG_LEA_BLACK_MAGIC_OPERAND_3 = 7;
     private static final int DOUG_LEA_BLACK_MAGIC_OPERAND_4 = 4;
     private Lock[] mutexes = null;
 
-    public StripedLock() {
+    StripedLock() {
         mutexes = new Lock[DEFAULT_NUMBER_OF_MUTEXES];
 
         for (int i = 0; i < mutexes.length; i++) {
@@ -44,7 +44,7 @@ public class StripedLock {
         }
     }
 
-    public Lock getLockForKey(final Object key) {
+    Lock getLockForKey(final Object key) {
         int lockNumber = selectLock(key, DEFAULT_NUMBER_OF_MUTEXES);
         return mutexes[lockNumber];
     }

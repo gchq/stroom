@@ -15,63 +15,69 @@
  *
  */
 
-package stroom.document.server.fs;
+package stroom.docstore.server;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import stroom.document.server.DocumentActionHandler;
-import stroom.document.shared.Document;
+import stroom.docstore.shared.Document;
 import stroom.entity.shared.ImportState;
 import stroom.entity.shared.ImportState.ImportMode;
 import stroom.entity.shared.PermissionException;
 import stroom.explorer.server.ExplorerActionHandler;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.server.ImportExportActionHandler;
-import stroom.security.SecurityHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
+import stroom.util.spring.StroomScope;
 
+import javax.inject.Inject;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-import java.util.stream.Stream;
 
-public final class FSDocumentStore<D extends Document> implements ExplorerActionHandler, DocumentActionHandler<D>, ImportExportActionHandler {
-    public static final String FOLDER = ExplorerConstants.FOLDER;
-    private static final String FILE_EXTENSION = ".json";
+@Component
+@Scope(StroomScope.PROTOTYPE)
+public class Store<D extends Document> implements ExplorerActionHandler, DocumentActionHandler<D>, ImportExportActionHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Store.class);
+
+    private static final String FOLDER = ExplorerConstants.FOLDER;
     private static final Charset CHARSET = Charset.forName("UTF-8");
-    public static final String KEY = "dat";
+    private static final String KEY = "dat";
 
-    private final Path dir;
-    private final String type;
     private final SecurityContext securityContext;
-    private final StripedLock stripedLock = new StripedLock();
-    private final ObjectMapper mapper;
-    private final Class<D> clazz;
+    private final Persistence persistence;
 
-    public FSDocumentStore(final Path dir, final String type, final Class<D> clazz, final SecurityContext securityContext) throws IOException {
-        this.dir = dir;
-        this.type = type;
+    private Serialiser<D> serialiser;
+    private String type;
+    private Class<D> clazz;
+
+    @Inject
+    public Store(final Persistence persistence, final SecurityContext securityContext) throws IOException {
+        this.persistence = persistence;
         this.securityContext = securityContext;
-        this.mapper = getMapper(true);
-        this.clazz = clazz;
+    }
 
-        Files.createDirectories(dir);
+    public void setSerialiser(final Serialiser<D> serialiser) {
+        this.serialiser = serialiser;
+    }
+
+    public void setType(final String type, final Class<D> clazz) {
+        this.type = type;
+        this.clazz = clazz;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -123,7 +129,7 @@ public final class FSDocumentStore<D extends Document> implements ExplorerAction
         // If we are moving folder then make sure we are allowed to create items in the target folder.
         final String permissionName = DocumentPermissionNames.getDocumentCreatePermission(type);
         if (!securityContext.hasDocumentPermission(FOLDER, parentFolderUUID, permissionName)) {
-            throw new RuntimeException("You are not authorised to create items in this folder");
+            throw new PermissionException(securityContext.getUserId(), "You are not authorised to create items in this folder");
         }
 
         document.setUpdateTime(now);
@@ -151,23 +157,13 @@ public final class FSDocumentStore<D extends Document> implements ExplorerAction
 
     @Override
     public final void deleteDocument(final String uuid) {
-        final Lock lock = stripedLock.getLockForKey(uuid);
-        lock.lock();
-        try {
-            // Check that the user has permission to delete this item.
-            if (!securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.DELETE)) {
-                throw new RuntimeException("You are not authorised to delete this item");
-            }
+        // Check that the user has permission to delete this item.
+        if (!securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.DELETE)) {
+            throw new PermissionException(securityContext.getUserId(), "You are not authorised to delete this item");
+        }
 
-            final Path path = getPathForUUID(uuid);
-            Files.delete(path);
-
-        } catch (final RuntimeException e) {
-            throw e;
-        } catch (final Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
-        } finally {
-            lock.unlock();
+        try (final RWLock lock = persistence.getLockFactory().lock(uuid)) {
+            persistence.delete(new DocRef(type, uuid));
         }
     }
 
@@ -224,37 +220,21 @@ public final class FSDocumentStore<D extends Document> implements ExplorerAction
 
     @Override
     public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
-        D document = null;
-
         final String uuid = docRef.getUuid();
-
         try {
-            final Path filePath = getPathForUUID(uuid);
-
-            // See if a document already exists with this uuid.
-            document = readDocument(docRef);
-            if (document == null) {
-                if (Files.isRegularFile(filePath)) {
-                    throw new RuntimeException("Document already exists with uuid=" + uuid);
-                }
-            } else {
-                if (!securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.UPDATE)) {
-                    throw new RuntimeException("You are not authorised to update this document " + docRef);
-                }
+            final boolean exists = persistence.exists(docRef);
+            if (exists && !securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.UPDATE)) {
+                throw new PermissionException(securityContext.getUserId(), "You are not authorised to update this document " + docRef);
             }
 
             if (importState.ok(importMode)) {
-                final Lock lock = stripedLock.getLockForKey(document.getUuid());
-                lock.lock();
-                try {
-                    Files.write(filePath, dataMap.get(KEY).getBytes(CHARSET));
-                } finally {
-                    lock.unlock();
-                }
+                final byte[] data = dataMap.get(KEY).getBytes(CHARSET);
 
-                // Now do final update.
-                document = read(uuid);
-                document = update(document);
+                try (final RWLock lock = persistence.getLockFactory().lock(uuid)) {
+                    try (final OutputStream outputStream = persistence.getOutputStream(docRef, exists)) {
+                        outputStream.write(data);
+                    }
+                }
             }
 
         } catch (final Exception e) {
@@ -290,7 +270,7 @@ public final class FSDocumentStore<D extends Document> implements ExplorerAction
                 }
 
                 final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                mapper.writeValue(byteArrayOutputStream, document);
+                serialiser.write(byteArrayOutputStream, document);
 
                 data = new HashMap<>();
                 data.put(KEY, new String(byteArrayOutputStream.toByteArray(), CHARSET));
@@ -315,25 +295,16 @@ public final class FSDocumentStore<D extends Document> implements ExplorerAction
     }
 
     private D create(final String parentFolderUUID, final D document) {
+        final DocRef docRef = createDocRef(document);
         try {
             // Check that the user has permission to create this item.
             final String permissionName = DocumentPermissionNames.getDocumentCreatePermission(type);
             if (!securityContext.hasDocumentPermission(FOLDER, parentFolderUUID, permissionName)) {
-                throw new RuntimeException("You are not authorised to create documents of type '" + type + "' in this folder");
+                throw new PermissionException(securityContext.getUserId(), "You are not authorised to create documents of type '" + type + "' in this folder");
             }
 
-            final Path filePath = getPathForUUID(document.getUuid());
-
-            if (Files.isRegularFile(filePath)) {
-                throw new RuntimeException("Document already exists with uuid=" + document.getUuid());
-            }
-
-            final Lock lock = stripedLock.getLockForKey(document.getUuid());
-            lock.lock();
-            try {
-                mapper.writeValue(Files.newOutputStream(filePath), document);
-            } finally {
-                lock.unlock();
+            try (final RWLock lock = persistence.getLockFactory().lock(document.getUuid())) {
+                serialiser.write(persistence.getOutputStream(docRef, false), document);
             }
 
             return document;
@@ -358,93 +329,58 @@ public final class FSDocumentStore<D extends Document> implements ExplorerAction
     }
 
     public D read(final String uuid) {
-        final Lock lock = stripedLock.getLockForKey(uuid);
-        lock.lock();
-        try {
+        try (final RWLock lock = persistence.getLockFactory().lock(uuid)) {
             // Check that the user has permission to read this item.
             if (!securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.READ)) {
-                throw new RuntimeException("You are not authorised to read this document");
+                throw new PermissionException(securityContext.getUserId(), "You are not authorised to read this document");
             }
 
-            final Path path = getPathForUUID(uuid);
-            return mapper.readValue(Files.newInputStream(path), clazz);
-
-        } catch (final RuntimeException e) {
-            throw e;
-        } catch (final Exception e) {
+            final InputStream inputStream = persistence.getInputStream(new DocRef(type, uuid));
+            return serialiser.read(inputStream, clazz);
+        } catch (final IOException e) {
+            LOGGER.error(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
-        } finally {
-            lock.unlock();
         }
     }
 
     public D update(final D document) {
-        final Lock lock = stripedLock.getLockForKey(document.getUuid());
-        lock.lock();
-        try {
-            // Check that the user has permission to read this item.
+        final DocRef docRef = createDocRef(document);
+        try (final RWLock lock = persistence.getLockFactory().lock(document.getUuid())) {
+            // Check that the user has permission to update this item.
             if (!securityContext.hasDocumentPermission(type, document.getUuid(), DocumentPermissionNames.UPDATE)) {
-                throw new RuntimeException("You are not authorised to update this document");
+                throw new PermissionException(securityContext.getUserId(), "You are not authorised to update this document");
             }
 
-            final Path path = getPathForUUID(document.getUuid());
-            final D existingDocument = mapper.readValue(Files.newInputStream(path), clazz);
+            try (final InputStream inputStream = persistence.getInputStream(docRef)) {
+                final D existingDocument = serialiser.read(inputStream, clazz);
 
-            // Perform version check to ensure the item hasn't been updated by somebody else before we try to update it.
-            if (!existingDocument.getUuid().equals(document.getUuid())) {
-                throw new RuntimeException("Document has already been updated");
+                // Perform version check to ensure the item hasn't been updated by somebody else before we try to update it.
+                if (!existingDocument.getVersion().equals(document.getVersion())) {
+                    throw new RuntimeException("Document has already been updated");
+                }
+
+                final long now = System.currentTimeMillis();
+                final String userId = securityContext.getUserId();
+
+                document.setVersion(UUID.randomUUID().toString());
+                document.setUpdateTime(now);
+                document.setUpdateUser(userId);
+
+                try (final OutputStream outputStream = persistence.getOutputStream(docRef, true)) {
+                    serialiser.write(outputStream, document);
+                }
+
+                return document;
             }
-
-            final long now = System.currentTimeMillis();
-            final String userId = securityContext.getUserId();
-
-            document.setVersion(UUID.randomUUID().toString());
-            document.setUpdateTime(now);
-            document.setUpdateUser(userId);
-
-            mapper.writeValue(Files.newOutputStream(path), document);
-
-            return document;
 
         } catch (final RuntimeException e) {
             throw e;
         } catch (final Exception e) {
             throw new RuntimeException(e.getMessage(), e);
-        } finally {
-            lock.unlock();
         }
     }
 
-    public Set<D> list() {
-        final Set<D> set = Collections.newSetFromMap(new ConcurrentHashMap<>());
-        try (final Stream<Path> stream = Files.list(dir)) {
-            stream.filter(p -> p.toString().endsWith(FILE_EXTENSION)).parallel().forEach(p -> {
-                try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
-                    final String fileName = p.getFileName().toString();
-                    final int index = fileName.indexOf(".");
-                    final String uuid = fileName.substring(0, index);
-                    final D document = read(uuid);
-                    set.add(document);
-                }
-            });
-        } catch (final IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
-        return set;
-    }
-
-    private Path getPathForUUID(final String uuid) throws IOException {
-        return dir.resolve(uuid + FILE_EXTENSION);
-    }
-
-    private ObjectMapper getMapper(final boolean indent) {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        // Enabling default typing adds type information where it would otherwise be ambiguous, i.e. for abstract classes
-//        mapper.enableDefaultTyping();
-        return mapper;
+    public Set<DocRef> list() {
+        return persistence.list(type);
     }
 }

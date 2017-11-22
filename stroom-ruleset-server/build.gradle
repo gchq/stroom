@@ -1,18 +1,14 @@
 dependencies {
     compile urlDependencies.get(urlLibs.stroomExpression)
 
-//    compile project(':stroom-core-shared')
     compile project(':stroom-entity-shared')
     compile project(':stroom-util-shared')
-
-    compile project(':stroom-security-api')
+    compile project(':stroom-ruleset-shared')
 
     compile project(':stroom-core-server')
-    compile project(':stroom-ruleset-shared')
+    compile project(':stroom-docstore-server')
 
     compile libs.slf4j_api
     compile libs.spring_context
-    compile libs.jackson_annotations
-    compile libs.jackson_databind
     compile libs.javax_inject
 }
