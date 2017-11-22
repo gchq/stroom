@@ -63,6 +63,7 @@
     <!-- Additional -->
     <inherits name="stroom.dashboard.Dashboard"/>
     <inherits name="stroom.query.Query"/>
+    <inherits name="stroom.docstore.DocStore"/>
     <inherits name="stroom.ruleset.RuleSet"/>
     <inherits name="stroom.streamstore.StreamStore"/>
     <inherits name="stroom.streamtask.StreamTask"/>

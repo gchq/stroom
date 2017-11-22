@@ -82,6 +82,7 @@
     <inherits name="stroom.statistics.Statistics"/>
     <inherits name="stroom.stats.Stats"/>
     <inherits name="stroom.benchmark.Benchmark" />
+    <inherits name="stroom.docstore.DocStore"/>
     <inherits name="stroom.ruleset.RuleSet"/>
     <inherits name="stroom.streamstore.StreamStore" />
     <inherits name="stroom.streamtask.StreamTask" />
