@@ -137,8 +137,28 @@ public class DatabaseCommonTestControlTransactionHelper {
         executeStatementsWithNoConstraints(truncateStatements);
     }
 
+    public void enableConstraints() {
+        Connection connection = null;
+        try {
+            connection = ConnectionUtil.getConnection();
+        } catch (SQLException e) {
+            throw new RuntimeException("Error getting connection", e);
+        }
+        String sql = "SET FOREIGN_KEY_CHECKS=1";
+        try {
+            ConnectionUtil.executeStatement(connection, sql);
+        } catch (SQLException e) {
+            throw new RuntimeException(String.format("Error executing %s", sql), e);
+        }
+    }
+
     private void executeStatementsWithNoConstraints(final List<String> statements) {
-        Connection connection = ConnectionUtil.getConnection(dataSource);
+        Connection connection = null;
+        try {
+            connection = ConnectionUtil.getConnection();
+        } catch (SQLException e) {
+            throw new RuntimeException("Error getting connection", e);
+        }
         List<String> allStatements = new ArrayList<>();
         allStatements.add("SET FOREIGN_KEY_CHECKS=0");
         allStatements.addAll(statements);

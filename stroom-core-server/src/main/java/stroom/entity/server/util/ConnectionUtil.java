@@ -128,7 +128,7 @@ public class ConnectionUtil {
 
             preparedStatement.close();
 
-            log(logExecutionTime, result, () -> sql, args);
+            log(logExecutionTime, () -> Integer.toString(result), () -> sql, args);
 
             return result;
         } catch (final SQLException sqlException) {
@@ -186,7 +186,12 @@ public class ConnectionUtil {
                 throw new RuntimeException(String.format("Got error code for batch %s", sqlStatements));
             }
 
-            log(logExecutionTime, null, sqlStatements::toString, Collections.emptyList());
+            log(logExecutionTime,
+                    () -> Arrays.stream(results)
+                            .mapToObj(Integer::toString)
+                            .collect(Collectors.joining(",")),
+                    sqlStatements::toString,
+                    Collections.emptyList());
 
         } catch (final Exception e) {
             LOGGER.error("executeStatement() - " + sqlStatements, e);
@@ -266,7 +271,7 @@ public class ConnectionUtil {
             PreparedStatementUtil.setArguments(preparedStatement, args);
             final ResultSet resultSet = PreparedStatementUtil.createCloseStatementResultSet(preparedStatement);
 
-            log(logExecutionTime, null, sql, args);
+            log(logExecutionTime, "ResultSet", sql, args);
 
             return resultSet;
         } catch (final SQLException sqlException) {
@@ -279,17 +284,17 @@ public class ConnectionUtil {
                             final Object result,
                             final String sql,
                             final List<Object> args) {
-        log(logExecutionTime, result, () -> sql, args);
+        log(logExecutionTime, result::toString, () -> sql, args);
 
     }
     private static void log(final LogExecutionTime logExecutionTime,
-                            final Object result,
+                            final Supplier<String> resultSupplier,
                             final Supplier<String> sqlSupplier,
                             final List<Object> args) {
         final long time = logExecutionTime.getDuration();
         if (LOGGER.isDebugEnabled() || time > 1000) {
             final String message = "<<< " + sqlSupplier.get() + " " + args + " took " + ModelStringUtil.formatDurationString(time)
-                    + " with result " + result;
+                    + " with result " + resultSupplier.get();
             if (time > 1000) {
                 LOGGER.warn(message);
             } else {
@@ -476,7 +481,7 @@ public class ConnectionUtil {
                     keyList = Collections.emptyList();
                 }
 
-                log(logExecutionTime, result, preparedStatement::toString, allArgs);
+                log(logExecutionTime, () -> Integer.toString(result), preparedStatement::toString, allArgs);
                 return keyList;
 
             } catch (final SQLException sqlException) {

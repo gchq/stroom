@@ -98,6 +98,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
             Feed.TABLE_NAME,
             Folder.TABLE_NAME,
             Index.TABLE_NAME,
+            Index.TABLE_NAME_INDEX_VOLUME, //link table between IDX and VOL so no entity of its own
             IndexShard.TABLE_NAME,
             Job.TABLE_NAME,
             JobNode.TABLE_NAME,
@@ -110,6 +111,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
             Script.TABLE_NAME,
             StatisticStoreEntity.TABLE_NAME,
             Stream.TABLE_NAME,
+            StreamAttributeKey.TABLE_NAME,
             StreamAttributeValue.TABLE_NAME,
             StreamProcessor.TABLE_NAME,
             StreamProcessorFilter.TABLE_NAME,
@@ -158,6 +160,8 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
     @Override
     public void setup() {
         Instant startTime = Instant.now();
+        //ensure the constraints are enabled in case teardown did not happen on a previous test
+        databaseCommonTestControlTransactionHelper.enableConstraints();
         nodeConfig.setup();
         createStreamAttributeKeys();
 
@@ -187,10 +191,10 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
             FileSystemUtil.deleteContents(FileSystemUtil.createFileTypeRoot(volume).getParentFile());
         }
 
-        //truncate all the tables
-        databaseCommonTestControlTransactionHelper.truncateTables(TABLES_TO_TRUNCATE);
-
         databaseCommonTestControlTransactionHelper.clearContext();
+
+        //truncate all the tables using a different connection
+        databaseCommonTestControlTransactionHelper.truncateTables(TABLES_TO_TRUNCATE);
         stroomCacheManager.clear();
 
         final Map<String, Clearable> clearableBeanMap = applicationContext.getBeansOfType(Clearable.class, false,
