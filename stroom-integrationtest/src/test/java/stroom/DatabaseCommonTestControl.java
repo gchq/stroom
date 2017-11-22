@@ -54,7 +54,7 @@ import stroom.security.server.DocumentPermission;
 import stroom.security.server.Permission;
 import stroom.security.server.User;
 import stroom.security.server.UserGroupUser;
-import stroom.statistics.shared.StatisticStore;
+import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.Stream;
@@ -77,6 +77,7 @@ import javax.annotation.Resource;
 import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -89,6 +90,40 @@ import java.util.Map;
 @Component
 public class DatabaseCommonTestControl implements CommonTestControl, ApplicationContextAware {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(DatabaseCommonTestControl.class);
+
+    private static final List<String> TABLES_TO_TRUNCATE = Arrays.asList(
+            Dashboard.TABLE_NAME,
+            Dictionary.TABLE_NAME,
+            DocumentPermission.TABLE_NAME,
+            Feed.TABLE_NAME,
+            Folder.TABLE_NAME,
+            Index.TABLE_NAME,
+            IndexShard.TABLE_NAME,
+            Job.TABLE_NAME,
+            JobNode.TABLE_NAME,
+            Node.TABLE_NAME,
+            Permission.TABLE_NAME,
+            PipelineEntity.TABLE_NAME,
+            Query.TABLE_NAME,
+            Rack.TABLE_NAME,
+            Res.TABLE_NAME,
+            Script.TABLE_NAME,
+            StatisticStoreEntity.TABLE_NAME,
+            Stream.TABLE_NAME,
+            StreamAttributeValue.TABLE_NAME,
+            StreamProcessor.TABLE_NAME,
+            StreamProcessorFilter.TABLE_NAME,
+            StreamProcessorFilterTracker.TABLE_NAME,
+            StreamTask.TABLE_NAME,
+            StreamVolume.TABLE_NAME,
+            TextConverter.TABLE_NAME,
+            User.TABLE_NAME,
+            UserGroupUser.TABLE_NAME,
+            Visualisation.TABLE_NAME,
+            Volume.TABLE_NAME,
+            VolumeState.TABLE_NAME,
+            XMLSchema.TABLE_NAME,
+            XSLT.TABLE_NAME);
 
     @Resource
     private VolumeService volumeService;
@@ -137,54 +172,12 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
     @Override
     public void teardown() {
         Instant startTime = Instant.now();
-        deleteEntity(StreamTask.class);
-
-        deleteEntity(StreamVolume.class);
-        deleteEntity(StreamAttributeValue.class);
-        deleteEntity(Stream.class);
-
-        deleteEntity(Query.class);
-        deleteEntity(Dashboard.class);
-        deleteEntity(Visualisation.class);
-        deleteEntity(Script.class);
-        deleteEntity(Res.class);
-        deleteEntity(Dictionary.class);
-        deleteEntity(StatisticStore.class);
-
         // Make sure we are no longer creating tasks.
         streamTaskCreator.shutdown();
 
         // Make sure we don't delete database entries without clearing the pool.
         indexShardWriterCache.shutdown();
         indexShardManager.deleteFromDisk();
-
-        deleteEntity(IndexShard.class);
-        deleteEntity(Index.class);
-
-        deleteEntity(Feed.class);
-
-        deleteEntity(XMLSchema.class);
-        deleteEntity(TextConverter.class);
-        deleteEntity(XSLT.class);
-
-        deleteEntity(StreamProcessorFilter.class);
-        deleteEntity(StreamProcessorFilterTracker.class);
-        deleteEntity(StreamProcessor.class);
-
-        deleteEntity(PipelineEntity.class);
-
-        deleteEntity(UserGroupUser.class);
-        deleteEntity(DocumentPermission.class);
-        deleteEntity(Permission.class);
-        deleteEntity(User.class);
-
-        // Delete folders last as they are the parent for many other entities.
-        deleteEntity(Folder.class);
-
-        // deleteTable("sys_user_role");
-        // deleteTable("sys_user_group");
-        // deleteTable("sys_user");
-        // deleteTable("sys_group");
 
         // Delete the contents of all volumes.
         final List<Volume> volumes = volumeService.find(new FindVolumeCriteria());
@@ -194,14 +187,8 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
             FileSystemUtil.deleteContents(FileSystemUtil.createFileTypeRoot(volume).getParentFile());
         }
 
-        // These are static
-        deleteEntity(JobNode.class);
-        deleteEntity(Job.class);
-
-        deleteEntity(Volume.class);
-        deleteEntity(VolumeState.class);
-        deleteEntity(Node.class);
-        deleteEntity(Rack.class);
+        //truncate all the tables
+        databaseCommonTestControlTransactionHelper.truncateTables(TABLES_TO_TRUNCATE);
 
         databaseCommonTestControlTransactionHelper.clearContext();
         stroomCacheManager.clear();

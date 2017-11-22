@@ -18,6 +18,7 @@ package stroom.entity.server.util;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
@@ -29,6 +30,7 @@ import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.annotation.concurrent.NotThreadSafe;
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -39,6 +41,7 @@ import java.sql.Statement;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -81,7 +84,17 @@ public class ConnectionUtil {
         return DriverManager.getConnection(driverUrl, driverUsername, driverPassword);
     }
 
-    public static final int getMultiInsertMaxBatchSize() {
+    /**
+     * Attempts to get the connection currently in use by a transaction using the passed datasource, or create one
+     * if there isn't one.
+     * @param dataSource The dataSource to get the connection to
+     * @return A new or existing connection
+     */
+    public static Connection getConnection(final DataSource dataSource) {
+        return DataSourceUtils.getConnection(dataSource);
+    }
+
+    private static int getMultiInsertMaxBatchSize() {
         return StroomProperties.getIntProperty(MULTI_INSERT_BATCH_SIZE, MULTI_INSERT_BATCH_SIZE_DEFAULT);
     }
 
@@ -146,6 +159,38 @@ public class ConnectionUtil {
         } catch (final SQLException sqlException) {
             LOGGER.error("executeUpdate() - " + sql + " " + args, sqlException);
             throw sqlException;
+        }
+    }
+
+    public static void executeStatement(final Connection connection, final String sql) throws SQLException {
+        executeStatements(connection, Collections.singletonList(sql));
+    }
+
+    public static void executeStatements(final Connection connection, final List<String> sqlStatements) throws SQLException {
+        LOGGER.debug(">>> %s", sqlStatements);
+        final LogExecutionTime logExecutionTime = new LogExecutionTime();
+        try (Statement statement = connection.createStatement()) {
+
+            sqlStatements.forEach(sql -> {
+                try {
+                    statement.addBatch(sql);
+                } catch (SQLException e) {
+                    throw new RuntimeException(String.format("Error adding sql [%s] to batch", sql), e);
+                }
+            });
+            int[] results = statement.executeBatch();
+            boolean isFailure = Arrays.stream(results)
+                    .anyMatch(val -> val == Statement.EXECUTE_FAILED);
+
+            if (isFailure) {
+                throw new RuntimeException(String.format("Got error code for batch %s", sqlStatements));
+            }
+
+            log(logExecutionTime, null, sqlStatements::toString, Collections.emptyList());
+
+        } catch (final Exception e) {
+            LOGGER.error("executeStatement() - " + sqlStatements, e);
+            throw e;
         }
     }
 
