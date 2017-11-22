@@ -34,14 +34,6 @@ import stroom.widget.tickbox.client.view.TickBox;
 public final class UserEditViewImpl extends ViewWithUiHandlers<UserEditUiHandlers> implements UserEditView {
     private final Widget widget;
     @UiField
-    TickBox statusNotEnabled;
-    @UiField
-    TickBox loginNeverExpires;
-    @UiField
-    Button resetPassword;
-    @UiField
-    Button emailResetPassword;
-    @UiField
     ResizeSimplePanel userGroups;
     @UiField
     ResizeSimplePanel appPermissions;
@@ -52,28 +44,8 @@ public final class UserEditViewImpl extends ViewWithUiHandlers<UserEditUiHandler
     }
 
     @Override
-    public TickBox getStatusNotEnabled() {
-        return statusNotEnabled;
-    }
-
-    @Override
-    public TickBox getLoginNeverExpires() {
-        return loginNeverExpires;
-    }
-
-    @Override
     public Widget asWidget() {
         return widget;
-    }
-
-    @UiHandler("resetPassword")
-    void onResetPasswordClick(final ClickEvent event) {
-        getUiHandlers().resetPassword();
-    }
-
-    @UiHandler("emailResetPassword")
-    void onEmailResetPasswordClick(final ClickEvent event) {
-        getUiHandlers().emailResetPassword();
     }
 
     @Override

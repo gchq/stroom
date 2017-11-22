@@ -19,7 +19,4 @@ package stroom.security.client.presenter;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface UserEditUiHandlers extends UiHandlers {
-    void resetPassword();
-
-    void emailResetPassword();
 }
