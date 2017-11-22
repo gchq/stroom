@@ -30,9 +30,9 @@ import javax.xml.bind.annotation.XmlType;
 import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "parentFolderUUID", "fields", "rules"})
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "fields", "rules"})
 @XmlRootElement(name = "dataReceiptPolicy")
-@XmlType(name = "DataReceiptPolicy", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "parentFolderUUID", "fields", "rules"})
+@XmlType(name = "DataReceiptPolicy", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "fields", "rules"})
 public class RuleSet extends Document implements SharedObject {
     private static final long serialVersionUID = -7268301402378907741L;
 
