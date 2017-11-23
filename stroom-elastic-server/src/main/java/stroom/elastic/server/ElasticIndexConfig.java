@@ -4,9 +4,19 @@ package stroom.elastic.server;
  * As loaded in from remote service
  */
 public class ElasticIndexConfig {
+    private String uuid;
+
     private String indexName;
 
     private String indexedType;
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
 
     public String getIndexName() {
         return indexName;
@@ -27,7 +37,8 @@ public class ElasticIndexConfig {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("ElasticIndexConfig{");
-        sb.append("indexName='").append(indexName).append('\'');
+        sb.append("uuid='").append(uuid).append('\'');
+        sb.append(", indexName='").append(indexName).append('\'');
         sb.append(", indexedType='").append(indexedType).append('\'');
         sb.append('}');
         return sb.toString();
