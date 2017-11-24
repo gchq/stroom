@@ -20,7 +20,6 @@ package stroom.document.client;
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.PresenterWidget;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.SelectContentTabEvent;
 import stroom.core.client.ContentManager;
@@ -29,17 +28,14 @@ import stroom.core.client.ContentManager.CloseHandler;
 import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.entity.shared.DocumentServiceForkAction;
 import stroom.entity.shared.DocumentServiceReadAction;
 import stroom.entity.shared.DocumentServiceWriteAction;
-import stroom.entity.shared.PermissionInheritance;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.query.api.v2.DocRef;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.util.shared.SharedObject;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.util.client.Future;
 
 import java.util.HashMap;
@@ -164,45 +160,6 @@ public abstract class DocumentPlugin<D extends SharedObject> extends Plugin {
                 presenter.write(document);
                 save(getDocRef(document), document).onSuccess(doc -> presenter.read(getDocRef(doc), doc));
             }
-        }
-    }
-
-    /**
-     * 6. This method will save an document as a copy with a different name.
-     */
-    @SuppressWarnings("unchecked")
-    public void saveAs(final PresenterWidget<?> dialog,
-                       final DocumentTabData tabData,
-                       final String docName,
-                       final DocRef destinationFolderRef,
-                       final PermissionInheritance permissionInheritance) {
-        if (tabData != null && tabData instanceof DocumentEditPresenter<?, ?>) {
-            final DocumentEditPresenter<?, D> presenter = (DocumentEditPresenter<?, D>) tabData;
-            final D document = presenter.getEntity();
-            presenter.write(presenter.getEntity());
-
-            final DocRef oldDocumentReference = getDocRef(document);
-
-            fork(getDocRef(document), document, docName, destinationFolderRef, permissionInheritance).onSuccess(doc -> {
-                // Hide the save as presenter.
-                HidePopupEvent.fire(DocumentPlugin.this, dialog);
-
-                // Create an document item so we can open it in the editor and
-                // select it in the explorer tree.
-                final DocRef docRef = getDocRef(doc);
-                highlight(docRef);
-
-                // The document we had open before is now effectively closed
-                // and the new one open so record this fact so that we can
-                // open the old one again and the new one won't open twice.
-                documentToTabDataMap.remove(oldDocumentReference);
-                documentToTabDataMap.put(docRef, tabData);
-                tabDataToDocumentMap.remove(tabData);
-                tabDataToDocumentMap.put(tabData, docRef);
-
-                // Update the item in the content pane.
-                presenter.read(docRef, doc);
-            });
         }
     }
 
@@ -449,10 +406,6 @@ public abstract class DocumentPlugin<D extends SharedObject> extends Plugin {
 
     public Future<D> save(final DocRef docRef, final D document) {
         return dispatcher.exec(new DocumentServiceWriteAction<>(docRef, document));
-    }
-
-    public Future<D> fork(final DocRef docRef, final D document, final String docName, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
-        return dispatcher.exec(new DocumentServiceForkAction<>(docRef, document, docName, destinationFolderRef, permissionInheritance));
     }
 
     protected abstract DocRef getDocRef(D document);

@@ -26,7 +26,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.DocumentServiceDeleteAction;
+import stroom.entity.shared.EntityServiceDeleteAction;
 import stroom.entity.shared.FindNamedEntityCriteria;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.StringCriteria.MatchStyle;
@@ -144,7 +144,7 @@ public abstract class ManageEntityPresenter<C extends FindNamedEntityCriteria, E
             ConfirmEvent.fire(this, "Are you sure you want to delete the selected " + getEntityDisplayType() + "?",
                     result -> {
                         if (result) {
-                            dispatcher.exec(new DocumentServiceDeleteAction(entity)).onSuccess(res -> {
+                            dispatcher.exec(new EntityServiceDeleteAction(entity)).onSuccess(res -> {
                                 listPresenter.refresh();
                                 listPresenter.getView().getSelectionModel().clear();
                             });

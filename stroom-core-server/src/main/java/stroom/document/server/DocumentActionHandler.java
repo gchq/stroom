@@ -23,8 +23,4 @@ public interface DocumentActionHandler<D> {
     D readDocument(DocRef docRef);
 
     D writeDocument(D document);
-
-    D forkDocument(D document, String name, DocRef destinationFolderRef);
-
-//    void deleteDocument(DocRef docRef);
 }

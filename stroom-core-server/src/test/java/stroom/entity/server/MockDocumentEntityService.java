@@ -504,29 +504,6 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
         return save(document);
     }
 
-    @Override
-    public E forkDocument(final E document, final String name, final DocRef destinationFolderRef) {
-        if (!getEntityClass().isAssignableFrom(document.getClass())) {
-            throw new EntityServiceException("Unexpected document type");
-        }
-
-        final E entity = (E) document;
-
-        // This is going to be a copy so clear the persistence so save will create a new DB entry.
-        entity.clearPersistence();
-
-        entity.setName(name);
-
-        return doSave(entity);
-
-        // TODO : Call the explorer service to notify it that a new item has been created.
-    }
-
-//    @Override
-//    public void deleteDocument(final DocRef docRef) {
-//        delete(docRef.getUuid());
-//    }
-
     ////////////////////////////////////////////////////////////////////////
     // END OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////

@@ -18,10 +18,9 @@
 package stroom.document.server;
 
 import org.springframework.stereotype.Component;
-import stroom.logging.DocumentEventLog;
 import stroom.entity.server.EntityServiceBeanRegistry;
 import stroom.entity.shared.EntityServiceException;
-import stroom.entity.shared.PermissionInheritance;
+import stroom.logging.DocumentEventLog;
 import stroom.query.api.v2.DocRef;
 
 import javax.inject.Inject;
@@ -69,39 +68,6 @@ class DocumentServiceImpl implements DocumentService {
         }
 
         return result;
-    }
-
-    @Override
-    public Object forkDocument(final DocRef docRef, final Object document, final String docName, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
-        Object result = null;
-        try {
-            final DocumentActionHandler documentActionHandler = getDocumentActionHandler(docRef.getType());
-            result = documentActionHandler.forkDocument(document, docName, destinationFolderRef);
-            if (result != null) {
-                documentEventLog.create(result, null);
-            }
-        } catch (final RuntimeException e) {
-            documentEventLog.create(docRef, e);
-            throw e;
-        }
-
-        // TODO : Tell the explorer service that this document has been forked so that it can create an entry and setup permissions.
-
-        return result;
-    }
-
-    @Override
-    public void deleteDocument(final DocRef docRef) {
-//        try {
-//            final DocumentActionHandler documentActionHandler = getDocumentActionHandler(docRef.getType());
-//            documentActionHandler.deleteDocument(docRef);
-//            documentEventLog.delete(docRef, null);
-//        } catch (final RuntimeException e) {
-//            documentEventLog.delete(docRef, e);
-//            throw e;
-//        }
-
-        throw new EntityServiceException("Not implemented");
     }
 
     private DocumentActionHandler getDocumentActionHandler(final String type) {

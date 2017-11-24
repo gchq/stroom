@@ -57,7 +57,6 @@ public final class SvgPresets {
     public static final SvgPreset REMOVE = new SvgPreset("images/remove.svg", "Remove", false);
     public static final SvgPreset RULESET = new SvgPreset("images/ruleset.svg", "Rule Set", true);
     public static final SvgPreset SAVE = new SvgPreset("images/save.svg", "Save", false);
-    public static final SvgPreset SAVE_AS = new SvgPreset("images/saveas.svg", "Save As", true);
     public static final SvgPreset SHARD_FLUSH = new SvgPreset("images/shard-flush.svg", "Flush Selected Shards", false);
     public static final SvgPreset SHARD_CLOSE = new SvgPreset("images/shard-close.svg", "Close Selected Shards", false);
     public static final SvgPreset SPINNER = new SvgPreset("images/spinner.svg", null, true);

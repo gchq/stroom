@@ -28,8 +28,8 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.shared.FindQueryCriteria;
 import stroom.dashboard.shared.QueryEntity;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.DocumentServiceDeleteAction;
 import stroom.entity.shared.DocumentServiceWriteAction;
+import stroom.entity.shared.EntityServiceDeleteAction;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.Sort.Direction;
@@ -264,7 +264,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
     }
 
     private void delete(final QueryEntity query) {
-        dispatcher.exec(new DocumentServiceDeleteAction(query)).onSuccess(result -> refresh(false));
+        dispatcher.exec(new EntityServiceDeleteAction(query)).onSuccess(result -> refresh(false));
     }
 
     public interface QueryFavouritesView extends View {

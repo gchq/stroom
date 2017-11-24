@@ -186,30 +186,6 @@ public class Store<D extends Document> implements ExplorerActionHandler, Documen
         return update(document);
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public D forkDocument(final D document, final String docName, final DocRef destinationFolderRef) {
-        String parentFolderUUID = null;
-        if (destinationFolderRef != null) {
-            parentFolderUUID = destinationFolderRef.getUuid();
-        }
-
-        final long now = System.currentTimeMillis();
-        final String userId = securityContext.getUserId();
-
-        document.setUuid(UUID.randomUUID().toString());
-        document.setName(docName);
-        document.setVersion(UUID.randomUUID().toString());
-        document.setCreateTime(now);
-        document.setUpdateTime(now);
-        document.setCreateUser(userId);
-        document.setUpdateUser(userId);
-
-        return create(parentFolderUUID, document);
-
-        // TODO : Call the explorer service to notify it that a new item has been created.
-    }
-
     ////////////////////////////////////////////////////////////////////////
     // END OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////

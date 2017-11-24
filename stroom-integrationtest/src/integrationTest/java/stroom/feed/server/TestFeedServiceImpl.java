@@ -77,19 +77,6 @@ public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
     }
 
     /**
-     * Test.
-     */
-    @Test
-    public void testSaveAs() {
-        final String feedName = FileSystemTestUtil.getUniqueTestString();
-        Feed fd = feedService.create(feedName);
-
-        fd = feedService.forkDocument(fd, fd.getName() + "COPY", null);
-
-        feedService.save(fd);
-    }
-
-    /**
      * Added this test to ensure that deletion works on the database correctly
      * and cascades to the join table. Previously this was broken as the
      * deletion was violating the integrity constraint placed on the join table.

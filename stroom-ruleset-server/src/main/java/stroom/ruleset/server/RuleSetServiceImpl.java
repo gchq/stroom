@@ -89,11 +89,6 @@ public class RuleSetServiceImpl implements RuleSetService {
         return store.writeDocument(document);
     }
 
-    @Override
-    public RuleSet forkDocument(final RuleSet document, String name, DocRef destinationFolderRef) {
-        return store.forkDocument(document, name, destinationFolderRef);
-    }
-
     ////////////////////////////////////////////////////////////////////////
     // END OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////

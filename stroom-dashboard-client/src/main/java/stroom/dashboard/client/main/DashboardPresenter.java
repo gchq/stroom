@@ -46,7 +46,6 @@ import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.document.client.event.ShowForkDocumentDialogEvent;
 import stroom.document.client.event.WriteDocumentEvent;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.shared.DocumentType;
@@ -74,7 +73,6 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         implements FlexLayoutChangeHandler, DocumentTabData, DashboardUiHandlers {
     private static final Logger logger = Logger.getLogger(DashboardPresenter.class.getName());
     private final ButtonView saveButton;
-    private final ButtonView saveAsButton;
     private final DashboardLayoutPresenter layoutPresenter;
     private final Provider<ComponentAddPresenter> addPresenterProvider;
     private final Components components;
@@ -97,18 +95,11 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         this.components = components;
 
         saveButton = addButtonLeft(SvgPresets.SAVE);
-        saveAsButton = addButtonLeft(SvgPresets.SAVE_AS);
         saveButton.setEnabled(false);
-        saveAsButton.setEnabled(false);
 
         registerHandler(saveButton.addClickHandler(event -> {
             if (saveButton.isEnabled()) {
                 WriteDocumentEvent.fire(DashboardPresenter.this, DashboardPresenter.this);
-            }
-        }));
-        registerHandler(saveAsButton.addClickHandler(event -> {
-            if (saveAsButton.isEnabled()) {
-                ShowForkDocumentDialogEvent.fire(DashboardPresenter.this, DashboardPresenter.this);
             }
         }));
 
@@ -307,7 +298,6 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         super.onPermissionsCheck(readOnly);
 
         saveButton.setEnabled(isDirty() && !readOnly);
-        saveAsButton.setEnabled(true);
 
         addButton.setEnabled(!readOnly);
         if (!readOnly) {

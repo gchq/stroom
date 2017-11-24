@@ -640,17 +640,6 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return save(document);
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public E forkDocument(final E document, final String name, final DocRef destinationFolderRef) {
-        String parentFolderUUID = null;
-        if (destinationFolderRef != null) {
-            parentFolderUUID = destinationFolderRef.getUuid();
-        }
-
-        return copy(document, name, parentFolderUUID);
-    }
-
     ////////////////////////////////////////////////////////////////////////
     // END OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////

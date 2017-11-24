@@ -26,8 +26,8 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.DocumentServiceDeleteAction;
 import stroom.entity.shared.DocumentServiceReadAction;
+import stroom.entity.shared.EntityServiceDeleteAction;
 import stroom.node.client.view.WrapperView;
 import stroom.node.shared.FlushVolumeStatusAction;
 import stroom.node.shared.Volume;
@@ -117,7 +117,7 @@ public class ManageVolumesPresenter extends MyPresenter<WrapperView, ManageVolum
                         if (result) {
                             volumeStatusListPresenter.getSelectionModel().clear();
                             for (final Volume volume : list) {
-                                dispatcher.exec(new DocumentServiceDeleteAction(volume)).onSuccess(r -> refresh());
+                                dispatcher.exec(new EntityServiceDeleteAction(volume)).onSuccess(r -> refresh());
                             }
                         }
                     });
