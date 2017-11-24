@@ -69,7 +69,7 @@ public class Dictionary extends StroomExtensionFunctionCall {
                                 + "'. You might not have permission to access this dictionary", null);
                     } else {
                         if (list.size() > 1) {
-                            log(context, Severity.INFO, "Multple dictionaries found with name '" + name
+                            log(context, Severity.INFO, "Multiple dictionaries found with name '" + name
                                     + "' - using the first one that was created", null);
                         }
 

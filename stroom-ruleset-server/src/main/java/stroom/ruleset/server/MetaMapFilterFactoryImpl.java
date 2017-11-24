@@ -25,18 +25,18 @@ import stroom.dictionary.server.DictionaryService;
 import javax.inject.Inject;
 
 @Component
-class MetaMapFilterFactoryImpl implements MetaMapFilterFactory {
-    private final RuleSetService dataReceiptService;
+public class MetaMapFilterFactoryImpl implements MetaMapFilterFactory {
+    private final RuleSetService ruleSetService;
     private final DictionaryService dictionaryService;
 
     @Inject
-    public MetaMapFilterFactoryImpl(final RuleSetService dataReceiptService, final DictionaryService dictionaryService) {
-        this.dataReceiptService = dataReceiptService;
+    public MetaMapFilterFactoryImpl(final RuleSetService ruleSetService, final DictionaryService dictionaryService) {
+        this.ruleSetService = ruleSetService;
         this.dictionaryService = dictionaryService;
     }
 
     @Override
     public MetaMapFilter create(final String uuid) {
-        return new MetaMapFilterImpl(new DataReceiptPolicyChecker(dataReceiptService, dictionaryService, uuid));
+        return new MetaMapFilterImpl(new DataReceiptPolicyChecker(ruleSetService, dictionaryService, uuid));
     }
 }
