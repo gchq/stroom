@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.64] - 2017-11-27
+
 * Issue **#497** : Change stream task creation to use straight JDBC rather than hibernate for inserts and use a configurable batch size (stroom.databaseMultiInsertMaxBatchSize) for the inserts.
 
 * Issue **#502** : The task executor was not responding to shutdown and was therefore preventing the app from stopping gracefully.
@@ -690,7 +692,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.63...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.64...HEAD
+[v5.0-beta.64]: https://github.com/gchq/stroom/compare/v5.0-beta.63...v5.0-beta.64
 [v5.0-beta.63]: https://github.com/gchq/stroom/compare/v5.0-beta.62...v5.0-beta.63
 [v5.0-beta.62]: https://github.com/gchq/stroom/compare/v5.0-beta.61...v5.0-beta.62
 [v5.0-beta.61]: https://github.com/gchq/stroom/compare/v5.0-beta.60...v5.0-beta.61
