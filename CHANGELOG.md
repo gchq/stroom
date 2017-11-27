@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#497** : Change stream task creation to use straight JDBC rather than hibernate for inserts and use a configurable batch size (stroom.databaseMultiInsertMaxBatchSize) for the inserts
 
+* Issue **#502** : The task executor was not responding to shutdown and was therefore preventing the app from stopping gracefully.
+
 ## [v5.0-beta.63] - 2017-11-20
 
 * Issue **#498** : The UI was adding more than one link between 'Source' and 'Parser' elements, this is now fixed.
