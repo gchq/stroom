@@ -63,6 +63,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
     private String elementId;
     private PipelineElementType elementType;
     private DocRef entityRef;
+    private DocRef fuzzyEntityRef;
     private PipelineStepAction pipelineStepAction;
     private boolean refreshRequired = true;
     private boolean loaded;
@@ -92,59 +93,18 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
 
         if (!loaded) {
             loaded = true;
-            boolean async = false;
+            boolean loading = false;
 
-            if (elementType != null && elementType.hasRole(PipelineElementType.ROLE_HAS_CODE) && entityRef != null) {
+            if (elementType != null && elementType.hasRole(PipelineElementType.ROLE_HAS_CODE)) {
                 getView().setCodeView(getCodePresenter().getView());
 
                 try {
-                    if (entityRef.getUuid() == null && entityRef.getName() != null) {
-                        if (TextConverter.ENTITY_TYPE.equals(entityRef.getType())) {
-                            final FindTextConverterCriteria criteria = new FindTextConverterCriteria();
-                            criteria.setName(new StringCriteria(entityRef.getName()));
-                            criteria.setSort(FindXSLTCriteria.FIELD_ID);
-                            final EntityServiceFindAction<FindTextConverterCriteria, TextConverter> findAction = new EntityServiceFindAction<>(criteria);
-                            async = true;
-                            dispatcher.exec(findAction)
-                                    .onSuccess(result -> {
-                                        if (result != null && result.size() > 0) {
-                                            entity = result.get(0);
-                                            dirtyCode = false;
-                                            read();
-                                        }
-
-                                        future.setResult(true);
-                                    })
-                                    .onFailure(caught -> future.setResult(false));
-                        } else if (XSLT.ENTITY_TYPE.equals(entityRef.getType())) {
-                            final FindXSLTCriteria criteria = new FindXSLTCriteria();
-                            criteria.setName(new StringCriteria(entityRef.getName()));
-                            criteria.setSort(FindXSLTCriteria.FIELD_ID);
-                            final EntityServiceFindAction<FindXSLTCriteria, XSLT> findAction = new EntityServiceFindAction<>(criteria);
-                            async = true;
-                            dispatcher.exec(findAction)
-                                    .onSuccess(result -> {
-                                        if (result != null && result.size() > 0) {
-                                            entity = result.get(0);
-                                            dirtyCode = false;
-                                            read();
-                                        }
-
-                                        future.setResult(true);
-                                    })
-                                    .onFailure(caught -> future.setResult(false));
-                        }
+                    if (fuzzyEntityRef != null && fuzzyEntityRef.getName() != null && fuzzyEntityRef.getName().length() > 0) {
+                        loadFuzzyEntityRef(future);
+                        loading = true;
                     } else {
-                        async = true;
-                        dispatcher.exec(new EntityServiceLoadAction<>(entityRef, null))
-                                .onSuccess(result -> {
-                                    entity = result;
-                                    dirtyCode = false;
-                                    read();
-
-                                    future.setResult(true);
-                                })
-                                .onFailure(caught -> future.setResult(false));
+                        loadEntityRef(future);
+                        loading = true;
                     }
                 } catch (final Exception e) {
                     AlertEvent.fireErrorFromException(this, e, null);
@@ -160,7 +120,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
             // We always want to see the output of the element.
             getView().setOutputView(getOutputPresenter().getView());
 
-            if (!async) {
+            if (!loading) {
                 Scheduler.get().scheduleDeferred(() -> future.setResult(true));
             }
         } else {
@@ -168,6 +128,64 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
         }
 
         return future;
+    }
+
+    private void loadFuzzyEntityRef(final FutureImpl<Boolean> future) {
+        if (TextConverter.ENTITY_TYPE.equals(fuzzyEntityRef.getType())) {
+            final FindTextConverterCriteria criteria = new FindTextConverterCriteria();
+            criteria.setName(new StringCriteria(fuzzyEntityRef.getName()));
+            criteria.setSort(FindXSLTCriteria.FIELD_ID);
+            final EntityServiceFindAction<FindTextConverterCriteria, TextConverter> findAction = new EntityServiceFindAction<>(criteria);
+            dispatcher.exec(findAction)
+                    .onSuccess(result -> {
+                        if (result != null && result.size() > 0) {
+                            entity = result.get(0);
+                            dirtyCode = false;
+                            read();
+                            future.setResult(true);
+                        } else {
+                            // Try and load by entity ref if there is one.
+                            loadEntityRef(future);
+                        }
+                    })
+                    .onFailure(caught -> future.setResult(false));
+        } else if (XSLT.ENTITY_TYPE.equals(fuzzyEntityRef.getType())) {
+            final FindXSLTCriteria criteria = new FindXSLTCriteria();
+            criteria.setName(new StringCriteria(fuzzyEntityRef.getName()));
+            criteria.setSort(FindXSLTCriteria.FIELD_ID);
+            final EntityServiceFindAction<FindXSLTCriteria, XSLT> findAction = new EntityServiceFindAction<>(criteria);
+            dispatcher.exec(findAction)
+                    .onSuccess(result -> {
+                        if (result != null && result.size() > 0) {
+                            entity = result.get(0);
+                            dirtyCode = false;
+                            read();
+                            future.setResult(true);
+                        } else {
+                            // Try and load by entity ref if there is one.
+                            loadEntityRef(future);
+                        }
+                    })
+                    .onFailure(caught -> future.setResult(false));
+        } else {
+            Scheduler.get().scheduleDeferred(() -> future.setResult(true));
+        }
+    }
+
+    private void loadEntityRef(final FutureImpl<Boolean> future) {
+        if (entityRef != null) {
+            dispatcher.exec(new EntityServiceLoadAction<>(entityRef, null))
+                    .onSuccess(result -> {
+                        entity = result;
+                        dirtyCode = false;
+                        read();
+
+                        future.setResult(true);
+                    })
+                    .onFailure(caught -> future.setResult(false));
+        } else {
+            Scheduler.get().scheduleDeferred(() -> future.setResult(true));
+        }
     }
 
     public void save() {
@@ -279,6 +297,10 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
 
     public void setEntityRef(final DocRef entityRef) {
         this.entityRef = entityRef;
+    }
+
+    public void setFuzzyEntityRef(final DocRef fuzzyEntityRef) {
+        this.fuzzyEntityRef = fuzzyEntityRef;
     }
 
     public void setPipelineStepAction(final PipelineStepAction pipelineStepAction) {
