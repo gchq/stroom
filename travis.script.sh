@@ -5,11 +5,13 @@ set -e
 
 DOCKER_REPO="gchq/stroom"
 GITHUB_REPO="gchq/stroom"
+GITHUB_API_URL="https://api.github.com/repos/gchq/stroom/releases"
 DOCKER_CONTEXT_ROOT="stroom-app/docker/."
 FLOATING_TAG=""
 SPECIFIC_TAG=""
 #This is a whitelist of branches to produce docker builds for
 BRANCH_WHITELIST_REGEX='(^dev$|^master$|^v[0-9].*$)'
+CRON_TAG_SUFFIC="DAILY"
 doDockerBuild=false
 
 #Shell Colour constants for use in 'echo -e'
@@ -27,9 +29,9 @@ createGitTag() {
     git config --global user.name "Travis CI"
 
     echo -e "Tagging commit [${GREEN}${TRAVIS_COMMIT}${NC}] with tag [${GREEN}${tagName}${NC}]"
-    git tag -a ${tagName} ${TRAVIS_COMMIT} -m "Automated Travis build $TRAVIS_BUILD_NUMBER" 
+    git tag -a ${tagName} ${TRAVIS_COMMIT} -m "Automated Travis build $TRAVIS_BUILD_NUMBER" >/dev/null 2>&1
     #TAGPERM is a travis encrypted github token, see 'env' section in .travis.yml
-    git push -q https://$TAGPERM@github.com/${GITHUB_REPO} ${tagName}
+    git push -q https://$TAGPERM@github.com/${GITHUB_REPO} ${tagName} >/dev/null 2>&1
 }
 
 
@@ -52,13 +54,47 @@ echo -e "TRAVIS_EVENT_TYPE:   [${GREEN}${TRAVIS_EVENT_TYPE}${NC}]"
 echo -e "STROOM_VERSION:      [${GREEN}${STROOM_VERSION}${NC}]"
 
 if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then
-    echo "This is a cron build so just tag the commit and exit"
-    echo "The build will happen when travis picks up the tagged commit"
-    #This is a cron triggered build so tag as -DAILY and push a tag to git
-    DATE_ONLY="$(date +%Y%m%d)"
-    gitTag="${STROOM_VERSION}-${DATE_ONLY}-DAILY"
+    echo "This is a cron build so just tag the commit if we need to and exit"
+    #GH_USER_AND_TOKEN is set in env section of .travis.yml
+    if [ "${GH_USER_AND_TOKEN}x" = "x" ]; then 
+        #no token so do it unauthenticated
+        authArgs=""
+    else
+        echo "Using authentication with curl"
+        authArgs="--user ${GH_USER_AND_TOKEN}"
+    fi
+    #query the github api for the latest cron release tag name
+    #redirect stderr to dev/null to protect api token
+    latestTagName=$(curl -s ${authArgs} ${GITHUB_API_URL} | \
+        jq -r "[.[] | select(.tag_name | test(\"${TRAVIS_BRANCH}.*${CRON_TAG_SUFFIC}\"))][0].tag_name" 2>/dev/null)
+    echo -e "latestTagName: [${GREEN}${latestTagName}${NC}]"
 
-    createGitTag ${gitTag}
+    doTagging=true
+    if [ "${latestTagName}x" != "x" ]; then 
+        #Get the commit sha that this tag applies to (not the commit of the tag itself)
+        shaForTag=$(git rev-list -n 1 "${latestTagName}")
+        echo -e "shaForTag: [${GREEN}${shaForTag}${NC}]"
+        if [ "${shaForTag}x" = "x" ]; then
+            echo -e "${RED}Unable to get sha for tag ${BLUE}${latestTagName}${NC}"
+            exit 1
+        fi
+
+        if [ "${shaForTag}x" = "${TRAVIS_COMMIT}x" ]; then
+            echo -e "${RED}Current commit matches latest releases, git will not be tagged${NC}"
+            #The latest release has the same commit sha as the commit travis is building
+            #so don't bother creating a new tag as we don't want a new release
+            doTagging=false
+        fi
+    fi
+
+    if [ ${doTagging} = true ]; then
+        echo "The build will happen when travis picks up the tagged commit"
+        #This is a cron triggered build so tag as -DAILY and push a tag to git
+        DATE_ONLY="$(date +%Y%m%d)"
+        gitTag="${STROOM_VERSION}-${DATE_ONLY}-${CRON_TAG_SUFFIC}"
+
+        createGitTag ${gitTag}
+    fi
 else
     #Do the gradle build
     # Use 1 local worker to avoid using too much memory as each worker will chew up ~500Mb ram
@@ -83,9 +119,9 @@ else
         echo -e "Building a docker image with tags: ${GREEN}${SPECIFIC_TAG}${NC} ${GREEN}${FLOATING_TAG}${NC}"
 
         #The username and password are configured in the travis gui
-        docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-        docker build ${SPECIFIC_TAG} ${FLOATING_TAG} ${DOCKER_CONTEXT_ROOT}
-        docker push ${DOCKER_REPO}
+        docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD" >/dev/null 2>&1
+        docker build ${SPECIFIC_TAG} ${FLOATING_TAG} ${DOCKER_CONTEXT_ROOT} >/dev/null 2>&1
+        docker push ${DOCKER_REPO} >/dev/null 2>&1
     fi
 
     #Deploy the generated swagger specs and swagger UI (obtained from github) to gh-pages
