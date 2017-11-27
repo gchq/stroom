@@ -320,10 +320,10 @@ subprojects {
         }
     }
 
-clean{
-    //clear out the 'out' dirs used by intelliJ
-    delete "out"
-}
+    clean{
+        //clear out the 'out' dirs used by intelliJ
+        delete "out"
+    }
 
     //ensure we download our libs before compiling java
     tasks.compileJava.dependsOn downloadUrlDependencies

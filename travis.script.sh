@@ -62,7 +62,7 @@ if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then
 else
     #Do the gradle build
     # Use 1 local worker to avoid using too much memory as each worker will chew up ~500Mb ram
-    ./gradlew -Pversion=$TRAVIS_TAG -PgwtCompilerWorkers=1 -PgwtCompilerMinHeap=50M -PgwtCompilerMaxHeap=500M clean build
+    ./gradlew -Pversion=$TRAVIS_TAG -PgwtCompilerWorkers=1 -PgwtCompilerMinHeap=50M -PgwtCompilerMaxHeap=500M clean build dist
 
     if [ -n "$TRAVIS_TAG" ]; then
         #This is a tagged commit, so create a docker image with that tag

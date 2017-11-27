@@ -68,4 +68,5 @@ include 'stroom-app'
 
 // Integration tests.
 include 'stroom-integrationtest'
+include 'stroom-app-distribution'
 

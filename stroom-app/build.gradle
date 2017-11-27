@@ -207,6 +207,11 @@ swagger {
     }
 }
 
+task dist(type: Zip) {
+    from 'src/dist'
+    from shadowJar.outputs.files
+}
+
 tasks.build.dependsOn generateSwaggerDocumentation
 tasks.build.dependsOn copyFilesForDockerBuild
 tasks.build.dependsOn shadowJar
