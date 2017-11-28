@@ -47,7 +47,7 @@ public class AnnotationsPlugin extends Plugin {
         clientPropertyCache.get()
                 .onSuccess(result -> {
                     final IconMenuItem annotationsMenuItem;
-                    final String annotationsURL = result.get(ClientProperties.URL_ANNOTATIONS_UI);
+                    final String annotationsURL = result.get(ClientProperties.URL_ANNOTATIONS_QUERY_UI);
                     if (annotationsURL != null && annotationsURL.trim().length() > 0) {
                         annotationsMenuItem = new IconMenuItem(5, SvgPresets.ANNOTATIONS, null, "Annotations", null, true, () -> {
                             final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()

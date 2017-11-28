@@ -20,7 +20,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.explorer.shared.ExplorerConstants;
 import stroom.node.server.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
@@ -56,8 +55,8 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
             urlMap = new HashMap<String, String>();
             urlMap.put("Index", basePath + "/api/stroom-index/v2");
             urlMap.put("StatisticStore", basePath + "/api/sqlstatistics/v2");
-            urlMap.put(ExplorerConstants.ANNOTATIONS, annotationsPath);
-            urlMap.put(ExplorerConstants.ELASTIC_SEARCH, elasticPath);
+            urlMap.put("AnnotationsIndex", annotationsPath);
+            urlMap.put("ElasticIndex", elasticPath);
                     //strooom-stats is not available as a local service as if you have stroom-stats you have zookeeper so
                     //you can run service discovery
             urlMap.put("authentication", basePath + "/api/authentication/v1");

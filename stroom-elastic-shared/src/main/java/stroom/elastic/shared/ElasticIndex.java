@@ -10,7 +10,7 @@ import javax.persistence.Transient;
 @Entity
 @Table(name = "ELASTIC_INDEX")
 public class ElasticIndex extends DocumentEntity {
-    public static final String ENTITY_TYPE = ExplorerConstants.ELASTIC_SEARCH;
+    public static final String ENTITY_TYPE = "ElasticIndex";
 
     @Transient
     @Override

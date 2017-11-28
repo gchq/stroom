@@ -9,7 +9,5 @@ public class ElasticIndexModule extends PluginModule {
     protected void configure() {
         bindPlugin(ElasticIndexPlugin.class);
         bind(ElasticIndexExternalPresenter.class);
-        //bind(ElasticIndexPresenter.class);
-        //bindPresenterWidget(ElasticIndexPresenter.class, ElasticIndexSettingsPresenter.ElasticIndexSettingsView.class, ElasticIndexSettingsViewImpl.class);
     }
 }

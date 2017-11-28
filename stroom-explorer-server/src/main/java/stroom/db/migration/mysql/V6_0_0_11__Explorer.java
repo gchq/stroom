@@ -69,8 +69,6 @@ public class V6_0_0_11__Explorer implements JdbcMigration {
             ancestorIdList = Collections.singletonList(nodeId);
         }
 
-        addAnnotationsNode(connection, nodeId);
-
         // Store the mapping of folder id to explorer node ancestors.
         folderIdToAncestorIDMap.put(0L, ancestorIdList);
 
@@ -90,21 +88,6 @@ public class V6_0_0_11__Explorer implements JdbcMigration {
         addOtherNodes(connection, "DASH", "Dashboard");
         addOtherNodes(connection, "DICT", "Dictionary");
         addOtherNodes(connection, "XSLT", "XSLT");
-    }
-
-    private void addAnnotationsNode(final Connection connection,
-                                    final Long rootNodeId) throws Exception {
-        final DocRef root = ExplorerConstants.ANNOTATIONS_DOC_REF;
-
-        Long annotationsNodeId = getExplorerTreeNodeId(connection, root);
-
-        if (annotationsNodeId == null) {
-            createExplorerTreeNode(connection, root, "DataSource");
-            annotationsNodeId = getExplorerTreeNodeId(connection, root);
-
-            // Insert paths.
-            insertPaths(connection, annotationsNodeId, Arrays.asList(annotationsNodeId, rootNodeId));
-        }
     }
 
     private void addOtherNodes(final Connection connection, final String tableName, final String type) throws SQLException {
