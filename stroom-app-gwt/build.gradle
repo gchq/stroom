@@ -9,6 +9,7 @@ def extraDir = "${gwtBuildDir}/extra"
 
 dependencies {
     compile project(':stroom-index-client')
+    compile project(':stroom-annotations-client')
     compile project(':stroom-elastic-client')
     compile project(':stroom-statistics-client')
     compile project(':stroom-dashboard-client')

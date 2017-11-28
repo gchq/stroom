@@ -26,6 +26,8 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
 import stroom.about.client.presenter.AboutPresenter;
 import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
+import stroom.annotations.client.gin.AnnotationsIndexGinjector;
+import stroom.annotations.client.gin.AnnotationsIndexModule;
 import stroom.app.client.presenter.AppPresenter;
 import stroom.cache.client.gin.CacheGinjector;
 import stroom.cache.client.gin.CacheModule;
@@ -82,6 +84,7 @@ import stroom.xmlschema.client.gin.XMLSchemaModule;
 
 @GinModules({
         AlertModule.class,
+        AnnotationsIndexModule.class,
         AppModule.class,
         CacheModule.class,
         ClientDispatchModule.class,
@@ -116,6 +119,7 @@ public interface AppGinjector extends
         DashboardGinjector,
         DictionaryGinjector,
         EntityGinjector,
+        AnnotationsIndexGinjector,
         ElasticIndexGinjector,
         FeedGinjector,
         FolderGinjector,

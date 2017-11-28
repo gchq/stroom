@@ -8,5 +8,4 @@ dependencies {
     compile libs.gin
     compile libs.guice3
     compile libs.gwt_servlet
-    compile libs.gwtp_mvp_client
 }

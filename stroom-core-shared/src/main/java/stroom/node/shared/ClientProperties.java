@@ -43,12 +43,11 @@ public class ClientProperties implements SharedObject {
     public static final String HELP_URL = "stroom.helpUrl";
     public static final String URL_LIST = "stroom.url.list";
     public static final String URL_BASE = "stroom.url.";
-    public static final String URL_ANNOTATIONS_UI = URL_BASE + "annotations-ui";
     public static final String URL_KIBANA_UI = URL_BASE + "kibana-ui";
     public static final String URL_ELASTIC_EXPLORER = URL_BASE + "elastic-explorer";
     public static final String URL_ELASTIC_QUERY_UI = URL_BASE + "elastic-query-ui";
+    public static final String URL_ANNOTATIONS_QUERY_UI = URL_BASE + "annotations-query-ui";
     public static final String URL_ANNOTATIONS_SERVICE = URL_BASE + "annotations-service";
-    public static final String URL_DASHBOARD = URL_BASE + "annotations-dashboard";
 
     private static final long serialVersionUID = 8717922468620533698L;
     private HashMap<String, String> map;
