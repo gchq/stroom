@@ -16,9 +16,11 @@
 
 package stroom.streamtask.server;
 
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.server.util.StroomEntityManager;
@@ -46,6 +48,9 @@ import stroom.streamtask.shared.TaskStatus;
 import stroom.util.logging.StroomLogger;
 
 import javax.annotation.Resource;
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -108,6 +113,9 @@ public class StreamTaskCreatorTransactionHelper {
     private StroomDatabaseInfo stroomDatabaseInfo;
     @Resource
     private StreamProcessorFilterService streamProcessorFilterService;
+    @Resource(name = "dataSource")
+    DataSource dataSource;
+
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
 
@@ -179,9 +187,13 @@ public class StreamTaskCreatorTransactionHelper {
      * node and available to be handed to workers (i.e. their associated
      * streams are not locked).
      */
-    public CreatedTasks createNewTasks(final StreamProcessorFilter filter, final StreamProcessorFilterTracker tracker,
-                                       final long streamQueryTime, final Map<Stream, InclusiveRanges> streams, final Node thisNode,
-                                       final StreamTaskCreatorRecentStreamDetails recentStreamInfo, final boolean reachedLimit) {
+    public CreatedTasks createNewTasks(final StreamProcessorFilter filter,
+                                       final StreamProcessorFilterTracker tracker,
+                                       final long streamQueryTime,
+                                       final Map<Stream, InclusiveRanges> streams,
+                                       final Node thisNode,
+                                       final StreamTaskCreatorRecentStreamDetails recentStreamInfo,
+                                       final boolean reachedLimit) {
         List<StreamTask> availableTaskList = Collections.emptyList();
         int availableTasksCreated = 0;
         int totalTasksCreated = 0;
@@ -200,28 +212,20 @@ public class StreamTaskCreatorTransactionHelper {
             InclusiveRange eventIdRange = null;
 
             if (streams.size() > 0) {
-                final SqlBuilder batchStreamTaskInsert = new SqlBuilder();
-                batchStreamTaskInsert.append("INSERT INTO ");
-                batchStreamTaskInsert.append(StreamTask.TABLE_NAME);
-                batchStreamTaskInsert.append(" (");
-                batchStreamTaskInsert.append(BaseEntity.VERSION);
-                batchStreamTaskInsert.append(",");
-                batchStreamTaskInsert.append(StreamTask.CREATE_MS);
-                batchStreamTaskInsert.append(",");
-                batchStreamTaskInsert.append(StreamTask.STATUS);
-                batchStreamTaskInsert.append(",");
-                batchStreamTaskInsert.append(StreamTask.STATUS_MS);
-                batchStreamTaskInsert.append(",");
-                batchStreamTaskInsert.append(Node.FOREIGN_KEY);
-                batchStreamTaskInsert.append(",");
-                batchStreamTaskInsert.append(Stream.FOREIGN_KEY);
-                batchStreamTaskInsert.append(",");
-                batchStreamTaskInsert.append(StreamTask.DATA);
-                batchStreamTaskInsert.append(",");
-                batchStreamTaskInsert.append(StreamProcessorFilter.FOREIGN_KEY);
-                batchStreamTaskInsert.append(") VALUES ");
 
-                boolean doneOne = false;
+                final List<String> columnNames = Arrays.asList(
+                        BaseEntity.VERSION,
+                        StreamTask.CREATE_MS,
+                        StreamTask.STATUS,
+                        StreamTask.STATUS_MS,
+                        Node.FOREIGN_KEY,
+                        Stream.FOREIGN_KEY,
+                        StreamTask.DATA,
+                        StreamProcessorFilter.FOREIGN_KEY);
+
+                final List<List<Object>> allArgs = new ArrayList<>();
+
+
                 for (final Entry<Stream, InclusiveRanges> entry : streams.entrySet()) {
                     final Stream stream = entry.getKey();
                     final InclusiveRanges eventRanges = entry.getValue();
@@ -245,48 +249,45 @@ public class StreamTaskCreatorTransactionHelper {
                     streamIdRange = InclusiveRange.extend(streamIdRange, stream.getId());
                     streamMsRange = InclusiveRange.extend(streamMsRange, stream.getCreateMs());
 
-                    if (doneOne) {
-                        batchStreamTaskInsert.append(",");
-                    }
+                    final List<Object> rowArgs = new ArrayList<>(columnNames.size());
 
-                    batchStreamTaskInsert.append("(");
-                    batchStreamTaskInsert.arg(1);
-                    batchStreamTaskInsert.append(",");
-                    batchStreamTaskInsert.arg(streamTaskCreateMs);
-                    batchStreamTaskInsert.append(",");
-                    batchStreamTaskInsert.arg(TaskStatus.UNPROCESSED.getPrimitiveValue());
-                    batchStreamTaskInsert.append(",");
-                    batchStreamTaskInsert.arg(streamTaskCreateMs);
-                    batchStreamTaskInsert.append(",");
+                    rowArgs.add(1); //version
+                    rowArgs.add(streamTaskCreateMs); //create_ms
+                    rowArgs.add(TaskStatus.UNPROCESSED.getPrimitiveValue()); //stat
+                    rowArgs.add(streamTaskCreateMs); //stat_ms
 
                     if (StreamStatus.UNLOCKED.equals(stream.getStatus())) {
                         // If the stream is unlocked then take ownership of the
                         // task, i.e. set the node to this node.
-                        batchStreamTaskInsert.arg(thisNode.getId());
+                        rowArgs.add(thisNode.getId()); //fk_node_id
                         availableTasksCreated++;
                     } else {
                         // If the stream is locked then don't take ownership of
                         // the task at this time, i.e. set the node to null.
-                        batchStreamTaskInsert.arg(null);
+                        rowArgs.add(null); //fk_node_id
                     }
-                    batchStreamTaskInsert.append(",");
-                    batchStreamTaskInsert.arg(stream.getId());
-                    batchStreamTaskInsert.append(",");
+                    rowArgs.add(stream.getId()); //fk_strm_id
                     if (eventRangeData != null && eventRangeData.length() > 0) {
-                        batchStreamTaskInsert.arg(eventRangeData);
+                        rowArgs.add(eventRangeData); //dat
                     } else {
-                        batchStreamTaskInsert.arg(null);
+                        rowArgs.add(null); //dat
                     }
-                    batchStreamTaskInsert.append(",");
-                    batchStreamTaskInsert.arg(filter.getId());
-                    batchStreamTaskInsert.append(")");
+                    rowArgs.add(filter.getId()); //fk_strm_proc_filt_id
 
-                    totalTasksCreated++;
-                    doneOne = true;
+                    allArgs.add(rowArgs);
                 }
 
-                // Save them
-                stroomEntityManager.executeNativeUpdate(batchStreamTaskInsert);
+                // Save the stream tasks using the existing transaction
+                final Connection connection = DataSourceUtils.getConnection(dataSource);
+                try (final ConnectionUtil.MultiInsertExecutor multiInsertExecutor = new ConnectionUtil.MultiInsertExecutor(
+                        connection,
+                        StreamTask.TABLE_NAME,
+                        columnNames)) {
+
+                    multiInsertExecutor.execute(allArgs);
+                }
+
+                totalTasksCreated = allArgs.size();
 
                 // Select them back
                 final FindStreamTaskCriteria findStreamTaskCriteria = new FindStreamTaskCriteria();

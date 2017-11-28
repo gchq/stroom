@@ -16,6 +16,8 @@
 
 package stroom.search.server.taskqueue;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.task.server.StroomThreadGroup;
 import stroom.util.spring.StroomShutdown;
 import stroom.util.thread.CustomThreadFactory;
@@ -31,6 +33,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class TaskExecutor {
     private static final int DEFAULT_MAX_THREADS = 5;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TaskExecutor.class);
 
     private volatile int maxThreads = DEFAULT_MAX_THREADS;
 
@@ -56,8 +60,13 @@ public class TaskExecutor {
                 try {
                     Runnable task = execNextTask();
                     if (task == null) {
-                        condition.awaitUninterruptibly();
+                        condition.await();
                     }
+                } catch (final InterruptedException e) {
+                    // Clear the interrupt state.
+                    Thread.interrupted();
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
                 } finally {
                     taskLock.unlock();
                 }
@@ -68,6 +77,8 @@ public class TaskExecutor {
     @StroomShutdown
     public void stop() {
         running = false;
+        // Wake up any waiting threads.
+        signalAll();
         executor.shutdown();
     }
 
