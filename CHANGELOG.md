@@ -39,6 +39,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
+## [v5.0-beta.64] - 2017-11-27
+
+* Issue **#497** : Change stream task creation to use straight JDBC rather than hibernate for inserts and use a configurable batch size (stroom.databaseMultiInsertMaxBatchSize) for the inserts.
+
+* Issue **#502** : The task executor was not responding to shutdown and was therefore preventing the app from stopping gracefully.
+
+* Issue **#476** : Stepping with dynamic XSLT or text converter properties now correctly falls back to the specified entity if a match cannot be found by name.
+
 ## [v5.0-beta.63] - 2017-11-20
 
 * Issue **#498** : The UI was adding more than one link between 'Source' and 'Parser' elements, this is now fixed.
@@ -717,7 +725,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
 [v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.63...HEAD
+[v5.0-beta.64]: https://github.com/gchq/stroom/compare/v5.0-beta.63...v5.0-beta.64
 [v5.0-beta.63]: https://github.com/gchq/stroom/compare/v5.0-beta.62...v5.0-beta.63
 [v5.0-beta.62]: https://github.com/gchq/stroom/compare/v5.0-beta.61...v5.0-beta.62
 [v5.0-beta.61]: https://github.com/gchq/stroom/compare/v5.0-beta.60...v5.0-beta.61
