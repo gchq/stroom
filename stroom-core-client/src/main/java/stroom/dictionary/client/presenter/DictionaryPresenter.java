@@ -17,11 +17,10 @@
 
 package stroom.dictionary.client.presenter;
 
-import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.core.client.event.DirtyKeyDownHander;
-import stroom.dictionary.shared.Dictionary;
+import stroom.dictionary.shared.DictionaryDoc;
+import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
@@ -29,49 +28,84 @@ import stroom.security.client.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
-public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Dictionary> {
-    private static final TabData WORDS = new TabDataImpl("Words");
+import javax.inject.Provider;
 
-    private final TextAreaPresenter textAreaPresenter;
+public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelView, DictionaryDoc> {
+    private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
+    private static final TabData WORDS_TAB = new TabDataImpl("Words");
+
+    private final DictionarySettingsPresenter settingsPresenter;
+    private final Provider<EditorPresenter> editorPresenterProvider;
+
+    private EditorPresenter codePresenter;
 
     @Inject
-    public DictionaryPresenter(final EventBus eventBus, final LinkTabPanelView view, final TextAreaPresenter textAreaPresenter,
+    public DictionaryPresenter(final EventBus eventBus,
+                               final LinkTabPanelView view,
+                               final DictionarySettingsPresenter settingsPresenter,
+                               final Provider<EditorPresenter> editorPresenterProvider,
                                final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
-        this.textAreaPresenter = textAreaPresenter;
+        this.settingsPresenter = settingsPresenter;
+        this.editorPresenterProvider = editorPresenterProvider;
 
-        registerHandler(textAreaPresenter.addKeyDownHandler(new DirtyKeyDownHander() {
-            @Override
-            public void onDirty(final KeyDownEvent event) {
+        settingsPresenter.addDirtyHandler(event -> {
+            if (event.isDirty()) {
                 setDirty(true);
             }
-        }));
+        });
 
-        addTab(WORDS);
-        selectTab(WORDS);
+        addTab(SETTINGS_TAB);
+        addTab(WORDS_TAB);
+        selectTab(SETTINGS_TAB);
     }
 
     @Override
     protected void getContent(final TabData tab, final ContentCallback callback) {
-        if (WORDS.equals(tab)) {
-            callback.onReady(textAreaPresenter);
+        if (SETTINGS_TAB.equals(tab)) {
+            callback.onReady(settingsPresenter);
+        } else if (WORDS_TAB.equals(tab)) {
+            callback.onReady(codePresenter);
         } else {
             callback.onReady(null);
         }
     }
 
     @Override
-    protected void onRead(final Dictionary dictionary) {
-        textAreaPresenter.setText(dictionary.getData());
+    public void onRead(final DictionaryDoc doc) {
+        settingsPresenter.read(getDocRef(), doc);
+
+        if (codePresenter != null) {
+            codePresenter.setText(doc.getData());
+        }
     }
 
     @Override
-    protected void onWrite(final Dictionary dictionary) {
-        dictionary.setData(textAreaPresenter.getText());
+    protected void onWrite(final DictionaryDoc doc) {
+        settingsPresenter.write(doc);
+
+        if (codePresenter != null) {
+            doc.setData(codePresenter.getText());
+        }
+    }
+
+    @Override
+    public void onPermissionsCheck(final boolean readOnly) {
+        super.onPermissionsCheck(readOnly);
+
+        codePresenter = editorPresenterProvider.get();
+        codePresenter.setReadOnly(readOnly);
+
+        registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
+        registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
+
+        if (getEntity() != null) {
+            codePresenter.setText(getEntity().getData());
+        }
     }
 
     @Override
     public String getType() {
-        return Dictionary.ENTITY_TYPE;
+        return DictionaryDoc.ENTITY_TYPE;
     }
 }

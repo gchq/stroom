@@ -1,29 +1,39 @@
 package stroom.streamtask.server;
 
 import org.springframework.stereotype.Component;
-import stroom.entity.server.util.HqlBuilder;
-import stroom.entity.server.util.SqlBuilder;
-import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.EntityServiceException;
+import stroom.feed.server.FeedService;
+import stroom.feed.shared.Feed;
+import stroom.feed.shared.FindFeedCriteria;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.streamstore.server.StreamTypeService;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.FindStreamDataSource;
+import stroom.streamstore.shared.FindStreamTypeCriteria;
 import stroom.streamstore.shared.QueryData;
+import stroom.streamstore.shared.StreamType;
 
 import javax.inject.Inject;
-import java.util.*;
-import java.util.function.BiFunction;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
 public class SourceSelectorToFindCriteria {
-    private final StroomEntityManager entityManager;
+    private final FeedService feedService;
+    private final StreamTypeService streamTypeService;
 
     @Inject
-    public SourceSelectorToFindCriteria(final StroomEntityManager entityManager) {
-        this.entityManager = entityManager;
+    public SourceSelectorToFindCriteria(final FeedService feedService, final StreamTypeService streamTypeService) {
+        this.feedService = feedService;
+        this.streamTypeService = streamTypeService;
     }
 
     public FindStreamCriteria convert(final QueryData queryData) {
@@ -144,30 +154,49 @@ public class SourceSelectorToFindCriteria {
             }
         }
 
-        final BiFunction<String, String, Long> getIdForName = (tableName, name) -> {
-            final SqlBuilder sql = new SqlBuilder();
-            sql.append("SELECT ID FROM ");
-            sql.append(tableName);
-            sql.append(" WHERE NAME = ");
-            sql.arg(name);
+        final Function<String, Optional<Long>> getIdForFeedName = (name) -> {
+            List<Feed> feeds = feedService.find(new FindFeedCriteria(name));
+            if (feeds != null && feeds.size() > 0) {
+                return Optional.of(feeds.get(0).getId());
+            }
 
-            final long id = entityManager.executeNativeQueryLongResult(sql);
-            return id;
+            return Optional.empty();
+        };
+
+        final Function<String, Optional<Long>> getIdForStreamType = (name) -> {
+            List<StreamType> streamTypes = streamTypeService.find(new FindStreamTypeCriteria(name));
+            if (streamTypes != null && streamTypes.size() > 0) {
+                return Optional.of(streamTypes.get(0).getId());
+            }
+
+            return Optional.empty();
         };
 
         final List<Long> streamTypeIdsToInclude = streamTypeNamesToInclude.stream()
-                .map(n -> getIdForName.apply("STRM_TP", n))
+                .map(getIdForStreamType)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .collect(Collectors.toList());
         final List<Long> feedIdsToInclude = feedNamesToInclude.stream()
-                .map(n -> getIdForName.apply("FD", n))
+                .map(getIdForFeedName)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .collect(Collectors.toList());
         final List<Long> feedIdsToExclude = feedNamesToExclude.stream()
-                .map(n -> getIdForName.apply("FD", n))
+                .map(getIdForFeedName)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .collect(Collectors.toList());
 
-        newCriteria.obtainStreamTypeIdSet().addAll(streamTypeIdsToInclude);
-        newCriteria.obtainFeeds().obtainInclude().addAll(feedIdsToInclude);
-        newCriteria.obtainFeeds().obtainExclude().addAll(feedIdsToExclude);
+        if (streamTypeIdsToInclude.size() > 0) {
+            newCriteria.obtainStreamTypeIdSet().addAll(streamTypeIdsToInclude);
+        }
+        if (feedIdsToInclude.size() > 0) {
+            newCriteria.obtainFeeds().obtainInclude().addAll(feedIdsToInclude);
+        }
+        if (feedIdsToExclude.size() > 0) {
+            newCriteria.obtainFeeds().obtainExclude().addAll(feedIdsToExclude);
+        }
 
         // Do all the other criteria need to be set to 'ANY'?
 

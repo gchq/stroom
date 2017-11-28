@@ -16,24 +16,22 @@
 
 package stroom.dictionary.client.view;
 
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.dictionary.client.presenter.TextAreaPresenter.TextAreaView;
+import stroom.dictionary.client.presenter.DictionarySettingsPresenter.DictionarySettingsView;
+import stroom.util.shared.HasReadOnly;
 
-public class TextAreaViewImpl extends ViewImpl implements TextAreaView {
+public class DictionarySettingsViewImpl extends ViewImpl implements DictionarySettingsView, HasReadOnly {
     private final Widget widget;
     @UiField
-    TextArea textArea;
+    TextArea description;
 
     @Inject
-    public TextAreaViewImpl(final Binder binder) {
+    public DictionarySettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -43,25 +41,20 @@ public class TextAreaViewImpl extends ViewImpl implements TextAreaView {
     }
 
     @Override
-    public String getText() {
-        return textArea.getText();
+    public TextArea getDescription() {
+        return description;
     }
 
     @Override
-    public void setText(final String text) {
-        textArea.setText(text);
+    public boolean isReadOnly() {
+        return description.isEnabled();
     }
 
     @Override
-    public HandlerRegistration addKeyDownHandler(final KeyDownHandler handler) {
-        return textArea.addKeyDownHandler(handler);
+    public void setReadOnly(final boolean readOnly) {
+        description.setEnabled(!readOnly);
     }
 
-    @Override
-    public void fireEvent(final GwtEvent<?> event) {
-        widget.fireEvent(event);
-    }
-
-    public interface Binder extends UiBinder<Widget, TextAreaViewImpl> {
+    public interface Binder extends UiBinder<Widget, DictionarySettingsViewImpl> {
     }
 }

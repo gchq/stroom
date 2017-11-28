@@ -1,0 +1,4 @@
+dependencies {
+    compile urlDependencies.get(urlLibs.stroomQueryApi)
+    compile project(':stroom-docstore-shared')
+}

@@ -12,15 +12,22 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package stroom.document.server;
+package stroom.docstore.shared;
 
 import stroom.query.api.v2.DocRef;
 
-public interface DocumentActionHandler<D> {
-    D readDocument(DocRef docRef);
+public final class DocRefUtil {
+    private DocRefUtil() {
+        // Utility class.
+    }
 
-    D writeDocument(D document);
+    public static DocRef create(final Doc doc) {
+        if (doc == null) {
+            return null;
+        }
+
+        return new DocRef(doc.getType(), doc.getUuid(), doc.getName());
+    }
 }

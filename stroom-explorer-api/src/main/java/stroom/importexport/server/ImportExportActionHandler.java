@@ -1,9 +1,9 @@
 package stroom.importexport.server;
 
-import stroom.entity.shared.ImportState;
-import stroom.entity.shared.ImportState.ImportMode;
-import stroom.query.api.v2.DocRef;
+import stroom.importexport.shared.ImportState;
+import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.util.shared.Message;
+import stroom.query.api.v2.DocRef;
 
 import java.util.List;
 import java.util.Map;

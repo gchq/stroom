@@ -19,7 +19,7 @@ package stroom.ruleset.shared;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.datasource.api.v2.DataSourceField;
-import stroom.docstore.shared.Document;
+import stroom.docstore.shared.Doc;
 import stroom.util.shared.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -33,7 +33,7 @@ import java.util.List;
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "fields", "rules"})
 @XmlRootElement(name = "dataReceiptPolicy")
 @XmlType(name = "DataReceiptPolicy", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "fields", "rules"})
-public class RuleSet extends Document implements SharedObject {
+public class RuleSet extends Doc implements SharedObject {
     private static final long serialVersionUID = -7268301402378907741L;
 
     public static final String DOCUMENT_TYPE = "ruleset";
@@ -67,16 +67,18 @@ public class RuleSet extends Document implements SharedObject {
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
 
-        final RuleSet that = (RuleSet) o;
+        final RuleSet ruleSet = (RuleSet) o;
 
-        if (fields != null ? !fields.equals(that.fields) : that.fields != null) return false;
-        return rules != null ? rules.equals(that.rules) : that.rules == null;
+        if (fields != null ? !fields.equals(ruleSet.fields) : ruleSet.fields != null) return false;
+        return rules != null ? rules.equals(ruleSet.rules) : ruleSet.rules == null;
     }
 
     @Override
     public int hashCode() {
-        int result = fields != null ? fields.hashCode() : 0;
+        int result = super.hashCode();
+        result = 31 * result + (fields != null ? fields.hashCode() : 0);
         result = 31 * result + (rules != null ? rules.hashCode() : 0);
         return result;
     }

@@ -24,6 +24,7 @@ import stroom.dictionary.spring.DictionaryConfiguration;
 import stroom.explorer.server.ExplorerConfiguration;
 import stroom.index.spring.IndexConfiguration;
 import stroom.pipeline.spring.PipelineConfiguration;
+import stroom.ruleset.spring.RuleSetConfiguration;
 import stroom.script.spring.ScriptConfiguration;
 import stroom.search.spring.SearchConfiguration;
 import stroom.security.spring.SecurityConfiguration;
@@ -49,6 +50,7 @@ import stroom.visualisation.spring.VisualisationConfiguration;
         PersistenceConfiguration.class,
         DictionaryConfiguration.class,
         PipelineConfiguration.class,
+        RuleSetConfiguration.class,
         ScopeConfiguration.class,
         ScopeTestConfiguration.class,
         ScriptConfiguration.class,

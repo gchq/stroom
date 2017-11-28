@@ -1,4 +1,4 @@
-package stroom.pipeline.server.writer;
+package stroom.proxy.repo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,12 +8,11 @@ import stroom.feed.MetaMap;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.factory.ConfigurableElement;
+import stroom.pipeline.server.writer.AbstractDestinationProvider;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaDataHolder;
-import stroom.proxy.repo.ProxyRepositoryManager;
-import stroom.proxy.repo.StroomZipOutputStream;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;

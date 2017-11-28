@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.entity.shared;
+package stroom.importexport.shared;
 
 import stroom.query.api.v2.DocRef;
 import stroom.util.shared.HasDisplayValue;

@@ -19,22 +19,20 @@ package stroom.docstore.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import stroom.document.server.DocumentActionHandler;
-import stroom.docstore.shared.Document;
-import stroom.entity.shared.ImportState;
-import stroom.entity.shared.ImportState.ImportMode;
+import stroom.docstore.shared.Doc;
 import stroom.entity.shared.PermissionException;
 import stroom.explorer.server.ExplorerActionHandler;
-import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.server.ImportExportActionHandler;
+import stroom.importexport.shared.ImportState;
+import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.io.ByteArrayOutputStream;
@@ -46,15 +44,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 @Component
-@Scope(StroomScope.PROTOTYPE)
-public class Store<D extends Document> implements ExplorerActionHandler, DocumentActionHandler<D>, ImportExportActionHandler {
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActionHandler<D>, ImportExportActionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(Store.class);
 
-    private static final String FOLDER = ExplorerConstants.FOLDER;
+    private static final String FOLDER = "Folder";
     private static final Charset CHARSET = Charset.forName("UTF-8");
     private static final String KEY = "dat";
 
@@ -356,7 +353,7 @@ public class Store<D extends Document> implements ExplorerActionHandler, Documen
         }
     }
 
-    public Set<DocRef> list() {
+    public List<DocRef> list() {
         return persistence.list(type);
     }
 }

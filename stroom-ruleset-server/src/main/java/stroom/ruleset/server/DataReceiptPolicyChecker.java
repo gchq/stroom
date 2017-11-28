@@ -20,7 +20,7 @@ package stroom.ruleset.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.DataSourceField;
-import stroom.dictionary.server.DictionaryService;
+import stroom.dictionary.server.DictionaryStore;
 import stroom.feed.MetaMap;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
@@ -47,16 +47,16 @@ class DataReceiptPolicyChecker {
     private static final int ONE_MINUTE = 60 * 1000;
 
     private final RuleSetService dataReceiptService;
-    private final DictionaryService dictionaryService;
+    private final DictionaryStore dictionaryStore;
     private final String policyUUID;
     private final AtomicLong lastRefresh = new AtomicLong();
     private volatile Checker checker = new ReceiveAllChecker();
 
     DataReceiptPolicyChecker(final RuleSetService dataReceiptService,
-                             final DictionaryService dictionaryService,
+                             final DictionaryStore dictionaryStore,
                              final String policyUUID) {
         this.dataReceiptService = dataReceiptService;
-        this.dictionaryService = dictionaryService;
+        this.dictionaryStore = dictionaryStore;
         this.policyUUID = policyUUID;
     }
 
@@ -107,7 +107,7 @@ class DataReceiptPolicyChecker {
                         .filter(Objects::nonNull)
                         .collect(Collectors.toMap(DataSourceField::getName, Function.identity()));
 
-                final ExpressionMatcher expressionMatcher = new ExpressionMatcher(usedFieldMap, dictionaryService);
+                final ExpressionMatcher expressionMatcher = new ExpressionMatcher(usedFieldMap, dictionaryStore);
                 checker = new CheckerImpl(expressionMatcher, activeRules, fieldMap);
 
             } else {

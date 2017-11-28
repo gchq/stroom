@@ -22,13 +22,15 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dictionary.client.presenter.DictionaryPresenter;
-import stroom.dictionary.shared.Dictionary;
+import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.docstore.shared.DocRefUtil;
+import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.query.api.v2.DocRef;
 
-public class DictionaryPlugin extends EntityPlugin<Dictionary> {
+public class DictionaryPlugin extends DocumentPlugin<DictionaryDoc> {
     private final Provider<DictionaryPresenter> editorProvider;
 
     @Inject
@@ -48,6 +50,11 @@ public class DictionaryPlugin extends EntityPlugin<Dictionary> {
 
     @Override
     public String getType() {
-        return Dictionary.ENTITY_TYPE;
+        return DictionaryDoc.ENTITY_TYPE;
+    }
+
+    @Override
+    protected DocRef getDocRef(final DictionaryDoc document) {
+        return DocRefUtil.create(document);
     }
 }

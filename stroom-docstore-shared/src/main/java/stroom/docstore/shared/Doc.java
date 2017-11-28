@@ -27,10 +27,10 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
-@XmlRootElement(name = "document")
-@XmlType(name = "document", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
+@XmlRootElement(name = "doc")
+@XmlType(name = "Doc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Document implements SharedObject {
+public class Doc implements SharedObject {
     private static final long serialVersionUID = -7268601402378907741L;
 
     @XmlElement(name = "type")
@@ -50,10 +50,10 @@ public class Document implements SharedObject {
     @XmlElement(name = "updateUser")
     private String updateUser;
 
-    public Document() {
+    public Doc() {
     }
 
-    public Document(final String type, final String uuid, final String name) {
+    public Doc(final String type, final String uuid, final String name) {
         this.type = type;
         this.uuid = uuid;
         this.name = name;
@@ -126,9 +126,9 @@ public class Document implements SharedObject {
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
-        if (!(o instanceof Document)) return false;
+        if (!(o instanceof Doc)) return false;
 
-        final Document document = (Document) o;
+        final Doc document = (Doc) o;
 
         if (type != null ? !type.equals(document.type) : document.type != null) return false;
         if (uuid != null ? !uuid.equals(document.uuid) : document.uuid != null) return false;

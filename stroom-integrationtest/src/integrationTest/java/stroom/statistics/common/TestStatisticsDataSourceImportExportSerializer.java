@@ -23,7 +23,7 @@ import stroom.datasource.api.v2.DataSource;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
-import stroom.entity.shared.ImportState.ImportMode;
+import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.explorer.server.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.server.ImportExportSerializer;

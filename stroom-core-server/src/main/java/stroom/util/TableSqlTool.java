@@ -16,7 +16,6 @@
 
 package stroom.util;
 
-import stroom.dictionary.shared.Dictionary;
 import stroom.feed.shared.Feed;
 import stroom.jobsystem.shared.ClusterLock;
 import stroom.jobsystem.shared.Job;
@@ -49,7 +48,7 @@ public class TableSqlTool {
     public static final List<String> TABLE_CREATE_ORDER = Collections.unmodifiableList(Arrays.asList(
             Rack.TABLE_NAME, Node.TABLE_NAME, StreamType.TABLE_NAME, ClusterLock.TABLE_NAME, PipelineEntity.TABLE_NAME,
             XSLT.TABLE_NAME, TextConverter.TABLE_NAME, Feed.TABLE_NAME, Volume.TABLE_NAME, VolumeState.TABLE_NAME,
-            GlobalProperty.TABLE_NAME, XMLSchema.TABLE_NAME, Job.TABLE_NAME, JobNode.TABLE_NAME, Dictionary.TABLE_NAME,
+            GlobalProperty.TABLE_NAME, XMLSchema.TABLE_NAME, Job.TABLE_NAME, JobNode.TABLE_NAME,
             StreamProcessor.TABLE_NAME, StreamProcessorFilter.TABLE_NAME, StreamType.TABLE_NAME, Stream.TABLE_NAME,
             StreamAttributeKey.TABLE_NAME, StreamAttributeValue.TABLE_NAME, StreamVolume.TABLE_NAME,
             StreamTask.TABLE_NAME));

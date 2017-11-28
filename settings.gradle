@@ -26,6 +26,7 @@ include 'stroom-entity-shared'
 
 // API projects
 include 'stroom-security-api'
+include 'stroom-explorer-api'
 include 'stroom-statistics-api'
 
 // More shared projects.

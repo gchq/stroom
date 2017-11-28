@@ -199,6 +199,8 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
         deleteEntity(Node.class);
         deleteEntity(Rack.class);
 
+        databaseCommonTestControlTransactionHelper.truncateTable("doc");
+
         databaseCommonTestControlTransactionHelper.clearContext();
         stroomCacheManager.clear();
 

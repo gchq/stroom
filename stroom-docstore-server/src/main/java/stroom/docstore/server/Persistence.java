@@ -4,7 +4,7 @@ import stroom.query.api.v2.DocRef;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Set;
+import java.util.List;
 
 public interface Persistence {
     boolean exists(DocRef docRef);
@@ -15,7 +15,7 @@ public interface Persistence {
 
     OutputStream getOutputStream(DocRef docRef, boolean update);
 
-    Set<DocRef> list(String type);
+    List<DocRef> list(String type);
 
     RWLockFactory getLockFactory();
 }

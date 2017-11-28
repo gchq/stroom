@@ -24,21 +24,22 @@ import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import stroom.dictionary.server.DictionaryService;
-import stroom.dictionary.shared.FindDictionaryCriteria;
-import stroom.entity.shared.BaseResultList;
+import stroom.dictionary.server.DictionaryStore;
+import stroom.dictionary.shared.DictionaryDoc;
+import stroom.query.api.v2.DocRef;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
 import javax.annotation.Resource;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Component
 @Scope(value = StroomScope.TASK)
 public class Dictionary extends StroomExtensionFunctionCall {
     @Resource
-    private DictionaryService dictionaryService;
+    private DictionaryStore dictionaryStore;
 
     private Map<String, String> cachedData;
 
@@ -59,10 +60,7 @@ public class Dictionary extends StroomExtensionFunctionCall {
             } else {
                 try {
                     // Try and load a dictionary with the supplied name.
-                    final FindDictionaryCriteria criteria = new FindDictionaryCriteria(name);
-                    criteria.setSort(FindDictionaryCriteria.FIELD_ID);
-                    final BaseResultList<stroom.dictionary.shared.Dictionary> list = dictionaryService
-                            .find(criteria);
+                    final List<DocRef> list = dictionaryStore.findByName(name);
 
                     if (list == null || list.size() == 0) {
                         log(context, Severity.WARNING, "Dictionary not found with name '" + name
@@ -73,8 +71,14 @@ public class Dictionary extends StroomExtensionFunctionCall {
                                     + "' - using the first one that was created", null);
                         }
 
-                        final stroom.dictionary.shared.Dictionary dictionary = list.getFirst();
-                        data = dictionary.getData();
+                        final DocRef docRef = list.get(0);
+                        final DictionaryDoc doc = dictionaryStore.read(docRef.getUuid());
+
+                        if (doc == null) {
+                            log(context, Severity.INFO, "Unable to find dictionary " + docRef, null);
+                        } else {
+                            data = doc.getData();
+                        }
                     }
                 } catch (final Exception e) {
                     log(context, Severity.ERROR, e.getMessage(), e);

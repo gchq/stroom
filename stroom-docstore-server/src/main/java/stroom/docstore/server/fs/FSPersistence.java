@@ -2,7 +2,6 @@ package stroom.docstore.server.fs;
 
 import stroom.docstore.server.Persistence;
 import stroom.docstore.server.RWLockFactory;
-import stroom.node.server.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 
 import javax.inject.Inject;
@@ -12,9 +11,8 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
@@ -25,9 +23,9 @@ public class FSPersistence implements Persistence {
     private final Path dir;
 
     @Inject
-    FSPersistence(final StroomPropertyService stroomPropertyService) {
+    FSPersistence(final FSPersistenceConfig config) {
         try {
-            final String path = stroomPropertyService.getProperty("stroom.config.dir");
+            final String path = config.getPath();
             this.dir = Paths.get(path);
             Files.createDirectories(dir);
         } catch (final IOException e) {
@@ -90,19 +88,23 @@ public class FSPersistence implements Persistence {
     }
 
     @Override
-    public Set<DocRef> list(final String type) {
-        final Set<DocRef> set = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    public List<DocRef> list(final String type) {
+        List<DocRef> list;
         try (final Stream<Path> stream = Files.list(getPathForType(type))) {
-            stream.filter(p -> p.toString().endsWith(FILE_EXTENSION)).parallel().forEach(p -> {
-                final String fileName = p.getFileName().toString();
-                final int index = fileName.indexOf(".");
-                final String uuid = fileName.substring(0, index);
-                set.add(new DocRef(type, uuid));
-            });
+            list = stream
+                    .parallel()
+                    .filter(p -> p.toString().endsWith(FILE_EXTENSION))
+                    .map(p -> {
+                        final String fileName = p.getFileName().toString();
+                        final int index = fileName.indexOf(".");
+                        final String uuid = fileName.substring(0, index);
+                        return new DocRef(type, uuid);
+                    })
+                    .collect(Collectors.toList());
         } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
-        return set;
+        return list;
     }
 
     @Override

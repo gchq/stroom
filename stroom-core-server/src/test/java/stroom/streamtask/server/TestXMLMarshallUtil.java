@@ -38,6 +38,7 @@ public class TestXMLMarshallUtil extends StroomUnitTest {
         final String createdPeriod = String.format("%d%s%d", 1L, ExpressionTerm.Condition.IN_CONDITION_DELIMITER, 2L);
 
         final QueryData queryData1 = new QueryData.Builder()
+                .dataSource(QueryData.STREAM_STORE_DOC_REF)
                 .expression(ExpressionOperator.Op.AND)
                     .addOperator(ExpressionOperator.Op.OR)
                         .addTerm(FindStreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(999L))

@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import stroom.dictionary.server.DictionaryService;
+import stroom.dictionary.server.DictionaryStore;
 import stroom.index.server.IndexService;
 import stroom.index.server.LuceneVersionUtil;
 import stroom.index.shared.Index;
@@ -60,7 +60,7 @@ public class LuceneSearchStoreFactory {
     private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
 
     private final IndexService indexService;
-    private final DictionaryService dictionaryService;
+    private final DictionaryStore dictionaryStore;
     private final StroomPropertyService stroomPropertyService;
     private final NodeCache nodeCache;
     private final TaskManager taskManager;
@@ -70,7 +70,7 @@ public class LuceneSearchStoreFactory {
 
     @Inject
     public LuceneSearchStoreFactory(final IndexService indexService,
-                                    final DictionaryService dictionaryService,
+                                    final DictionaryStore dictionaryStore,
                                     final StroomPropertyService stroomPropertyService,
                                     final NodeCache nodeCache,
                                     final TaskManager taskManager,
@@ -78,7 +78,7 @@ public class LuceneSearchStoreFactory {
                                     @Value("#{propertyConfigurer.getProperty('stroom.search.maxBooleanClauseCount')}") final String maxBooleanClauseCount,
                                     final SecurityContext securityContext) {
         this.indexService = indexService;
-        this.dictionaryService = dictionaryService;
+        this.dictionaryStore = dictionaryStore;
         this.stroomPropertyService = stroomPropertyService;
         this.nodeCache = nodeCache;
         this.taskManager = taskManager;
@@ -184,7 +184,7 @@ public class LuceneSearchStoreFactory {
             final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getIndexFieldsObject());
             // Parse the query.
             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
-                    dictionaryService, indexFieldsMap, maxBooleanClauseCount, timeZoneId, nowEpochMilli);
+                    dictionaryStore, indexFieldsMap, maxBooleanClauseCount, timeZoneId, nowEpochMilli);
             final SearchExpressionQuery query = searchExpressionQueryBuilder
                     .buildQuery(LuceneVersionUtil.CURRENT_LUCENE_VERSION, expression);
 

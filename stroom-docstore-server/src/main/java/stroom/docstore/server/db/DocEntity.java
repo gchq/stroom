@@ -1,6 +1,6 @@
 package stroom.docstore.server.db;
 
-class Doc {
+class DocEntity {
     // Value of a long to represent an undefined id.
     private static final long UNDEFINED_ID = -1;
 
@@ -10,7 +10,7 @@ class Doc {
     private String name;
     private byte[] data;
 
-    Doc(final long id, final String type, final String uuid, final String name, final byte[] data) {
+    DocEntity(final long id, final String type, final String uuid, final String name, final byte[] data) {
         this.id = id;
         this.type = type;
         this.uuid = uuid;

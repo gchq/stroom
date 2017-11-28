@@ -17,6 +17,7 @@
 
 package stroom.document.server;
 
+import stroom.docstore.server.DocumentActionHandler;
 import stroom.explorer.server.ExplorerActionHandler;
 import stroom.importexport.server.ImportExportActionHandler;
 

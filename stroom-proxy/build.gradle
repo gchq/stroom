@@ -5,6 +5,8 @@ dependencies {
     compile project(':stroom-ruleset-server')
     compile project(':stroom-util-shared')
     compile project(':stroom-util')
+    compile project(':stroom-security-api')
+    compile project(':stroom-docstore-server')
 
     compile libs.slf4j_api
     compile libs.commons_lang

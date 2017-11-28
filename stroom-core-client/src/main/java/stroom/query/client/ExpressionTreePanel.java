@@ -27,7 +27,7 @@ import com.google.gwt.view.client.SelectionModel;
 import com.google.inject.Provider;
 import stroom.data.grid.client.MouseHelper;
 import stroom.datasource.api.v2.DataSourceField;
-import stroom.dictionary.shared.Dictionary;
+import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.structure.client.view.Box;
@@ -64,7 +64,7 @@ public class ExpressionTreePanel extends TreePanel<Item> {
 
     public ExpressionTreePanel(final Provider<EntityDropDownPresenter> dictionaryProvider) {
         final EntityDropDownPresenter dictionaryPresenter = dictionaryProvider.get();
-        dictionaryPresenter.setIncludedTypes(Dictionary.ENTITY_TYPE);
+        dictionaryPresenter.setIncludedTypes(DictionaryDoc.ENTITY_TYPE);
         dictionaryPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
         dictionaryPresenter.getWidget().getElement().getStyle().setMargin(0, Unit.PX);
         operatorEditor = new OperatorEditor();

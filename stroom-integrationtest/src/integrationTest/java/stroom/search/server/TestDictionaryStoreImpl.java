@@ -19,27 +19,28 @@ package stroom.search.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.dictionary.server.DictionaryService;
-import stroom.dictionary.shared.Dictionary;
-import stroom.dictionary.shared.FindDictionaryCriteria;
-import stroom.entity.shared.BaseResultList;
+import stroom.dictionary.server.DictionaryStore;
+import stroom.dictionary.shared.DictionaryDoc;
+import stroom.query.api.v2.DocRef;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.annotation.Resource;
 
-public class TestDictionaryServiceImpl extends AbstractCoreIntegrationTest {
+public class TestDictionaryStoreImpl extends AbstractCoreIntegrationTest {
     @Resource
-    private DictionaryService dictionaryService;
+    private DictionaryStore dictionaryStore;
 
     @Test
     public void test() {
         // Create a dictionary and save it.
-        final Dictionary dictionary = dictionaryService.create("TEST");
+        final DocRef docRef = dictionaryStore.createDocument("TEST", null);
+        final DictionaryDoc dictionary = dictionaryStore.read(docRef.getUuid());
         dictionary.setData("This\nis\na\nlist\nof\nwords");
-        dictionaryService.save(dictionary);
+        dictionaryStore.update(dictionary);
 
         // Make sure we can get it back.
-        final BaseResultList<Dictionary> list = dictionaryService.find(new FindDictionaryCriteria());
-        Assert.assertEquals(1, list.size());
+        final DictionaryDoc loaded = dictionaryStore.read(dictionary.getUuid());
+        Assert.assertNotNull(loaded);
+        Assert.assertEquals(dictionary.getData(), loaded.getData());
     }
 }

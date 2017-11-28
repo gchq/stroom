@@ -26,7 +26,6 @@ import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.FindStreamDataSource;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamType;
@@ -108,6 +107,7 @@ public class TestStreamProcessorFilterService extends AbstractCoreIntegrationTes
 
 
         final QueryData findStreamQueryData = new QueryData.Builder()
+                .dataSource(QueryData.STREAM_STORE_DOC_REF)
                 .expression(ExpressionOperator.Op.AND)
                     .addOperator(ExpressionOperator.Op.OR)
                         .addTerm(FindStreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed1.getName())
@@ -126,7 +126,7 @@ public class TestStreamProcessorFilterService extends AbstractCoreIntegrationTes
         final BaseResultList<StreamProcessorFilter> filters = streamProcessorFilterService
                 .find(findStreamProcessorFilterCriteria);
         StreamProcessorFilter filter = filters.getFirst();
-        String xml = buildXML(new long[]{feed1.getId(), feed2.getId()}, null);
+        String xml = buildXML(new Feed[]{feed1, feed2}, null);
         Assert.assertEquals(xml, filter.getData());
 
         // TODO DocRefId - Need to rewrite the build XML to handle expression operators
@@ -146,36 +146,90 @@ public class TestStreamProcessorFilterService extends AbstractCoreIntegrationTes
 //        Assert.assertEquals(xml, filter.getData());
     }
 
-    private String buildXML(final long[] include, final long[] exclude) {
+    private String buildXML(final Feed[] include, final Feed[] exclude) {
         final StringBuilder sb = new StringBuilder();
-        sb.append("<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n");
-        sb.append("<findStreamCriteria>\n");
-        sb.append("   <feeds>\n");
+        String xml = "" +
+                "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n" +
+                "<query>\n" +
+                "   <dataSource>\n" +
+                "      <type>StreamStore</type>\n" +
+                "      <uuid>0</uuid>\n" +
+                "      <name>StreamStore</name>\n" +
+                "   </dataSource>\n" +
+                "   <expression>\n" +
+                "      <op>AND</op>\n" +
+                "      <children>\n";
+
         if (include != null && include.length > 0) {
-            sb.append("      <include>\n");
-            for (final long inc : include) {
-                sb.append("         <id>");
-                sb.append(inc);
-                sb.append("</id>\n");
+            xml += "" +
+                    "         <addOperator>\n" +
+                    "            <op>OR</op>\n" +
+                    "            <children>\n";
+            for (final Feed feed : include) {
+                xml += "" +
+                        "               <term>\n" +
+                        "                  <field>Feed</field>\n" +
+                        "                  <condition>EQUALS</condition>\n" +
+                        "                  <value>" + feed.getName() + "</value>\n" +
+                        "               </term>\n";
             }
-            sb.append("      </include>\n");
+
+            xml += "" +
+                    "            </children>\n" +
+                    "         </addOperator>\n";
         }
-        if (exclude != null && exclude.length > 0) {
-            sb.append("      <exclude>\n");
-            for (final long exc : exclude) {
-                sb.append("         <id>");
-                sb.append(exc);
-                sb.append("</id>\n");
-            }
-            sb.append("      </exclude>\n");
-        }
-        sb.append("   </feeds>\n");
-        sb.append("   <streamTypeIdSet>\n");
-        sb.append("      <id>11</id>\n");
-        sb.append("      <id>12</id>\n");
-        sb.append("   </streamTypeIdSet>\n");
-        sb.append("</findStreamCriteria>\n");
-        return sb.toString();
+
+
+        xml += "" +
+                "         <addOperator>\n" +
+                "            <op>OR</op>\n" +
+                "            <children>\n" +
+                "               <term>\n" +
+                "                  <field>Stream Type</field>\n" +
+                "                  <condition>EQUALS</condition>\n" +
+                "                  <value>Raw Events</value>\n" +
+                "               </term>\n" +
+                "               <term>\n" +
+                "                  <field>Stream Type</field>\n" +
+                "                  <condition>EQUALS</condition>\n" +
+                "                  <value>Raw Reference</value>\n" +
+                "               </term>\n" +
+                "            </children>\n" +
+                "         </addOperator>\n" +
+                "      </children>\n" +
+                "   </expression>\n" +
+                "</query>\n";
+
+        return xml;
+
+//        sb.append("<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n");
+//        sb.append("<findStreamCriteria>\n");
+//        sb.append("   <feeds>\n");
+//        if (include != null && include.length > 0) {
+//            sb.append("      <include>\n");
+//            for (final long inc : include) {
+//                sb.append("         <id>");
+//                sb.append(inc);
+//                sb.append("</id>\n");
+//            }
+//            sb.append("      </include>\n");
+//        }
+//        if (exclude != null && exclude.length > 0) {
+//            sb.append("      <exclude>\n");
+//            for (final long exc : exclude) {
+//                sb.append("         <id>");
+//                sb.append(exc);
+//                sb.append("</id>\n");
+//            }
+//            sb.append("      </exclude>\n");
+//        }
+//        sb.append("   </feeds>\n");
+//        sb.append("   <streamTypeIdSet>\n");
+//        sb.append("      <id>11</id>\n");
+//        sb.append("      <id>12</id>\n");
+//        sb.append("   </streamTypeIdSet>\n");
+//        sb.append("</findStreamCriteria>\n");
+//        return sb.toString();
     }
 
     @Test

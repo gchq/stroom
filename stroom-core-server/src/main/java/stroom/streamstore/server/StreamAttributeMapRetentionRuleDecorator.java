@@ -19,7 +19,7 @@ package stroom.streamstore.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dictionary.server.DictionaryService;
+import stroom.dictionary.server.DictionaryStore;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.ruleset.shared.DataRetentionRule;
@@ -42,9 +42,9 @@ public class StreamAttributeMapRetentionRuleDecorator {
     private final List<DataRetentionRule> rules;
     private final ExpressionMatcher expressionMatcher;
 
-    public StreamAttributeMapRetentionRuleDecorator(final DictionaryService dictionaryService, final List<DataRetentionRule> rules) {
+    public StreamAttributeMapRetentionRuleDecorator(final DictionaryStore dictionaryStore, final List<DataRetentionRule> rules) {
         this.rules = rules;
-        expressionMatcher = new ExpressionMatcher(StreamFields.getFieldMap(), dictionaryService);
+        expressionMatcher = new ExpressionMatcher(StreamFields.getFieldMap(), dictionaryStore);
     }
 
     public void addMatchingRetentionRuleInfo(final StreamAttributeMap streamAttributeMap) {

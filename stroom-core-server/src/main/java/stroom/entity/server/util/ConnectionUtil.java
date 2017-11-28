@@ -67,7 +67,7 @@ public class ConnectionUtil {
         return DriverManager.getConnection(driverUrl, driverUsername, driverPassword);
     }
 
-    public static final void close(final Connection connection) {
+    public static void close(final Connection connection) {
         if (connection != null) {
             try {
                 connection.close();

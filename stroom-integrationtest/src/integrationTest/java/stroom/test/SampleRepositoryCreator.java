@@ -19,7 +19,7 @@ package stroom.test;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-import stroom.entity.shared.ImportState.ImportMode;
+import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.feed.server.FeedService;
 import stroom.importexport.server.ImportExportSerializer;
 import stroom.node.server.NodeCache;

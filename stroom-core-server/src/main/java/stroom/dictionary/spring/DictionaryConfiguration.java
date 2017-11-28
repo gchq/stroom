@@ -19,8 +19,8 @@ package stroom.dictionary.spring;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
-import stroom.dictionary.server.DictionaryService;
-import stroom.dictionary.shared.Dictionary;
+import stroom.dictionary.server.DictionaryStore;
+import stroom.dictionary.shared.DictionaryDoc;
 import stroom.explorer.server.ExplorerActionHandlers;
 import stroom.importexport.server.ImportExportActionHandlers;
 
@@ -38,8 +38,8 @@ public class DictionaryConfiguration {
     @Inject
     public DictionaryConfiguration(final ExplorerActionHandlers explorerActionHandlers,
                                    final ImportExportActionHandlers importExportActionHandlers,
-                                   final DictionaryService dictionaryService) {
-        explorerActionHandlers.add(9, Dictionary.ENTITY_TYPE, Dictionary.ENTITY_TYPE, dictionaryService);
-        importExportActionHandlers.add(Dictionary.ENTITY_TYPE, dictionaryService);
+                                   final DictionaryStore dictionaryStore) {
+        explorerActionHandlers.add(9, DictionaryDoc.ENTITY_TYPE, DictionaryDoc.ENTITY_TYPE, dictionaryStore);
+        importExportActionHandlers.add(DictionaryDoc.ENTITY_TYPE, dictionaryStore);
     }
 }

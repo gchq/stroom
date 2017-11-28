@@ -17,7 +17,7 @@
 package stroom.importexport.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.entity.shared.ImportState;
+import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportConfigConfirmationAction;
 import stroom.security.Secured;
 import stroom.servlet.SessionResourceStore;

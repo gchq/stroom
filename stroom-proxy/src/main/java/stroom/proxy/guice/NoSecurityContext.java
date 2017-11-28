@@ -16,10 +16,8 @@
 
 package stroom.proxy.guice;
 
-import org.springframework.stereotype.Component;
 import stroom.security.SecurityContext;
 
-@Component
 public class NoSecurityContext implements SecurityContext {
     @Override
     public void pushUser(final String name) {
