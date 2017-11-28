@@ -1,0 +1,18 @@
+dependencies {
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-security-api')
+
+    compile project(':stroom-core-server')
+    compile project(':stroom-docstore-shared')
+
+    compile libs.slf4j_api
+    compile libs.spring_context
+    compile libs.spring_tx
+    compile libs.spring_jdbc
+    compile libs.jackson_annotations
+    compile libs.jackson_databind
+    compile libs.javax_inject
+
+    testCompile libs.junit
+}

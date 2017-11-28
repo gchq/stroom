@@ -23,5 +23,5 @@ import stroom.ruleset.shared.RuleSet;
 public interface RuleSetService extends DocumentStore<RuleSet> {
     RuleSet read(String uuid);
 
-    RuleSet update(RuleSet dataReceiptPolicy);
+    RuleSet update(RuleSet ruleSet);
 }

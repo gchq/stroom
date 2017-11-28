@@ -44,6 +44,7 @@ import stroom.streamtask.server.StreamProcessorTaskFactory;
         "stroom.cluster",
         "stroom.datafeed",
         "stroom.datasource",
+        "stroom.docstore.server",
         "stroom.db",
         "stroom.dispatch",
         "stroom.entity",

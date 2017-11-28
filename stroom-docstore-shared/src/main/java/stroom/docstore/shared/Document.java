@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.document.shared;
+package stroom.docstore.shared;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.SharedObject;
