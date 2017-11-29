@@ -21,10 +21,22 @@ import stroom.entity.server.util.ExternalCommand;
 import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.shared.*;
-import stroom.entity.shared.ImportState.ImportMode;
+import stroom.entity.shared.BaseCriteria;
+import stroom.entity.shared.BaseEntity;
+import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.DocRefUtil;
+import stroom.entity.shared.DocumentEntity;
+import stroom.entity.shared.EntityServiceException;
+import stroom.entity.shared.FindDocumentEntityCriteria;
+import stroom.entity.shared.FindNamedEntityCriteria;
+import stroom.entity.shared.NamedEntity;
+import stroom.entity.shared.PageRequest;
+import stroom.entity.shared.PermissionException;
+import stroom.entity.shared.ProvidesNamePattern;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.server.ImportExportHelper;
+import stroom.importexport.shared.ImportState;
+import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.logging.DocumentEventLog;
 import stroom.node.server.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
@@ -34,13 +46,13 @@ import stroom.util.config.StroomProperties;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
-import javax.net.ssl.HttpsURLConnection;
 import javax.persistence.Transient;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Transactional
@@ -786,17 +798,6 @@ public abstract class ExternalDocumentEntityServiceImpl
     @Override
     public E writeDocument(final E document) {
         return save(document);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public E forkDocument(final E document, final String name, final DocRef destinationFolderRef) {
-        String parentFolderUUID = null;
-        if (destinationFolderRef != null) {
-            parentFolderUUID = destinationFolderRef.getUuid();
-        }
-
-        return copy(document, name, parentFolderUUID);
     }
 
     ////////////////////////////////////////////////////////////////////////

@@ -11,6 +11,7 @@ dependencies {
     compile libs.slf4j_api
     compile libs.commons_lang
     compile libs.jackson_annotations
+    compile libs.findbugs_jsr
 
     compile libs.guice4
     compile libs.javax_inject
