@@ -22,6 +22,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.datasource.api.v2.DataSourceField;
+import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.ruleset.client.presenter.EditExpressionPresenter;
@@ -31,18 +32,21 @@ import java.util.List;
 
 public class FilterPresenter extends MyPresenterWidget<FilterPresenter.FilterView> {
     private final EditExpressionPresenter editExpressionPresenter;
+    private final ClientDispatchAsync dispatcher;
 
     @Inject
     public FilterPresenter(final EventBus eventBus,
                            final FilterView view,
-                           final EditExpressionPresenter editExpressionPresenter) {
+                           final EditExpressionPresenter editExpressionPresenter,
+                           final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.editExpressionPresenter = editExpressionPresenter;
+        this.dispatcher = dispatcher;
         view.setExpressionView(editExpressionPresenter.getView());
     }
 
     void read(final QueryData queryData, final List<DataSourceField> fields) {
-        editExpressionPresenter.init(null, null, fields);
+        editExpressionPresenter.init(dispatcher, QueryData.STREAM_STORE_DOC_REF, fields);
         editExpressionPresenter.read(getExpressionFromQueryData(queryData));
     }
 
