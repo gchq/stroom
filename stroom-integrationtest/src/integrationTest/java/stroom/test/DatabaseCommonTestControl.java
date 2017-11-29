@@ -26,7 +26,6 @@ import org.springframework.stereotype.Component;
 import stroom.cache.StroomCacheManager;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.QueryEntity;
-import stroom.dictionary.shared.Dictionary;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Res;
@@ -152,7 +151,6 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
         deleteEntity(Visualisation.class);
         deleteEntity(Script.class);
         deleteEntity(Res.class);
-        deleteEntity(Dictionary.class);
         deleteEntity(StatisticStoreEntity.class);
         deleteEntity(StroomStatsStoreEntity.class);
 
