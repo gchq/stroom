@@ -10,7 +10,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.65] - 2017-11-29
+
 * Issue **#497** : DB connections obtained from the data source are now released back to the pool after use.
+
+* Issue **#492** : Task producers were not being marked as complete on termination which meant that the parent cluster task was not completing. This has now been fixed.
 
 ## [v5.0-beta.64] - 2017-11-27
 
@@ -694,7 +698,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.64...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.65...HEAD
+[v5.0-beta.65]: https://github.com/gchq/stroom/compare/v5.0-beta.64...v5.0-beta.65
 [v5.0-beta.64]: https://github.com/gchq/stroom/compare/v5.0-beta.63...v5.0-beta.64
 [v5.0-beta.63]: https://github.com/gchq/stroom/compare/v5.0-beta.62...v5.0-beta.63
 [v5.0-beta.62]: https://github.com/gchq/stroom/compare/v5.0-beta.61...v5.0-beta.62
