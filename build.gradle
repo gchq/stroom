@@ -117,6 +117,7 @@ ext.libs = [
     dropwizard_metrics_healthchecks: "io.dropwizard.metrics:metrics-healthchecks:$versions.dropwizard_metrics",
     dropwizard_servlets: "io.dropwizard:dropwizard-servlets:$versions.dropwizard",
     dropwizard_testing: "io.dropwizard:dropwizard-testing:$versions.dropwizard",
+    findbugs_jsr: "com.google.code.findbugs:jsr305:3.0.1",
     flyway_core: "org.flywaydb:flyway-core:4.0.3",
     gin: "com.google.gwt.inject:gin:2.1.2",
     guava: "com.google.guava:guava:21.0", //>=v21 removes MoreExecutors.sameThreadExecutor() which is needed by curator 2.11

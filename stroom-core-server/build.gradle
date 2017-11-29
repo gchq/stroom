@@ -45,6 +45,7 @@ dependencies {
     compile libs.spring_core
     compile libs.xml_apis
     compile libs.flyway_core
+    compile libs.findbugs_jsr
     compile libs.hsqldb
     permitUnusedDeclared libs.hsqldb
     compile libs.vavr

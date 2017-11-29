@@ -21,7 +21,18 @@ import stroom.entity.server.util.ExternalCommand;
 import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.shared.*;
+import stroom.entity.shared.BaseCriteria;
+import stroom.entity.shared.BaseEntity;
+import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.DocRefUtil;
+import stroom.entity.shared.DocumentEntity;
+import stroom.entity.shared.EntityServiceException;
+import stroom.entity.shared.FindDocumentEntityCriteria;
+import stroom.entity.shared.FindNamedEntityCriteria;
+import stroom.entity.shared.NamedEntity;
+import stroom.entity.shared.PageRequest;
+import stroom.entity.shared.PermissionException;
+import stroom.entity.shared.ProvidesNamePattern;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.importexport.shared.ImportState;
@@ -35,7 +46,12 @@ import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
 import javax.persistence.Transient;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Transactional
