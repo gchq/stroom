@@ -82,6 +82,7 @@ import stroom.xmlschema.server.MockXMLSchemaService;
         "stroom.cluster",
         "stroom.datafeed",
         "stroom.datasource",
+        "stroom.docstore.server",
         "stroom.db",
         "stroom.dictionary",
         "stroom.dispatch",
