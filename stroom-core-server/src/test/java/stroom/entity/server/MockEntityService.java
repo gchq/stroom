@@ -45,9 +45,6 @@ public abstract class MockEntityService<E extends Entity, C extends BaseCriteria
     }
 
     public boolean isMatch(final C criteria, final E entity) {
-//        if (entity instanceof NamedEntity && criteria instanceof FindNamedEntityCriteria) {
-//            return ((FindNamedEntityCriteria) criteria).getName().isMatch(((NamedEntity) entity).getName());
-//        }
         return true;
     }
 
@@ -61,14 +58,6 @@ public abstract class MockEntityService<E extends Entity, C extends BaseCriteria
         }
         return BaseResultList.createUnboundedList(list);
     }
-
-//    @Override
-//    public E create(final E entity) throws RuntimeException {
-//        if (entity.isPersistent()) {
-//            throw new EntityServiceException("Entity is already persistent");
-//        }
-//        return save(entity);
-//    }
 
     @Override
     public E load(final E entity) throws RuntimeException {
@@ -93,11 +82,6 @@ public abstract class MockEntityService<E extends Entity, C extends BaseCriteria
     public E loadById(final long id, final Set<String> fetchSet) throws RuntimeException {
         return map.get(id);
     }
-
-//    @Override
-//    public E loadByIdInsecure(final long id, final Set<String> fetchSet) throws RuntimeException {
-//        return map.get(id);
-//    }
 
     @Override
     public E save(final E entity) {

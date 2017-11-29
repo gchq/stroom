@@ -29,13 +29,11 @@ import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.document.client.event.CopyDocumentEvent;
 import stroom.document.client.event.CreateDocumentEvent;
-import stroom.document.client.event.ForkDocumentEvent;
 import stroom.document.client.event.MoveDocumentEvent;
 import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.document.client.event.RenameDocumentEvent;
 import stroom.document.client.event.ShowCopyDocumentDialogEvent;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
-import stroom.document.client.event.ShowForkDocumentDialogEvent;
 import stroom.document.client.event.ShowMoveDocumentDialogEvent;
 import stroom.document.client.event.ShowPermissionsDialogEvent;
 import stroom.document.client.event.ShowRenameDocumentDialogEvent;
@@ -195,19 +193,10 @@ public class DocumentPluginEventManager extends Plugin {
             }
         }));
 
-        // 6. Handle save as events.
-        registerHandler(getEventBus().addHandler(ForkDocumentEvent.getType(), event -> {
-            final DocumentPlugin<?> plugin = pluginMap.get(event.getTabData().getType());
-            if (plugin != null) {
-                plugin.saveAs(event.getDialog(), event.getTabData(), event.getDocName(), event.getDestinationFolderRef(), event.getPermissionInheritance());
-            }
-        }));
 
-
-//////////////////////////////
+        //////////////////////////////
         // START EXPLORER EVENTS
         ///////////////////////////////
-
 
         // 1. Handle entity creation events.
         registerHandler(getEventBus().addHandler(CreateDocumentEvent.getType(), event -> {
@@ -434,7 +423,6 @@ public class DocumentPluginEventManager extends Plugin {
                     menuItems.add(createCloseAllMenuItem(isTabItemSelected(selectedTab)));
                     menuItems.add(new Separator(5));
                     menuItems.add(createSaveMenuItem(6, isDirty(selectedTab)));
-                    menuItems.add(createSaveAsMenuItem(7, isEntityTabData(selectedTab)));
                     menuItems.add(createSaveAllMenuItem(8, isTabItemSelected(selectedTab)));
                     menuItems.add(new Separator(9));
                     addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
@@ -574,18 +562,6 @@ public class DocumentPluginEventManager extends Plugin {
         keyboardInterceptor.addKeyTest(CTRL_S, command);
 
         return new IconMenuItem(priority, SvgPresets.SAVE, SvgPresets.SAVE, "Save", "Ctrl+S",
-                enabled, command);
-    }
-
-    private MenuItem createSaveAsMenuItem(final int priority, final boolean enabled) {
-        final Command command = () -> {
-            if (isEntityTabData(selectedTab)) {
-                final DocumentTabData entityTabData = (DocumentTabData) selectedTab;
-                ShowForkDocumentDialogEvent.fire(DocumentPluginEventManager.this, entityTabData);
-            }
-        };
-
-        return new IconMenuItem(priority, SvgPresets.SAVE_AS, SvgPresets.SAVE_AS, "Save As", null,
                 enabled, command);
     }
 

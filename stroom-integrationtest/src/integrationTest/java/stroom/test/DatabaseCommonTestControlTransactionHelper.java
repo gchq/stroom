@@ -19,11 +19,15 @@ package stroom.test;
 import org.junit.Assert;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
+import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
 
 import javax.annotation.Resource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -99,6 +103,16 @@ public class DatabaseCommonTestControlTransactionHelper {
         final int count = countEntity(clazz);
         if (count > 0) {
             Assert.fail("Entities not deleted for: " + clazz.getName());
+        }
+    }
+
+    public void truncateTable(final String tableName) {
+        try (final Connection connection = ConnectionUtil.getConnection()) {
+            try (final PreparedStatement ps = connection.prepareStatement("TRUNCATE " + tableName)) {
+                ps.execute();
+            }
+        } catch (final SQLException e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 

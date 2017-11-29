@@ -2,6 +2,9 @@ dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-entity-shared')
     compile project(':stroom-security-api')
+    compile project(':stroom-explorer-api')
+    compile project(':stroom-docstore-shared')
+    compile project(':stroom-docstore-server')
     compile project(':stroom-statistics-api')
     permitUnusedDeclared project(':stroom-statistics-api') //not clear why it thinks this is unused
     compile project(':stroom-util')

@@ -13,7 +13,6 @@ import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.server.filter.AbstractSamplingFilter;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
-import stroom.util.task.TaskMonitor;
 
 public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter {
 

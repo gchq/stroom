@@ -20,23 +20,23 @@ package stroom.ruleset.server;
 import org.springframework.stereotype.Component;
 import stroom.datafeed.server.MetaMapFilter;
 import stroom.datafeed.server.MetaMapFilterFactory;
-import stroom.dictionary.server.DictionaryService;
+import stroom.dictionary.server.DictionaryStore;
 
 import javax.inject.Inject;
 
 @Component
-class MetaMapFilterFactoryImpl implements MetaMapFilterFactory {
-    private final RuleSetService dataReceiptService;
-    private final DictionaryService dictionaryService;
+public class MetaMapFilterFactoryImpl implements MetaMapFilterFactory {
+    private final RuleSetService ruleSetService;
+    private final DictionaryStore dictionaryStore;
 
     @Inject
-    public MetaMapFilterFactoryImpl(final RuleSetService dataReceiptService, final DictionaryService dictionaryService) {
-        this.dataReceiptService = dataReceiptService;
-        this.dictionaryService = dictionaryService;
+    public MetaMapFilterFactoryImpl(final RuleSetService ruleSetService, final DictionaryStore dictionaryStore) {
+        this.ruleSetService = ruleSetService;
+        this.dictionaryStore = dictionaryStore;
     }
 
     @Override
     public MetaMapFilter create(final String uuid) {
-        return new MetaMapFilterImpl(new DataReceiptPolicyChecker(dataReceiptService, dictionaryService, uuid));
+        return new MetaMapFilterImpl(new DataReceiptPolicyChecker(ruleSetService, dictionaryStore, uuid));
     }
 }

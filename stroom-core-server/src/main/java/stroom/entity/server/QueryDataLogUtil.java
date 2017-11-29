@@ -21,9 +21,9 @@ import event.logging.BaseAdvancedQueryItem;
 import event.logging.BaseAdvancedQueryOperator;
 import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
-import stroom.dictionary.server.DictionaryService;
-import stroom.dictionary.shared.Dictionary;
-import stroom.dictionary.shared.FindDictionaryCriteria;
+import stroom.dictionary.server.DictionaryStore;
+import stroom.dictionary.shared.DictionaryDoc;
+import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -33,14 +33,14 @@ import java.util.List;
 
 public class QueryDataLogUtil {
     public static void appendExpressionItem(final List<BaseAdvancedQueryItem> items,
-                                            final DictionaryService dictionaryService, final ExpressionItem item) {
+                                            final DictionaryStore dictionaryStore, final ExpressionItem item) {
         if (item == null) {
             return;
         }
 
         if (item.enabled()) {
             if (item instanceof ExpressionOperator) {
-                appendOperator(items, dictionaryService, (ExpressionOperator) item);
+                appendOperator(items, dictionaryStore, (ExpressionOperator) item);
             } else {
                 final ExpressionTerm expressionTerm = (ExpressionTerm) item;
 
@@ -73,19 +73,29 @@ public class QueryDataLogUtil {
                         appendTerm(items, field, TermCondition.CONTAINS, value);
                         break;
                     case IN_DICTIONARY:
-                        if (dictionaryService != null) {
-                            final FindDictionaryCriteria dictionaryCriteria = new FindDictionaryCriteria();
-                            dictionaryCriteria.getName().setString(expressionTerm.getValue());
-                            final List<Dictionary> dictionaries = dictionaryService.find(dictionaryCriteria);
-                            if (dictionaries != null && dictionaries.size() > 0) {
-                                final Dictionary dictionary = dictionaries.get(0);
-                                final String words = dictionary.getData();
-                                if (words != null) {
-                                    value += " (" + words + ")";
+                        if (dictionaryStore != null) {
+                            DocRef docRef = expressionTerm.getDictionary();
+                            if (docRef == null) {
+                                final List<DocRef> docRefs = dictionaryStore.findByName(expressionTerm.getValue());
+                                if (docRefs != null && docRefs.size() > 0) {
+                                    docRef = docRefs.get(0);
                                 }
                             }
 
-                            appendTerm(items, field, TermCondition.CONTAINS, value);
+                            if (docRef != null) {
+                                final DictionaryDoc dictionary = dictionaryStore.read(docRef.getUuid());
+                                if (dictionary != null) {
+                                    final String words = dictionary.getData();
+                                    if (words != null) {
+                                        value += " (" + words + ")";
+                                    }
+                                }
+
+                                appendTerm(items, field, TermCondition.CONTAINS, value);
+
+                            } else {
+                                appendTerm(items, field, TermCondition.CONTAINS, "dictionary: " + value);
+                            }
 
                         } else {
                             appendTerm(items, field, TermCondition.CONTAINS, "dictionary: " + value);
@@ -97,7 +107,7 @@ public class QueryDataLogUtil {
     }
 
     private static void appendOperator(final List<BaseAdvancedQueryItem> items,
-                                       final DictionaryService dictionaryService, final ExpressionOperator exp) {
+                                       final DictionaryStore dictionaryStore, final ExpressionOperator exp) {
         BaseAdvancedQueryOperator operator;
         if (exp.getOp() == Op.NOT) {
             operator = new BaseAdvancedQueryOperator.Not();
@@ -111,7 +121,7 @@ public class QueryDataLogUtil {
 
         if (exp.getChildren() != null) {
             for (final ExpressionItem child : exp.getChildren()) {
-                appendExpressionItem(operator.getAdvancedQueryItems(), dictionaryService, child);
+                appendExpressionItem(operator.getAdvancedQueryItems(), dictionaryStore, child);
             }
         }
     }

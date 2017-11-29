@@ -19,8 +19,8 @@ package stroom.search;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.dictionary.server.DictionaryService;
-import stroom.dictionary.shared.Dictionary;
+import stroom.dictionary.server.DictionaryStore;
+import stroom.dictionary.shared.DictionaryDoc;
 import stroom.entity.shared.DocRefUtil;
 import stroom.index.server.IndexService;
 import stroom.index.shared.FindIndexCriteria;
@@ -70,7 +70,7 @@ public class TestInteractiveSearch extends AbstractSearchTest {
     @Resource
     private IndexService indexService;
     @Resource
-    private DictionaryService dictionaryService;
+    private DictionaryStore dictionaryStore;
     @Resource
     private TaskManager taskManager;
 
@@ -306,16 +306,17 @@ public class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     public void dictionaryTest1() {
-        Dictionary dic = dictionaryService.create("users");
+        final DocRef docRef = dictionaryStore.createDocument("users", null);
+        final DictionaryDoc dic = dictionaryStore.read(docRef.getUuid());
         dic.setData("user1\nuser2\nuser5");
-        dic = dictionaryService.save(dic);
+        dictionaryStore.update(dic);
 
         final ExpressionOperator.Builder and = new ExpressionOperator.Builder(Op.AND);
-        and.addDictionaryTerm("UserId", Condition.IN_DICTIONARY, DocRefUtil.create(dic));
+        and.addDictionaryTerm("UserId", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic));
 
         test(and, 15);
 
-        dictionaryService.delete(dic);
+        dictionaryStore.deleteDocument(dic.getUuid());
     }
 
     /**
@@ -323,22 +324,24 @@ public class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     public void dictionaryTest2() {
-        Dictionary dic1 = dictionaryService.create("users");
+        final DocRef docRef1 = dictionaryStore.createDocument("users", null);
+        DictionaryDoc dic1 = dictionaryStore.read(docRef1.getUuid());
         dic1.setData("user1\nuser2\nuser5");
-        dic1 = dictionaryService.save(dic1);
+        dictionaryStore.update(dic1);
 
-        Dictionary dic2 = dictionaryService.create("command");
+        final DocRef docRef2 = dictionaryStore.createDocument("command", null);
+        DictionaryDoc dic2 = dictionaryStore.read(docRef2.getUuid());
         dic2.setData("msg");
-        dic2 = dictionaryService.save(dic2);
+        dictionaryStore.update(dic2);
 
         final ExpressionOperator.Builder and = new ExpressionOperator.Builder(Op.AND);
-        and.addDictionaryTerm("UserId", Condition.IN_DICTIONARY, DocRefUtil.create(dic1));
-        and.addDictionaryTerm("Command", Condition.IN_DICTIONARY, DocRefUtil.create(dic2));
+        and.addDictionaryTerm("UserId", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic1));
+        and.addDictionaryTerm("Command", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic2));
 
         test(and, 10);
 
-        dictionaryService.delete(dic1);
-        dictionaryService.delete(dic2);
+        dictionaryStore.deleteDocument(dic1.getUuid());
+        dictionaryStore.deleteDocument(dic2.getUuid());
     }
 
     /**
@@ -346,22 +349,24 @@ public class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     public void dictionaryTest3() {
-        Dictionary dic1 = dictionaryService.create("users");
+        final DocRef docRef1 = dictionaryStore.createDocument("users", null);
+        DictionaryDoc dic1 = dictionaryStore.read(docRef1.getUuid());
         dic1.setData("user1\nuser2\nuser5");
-        dic1 = dictionaryService.save(dic1);
+        dictionaryStore.update(dic1);
 
-        Dictionary dic2 = dictionaryService.create("command");
+        final DocRef docRef2 = dictionaryStore.createDocument("command", null);
+        DictionaryDoc dic2 = dictionaryStore.read(docRef2.getUuid());
         dic2.setData("msg foo bar");
-        dic2 = dictionaryService.save(dic2);
+        dictionaryStore.update(dic2);
 
         final ExpressionOperator.Builder and = new ExpressionOperator.Builder(Op.AND);
-        and.addDictionaryTerm("UserId", Condition.IN_DICTIONARY, DocRefUtil.create(dic1));
-        and.addDictionaryTerm("Command", Condition.IN_DICTIONARY, DocRefUtil.create(dic2));
+        and.addDictionaryTerm("UserId", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic1));
+        and.addDictionaryTerm("Command", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic2));
 
         test(and, 10);
 
-        dictionaryService.delete(dic1);
-        dictionaryService.delete(dic2);
+        dictionaryStore.deleteDocument(dic1.getUuid());
+        dictionaryStore.deleteDocument(dic2.getUuid());
     }
 
     /**

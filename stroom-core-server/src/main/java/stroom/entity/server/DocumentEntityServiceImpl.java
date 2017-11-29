@@ -28,21 +28,21 @@ import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.FindDocumentEntityCriteria;
 import stroom.entity.shared.FindNamedEntityCriteria;
-import stroom.entity.shared.ImportState;
-import stroom.entity.shared.ImportState.ImportMode;
+import stroom.importexport.shared.ImportState;
+import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.PermissionException;
 import stroom.entity.shared.ProvidesNamePattern;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.server.ImportExportHelper;
+import stroom.util.shared.Severity;
 import stroom.logging.DocumentEventLog;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.Message;
-import stroom.util.shared.Severity;
 
 import javax.persistence.Transient;
 import java.util.ArrayList;
@@ -638,17 +638,6 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     @Override
     public E writeDocument(final E document) {
         return save(document);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public E forkDocument(final E document, final String name, final DocRef destinationFolderRef) {
-        String parentFolderUUID = null;
-        if (destinationFolderRef != null) {
-            parentFolderUUID = destinationFolderRef.getUuid();
-        }
-
-        return copy(document, name, parentFolderUUID);
     }
 
     ////////////////////////////////////////////////////////////////////////

@@ -20,18 +20,20 @@ package stroom.ruleset.server;
 import org.springframework.stereotype.Component;
 import stroom.docstore.server.JsonSerialiser;
 import stroom.docstore.server.Store;
-import stroom.entity.shared.ImportState;
-import stroom.entity.shared.ImportState.ImportMode;
+import stroom.importexport.shared.ImportState;
+import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.query.api.v2.DocRef;
 import stroom.ruleset.shared.RuleSet;
 import stroom.util.shared.Message;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 @Component
+@Singleton
 public class RuleSetServiceImpl implements RuleSetService {
     private final Store<RuleSet> store;
 
@@ -87,11 +89,6 @@ public class RuleSetServiceImpl implements RuleSetService {
     @Override
     public RuleSet writeDocument(final RuleSet document) {
         return store.writeDocument(document);
-    }
-
-    @Override
-    public RuleSet forkDocument(final RuleSet document, String name, DocRef destinationFolderRef) {
-        return store.forkDocument(document, name, destinationFolderRef);
     }
 
     ////////////////////////////////////////////////////////////////////////

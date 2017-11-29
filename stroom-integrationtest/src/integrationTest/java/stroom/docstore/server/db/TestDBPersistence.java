@@ -11,7 +11,7 @@ import javax.annotation.Resource;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
-import java.util.Set;
+import java.util.List;
 import java.util.UUID;
 
 
@@ -56,9 +56,9 @@ public class TestDBPersistence extends AbstractCoreIntegrationTest {
         }
 
         // List
-        final Set<DocRef> refs = persistence.list(docRef.getType());
+        final List<DocRef> refs = persistence.list(docRef.getType());
         Assert.assertEquals(1, refs.size());
-        Assert.assertEquals(docRef, refs.iterator().next());
+        Assert.assertEquals(docRef, refs.get(0));
 
         // Delete
         persistence.delete(docRef);

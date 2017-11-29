@@ -17,7 +17,7 @@
 
 package stroom.entity.server;
 
-import stroom.document.server.DocumentActionHandler;
+import stroom.docstore.server.DocumentActionHandler;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.HasLoadByUuid;
 import stroom.entity.shared.ProvidesNamePattern;

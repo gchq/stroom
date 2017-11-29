@@ -621,6 +621,14 @@
             <property name="requireRestart" value="true"/>
         </bean>
 
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.databaseMultiInsertMaxBatchSize"/>
+            <property name="value" value="500"/>
+            <property name="description" value="The maximum number of rows to insert in a single multi insert statement, e.g. INSERT INTO X VALUES (...), (...), (...)"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+        </bean>
+
         <!-- Entity Names -->
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.namePattern"/>

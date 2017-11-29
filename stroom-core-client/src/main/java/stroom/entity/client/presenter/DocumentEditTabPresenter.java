@@ -24,7 +24,6 @@ import com.gwtplatform.mvp.client.PresenterWidget;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.data.table.client.Refreshable;
 import stroom.document.client.DocumentTabData;
-import stroom.document.client.event.ShowForkDocumentDialogEvent;
 import stroom.document.client.event.WriteDocumentEvent;
 import stroom.explorer.shared.DocumentType;
 import stroom.security.client.ClientSecurityContext;
@@ -47,7 +46,6 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
         extends DocumentEditPresenter<V, D> implements DocumentTabData, Refreshable, HasType {
     private final List<TabData> tabs = new ArrayList<>();
     private final ButtonView saveButton;
-    private final ButtonView saveAsButton;
     private TabData selectedTab;
     private String lastLabel;
     private ButtonPanel leftButtons;
@@ -59,18 +57,11 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
         super(eventBus, view, securityContext);
 
         saveButton = addButtonLeft(SvgPresets.SAVE);
-        saveAsButton = addButtonLeft(SvgPresets.SAVE_AS);
         saveButton.setEnabled(false);
-        saveAsButton.setEnabled(false);
 
         registerHandler(saveButton.addClickHandler(event -> {
             if (saveButton.isEnabled()) {
                 WriteDocumentEvent.fire(DocumentEditTabPresenter.this, DocumentEditTabPresenter.this);
-            }
-        }));
-        registerHandler(saveAsButton.addClickHandler(event -> {
-            if (saveAsButton.isEnabled()) {
-                ShowForkDocumentDialogEvent.fire(DocumentEditTabPresenter.this, DocumentEditTabPresenter.this);
             }
         }));
         registerHandler(getView().getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
@@ -189,7 +180,6 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
     public void onPermissionsCheck(final boolean readOnly) {
         super.onPermissionsCheck(readOnly);
         saveButton.setEnabled(isDirty() && !readOnly);
-        saveAsButton.setEnabled(true);
     }
 
     @Override

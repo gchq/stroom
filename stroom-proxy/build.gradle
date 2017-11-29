@@ -2,18 +2,16 @@
 
 dependencies {
     compile project(':stroom-core-server')
+    compile project(':stroom-ruleset-server')
     compile project(':stroom-util-shared')
     compile project(':stroom-util')
+    compile project(':stroom-security-api')
+    compile project(':stroom-docstore-server')
 
     compile libs.slf4j_api
     compile libs.commons_lang
     compile libs.jackson_annotations
 
-    compile 'com.google.code.findbugs:jsr305:3.0.1'
-
-//    compile libs.spring_beans
-//    compile libs.spring_context
-//    compile libs.spring_core
     compile libs.guice4
     compile libs.javax_inject
 

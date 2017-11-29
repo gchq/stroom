@@ -20,10 +20,10 @@ package stroom.test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.shared.Dashboard;
-import stroom.db.migration.mysql.V6_0_0_11__Explorer;
+import stroom.db.migration.mysql.V6_0_0_21__Dictionary;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.ImportState.ImportMode;
+import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.feed.server.FeedService;
 import stroom.entity.shared.NamedEntity;
 import stroom.feed.shared.Feed;
@@ -196,6 +196,7 @@ public final class SetupSampleDataBean {
 
                 // Create a processor for this index.
                 final QueryData criteria = new QueryData.Builder()
+                        .dataSource(QueryData.STREAM_STORE_DOC_REF)
                         .expression(ExpressionOperator.Op.AND)
                             .addOperator(ExpressionOperator.Op.OR)
                                 .addTerm(FindStreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.EVENTS.getName())
@@ -250,6 +251,7 @@ public final class SetupSampleDataBean {
 
                 // Create a processor for this feed.
                 final QueryData criteria = new QueryData.Builder()
+                        .dataSource(QueryData.STREAM_STORE_DOC_REF)
                         .expression(ExpressionOperator.Op.AND)
                             .addOperator(ExpressionOperator.Op.OR)
                                 .addTerm(FindStreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
@@ -278,7 +280,7 @@ public final class SetupSampleDataBean {
         }
 
         try (final Connection connection = ConnectionUtil.getConnection()) {
-            new V6_0_0_11__Explorer().migrate(connection);
+            new V6_0_0_21__Dictionary().migrate(connection);
         } catch (final Exception e) {
             LOGGER.error(e.getMessage());
         }
@@ -553,7 +555,7 @@ public final class SetupSampleDataBean {
     // expression.setFolder(folder);
     // searchExpressionService.save(expression);
     //
-    // final Dictionary dictionary = new Dictionary();
+    // final DictionaryDocument dictionary = new Dictionary();
     // dictionary.setName("User list");
     // dictionary.setWords("userone\nuser1");
     // }
@@ -562,12 +564,12 @@ public final class SetupSampleDataBean {
     // final Folder folder = get(SEARCH + "/Search Examples");
     // final XSLT resultXSLT = findXSLT("Search Result Table - Show XML");
     //
-    // final Dictionary dictionary = new Dictionary();
+    // final DictionaryDocument dictionary = new Dictionary();
     // dictionary.setName("User list");
     // dictionary.setWords("userone\nuser1");
     // dictionary.setFolder(folder);
     //
-    // dictionaryService.save(dictionary);
+    // dictionaryStore.save(dictionary);
     //
     // final SearchExpressionTerm content1 = new SearchExpressionTerm();
     // content1.setField("UserId");

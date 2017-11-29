@@ -85,7 +85,7 @@ public class QueryData implements Serializable {
             this.instance = new QueryData();
         }
 
-        public ABuilder dataSource(final DocRef value) {
+        public ABuilder<OwningBuilder, CHILD_CLASS> dataSource(final DocRef value) {
             this.instance.dataSource = value;
             return this;
         }

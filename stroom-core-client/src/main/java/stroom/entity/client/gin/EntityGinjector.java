@@ -21,7 +21,6 @@ import com.google.gwt.inject.client.AsyncProvider;
 import com.google.gwt.inject.client.Ginjector;
 import stroom.entity.client.presenter.CopyDocumentPresenter;
 import stroom.entity.client.presenter.CreateDocumentPresenter;
-import stroom.entity.client.presenter.ForkDocumentPresenter;
 import stroom.entity.client.presenter.MoveDocumentPresenter;
 import stroom.entity.client.presenter.NameDocumentPresenter;
 
@@ -33,6 +32,4 @@ public interface EntityGinjector extends Ginjector {
     AsyncProvider<MoveDocumentPresenter> getMoveEntityPresenter();
 
     AsyncProvider<NameDocumentPresenter> getRenameEntityPresenter();
-
-    AsyncProvider<ForkDocumentPresenter> getSaveAsEntityPresenter();
 }

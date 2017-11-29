@@ -17,15 +17,10 @@
 
 package stroom.document.server;
 
-import stroom.entity.shared.PermissionInheritance;
 import stroom.query.api.v2.DocRef;
 
 interface DocumentService {
     Object readDocument(DocRef docRef);
 
     Object writeDocument(DocRef docRef, Object document);
-
-    Object forkDocument(DocRef docRef, Object document, final String docName, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance);
-
-    void deleteDocument(DocRef docRef);
 }

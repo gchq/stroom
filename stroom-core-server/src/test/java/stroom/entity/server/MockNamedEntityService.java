@@ -27,6 +27,11 @@ import java.util.Set;
 public abstract class MockNamedEntityService<E extends NamedEntity, C extends FindNamedEntityCriteria>
         extends MockSystemEntityService<E, C> implements NamedEntityService<E> {
     @Override
+    public boolean isMatch(final C criteria, final E entity) {
+        return super.isMatch(criteria, entity) && (criteria.getName() == null || criteria.getName().isMatch(entity.getName()));
+    }
+
+    @Override
     public E create(final String name) throws RuntimeException {
         try {
             final E entity = getEntityClass().newInstance();

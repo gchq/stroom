@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.datasource.api.v2.DataSourceField;
-import stroom.dictionary.server.DictionaryService;
+import stroom.dictionary.server.DictionaryStore;
 import stroom.entity.server.util.PreparedStatementUtil;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.shared.Period;
@@ -61,13 +61,13 @@ public class DataRetentionTransactionHelper {
 
     private final DataSource dataSource;
     private final FileSystemStreamStore fileSystemStreamStore;
-    private final DictionaryService dictionaryService;
+    private final DictionaryStore dictionaryStore;
 
     @Inject
-    public DataRetentionTransactionHelper(final DataSource dataSource, final FileSystemStreamStore fileSystemStreamStore, final DictionaryService dictionaryService) {
+    public DataRetentionTransactionHelper(final DataSource dataSource, final FileSystemStreamStore fileSystemStreamStore, final DictionaryStore dictionaryStore) {
         this.dataSource = dataSource;
         this.fileSystemStreamStore = fileSystemStreamStore;
-        this.dictionaryService = dictionaryService;
+        this.dictionaryStore = dictionaryStore;
     }
 
     @Transactional(propagation = Propagation.NEVER, readOnly = true)
@@ -98,7 +98,7 @@ public class DataRetentionTransactionHelper {
         final long rowCount = getRowCount(ageRange, fieldSet);
         long rowNum = 1;
 
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamFields.getFieldMap(), dictionaryService);
+        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamFields.getFieldMap(), dictionaryStore);
 
         final SqlBuilder sql = getSql(ageRange, fieldSet, false);
         try (final Connection connection = dataSource.getConnection()) {

@@ -163,6 +163,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
         } else {
             DocRef docRef = null;
+            DocRef fuzzyDocRef = null;
 
             final List<PipelineProperty> properties = pipelineModel.getProperties(element);
             if (properties != null && properties.size() > 0) {
@@ -177,9 +178,9 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                             value = replace(value, "pipeline", action.getPipeline().getName());
 
                             if (element.getElementType().getType().equalsIgnoreCase("XSLTFilter")) {
-                                docRef = new DocRef(XSLT.ENTITY_TYPE, null, value);
+                                fuzzyDocRef = new DocRef(XSLT.ENTITY_TYPE, null, value);
                             } else {
-                                docRef = new DocRef(TextConverter.ENTITY_TYPE, null, value);
+                                fuzzyDocRef = new DocRef(TextConverter.ENTITY_TYPE, null, value);
                             }
                         }
                     }
@@ -200,6 +201,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                 presenter.setElementId(element.getId());
                 presenter.setElementType(element.getElementType());
                 presenter.setEntityRef(docRef);
+                presenter.setFuzzyEntityRef(fuzzyDocRef);
                 presenter.setPipelineStepAction(action);
                 editorMap.put(elementId, presenter);
                 presenter.addDirtyHandler(dirtyEditorHandler);

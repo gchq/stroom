@@ -7,6 +7,8 @@ dependencies {
     compile project(':stroom-entity-shared')
     compile project(':stroom-ruleset-shared')
     compile project(':stroom-util-shared')
+    compile project(':stroom-explorer-api')
+    compile project(':stroom-docstore-shared')
 
     compile libs.gin
     compile libs.guice3

@@ -23,9 +23,9 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.FindDocumentEntityCriteria;
-import stroom.entity.shared.ImportState;
-import stroom.entity.shared.ImportState.ImportMode;
-import stroom.entity.shared.ImportState.State;
+import stroom.importexport.shared.ImportState;
+import stroom.importexport.shared.ImportState.ImportMode;
+import stroom.importexport.shared.ImportState.State;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.util.shared.Message;
@@ -503,29 +503,6 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
     public E writeDocument(final E document) {
         return save(document);
     }
-
-    @Override
-    public E forkDocument(final E document, final String name, final DocRef destinationFolderRef) {
-        if (!getEntityClass().isAssignableFrom(document.getClass())) {
-            throw new EntityServiceException("Unexpected document type");
-        }
-
-        final E entity = (E) document;
-
-        // This is going to be a copy so clear the persistence so save will create a new DB entry.
-        entity.clearPersistence();
-
-        entity.setName(name);
-
-        return doSave(entity);
-
-        // TODO : Call the explorer service to notify it that a new item has been created.
-    }
-
-//    @Override
-//    public void deleteDocument(final DocRef docRef) {
-//        delete(docRef.getUuid());
-//    }
 
     ////////////////////////////////////////////////////////////////////////
     // END OF DocumentActionHandler

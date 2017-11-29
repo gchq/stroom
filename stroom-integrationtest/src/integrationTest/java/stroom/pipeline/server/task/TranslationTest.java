@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.ImportState.ImportMode;
+import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.server.FeedService;
@@ -156,6 +156,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 final String streamType = feed.isReference() ?
                         StreamType.RAW_REFERENCE.getName() : StreamType.RAW_EVENTS.getName();
                 final QueryData findStreamQueryData = new QueryData.Builder()
+                        .dataSource(QueryData.STREAM_STORE_DOC_REF)
                         .expression(ExpressionOperator.Op.AND)
                             .addOperator(ExpressionOperator.Op.OR)
                                 .addTerm(FindStreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())

@@ -25,7 +25,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import stroom.cluster.server.ClusterNodeManagerImpl;
 import stroom.dashboard.server.QueryServiceImpl;
-import stroom.dictionary.server.DictionaryServiceImpl;
+import stroom.dictionary.server.DictionaryStoreImpl;
 import stroom.elastic.server.ElasticIndexServiceImpl;
 import stroom.explorer.server.ExplorerActionHandlers;
 import stroom.feed.server.FeedServiceImpl;
@@ -94,6 +94,7 @@ import stroom.xmlschema.shared.XMLSchema;
         "stroom.db",
         "stroom.dictionary",
         "stroom.dispatch",
+        "stroom.docstore.server",
         "stroom.entity",
         "stroom.feed",
         "stroom.folder",
@@ -133,7 +134,7 @@ import stroom.xmlschema.shared.XMLSchema;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ClusterLockServiceImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ClusterNodeManagerImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = DatabaseCommonTestControl.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = DictionaryServiceImpl.class),
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = DictionaryStoreImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ElasticIndexServiceImpl.class),
         // @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value =
         // EntityPathResolverImpl.class),

@@ -29,6 +29,7 @@ import org.springframework.context.annotation.FilterType;
 @Configuration
 @ComponentScan(basePackages = {
         "stroom.cache",
+        "stroom.docstore.server",
         "stroom.dictionary",
         "stroom.logging",
         "stroom.entity",

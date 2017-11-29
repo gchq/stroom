@@ -29,7 +29,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,7 +37,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class V6_0_0_11__Explorer implements JdbcMigration {
-    private static final Logger LOGGER = LoggerFactory.getLogger(V6_0_0_11__Explorer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(V6_0_0_21__Dictionary.class);
 
     private Map<Long, List<Long>> folderIdToAncestorIDMap = new HashMap<>();
 

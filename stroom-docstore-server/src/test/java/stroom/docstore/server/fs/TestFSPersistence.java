@@ -4,20 +4,21 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.docstore.server.Persistence;
 import stroom.query.api.v2.DocRef;
-import stroom.util.io.FileUtil;
-import stroom.util.io.StreamUtil;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
-import java.util.Set;
+import java.nio.file.Files;
+import java.util.List;
 import java.util.UUID;
 
 
 public class TestFSPersistence {
     @Test
     public void test() throws Exception {
-        final Persistence persistence = new FSPersistence(FileUtil.getTempDir().resolve("conf"));
+        final Persistence persistence = new FSPersistence(Files.createTempDirectory("docstore").resolve("conf"));
 
         final String data = UUID.randomUUID().toString();
         final String data2 = UUID.randomUUID().toString();
@@ -38,7 +39,7 @@ public class TestFSPersistence {
 
         // Read
         try (final InputStream inputStream = persistence.getInputStream(docRef)) {
-            final String stored = StreamUtil.streamToString(inputStream);
+            final String stored = streamToString(inputStream);
             Assert.assertEquals(data, stored);
         }
 
@@ -49,16 +50,26 @@ public class TestFSPersistence {
 
         // Read
         try (final InputStream inputStream = persistence.getInputStream(docRef)) {
-            final String stored = StreamUtil.streamToString(inputStream);
+            final String stored = streamToString(inputStream);
             Assert.assertEquals(data2, stored);
         }
 
         // List
-        final Set<DocRef> refs = persistence.list(docRef.getType());
+        final List<DocRef> refs = persistence.list(docRef.getType());
         Assert.assertEquals(1, refs.size());
-        Assert.assertEquals(docRef, refs.iterator().next());
+        Assert.assertEquals(docRef, refs.get(0));
 
         // Delete
         persistence.delete(docRef);
+    }
+
+    private String streamToString(final InputStream inputStream) throws IOException {
+        final byte[] buffer = new byte[1024];
+        int len;
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        while ((len = inputStream.read(buffer, 0, buffer.length)) != -1) {
+            byteArrayOutputStream.write(buffer, 0, len);
+        }
+        return new String(byteArrayOutputStream.toByteArray(), "UTF-8");
     }
 }

@@ -6,6 +6,7 @@ dependencies {
     compile project(':stroom-util-shared')
     compile project(':stroom-util')
     compile project(':stroom-security-api')
+    compile project(':stroom-explorer-api')
 
     compile libs.hibernate_jpa_api
     compile libs.javax_inject

@@ -20,7 +20,7 @@ package stroom.importexport.server;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.DocRefs;
-import stroom.entity.shared.ImportState;
+import stroom.importexport.shared.ImportState;
 import stroom.explorer.server.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.feed.server.FeedService;
