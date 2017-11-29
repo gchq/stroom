@@ -285,6 +285,8 @@ public class StreamTaskCreatorTransactionHelper {
                         columnNames)) {
 
                     multiInsertExecutor.execute(allArgs);
+                } finally {
+                    DataSourceUtils.releaseConnection(connection, dataSource);
                 }
 
                 totalTasksCreated = allArgs.size();
