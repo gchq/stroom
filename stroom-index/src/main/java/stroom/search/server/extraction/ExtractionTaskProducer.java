@@ -131,6 +131,11 @@ public class ExtractionTaskProducer extends TaskProducer {
 
         if (clusterSearchTask.isTerminated()) {
             finishedAddingTasks = true;
+
+            // Drain the queue and increment the complete task count.
+            while (taskQueue.poll() != null) {
+                getTasksCompleted().getAndIncrement();
+            }
         } else {
             task = taskQueue.poll();
             if (task == null) {
