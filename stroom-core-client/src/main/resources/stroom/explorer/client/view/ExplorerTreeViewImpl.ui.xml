@@ -5,6 +5,7 @@
     <ui:style>
         .bar {
         border-bottom-style: solid;
+        background-color: white;
         }
 
         .bar div {

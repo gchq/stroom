@@ -37,8 +37,20 @@ body {
 	height: 100%;
 	padding: 0px;
 	border: 1px solid #404e60;
-	background-image: linear-gradient(rgb(244, 248, 253) 0px, rgb(222, 234, 248) 36px);
-	background-color: rgb(223, 234, 248);
+
+/*		background-image: linear-gradient(rgb(244, 248, 253) 0px, rgb(222, 234, 248) 36px);
+   	background-color: rgb(223, 234, 248);
+
+	background-color: white;
+
+	background-color: #f5f5f5;
+*/
+
+/*
+	        background-image: linear-gradient(rgb(244, 248, 253) 0px, rgb(222, 234, 248) 36px);
+            background-color: rgb(223, 234, 248);
+  */
+            background-color: #f5f5f5;
 }
 
 .stroom-border {
