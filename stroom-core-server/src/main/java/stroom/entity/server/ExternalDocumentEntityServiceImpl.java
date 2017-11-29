@@ -22,9 +22,9 @@ import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.*;
-import stroom.entity.shared.ImportState.ImportMode;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.server.ImportExportHelper;
+import stroom.importexport.shared.ImportState;
 import stroom.logging.DocumentEventLog;
 import stroom.node.server.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
@@ -657,7 +657,10 @@ public abstract class ExternalDocumentEntityServiceImpl
     }
 
     @Override
-    public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
+    public DocRef importDocument(final DocRef docRef,
+                                 final Map<String, String> dataMap,
+                                 final ImportState importState,
+                                 final ImportState.ImportMode importMode) {
         E entity = null;
 
         try {
@@ -786,17 +789,6 @@ public abstract class ExternalDocumentEntityServiceImpl
     @Override
     public E writeDocument(final E document) {
         return save(document);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public E forkDocument(final E document, final String name, final DocRef destinationFolderRef) {
-        String parentFolderUUID = null;
-        if (destinationFolderRef != null) {
-            parentFolderUUID = destinationFolderRef.getUuid();
-        }
-
-        return copy(document, name, parentFolderUUID);
     }
 
     ////////////////////////////////////////////////////////////////////////
