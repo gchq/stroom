@@ -36,7 +36,6 @@ import stroom.entity.shared.ProvidesNamePattern;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.importexport.shared.ImportState;
-import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.logging.DocumentEventLog;
 import stroom.node.server.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
@@ -669,7 +668,10 @@ public abstract class ExternalDocumentEntityServiceImpl
     }
 
     @Override
-    public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
+    public DocRef importDocument(final DocRef docRef,
+                                 final Map<String, String> dataMap,
+                                 final ImportState importState,
+                                 final ImportState.ImportMode importMode) {
         E entity = null;
 
         try {
