@@ -92,11 +92,7 @@ public class IndexShardSearchTaskProducer extends TaskProducer {
 
     @Override
     public boolean isComplete() {
-        return getTasksTotal().get() == getTasksCompleted().get();
-    }
-
-    public int remainingTasks() {
-        return getTasksTotal().get() - getTasksCompleted().get();
+        return clusterSearchTask.isTerminated() || super.isComplete();
     }
 
     @Override

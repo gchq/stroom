@@ -457,16 +457,15 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                             extractionTaskProperties.getMaxThreadsPerTask(),
                             executorProvider,
                             extractionTaskHandlerProvider,
-                            indexShardSearchTaskProducer,
-                            taskContext);
+                            indexShardSearchTaskProducer);
 
                     // Wait for completion.
                     while (!indexShardSearchTaskProducer.isComplete() || !extractionTaskProducer.isComplete()) {
                         taskContext.info(
                                 "Searching... " +
-                                        indexShardSearchTaskProducer.remainingTasks() +
+                                        indexShardSearchTaskProducer.getRemainingTasks() +
                                         " shards and " +
-                                        extractionTaskProducer.remainingTasks() +
+                                        extractionTaskProducer.getRemainingTasks() +
                                         " extractions remaining");
 
                         ThreadUtil.sleep(1000);
