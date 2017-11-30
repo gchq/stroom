@@ -79,7 +79,7 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
                     try {
                         task.run();
                     } catch (final Throwable e) {
-                        LOGGER.error(e.getMessage(), e);
+                        LOGGER.debug(e.getMessage(), e);
                     } finally {
                         threadsUsed.decrementAndGet();
                         tasksCompleted.incrementAndGet();

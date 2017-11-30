@@ -122,17 +122,13 @@ public class TaskExecutor {
 
                 if (currentTask != null) {
                     executing = true;
-                    final Runnable runnable = () -> {
-                        try {
-                            currentTask.run();
-                        } catch (final Throwable e) {
-                            LOGGER.error(e.getMessage(), e);
-                        } finally {
-                            totalThreads.decrementAndGet();
-                            signalAll();
-                        }
-                    };
-                    CompletableFuture.runAsync(runnable, currentProducer.getExecutor());
+                    CompletableFuture.runAsync(currentTask, currentProducer.getExecutor())
+                            .thenAccept(result -> complete())
+                            .exceptionally(t -> {
+                                complete();
+                                LOGGER.error(t.getMessage(), t);
+                                return null;
+                            });
                 }
             }
         } finally {
@@ -142,6 +138,11 @@ public class TaskExecutor {
         }
 
         return task;
+    }
+
+    private void complete() {
+        totalThreads.decrementAndGet();
+        signalAll();
     }
 
     private TaskProducer nextProducer() {
