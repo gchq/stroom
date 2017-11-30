@@ -36,7 +36,7 @@ import java.util.List;
 public class RuleSet extends Doc implements SharedObject {
     private static final long serialVersionUID = -7268301402378907741L;
 
-    public static final String DOCUMENT_TYPE = "ruleset";
+    public static final String DOCUMENT_TYPE = "RuleSet";
 
     @XmlElement(name = "fields")
     private List<DataSourceField> fields;

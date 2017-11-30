@@ -68,7 +68,7 @@ public abstract class ExternalDocumentEntityServiceImpl
     public static final String ID = "@ID@";
     public static final String TYPE = "@TYPE@";
     public static final String NAME = "@NAME@";
-    private static final String BASE_URL_PROPERTY = "stroom.url.doc-ref.%s";
+    public static final String BASE_URL_PROPERTY = "stroom.url.doc-ref.%s";
 
     private final StroomEntityManager entityManager;
     private final SecurityContext securityContext;

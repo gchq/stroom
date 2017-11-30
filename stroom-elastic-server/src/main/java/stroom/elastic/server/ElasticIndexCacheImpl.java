@@ -6,6 +6,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.apache.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import stroom.elastic.shared.ElasticIndex;
 import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
 import stroom.pipeline.server.errorhandler.LoggedException;
@@ -22,6 +23,8 @@ import java.net.URL;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+import static stroom.entity.server.ExternalDocumentEntityServiceImpl.BASE_URL_PROPERTY;
+
 @Component
 public class ElasticIndexCacheImpl implements ElasticIndexCache {
     private static final int MAX_CACHE_ENTRIES = 100;
@@ -29,20 +32,21 @@ public class ElasticIndexCacheImpl implements ElasticIndexCache {
     private final LoadingCache<DocRef, ElasticIndexConfig> cache;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final Function<String, String> explorerFetchUrl;
+    private final Function<String, String> fetchDocRefUrl;
 
     @Inject
     ElasticIndexCacheImpl(final CacheManager cacheManager,
                           final StroomPropertyService propertyService) {
-        this.explorerFetchUrl = (uuid) ->
-                String.format("%s/%s", propertyService.getProperty(ClientProperties.URL_ELASTIC_EXPLORER), uuid);
+        final String urlPropKey = String.format(BASE_URL_PROPERTY, ElasticIndex.ENTITY_TYPE);
+        this.fetchDocRefUrl = (uuid) ->
+                String.format("%s/%s", propertyService.getProperty(urlPropKey), uuid);
 
         final CacheLoader<DocRef, ElasticIndexConfig> cacheLoader = CacheLoader.from(k -> {
             HttpURLConnection connection = null;
 
             try {
                 //Create connection
-                URL url = new URL(explorerFetchUrl.apply(k.getUuid()));
+                URL url = new URL(fetchDocRefUrl.apply(k.getUuid()));
                 connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("GET");
                 connection.setRequestProperty("accept", MediaType.APPLICATION_JSON);
