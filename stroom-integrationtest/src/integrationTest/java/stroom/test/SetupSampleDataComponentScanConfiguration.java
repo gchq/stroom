@@ -30,7 +30,6 @@ import stroom.dashboard.server.MockQueryService;
 import stroom.dashboard.server.MockVisualisationService;
 import stroom.datafeed.server.MockHttpServletRequest;
 import stroom.datafeed.server.MockHttpServletResponse;
-import stroom.dictionary.MockDictionaryService;
 import stroom.entity.server.MockEntityService;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.feed.server.MockFeedService;
@@ -82,6 +81,7 @@ import stroom.xmlschema.server.MockXMLSchemaService;
         "stroom.cluster",
         "stroom.datafeed",
         "stroom.datasource",
+        "stroom.docstore.server",
         "stroom.db",
         "stroom.dictionary",
         "stroom.dispatch",
@@ -126,7 +126,6 @@ import stroom.xmlschema.server.MockXMLSchemaService;
         // Exclude all mocks
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockClusterNodeManager.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockCommonTestControl.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockDictionaryService.class),
         // @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value =
         // MockEntityPathResolver.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockEntityService.class),

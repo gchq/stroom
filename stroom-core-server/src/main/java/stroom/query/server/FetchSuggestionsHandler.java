@@ -28,6 +28,7 @@ import stroom.pipeline.server.PipelineService;
 import stroom.query.shared.FetchSuggestionsAction;
 import stroom.streamstore.server.StreamFields;
 import stroom.streamstore.server.StreamTypeService;
+import stroom.streamstore.shared.QueryData;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedList;
@@ -55,7 +56,7 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
     @Override
     public SharedList<SharedString> exec(final FetchSuggestionsAction task) {
         if (task.getDataSource() != null) {
-            if ("STREAM_STORE".equals(task.getDataSource().getUuid())) {
+            if (QueryData.STREAM_STORE_DOC_REF.equals(task.getDataSource())) {
                 if (task.getField().getName().equals(StreamFields.FEED)) {
                     return createList(feedService, task.getText());
                 }

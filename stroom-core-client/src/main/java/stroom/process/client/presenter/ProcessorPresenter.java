@@ -24,27 +24,24 @@ import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasRead;
-import stroom.entity.shared.*;
-import stroom.feed.shared.Feed;
+import stroom.entity.shared.BaseEntity;
+import stroom.entity.shared.DocRefUtil;
+import stroom.entity.shared.EntityServiceDeleteAction;
+import stroom.entity.shared.EntityServiceSaveAction;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.process.shared.CreateProcessorAction;
-import stroom.process.shared.LoadEntityIdSetAction;
-import stroom.process.shared.SetId;
 import stroom.process.shared.StreamProcessorFilterRow;
 import stroom.process.shared.StreamProcessorRow;
-import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.client.ExpressionTreePresenter;
-import stroom.ruleset.client.presenter.EditExpressionPresenter;
-import stroom.streamstore.shared.*;
+import stroom.streamstore.shared.FindStreamDataSource;
+import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.svg.client.SvgPresets;
-import stroom.util.shared.SharedMap;
 import stroom.util.shared.SharedObject;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -52,13 +49,10 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.util.client.MultiSelectionModel;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.ProcessorView>
         implements HasRead<BaseEntity> {
     private final ProcessorListPresenter processorListPresenter;
-    private final EditExpressionPresenter editExpressionPresenter;
+    private final FilterPresenter filterPresenter;
     private final ExpressionTreePresenter expressionPresenter;
     private final ClientDispatchAsync dispatcher;
 
@@ -74,12 +68,12 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     public ProcessorPresenter(final EventBus eventBus,
                               final ProcessorView view,
                               final ProcessorListPresenter processorListPresenter,
-                              final EditExpressionPresenter editExpressionPresenter,
+                              final FilterPresenter filterPresenter,
                               final ExpressionTreePresenter expressionPresenter,
                               final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.processorListPresenter = processorListPresenter;
-        this.editExpressionPresenter = editExpressionPresenter;
+        this.filterPresenter = filterPresenter;
         this.expressionPresenter = expressionPresenter;
         this.dispatcher = dispatcher;
 
@@ -192,88 +186,12 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     }
 
     private void setData(final QueryData queryData) {
-        expressionPresenter.read(null);
-        // getView().setDetails("");
+        ExpressionOperator expression = null;
+        if (queryData != null && queryData.getExpression() != null) {
+            expression = queryData.getExpression();
+        }
 
-        final ExpressionOperator expression = queryData.getExpression();
         expressionPresenter.read(expression);
-    }
-
-    private void addEntityListTerm(final ExpressionOperator.ABuilder<?, ?> operator, final DocRefs entities,
-                                   final String label) {
-        if (entities != null) {
-            final List<DocRef> list = new ArrayList<>(entities.getDoc());
-            if (list.size() > 0) {
-                if (list.size() > 1) {
-                    final ExpressionOperator.OBuilder<?> or = operator.addOperator(Op.OR);
-
-                    list.sort(new EntityReferenceComparator());
-                    for (final DocRef entity : list) {
-                        addEntity(or, entity, label);
-                    }
-
-                } else {
-                    final DocRef entity = list.get(0);
-                    addEntity(operator, entity, label);
-                }
-            }
-        }
-    }
-
-    private void addEntity(final ExpressionOperator.ABuilder<?, ?> operator,
-                           final DocRef entity,
-                           final String label) {
-        if (entity != null) {
-            operator.addTerm(label, Condition.EQUALS, entity.getName());
-        }
-    }
-
-    private void addIdTerm(final ExpressionOperator.ABuilder<?, ?> operator,
-                           final EntityIdSet<?> entities,
-                           final String label) {
-        if (entities != null && entities.size() > 0) {
-            Condition condition = Condition.EQUALS;
-            if (entities.size() > 1) {
-                condition = Condition.IN;
-            }
-
-            final StringBuilder sb = new StringBuilder();
-            for (final Long id : entities) {
-                if (id != null) {
-                    sb.append(id.toString());
-                    sb.append(",");
-                }
-            }
-            if (sb.length() > 0) {
-                sb.setLength(sb.length() - 1);
-            }
-
-            operator.addTerm(label, condition, sb.toString());
-        }
-    }
-
-    private void addPeriodTerm(final ExpressionOperator.ABuilder<?, ?> operator,
-                               final Period period,
-                               final String label) {
-        if (period != null && (period.getFrom() != null || period.getTo() != null)) {
-            Condition condition = null;
-
-            final StringBuilder sb = new StringBuilder();
-            if (period.getFrom() != null && period.getTo() != null) {
-                condition = Condition.BETWEEN;
-                sb.append(ClientDateUtil.toISOString(period.getFrom()));
-                sb.append(" and ");
-                sb.append(ClientDateUtil.toISOString(period.getTo()));
-            } else if (period.getFrom() != null) {
-                condition = Condition.GREATER_THAN;
-                sb.append(ClientDateUtil.toISOString(period.getFrom()));
-            } else if (period.getTo() != null) {
-                condition = Condition.LESS_THAN;
-                sb.append(ClientDateUtil.toISOString(period.getTo()));
-            }
-
-            operator.addTerm(label, condition, sb.toString());
-        }
     }
 
     public MultiSelectionModel<SharedObject> getSelectionModel() {
@@ -296,37 +214,18 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         }
     }
 
-    private ExpressionOperator getExpressionFromQueryData(final StreamProcessorFilter filter) {
-        if (null != filter) {
-            final QueryData queryData = filter.getQueryData();
-            if (null != queryData) {
-                return queryData.getExpression();
-            }
-        }
-
-        return new ExpressionOperator.Builder(Op.AND).build();
-    }
-
-    private QueryData getQueryDataFromExpression(final ExpressionOperator expressionOperator) {
-        final QueryData queryData = new QueryData();
-        queryData.setExpression(expressionOperator);
-        queryData.setDataSource(QueryData.STREAM_STORE_DOC_REF);
-        return queryData;
-    }
-
     private void addOrEditProcessor(final StreamProcessorFilter filter) {
-
-        // Give it a default rule
-
-        editExpressionPresenter.init(null, null, FindStreamDataSource.getFields());
-        editExpressionPresenter.read(getExpressionFromQueryData(filter));
+        QueryData queryData = new QueryData();
+        if (filter != null && filter.getQueryData() != null) {
+            queryData = filter.getQueryData();
+        }
+        filterPresenter.read(queryData, FindStreamDataSource.getFields());
 
         final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
-                    final ExpressionOperator findStreamExpression = editExpressionPresenter.write();
-                    final QueryData queryData = getQueryDataFromExpression(findStreamExpression);
+                    final QueryData queryData = filterPresenter.write();
 
                     if (filter != null) {
                         ConfirmEvent.fire(ProcessorPresenter.this,
@@ -341,7 +240,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                     }
 
                 } else {
-                    HidePopupEvent.fire(ProcessorPresenter.this, editExpressionPresenter);
+                    HidePopupEvent.fire(ProcessorPresenter.this, filterPresenter);
                 }
             }
 
@@ -354,29 +253,76 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         // Show the processor creation dialog.
         final PopupSize popupSize = new PopupSize(800, 600, 412, 600, true);
         if (filter != null) {
-            ShowPopupEvent.fire(this, editExpressionPresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Filter",
+            ShowPopupEvent.fire(this, filterPresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Filter",
                     popupUiHandlers);
         } else {
-            ShowPopupEvent.fire(this, editExpressionPresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Add Filter",
+            ShowPopupEvent.fire(this, filterPresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Add Filter",
                     popupUiHandlers);
         }
     }
 
     private void validateFeed(final StreamProcessorFilter filter, final QueryData queryData) {
-        /*if (findStreamCriteria.obtainStreamIdSet().size() == 0
-                && findStreamCriteria.obtainParentStreamIdSet().size() == 0
-                && findStreamCriteria.obtainFeeds().obtainInclude().getSet().size() == 0
-                && findStreamCriteria.obtainFeeds().obtainExclude().getSet().size() == 0) {
+        final int feedCount = termCount(queryData, FindStreamDataSource.FEED);
+        final int streamIdCount = termCount(queryData, FindStreamDataSource.STREAM_ID);
+        final int parentStreamIdCount = termCount(queryData, FindStreamDataSource.PARENT_STREAM_ID);
+
+        if (streamIdCount == 0
+                && parentStreamIdCount == 0
+                && feedCount == 0) {
             ConfirmEvent.fire(ProcessorPresenter.this,
                     "You are about to process all feeds. Are you sure you wish to do this?", result -> {
                         if (result) {
-                            validateStreamType(filter, findStreamCriteria);
+                            validateStreamType(filter, queryData);
                         }
                     });
-        } else {*/
-        // TODO I will need to trawl through the expression and check how greedy it is
-        createOrUpdateProcessor(filter, queryData);
-        //}
+        } else {
+            createOrUpdateProcessor(filter, queryData);
+        }
+    }
+
+    private void validateStreamType(final StreamProcessorFilter filter, final QueryData queryData) {
+        final int streamTypeCount = termCount(queryData, FindStreamDataSource.STREAM_TYPE);
+        final int streamIdCount = termCount(queryData, FindStreamDataSource.STREAM_ID);
+        final int parentStreamIdCount = termCount(queryData, FindStreamDataSource.PARENT_STREAM_ID);
+
+        if (streamIdCount == 0
+                && parentStreamIdCount == 0
+                && streamTypeCount == 0) {
+            ConfirmEvent.fire(ProcessorPresenter.this,
+                    "You are about to process all stream types. Are you sure you wish to do this?",
+                    result -> {
+                        if (result) {
+                            createOrUpdateProcessor(filter, queryData);
+                        }
+                    });
+        } else {
+            createOrUpdateProcessor(filter, queryData);
+        }
+    }
+
+    private int termCount(final QueryData queryData, final String field) {
+        if (queryData == null || queryData.getExpression() == null) {
+            return 0;
+        }
+        return termCount(queryData.getExpression(), field);
+    }
+
+    private int termCount(final ExpressionOperator expressionOperator, final String field) {
+        int count = 0;
+        if (expressionOperator.enabled()) {
+            for (final ExpressionItem item : expressionOperator.getChildren()) {
+                if (item.enabled()) {
+                    if (item instanceof ExpressionTerm) {
+                        if (field.equals(((ExpressionTerm) item).getField())) {
+                            count++;
+                        }
+                    } else if (item instanceof ExpressionOperator) {
+                        count += termCount((ExpressionOperator) item, field);
+                    }
+                }
+            }
+        }
+        return count;
     }
 
     private void createOrUpdateProcessor(final StreamProcessorFilter filter,
@@ -386,14 +332,14 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             filter.setQueryData(queryData);
             dispatcher.exec(new EntityServiceSaveAction<>(filter)).onSuccess(result -> {
                 refresh(result);
-                HidePopupEvent.fire(ProcessorPresenter.this, editExpressionPresenter);
+                HidePopupEvent.fire(ProcessorPresenter.this, filterPresenter);
             });
 
         } else {
             // Now create the processor filter using the find stream criteria.
             dispatcher.exec(new CreateProcessorAction(DocRefUtil.create(pipelineEntity), queryData, false, 10)).onSuccess(result -> {
                 refresh(result);
-                HidePopupEvent.fire(ProcessorPresenter.this, editExpressionPresenter);
+                HidePopupEvent.fire(ProcessorPresenter.this, filterPresenter);
             });
         }
     }
