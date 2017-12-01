@@ -12,6 +12,7 @@ dependencies {
     compile libs.gwt_user
     compile libs.gwtp_mvp_client
     compile libs.javax_inject
+    compile libs.stroomQueryApi
 
     //Needed only for the GwtCompilerWrapper
     compileOnly libs.gwt_dev

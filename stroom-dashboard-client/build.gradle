@@ -8,7 +8,8 @@ dependencies {
     compile project(':stroom-util-shared')
     runtime project(':stroom-security-client')
 
-    compile urlDependencies.get(urlLibs.stroomQueryCommon)
+    compile libs.stroomQueryApi
+    compile libs.stroomQueryCommon
 
     compile libs.gin
     compile libs.guice

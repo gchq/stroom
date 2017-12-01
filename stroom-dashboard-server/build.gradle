@@ -23,8 +23,10 @@ dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-security-api')
 
-    compile urlDependencies.get(urlLibs.stroomExpression)
+    compile libs.stroomExpression
 
+    compile libs.stroomQueryApi
+    compile libs.eventLogging
     compile libs.guava
     compile libs.jackson_annotations
     compile libs.jackson_databind

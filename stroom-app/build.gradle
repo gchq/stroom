@@ -58,14 +58,6 @@ dependencies {
     compile project(':stroom-dashboard-server')
     compile project(':stroom-statistics-server')
 
-    compile urlDependencies.get(urlLibs.stroomQueryApi)
-    compile urlDependencies.get(urlLibs.stroomQueryCommon)
-
-
-
-
-
-
     //    compile project(':stroom-module')
 //
 //    compile project(':stroom-core-shared')
