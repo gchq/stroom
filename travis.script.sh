@@ -49,7 +49,6 @@ isCronBuildRequired() {
         jq -r "[.[] | select(.tag_name | test(\"${TRAVIS_BRANCH}.*${CRON_TAG_SUFFIX}\"))][0].tag_name" 2>/dev/null)
     echo -e "Latest release ${CRON_TAG_SUFFIX} tag: [${GREEN}${latestTagName}${NC}]"
 
-    true
     if [ "${latestTagName}x" != "x" ]; then 
         #Get the commit sha that this tag applies to (not the commit of the tag itself)
         shaForTag=$(git rev-list -n 1 "${latestTagName}")
@@ -66,6 +65,9 @@ isCronBuildRequired() {
                 false
             fi
         fi
+    else
+        #no release found so return true so a build happens
+        true
     fi
     return
 }
