@@ -8,6 +8,8 @@ dependencies {
     compile project(':stroom-security-api')
     compile project(':stroom-explorer-api')
 
+    compile libs.stroomQueryApi
+    compile libs.eventLogging
     compile libs.hibernate_jpa_api
     compile libs.javax_inject
     compile libs.spring_tx

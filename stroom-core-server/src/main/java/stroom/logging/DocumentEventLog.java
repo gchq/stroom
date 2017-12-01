@@ -24,11 +24,11 @@ import stroom.entity.shared.BaseResultList;
 public interface DocumentEventLog {
 //    void create(Object entity);
 
-    void create(Object entity, Exception ex);
+    void create(Object entity, Throwable ex);
 
 //    void create(String entityType, String entityName);
 
-    void create(String entityType, String entityName, Exception ex);
+    void create(String entityType, String entityName, Throwable ex);
 
 //    void update(Object before, Object after);
 
@@ -36,39 +36,39 @@ public interface DocumentEventLog {
 
 //    void copy(Object before, Object after);
 
-    void copy(Object before, Object after, Exception ex);
+    void copy(Object before, Object after, Throwable ex);
 
 //    void move(Object before, Object after);
 
-    void move(Object before, Object after, Exception ex);
+    void move(Object before, Object after, Throwable ex);
 
-    void rename(Object before, Object after, Exception ex);
+    void rename(Object before, Object after, Throwable ex);
 
 //    void delete(Object entity);
 
-    void delete(Object entity, Exception ex);
+    void delete(Object entity, Throwable ex);
 
 
 
 
 
 
-    void update(Object before, Object after, Exception ex);
+    void update(Object before, Object after, Throwable ex);
 
 
     void view(Object entity);
 
-    void view(Object entity, Exception ex);
+    void view(Object entity, Throwable ex);
 
     void delete(BaseCriteria criteria, Query query, Long size);
 
-    void delete(BaseCriteria criteria, Query query, Exception ex);
+    void delete(BaseCriteria criteria, Query query, Throwable ex);
 
     void search(BaseCriteria criteria, Query query, BaseResultList<?> results);
 
-    void search(BaseCriteria criteria, Query query, Exception ex);
+    void search(BaseCriteria criteria, Query query, Throwable ex);
 
     void searchSummary(BaseCriteria criteria, Query query, BaseResultList<?> results);
 
-    void searchSummary(BaseCriteria criteria, Query query, Exception ex);
+    void searchSummary(BaseCriteria criteria, Query query, Throwable ex);
 }

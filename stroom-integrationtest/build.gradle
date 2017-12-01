@@ -21,8 +21,8 @@ dependencies {
     compile project(':stroom-headless')
     permitUnusedDeclared project(':stroom-headless')
 
-    integrationTestCompile urlDependencies.get(urlLibs.stroomQueryApi)
-    integrationTestCompile urlDependencies.get(urlLibs.stroomQueryCommon)
+    integrationTestCompile libs.stroomQueryApi
+    integrationTestCompile libs.stroomQueryCommon
     integrationTestCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
     integrationTestCompile project(path: ':stroom-dashboard-server', configuration: 'testArtifacts')
     integrationTestCompile project(path: ':stroom-index-server', configuration: 'testArtifacts')

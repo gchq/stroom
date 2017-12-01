@@ -50,7 +50,7 @@ stroom.connectors.elastic.default.connector.version=5.6.4
 
 # UI URLs
 stroom.url.list=annotations-query-ui,elastic-query-ui,kibana-ui,dashboard
-stroom.url.annotations-query-ui=http://localhost:3000
+stroom.url.annotations-query-ui=http://localhost:5001
 stroom.url.elastic-query-ui=http://localhost:5002
 stroom.url.kibana-ui=http://localhost:5601
 stroom.url.dashboard=http://localhost:8080/dashboard.jsp
@@ -62,5 +62,5 @@ stroom.url.elastic-explorer=http://localhost:8299/explorerAction/v1
 stroom.url.elastic-query=http://localhost:8299/queryApi/v1
 
 # External Doc Ref
-stroom.url.doc-ref.AnnotationsIndex=http://localhost:8199/docRefApi/v1
-stroom.url.doc-ref.ElasticIndex=http://localhost:8299/docRefApi/v1
+stroom.url.doc-ref.AnnotationsIndex=http://localhost:8199
+stroom.url.doc-ref.ElasticIndex=http://localhost:8299

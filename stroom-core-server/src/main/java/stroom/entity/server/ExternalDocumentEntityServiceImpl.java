@@ -17,7 +17,6 @@
 package stroom.entity.server;
 
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.util.ExternalCommand;
 import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
@@ -39,6 +38,7 @@ import stroom.importexport.shared.ImportState;
 import stroom.logging.DocumentEventLog;
 import stroom.node.server.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
+import stroom.query.audit.DocRefResourceHttpClient;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.config.StroomProperties;
@@ -76,7 +76,7 @@ public abstract class ExternalDocumentEntityServiceImpl
     private final EntityServiceHelper<E> entityServiceHelper;
     private final FindServiceHelper<E, C> findServiceHelper;
     private final ImportExportHelper importExportHelper;
-    private String externalUrl = null;
+    private DocRefResourceHttpClient docRefHttpClient = null;
 
     private final QueryAppender<E, ?> queryAppender;
     private String entityType;
@@ -98,7 +98,7 @@ public abstract class ExternalDocumentEntityServiceImpl
         try {
             final E entity = getEntityClass().newInstance();
             final String urlPropKey = String.format(BASE_URL_PROPERTY, entity.getType());
-            externalUrl = propertyService.getProperty(urlPropKey);
+            docRefHttpClient = new DocRefResourceHttpClient(propertyService.getProperty(urlPropKey));
         } catch (final IllegalAccessException | InstantiationException e) {
             throw new EntityServiceException(e.getMessage());
         }
@@ -121,34 +121,6 @@ public abstract class ExternalDocumentEntityServiceImpl
         return create(name, null);
     }
 
-    private class ExternalCreate extends ExternalCommand {
-        private String uuid;
-        private String name;
-
-        public ExternalCreate uuid(final String value) {
-            this.uuid = value;
-            return this;
-        }
-
-        public ExternalCreate name(final String value) {
-            this.name = value;
-            return this;
-        }
-
-        @Override
-        public String getUrl() {
-            return String.format("%s/create/%s/%s",
-                    ExternalDocumentEntityServiceImpl.this.externalUrl,
-                    uuid,
-                    name);
-        }
-
-        @Override
-        public String getMethod() {
-            return "POST";
-        }
-    }
-
     private E create(final String name, final String parentFolderUUID) throws RuntimeException {
         E entity;
 
@@ -166,7 +138,7 @@ public abstract class ExternalDocumentEntityServiceImpl
             final String uuid = UUID.randomUUID().toString();
             entity.setUuid(uuid);
 
-            new ExternalCreate().uuid(uuid).name(name).send();
+            docRefHttpClient.createDocument(uuid, name);
 
             // Validate the entity name.
             NameValidationUtil.validate(getNamePattern(), name);
@@ -176,10 +148,7 @@ public abstract class ExternalDocumentEntityServiceImpl
 
             documentEventLog.create(entity, null);
 
-        } catch (final RuntimeException e) {
-            documentEventLog.create(getEntityType(), name, e);
-            throw e;
-        } catch (final Exception e) {
+        } catch (final Throwable e) {
             documentEventLog.create(getEntityType(), name, e);
             throw new RuntimeException(e);
         }
@@ -403,74 +372,25 @@ public abstract class ExternalDocumentEntityServiceImpl
         return after;
     }
 
-    private class ExternalDelete extends ExternalCommand {
-        private String uuid;
-
-        public ExternalDelete uuid(final String value) {
-            this.uuid = value;
-            return this;
-        }
-
-        @Override
-        public String getUrl() {
-            return String.format("%s/delete/%s",
-                    ExternalDocumentEntityServiceImpl.this.externalUrl,
-                    uuid);
-        }
-
-        @Override
-        public String getMethod() {
-            return "DELETE";
-        }
-    }
-
     @Override
     public Boolean delete(final E entity) throws RuntimeException {
         Boolean success;
         try {
             checkDeletePermission(DocRefUtil.create(entity));
 
-            new ExternalDelete().uuid(entity.getUuid()).send();
+            docRefHttpClient.deleteDocument(entity.getUuid());
 
             success = entityServiceHelper.delete(entity);
             documentEventLog.delete(entity, null);
         } catch (final RuntimeException e) {
             documentEventLog.delete(entity, e);
             throw e;
-        } catch (final Exception e) {
+        } catch (final Throwable e) {
             documentEventLog.delete(entity, e);
             throw new RuntimeException(e);
         }
 
         return success;
-    }
-
-    private class ExternalCopy extends ExternalCommand {
-        private String originalUuid;
-        private String copyUuid;
-
-        public ExternalCopy originalUuid(final String value) {
-            this.originalUuid = value;
-            return this;
-        }
-
-        public ExternalCopy copyUuid(final String value) {
-            this.copyUuid = value;
-            return this;
-        }
-
-        @Override
-        public String getUrl() {
-            return String.format("%s/copy/%s/%s",
-                    ExternalDocumentEntityServiceImpl.this.externalUrl,
-                    originalUuid,
-                    copyUuid);
-        }
-
-        @Override
-        public String getMethod() {
-            return "POST";
-        }
     }
 
     private E copy(final E document, final String name, final String parentFolderUUID) {
@@ -489,7 +409,7 @@ public abstract class ExternalDocumentEntityServiceImpl
             final String copyUuid = UUID.randomUUID().toString();
             after.setUuid(copyUuid);
 
-            new ExternalCopy().originalUuid(originalUuid).copyUuid(copyUuid).send();
+            docRefHttpClient.copyDocument(originalUuid, copyUuid);
 
             // Validate the entity name.
             NameValidationUtil.validate(getNamePattern(), name);
@@ -502,33 +422,12 @@ public abstract class ExternalDocumentEntityServiceImpl
         } catch (final RuntimeException e) {
             documentEventLog.copy(before, after, e);
             throw e;
-        } catch (final Exception e) {
+        } catch (final Throwable e) {
             documentEventLog.copy(before, after, e);
             throw new RuntimeException(e);
         }
 
         return after;
-    }
-
-    private class ExternalMove extends ExternalCommand {
-        private String uuid;
-
-        public ExternalMove uuid(final String value) {
-            this.uuid = value;
-            return this;
-        }
-
-        @Override
-        public String getUrl() {
-            return String.format("%s/move/%s",
-                    ExternalDocumentEntityServiceImpl.this.externalUrl,
-                    uuid);
-        }
-
-        @Override
-        public String getMethod() {
-            return "PUT";
-        }
     }
 
     private E move(final E document, final String parentFolderUUID) {
@@ -539,7 +438,7 @@ public abstract class ExternalDocumentEntityServiceImpl
             // Check create permissions of the parent folder.
             checkCreatePermission(parentFolderUUID);
 
-            new ExternalMove().uuid(before.getUuid()).send();
+            docRefHttpClient.documentMoved(before.getUuid());
 
             after = entityServiceHelper.save(after, queryAppender);
 
@@ -548,40 +447,12 @@ public abstract class ExternalDocumentEntityServiceImpl
         } catch (final RuntimeException e) {
             documentEventLog.move(before, after, e);
             throw e;
-        } catch (final Exception e) {
+        } catch (final Throwable e) {
             documentEventLog.move(before, after, e);
             throw new RuntimeException(e);
         }
 
         return after;
-    }
-
-    private class ExternalRename extends ExternalCommand {
-        private String uuid;
-        private String name;
-
-        public ExternalRename uuid(final String value) {
-            this.uuid = value;
-            return this;
-        }
-
-        public ExternalRename name(final String value) {
-            this.name = value;
-            return this;
-        }
-
-        @Override
-        public String getUrl() {
-            return String.format("%s/rename/%s/%s",
-                    ExternalDocumentEntityServiceImpl.this.externalUrl,
-                    uuid,
-                    name);
-        }
-
-        @Override
-        public String getMethod() {
-            return "PUT";
-        }
     }
 
     private E rename(final E document, final String name) {
@@ -593,7 +464,7 @@ public abstract class ExternalDocumentEntityServiceImpl
             NameValidationUtil.validate(getNamePattern(), name);
             after.setName(name);
 
-            new ExternalRename().uuid(before.getUuid()).name(name).send();
+            docRefHttpClient.documentRenamed(before.getUuid(), name);
 
             after = entityServiceHelper.save(after, queryAppender);
 
@@ -602,7 +473,7 @@ public abstract class ExternalDocumentEntityServiceImpl
         } catch (final RuntimeException e) {
             documentEventLog.rename(before, after, e);
             throw e;
-        } catch (final Exception e) {
+        } catch (final Throwable e) {
             documentEventLog.rename(before, after, e);
             throw new RuntimeException(e);
         }

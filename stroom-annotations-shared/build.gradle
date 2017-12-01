@@ -15,8 +15,6 @@
  */
 
 dependencies {
-    compile urlDependencies.get(urlLibs.stroomQueryApi)
-
     compile project(':stroom-entity-shared')
     compile project(':stroom-core-shared')
     permitUnusedDeclared project(':stroom-core-shared')

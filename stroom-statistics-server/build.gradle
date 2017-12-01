@@ -11,8 +11,10 @@ dependencies {
     compile project(':stroom-connectors')
 
     compile urlDependencies.get(urlLibs.hadoopCommonShaded)
-    compile urlDependencies.get(urlLibs.stroomExpression)
-    compile urlDependencies.get(urlLibs.stroomQueryCommon)
+
+    compile libs.stroomQueryApi
+    compile libs.stroomExpression
+    compile libs.stroomQueryCommon
 
     compile libs.c3p0
     compile libs.commons_lang

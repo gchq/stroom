@@ -62,8 +62,7 @@ dependencies {
     compile project(':stroom-elastic-server')
     compile project(':stroom-ruleset-server')
 
-    compile urlDependencies.get(urlLibs.stroomQueryApi)
-    compile urlDependencies.get(urlLibs.stroomQueryCommon)
+    compile libs.stroomQueryApi
 
     compile libs.dropwizard_lifecycle
     compile libs.guava

@@ -14,6 +14,7 @@ dependencies {
     compile urlDependencies.get(urlLibs.hadoopCommonShaded)
     compile urlDependencies.get(urlLibs.hadoopHdfsShaded)
 
+    compile libs.stroomQueryApi
     compile libs.spring_beans
     compile libs.spring_context
     compile libs.spring_tx

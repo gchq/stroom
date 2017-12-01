@@ -13,6 +13,14 @@ dependencies {
     compile project(':stroom-dashboard-client')
     compile project(':stroom-security-client')
 
+    compile "${libs.stroomQueryApi}:sources"
+    compile "${libs.stroomQueryCommon}:sources"
+
+    permitUnusedDeclared libs.stroomQueryApi
+    permitUnusedDeclared libs.stroomQueryCommon
+    permitUnusedDeclared "${libs.stroomQueryApi}:sources"
+    permitUnusedDeclared "${libs.stroomQueryCommon}:sources"
+
     compile libs.gin
     compile libs.guice3
     compile libs.gwt_dev
@@ -38,12 +46,6 @@ parent.subprojects.each { p ->
     }
 }
 gwtSourceDirs.addAll(sourceSets.main.compileClasspath)
-
-// We need to add the sources of GitHub dependencies.
-gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(urlLibs.stroomQueryApiSources))).getAsPath())
-gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(urlLibs.stroomQueryApi))).getAsPath())
-gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(urlLibs.stroomQueryCommon))).getAsPath())
-gwtSourceDirs.add(files(urlDependencies.getAsFile(urlDependencies.getAsPath(urlLibs.stroomQueryCommonSources))).getAsPath())
 
 //println "Dumping gwtSourceDirs contents"
 //gwtSourceDirs.each { dir -> 

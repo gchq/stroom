@@ -1,4 +1,4 @@
 dependencies {
-    compile urlDependencies.get(urlLibs.stroomQueryApi)
+    compile libs.stroomQueryApi
     compile libs.jackson_annotations
 }

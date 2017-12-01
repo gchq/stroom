@@ -1,8 +1,9 @@
 dependencies {
-    compile urlDependencies.get(urlLibs.stroomExpression)
 
     compile project(':stroom-entity-shared')
     compile project(':stroom-util-shared')
     compile project(':stroom-docstore-shared')
+
+    compile libs.stroomQueryApi
     compile libs.jackson_annotations
 }

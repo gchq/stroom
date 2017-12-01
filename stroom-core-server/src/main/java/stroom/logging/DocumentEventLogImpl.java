@@ -103,7 +103,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 //    }
 
     @Override
-    public void create(final String objectType, final String objectName, final Exception ex) {
+    public void create(final String objectType, final String objectName, final Throwable ex) {
         try {
             final Event event = createAction("Create", "Creating", objectType, objectName);
             final ObjectOutcome objectOutcome = new ObjectOutcome();
@@ -127,7 +127,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 //    }
 
     @Override
-    public void create(final java.lang.Object object, final Exception ex) {
+    public void create(final java.lang.Object object, final Throwable ex) {
         try {
             final Event event = createAction("Create", "Creating", object);
             final ObjectOutcome objectOutcome = new ObjectOutcome();
@@ -146,7 +146,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 //    }
 
     @Override
-    public void update(final java.lang.Object before, final java.lang.Object after, final Exception ex) {
+    public void update(final java.lang.Object before, final java.lang.Object after, final Throwable ex) {
         try {
             final Event event = createAction("Update", "Updating", before);
             final Update update = new Update();
@@ -179,7 +179,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
 
     @Override
-    public void copy(final java.lang.Object before, final java.lang.Object after, final Exception ex) {
+    public void copy(final java.lang.Object before, final java.lang.Object after, final Throwable ex) {
         try {
             final Event event = createAction("Copy", "Copying", before);
             final CopyMove copy = new CopyMove();
@@ -211,7 +211,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     }
 
     @Override
-    public void move(final java.lang.Object before, final java.lang.Object after, final Exception ex) {
+    public void move(final java.lang.Object before, final java.lang.Object after, final Throwable ex) {
         try {
             final Event event = createAction("Move", "Moving", before);
             final CopyMove move = new CopyMove();
@@ -243,7 +243,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     }
 
     @Override
-    public void rename(final java.lang.Object before, final java.lang.Object after, final Exception ex) {
+    public void rename(final java.lang.Object before, final java.lang.Object after, final Throwable ex) {
         try {
             final Event event = createAction("Rename", "Renaming", before);
             final CopyMove move = new CopyMove();
@@ -280,7 +280,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 //    }
 
     @Override
-    public void delete(final java.lang.Object object, final Exception ex) {
+    public void delete(final java.lang.Object object, final Throwable ex) {
         try {
             final Event event = createAction("Delete", "Deleting", object);
             final ObjectOutcome objectOutcome = new ObjectOutcome();
@@ -299,7 +299,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     }
 
     @Override
-    public void view(final java.lang.Object object, final Exception ex) {
+    public void view(final java.lang.Object object, final Throwable ex) {
         try {
             final Event event = createAction("View", "Viewing", object);
             final ObjectOutcome objectOutcome = new ObjectOutcome();
@@ -318,11 +318,11 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     }
 
     @Override
-    public void delete(final BaseCriteria criteria, final Query query, final Exception ex) {
+    public void delete(final BaseCriteria criteria, final Query query, final Throwable ex) {
         doDelete(criteria, query, null, ex);
     }
 
-    private void doDelete(final BaseCriteria criteria, final Query query, final Long size, final Exception ex) {
+    private void doDelete(final BaseCriteria criteria, final Query query, final Long size, final Throwable ex) {
         try {
             final Event event = createAction(criteria.getClass().getSimpleName(), "Finding " + getObjectType(criteria),
                     null);
@@ -351,12 +351,12 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     }
 
     @Override
-    public void search(final BaseCriteria criteria, final Query query, final Exception ex) {
+    public void search(final BaseCriteria criteria, final Query query, final Throwable ex) {
         doSearch(criteria, query, null, ex);
     }
 
     private void doSearch(final BaseCriteria criteria, final Query query, final BaseResultList<?> results,
-                          final Exception ex) {
+                          final Throwable ex) {
         try {
             final Event event = createAction(criteria.getClass().getSimpleName(), "Finding " + getObjectType(criteria),
                     null);
@@ -386,12 +386,12 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     }
 
     @Override
-    public void searchSummary(final BaseCriteria criteria, final Query query, final Exception ex) {
+    public void searchSummary(final BaseCriteria criteria, final Query query, final Throwable ex) {
         doSearchSummary(criteria, query, null, ex);
     }
 
     private void doSearchSummary(final BaseCriteria criteria, final Query query, final BaseResultList<?> results,
-                                 final Exception ex) {
+                                 final Throwable ex) {
         try {
             final Event event = createAction(criteria.getClass().getSimpleName(),
                     "Finding Summary " + getObjectType(criteria), null);

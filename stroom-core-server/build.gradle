@@ -11,9 +11,9 @@ dependencies {
     compile project(':stroom-util-shared')
     compile project(':stroom-connectors')
 
-    compile urlDependencies.get(urlLibs.eventLogging)
-    compile urlDependencies.get(urlLibs.stroomQueryApi)
-    compile urlDependencies.get(urlLibs.stroomQueryCommon)
+    compile libs.eventLogging
+    compile libs.stroomQueryApi
+    compile libs.stroomQueryAudit
     compile urlDependencies.get(urlLibs.stroomStatsSchema)
 
     compile libs.curator_client

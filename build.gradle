@@ -55,8 +55,8 @@ ext.versions = [
     eventLogging: 'v3.1.1_schema-v3.1.2',
     hadoopCommonShaded: 'v2.6.4-3',
     hadoopHdfsShaded: 'v2.6.4',
-    stroomExpression: 'v1.0.0', 
-    stroomQuery: 'v2.0.0-alpha.9', //same version for both stroom-query-api and stroom-query-common
+    stroomExpression: 'v1.0.1',
+    stroomQuery: 'v2.0.0-alpha.11', //same version for both stroom-query-api and stroom-query-common
     stroomStats: 'v0.6.0-alpha',
 
     //------------3rd-party------------
@@ -80,13 +80,7 @@ ext.versions = [
 
 //lib names for urlDependenciesPlugin
 ext.urlLibs = [
-    stroomQueryApi: "stroom-query-api-$versions.stroomQuery",
-    stroomQueryApiSources: "stroom-query-api-$versions.stroomQuery-sources",
-    stroomQueryCommon: "stroom-query-common-$versions.stroomQuery",
-    stroomQueryCommonSources: "stroom-query-common-$versions.stroomQuery-sources",
-    stroomExpression: "stroom-expression-$versions.stroomExpression",
     stroomStatsSchema: "stroom-stats-schema-$versions.stroomStats",
-    eventLogging: "event-logging-$versions.eventLogging",
     hadoopCommonShaded: "hadoop-common-shaded-$versions.hadoopCommonShaded-all",
     hadoopHdfsShaded: "hadoop-hdfs-shaded-$versions.hadoopHdfsShaded-all",
     zzDUMMYzz: "makes sorting easier"
@@ -94,6 +88,17 @@ ext.urlLibs = [
 
 //dependency strings for use in sub projects
 ext.libs = [
+    //------Stroom-libs---------------
+    eventLogging: "event-logging:event-logging:$versions.eventLogging",
+    stroomQueryApi: "stroom:stroom-query-api:$versions.stroomQuery",
+    stroomQueryApiSources: "stroom:stroom-query-api:$versions.stroomQuery-sources",
+    stroomQueryAudit: "stroom:stroom-query-audit:$versions.stroomQuery",
+    stroomQueryAuditSources: "stroom:stroom-query-audit:$versions.stroomQuery-sources",
+    stroomQueryCommon: "stroom:stroom-query-common:$versions.stroomQuery",
+    stroomQueryCommonSources: "stroom:stroom-query-common:$versions.stroomQuery-sources",
+    stroomExpression: "stroom:stroom-expression:$versions.stroomExpression",
+
+    //------3rd Party-libs---------------
     aopalliance: "aopalliance:aopalliance:1.0",
     aspectjrt: "org.aspectj:aspectjrt:1.8.10",
     assertj_core: "org.assertj:assertj-core:3.6.2",
@@ -292,6 +297,8 @@ subprojects {
     repositories {
         mavenLocal()
         maven { url "http://repo.maven.apache.org/maven2" }
+        maven { url "https://dl.bintray.com/stroom/event-logging" }
+        maven { url "https://dl.bintray.com/stroom/stroom" }
     }
 
     // This means the reports from our integration tests won't over-write the reports from our unit tests.
@@ -413,26 +420,9 @@ project(':stroom-entity-shared') {
 
 urlDependencies {
     libs "libs"
-    compile(urlLibs.stroomQueryApi,
-        "https://github.com/gchq/stroom-query/releases/download/$versions.stroomQuery/${urlLibs.stroomQueryApi}.jar")
-
-    compile(urlLibs.stroomQueryApiSources,
-        "https://github.com/gchq/stroom-query/releases/download/$versions.stroomQuery/${urlLibs.stroomQueryApiSources}.jar")
-
-    compile(urlLibs.stroomQueryCommon,
-            "https://github.com/gchq/stroom-query/releases/download/$versions.stroomQuery/${urlLibs.stroomQueryCommon}.jar")
-
-    compile(urlLibs.stroomQueryCommonSources,
-            "https://github.com/gchq/stroom-query/releases/download/$versions.stroomQuery/${urlLibs.stroomQueryCommonSources}.jar")
-
-    compile(urlLibs.stroomExpression,
-            "https://github.com/gchq/stroom-expression/releases/download/$versions.stroomExpression/${urlLibs.stroomExpression}.jar")
 
     compile(urlLibs.stroomStatsSchema,
             "https://github.com/gchq/stroom-stats/releases/download/$versions.stroomStats/${urlLibs.stroomStatsSchema}.jar")
-
-    compile(urlLibs.eventLogging,
-            "https://github.com/gchq/event-logging/releases/download/$versions.eventLogging/${urlLibs.eventLogging}.jar")
 
     compile(urlLibs.hadoopHdfsShaded,
             "https://github.com/gchq/hadoop-hdfs-shaded/releases/download/$versions.hadoopHdfsShaded/${urlLibs.hadoopHdfsShaded}.jar")
