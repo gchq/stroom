@@ -10,7 +10,6 @@ dependencies {
 
     compile libs.eventLogging
     compile libs.stroomQueryApi
-    compile urlDependencies.get(urlLibs.stroomStatsSchema)
 
     compile libs.curator_client
     compile libs.curator_framework

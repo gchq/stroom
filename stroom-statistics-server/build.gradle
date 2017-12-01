@@ -15,6 +15,7 @@ dependencies {
     compile libs.stroomQueryApi
     compile libs.stroomExpression
     compile libs.stroomQueryCommon
+    compile libs.stroomStatsSchema
 
     compile libs.c3p0
     compile libs.commons_lang

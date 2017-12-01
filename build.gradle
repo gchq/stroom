@@ -57,7 +57,7 @@ ext.versions = [
     hadoopHdfsShaded: 'v2.6.4',
     stroomExpression: 'v1.0.1',
     stroomQuery: 'v2.0.0-alpha.11', //same version for both stroom-query-api and stroom-query-common
-    stroomStats: 'v0.6.0-alpha',
+    stroomStats: 'v0.6.0-alpha.2',
 
     //------------3rd-party------------
     curator: '2.12.0', //must be chosen to be compatible with the ZK version in CDH 5.10
@@ -79,7 +79,6 @@ ext.versions = [
 
 //lib names for urlDependenciesPlugin
 ext.urlLibs = [
-    stroomStatsSchema: "stroom-stats-schema-$versions.stroomStats",
     hadoopCommonShaded: "hadoop-common-shaded-$versions.hadoopCommonShaded-all",
     hadoopHdfsShaded: "hadoop-hdfs-shaded-$versions.hadoopHdfsShaded-all",
     zzDUMMYzz: "makes sorting easier"
@@ -93,6 +92,7 @@ ext.libs = [
     stroomQueryAudit: "stroom:stroom-query-audit:$versions.stroomQuery",
     stroomQueryCommon: "stroom:stroom-query-common:$versions.stroomQuery",
     stroomExpression: "stroom:stroom-expression:$versions.stroomExpression",
+    stroomStatsSchema: "stroom:stroom-stats-schema:$versions.stroomStats",
 
     //------3rd Party-libs---------------
     aopalliance: "aopalliance:aopalliance:1.0",
@@ -414,8 +414,6 @@ project(':stroom-entity-shared') {
 urlDependencies {
     libs "libs"
 
-    compile(urlLibs.stroomStatsSchema,
-            "https://github.com/gchq/stroom-stats/releases/download/$versions.stroomStats/${urlLibs.stroomStatsSchema}.jar")
     compile(urlLibs.hadoopHdfsShaded,
             "https://github.com/gchq/hadoop-hdfs-shaded/releases/download/$versions.hadoopHdfsShaded/${urlLibs.hadoopHdfsShaded}.jar")
 
