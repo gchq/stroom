@@ -8,13 +8,16 @@ Users can be added to user groups and individual users and groups can have vario
 ## Raw streaming
 Data can be streamed in it's raw form from the stream store to multiple destinations without any transformation taking place.
 
+## HDFS appender
+Pipeline XML/text data can be writen out to a HDFS (Hadoop Distributed File System) cluster. This increases the options for using Stroom's data for other purposes.
+
 # v6.0
 
 ## OAuth 2.0/OpenID Connect authentication
 Authentication for Stroom provided by an external service rather than a service internal to Stroom. This change allows support for broader corporate authentication schemes and is a key requirement for enabling the future microservice architecture for Stroom.
 
 ## HBase backed statistics store
-This new implementation of statistics provides a vastly more scalable time series DB for large scale collection of statistical data from Stroom.
+This new implementation of statistics (Stroom-Stats) provides a vastly more scalable time series DB for large scale collection of Stroom's data aggregated to various time buckets. Stroom-Stats uses Kafka for ingesting the source data.
 
 ## Data receipt filtering
 Data arriving in Stroom has meta data that can be matched against a policy so that certain actions can be taken. This could be to receive, drop or reject the data.
@@ -32,6 +35,9 @@ Search results in dashboards can be annotated to provide status and notes relati
 
 ## Search API
 The search system used by Dashboards can be used via a restful API. This provides access to data stored in search indices (including the ability to extract data) and statistics stores. The data fetched via the search API can be received and processed via an external system.
+
+## Kafka appender and filter
+New pipeline elements for writing XML or text data to a Kafka topic. This provides more options for using Stroom's data in other systems.
 
 # v7.0
 
