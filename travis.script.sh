@@ -11,7 +11,7 @@ FLOATING_TAG=""
 SPECIFIC_TAG=""
 #This is a whitelist of branches to produce docker builds for
 BRANCH_WHITELIST_REGEX='(^dev$|^master$|^v[0-9].*$)'
-CRON_TAG_SUFFIC="DAILY"
+CRON_TAG_SUFFIX="DAILY"
 doDockerBuild=false
 
 #Shell Colour constants for use in 'echo -e'
@@ -66,21 +66,22 @@ if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then
     #query the github api for the latest cron release tag name
     #redirect stderr to dev/null to protect api token
     latestTagName=$(curl -s ${authArgs} ${GITHUB_API_URL} | \
-        jq -r "[.[] | select(.tag_name | test(\"${TRAVIS_BRANCH}.*${CRON_TAG_SUFFIC}\"))][0].tag_name" 2>/dev/null)
-    echo -e "latestTagName: [${GREEN}${latestTagName}${NC}]"
+        jq -r "[.[] | select(.tag_name | test(\"${TRAVIS_BRANCH}.*${CRON_TAG_SUFFIX}\"))][0].tag_name" 2>/dev/null)
+    echo -e "Latest release ${CRON_TAG_SUFFIX} tag: [${GREEN}${latestTagName}${NC}]"
 
     doTagging=true
     if [ "${latestTagName}x" != "x" ]; then 
         #Get the commit sha that this tag applies to (not the commit of the tag itself)
         shaForTag=$(git rev-list -n 1 "${latestTagName}")
-        echo -e "shaForTag: [${GREEN}${shaForTag}${NC}]"
+        echo -e "SHA hash for tag ${latestTagName}: [${GREEN}${shaForTag}${NC}]"
         if [ "${shaForTag}x" = "x" ]; then
             echo -e "${RED}Unable to get sha for tag ${BLUE}${latestTagName}${NC}"
             exit 1
         fi
 
         if [ "${shaForTag}x" = "${TRAVIS_COMMIT}x" ]; then
-            echo -e "${RED}Current commit matches latest releases, git will not be tagged${NC}"
+            echo -e "${RED}The commit of the build matches the latest ${CRON_TAG_SUFFIX} release.${NC}"
+            echo -e "${RED}Git will not be tagged and no release will be made.${NC}"
             #The latest release has the same commit sha as the commit travis is building
             #so don't bother creating a new tag as we don't want a new release
             doTagging=false
@@ -91,7 +92,7 @@ if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then
         echo "The build will happen when travis picks up the tagged commit"
         #This is a cron triggered build so tag as -DAILY and push a tag to git
         DATE_ONLY="$(date +%Y%m%d)"
-        gitTag="${STROOM_VERSION}-${DATE_ONLY}-${CRON_TAG_SUFFIC}"
+        gitTag="${STROOM_VERSION}-${DATE_ONLY}-${CRON_TAG_SUFFIX}"
 
         createGitTag ${gitTag}
     fi
