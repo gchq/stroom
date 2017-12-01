@@ -10,6 +10,8 @@ dependencies {
     compile project(':stroom-util')
 
     compile libs.stroomQueryApi
+    compile libs.stroomQueryAudit
+    compile libs.ws_rs_api
     compile libs.guava
     compile libs.slf4j_api
     compile libs.spring_context

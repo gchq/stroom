@@ -91,11 +91,8 @@ ext.libs = [
     //------Stroom-libs---------------
     eventLogging: "event-logging:event-logging:$versions.eventLogging",
     stroomQueryApi: "stroom:stroom-query-api:$versions.stroomQuery",
-    stroomQueryApiSources: "stroom:stroom-query-api:$versions.stroomQuery-sources",
     stroomQueryAudit: "stroom:stroom-query-audit:$versions.stroomQuery",
-    stroomQueryAuditSources: "stroom:stroom-query-audit:$versions.stroomQuery-sources",
     stroomQueryCommon: "stroom:stroom-query-common:$versions.stroomQuery",
-    stroomQueryCommonSources: "stroom:stroom-query-common:$versions.stroomQuery-sources",
     stroomExpression: "stroom:stroom-expression:$versions.stroomExpression",
 
     //------3rd Party-libs---------------
