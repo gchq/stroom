@@ -2,12 +2,13 @@ package stroom.security.server;
 
 import com.google.common.base.Strings;
 import org.apache.shiro.web.util.WebUtils;
+import org.jose4j.jwk.PublicJsonWebKey;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
-import org.jose4j.keys.HmacKey;
+import org.jose4j.lang.JoseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +19,7 @@ import stroom.auth.service.ApiException;
 import javax.inject.Inject;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.NotNull;
 import java.util.Optional;
 
 @Component
@@ -28,25 +30,25 @@ public class JWTService {
     private static final String AUTHORIZATION_HEADER = "Authorization";
 
     private final String authenticationServiceUrl;
-    private final String authJwtVerificationKey;
+    private final PublicJsonWebKey deserialisedJwk;
     private final String authJwtIssuer;
     private AuthenticationServiceClients authenticationServiceClients;
     private final boolean checkTokenRevocation;
 
     @Inject
     public JWTService(
-            @Value("#{propertyConfigurer.getProperty('stroom.auth.service.url')}")
+            @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.service.url')}")
         final String authenticationServiceUrl,
-            @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.verificationkey')}")
+            @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.verificationkey')}")
         final String authJwtVerificationKey,
-            @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.issuer')}")
+            @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.issuer')}")
         final String authJwtIssuer,
-            @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.enabletokenrevocationcheck')}")
+            @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.enabletokenrevocationcheck')}")
         final boolean enableTokenRevocationCheck,
-            final AuthenticationServiceClients authenticationServiceClients){
+            final AuthenticationServiceClients authenticationServiceClients) throws JoseException {
         this.authenticationServiceUrl = authenticationServiceUrl;
-        this.authJwtVerificationKey = authJwtVerificationKey;
         this.authJwtIssuer = authJwtIssuer;
+        deserialisedJwk = PublicJsonWebKey.Factory.newPublicJwk(authJwtVerificationKey);
         this.authenticationServiceClients = authenticationServiceClients;
         this.checkTokenRevocation = enableTokenRevocationCheck;
 
@@ -138,7 +140,7 @@ public class JWTService {
         JwtConsumerBuilder builder = new JwtConsumerBuilder()
                 .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account for clock skew
                 .setRequireSubject() // the JWT must have a subject claim
-                .setVerificationKey(new HmacKey(authJwtVerificationKey.getBytes())) // verify the signature with the public key
+                .setVerificationKey(this.deserialisedJwk.getPublicKey()) // verify the signature with the public key
                 .setRelaxVerificationKeyValidation() // relaxes key length requirement
                 .setExpectedIssuer(authJwtIssuer);
         return builder.build();
