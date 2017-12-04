@@ -22,6 +22,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -54,6 +56,19 @@ public class SourceSelectorToFindCriteria {
         final List<String> feedNamesToInclude = new ArrayList<>();
         final List<String> feedNamesToExclude = new ArrayList<>();
 
+        final BiConsumer<ExpressionTerm, Consumer<String>> addTermValues = (term, consumer) -> {
+            switch (term.getCondition()) {
+                case EQUALS:
+                    consumer.accept(term.getValue());
+                    break;
+                case IN:
+                    Arrays.asList(term.getValue()
+                            .split(ExpressionTerm.Condition.IN_CONDITION_DELIMITER))
+                            .forEach(consumer);
+                    break;
+            }
+        };
+
         // the root must be 'and'
         if (rootOp.getOp().equals(ExpressionOperator.Op.AND)) {
             for (ExpressionItem expressionItem : rootOp.getChildren()) {
@@ -83,25 +98,28 @@ public class SourceSelectorToFindCriteria {
                             final String errorMsg = "Found mixed terms inside an OR, an OR is used for inclusion sets, they must all be same field within the set";
                             throw new EntityServiceException(errorMsg);
                         }
+                        final String fieldName = fieldNames.iterator().next();
 
-                        final List<String> values = terms.stream()
-                                .map(ExpressionTerm::getValue)
-                                .collect(Collectors.toList());
-
-                        switch (fieldNames.iterator().next()) {
+                        final Consumer<String> appendToList;
+                        switch (fieldName) {
                             case FindStreamDataSource.FEED:
-                                feedNamesToInclude.addAll(values);
+                                appendToList = feedNamesToInclude::add;
                                 break;
                             case FindStreamDataSource.STREAM_TYPE:
-                                streamTypeNamesToInclude.addAll(values);
+                                appendToList = streamTypeNamesToInclude::add;
                                 break;
                             case FindStreamDataSource.PARENT_STREAM_ID:
-                                parentStreamsToInclude.addAll(values);
+                                appendToList = parentStreamsToInclude::add;
                                 break;
                             case FindStreamDataSource.STREAM_ID:
-                                streamIdsToInclude.addAll(values);
+                                appendToList = streamIdsToInclude::add;
                                 break;
+                            default:
+                                final String errorMsg = String.format("Found incorrect field in term %s", fieldName);
+                                throw new EntityServiceException(errorMsg);
                         }
+
+                        terms.forEach(term -> addTermValues.accept(term, appendToList));
 
                     } else if (operator.getOp().equals(ExpressionOperator.Op.NOT)) {
                         // Must contain an OR with feed exclusions
@@ -115,13 +133,7 @@ public class SourceSelectorToFindCriteria {
                                             final ExpressionTerm feedExcludeTerm = (ExpressionTerm) feedExcludeRaw;
                                             // We need the ID for this feed name
                                             if (feedExcludeTerm.getField().equals(FindStreamDataSource.FEED)) {
-                                                if (feedExcludeTerm.getCondition().equals(ExpressionTerm.Condition.EQUALS)) {
-                                                    feedNamesToExclude.add(feedExcludeTerm.getValue());
-                                                } else if (feedExcludeTerm.getCondition().equals(ExpressionTerm.Condition.IN)) {
-                                                    Arrays.asList(feedExcludeTerm.getValue()
-                                                            .split(ExpressionTerm.Condition.IN_CONDITION_DELIMITER))
-                                                            .forEach(feedNamesToExclude::add);
-                                                }
+                                                addTermValues.accept(feedExcludeTerm, feedNamesToExclude::add);
                                             } else {
                                                 final String error = "Could not convert criteria, Found wrong condition inside AND -> NOT -> OR -> child, expected EQUALS for feed name";
                                                 throw new EntityServiceException(error);
@@ -150,6 +162,21 @@ public class SourceSelectorToFindCriteria {
 
                 } else if (expressionItem instanceof ExpressionTerm) {
                     final ExpressionTerm term = (ExpressionTerm) expressionItem;
+
+                    switch (term.getField()) {
+                        case FindStreamDataSource.FEED:
+                            addTermValues.accept(term, feedNamesToInclude::add);
+                            break;
+                        case FindStreamDataSource.STREAM_TYPE:
+                            addTermValues.accept(term, streamTypeNamesToInclude::add);
+                            break;
+                        case FindStreamDataSource.PARENT_STREAM_ID:
+                            addTermValues.accept(term, parentStreamsToInclude::add);
+                            break;
+                        case FindStreamDataSource.STREAM_ID:
+                            addTermValues.accept(term, streamIdsToInclude::add);
+                            break;
+                    }
                 }
             }
         }
@@ -198,7 +225,6 @@ public class SourceSelectorToFindCriteria {
             newCriteria.obtainFeeds().obtainExclude().addAll(feedIdsToExclude);
         }
 
-        // Do all the other criteria need to be set to 'ANY'?
 
             /*
             originalCriteria.obtainStreamProcessorIdSet().copyFrom(newCriteria.obtainStreamProcessorIdSet());

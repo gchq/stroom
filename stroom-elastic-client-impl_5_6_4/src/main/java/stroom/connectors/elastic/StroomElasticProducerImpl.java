@@ -123,11 +123,17 @@ public class StroomElasticProducerImpl implements StroomElasticProducer {
             }
             in.close();
 
-            if (responseCode != HttpURLConnection.HTTP_CREATED) {
-                final String msg = String.format("Bad Response from Elastic Search: %d - %s",
-                        responseCode,
-                        response);
-                exceptionHandler.accept(new Exception(msg));
+            switch (responseCode) {
+                case HttpURLConnection.HTTP_CREATED:
+                case HttpURLConnection.HTTP_ACCEPTED:
+                case HttpURLConnection.HTTP_OK:
+                    break;
+                default:
+                    final String msg = String.format("Bad Response from Elastic Search: %d - %s",
+                            responseCode,
+                            response);
+                    exceptionHandler.accept(new Exception(msg));
+                    break;
             }
         } catch (Exception e) {
             final String msg = String.format("Error initialising elastic producer to %s, (%s)",
