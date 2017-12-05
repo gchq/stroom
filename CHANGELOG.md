@@ -10,7 +10,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
-## [v6.0-alpha.2] - 2017-10-04
+## [v6.0-alpha.3] - 2017-12-05
+
+### Changed
+
+* Relax regex in build script to allow tags like v6.0-alpha.3 to be published to Bintray
+
+## [v6.0-alpha.2] - 2017-12-05
 
 ### Added
 
@@ -740,8 +746,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.3...HEAD
 
+[v6.0-alpha.3]: https://github.com/gchq/stroom/compare/v6.0-alpha.2...v6.0-alpha.3
 [v6.0-alpha.2]: https://github.com/gchq/stroom/compare/v6.0-alpha.1...v6.0-alpha.2
 [v6.0-alpha.1]: https://github.com/gchq/stroom/releases/tag/v6.0-alpha.1
 
