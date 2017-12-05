@@ -2,12 +2,13 @@ dependencies {
     compile project(':stroom-util')
     permitUnusedDeclared project(':stroom-util')
 
-    testCompile libs.junit
+    compile libs.junit
+    compile libs.slf4j_api
 
     //the following logging libs are needed when running junits outside dropwizard
-    testRuntime libs.jcl_over_slf4j
-    testRuntime libs.jul_to_slf4j
-    testRuntime libs.log4j_over_slf4j
-    testRuntime libs.logback_classic
-    testRuntime libs.logback_core
+    runtime libs.jcl_over_slf4j
+    runtime libs.jul_to_slf4j
+    runtime libs.log4j_over_slf4j
+    runtime libs.logback_classic
+    runtime libs.logback_core
 }

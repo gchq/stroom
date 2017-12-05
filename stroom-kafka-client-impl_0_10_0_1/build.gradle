@@ -1,6 +1,4 @@
-plugins {
-    id 'com.github.johnrengelman.shadow' version '1.2.4'
-}
+apply plugin: "com.github.johnrengelman.shadow"
 
 dependencies {
     compile project(':stroom-connectors')

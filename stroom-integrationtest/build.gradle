@@ -15,18 +15,19 @@ dependencies {
     compile project(':stroom-statistics-server')
     permitUnusedDeclared project(':stroom-statistics-server')
 
-    integrationTestCompile urlDependencies.get(urlLibs.stroomQueryApi)
-    integrationTestCompile urlDependencies.get(urlLibs.stroomQueryCommon)
+    integrationTestCompile libs.stroomQueryApi
+    integrationTestCompile libs.stroomQueryCommon
     integrationTestCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
     integrationTestCompile project(path: ':stroom-dashboard-server', configuration: 'testArtifacts')
     integrationTestCompile project(path: ':stroom-index-server', configuration: 'testArtifacts')
     integrationTestCompile project(path: ':stroom-security-server', configuration: 'testArtifacts')
-    integrationTestCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
+    integrationTestCompile project(':stroom-test-common')
     integrationTestCompile project(path: ':stroom-util', configuration: 'testArtifacts')
 
     integrationTestCompile libs.slf4j_api
     integrationTestCompile libs.junit
 
+    integrationTestCompile libs.commons_io
     integrationTestRuntime libs.javax_el
     //the following logging libs are needed when running junits outside dropwizard
     integrationTestRuntime libs.jcl_over_slf4j

@@ -36,8 +36,8 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 /**
- * Usage java stroom.util.config.Configure <parameter file> <files to
- * process>
+ * Usage java stroom.util.config.Configure
+ * <pre><code>{@code <parameter file> <files to process>}</code></pre>
  */
 public class Configure extends AbstractCommandLineTool {
     private String parameterFilePath = null;
