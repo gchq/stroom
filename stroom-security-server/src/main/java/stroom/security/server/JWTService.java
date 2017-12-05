@@ -2,7 +2,9 @@ package stroom.security.server;
 
 import com.google.common.base.Strings;
 import org.apache.shiro.web.util.WebUtils;
+import org.jose4j.jwa.AlgorithmConstraints;
 import org.jose4j.jwk.PublicJsonWebKey;
+import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.InvalidJwtException;
@@ -142,6 +144,9 @@ public class JWTService {
                 .setRequireSubject() // the JWT must have a subject claim
                 .setVerificationKey(this.deserialisedJwk.getPublicKey()) // verify the signature with the public key
                 .setRelaxVerificationKeyValidation() // relaxes key length requirement
+                .setJwsAlgorithmConstraints( // only allow the expected signature algorithm(s) in the given context
+                        new AlgorithmConstraints(AlgorithmConstraints.ConstraintType.WHITELIST, // which is only RS256 here
+                                AlgorithmIdentifiers.RSA_USING_SHA256))
                 .setExpectedIssuer(authJwtIssuer);
         return builder.build();
     }
