@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Added ability to put clickable hyperlinks in Dashboard tables
 
+* Add Bintray publish plugin to Gradle build
+
 ### Changed
 
 * Issue **#412** : Fixed no-column table breakage
