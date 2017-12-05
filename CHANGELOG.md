@@ -737,18 +737,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Initial open source release
 
 [Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.1...HEAD
-<<<<<<< HEAD
 [v6.0-alpha.1]: https://github.com/gchq/stroom/releases/tag/v6.0-alpha.1
-=======
->>>>>>> master
 
 [v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
 [v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
 
-<<<<<<< HEAD
-=======
 [v5.0-beta.64]: https://github.com/gchq/stroom/compare/v5.0-beta.63...v5.0-beta.64
->>>>>>> master
 [v5.0-beta.63]: https://github.com/gchq/stroom/compare/v5.0-beta.62...v5.0-beta.63
 [v5.0-beta.62]: https://github.com/gchq/stroom/compare/v5.0-beta.61...v5.0-beta.62
 [v5.0-beta.61]: https://github.com/gchq/stroom/compare/v5.0-beta.60...v5.0-beta.61
