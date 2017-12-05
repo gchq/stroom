@@ -29,6 +29,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **360** : Fix inability to sort sql stats results in the dashboard table
 
+### Merged
+
+* Merged in [v5.0-beta.64]
+
 ## [v5.1-alpha.2] - 2017-06-22
 
 * Issue **#203** : Initial release of the new data receipt policy functionality.
