@@ -44,7 +44,7 @@ public class MockIndexShardWriterCache implements IndexShardWriterCache {
     }
 
     @Override
-    public IndexShardWriter getWriterByShardId(final Long indexShardId) {
+    public IndexShardWriter getWriterByShardId(final long indexShardId) {
         return openWritersByShardId.get(indexShardId);
     }
 
@@ -64,6 +64,14 @@ public class MockIndexShardWriterCache implements IndexShardWriterCache {
     }
 
     @Override
+    public void flush(final long indexShardId) {
+        final IndexShardWriter indexShardWriter = openWritersByShardId.get(indexShardId);
+        if (indexShardWriter != null) {
+            indexShardWriter.flush();
+        }
+    }
+
+    @Override
     public void sweep() {
     }
 
@@ -74,7 +82,16 @@ public class MockIndexShardWriterCache implements IndexShardWriterCache {
         openWritersByShardKey.remove(indexShardWriter.getIndexShardKey());
     }
 
-//    @Override
+    @Override
+    public void delete(final long indexShardId) {
+        openWritersByShardKey.values().forEach(indexShardWriter -> {
+            if (indexShardWriter.getIndexShardId() == indexShardId) {
+                close(indexShardWriter);
+            }
+        });
+    }
+
+    //    @Override
 //    public void clear() {
 //        openWritersByShardId.values().parallelStream().forEach(this::close);
 //    }
@@ -84,7 +101,7 @@ public class MockIndexShardWriterCache implements IndexShardWriterCache {
         openWritersByShardId.values().parallelStream().forEach(this::close);
     }
 
-    public Map<IndexShardKey, IndexShardWriter> getWriters() {
+    Map<IndexShardKey, IndexShardWriter> getWriters() {
         return openWritersByShardKey;
     }
 }
