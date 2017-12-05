@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#508** : Fix directory creation for index shards.
+
 ## [v5.0-beta.66] - 2017-11-30
 
 * Issue **#492** : Task producers were still not being marked as complete on termination which meant that the parent cluster task was not completing. This has now been fixed.
