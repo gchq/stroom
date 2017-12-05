@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.67] - 2017-12-05
+
 * Issue **#508** : Fix directory creation for index shards.
 
 ## [v5.0-beta.66] - 2017-11-30
@@ -704,7 +706,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.66...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.67...HEAD
+[v5.0-beta.67]: https://github.com/gchq/stroom/compare/v5.0-beta.66...v5.0-beta.67
 [v5.0-beta.66]: https://github.com/gchq/stroom/compare/v5.0-beta.65...v5.0-beta.66
 [v5.0-beta.65]: https://github.com/gchq/stroom/compare/v5.0-beta.64...v5.0-beta.65
 [v5.0-beta.64]: https://github.com/gchq/stroom/compare/v5.0-beta.63...v5.0-beta.64
