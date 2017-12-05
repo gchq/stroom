@@ -167,6 +167,13 @@ public class TestLmdbKeyValueStore {
         });
     }
 
+    /**
+     * The aim of this test is to create a DB that is bigger than the available RAM.
+     * Was run on a VM with ~2.5GB free RAM and a ~4GB disk for LMDB.
+     * -xmx was set to 256M
+     * It writes ~4gb of data to the DB then reads gets each key, extracting a long
+     * from the ~1MB value
+     */
     @Test
     public void testLargeDB() throws IOException {
         Path path = Paths.get("/tmp/testLargeDB");
@@ -180,7 +187,7 @@ public class TestLmdbKeyValueStore {
 
         final Dbi<ByteBuffer> db = env.openDbi(DB_NAME, DbiFlags.MDB_CREATE);
 
-        int recCount = 5000;
+        int recCount = 3600;
 
         LOGGER.info("Loading data");
 //        try (final Txn<ByteBuffer> txn = env.txnWrite()) {
@@ -190,15 +197,18 @@ public class TestLmdbKeyValueStore {
                 key.clear();
                 key.putLong(i).flip();
 
-                final byte[] valueArr = new byte[(int) MEGA_BYTES];
+                final byte[] valueArr = new byte[(int) MEGA_BYTES - Long.BYTES];
                 final ByteBuffer value = ByteBuffer.allocateDirect((int) MEGA_BYTES);
                 value.clear();
+                value.putLong(i);
                 value.put(valueArr).flip();
 
 //                boolean result = db.put(txn, key, value);
-                LOGGER.info("Putting {}", i);
+//                LOGGER.info("Putting {}", i);
                 db.put(key, value);
-                LOGGER.info("Put {}", i);
+                if (i % 100 == 0) {
+                    LOGGER.info("Put {}", i);
+                }
 //                Assert.assertTrue(result);
 
             });
@@ -221,7 +231,14 @@ public class TestLmdbKeyValueStore {
 
                 Assert.assertNotNull(val);
 
-                Assert.assertEquals(MEGA_BYTES, val.remaining());
+                long extractedVal = val.getLong();
+
+                Assert.assertEquals(i, extractedVal);
+                Assert.assertEquals(MEGA_BYTES - Long.BYTES, val.remaining());
+
+                if (i % 100 == 0) {
+                    LOGGER.info("Read {}", i);
+                }
             });
         }
         LOGGER.info("Read data");
