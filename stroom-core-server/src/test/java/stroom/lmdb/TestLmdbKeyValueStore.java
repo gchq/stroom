@@ -7,10 +7,7 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.lmdbjava.Dbi;
-import org.lmdbjava.DbiFlags;
-import org.lmdbjava.Env;
-import org.lmdbjava.Txn;
+import org.lmdbjava.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -282,6 +279,41 @@ public class TestLmdbKeyValueStore {
         11:27:32.349 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Read 10 hot keys for 370 iterations in PT0.003S
          */
     }
+
+
+    @Test
+    public void testTimeScan() throws IOException {
+
+        Path path = Paths.get("/disk2/testTimeScan");
+        deleteDirRecursive(path);
+        Files.createDirectories(path);
+
+        final Env<ByteBuffer> env = Env.<ByteBuffer>create()
+                .setMapSize(50 * GIGA_BYTES)
+                .setMaxDbs(1)
+                .open(path.toFile());
+
+        final Dbi<ByteBuffer> db = env.openDbi(DB_NAME, DbiFlags.MDB_CREATE);
+
+
+
+        //TODO load some data using TemporalKey, multiple times for each string part
+        //scan back from a time to get the first applicable key
+        final TemporalKey searchStartKey = new TemporalKey("MyKey", Instant.now().toEpochMilli());
+        final KeyRange<ByteBuffer> range = KeyRange.atLeastBackward(searchStartKey.toDbKey());
+
+        try (Txn<ByteBuffer> txn = env.txnRead()) {
+            try (CursorIterator<ByteBuffer> it = db.iterate(txn, range)) {
+                for (final CursorIterator.KeyVal<ByteBuffer> kv : it.iterable()) {
+//                    assertThat(kv.key(), notNullValue());
+//                    assertThat(kv.val(), notNullValue());
+                }
+            }
+        }
+
+    }
+
+
 
 
 
