@@ -43,7 +43,18 @@ public class InMemoryKeyValueStore implements KeyValueStore {
     }
 
     @Override
+    public Optional<String> getWithTxn(String key) {
+        //no concept of a txn here
+        return get(key);
+    }
+
+    @Override
     public void clear() {
         map.clear();
+    }
+
+    @Override
+    public void close() throws Exception {
+        //do nothing
     }
 }

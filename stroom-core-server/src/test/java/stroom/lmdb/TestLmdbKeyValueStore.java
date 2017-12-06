@@ -49,7 +49,7 @@ public class TestLmdbKeyValueStore {
 
     @Test
     public void test() {
-        LOGGER.error("My Error",new RuntimeException());
+        LOGGER.error("My Error", new RuntimeException());
     }
 
     @Test
@@ -101,7 +101,7 @@ public class TestLmdbKeyValueStore {
     public void perfTest() throws IOException {
 
         LOGGER.info("Generating test data");
-        List<Map.Entry<String, String>> entries = IntStream.rangeClosed(1, 1_000_000)
+        List<Map.Entry<String, String>> entries = IntStream.rangeClosed(1, 10_000)
                 .mapToObj(i -> Maps.immutableEntry(
                         "key" + i + UUID.randomUUID().toString(),
                         UUID.randomUUID().toString()))
@@ -151,32 +151,31 @@ public class TestLmdbKeyValueStore {
 
             store.putBatch(entries);
 
-            LOGGER.info("PutBatch duration {}", Duration.between(start, Instant.now()).toString());
+            LOGGER.info("PutBatch duration {} ms", Duration.between(start, Instant.now()).toMillis());
 
             //gets
-            for (int i=0; i<10; i++) {
+            for (int i = 0; i < 10; i++) {
                 start = Instant.now();
 
                 randomEntries.forEach(entry -> {
-                    Optional<String> val = store.get(entry.getKey());
+                    Optional<String> val = store.getWithTxn(entry.getKey());
                     Preconditions.checkNotNull(val);
                 });
 
-                LOGGER.info("Get duration {}", Duration.between(start, Instant.now()).toString());
+                LOGGER.info("Get duration {} ms", Duration.between(start, Instant.now()).toMillis());
+            }
+
+            try {
+                store.close();
+            } catch (Exception e) {
+                throw new RuntimeException("Error closing store " + store, e);
             }
         });
     }
 
-    /**
-     * The aim of this test is to create a DB that is bigger than the available RAM.
-     * Was run on a VM with ~2.5GB free RAM and a ~4GB disk for LMDB.
-     * -xmx was set to 256M
-     * It writes ~4gb of data to the DB then reads gets each key, extracting a long
-     * from the ~1MB value
-     */
     @Test
     public void testLargeDB() throws IOException {
-        Path path = Paths.get("/tmp/testLargeDB");
+        Path path = Paths.get("/disk2/testLargeDB");
         deleteDirRecursive(path);
         Files.createDirectories(path);
 
@@ -187,62 +186,169 @@ public class TestLmdbKeyValueStore {
 
         final Dbi<ByteBuffer> db = env.openDbi(DB_NAME, DbiFlags.MDB_CREATE);
 
-        int recCount = 3600;
+        int recCount = 3700;
+        int batchSize = 1000;
 
+        //Load all the data into the db in batches. Each batch is loaded in a txn.  Using a batch
+        //that needs more memory than is available seems to kill it, so the amount of data
+        //in the txn needs to be less than available RAM
+        //Once committed, the txn cannot be reused.
         LOGGER.info("Loading data");
-//        try (final Txn<ByteBuffer> txn = env.txnWrite()) {
-            LongStream.rangeClosed(1, recCount).forEach(i -> {
 
-                final ByteBuffer key = ByteBuffer.allocateDirect(Long.BYTES);
-                key.clear();
-                key.putLong(i).flip();
+        doTimedWork("Loaded data", () -> {
+            int i = 1;
+            while (i < recCount) {
+                int thisBatchSize = Math.min(batchSize, recCount - i + 1);
+                LOGGER.info("Batch size: {}", thisBatchSize);
+                putValues(db, env, i, thisBatchSize);
+                i += thisBatchSize;
+            }
+        });
 
-                final byte[] valueArr = new byte[(int) MEGA_BYTES - Long.BYTES];
-                final ByteBuffer value = ByteBuffer.allocateDirect((int) MEGA_BYTES);
-                value.clear();
-                value.putLong(i);
-                value.put(valueArr).flip();
+        //Get each kv pair in turn. If the DB is bigger than available RAM this will
+        //mean shifting data in/out of page cache and reading from disk
+        LOGGER.info("Reading all data");
 
-//                boolean result = db.put(txn, key, value);
-//                LOGGER.info("Putting {}", i);
-                db.put(key, value);
-                if (i % 100 == 0) {
-                    LOGGER.info("Put {}", i);
-                }
-//                Assert.assertTrue(result);
+        doTimedWork("Read data", () -> {
+            try (Txn<ByteBuffer> txn = env.txnRead()) {
 
-            });
-//            LOGGER.info("Committing");
-//            txn.commit();
-//            LOGGER.info("Committed");
-//        }
+                LongStream.rangeClosed(1, recCount).forEach(j -> {
+                    getValue(db, txn, j);
 
-        LOGGER.info("Reading data");
+                    if (j % 500 == 0) {
+                        LOGGER.info("Read {}", j);
+                    }
+                });
+            }
+        });
 
-        try (Txn<ByteBuffer> txn = env.txnRead()) {
+        //repeatedly get the values for the same 10 keys many times
+        //akin to frequent access to hot data
+        //these kv pairs should therefore sit in the page cache and be fast to access
+        LOGGER.info("Reading hot keys many times");
 
-            LongStream.rangeClosed(1, recCount).forEach(i -> {
-                final ByteBuffer key = ByteBuffer.allocateDirect(Long.BYTES);
-//                final ByteBuffer key = ByteBuffer.allocateDirect(env.getMaxKeySize());
-                key.clear();
-                key.putLong(i).flip();
+        int hotKeyCount = 10;
+        int iterations = recCount / hotKeyCount;
+        doTimedWork(String.format("Read %s hot keys for %s iterations", hotKeyCount, iterations), () -> {
+            try (Txn<ByteBuffer> txn = env.txnRead()) {
 
-                final ByteBuffer val = db.get(txn, key);
+                LongStream.rangeClosed(1, recCount / 10).forEach(i -> {
+                    LongStream.rangeClosed(1, 10).forEach(key -> {
+                        getValue(db, txn, key);
+                    });
+                });
+            }
+        });
 
-                Assert.assertNotNull(val);
+        /*
+        The following is the output on a VM with 4GB RAM (~2.5Gb available) and backed by
+        an NVMe SSD. 3700 kv pairs (3.7Gb of data) is loaded into LMDB. Xmx is set to 256M.
 
-                long extractedVal = val.getLong();
-
-                Assert.assertEquals(i, extractedVal);
-                Assert.assertEquals(MEGA_BYTES - Long.BYTES, val.remaining());
-
-                if (i % 100 == 0) {
-                    LOGGER.info("Read {}", i);
-                }
-            });
-        }
-        LOGGER.info("Read data");
+        11:27:22.011 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Loading data
+        11:27:22.015 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Batch size: 1000
+        11:27:22.016 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Putting start: 1, count 1000
+        11:27:22.582 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Put 500
+        11:27:22.970 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Put 1000
+        11:27:22.970 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Committing
+        11:27:24.404 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Committed
+        11:27:24.405 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Batch size: 1000
+        11:27:24.405 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Putting start: 1001, count 1000
+        11:27:24.784 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Put 1500
+        11:27:25.138 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Put 2000
+        11:27:25.138 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Committing
+        11:27:26.557 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Committed
+        11:27:26.558 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Batch size: 1000
+        11:27:26.558 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Putting start: 2001, count 1000
+        11:27:26.939 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Put 2500
+        11:27:27.275 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Put 3000
+        11:27:27.275 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Committing
+        11:27:28.471 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Committed
+        11:27:28.471 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Batch size: 700
+        11:27:28.471 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Putting start: 3001, count 700
+        11:27:28.798 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Put 3500
+        11:27:28.931 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Committing
+        11:27:29.803 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Committed
+        11:27:29.815 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Loaded data in PT7.789S
+        11:27:29.815 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Reading all data
+        11:27:30.291 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Read 500
+        11:27:30.744 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Read 1000
+        11:27:31.208 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Read 1500
+        11:27:31.638 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Read 2000
+        11:27:32.055 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Read 2500
+        11:27:32.343 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Read 3000
+        11:27:32.345 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Read 3500
+        11:27:32.345 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Read data in PT2.524S
+        11:27:32.345 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Reading hot keys many times
+        11:27:32.349 [main] INFO  stroom.lmdb.TestLmdbKeyValueStore - Read 10 hot keys for 370 iterations in PT0.003S
+         */
     }
+
+
+
+    /**
+     * Get a kv pair from the db using the passes key, and return the extracted long value
+     * from the first 8 bytes of the kv pair value
+     */
+    private static long getValue(Dbi<ByteBuffer> db, Txn<ByteBuffer> txn, long key) {
+        final ByteBuffer keyBuf = ByteBuffer.allocateDirect(Long.BYTES);
+//                final ByteBuffer key = ByteBuffer.allocateDirect(env.getMaxKeySize());
+        keyBuf.clear();
+        keyBuf.putLong(key).flip();
+
+        final ByteBuffer val = db.get(txn, keyBuf);
+
+        Assert.assertNotNull(val);
+
+        long extractedVal = val.getLong();
+
+        Assert.assertEquals(key, extractedVal);
+        Assert.assertEquals(MEGA_BYTES - Long.BYTES, val.remaining());
+
+        return extractedVal;
+    }
+
+    /**
+     * Put a batch of vk pairs into the DB under a single txn
+     * @param startKey The key at the start of the batch
+     * @param count The number of kv pairs to put
+     */
+    private static void putValues(final Dbi<ByteBuffer> db, Env<ByteBuffer> env, final long startKey, final long count) {
+        LOGGER.info("Putting start: {}, count {}", startKey, count);
+        try (Txn<ByteBuffer> txn = env.txnWrite()) {
+            LongStream.range(startKey, startKey + count)
+                    .forEach(i -> {
+                        putValue(db, txn, i);
+                        if (i % 500 == 0) {
+                            LOGGER.info("Put {}", i);
+                        }
+                    });
+            LOGGER.info("Committing");
+            txn.commit();
+            LOGGER.info("Committed");
+        }
+    }
+
+    /**
+     * Put a single kv pair into the database using the passed txn
+     * @param keyVal The value of the key, also used in part of the kv pair value
+     */
+    private static void putValue(final Dbi<ByteBuffer> db, final Txn<ByteBuffer> txn, final long keyVal) {
+
+        //build the key buffer
+        final ByteBuffer key = ByteBuffer.allocateDirect(Long.BYTES);
+        key.clear();
+        key.putLong(keyVal).flip();
+
+        //build the value buffer, 1MB in size, with the key also written to
+        //the first 8 bytes
+        final byte[] valueArr = new byte[(int) MEGA_BYTES - Long.BYTES];
+        final ByteBuffer value = ByteBuffer.allocateDirect((int) MEGA_BYTES);
+        value.clear();
+        value.putLong(keyVal);
+        value.put(valueArr).flip();
+        db.put(txn, key, value);
+    }
+
 
     private void deleteDirRecursive(final Path path) throws IOException {
         if (Files.exists(path)) {
@@ -251,5 +357,11 @@ public class TestLmdbKeyValueStore {
                     .sorted((o1, o2) -> -o1.compareTo(o2))
                     .forEach(File::delete);
         }
+    }
+
+    private static void doTimedWork(final String logMsg, final Runnable work) {
+        Instant startTime = Instant.now();
+        work.run();
+        LOGGER.info(logMsg + " in {}", Duration.between(startTime, Instant.now()).toString());
     }
 }

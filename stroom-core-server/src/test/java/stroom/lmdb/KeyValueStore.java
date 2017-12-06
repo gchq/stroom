@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public interface KeyValueStore {
+public interface KeyValueStore extends AutoCloseable {
 
     void put(final String key, final String value);
 
@@ -12,8 +12,8 @@ public interface KeyValueStore {
 
     Optional<String> get(final String key);
 
+    Optional<String> getWithTxn(final String key);
+
     void clear();
-
-
 
 }

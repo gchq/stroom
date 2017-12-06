@@ -6,6 +6,7 @@ import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -16,7 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class LmdbKeyValueStore implements KeyValueStore, Closeable {
+@NotThreadSafe
+public class LmdbKeyValueStore implements KeyValueStore {
 
     public static final int VALUE_BUFFER_SIZE = 700;
 
@@ -24,6 +26,7 @@ public class LmdbKeyValueStore implements KeyValueStore, Closeable {
     private final String dbName;
     private final Env<ByteBuffer> env;
     private final Dbi<ByteBuffer> db;
+    private Txn<ByteBuffer> readTxn = null;
 
     public LmdbKeyValueStore(final String dbName,
                              final Path dir) {
@@ -88,6 +91,25 @@ public class LmdbKeyValueStore implements KeyValueStore, Closeable {
     }
 
     @Override
+    public Optional<String> getWithTxn(String key) {
+        Preconditions.checkNotNull(key);
+        ByteBuffer keyBuf = stringToBuffer(key, env.getMaxKeySize());
+
+            final ByteBuffer valBuffer = db.get(getReadTxn(), keyBuf);
+
+            return Optional
+                    .ofNullable(valBuffer)
+                    .map(this::byteBufferToString);
+    }
+
+    private Txn<ByteBuffer> getReadTxn() {
+        if (readTxn == null) {
+            readTxn =env.txnRead();
+        }
+        return readTxn;
+    }
+
+    @Override
     public void clear() {
         try (Txn<ByteBuffer> txn = env.txnWrite()) {
             db.drop(txn);
@@ -96,6 +118,10 @@ public class LmdbKeyValueStore implements KeyValueStore, Closeable {
 
     @Override
     public void close() throws IOException {
+        if (readTxn != null) {
+            readTxn.close();
+        }
+
         if (env != null) {
             try {
                 env.close();
