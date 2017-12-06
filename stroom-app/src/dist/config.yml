@@ -1,0 +1,34 @@
+server:
+  type: simple
+  applicationContextPath: /
+  adminContextPath: /admin
+  connector:
+    type: http
+    port: 8080
+
+logging:
+  level: ERROR
+  loggers:
+    stroom: INFO
+    io.dropwizard: INFO
+    org.eclipse.jetty: INFO
+    org.flywaydb: INFO
+    "event-logger":
+      level: INFO
+      additive: false
+      appenders:
+        - type: file
+          logFormat: "%msg%n"
+          currentLogFilename: event.log
+          archivedLogFilenamePattern: event-%d{yyyy-MM-dd}.log
+          timeZone: UTC
+  appenders:
+    - type: console
+      logFormat: "%-6level [%d{HH:mm:ss.SSS}] [%t] %logger{5} - %X{code} %msg %n"
+      timeZone: UTC
+    - type: file
+      logFormat: "%-6level [%d{HH:mm:ss.SSS}] [%t] %logger{35} - %X{code} %msg %n"
+      currentLogFilename: stroom.log
+      archivedLogFilenamePattern: stroom-%d{yyyy-MM-dd}.log
+      archivedFileCount: 10
+      timeZone: UTC

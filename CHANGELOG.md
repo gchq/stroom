@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+## [v6.0-alpha.3] - 2017-12-05
+
+### Changed
+
+* Relax regex in build script to allow tags like v6.0-alpha.3 to be published to Bintray
+
+## [v6.0-alpha.2] - 2017-12-05
+
+### Added
+
+* Add Bintray publish plugin to Gradle build
+
+### Merged
+
+* Merged in [v5.0-beta.64]
+
+## [v6.0-alpha.1] - 2017-11-28
+
+### Added
+
 * Issue **#75** : Upgraded to Lucene 5.
 
 * Issue **#135** : [BREAKING CHANGE] Removed JODA Time library and replaced with Java 7 Time API. This change breaks time zone output previously formatted with `ZZ` or `ZZZ`.
@@ -14,8 +37,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Added XSLT functions generate-url and fetch-json
 
 * Added ability to put clickable hyperlinks in Dashboard tables
-
-* Add Bintray publish plugin to Gradle build
 
 ### Changed
 
@@ -28,6 +49,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **98** : Fix premature trimming of results in the store
 
 * Issue **360** : Fix inability to sort sql stats results in the dashboard table
+
+### Merged
+
+* Merged in [v5.1-alpha.2]
+
+* Merged in [v5.0-beta.63]
 
 ## [v5.1-alpha.2] - 2017-06-22
 
@@ -719,8 +746,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.1-alpha.2...HEAD
-[v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.3...HEAD
+
+[v6.0-alpha.3]: https://github.com/gchq/stroom/compare/v6.0-alpha.2...v6.0-alpha.3
+[v6.0-alpha.2]: https://github.com/gchq/stroom/compare/v6.0-alpha.1...v6.0-alpha.2
+[v6.0-alpha.1]: https://github.com/gchq/stroom/releases/tag/v6.0-alpha.1
+
+[v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.1-alpha.1...v5.1-alpha.2
 [v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
 
 [v5.0-beta.64]: https://github.com/gchq/stroom/compare/v5.0-beta.63...v5.0-beta.64
