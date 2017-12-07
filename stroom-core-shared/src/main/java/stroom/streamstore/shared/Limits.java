@@ -16,7 +16,6 @@
 
 package stroom.streamstore.shared;
 
-import stroom.util.shared.OwnedBuilder;
 import stroom.util.shared.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -68,60 +67,31 @@ public class Limits implements SharedObject {
         this.durationMs = durationMs;
     }
 
-    public static abstract class ABuilder<
-                    OwningBuilder extends OwnedBuilder,
-                    CHILD_CLASS extends ABuilder<OwningBuilder, ?>>
-            extends OwnedBuilder<OwningBuilder, Limits, CHILD_CLASS> {
+    public static class Builder {
 
         private final Limits instance;
 
-        public ABuilder() {
+        public Builder() {
             this.instance = new Limits();
         }
 
-        public CHILD_CLASS streamCount(final Long value) {
+        public Builder streamCount(final Long value) {
             this.instance.streamCount = value;
-            return self();
+            return this;
         }
 
-        public CHILD_CLASS eventCount(final Long value) {
+        public Builder eventCount(final Long value) {
             this.instance.eventCount = value;
-            return self();
+            return this;
         }
 
-        public CHILD_CLASS durationMs(final Long value) {
+        public Builder durationMs(final Long value) {
             this.instance.durationMs = value;
-            return self();
+            return this;
         }
 
-        @Override
-        protected Limits pojoBuild() {
+        public Limits build() {
             return instance;
-        }
-    }
-
-
-    /**
-     * A builder that is owned by another builder, used for popping back up a stack
-     *
-     * @param <OwningBuilder> The class of the parent builder
-     */
-    public static final class OBuilder<OwningBuilder extends OwnedBuilder>
-            extends ABuilder<OwningBuilder, OBuilder<OwningBuilder>> {
-        @Override
-        public OBuilder<OwningBuilder> self() {
-            return this;
-        }
-    }
-
-    /**
-     * A builder that is created independently of any parent builder
-     */
-    public static final class Builder extends ABuilder<Builder, Builder> {
-
-        @Override
-        public Builder self() {
-            return this;
         }
     }
 }

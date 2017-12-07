@@ -90,12 +90,12 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     public void testBooleanQuery() throws Exception {
         final String field = "Command";
         final ExpressionOperator.Builder expression = new ExpressionOperator.Builder()
-                .addOperator(Op.AND)
+                .addOperator(new ExpressionOperator.Builder(Op.AND)
                     .addTerm(field, Condition.CONTAINS, "service")
                     .addTerm(field, Condition.CONTAINS, "cwhp")
                     .addTerm(field, Condition.CONTAINS, "authorize")
                     .addTerm(field, Condition.CONTAINS, "deviceGroup")
-                    .end()
+                    .build())
                 .addTerm("UserId", Condition.CONTAINS, "user5");
         test(expression, 1, 5);
     }
@@ -106,8 +106,9 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
         final ExpressionOperator.Builder orCondition = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
         orCondition.addTerm("UserId", Condition.CONTAINS, "user6");
 
-        final ExpressionOperator.OBuilder<?> andCondition = orCondition.addOperator(Op.AND);
-        andCondition.addTerm("UserId", Condition.CONTAINS, "user1");
+        final ExpressionOperator.Builder andCondition = orCondition.addOperator(new ExpressionOperator.Builder(Op.AND)
+                .addTerm("UserId", Condition.CONTAINS, "user1")
+                .build());
 
         // Check there are 4 events.
         test(andCondition, 1, 4);
@@ -133,7 +134,7 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
         test(expression, 1, 2);
     }
 
-    private void test(final ExpressionOperator.ABuilder<?, ?> expression, final long expectedStreams, final long expectedEvents)
+    private void test(final ExpressionOperator.Builder expression, final long expectedStreams, final long expectedEvents)
             throws Exception {
         final Index index = indexService.find(new FindIndexCriteria()).getFirst();
 

@@ -37,6 +37,7 @@ import stroom.util.spring.StroomScope;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -96,7 +97,7 @@ public class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataActio
                 }
 
                 final List<StreamProcessor> list = new ArrayList<>(streamToProcessorSet.keySet());
-                Collections.sort(list, (o1, o2) -> o1.getPipeline().getName().compareTo(o2.getPipeline().getName()));
+                Collections.sort(list, Comparator.comparing(o -> o.getPipeline().getName()));
 
                 for (final StreamProcessor streamProcessor : list) {
                     final EntityIdSet<Stream> streamSet = streamToProcessorSet.get(streamProcessor);
@@ -104,10 +105,11 @@ public class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataActio
                     final QueryData queryData = new QueryData();
                     final ExpressionOperator.Builder operator = new ExpressionOperator.Builder(ExpressionOperator.Op.AND);
 
-                    final ExpressionOperator.OBuilder streamIdTerms = operator.addOperator(ExpressionOperator.Op.OR);
+                    final ExpressionOperator.Builder streamIdTerms = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
                     streamSet.forEach(streamId -> {
                         streamIdTerms.addTerm(FindStreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(streamId));
                     });
+                    operator.addOperator(streamIdTerms.build());
 
                     queryData.setDataSource(QueryData.STREAM_STORE_DOC_REF);
                     queryData.setExpression(operator.build());

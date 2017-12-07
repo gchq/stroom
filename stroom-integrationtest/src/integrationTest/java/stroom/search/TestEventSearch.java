@@ -159,7 +159,7 @@ public class TestEventSearch extends AbstractSearchTest {
 
     private TableSettings createTableSettings(final Index index, final boolean extractValues) {
         final Field idField = new Field.Builder()
-                .name("Id")
+                .name("IdTreeNode")
                 .expression(ParamUtil.makeParam("StreamId"))
                 .build();
 

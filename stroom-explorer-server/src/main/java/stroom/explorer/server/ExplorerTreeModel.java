@@ -19,14 +19,12 @@ package stroom.explorer.server;
 import org.springframework.stereotype.Component;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.query.api.v2.DocRef;
 import stroom.security.Insecure;
 import stroom.util.task.TaskScopeRunnable;
 
 import javax.inject.Inject;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
 @Component
 class ExplorerTreeModel {

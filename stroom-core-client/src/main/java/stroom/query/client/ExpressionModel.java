@@ -92,23 +92,25 @@ public class ExpressionModel {
     }
 
     private void addChildrenFromTree(final Operator source,
-                                     final ExpressionOperator.ABuilder<?, ?> dest,
+                                     final ExpressionOperator.Builder dest,
                                      final DefaultTreeForTreeLayout<Item> tree) {
         final List<Item> children = tree.getChildren(source);
         if (children != null) {
             for (final Item child : children) {
                 if (child instanceof Operator) {
                     final Operator operator = (Operator) child;
-                    final ExpressionOperator.OBuilder<?> childDest = dest.addOperator(operator.enabled(), operator.getOp());
+                    final ExpressionOperator.Builder childDest = new ExpressionOperator.Builder(operator.enabled(), operator.getOp());
                     addChildrenFromTree(operator, childDest, tree);
+                    dest.addOperator(childDest.build());
                 } else if (child instanceof Term) {
                     final Term term = (Term) child;
-                    dest.addTerm()
+                    dest.addOperator(new ExpressionTerm.Builder()
                             .enabled(term.getEnabled())
                             .field(term.getField())
                             .condition(term.getCondition())
                             .value(term.getValue())
-                            .dictionary(term.getDictionary());
+                            .dictionary(term.getDictionary())
+                            .build());
                 }
             }
         }

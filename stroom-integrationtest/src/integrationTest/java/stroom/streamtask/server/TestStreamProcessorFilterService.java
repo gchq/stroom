@@ -108,16 +108,16 @@ public class TestStreamProcessorFilterService extends AbstractCoreIntegrationTes
 
         final QueryData findStreamQueryData = new QueryData.Builder()
                 .dataSource(QueryData.STREAM_STORE_DOC_REF)
-                .expression(ExpressionOperator.Op.AND)
-                    .addOperator(ExpressionOperator.Op.OR)
+                .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+                    .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
                         .addTerm(FindStreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed1.getName())
                         .addTerm(FindStreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed2.getName())
-                        .end()
-                    .addOperator(ExpressionOperator.Op.OR)
+                        .build())
+                    .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
                         .addTerm(FindStreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
                         .addTerm(FindStreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_REFERENCE.getName())
-                        .end()
-                    .end()
+                        .build())
+                    .build())
                 .build();
 
         final FindStreamProcessorFilterCriteria findStreamProcessorFilterCriteria = new FindStreamProcessorFilterCriteria();

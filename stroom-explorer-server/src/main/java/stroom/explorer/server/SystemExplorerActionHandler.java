@@ -1,7 +1,6 @@
 package stroom.explorer.server;
 
 import org.springframework.stereotype.Component;
-import stroom.entity.server.NameValidationUtil;
 import stroom.entity.shared.PermissionException;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.query.api.v2.DocRef;

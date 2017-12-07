@@ -112,15 +112,15 @@ public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
 
         final QueryData findStreamQueryData = new QueryData.Builder()
                 .dataSource(QueryData.STREAM_STORE_DOC_REF)
-                .expression(ExpressionOperator.Op.AND)
-                    .addOperator(ExpressionOperator.Op.OR)
+                .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+                    .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
                         .addTerm(FindStreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed1.getName())
                         .addTerm(FindStreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed2.getName())
-                        .end()
-                    .addOperator(ExpressionOperator.Op.OR)
+                        .build())
+                    .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
                         .addTerm(FindStreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
-                        .end()
-                    .end()
+                        .build())
+                    .build())
                 .build();
 
         commonTestScenarioCreator.createStreamProcessor(findStreamQueryData);

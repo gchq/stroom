@@ -199,14 +199,14 @@ public final class StoreCreationTool {
             // Setup the stream processor filter.
             final QueryData findStreamQueryData = new QueryData.Builder()
                     .dataSource(QueryData.STREAM_STORE_DOC_REF)
-                    .expression(ExpressionOperator.Op.AND)
-                        .addOperator(ExpressionOperator.Op.OR)
+                    .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+                        .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
                             .addTerm(FindStreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, referenceFeed.getName())
-                            .end()
-                        .addOperator(ExpressionOperator.Op.OR)
+                            .build())
+                        .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
                             .addTerm(FindStreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_REFERENCE.getName())
-                            .end()
-                        .end()
+                            .build())
+                        .build())
                     .build();
             streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 2, findStreamQueryData);
         }
@@ -368,14 +368,14 @@ public final class StoreCreationTool {
             // Setup the stream processor filter.
             final QueryData findStreamQueryData = new QueryData.Builder()
                     .dataSource(QueryData.STREAM_STORE_DOC_REF)
-                    .expression(ExpressionOperator.Op.AND)
-                        .addOperator(ExpressionOperator.Op.OR)
+                    .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+                        .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
                             .addTerm(FindStreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, eventFeed.getName())
-                            .end()
-                        .addOperator(ExpressionOperator.Op.OR)
+                            .build())
+                        .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
                             .addTerm(FindStreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
-                            .end()
-                        .end()
+                            .build())
+                        .build())
                     .build();
 
             streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, findStreamQueryData);
@@ -605,11 +605,11 @@ public final class StoreCreationTool {
 
             final QueryData findStreamQueryData = new QueryData.Builder()
                     .dataSource(QueryData.STREAM_STORE_DOC_REF)
-                    .expression(ExpressionOperator.Op.AND)
-                        .addOperator(ExpressionOperator.Op.OR)
+                    .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+                        .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
                             .addTerm(FindStreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.EVENTS.getName())
-                            .end()
-                        .end()
+                            .build())
+                        .build())
                     .build();
             streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, findStreamQueryData);
         }

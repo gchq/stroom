@@ -197,11 +197,11 @@ public final class SetupSampleDataBean {
                 // Create a processor for this index.
                 final QueryData criteria = new QueryData.Builder()
                         .dataSource(QueryData.STREAM_STORE_DOC_REF)
-                        .expression(ExpressionOperator.Op.AND)
-                            .addOperator(ExpressionOperator.Op.OR)
+                        .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+                            .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
                                 .addTerm(FindStreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.EVENTS.getName())
-                                .end()
-                            .end()
+                                .build())
+                            .build())
                         .build();
 
                 streamProcessorFilterService.createNewFilter(pipeline, criteria, true, 10);
@@ -252,15 +252,15 @@ public final class SetupSampleDataBean {
                 // Create a processor for this feed.
                 final QueryData criteria = new QueryData.Builder()
                         .dataSource(QueryData.STREAM_STORE_DOC_REF)
-                        .expression(ExpressionOperator.Op.AND)
-                            .addOperator(ExpressionOperator.Op.OR)
+                        .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+                            .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
                                 .addTerm(FindStreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
-                                .end()
-                            .addOperator(ExpressionOperator.Op.OR)
+                                .build())
+                            .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
                                 .addTerm(FindStreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
                                 .addTerm(FindStreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_REFERENCE.getName())
-                                .end()
-                            .end()
+                                .build())
+                            .build())
                         .build();
                 streamProcessorFilterService.createNewFilter(pipeline, criteria, true, 10);
                 // final StreamProcessorFilter filter =

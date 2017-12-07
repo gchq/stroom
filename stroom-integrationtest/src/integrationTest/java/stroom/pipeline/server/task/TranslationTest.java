@@ -157,14 +157,14 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                         StreamType.RAW_REFERENCE.getName() : StreamType.RAW_EVENTS.getName();
                 final QueryData findStreamQueryData = new QueryData.Builder()
                         .dataSource(QueryData.STREAM_STORE_DOC_REF)
-                        .expression(ExpressionOperator.Op.AND)
-                            .addOperator(ExpressionOperator.Op.OR)
+                        .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+                            .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
                                 .addTerm(FindStreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
-                                .end()
-                            .addOperator(ExpressionOperator.Op.OR)
+                                .build())
+                            .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
                                 .addTerm(FindStreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, streamType)
-                                .end()
-                            .end()
+                                .build())
+                            .build())
                         .build();
 
                 streamProcessorFilterService.addFindStreamCriteria(streamProcessor, priority, findStreamQueryData);

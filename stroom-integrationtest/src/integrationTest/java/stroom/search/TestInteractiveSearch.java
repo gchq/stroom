@@ -246,7 +246,9 @@ public class TestInteractiveSearch extends AbstractSearchTest {
     public void notEqualsTest() {
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567");
-        expression.addOperator(Op.NOT).addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z");
+        expression.addOperator(new ExpressionOperator.Builder(Op.NOT)
+                .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
+                .build());
         test(expression, 24);
     }
 
@@ -257,12 +259,12 @@ public class TestInteractiveSearch extends AbstractSearchTest {
     public void notEqualsTest2() {
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567")
-                .addOperator(Op.NOT)
-                    .addOperator(Op.OR)
+                .addOperator(new ExpressionOperator.Builder(Op.NOT)
+                    .addOperator(new ExpressionOperator.Builder(Op.OR)
                         .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
                         .addTerm("EventTime", Condition.EQUALS, "2007-01-18T13:56:42.000Z")
-                        .end()
-                    .end();
+                        .build())
+                    .build());
         test(expression, 23);
     }
 
@@ -273,12 +275,12 @@ public class TestInteractiveSearch extends AbstractSearchTest {
     public void notEqualsTest3() {
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567")
-                .addOperator(Op.NOT)
-                    .addOperator(Op.AND)
+                .addOperator(new ExpressionOperator.Builder(Op.NOT)
+                    .addOperator(new ExpressionOperator.Builder(Op.AND)
                         .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
                         .addTerm("UserId", Condition.EQUALS, "user4")
-                        .end()
-                    .end();
+                        .build())
+                    .build());
         test(expression, 24);
     }
 
@@ -289,15 +291,15 @@ public class TestInteractiveSearch extends AbstractSearchTest {
     public void notEqualsTest4() {
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567")
-                .addOperator(Op.NOT)
-                    .addOperator(Op.OR)
-                        .addOperator(Op.AND)
+                .addOperator(new ExpressionOperator.Builder(Op.NOT)
+                    .addOperator(new ExpressionOperator.Builder(Op.OR)
+                        .addOperator(new ExpressionOperator.Builder(Op.AND)
                             .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
                             .addTerm("UserId", Condition.EQUALS, "user4")
-                            .end()
+                            .build())
                         .addTerm("EventTime", Condition.EQUALS, "2007-01-18T13:56:42.000Z")
-                        .end()
-                    .end();
+                        .build())
+                    .build());
         test(expression, 23);
     }
 
@@ -513,7 +515,7 @@ public class TestInteractiveSearch extends AbstractSearchTest {
 
     private TableSettings createTableSettings(final Index index, final boolean extractValues) {
         final Field idField = new Field.Builder()
-                .name("Id")
+                .name("IdTreeNode")
                 .expression(ParamUtil.makeParam("StreamId"))
                 .build();
 

@@ -40,7 +40,7 @@ public class TestFilterTermsTreeBuilder extends StroomUnitTest {
      * correctly into a {@link FilterTermsTree}
      */
     @Test
-    public void testConvertExpresionItemsTree() {
+    public void testConvertExpressionItemsTree() {
         // AND (op1)
         // --term1field IN term1value1,term1value2,term1value3
         // --OR (op2)
@@ -66,21 +66,21 @@ public class TestFilterTermsTreeBuilder extends StroomUnitTest {
         final String term1value2 = "term1value2";
         final String term1value3 = "term1value3";
 
-        final ExpressionOperator.Builder op1 = new ExpressionOperator.Builder(Op.AND);
-        op1.addTerm("term1field", Condition.IN, term1value1 + "," + term1value2 + "," + term1value3);
-
-        final ExpressionOperator.OBuilder<?> op2 = op1.addOperator(Op.OR);
-        op2.addTerm("term2field", Condition.EQUALS, "term2value");
-        op2.addTerm("term3field", Condition.EQUALS, "term3value");
-
-        final ExpressionOperator.OBuilder<?> op3 = op2.addOperator(Op.NOT);
-        op3.addTerm("term4field", Condition.EQUALS, "term4value");
+        final ExpressionOperator.Builder op1 = new ExpressionOperator.Builder(Op.AND)
+                .addTerm("term1field", Condition.IN, term1value1 + "," + term1value2 + "," + term1value3)
+                .addOperator(new ExpressionOperator.Builder(Op.OR)
+                        .addTerm("term2field", Condition.EQUALS, "term2value")
+                        .addTerm("term3field", Condition.EQUALS, "term3value")
+                        .addOperator(new ExpressionOperator.Builder(Op.NOT)
+                                .addTerm("term4field", Condition.EQUALS, "term4value")
+                                .build())
+                        .build());
 
         final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(op1.build());
 
         final OperatorNode newOp1 = (OperatorNode) filterTermsTree.getRootNode();
 
-        Assert.assertEquals(op1.build().getOp().toString(), newOp1.getFilterOperationMode().toString());
+        Assert.assertEquals(Op.AND.toString(), newOp1.getFilterOperationMode().toString());
 
         final OperatorNode newTerm1OpNode = (OperatorNode) newOp1.getChildren().get(0);
         Assert.assertEquals(Op.OR.toString(), newTerm1OpNode.getFilterOperationMode().toString());
@@ -99,7 +99,7 @@ public class TestFilterTermsTreeBuilder extends StroomUnitTest {
 
         final OperatorNode newOp2 = (OperatorNode) newOp1.getChildren().get(1);
 
-        Assert.assertEquals(op2.build().getOp().toString(), newOp2.getFilterOperationMode().toString());
+        Assert.assertEquals(Op.OR.toString(), newOp2.getFilterOperationMode().toString());
 
         final TermNode newTerm2 = (TermNode) newOp2.getChildren().get(0);
         final TermNode newTerm3 = (TermNode) newOp2.getChildren().get(1);
@@ -109,7 +109,7 @@ public class TestFilterTermsTreeBuilder extends StroomUnitTest {
         Assert.assertEquals("term2value", newTerm2.getValue());
         Assert.assertEquals("term3field", newTerm3.getTag());
         Assert.assertEquals("term3value", newTerm3.getValue());
-        Assert.assertEquals(op3.build().getOp().toString(), newOp3.getFilterOperationMode().toString());
+        Assert.assertEquals(Op.NOT.toString(), newOp3.getFilterOperationMode().toString());
 
         final TermNode newTerm4 = (TermNode) newOp3.getChildren().get(0);
         Assert.assertEquals("term4field", newTerm4.getTag());

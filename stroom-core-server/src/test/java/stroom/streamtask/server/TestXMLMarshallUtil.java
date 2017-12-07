@@ -39,18 +39,18 @@ public class TestXMLMarshallUtil extends StroomUnitTest {
 
         final QueryData queryData1 = new QueryData.Builder()
                 .dataSource(QueryData.STREAM_STORE_DOC_REF)
-                .expression(ExpressionOperator.Op.AND)
-                    .addOperator(ExpressionOperator.Op.OR)
+                .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+                    .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
                         .addTerm(FindStreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(999L))
                         .addTerm(FindStreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(7L))
                         .addTerm(FindStreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(77L))
-                        .end()
-                    .addOperator(ExpressionOperator.Op.OR)
+                        .build())
+                    .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
                         .addTerm(FindStreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, Long.toString(88L))
                         .addTerm(FindStreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, Long.toString(889L))
-                        .end()
+                        .build())
                     .addTerm(FindStreamDataSource.CREATED, ExpressionTerm.Condition.BETWEEN, createdPeriod)
-                    .end()
+                    .build())
                 .build();
 
         // Test Writing

@@ -18,8 +18,6 @@ package stroom.streamstore.shared;
 
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.util.shared.OwnedBuilder;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -74,74 +72,31 @@ public class QueryData implements Serializable {
         this.limits = limits;
     }
 
-    public static abstract class ABuilder<
-                    OwningBuilder extends OwnedBuilder,
-                    CHILD_CLASS extends ABuilder<OwningBuilder, ?>>
-            extends OwnedBuilder<OwningBuilder, QueryData, CHILD_CLASS> {
+    public static class Builder {
 
         private final QueryData instance;
 
-        public ABuilder() {
+        public Builder() {
             this.instance = new QueryData();
         }
 
-        public ABuilder<OwningBuilder, CHILD_CLASS> dataSource(final DocRef value) {
+        public Builder dataSource(final DocRef value) {
             this.instance.dataSource = value;
             return this;
         }
 
-        public DocRef.OBuilder<CHILD_CLASS> dataSource() {
-            return new DocRef.OBuilder<CHILD_CLASS>()
-                    .popToWhenComplete(self(), this::dataSource);
-        }
-
-        public CHILD_CLASS limits(final Limits value) {
+        public Builder limits(final Limits value) {
             this.instance.limits = value;
-            return self();
+            return this;
         }
 
-        public Limits.OBuilder<CHILD_CLASS> limits() {
-            return new Limits.OBuilder<CHILD_CLASS>()
-                    .popToWhenComplete(self(), this::limits);
-        }
-
-        public CHILD_CLASS expression(final ExpressionOperator value) {
+        public Builder expression(final ExpressionOperator value) {
             this.instance.expression = value;
-            return self();
+            return this;
         }
 
-        public ExpressionOperator.OBuilder<CHILD_CLASS> expression(ExpressionOperator.Op operator) {
-            return new ExpressionOperator.OBuilder<CHILD_CLASS>(operator)
-                    .popToWhenComplete(self(), this::expression);
-        }
-
-        @Override
-        protected QueryData pojoBuild() {
+        public QueryData build() {
             return instance;
-        }
-    }
-
-    /**
-     * A builder that is owned by another builder, used for popping back up a stack
-     *
-     * @param <OwningBuilder> The class of the parent builder
-     */
-    public static final class OBuilder<OwningBuilder extends OwnedBuilder>
-            extends ABuilder<OwningBuilder, OBuilder<OwningBuilder>> {
-        @Override
-        public OBuilder<OwningBuilder> self() {
-            return this;
-        }
-    }
-
-    /**
-     * A builder that is created independently of any parent builder
-     */
-    public static final class Builder extends ABuilder<Builder, Builder> {
-
-        @Override
-        public Builder self() {
-            return this;
         }
     }
 }

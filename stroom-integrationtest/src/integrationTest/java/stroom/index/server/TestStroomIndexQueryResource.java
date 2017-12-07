@@ -59,7 +59,7 @@ public class TestStroomIndexQueryResource {
                 new DocRef("docRefType", "docRefUuid", "docRefName"),
                 new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                         .addTerm("field1", ExpressionTerm.Condition.EQUALS, "value1")
-                        .addOperator(ExpressionOperator.Op.AND)
+                        .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.AND).build())
                         .addTerm("field2", ExpressionTerm.Condition.BETWEEN, "value2")
                         .build()
         );

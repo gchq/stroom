@@ -16,4 +16,7 @@ dependencies {
     compile libs.spring_context
     compile libs.slf4j_api
     compile libs.flyway_core
+
+    integrationTestRuntime libs.mysql_connector_java
+    integrationTestCompile libs.junit
 }

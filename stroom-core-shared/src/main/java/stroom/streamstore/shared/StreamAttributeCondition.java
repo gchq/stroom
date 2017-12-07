@@ -90,4 +90,14 @@ public class StreamAttributeCondition implements Serializable {
 
         return builder.isEquals();
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("StreamAttributeCondition{");
+        sb.append("streamAttributeKey=").append(streamAttributeKey);
+        sb.append(", condition=").append(condition);
+        sb.append(", fieldValue='").append(fieldValue).append('\'');
+        sb.append('}');
+        return sb.toString();
+    }
 }

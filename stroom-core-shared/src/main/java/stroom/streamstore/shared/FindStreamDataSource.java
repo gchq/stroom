@@ -19,6 +19,7 @@ public class FindStreamDataSource {
     public static final String FEED = "Feed";
     public static final String STREAM_TYPE = "Stream Type";
     public static final String STREAM_ID = "Stream Id";
+    public static final String PIPELINE = "Pipeline";
     public static final String PARENT_STREAM_ID = "Parent Stream Id";
     public static final String CREATED = "Creation time";
     public static final String EFFECTIVE = "Effective time";
@@ -27,53 +28,58 @@ public class FindStreamDataSource {
     public static final String SYSTEM_ATTR_PREFIX = "Stream.";
 
     static {
-        FIELDS.add(new DataSourceField.Builder<>()
+        FIELDS.add(new DataSourceField.Builder()
                 .name(FEED)
                 .addConditions(ExpressionTerm.Condition.EQUALS)
                 .addConditions(ExpressionTerm.Condition.IN)
+                .addConditions(ExpressionTerm.Condition.IN_DICTIONARY)
                 .type(DataSourceField.DataSourceFieldType.FIELD)
                 .build());
-        FIELDS.add(new DataSourceField.Builder<>()
+        FIELDS.add(new DataSourceField.Builder()
                 .name(STREAM_TYPE)
                 .addConditions(ExpressionTerm.Condition.EQUALS)
                 .addConditions(ExpressionTerm.Condition.IN)
+                .addConditions(ExpressionTerm.Condition.IN_DICTIONARY)
                 .type(DataSourceField.DataSourceFieldType.FIELD)
                 .build());
-        FIELDS.add(new DataSourceField.Builder<>()
+        FIELDS.add(new DataSourceField.Builder()
                 .name(STREAM_ID)
                 .addConditions(ExpressionTerm.Condition.EQUALS)
                 .addConditions(ExpressionTerm.Condition.IN)
+                .addConditions(ExpressionTerm.Condition.IN_DICTIONARY)
                 .type(DataSourceField.DataSourceFieldType.ID)
                 .build());
-        FIELDS.add(new DataSourceField.Builder<>()
+        FIELDS.add(new DataSourceField.Builder()
                 .name(PARENT_STREAM_ID)
                 .addConditions(ExpressionTerm.Condition.EQUALS)
                 .addConditions(ExpressionTerm.Condition.IN)
+                .addConditions(ExpressionTerm.Condition.IN_DICTIONARY)
                 .type(DataSourceField.DataSourceFieldType.ID)
                 .build());
-        FIELDS.add(new DataSourceField.Builder<>()
+        FIELDS.add(new DataSourceField.Builder()
+                .name(PIPELINE)
+                .addConditions(ExpressionTerm.Condition.EQUALS)
+                .addConditions(ExpressionTerm.Condition.IN)
+                .addConditions(ExpressionTerm.Condition.IN_DICTIONARY)
+                .type(DataSourceField.DataSourceFieldType.ID)
+                .build());
+        FIELDS.add(new DataSourceField.Builder()
                 .name(CREATED)
                 .addConditions(ExpressionTerm.Condition.BETWEEN)
                 .type(DataSourceField.DataSourceFieldType.DATE_FIELD)
                 .build());
-        FIELDS.add(new DataSourceField.Builder<>()
+        FIELDS.add(new DataSourceField.Builder()
                 .name(EFFECTIVE)
                 .addConditions(ExpressionTerm.Condition.BETWEEN)
                 .type(DataSourceField.DataSourceFieldType.DATE_FIELD)
                 .build());
-        FIELDS.add(new DataSourceField.Builder<>()
-                .name(STATUS_TIME)
-                .addConditions(ExpressionTerm.Condition.EQUALS)
-                .addConditions(ExpressionTerm.Condition.IN)
-                .type(DataSourceField.DataSourceFieldType.FIELD)
-                .build());
-        FIELDS.add(new DataSourceField.Builder<>()
+        FIELDS.add(new DataSourceField.Builder()
                 .name(STATUS_TIME)
                 .addConditions(ExpressionTerm.Condition.BETWEEN)
                 .type(DataSourceField.DataSourceFieldType.DATE_FIELD)
                 .build());
         SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP.keySet().forEach(streamAttributeKey -> {
-            FIELDS.add(new DataSourceField.Builder<>()
+            FIELDS.add(new DataSourceField.Builder()
                     .name(SYSTEM_ATTR_PREFIX + streamAttributeKey)
                     .addConditions(ExpressionTerm.Condition.EQUALS)
                     .addConditions(ExpressionTerm.Condition.GREATER_THAN_OR_EQUAL_TO)

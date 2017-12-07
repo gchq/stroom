@@ -58,6 +58,9 @@ public class SourceSelectorToFindCriteria {
 
         final BiConsumer<ExpressionTerm, Consumer<String>> addTermValues = (term, consumer) -> {
             switch (term.getCondition()) {
+                case IN_DICTIONARY:
+                    // Not sure how to handle this just yet
+                    break;
                 case EQUALS:
                     consumer.accept(term.getValue());
                     break;
@@ -82,7 +85,8 @@ public class SourceSelectorToFindCriteria {
                                 .filter(o -> o instanceof ExpressionTerm)
                                 .map(o -> (ExpressionTerm) o)
                                 .filter(t -> t.getCondition().equals(ExpressionTerm.Condition.EQUALS)
-                                        || t.getCondition().equals(ExpressionTerm.Condition.IN))
+                                        || t.getCondition().equals(ExpressionTerm.Condition.IN)
+                                        || t.getCondition().equals(ExpressionTerm.Condition.IN_DICTIONARY))
                                 .collect(Collectors.toList());
 
                         if (terms.size() != operator.getChildren().size()) {

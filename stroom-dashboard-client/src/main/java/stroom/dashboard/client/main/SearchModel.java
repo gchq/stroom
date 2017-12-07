@@ -194,26 +194,28 @@ public class SearchModel {
         }
     }
 
-    private void replaceExpressionParameters(final ExpressionOperator.ABuilder<?, ?> builder,
+    private void replaceExpressionParameters(final ExpressionOperator.Builder builder,
                                              final ExpressionOperator operator,
                                              final Map<String, String> paramMap) {
         if (operator.getChildren() != null) {
             for (ExpressionItem child : operator.getChildren()) {
                 if (child instanceof ExpressionOperator) {
                     final ExpressionOperator childOperator = (ExpressionOperator) child;
-                    final ExpressionOperator.OBuilder<?> childBuilder = builder.addOperator(childOperator.getOp())
+                    final ExpressionOperator.Builder childBuilder = new ExpressionOperator.Builder(childOperator.getOp())
                             .enabled(childOperator.getEnabled());
+                    builder.addOperator(childBuilder.build());
                     replaceExpressionParameters(childBuilder, childOperator, paramMap);
                 } else if (child instanceof ExpressionTerm) {
                     final ExpressionTerm term = (ExpressionTerm) child;
                     final String value = term.getValue();
                     final String replaced = KVMapUtil.replaceParameters(value, paramMap);
-                    builder.addTerm()
+                    builder.addOperator(new ExpressionTerm.Builder()
                             .enabled(term.getEnabled())
                             .field(term.getField())
                             .condition(term.getCondition())
                             .value(replaced)
-                            .dictionary(term.getDictionary());
+                            .dictionary(term.getDictionary())
+                            .build());
                 }
             }
         }
