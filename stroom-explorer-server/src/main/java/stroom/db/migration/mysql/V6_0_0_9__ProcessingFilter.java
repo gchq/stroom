@@ -124,7 +124,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         }
     }
 
-    public QueryData convertFindStreamCriteria(final Connection connection,
+    private QueryData convertFindStreamCriteria(final Connection connection,
                                                final OldFindStreamCriteria criteria) throws Exception {
         // Get all the feed ID's to Names
         final Map<Long, String> feedNamesById = getNamesById(connection, "FD");
@@ -178,7 +178,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         } else if (includeFeedIds.size() > 0) {
             applyIncludesTerm(rootAnd, includeFeedIds, feedNamesById::get, FindStreamDataSource.FEED);
         } else if (feedDictionariesToInclude.size() > 0) {
-            final ExpressionOperator.Builder or = new ExpressionOperator.Builder(ExpressionOperator.Op.NOT);
+            final ExpressionOperator.Builder or = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
             feedDictionariesToInclude.forEach(dict ->
                 or.addOperator(new ExpressionTerm.Builder()
                         .field(FindStreamDataSource.FEED)
@@ -306,11 +306,11 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
 
         private final List<IdTreeNode> children = new ArrayList<>();
 
-        public IdTreeNode(final long id) {
+        IdTreeNode(final long id) {
             this.id = id;
         }
 
-        public void addChild(final IdTreeNode child) {
+        void addChild(final IdTreeNode child) {
             this.children.add(child);
         }
 
@@ -325,7 +325,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
             return sb.toString();
         }
 
-        public void recurse(final Consumer<Long> consumer,
+        void recurse(final Consumer<Long> consumer,
                             final boolean deep) {
             consumer.accept(this.id);
             if (deep) {
@@ -392,7 +392,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         return objectsById;
     }
 
-    public <T> void applyIncludesTerm(final ExpressionOperator.Builder parentTerm,
+    private <T> void applyIncludesTerm(final ExpressionOperator.Builder parentTerm,
                                       final Set<T> rawTerms,
                                       final Function<T, String> toString,
                                       final String fieldName) {
@@ -405,30 +405,14 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         }
     }
 
-    public OldFindStreamCriteria unmarshalCriteria(final String input) throws JAXBException {
+    private OldFindStreamCriteria unmarshalCriteria(final String input) throws JAXBException {
         if (null != jaxbException) {
             throw jaxbException;
         }
         return XMLMarshallerUtil.unmarshal(findStreamCriteriaJaxb, OldFindStreamCriteria.class, input);
     }
 
-    public String marshalCriteria(final QueryData queryData) throws JAXBException {
-        if (null != jaxbException) {
-            throw jaxbException;
-        }
-
-        return XMLMarshallerUtil.marshal(queryDataJaxb, queryData);
-    }
-
-    public QueryData unmarshalQueryData(final String input) throws JAXBException {
-        if (null != jaxbException) {
-            throw jaxbException;
-        }
-
-        return XMLMarshallerUtil.unmarshal(queryDataJaxb, QueryData.class, input);
-    }
-
-    public String marshalQueryData(final QueryData queryData) throws JAXBException {
+    private String marshalQueryData(final QueryData queryData) throws JAXBException {
         if (null != jaxbException) {
             throw jaxbException;
         }

@@ -162,7 +162,7 @@ public class TestStreamProcessorFilterService extends AbstractCoreIntegrationTes
 
         if (include != null && include.length > 0) {
             xml += "" +
-                    "         <addOperator>\n" +
+                    "         <operator>\n" +
                     "            <op>OR</op>\n" +
                     "            <children>\n";
             for (final Feed feed : include) {
@@ -176,12 +176,12 @@ public class TestStreamProcessorFilterService extends AbstractCoreIntegrationTes
 
             xml += "" +
                     "            </children>\n" +
-                    "         </addOperator>\n";
+                    "         </operator>\n";
         }
 
 
         xml += "" +
-                "         <addOperator>\n" +
+                "         <operator>\n" +
                 "            <op>OR</op>\n" +
                 "            <children>\n" +
                 "               <term>\n" +
@@ -195,7 +195,7 @@ public class TestStreamProcessorFilterService extends AbstractCoreIntegrationTes
                 "                  <value>Raw Reference</value>\n" +
                 "               </term>\n" +
                 "            </children>\n" +
-                "         </addOperator>\n" +
+                "         </operator>\n" +
                 "      </children>\n" +
                 "   </expression>\n" +
                 "</query>\n";

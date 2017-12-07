@@ -84,7 +84,7 @@ public abstract class AbstractStreamAppenderTest extends AbstractAppenderTest {
                     "            <IPAddress>123.123.123.123</IPAddress>\n" +
                     "         </Client>\n" +
                     "         <User>\n" +
-                    "            <IdTreeNode>firstuser</IdTreeNode>\n" +
+                    "            <Id>firstuser</Id>\n" +
                     "         </User>\n" +
                     "      </EventSource>\n" +
                     "      <EventDetail>\n" +
@@ -117,7 +117,7 @@ public abstract class AbstractStreamAppenderTest extends AbstractAppenderTest {
                     "            <IPAddress>123.123.123.123</IPAddress>\n" +
                     "         </Client>\n" +
                     "         <User>\n" +
-                    "            <IdTreeNode>lastuser</IdTreeNode>\n" +
+                    "            <Id>lastuser</Id>\n" +
                     "         </User>\n" +
                     "      </EventSource>\n" +
                     "      <EventDetail>\n" +
