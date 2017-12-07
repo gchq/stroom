@@ -1,6 +1,8 @@
 package stroom.streamtask.server;
 
 import org.springframework.stereotype.Component;
+import stroom.dictionary.server.DictionaryStore;
+import stroom.dictionary.shared.DictionaryDoc;
 import stroom.entity.shared.EntityServiceException;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
@@ -26,16 +28,21 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 public class SourceSelectorToFindCriteria {
     private final FeedService feedService;
     private final StreamTypeService streamTypeService;
+    private final DictionaryStore dictionaryStore;
 
     @Inject
-    public SourceSelectorToFindCriteria(final FeedService feedService, final StreamTypeService streamTypeService) {
+    public SourceSelectorToFindCriteria(final FeedService feedService,
+                                        final StreamTypeService streamTypeService,
+                                        final DictionaryStore dictionaryStore) {
         this.feedService = feedService;
         this.streamTypeService = streamTypeService;
+        this.dictionaryStore = dictionaryStore;
     }
 
     public FindStreamCriteria convert(final QueryData queryData) {
@@ -59,7 +66,8 @@ public class SourceSelectorToFindCriteria {
         final BiConsumer<ExpressionTerm, Consumer<String>> addTermValues = (term, consumer) -> {
             switch (term.getCondition()) {
                 case IN_DICTIONARY:
-                    // Not sure how to handle this just yet
+                    final DictionaryDoc dict = dictionaryStore.read(term.getDictionary().getUuid());
+                    Stream.of(dict.getData().split("\n")).forEach(consumer);
                     break;
                 case EQUALS:
                     consumer.accept(term.getValue());
