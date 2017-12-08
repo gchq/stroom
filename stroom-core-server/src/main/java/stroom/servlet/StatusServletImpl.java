@@ -100,8 +100,6 @@ public class StatusServletImpl extends HttpServlet implements StatusServlet {
             reportVolumeStatus(pw);
 
             pw.close();
-        } finally {
-            securityContext.popUser();
         }
     }
 

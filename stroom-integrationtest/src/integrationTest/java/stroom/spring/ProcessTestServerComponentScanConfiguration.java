@@ -205,8 +205,8 @@ public class ProcessTestServerComponentScanConfiguration {
         return feedService;
     }
 
-    @Bean(name = "cachedPipelineEntityService")
-    public MockPipelineService getCachedPipelineEntityService(final MockPipelineService pipelineService) {
+    @Bean(name = "cachedPipelineService")
+    public MockPipelineService getCachedPipelineService(final MockPipelineService pipelineService) {
         return pipelineService;
     }
 

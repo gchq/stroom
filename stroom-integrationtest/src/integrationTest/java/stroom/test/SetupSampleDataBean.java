@@ -196,11 +196,9 @@ public final class SetupSampleDataBean {
 
                 // Create a processor for this index.
                 final QueryData criteria = new QueryData.Builder()
-                        .dataSource(QueryData.STREAM_STORE_DOC_REF)
+                        .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                         .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                            .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                .addTerm(FindStreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.EVENTS.getName())
-                                .build())
+                            .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.EVENTS.getName())
                             .build())
                         .build();
 
@@ -251,14 +249,12 @@ public final class SetupSampleDataBean {
 
                 // Create a processor for this feed.
                 final QueryData criteria = new QueryData.Builder()
-                        .dataSource(QueryData.STREAM_STORE_DOC_REF)
+                        .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                         .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+                            .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
                             .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                .addTerm(FindStreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
-                                .build())
-                            .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                .addTerm(FindStreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
-                                .addTerm(FindStreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_REFERENCE.getName())
+                                .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
+                                .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_REFERENCE.getName())
                                 .build())
                             .build())
                         .build();

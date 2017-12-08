@@ -28,21 +28,20 @@ import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.FindDocumentEntityCriteria;
 import stroom.entity.shared.FindNamedEntityCriteria;
-import stroom.importexport.shared.ImportState;
-import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.PermissionException;
 import stroom.entity.shared.ProvidesNamePattern;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.server.ImportExportHelper;
-import stroom.util.shared.Severity;
-import stroom.logging.DocumentEventLog;
+import stroom.importexport.shared.ImportState;
+import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.Message;
+import stroom.util.shared.Severity;
 
 import javax.persistence.Transient;
 import java.util.ArrayList;
@@ -65,7 +64,6 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
     private final StroomEntityManager entityManager;
     private final SecurityContext securityContext;
-    private final DocumentEventLog documentEventLog;
     private final EntityServiceHelper<E> entityServiceHelper;
     private final FindServiceHelper<E, C> findServiceHelper;
     private final ImportExportHelper importExportHelper;
@@ -76,11 +74,10 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
     protected DocumentEntityServiceImpl(final StroomEntityManager entityManager,
                                         final ImportExportHelper importExportHelper,
-                                        final SecurityContext securityContext, final DocumentEventLog documentEventLog) {
+                                        final SecurityContext securityContext) {
         this.entityManager = entityManager;
         this.importExportHelper = importExportHelper;
         this.securityContext = securityContext;
-        this.documentEventLog = documentEventLog;
         this.queryAppender = createQueryAppender(entityManager);
         this.entityServiceHelper = new EntityServiceHelper<>(entityManager, getEntityClass());
         this.findServiceHelper = new FindServiceHelper<>(entityManager, getEntityClass(), queryAppender);
@@ -124,14 +121,9 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
             entity.setName(name);
 
             entity = entityServiceHelper.save(entity, queryAppender);
-
-            documentEventLog.create(entity, null);
-
         } catch (final RuntimeException e) {
-            documentEventLog.create(getEntityType(), name, e);
             throw e;
         } catch (final Exception e) {
-            documentEventLog.create(getEntityType(), name, e);
             throw new RuntimeException(e);
         }
 
@@ -193,48 +185,15 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
                     queryAppender.postLoad(entity);
                 }
                 checkReadPermission(DocRefUtil.create(entity));
-                documentEventLog.view(entity);
             } catch (final RuntimeException e) {
-                documentEventLog.view(entity, e);
                 throw e;
             } catch (final Exception e) {
-                documentEventLog.view(entity, e);
                 throw new RuntimeException(e);
             }
         }
 
         return entity;
     }
-
-//    // TODO : Remove this method when the explorer service is broken out as a separate micro service.
-//    @SuppressWarnings("unchecked")
-//    @Transactional(readOnly = true)
-//    @Override
-//    public E loadByIdInsecure(final long id, final Set<String> fetchSet) throws RuntimeException {
-//        E entity = null;
-//
-//        final HqlBuilder sql = new HqlBuilder();
-//        sql.append("SELECT e");
-//        sql.append(" FROM ");
-//        sql.append(getEntityClass().getName());
-//        sql.append(" AS e");
-//
-//        queryAppender.appendBasicJoin(sql, "e", fetchSet);
-//
-//        sql.append(" WHERE e.id = ");
-//        sql.arg(id);
-//
-//        final List<E> resultList = getEntityManager().executeQueryResultList(sql, null, true);
-//        if (resultList != null && resultList.size() > 0) {
-//            entity = resultList.get(0);
-//        }
-//
-//        if (entity != null) {
-//            queryAppender.postLoad(entity);
-//        }
-//
-//        return entity;
-//    }
 
     @Transactional(readOnly = true)
     @Override
@@ -273,12 +232,9 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
                     queryAppender.postLoad(entity);
                 }
                 checkReadPermission(DocRefUtil.create(entity));
-                documentEventLog.view(entity);
             } catch (final RuntimeException e) {
-                documentEventLog.view(entity, e);
                 throw e;
             } catch (final Exception e) {
-                documentEventLog.view(entity, e);
                 throw new RuntimeException(e);
             }
         }
@@ -308,13 +264,9 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         if (entity != null) {
             try {
                 queryAppender.postLoad(entity);
-//                checkReadPermission(DocRefUtil.create(entity));
-                documentEventLog.view(entity);
             } catch (final RuntimeException e) {
-                documentEventLog.view(entity, e);
                 throw e;
             } catch (final Exception e) {
-                documentEventLog.view(entity, e);
                 throw new RuntimeException(e);
             }
         }
@@ -328,9 +280,6 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     }
 
     protected E save(final E entity, final QueryAppender<E, ?> queryAppender) throws RuntimeException {
-        E before = entity;
-        E after = before;
-
         try {
             if (!entity.isPersistent()) {
                 throw new EntityServiceException("You cannot update an entity that has not been created");
@@ -341,17 +290,12 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
             if (entity.getUuid() == null) {
                 entity.setUuid(UUID.randomUUID().toString());
             }
-            after = entityServiceHelper.save(entity, queryAppender);
-            documentEventLog.update(before, after, null);
+            return entityServiceHelper.save(entity, queryAppender);
         } catch (final RuntimeException e) {
-            documentEventLog.update(before, after, null);
             throw e;
         } catch (final Exception e) {
-            documentEventLog.update(before, after, null);
             throw new RuntimeException(e);
         }
-
-        return after;
     }
 
     @Override
@@ -360,12 +304,9 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         try {
             checkDeletePermission(DocRefUtil.create(entity));
             success = entityServiceHelper.delete(entity);
-            documentEventLog.delete(entity, null);
         } catch (final RuntimeException e) {
-            documentEventLog.delete(entity, e);
             throw e;
         } catch (final Exception e) {
-            documentEventLog.delete(entity, e);
             throw new RuntimeException(e);
         }
 
@@ -373,82 +314,52 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     }
 
     private E copy(final E document, final String name, final String parentFolderUUID) {
-        E before = document;
-        E after = before;
-
         try {
             // Check create permissions of the parent folder.
             checkCreatePermission(parentFolderUUID);
 
             // This is going to be a copy so clear the persistence so save will create a new DB entry.
-            after.clearPersistence();
+            document.clearPersistence();
 
-            after.setUuid(UUID.randomUUID().toString());
+            document.setUuid(UUID.randomUUID().toString());
 
             // Validate the entity name.
             NameValidationUtil.validate(getNamePattern(), name);
-            after.setName(name);
+            document.setName(name);
 
-            after = entityServiceHelper.save(after, queryAppender);
-
-            documentEventLog.copy(before, after, null);
-
+            return entityServiceHelper.save(document, queryAppender);
         } catch (final RuntimeException e) {
-            documentEventLog.copy(before, after, e);
             throw e;
         } catch (final Exception e) {
-            documentEventLog.copy(before, after, e);
             throw new RuntimeException(e);
         }
-
-        return after;
     }
 
     private E move(final E document, final String parentFolderUUID) {
-        E before = document;
-        E after = before;
-
         try {
             // Check create permissions of the parent folder.
             checkCreatePermission(parentFolderUUID);
 
-            after = entityServiceHelper.save(after, queryAppender);
-
-            documentEventLog.move(before, after, null);
-
+            return entityServiceHelper.save(document, queryAppender);
         } catch (final RuntimeException e) {
-            documentEventLog.move(before, after, e);
             throw e;
         } catch (final Exception e) {
-            documentEventLog.move(before, after, e);
             throw new RuntimeException(e);
         }
-
-        return after;
     }
 
     private E rename(final E document, final String name) {
-        E before = document;
-        E after = before;
-
         try {
             // Validate the entity name.
             NameValidationUtil.validate(getNamePattern(), name);
-            after.setName(name);
+            document.setName(name);
 
-            after = entityServiceHelper.save(after, queryAppender);
-
-            documentEventLog.rename(before, after, null);
-
+            return entityServiceHelper.save(document, queryAppender);
         } catch (final RuntimeException e) {
-            documentEventLog.rename(before, after, e);
             throw e;
         } catch (final Exception e) {
-            documentEventLog.rename(before, after, e);
             throw new RuntimeException(e);
         }
-
-        return after;
     }
 
     @Transactional(readOnly = true)
@@ -662,21 +573,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         }
     }
 
-//    private void checkCreatePermission(final DocRef folder) {
-//        // Only allow administrators to create documents with no folder.
-//        if (folder == null) {
-//            if (!securityContext.isAdmin()) {
-//                throw new PermissionException("Only administrators can create root level entries");
-//            }
-//        } else {
-//            if (!securityContext.hasDocumentPermission(Folder.ENTITY_TYPE, folder.getUuid(), DocumentPermissionNames.getDocumentCreatePermission(getEntityType()))) {
-//                throw new PermissionException("You do not have permission to create (" + getEntityType() + ") in folder " + folder);
-//            }
-//        }
-//    }
-
     protected void checkUpdatePermission(final E entity) {
-
         if (!entity.isPersistent()) {
             throw new PermissionException(securityContext.getUserId(), "You cannot update an entity that has not been created " + getDocReference(entity));
         }
@@ -689,18 +586,10 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         }
     }
 
-    protected final void checkReadPermission(final E entity) {
-        checkReadPermission(DocRefUtil.create(entity));
-    }
-
     protected final void checkReadPermission(final DocRef docRef) {
         if (!securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ)) {
             throw new PermissionException(securityContext.getUserId(), "You do not have permission to read (" + docRef + ")");
         }
-    }
-
-    private void checkDeletePermission(final E entity) {
-        checkDeletePermission(DocRefUtil.create(entity));
     }
 
     protected void checkDeletePermission(final DocRef docRef) {
@@ -709,44 +598,13 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         }
     }
 
-    private void clearDocumentPermissions(final DocRef docRef) {
-        String docType = null;
-        String docUuid = null;
-
-        if (docRef != null) {
-            docType = docRef.getType();
-            docUuid = docRef.getUuid();
-        }
-
-        securityContext.clearDocumentPermissions(docType, docUuid);
-    }
-
-    private void addDocumentPermissions(final DocRef source, final DocRef dest, final boolean owner) {
-        String sourceType = null;
-        String sourceUuid = null;
-        String destType = null;
-        String destUuid = null;
-
-        if (source != null) {
-            sourceType = source.getType();
-            sourceUuid = source.getUuid();
-        }
-
-        if (dest != null) {
-            destType = dest.getType();
-            destUuid = dest.getUuid();
-        }
-
-        securityContext.addDocumentPermissions(sourceType, sourceUuid, destType, destUuid, owner);
-    }
-
     protected FieldMap createFieldMap() {
         return new FieldMap()
                 .add(BaseCriteria.FIELD_ID, BaseEntity.ID, "id")
                 .add(FindNamedEntityCriteria.FIELD_NAME, NamedEntity.NAME, "name");
     }
 
-    final FieldMap getSqlFieldMap() {
+    private FieldMap getSqlFieldMap() {
         if (sqlFieldMap == null) {
             sqlFieldMap = createFieldMap();
         }

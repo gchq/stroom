@@ -76,13 +76,12 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
         Assert.assertEquals(1, streamTaskService.find(criteria).size());
 
         // Check the date filter works
-        final FindStreamCriteria findStreamCriteria = criteria.obtainFindStreamCriteria();
-        findStreamCriteria.setCreatePeriod(new Period(file1.getCreateMs() - 10000, file1.getCreateMs() + 10000));
+        criteria.setCreatePeriod(new Period(file1.getCreateMs() - 10000, file1.getCreateMs() + 10000));
         Assert.assertEquals(1, streamTaskService.find(criteria).size());
 
-        findStreamCriteria.setCreatePeriod(
-                new Period(Instant.ofEpochMilli(findStreamCriteria.getCreatePeriod().getFrom()).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli(),
-                        Instant.ofEpochMilli(findStreamCriteria.getCreatePeriod().getTo()).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli()));
+        criteria.setCreatePeriod(
+                new Period(Instant.ofEpochMilli(criteria.getCreatePeriod().getFrom()).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli(),
+                        Instant.ofEpochMilli(criteria.getCreatePeriod().getTo()).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli()));
         Assert.assertEquals(0, streamTaskService.find(criteria).size());
 
         Assert.assertNotNull(streamStore.loadStreamById(file1.getId()));
@@ -104,16 +103,14 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
         criteria.obtainNodeIdSet().add(1L);
         criteria.setSort(FindStreamTaskCriteria.FIELD_CREATE_TIME);
         criteria.obtainStreamTaskIdSet().add(1L);
-        criteria.obtainFindStreamCriteria().obtainFeeds().obtainInclude().add(1L);
-        criteria.obtainFindStreamCriteria().obtainStreamIdSet().add(1L);
-        criteria.obtainFindStreamCriteria().obtainStreamTypeIdSet().add(1L);
+        criteria.obtainFeedIdSet().add(1L);
+        criteria.obtainStreamIdSet().add(1L);
+        criteria.obtainStreamTypeIdSet().add(1L);
         criteria.obtainStreamTaskStatusSet().add(TaskStatus.COMPLETE);
 
-        criteria.getFindStreamCriteria()
-                .setCreatePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
-        criteria.getFindStreamCriteria()
-                .setEffectivePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
-        criteria.getFindStreamCriteria().obtainStreamTypeIdSet().add(StreamType.CONTEXT.getId());
+        criteria.setCreatePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
+        criteria.setEffectivePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
+        criteria.obtainStreamTypeIdSet().add(StreamType.CONTEXT.getId());
 
         criteria.getFetchSet().add(Stream.ENTITY_TYPE);
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
@@ -136,16 +133,14 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
         criteria.obtainNodeIdSet().add(1L);
         criteria.setSort(FindStreamTaskCriteria.FIELD_CREATE_TIME);
         criteria.obtainStreamTaskIdSet().add(1L);
-        criteria.obtainFindStreamCriteria().obtainFeeds().obtainInclude().add(1L);
-        criteria.obtainFindStreamCriteria().obtainStreamIdSet().add(1L);
-        criteria.obtainFindStreamCriteria().obtainStreamTypeIdSet().add(1L);
+        criteria.obtainFeedIdSet().add(1L);
+        criteria.obtainStreamIdSet().add(1L);
+        criteria.obtainStreamTypeIdSet().add(1L);
         criteria.obtainStreamTaskStatusSet().add(TaskStatus.COMPLETE);
 
-        criteria.getFindStreamCriteria()
-                .setCreatePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
-        criteria.getFindStreamCriteria()
-                .setEffectivePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
-        criteria.getFindStreamCriteria().getStreamTypeIdSet().add(StreamType.CONTEXT.getId());
+        criteria.setCreatePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
+        criteria.setEffectivePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
+        criteria.obtainStreamTypeIdSet().add(StreamType.CONTEXT.getId());
 
     }
 

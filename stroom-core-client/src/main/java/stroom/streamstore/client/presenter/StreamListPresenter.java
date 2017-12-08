@@ -20,16 +20,14 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.shared.StreamAttributeConstants;
-import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
 public class StreamListPresenter extends AbstractStreamListPresenter {
     @Inject
     public StreamListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
-                               final TooltipPresenter tooltipPresenter, final ClientSecurityContext securityContext) {
-        super(eventBus, dispatcher, tooltipPresenter, securityContext, true);
+                               final TooltipPresenter tooltipPresenter) {
+        super(eventBus, dispatcher, tooltipPresenter, true);
     }
 
     @Override

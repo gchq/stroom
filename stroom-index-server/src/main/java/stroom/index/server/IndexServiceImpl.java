@@ -38,8 +38,10 @@ import javax.inject.Inject;
 @AutoMarshal
 public class IndexServiceImpl extends DocumentEntityServiceImpl<Index, FindIndexCriteria> implements IndexService {
     @Inject
-    IndexServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext, final DocumentEventLog documentEventLog) {
-        super(entityManager, importExportHelper, securityContext, documentEventLog);
+    IndexServiceImpl(final StroomEntityManager entityManager,
+                     final ImportExportHelper importExportHelper,
+                     final SecurityContext securityContext) {
+        super(entityManager, importExportHelper, securityContext);
     }
 
     @Override

@@ -50,8 +50,8 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
     @Inject
     QueryServiceImpl(final StroomEntityManager entityManager,
                      final ImportExportHelper importExportHelper,
-                     final SecurityContext securityContext, final DocumentEventLog documentEventLog) {
-        super(entityManager, importExportHelper, securityContext, documentEventLog);
+                     final SecurityContext securityContext) {
+        super(entityManager, importExportHelper, securityContext);
         this.entityManager = entityManager;
         this.securityContext = securityContext;
     }

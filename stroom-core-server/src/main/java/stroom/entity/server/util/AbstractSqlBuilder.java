@@ -373,7 +373,7 @@ public abstract class AbstractSqlBuilder extends CoreSqlBuilder {
         if (range != null) {
             final Number size = range.size();
             // Exact range
-            if (size != null && size.longValue() == 1) {
+            if (size != null && size.longValue() == 0) {
                 append(" AND ");
                 append(field);
                 append(" = ");
@@ -388,7 +388,7 @@ public abstract class AbstractSqlBuilder extends CoreSqlBuilder {
                 if (range.getTo() != null) {
                     append(" AND ");
                     append(field);
-                    append(" < ");
+                    append(" <= ");
                     arg(range.getTo());
                 }
                 if (range.isMatchNull()) {

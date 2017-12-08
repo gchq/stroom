@@ -21,9 +21,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.feed.shared.Feed;
 import stroom.streamstore.server.MockStreamStore;
+import stroom.streamstore.server.OldFindStreamCriteria;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamTarget;
-import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.StreamUtil;
@@ -55,13 +55,13 @@ public class TestMockStreamStore extends StroomUnitTest {
         streamTarget.addChildStream(StreamType.SEGMENT_INDEX).getOutputStream()
                 .write("CHILD".getBytes(StreamUtil.DEFAULT_CHARSET));
 
-        Assert.assertEquals(0, mockStreamStore.find(FindStreamCriteria.createWithStream(stream1)).size());
+        Assert.assertEquals(0, mockStreamStore.find(OldFindStreamCriteria.createWithStream(stream1)).size());
 
         mockStreamStore.closeStreamTarget(streamTarget);
 
-        Assert.assertEquals(1, mockStreamStore.find(FindStreamCriteria.createWithStream(stream1)).size());
+        Assert.assertEquals(1, mockStreamStore.find(OldFindStreamCriteria.createWithStream(stream1)).size());
 
-        final Stream reload = mockStreamStore.find(FindStreamCriteria.createWithStream(stream1)).get(0);
+        final Stream reload = mockStreamStore.find(OldFindStreamCriteria.createWithStream(stream1)).get(0);
 
         final StreamSource streamSource = mockStreamStore.openStreamSource(reload.getId());
 

@@ -72,7 +72,7 @@ public class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceD
     private MapStoreHolder mapStoreHolder;
     @Resource(name = "cachedFeedService")
     private FeedService feedService;
-    @Resource(name = "cachedPipelineEntityService")
+    @Resource(name = "cachedPipelineService")
     private PipelineService pipelineService;
     @Resource
     private PipelineHolder pipelineHolder;

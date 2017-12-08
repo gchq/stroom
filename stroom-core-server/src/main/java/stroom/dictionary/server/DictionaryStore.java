@@ -22,6 +22,7 @@ import stroom.document.server.DocumentStore;
 import stroom.query.api.v2.DocRef;
 
 import java.util.List;
+import java.util.Set;
 
 public interface DictionaryStore extends DocumentStore<DictionaryDoc> {
     DictionaryDoc read(String uuid);
@@ -31,4 +32,6 @@ public interface DictionaryStore extends DocumentStore<DictionaryDoc> {
     List<DocRef> findByName(String name);
 
     List<DocRef> list();
+
+    Set<String> getWords(DocRef docRef);
 }

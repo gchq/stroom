@@ -25,10 +25,11 @@ import stroom.feed.shared.Feed;
 import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
-import stroom.security.SecurityHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.streamstore.server.StreamStore;
+import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamtask.shared.StreamProcessor;
@@ -109,11 +110,11 @@ public class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipeline
         if (id != null) {
             try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
                 final FindStreamCriteria criteria = new FindStreamCriteria();
+                criteria.setExpression(ExpressionUtil.createStreamExpression(id));
                 criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
                 criteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
                 criteria.getFetchSet().add(Feed.ENTITY_TYPE);
 
-                criteria.obtainStreamIdSet().add(id);
                 final List<Stream> streamList = streamStore.find(criteria);
                 if (streamList != null && streamList.size() > 0) {
                     stream = streamList.get(0);
@@ -128,9 +129,10 @@ public class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipeline
         if (id != null) {
             try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
                 final FindStreamCriteria criteria = new FindStreamCriteria();
+                criteria.setExpression(ExpressionUtil.createParentStreamExpression(id));
                 criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
                 criteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
-                criteria.obtainParentStreamIdSet().add(id);
+
                 return streamStore.find(criteria).getFirst();
             }
         }

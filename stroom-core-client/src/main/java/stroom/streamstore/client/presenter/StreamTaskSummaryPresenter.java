@@ -141,25 +141,19 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
         };
     }
 
-//    @Override
-//    protected void onBind() {
-//        super.onBind();
-//        registerHandler(getView().addSelectionHandler().addSelectionChangeHandler(interceptingSelectionChangeHandler));
-//    }
-
     public MultiSelectionModel<SummaryDataRow> getSelectionModel() {
         return getView().getSelectionModel();
     }
 
     private void setCriteria(final Feed feed) {
         final FindStreamTaskCriteria criteria = initCriteria();
-        criteria.obtainFindStreamCriteria().obtainFeeds().obtainInclude().add(feed);
+        criteria.obtainFeedIdSet().add(feed);
         dataProvider.setCriteria(criteria);
     }
 
     private void setCriteria(final PipelineEntity pipelineEntity) {
         final FindStreamTaskCriteria criteria = initCriteria();
-        criteria.obtainFindStreamCriteria().obtainPipelineIdSet().add(pipelineEntity);
+        criteria.obtainPipelineIdSet().add(pipelineEntity);
         dataProvider.setCriteria(criteria);
     }
 
@@ -180,7 +174,7 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
 
     private FindStreamTaskCriteria initCriteria() {
         final FindStreamTaskCriteria criteria = new FindStreamTaskCriteria();
-        criteria.obtainFindStreamCriteria().obtainStatusSet().setSingleItem(StreamStatus.UNLOCKED);
+        criteria.obtainStatusSet().setSingleItem(StreamStatus.UNLOCKED);
         return criteria;
     }
 }

@@ -19,6 +19,7 @@ package stroom.document.server;
 
 import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.DocumentServiceReadAction;
+import stroom.logging.DocumentEventLog;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedObject;
@@ -31,14 +32,17 @@ import javax.inject.Inject;
 class DocumentServiceReadHandler
         extends AbstractTaskHandler<DocumentServiceReadAction<SharedObject>, SharedObject> {
     private final DocumentService documentService;
+    private final DocumentEventLog documentEventLog;
 
     @Inject
-    DocumentServiceReadHandler(final DocumentService documentService) {
+    DocumentServiceReadHandler(final DocumentService documentService, final DocumentEventLog documentEventLog) {
         this.documentService = documentService;
+        this.documentEventLog = documentEventLog;
     }
 
     @Override
     public SharedObject exec(final DocumentServiceReadAction action) {
+
 //        BaseEntity result = null;
 //
 //        try {
@@ -62,6 +66,13 @@ class DocumentServiceReadHandler
 //
 //        return result;
 
-        return (SharedObject) documentService.readDocument(action.getDocRef());
+        try {
+            final SharedObject doc = (SharedObject) documentService.readDocument(action.getDocRef());
+            documentEventLog.view(action.getDocRef(), null);
+            return doc;
+        } catch (final RuntimeException e) {
+            documentEventLog.view(action.getDocRef(), e);
+            throw e;
+        }
     }
 }

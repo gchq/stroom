@@ -17,8 +17,8 @@
 package stroom.streamstore.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.logging.StreamEventLog;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
+import stroom.logging.StreamEventLog;
 import stroom.security.Secured;
 import stroom.servlet.SessionResourceStore;
 import stroom.streamstore.server.udload.StreamDownloadSettings;
@@ -32,7 +32,7 @@ import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
@@ -40,24 +40,27 @@ import java.util.ArrayList;
 @Scope(StroomScope.TASK)
 @Secured(Stream.EXPORT_DATA_PERMISSION)
 public class DownloadDataHandler extends AbstractTaskHandler<DownloadDataAction, ResourceGeneration> {
-    @Resource
-    private SessionResourceStore sessionResourceStore;
-    @Resource
-    private TaskManager taskManager;
-    @Resource
-    private StreamEventLog streamEventLog;
+    private final SessionResourceStore sessionResourceStore;
+    private final TaskManager taskManager;
+    private final StreamEventLog streamEventLog;
+
+    @Inject
+    DownloadDataHandler(final SessionResourceStore sessionResourceStore, final TaskManager taskManager, final StreamEventLog streamEventLog) {
+        this.sessionResourceStore = sessionResourceStore;
+        this.taskManager = taskManager;
+        this.streamEventLog = streamEventLog;
+    }
 
     @Override
     public ResourceGeneration exec(final DownloadDataAction action) {
-        ResourceKey resourceKey = null;
+        ResourceKey resourceKey;
         try {
             // Import file.
             resourceKey = sessionResourceStore.createTempFile("StroomData.zip");
             final Path file = sessionResourceStore.getTempFile(resourceKey);
 
             final StreamDownloadSettings settings = new StreamDownloadSettings();
-            taskManager.exec(new StreamDownloadTask(action.getUserToken(), action.getCriteria(),
-                    file, settings));
+            taskManager.exec(new StreamDownloadTask(action.getUserToken(), action.getCriteria(), file, settings));
 
             streamEventLog.exportStream(action.getCriteria(), null);
 

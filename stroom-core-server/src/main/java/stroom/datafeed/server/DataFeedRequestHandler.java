@@ -125,8 +125,6 @@ public class DataFeedRequestHandler implements RequestHandler {
             // Set the response status.
             response.setStatus(StroomStatusCode.OK.getHttpCode());
             LOGGER.info("handleRequest response " + StroomStatusCode.OK);
-        } finally {
-            securityContext.popUser();
         }
     }
 

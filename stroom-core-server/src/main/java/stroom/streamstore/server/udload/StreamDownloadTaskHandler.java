@@ -25,6 +25,7 @@ import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.proxy.repo.StroomZipOutputStream;
 import stroom.proxy.repo.StroomZipOutputStreamImpl;
+import stroom.streamstore.server.OldFindStreamCriteria;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.fs.serializable.NestedInputStream;
@@ -32,6 +33,7 @@ import stroom.streamstore.server.fs.serializable.RANestedInputStream;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
+import stroom.streamtask.server.SourceSelectorToFindCriteria;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.io.CloseableUtil;
@@ -44,7 +46,7 @@ import stroom.util.task.MonitorImpl;
 import stroom.util.task.TaskMonitor;
 import stroom.util.thread.BufferFactory;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
@@ -57,10 +59,16 @@ public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloa
 
     private static final String AGGREGATION_DELIMITER = "_";
 
-    @Resource
-    private TaskMonitor taskMonitor;
-    @Resource
-    private StreamStore streamStore;
+    private final TaskMonitor taskMonitor;
+    private final StreamStore streamStore;
+    private final SourceSelectorToFindCriteria sourceSelectorToFindCriteria;
+
+    @Inject
+    StreamDownloadTaskHandler(final TaskMonitor taskMonitor, final StreamStore streamStore, final SourceSelectorToFindCriteria sourceSelectorToFindCriteria) {
+        this.taskMonitor = taskMonitor;
+        this.streamStore = streamStore;
+        this.sourceSelectorToFindCriteria = sourceSelectorToFindCriteria;
+    }
 
     @Override
     public StreamDownloadResult exec(final StreamDownloadTask task) {
@@ -72,8 +80,9 @@ public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloa
         return result;
     }
 
-    private StreamDownloadResult downloadData(final StreamDownloadTask task, final FindStreamCriteria criteria,
+    private StreamDownloadResult downloadData(final StreamDownloadTask task, final FindStreamCriteria findStreamCriteria,
                                               Path data, final StreamDownloadSettings settings) throws RuntimeException {
+        final OldFindStreamCriteria criteria = sourceSelectorToFindCriteria.convert(findStreamCriteria);
         final BaseResultList<Stream> list = streamStore.find(criteria);
 
         final StreamDownloadResult result = new StreamDownloadResult();

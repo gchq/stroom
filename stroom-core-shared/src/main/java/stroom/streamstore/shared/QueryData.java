@@ -27,14 +27,6 @@ import java.io.Serializable;
 @XmlType(name = "query", propOrder = {"dataSource", "expression", "limits"})
 @XmlRootElement(name = "query")
 public class QueryData implements Serializable {
-
-    public static final String STREAM_STORE_TYPE = "StreamStore";
-    public static final DocRef STREAM_STORE_DOC_REF = new DocRef.Builder()
-            .type(STREAM_STORE_TYPE)
-            .uuid("0")
-            .name(STREAM_STORE_TYPE)
-            .build();
-
     private static final long serialVersionUID = -2530827581046882396L;
 
     private DocRef dataSource;

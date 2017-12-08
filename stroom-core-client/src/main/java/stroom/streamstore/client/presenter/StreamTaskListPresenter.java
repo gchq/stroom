@@ -205,8 +205,7 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
     }
 
     private void setCriteria(final Feed feed) {
-        final FindStreamTaskCriteria criteria = initCriteria();
-        criteria.obtainFindStreamCriteria().obtainFeeds().obtainInclude().add(feed);
+        final FindStreamTaskCriteria criteria = initCriteria(feed, null);
         dataProvider.setCriteria(criteria);
     }
 
@@ -215,13 +214,12 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
     }
 
     private void setCriteria(final PipelineEntity pipelineEntity) {
-        final FindStreamTaskCriteria criteria = initCriteria();
-        criteria.obtainFindStreamCriteria().obtainPipelineIdSet().add(pipelineEntity);
+        final FindStreamTaskCriteria criteria = initCriteria(null, pipelineEntity);
         dataProvider.setCriteria(criteria);
     }
 
     private void setNullCriteria() {
-        dataProvider.setCriteria(initCriteria());
+        dataProvider.setCriteria(initCriteria(null, null));
     }
 
     public void clear() {
@@ -240,7 +238,7 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
         }
     }
 
-    private FindStreamTaskCriteria initCriteria() {
+    static FindStreamTaskCriteria initCriteria(final Feed feed, final PipelineEntity pipeline) {
         final FindStreamTaskCriteria criteria = new FindStreamTaskCriteria();
         criteria.setSort(FindStreamTaskCriteria.FIELD_CREATE_TIME, Direction.DESCENDING, false);
         criteria.getFetchSet().add(Stream.ENTITY_TYPE);
@@ -251,7 +249,15 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
         criteria.obtainStreamTaskStatusSet().setMatchAll(Boolean.FALSE);
         // Only show unlocked stuff
-        criteria.obtainFindStreamCriteria().obtainStatusSet().setSingleItem(StreamStatus.UNLOCKED);
+        criteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
+
+        if (feed != null) {
+            criteria.obtainFeedIdSet().add(feed);
+        }
+        if (pipeline != null) {
+            criteria.obtainPipelineIdSet().add(pipeline);
+        }
+
         return criteria;
     }
 }

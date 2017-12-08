@@ -28,6 +28,7 @@ import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.fs.serializable.NestedInputStream;
 import stroom.streamstore.server.fs.serializable.RANestedInputStream;
+import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
@@ -119,7 +120,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         Assert.assertFalse("Expecting task to delete file once loaded into stream store", Files.isRegularFile(testFile4));
 
         final FindStreamCriteria findStreamCriteria1 = new FindStreamCriteria();
-        findStreamCriteria1.obtainFeeds().obtainInclude().add(eventFeed1.getId());
+        findStreamCriteria1.setExpression(ExpressionUtil.createFeedExpression(eventFeed1));
         final BaseResultList<Stream> resultList1 = streamStore.find(findStreamCriteria1);
         Assert.assertEquals("Expecting 2 files to get merged", 1, resultList1.size());
 
@@ -145,7 +146,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         streamStore.closeStreamSource(streamSource);
 
         final FindStreamCriteria findStreamCriteria2 = new FindStreamCriteria();
-        findStreamCriteria2.obtainFeeds().obtainInclude().add(eventFeed2.getId());
+        findStreamCriteria2.setExpression(ExpressionUtil.createFeedExpression(eventFeed2));
 
         final BaseResultList<Stream> resultList2 = streamStore.find(findStreamCriteria2);
 
@@ -177,7 +178,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         aggregate(FileUtil.getCanonicalPath(proxyDir), 10);
 
         final FindStreamCriteria criteria = new FindStreamCriteria();
-        criteria.obtainFeeds().obtainInclude().add(eventFeed1.getId());
+        criteria.setExpression(ExpressionUtil.createFeedExpression(eventFeed1));
         final List<Stream> list = streamStore.find(criteria);
         Assert.assertEquals(3, list.size());
 
@@ -249,7 +250,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         aggregate(FileUtil.getCanonicalPath(proxyDir), 10);
 
         final FindStreamCriteria criteria = new FindStreamCriteria();
-        criteria.obtainFeeds().obtainInclude().add(eventFeed1.getId());
+        criteria.setExpression(ExpressionUtil.createFeedExpression(eventFeed1));
         final List<Stream> list = streamStore.find(criteria);
         Assert.assertEquals(1, list.size());
 
@@ -300,7 +301,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         aggregate(FileUtil.getCanonicalPath(proxyDir), 10);
 
         final FindStreamCriteria criteria = new FindStreamCriteria();
-        criteria.obtainFeeds().obtainInclude().add(eventFeed1.getId());
+        criteria.setExpression(ExpressionUtil.createFeedExpression(eventFeed1));
         final List<Stream> list = streamStore.find(criteria);
         Assert.assertEquals(1, list.size());
 
@@ -455,7 +456,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         aggregate(FileUtil.getCanonicalPath(proxyDir), 50, 1L);
 
         final FindStreamCriteria findStreamCriteria1 = new FindStreamCriteria();
-        findStreamCriteria1.obtainFeeds().obtainInclude().add(eventFeed1);
+        findStreamCriteria1.setExpression(ExpressionUtil.createFeedExpression(eventFeed1));
         Assert.assertEquals(50, streamStore.find(findStreamCriteria1).size());
     }
 
@@ -477,7 +478,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         aggregate(FileUtil.getCanonicalPath(proxyDir), 25);
 
         final FindStreamCriteria findStreamCriteria1 = new FindStreamCriteria();
-        findStreamCriteria1.obtainFeeds().obtainInclude().add(eventFeed1);
+        findStreamCriteria1.setExpression(ExpressionUtil.createFeedExpression(eventFeed1));
         Assert.assertEquals(2, streamStore.find(findStreamCriteria1).size());
     }
 }

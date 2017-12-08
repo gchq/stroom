@@ -37,8 +37,12 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -203,5 +207,15 @@ public class DictionaryStoreImpl implements DictionaryStore {
     @Override
     public List<DocRef> list() {
         return store.list();
+    }
+
+    @Override
+    public Set<String> getWords(final DocRef docRef) {
+        Set<String> words = Collections.emptySet();
+        final DictionaryDoc doc = readDocument(docRef);
+        if (doc != null && doc.getData() != null) {
+            words = new HashSet<>(Arrays.asList(doc.getData().split("\n")));
+        }
+        return words;
     }
 }

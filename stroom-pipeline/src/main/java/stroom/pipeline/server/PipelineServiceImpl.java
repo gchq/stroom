@@ -39,8 +39,10 @@ import java.util.Collections;
 public class PipelineServiceImpl extends DocumentEntityServiceImpl<PipelineEntity, FindPipelineEntityCriteria>
         implements PipelineService {
     @Inject
-    PipelineServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext, final DocumentEventLog documentEventLog) {
-        super(entityManager, importExportHelper, securityContext, documentEventLog);
+    PipelineServiceImpl(final StroomEntityManager entityManager,
+                        final ImportExportHelper importExportHelper,
+                        final SecurityContext securityContext) {
+        super(entityManager, importExportHelper, securityContext);
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,27 +12,28 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
-package stroom.streamstore.client.view;
+package stroom.process.client.view;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.streamstore.client.presenter.IncludeExcludeEntityIdSetPopupPresenter.IncludeExcludeEntityIdSetPopupView;
+import stroom.process.client.presenter.ExpressionPresenter.ExpressionView;
 
-public class IncludeExcludeEntityIdSetPopupViewImpl extends ViewImpl implements IncludeExcludeEntityIdSetPopupView {
+public class ExpressionViewImpl extends ViewImpl implements ExpressionView {
     private final Widget widget;
+
     @UiField
-    FlowPanel includes;
-    @UiField
-    FlowPanel excludes;
+    SimplePanel expression;
+
     @Inject
-    public IncludeExcludeEntityIdSetPopupViewImpl(final Binder binder) {
+    public ExpressionViewImpl(final ExpressionViewImpl.Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -42,19 +43,10 @@ public class IncludeExcludeEntityIdSetPopupViewImpl extends ViewImpl implements 
     }
 
     @Override
-    public void setIncludesView(final View view) {
-        final Widget w = view.asWidget();
-        w.setSize("100%", "100%");
-        includes.add(w);
+    public void setExpressionView(final View view) {
+        expression.setWidget(view.asWidget());
     }
 
-    @Override
-    public void setExcludesView(final View view) {
-        final Widget w = view.asWidget();
-        w.setSize("100%", "100%");
-        excludes.add(w);
-    }
-
-    public interface Binder extends UiBinder<Widget, IncludeExcludeEntityIdSetPopupViewImpl> {
+    public interface Binder extends UiBinder<Widget, ExpressionViewImpl> {
     }
 }

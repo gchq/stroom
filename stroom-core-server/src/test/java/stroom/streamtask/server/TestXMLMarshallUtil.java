@@ -19,11 +19,9 @@ package stroom.streamtask.server;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.entity.shared.Period;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.FindStreamDataSource;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.util.test.StroomJUnit4ClassRunner;
@@ -38,18 +36,18 @@ public class TestXMLMarshallUtil extends StroomUnitTest {
         final String createdPeriod = String.format("%d%s%d", 1L, ExpressionTerm.Condition.IN_CONDITION_DELIMITER, 2L);
 
         final QueryData queryData1 = new QueryData.Builder()
-                .dataSource(QueryData.STREAM_STORE_DOC_REF)
+                .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                 .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                     .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                        .addTerm(FindStreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(999L))
-                        .addTerm(FindStreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(7L))
-                        .addTerm(FindStreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(77L))
+                        .addTerm(StreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(999L))
+                        .addTerm(StreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(7L))
+                        .addTerm(StreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(77L))
                         .build())
                     .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                        .addTerm(FindStreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, Long.toString(88L))
-                        .addTerm(FindStreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, Long.toString(889L))
+                        .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, Long.toString(88L))
+                        .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, Long.toString(889L))
                         .build())
-                    .addTerm(FindStreamDataSource.CREATED, ExpressionTerm.Condition.BETWEEN, createdPeriod)
+                    .addTerm(StreamDataSource.CREATED, ExpressionTerm.Condition.BETWEEN, createdPeriod)
                     .build())
                 .build();
 

@@ -57,7 +57,7 @@ public class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataL
     private FeedHolder feedHolder;
     @Resource
     private ErrorReceiverProxy errorReceiverProxy;
-    @Resource(name = "cachedPipelineEntityService")
+    @Resource(name = "cachedPipelineService")
     private PipelineService pipelineService;
     @Resource
     private PipelineDataCache pipelineDataCache;

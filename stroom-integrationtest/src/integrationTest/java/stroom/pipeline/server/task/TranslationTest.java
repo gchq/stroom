@@ -22,13 +22,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
-import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.importexport.server.ImportExportSerializer;
+import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.node.server.NodeCache;
 import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
@@ -39,7 +39,9 @@ import stroom.pipeline.shared.StepType;
 import stroom.pipeline.shared.SteppingResult;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.UserTokenUtil;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
@@ -47,7 +49,11 @@ import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.StreamTypeService;
 import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.server.fs.serializable.RawInputSegmentWriter;
-import stroom.streamstore.shared.*;
+import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.shared.QueryData;
+import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.server.StreamProcessorFilterService;
 import stroom.streamtask.server.StreamProcessorService;
 import stroom.streamtask.server.StreamProcessorTask;
@@ -156,15 +162,11 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 final String streamType = feed.isReference() ?
                         StreamType.RAW_REFERENCE.getName() : StreamType.RAW_EVENTS.getName();
                 final QueryData findStreamQueryData = new QueryData.Builder()
-                        .dataSource(QueryData.STREAM_STORE_DOC_REF)
-                        .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                            .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                .addTerm(FindStreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
+                        .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
+                        .expression(new ExpressionOperator.Builder(Op.AND)
+                                .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
+                                .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, streamType)
                                 .build())
-                            .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                .addTerm(FindStreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, streamType)
-                                .build())
-                            .build())
                         .build();
 
                 streamProcessorFilterService.addFindStreamCriteria(streamProcessor, priority, findStreamQueryData);
@@ -354,11 +356,19 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
         final PipelineEntity pipelineEntity = pipelines.getFirst();
         final Feed feed = feeds.getFirst();
+
+        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+                .addTerm(StreamDataSource.FEED, Condition.EQUALS, feedName)
+                .addOperator(new ExpressionOperator.Builder(Op.OR)
+                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.RAW_REFERENCE.getDisplayValue())
+                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.RAW_EVENTS.getDisplayValue())
+                        .build())
+                .build();
+
         final FindStreamCriteria streamCriteria = new FindStreamCriteria();
-        streamCriteria.obtainFeeds().obtainInclude().add(feed);
-        streamCriteria.obtainStreamIdSet().setMatchAll(Boolean.TRUE);
-        streamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_REFERENCE);
-        streamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS);
+        streamCriteria.setExpression(expression);
+        streamCriteria.obtainSelectedIdSet().setMatchAll(Boolean.TRUE);
+
         final SteppingTask action = new SteppingTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN);
         action.setPipeline(DocRefUtil.create(pipelineEntity));
         action.setCriteria(streamCriteria);

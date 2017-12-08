@@ -28,12 +28,15 @@ import stroom.entity.shared.ResultList;
 import stroom.entity.shared.Sort.Direction;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.security.client.ClientSecurityContext;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeMap;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.shared.Expander;
@@ -51,9 +54,10 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
     private Column<StreamAttributeMap, Expander> expanderColumn;
 
     @Inject
-    public StreamRelationListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
-                                       final TooltipPresenter tooltipPresenter, final ClientSecurityContext securityContext) {
-        super(eventBus, dispatcher, tooltipPresenter, securityContext, false);
+    public StreamRelationListPresenter(final EventBus eventBus,
+                                       final ClientDispatchAsync dispatcher,
+                                       final TooltipPresenter tooltipPresenter) {
+        super(eventBus, dispatcher, tooltipPresenter, false);
         dataProvider.setAllowNoConstraint(false);
     }
 
@@ -63,18 +67,20 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
             setCriteria(null);
 
         } else {
+            final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
+            if (!showSystemFiles) {
+                builder.addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue());
+            }
+            builder.addTerm(StreamDataSource.STREAM_ID, Condition.EQUALS, String.valueOf(streamAttributeMap.getStream().getId()));
+
             final FindStreamAttributeMapCriteria criteria = new FindStreamAttributeMapCriteria();
             final FindStreamCriteria findStreamCriteria = criteria.obtainFindStreamCriteria();
-            if (!showSystemFiles) {
-                findStreamCriteria.obtainStatusSet().setSingleItem(StreamStatus.UNLOCKED);
-            }
-            findStreamCriteria.obtainStreamIdSet().add(streamAttributeMap.getStream());
+            findStreamCriteria.setExpression(builder.build());
             findStreamCriteria.getFetchSet().add(Stream.ENTITY_TYPE);
-
             findStreamCriteria.getFetchSet().add(Feed.ENTITY_TYPE);
             findStreamCriteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
             findStreamCriteria.getFetchSet().add(StreamType.ENTITY_TYPE);
-            findStreamCriteria.setSort(FindStreamCriteria.FIELD_CREATE_MS, Direction.ASCENDING, false);
+            findStreamCriteria.setSort(StreamDataSource.CREATED, Direction.ASCENDING, false);
 
             setCriteria(criteria);
         }
@@ -182,7 +188,7 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
         return new Expander(getDepth(row), true, true);
     }
 
-    public int getDepth(final StreamAttributeMap row) {
+    private int getDepth(final StreamAttributeMap row) {
         int depth = 0;
         Long parentId = row.getStream().getParentStreamId();
         while (parentId != null) {
