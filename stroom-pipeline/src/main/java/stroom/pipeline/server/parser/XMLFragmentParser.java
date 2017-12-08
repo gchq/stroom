@@ -23,7 +23,6 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import stroom.cache.server.ParserFactoryPool;
 import stroom.cache.server.StoredParserFactory;
-import stroom.entity.shared.VersionedEntityDecorator;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.SupportsCodeInjection;
 import stroom.pipeline.server.errorhandler.ErrorReceiverIdDecorator;
@@ -40,7 +39,6 @@ import stroom.pipeline.shared.TextConverterService;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pool.PoolItem;
-import stroom.security.SecurityContext;
 import stroom.util.spring.StroomScope;
 import stroom.xml.converter.ParserFactory;
 
@@ -64,23 +62,20 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
 
     private final ParserFactoryPool parserFactoryPool;
     private final TextConverterService textConverterService;
-    private final SecurityContext securityContext;
 
     private String injectedCode;
     private boolean usePool = true;
     private TextConverter textConverter;
-    private PoolItem<VersionedEntityDecorator<TextConverter>, StoredParserFactory> poolItem;
+    private PoolItem<StoredParserFactory> poolItem;
 
     @Inject
     public XMLFragmentParser(final ErrorReceiverProxy errorReceiverProxy,
                              final LocationFactoryProxy locationFactory,
                              final ParserFactoryPool parserFactoryPool,
-                             final TextConverterService textConverterService,
-                             final SecurityContext securityContext) {
+                             final TextConverterService textConverterService) {
         super(errorReceiverProxy, locationFactory);
         this.parserFactoryPool = parserFactoryPool;
         this.textConverterService = textConverterService;
-        this.securityContext = securityContext;
     }
 
     @Override
@@ -115,7 +110,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
         }
 
         // Get a text converter generated parser from the pool.
-        poolItem = parserFactoryPool.borrowObject(new VersionedEntityDecorator<>(tc, getUser()), usePool);
+        poolItem = parserFactoryPool.borrowObject(tc, usePool);
         final StoredParserFactory storedParserFactory = poolItem.getValue();
         final StoredErrorReceiver storedErrorReceiver = storedParserFactory.getErrorReceiver();
         final ParserFactory parserFactory = storedParserFactory.getParserFactory();
@@ -127,13 +122,6 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
         }
 
         return null;
-    }
-
-    private String getUser() {
-        if (securityContext == null) {
-            return null;
-        }
-        return securityContext.getUserId();
     }
 
     @Override

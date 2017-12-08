@@ -1,7 +1,5 @@
 package stroom.proxy.handler.db;
 
-import com.googlecode.ehcache.annotations.Cacheable;
-import com.googlecode.ehcache.annotations.KeyGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.server.FeedStatus;
@@ -39,7 +37,6 @@ public class DataBaseFeedQueryCacheable implements LocalFeedService {
         return dataSource.getConnection();
     }
 
-    @Cacheable(cacheName = "dataBaseCache", keyGenerator = @KeyGenerator(name = "ListCacheKeyGenerator"))
     @SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public GetFeedStatusResponse getFeedStatus(GetFeedStatusRequest request) {
         GetFeedStatusResponse response = new GetFeedStatusResponse();

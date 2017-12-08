@@ -23,8 +23,7 @@ import stroom.entity.shared.FindClearService;
 import stroom.entity.shared.FindService;
 
 /**
- * This class maintains several caches used throughout the application by using
- * ehcache.
+ * This class maintains several caches used throughout the application.
  */
 public interface StroomCacheManager
         extends Clearable, FindClearService<FindCacheInfoCriteria>, FindService<CacheInfo, FindCacheInfoCriteria> {

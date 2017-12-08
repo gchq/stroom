@@ -8,6 +8,7 @@ _book
 .classpath
 classes/
 generated/
+.settings
 libs/
 jars/
 bin/
@@ -26,6 +27,8 @@ stroom-core-server/src/test/resources/transientContentPacks/
 !/.idea/runConfigurations
 # END OF IntelliJ
 
+.classpath
+.project
 
 #Gradle stuff (from https://github.com/github/gitignore/blob/master/Gradle.gitignore)
 .gradle

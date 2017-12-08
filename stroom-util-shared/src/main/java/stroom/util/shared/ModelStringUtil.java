@@ -86,31 +86,49 @@ public final class ModelStringUtil {
      * Return nice string like "25 B", "4 kB", "45 MB", etc.
      */
     public static String formatMetricByteSizeString(final Long streamSize) {
+        return formatMetricByteSizeString(streamSize, false);
+    }
+
+    /**
+     * Return nice string like "25 B", "4 kB", "45 MB", etc.
+     */
+    public static String formatMetricByteSizeString(final Long streamSize, final boolean stripTrailingZeros) {
         if (streamSize == null) {
             return "";
         }
-        return formatNumberString(streamSize, METRIC_BYTE_SIZE_DIVIDER);
+        return formatNumberString(streamSize, METRIC_BYTE_SIZE_DIVIDER, stripTrailingZeros);
     }
 
     /**
      * Return nice string like "25 B", "4 K", "45 M", etc.
      */
     public static String formatIECByteSizeString(final Long streamSize) {
+        return formatIECByteSizeString(streamSize, false);
+    }
+
+    /**
+     * Return nice string like "25 B", "4 K", "45 M", etc.
+     */
+    public static String formatIECByteSizeString(final Long streamSize, final boolean stripTrailingZeros) {
         if (streamSize == null) {
             return "";
         }
-        return formatNumberString(streamSize, IEC_BYTE_SIZE_DIVIDER);
+        return formatNumberString(streamSize, IEC_BYTE_SIZE_DIVIDER, stripTrailingZeros);
     }
 
     public static String formatDurationString(final Long ms) {
+        return formatDurationString(ms, false);
+    }
+
+    public static String formatDurationString(final Long ms, final boolean stripTrailingZeros) {
         if (ms == null) {
             return "";
         }
-        return formatNumberString(ms, TIME_SIZE_DIVIDER);
+        return formatNumberString(ms, TIME_SIZE_DIVIDER, stripTrailingZeros);
 
     }
 
-    private static String formatNumberString(final double number, final Divider[] dividers) {
+    private static String formatNumberString(final double number, final Divider[] dividers, final boolean stripTrailingZeros) {
         double nextNumber = number;
         Divider lastDivider = dividers[0];
 
@@ -127,8 +145,22 @@ public final class ModelStringUtil {
             if (nextNumber < 10) {
                 String str = String.valueOf(nextNumber);
                 final int decPt = str.indexOf(".");
-                if (decPt > 0 && decPt + 2 < str.length()) {
-                    str = str.substring(0, decPt + 2);
+                if (decPt != -1) {
+                    String p1 = str.substring(0, decPt);
+                    String p2 = str.substring(decPt + 1);
+
+                    if (p1.length() == 0) {
+                        p1 = "0";
+                    }
+
+                    if (p2.length() > 1) {
+                        p2 = p2.substring(0, 1);
+                    }
+                    if (stripTrailingZeros && ("0".equals(p2))) {
+                        str = p1;
+                    } else {
+                        str = p1 + "." + p2;
+                    }
                 }
                 return str + lastDivider.unit[0];
             } else {

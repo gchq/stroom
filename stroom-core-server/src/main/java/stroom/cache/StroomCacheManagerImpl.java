@@ -16,8 +16,6 @@
 
 package stroom.cache;
 
-import net.sf.ehcache.CacheManager;
-import net.sf.ehcache.Ehcache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -26,19 +24,31 @@ import stroom.cache.shared.FindCacheInfoCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.PageRequest;
+import stroom.util.cache.CacheManager;
+import stroom.util.cache.CacheManager.CacheHolder;
+import stroom.util.cache.CacheUtil;
+import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomFrequencySchedule;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomCacheManagerImpl.class);
 
-    @Resource
-    private CacheManager cacheManager;
+    private final CacheManager cacheManager;
+
+    @Inject
+    public StroomCacheManagerImpl(final CacheManager cacheManager) {
+        this.cacheManager = cacheManager;
+    }
 
     @Override
     public BaseResultList<CacheInfo> find(final FindCacheInfoCriteria criteria) throws RuntimeException {
@@ -64,16 +74,19 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
         }
 
         // Return a base result list.
-        final int cacheCount = cacheManager.getCacheNames().length;
+        final int cacheCount = cacheManager.getCaches().size();
         final boolean more = pageRequest.getOffset() + list.size() < cacheCount;
         return new BaseResultList<>(list, pageRequest.getOffset(), Long.valueOf(cacheCount), more);
     }
 
     private List<CacheInfo> findCaches(final FindCacheInfoCriteria criteria) {
-        final String[] cacheNames = cacheManager.getCacheNames();
-        Arrays.sort(cacheNames);
+        final List<String> cacheNames = cacheManager.getCaches()
+                .keySet()
+                .stream()
+                .sorted(Comparator.naturalOrder())
+                .collect(Collectors.toList());
 
-        final List<CacheInfo> list = new ArrayList<>(cacheNames.length);
+        final List<CacheInfo> list = new ArrayList<>(cacheNames.size());
         for (final String cacheName : cacheNames) {
             boolean include = true;
             if (criteria != null && criteria.getName() != null) {
@@ -81,9 +94,28 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
             }
 
             if (include) {
-                final Ehcache cache = cacheManager.getEhcache(cacheName);
-                final CacheInfo info = CacheUtil.getInfo(cache);
-                if (info != null) {
+                final CacheHolder cacheHolder = cacheManager.getCaches().get(cacheName);
+
+
+                if (cacheHolder != null) {
+                    final Map<String, String> map = new HashMap<>();
+                    map.put("Entries", String.valueOf(cacheHolder.getCache().size()));
+                    addEntries(map, cacheHolder.getCacheBuilder().toString());
+                    addEntries(map, cacheHolder.getCache().stats().toString());
+
+                    map.forEach((k, v) -> {
+                        if (k.startsWith("Expire")) {
+                            try {
+                                final long nanos = Long.valueOf(v);
+                                map.put(k, ModelStringUtil.formatDurationString(nanos / 1000000, true));
+
+                            } catch (final Exception e) {
+                                // Ignore.
+                            }
+                        }
+                    });
+
+                    final CacheInfo info = new CacheInfo(cacheName, map);
                     list.add(info);
                 }
             }
@@ -91,19 +123,40 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
         return list;
     }
 
+    private void addEntries(final Map<String, String> map, String string) {
+        if (string != null && string.length() > 0) {
+
+            string = string.replaceAll("^[^{]*\\{", "");
+            string = string.replaceAll("}.*", "");
+
+            Arrays.stream(string.split(",")).forEach(pair -> {
+                final String[] kv = pair.split("=");
+                if (kv.length == 2) {
+                    String key = kv[0].replaceAll("\\W", "");
+                    String value = kv[1].replaceAll("\\D", "");
+                    if (key.length() > 0) {
+                        final char[] chars = key.toCharArray();
+                        chars[0] = Character.toUpperCase(chars[0]);
+                        key = new String(chars, 0, chars.length);
+                    }
+
+                    map.put(key, value);
+                }
+            });
+        }
+    }
+
     @Override
     @StroomFrequencySchedule("1m")
     public void evictExpiredElements() {
-        final String[] cacheNames = cacheManager.getCacheNames();
-        for (final String cacheName : cacheNames) {
-            LOGGER.debug("Evicting cache entries for " + cacheName);
+        cacheManager.getCaches().forEach((k, v) -> {
+            LOGGER.debug("Evicting cache entries for " + k);
             try {
-                final Ehcache cache = cacheManager.getEhcache(cacheName);
-                cache.evictExpiredElements();
+                v.getCache().cleanUp();
             } catch (final Exception e) {
                 LOGGER.error(e.getMessage(), e);
             }
-        }
+        });
     }
 
     /**
@@ -111,13 +164,14 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
      */
     @Override
     public void clear() {
-        final String[] cacheNames = cacheManager.getCacheNames();
-        for (final String cacheName : cacheNames) {
-            final Ehcache cache = cacheManager.getEhcache(cacheName);
-            if (cache != null) {
-                CacheUtil.clear(cache);
+        cacheManager.getCaches().forEach((k, v) -> {
+            LOGGER.debug("Clearing cache entries for " + k);
+            try {
+                CacheUtil.clear(v.getCache());
+            } catch (final Exception e) {
+                LOGGER.error(e.getMessage(), e);
             }
-        }
+        });
     }
 
     /**
@@ -128,9 +182,9 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
         final List<CacheInfo> caches = findCaches(criteria);
         for (final CacheInfo cacheInfo : caches) {
             final String cacheName = cacheInfo.getName();
-            final Ehcache cache = cacheManager.getEhcache(cacheName);
-            if (cache != null) {
-                CacheUtil.clear(cache);
+            final CacheHolder cacheHolder = cacheManager.getCaches().get(cacheName);
+            if (cacheHolder != null) {
+                CacheUtil.clear(cacheHolder.getCache());
             } else {
                 LOGGER.error("Unable to find cache with name '" + cacheName + "'");
             }

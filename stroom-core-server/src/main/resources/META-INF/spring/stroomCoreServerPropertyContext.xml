@@ -629,6 +629,14 @@
             <property name="requireRestart" value="true"/>
         </bean>
 
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.databaseMultiInsertMaxBatchSize"/>
+            <property name="value" value="500"/>
+            <property name="description" value="The maximum number of rows to insert in a single multi insert statement, e.g. INSERT INTO X VALUES (...), (...), (...)"/>
+            <property name="editable" value="true"/>
+            <property name="requireRestart" value="false"/>
+        </bean>
+
         <!-- Entity Names -->
         <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.namePattern"/>
@@ -884,6 +892,20 @@
                       value="If no existing volumes are present a default volume will be created on application start. The volume will live in the volumes sub directory of the Stroom installation directory"/>
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.node.status.heapHistogram.classNameMatchRegex"/>
+            <property name="value" value="^stroom\..*$"/>
+            <property name="description"
+                      value="A single regex that will be used to filter classes from the jmap histogram internal statistic based on their name. e.g '^(stroom\..*)$'. If no value is supplied all classes will be included. If a value is supplied only those class names matching the regex will be included."/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.node.status.heapHistogram.jMapExecutable"/>
+            <property name="value" value="jmap"/>
+            <property name="description"
+                      value="The jmap executable name if it is available on the PATH or a fully qualified form"/>
+            <property name="editable" value="false"/>
         </bean>
 
 

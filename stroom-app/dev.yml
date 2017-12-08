@@ -17,7 +17,6 @@ logging:
   loggers:
     stroom: INFO
     io.dropwizard: INFO
-    org.ehcache: INFO
     org.eclipse.jetty: INFO
     org.flywaydb: INFO
   appenders:

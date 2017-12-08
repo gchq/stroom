@@ -16,9 +16,6 @@
 
 package stroom.feed.server;
 
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-
 public class GetFeedStatusRequest extends RemoteRequest {
     private static final long serialVersionUID = -4083508707616388035L;
 
@@ -46,26 +43,21 @@ public class GetFeedStatusRequest extends RemoteRequest {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (!(obj instanceof GetFeedStatusRequest)) {
-            return false;
-        }
-        GetFeedStatusRequest other = (GetFeedStatusRequest) obj;
-        EqualsBuilder equalsBuilder = new EqualsBuilder();
-        equalsBuilder.append(this.getFeedName(), other.getFeedName());
-        equalsBuilder.append(this.getSenderDn(), other.getSenderDn());
-        return equalsBuilder.isEquals();
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        final GetFeedStatusRequest that = (GetFeedStatusRequest) o;
+
+        if (feedName != null ? !feedName.equals(that.feedName) : that.feedName != null) return false;
+        return senderDn != null ? senderDn.equals(that.senderDn) : that.senderDn == null;
     }
 
     @Override
     public int hashCode() {
-        HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
-        hashCodeBuilder.append(this.getFeedName());
-        hashCodeBuilder.append(this.getSenderDn());
-        return hashCodeBuilder.toHashCode();
+        int result = feedName != null ? feedName.hashCode() : 0;
+        result = 31 * result + (senderDn != null ? senderDn.hashCode() : 0);
+        return result;
     }
 
     @Override

@@ -15,8 +15,6 @@
  */
 
 dependencies {
-    compile urlDependencies.get(urlLibs.stroomQueryCommon)
-    compile urlDependencies.get(urlLibs.stroomExpression)
     compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
     compile project(':stroom-entity-shared')
@@ -26,7 +24,11 @@ dependencies {
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
-    compile libs.ehcache_core
+    compile libs.stroomQueryApi
+    compile libs.stroomQueryCommon
+    compile libs.stroomExpression
+    compile libs.eventLogging
+    compile libs.guava
     compile libs.javax_inject
     compile libs.lucene_analyzers_common
     compile libs.lucene_core

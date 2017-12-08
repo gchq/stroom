@@ -16,48 +16,38 @@
 
 package stroom.task.cluster;
 
-import net.sf.ehcache.Cache;
-import net.sf.ehcache.CacheManager;
-import net.sf.ehcache.Element;
-import net.sf.ehcache.config.CacheConfiguration;
-import org.springframework.beans.factory.InitializingBean;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.Clearable;
+import stroom.util.cache.CacheManager;
+import stroom.util.cache.CacheUtil;
 import stroom.util.spring.StroomShutdown;
 
-import javax.annotation.Resource;
-import java.util.List;
+import javax.inject.Inject;
+import java.util.concurrent.TimeUnit;
 
 @Component
-public class ClusterResultCollectorCache implements Clearable, InitializingBean {
+public class ClusterResultCollectorCache implements Clearable {
     private static final int MAX_CACHE_ENTRIES = 1000000;
-    private final Cache cache;
-    @Resource
-    private CacheManager cacheManager;
+
+    private final Cache<CollectorId, ClusterResultCollector> cache;
+
     private volatile boolean shutdown;
 
-    public ClusterResultCollectorCache() {
-        final CacheConfiguration cacheConfiguration = new CacheConfiguration("Cluster Result Collector Cache",
-                MAX_CACHE_ENTRIES);
-        cacheConfiguration.setEternal(false);
-        // Allow collectors to idle for 10 minutes.
-        cacheConfiguration.setTimeToIdleSeconds(600);
-        // Allow collectors to live for a maximum of 24 hours.
-        cacheConfiguration.setTimeToLiveSeconds(86400);
-
-        cache = new Cache(cacheConfiguration);
+    @Inject
+    @SuppressWarnings("unchecked")
+    public ClusterResultCollectorCache(final CacheManager cacheManager) {
+        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
+                .maximumSize(MAX_CACHE_ENTRIES)
+                .expireAfterAccess(1, TimeUnit.MINUTES);
+        cache = cacheBuilder.build();
+        cacheManager.registerCache("Cluster Result Collector Cache", cacheBuilder, cache);
     }
 
     @StroomShutdown
     public void shutdown() {
         shutdown = true;
-        final List<Object> keys = cache.getKeys();
-        for (final Object key : keys) {
-            final Element element = cache.get(key);
-            if (element != null) {
-                final ClusterResultCollector<?> collector = (ClusterResultCollector<?>) element.getObjectValue();
-            }
-        }
     }
 
     public void put(final CollectorId collectorId, final ClusterResultCollector<?> clusterResultCollector) {
@@ -65,33 +55,25 @@ public class ClusterResultCollectorCache implements Clearable, InitializingBean 
             throw new RuntimeException("Stroom is shutting down");
         }
 
-        final Element element = new Element(collectorId, clusterResultCollector);
-        final Element existing = cache.putIfAbsent(element);
+        final ClusterResultCollector existing = cache.getIfPresent(collectorId);
         if (existing != null) {
             throw new RuntimeException(
                     "Existing item found in cluster result collector cache for key '" + collectorId.toString() + "'");
         }
+
+        cache.put(collectorId, clusterResultCollector);
     }
 
     public ClusterResultCollector<?> get(final CollectorId collectorId) {
-        final Element element = cache.get(collectorId);
-        if (element == null) {
-            return null;
-        }
-        return (ClusterResultCollector<?>) element.getObjectValue();
+        return cache.getIfPresent(collectorId);
     }
 
-    public boolean remove(final CollectorId id) {
-        return cache.remove(id);
+    public void remove(final CollectorId id) {
+        cache.invalidate(id);
     }
 
     @Override
     public void clear() {
-        cache.removeAll();
-    }
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        cacheManager.addCache(cache);
+        CacheUtil.clear(cache);
     }
 }

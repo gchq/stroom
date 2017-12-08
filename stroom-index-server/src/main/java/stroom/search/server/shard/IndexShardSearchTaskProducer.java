@@ -20,19 +20,24 @@ import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.search.server.ClusterSearchTask;
 import stroom.search.server.shard.IndexShardSearchTask.IndexShardQueryFactory;
 import stroom.search.server.shard.IndexShardSearchTask.ResultReceiver;
-import stroom.search.server.taskqueue.AbstractTaskProducer;
+import stroom.search.server.taskqueue.TaskExecutor;
+import stroom.search.server.taskqueue.TaskProducer;
+import stroom.task.server.ExecutorProvider;
+import stroom.task.server.ThreadPoolImpl;
 import stroom.util.shared.Severity;
+import stroom.util.shared.ThreadPool;
 
 import javax.inject.Provider;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class IndexShardSearchTaskProducer extends AbstractTaskProducer {
-    private static final long ONE_SECOND = TimeUnit.SECONDS.toNanos(1);
+public class IndexShardSearchTaskProducer extends TaskProducer {
+    static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Search Index Shard", 5, 0, Integer.MAX_VALUE);
 
     private final ClusterSearchTask clusterSearchTask;
     private final IndexShardSearcherCache indexShardSearcherCache;
@@ -41,8 +46,9 @@ public class IndexShardSearchTaskProducer extends AbstractTaskProducer {
     private final Queue<IndexShardSearchRunnable> taskQueue = new ConcurrentLinkedQueue<>();
     private final AtomicInteger tasksRequested = new AtomicInteger();
 
-    public IndexShardSearchTaskProducer(final ClusterSearchTask clusterSearchTask,
-                                        final TransferList<String[]> storedData,
+    public IndexShardSearchTaskProducer(final TaskExecutor taskExecutor,
+                                        final ClusterSearchTask clusterSearchTask,
+                                        final LinkedBlockingQueue<String[]> storedData,
                                         final IndexShardSearcherCache indexShardSearcherCache,
                                         final List<Long> shards,
                                         final IndexShardQueryFactory queryFactory,
@@ -50,20 +56,20 @@ public class IndexShardSearchTaskProducer extends AbstractTaskProducer {
                                         final ErrorReceiver errorReceiver,
                                         final AtomicLong hitCount,
                                         final int maxThreadsPerTask,
+                                        final ExecutorProvider executorProvider,
                                         final Provider<IndexShardSearchTaskHandler> handlerProvider) {
-        super(maxThreadsPerTask);
+        super(taskExecutor, maxThreadsPerTask, executorProvider.getExecutor(THREAD_POOL));
         this.clusterSearchTask = clusterSearchTask;
         this.indexShardSearcherCache = indexShardSearcherCache;
         this.errorReceiver = errorReceiver;
 
-        // Create a deque to capture stored data from the index that can be used
-        // by coprocessors.
+        // Create a deque to capture stored data from the index that can be used by coprocessors.
         final ResultReceiver resultReceiver = (shardId, values) -> {
             try {
                 boolean stored = false;
                 while (!clusterSearchTask.isTerminated() && !stored) {
                     // Loop until item is added or we terminate.
-                    stored = storedData.offer(values, ONE_SECOND);
+                    stored = storedData.offer(values, 1, TimeUnit.SECONDS);
                 }
             } catch (final Throwable e) {
                 error(e.getMessage(), e);
@@ -76,8 +82,15 @@ public class IndexShardSearchTaskProducer extends AbstractTaskProducer {
             final IndexShardSearchRunnable runnable = new IndexShardSearchRunnable(task, handlerProvider);
             taskQueue.add(runnable);
         }
+
+        // Attach to the supplied executor.
+        attach();
+
+        // Tell the supplied executor that we are ready to deliver tasks.
+        signalAvailable();
     }
 
+    @Override
     public boolean isComplete() {
         return remainingTasks() == 0;
     }
@@ -100,8 +113,7 @@ public class IndexShardSearchTaskProducer extends AbstractTaskProducer {
                 }
             }
 
-            // If there are no open shards that can be used for any tasks then
-            // just get the task at the head of the queue.
+            // If there are no open shards that can be used for any tasks then just get the task at the head of the queue.
             if (task == null) {
                 task = taskQueue.poll();
             }

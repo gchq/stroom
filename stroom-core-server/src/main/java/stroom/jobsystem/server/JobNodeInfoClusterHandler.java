@@ -18,7 +18,6 @@ package stroom.jobsystem.server;
 
 import org.springframework.context.annotation.Scope;
 import stroom.jobsystem.server.JobNodeTrackerCache.Trackers;
-import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobNode;
 import stroom.jobsystem.shared.JobNodeInfo;
 import stroom.task.server.AbstractTaskHandler;
@@ -35,12 +34,10 @@ import java.util.Collection;
 public class JobNodeInfoClusterHandler
         extends AbstractTaskHandler<JobNodeInfoClusterTask, SharedMap<JobNode, JobNodeInfo>> {
     private final JobNodeTrackerCache jobNodeTrackerCache;
-    private final TaskCache taskPool;
 
     @Inject
-    JobNodeInfoClusterHandler(final JobNodeTrackerCache jobNodeTrackerCache, final TaskCache taskPool) {
+    JobNodeInfoClusterHandler(final JobNodeTrackerCache jobNodeTrackerCache) {
         this.jobNodeTrackerCache = jobNodeTrackerCache;
-        this.taskPool = taskPool;
     }
 
     @Override
@@ -52,9 +49,7 @@ public class JobNodeInfoClusterHandler
             if (trackerList != null) {
                 for (final JobNodeTracker tracker : trackerList) {
                     final JobNode jobNode = tracker.getJobNode();
-                    final Job job = jobNode.getJob();
                     final int currentTaskCount = tracker.getCurrentTaskCount();
-                    final Integer currentCache = taskPool.taskCount(job.getName());
 
                     Long scheduleReferenceTime = null;
                     final Scheduler scheduler = trackers.getScheduler(jobNode);
@@ -63,7 +58,7 @@ public class JobNodeInfoClusterHandler
                     }
 
                     final JobNodeInfo info = new JobNodeInfo(currentTaskCount, scheduleReferenceTime,
-                            tracker.getLastExecutedTime(), currentCache);
+                            tracker.getLastExecutedTime());
                     result.put(jobNode, info);
                 }
             }

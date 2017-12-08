@@ -55,3 +55,4 @@ stroom.url.list=annotations-ui,annotations-service,dashboard
 stroom.url.annotations-ui=http://localhost:3000/
 stroom.url.annotations-service=http://localhost:8199/annotations/v1
 stroom.url.dashboard=http://localhost:8080/dashboard.jsp
+

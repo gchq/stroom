@@ -24,18 +24,15 @@ public class JobNodeInfo implements SharedObject {
     private Integer currentTaskCount;
     private Long scheduleReferenceTime;
     private Long lastExecutedTime;
-    private Integer currentCache;
 
     public JobNodeInfo() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public JobNodeInfo(final Integer currentTaskCount, final Long scheduleReferenceTime, final Long lastExecutedTime,
-                       final Integer currentCache) {
+    public JobNodeInfo(final Integer currentTaskCount, final Long scheduleReferenceTime, final Long lastExecutedTime) {
         this.currentTaskCount = currentTaskCount;
         this.scheduleReferenceTime = scheduleReferenceTime;
         this.lastExecutedTime = lastExecutedTime;
-        this.currentCache = currentCache;
     }
 
     public Integer getCurrentTaskCount() {
@@ -48,9 +45,5 @@ public class JobNodeInfo implements SharedObject {
 
     public Long getLastExecutedTime() {
         return lastExecutedTime;
-    }
-
-    public Integer getCurrentCache() {
-        return currentCache;
     }
 }

@@ -11,10 +11,6 @@ dependencies {
     compile libs.spring_context
     compile libs.spring_core
 
-    compile (libs.ehcache_spring_annotations) {
-        exclude(module: 'guava')
-    }
-
     compile libs.javax_servlet_api
 
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')

@@ -16,6 +16,8 @@
 
 package stroom.test;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -72,6 +74,8 @@ import stroom.visualisation.shared.Visualisation;
 import stroom.xmlschema.shared.XMLSchema;
 
 import javax.annotation.Resource;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -83,6 +87,8 @@ import java.util.Map;
  */
 @Component
 public class DatabaseCommonTestControl implements CommonTestControl, ApplicationContextAware {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseCommonTestControl.class);
+
     @Resource
     private VolumeService volumeService;
     @Resource
@@ -104,7 +110,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
     @Resource
     private LifecycleServiceImpl lifecycleServiceImpl;
     @Resource
-    private StroomCacheManager cacheManager;
+    private StroomCacheManager stroomCacheManager;
 
     private ApplicationContext applicationContext;
 
@@ -115,11 +121,13 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
 
     @Override
     public void setup() {
+        Instant startTime = Instant.now();
         nodeConfig.setup();
         createStreamAttributeKeys();
 
         // Ensure we can create tasks.
         streamTaskCreator.startup();
+        LOGGER.info("test environment setup completed in {}", Duration.between(startTime, Instant.now()));
     }
 
     /**
@@ -127,6 +135,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
      */
     @Override
     public void teardown() {
+        Instant startTime = Instant.now();
         deleteEntity(StreamTask.class);
 
         deleteEntity(StreamVolume.class);
@@ -197,13 +206,14 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
         deleteEntity(Rack.class);
 
         databaseCommonTestControlTransactionHelper.clearContext();
-        cacheManager.clear();
+        stroomCacheManager.clear();
 
         final Map<String, Clearable> clearableBeanMap = applicationContext.getBeansOfType(Clearable.class, false,
                 false);
         for (final Clearable clearable : clearableBeanMap.values()) {
             clearable.clear();
         }
+        LOGGER.info("test environment teardown completed in {}", Duration.between(startTime, Instant.now()));
     }
 
     public void createStreamAttributeKeys() {

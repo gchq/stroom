@@ -58,8 +58,7 @@ public class EventSearchResultHandler implements ResultHandler {
                 pendingMerges.clear();
 
             } else {
-                // Add the new queue to the pending merge queue ready for
-                // merging.
+                // Add the new queue to the pending merge queue ready for merging.
                 try {
                     pendingMerges.put(eventRefs);
                 } catch (final InterruptedException e) {

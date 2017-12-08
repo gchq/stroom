@@ -18,11 +18,11 @@ package stroom.streamtask.server;
 
 import stroom.streamtask.shared.StreamTask;
 
-import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class StreamTaskQueue {
-    private final LinkedBlockingDeque<StreamTask> queue = new LinkedBlockingDeque<>();
+    private final LinkedBlockingQueue<StreamTask> queue = new LinkedBlockingQueue<>();
     private final AtomicBoolean filling = new AtomicBoolean();
 
     public StreamTask poll() {

@@ -123,7 +123,7 @@ public class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
         pipelineEntity = pipelineEntityService.save(pipelineEntity);
 
         // Create the parser.
-        final PipelineData pipelineData = pipelineDataCache.getOrCreate(pipelineEntity);
+        final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
         final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
         feedHolder.setFeed(new Feed());

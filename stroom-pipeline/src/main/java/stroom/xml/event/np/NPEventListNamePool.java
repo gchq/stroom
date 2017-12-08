@@ -24,7 +24,7 @@
  * The Initial Developer of the Original Code is Michael H. Kay.
 
  * This is a copy of an old NamePool (< 9.4) implementation that has been augmented to make it
- * serializable for use with ehcache. A newer version of NamePool should be used in future or
+ * serializable for use with a cache. A newer version of NamePool should be used in future or
  * all of the NPEventList code should be replaced with tiny trees.
  *
  * Contributor(s): none.

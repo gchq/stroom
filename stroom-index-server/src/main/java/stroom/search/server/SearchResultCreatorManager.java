@@ -16,52 +16,67 @@
 
 package stroom.search.server;
 
-import net.sf.ehcache.CacheManager;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
 import org.springframework.stereotype.Component;
-import stroom.cache.AbstractCacheBean;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.Store;
+import stroom.util.cache.CacheManager;
 import stroom.util.spring.StroomFrequencySchedule;
 
 import javax.inject.Inject;
+import java.util.concurrent.TimeUnit;
 
 @Component
-public class SearchResultCreatorManager extends AbstractCacheBean<SearchResultCreatorManager.Key, SearchResponseCreator> {
+public class SearchResultCreatorManager {
     private static final int MAX_ACTIVE_QUERIES = 10000;
 
     private final LuceneSearchStoreFactory luceneSearchStoreFactory;
+    private final LoadingCache<SearchResultCreatorManager.Key, SearchResponseCreator> cache;
 
     @Inject
+    @SuppressWarnings("unchecked")
     public SearchResultCreatorManager(final CacheManager cacheManager,
                                       final LuceneSearchStoreFactory luceneSearchStoreFactory) {
-        super(cacheManager, "Search Result Creators", MAX_ACTIVE_QUERIES);
         this.luceneSearchStoreFactory = luceneSearchStoreFactory;
+
+        final RemovalListener<SearchResultCreatorManager.Key, SearchResponseCreator> removalListener = notification -> destroy(notification.getKey(), notification.getValue());
+        final CacheLoader<SearchResultCreatorManager.Key, SearchResponseCreator> cacheLoader = CacheLoader.from(this::create);
+        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
+                .maximumSize(MAX_ACTIVE_QUERIES)
+                .expireAfterAccess(10, TimeUnit.MINUTES)
+                .removalListener(removalListener);
+        cache = cacheBuilder.build(cacheLoader);
+        cacheManager.registerCache("Search Result Creators", cacheBuilder, cache);
     }
 
-    public SearchResponseCreator getOrCreate(final SearchResultCreatorManager.Key key) {
-        return computeIfAbsent(key, this::create);
+    public SearchResponseCreator get(final SearchResultCreatorManager.Key key) {
+        return cache.getUnchecked(key);
+    }
+
+    public void remove(final SearchResultCreatorManager.Key key) {
+        cache.invalidate(key);
+        cache.cleanUp();
     }
 
     private SearchResponseCreator create(final SearchResultCreatorManager.Key key) {
         Store store = luceneSearchStoreFactory.create(key.searchRequest);
-
         return new SearchResponseCreator(store);
     }
 
-    @Override
-    protected void destroy(final Key key, final Object value) {
-        super.destroy(key, value);
-        if (value != null && value instanceof SearchResponseCreator) {
-            ((SearchResponseCreator) value).destroy();
+    private void destroy(final Key key, final SearchResponseCreator value) {
+        if (value != null) {
+            value.destroy();
         }
     }
 
-    @Override
     @StroomFrequencySchedule("10s")
     public void evictExpiredElements() {
-        super.evictExpiredElements();
+        cache.cleanUp();
     }
 
     public static class Key {

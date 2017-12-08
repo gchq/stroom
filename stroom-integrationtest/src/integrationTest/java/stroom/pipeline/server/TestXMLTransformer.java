@@ -184,7 +184,7 @@ public class TestXMLTransformer extends AbstractProcessIntegrationTest {
         errorReceiver.setErrorReceiver(loggingErrorReceiver);
 
         // Create the parser.
-        final PipelineData pipelineData = pipelineDataCache.getOrCreate(pipelineEntity);
+        final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
         final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
         // Get the input stream.
