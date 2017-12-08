@@ -290,6 +290,11 @@ public class TestLmdbKeyValueStore {
     }
 
 
+    /**
+     * For each of X string keys, insert Y kv pairs (where the key is a compound of the string key and
+     * a timestamp) into lmdb, each one hour apart. Then for each string key make a random search time Z
+     * that is in the range of timestamps and use an iterator to find the first kv pair that is <= to the search key
+     */
     @Test
     public void testTimeScan() throws IOException {
 
