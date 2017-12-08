@@ -310,7 +310,7 @@ public class TestLmdbKeyValueStore {
         Instant time3 = time0.plus(1, ChronoUnit.HOURS);
 
 
-        int maxStringKeys = 100;
+        int maxStringKeys = 10_000;
         int maxTimeDelta = 100;
         LOGGER.info("Loading data, maxStringKeys: {}, maxTimeDelta: {}, firstTime: {}, lastTime {}",
                 maxStringKeys,
@@ -323,7 +323,7 @@ public class TestLmdbKeyValueStore {
                 for (int i = 0; i < maxStringKeys; i++) {
 
                     List<Map.Entry<TemporalKey, String>> entries = new ArrayList<>();
-                    for (int j = 0; j < 5; j++) {
+                    for (int j = 0; j <= maxTimeDelta; j++) {
                         entries.add(createEntry(String.format("%05d", i), time0.plus(j, ChronoUnit.HOURS)));
                     }
                     Collections.shuffle(entries);
@@ -340,16 +340,16 @@ public class TestLmdbKeyValueStore {
 
         LOGGER.info("Reading data");
 
-        boolean doAsserts = false;
+        boolean doAsserts = true;
 
-        doTimedWork(String.format("Looking up %s keys", maxStringKeys), () -> {
-            try (Txn<ByteBuffer> txn = env.txnRead()) {
-                for (int i = 0; i < maxStringKeys; i++) {
-                    //Pick a random time in our time range
-                    Instant searchTime = time0.plusMillis((int) (random.nextDouble() * maxTimeDelta * 1000 * 60 * 60));
-                    TemporalKey startKey = new TemporalKey(String.format("%05d", i), searchTime.toEpochMilli());
-                    final KeyRange<ByteBuffer> range = KeyRange.atLeastBackward(startKey.toDbKey());
+        doTimedWork(String.format("Looked up %s keys", maxStringKeys), () -> {
+            for (int i = 0; i < maxStringKeys; i++) {
+                //Pick a random time in our time range
+                Instant searchTime = time0.plusMillis((int) (random.nextDouble() * maxTimeDelta * 1000 * 60 * 60));
+                TemporalKey startKey = new TemporalKey(String.format("%05d", i), searchTime.toEpochMilli());
+                final KeyRange<ByteBuffer> range = KeyRange.atLeastBackward(startKey.toDbKey());
 
+                try (Txn<ByteBuffer> txn = env.txnRead()) {
                     try (CursorIterator<ByteBuffer> it = db.iterate(txn, range)) {
                         if (it.hasNext()) {
                             CursorIterator.KeyVal<ByteBuffer> keyVal = it.next();
@@ -364,7 +364,7 @@ public class TestLmdbKeyValueStore {
                                 //All keys are one hour apart so our serach time must be within one hour of the found key
                                 Assert.assertTrue(timeBetween.toMillis() < Duration.ofHours(1).toMillis());
                             }
-                        }else {
+                        } else {
                             Assert.fail(String.format("Couldn't find key %s", startKey));
                         }
                     }
@@ -375,13 +375,9 @@ public class TestLmdbKeyValueStore {
     }
 
 
-
     private Map.Entry<TemporalKey, String> createEntry(String key, Instant time) {
         return Maps.immutableEntry(new TemporalKey(key, time.toEpochMilli()), "value-" + key);
     }
-
-
-
 
 
     /**
@@ -408,8 +404,9 @@ public class TestLmdbKeyValueStore {
 
     /**
      * Put a batch of vk pairs into the DB under a single txn
+     *
      * @param startKey The key at the start of the batch
-     * @param count The number of kv pairs to put
+     * @param count    The number of kv pairs to put
      */
     private static void putValues(final Dbi<ByteBuffer> db, Env<ByteBuffer> env, final long startKey, final long count) {
         LOGGER.info("Putting start: {}, count {}", startKey, count);
@@ -429,6 +426,7 @@ public class TestLmdbKeyValueStore {
 
     /**
      * Put a single kv pair into the database using the passed txn
+     *
      * @param keyVal The value of the key, also used in part of the kv pair value
      */
     private static void putValue(final Dbi<ByteBuffer> db, final Txn<ByteBuffer> txn, final long keyVal) {
