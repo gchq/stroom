@@ -26,6 +26,7 @@ import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
+import stroom.pool.SecurityHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.streamstore.server.StreamStore;
@@ -35,7 +36,6 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;
-import stroom.util.task.ServerTask;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -100,8 +100,7 @@ public class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipeline
     private Stream getStream(final Long id) {
         Stream stream = null;
         if (id != null) {
-            securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
-            try {
+            try (SecurityHelper securityHelper = SecurityHelper.asProcUser(securityContext)) {
                 final FindStreamCriteria criteria = new FindStreamCriteria();
                 criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
                 criteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
@@ -112,8 +111,6 @@ public class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipeline
                 if (streamList != null && streamList.size() > 0) {
                     stream = streamList.get(0);
                 }
-            } finally {
-                securityContext.popUser();
             }
         }
 
@@ -122,15 +119,12 @@ public class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipeline
 
     private Stream getFirstChildStream(final Long id) {
         if (id != null) {
-            securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
-            try {
+            try (SecurityHelper securityHelper = SecurityHelper.asProcUser(securityContext)) {
                 final FindStreamCriteria criteria = new FindStreamCriteria();
                 criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
                 criteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
                 criteria.obtainParentStreamIdSet().add(id);
                 return streamStore.find(criteria).getFirst();
-            } finally {
-                securityContext.popUser();
             }
         }
 
@@ -160,15 +154,12 @@ public class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipeline
     }
 
     private Folder getFolder(final Stream stream) {
-        securityContext.pushUser(ServerTask.INTERNAL_PROCESSING_USER_TOKEN);
-        try {
+        try (SecurityHelper securityHelper = SecurityHelper.asProcUser(securityContext)) {
             final Feed feed = feedService.load(stream.getFeed());
             if (feed != null) {
                 return feed.getFolder();
             }
             return null;
-        } finally {
-            securityContext.popUser();
         }
     }
 }

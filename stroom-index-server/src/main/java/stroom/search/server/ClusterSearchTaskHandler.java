@@ -30,7 +30,6 @@ import stroom.index.shared.IndexFieldsMap;
 import stroom.index.shared.IndexService;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.MessageUtil;
-import stroom.pipeline.server.errorhandler.TerminatedException;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Param;
@@ -50,7 +49,6 @@ import stroom.search.server.shard.IndexShardSearchTaskHandler;
 import stroom.search.server.shard.IndexShardSearchTaskProducer;
 import stroom.search.server.shard.IndexShardSearchTaskProperties;
 import stroom.search.server.shard.IndexShardSearcherCache;
-import stroom.search.server.shard.TransferList;
 import stroom.security.SecurityContext;
 import stroom.streamstore.server.StreamStore;
 import stroom.task.server.ExecutorProvider;
@@ -79,7 +77,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -89,6 +87,8 @@ import java.util.stream.Collectors;
 @TaskHandlerBean(task = ClusterSearchTask.class)
 @Scope(StroomScope.TASK)
 class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeResult>, ErrorReceiver {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterSearchTaskHandler.class);
+
     /**
      * We don't want to collect more than 1 million doc's data into the queue by
      * default. When the queue is full the index shard data tasks will pause
@@ -97,10 +97,8 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     private static final int DEFAULT_MAX_STORED_DATA_QUEUE_SIZE = 1000000;
     private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterSearchTaskHandler.class);
-    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Stroom Result Sender", 5, 0, Integer.MAX_VALUE);
+    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Search Result Sender", 5, 0, Integer.MAX_VALUE);
 
-    private static final long ONE_SECOND = TimeUnit.SECONDS.toNanos(1);
     private final IndexService indexService;
     private final DictionaryService dictionaryService;
     private final TaskContext taskContext;
@@ -114,7 +112,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     private final SecurityContext securityContext;
     private final int maxBooleanClauseCount;
     private final int maxStoredDataQueueSize;
-    private final LinkedBlockingDeque<String> errors = new LinkedBlockingDeque<>();
+    private final LinkedBlockingQueue<String> errors = new LinkedBlockingQueue<>();
     private final AtomicBoolean searchComplete = new AtomicBoolean();
     private final AtomicBoolean sendingComplete = new AtomicBoolean();
     private final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider;
@@ -123,7 +121,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
     private ClusterSearchTask task;
 
-    private TransferList<String[]> storedData;
+    private LinkedBlockingQueue<String[]> storedData;
 
     @Inject
     ClusterSearchTaskHandler(final IndexService indexService,
@@ -188,8 +186,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                         throw new SearchException("No stored fields have been requested");
                     }
 
-                    // Get an array of stored index fields that will be used for
-                    // getting stored data.
+                    // Get an array of stored index fields that will be used for getting stored data.
                     final String[] storedFieldNames = new String[storedFields.length];
                     final FieldIndexMap storedFieldIndexMap = new FieldIndexMap();
                     for (int i = 0; i < storedFields.length; i++) {
@@ -197,8 +194,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                         storedFieldIndexMap.create(storedFieldNames[i], true);
                     }
 
-                    // See if we need to filter steams and if any of the
-                    // coprocessors need us to extract data.
+                    // See if we need to filter steams and if any of the coprocessors need us to extract data.
                     boolean filterStreams;
 
                     Map<CoprocessorKey, Coprocessor> coprocessorMap = null;
@@ -211,8 +207,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     // Create a map of index fields keyed by name.
                     final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getIndexFieldsObject());
 
-                    // Compile all of the result component options to optimise
-                    // pattern matching etc.
+                    // Compile all of the result component options to optimise pattern matching etc.
                     if (task.getCoprocessorMap() != null) {
                         coprocessorMap = new HashMap<>();
                         extractionCoprocessorsMap = new HashMap<>();
@@ -221,8 +216,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                             final CoprocessorKey coprocessorId = entry.getKey();
                             final CoprocessorSettings coprocessorSettings = entry.getValue();
 
-                            // Figure out where the fields required by this
-                            // coprocessor will be found.
+                            // Figure out where the fields required by this coprocessor will be found.
                             FieldIndexMap fieldIndexMap = storedFieldIndexMap;
                             if (coprocessorSettings.extractValues() && coprocessorSettings.getExtractionPipeline() != null
                                     && coprocessorSettings.getExtractionPipeline().getUuid() != null) {
@@ -242,8 +236,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                             if (coprocessor != null) {
                                 coprocessorMap.put(coprocessorId, coprocessor);
 
-                                // Find out what data extraction might be needed for
-                                // the coprocessors.
+                                // Find out what data extraction might be needed for the coprocessors.
                                 DocRef pipelineRef = null;
                                 if (coprocessorSettings.extractValues()
                                         && coprocessorSettings.getExtractionPipeline() != null) {
@@ -267,9 +260,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     try {
                         callback.onFailure(t);
                     } catch (final Throwable t2) {
-                        // If we failed to send the result or the source node
-                        // rejected the result because the
-                        // source task has been terminated then terminate the task.
+                        // If we failed to send the result or the source node rejected the result because the source task has been terminated then terminate the task.
                         LOGGER.info("Terminating search because we were unable to send result");
                         task.terminate();
                     }
@@ -297,6 +288,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
             final boolean searchComplete = ClusterSearchTaskHandler.this.searchComplete.get();
 
             if (!taskContext.isTerminated()) {
+                taskContext.setName("Search Result Sender");
                 taskContext.info("Creating search result");
 
                 // Produce payloads for each coprocessor.
@@ -339,20 +331,17 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
         CompletableFuture.supplyAsync(supplier, executor)
                 .thenAccept(complete -> {
                     if (complete) {
-                        // We have sent the last data we were expected to so tell the
-                        // parent cluster search that we have finished sending data.
+                        // We have sent the last data we were expected to so tell the parent cluster search that we have finished sending data.
                         sendingComplete.set(true);
 
                     } else {
-                        // If we aren't complete then send more using the supplied
-                        // sending frequency.
+                        // If we aren't complete then send more using the supplied sending frequency.
                         final long duration = System.currentTimeMillis() - now;
                         if (duration < frequency) {
                             ThreadUtil.sleep(frequency - duration);
                         }
 
-                        // Make sure we don't continue to execute this task if it should
-                        // have terminated.
+                        // Make sure we don't continue to execute this task if it should have terminated.
                         if (!taskContext.isTerminated()) {
                             // Try to send more data.
                             sendData(coprocessorMap, callback, frequency, executor);
@@ -360,9 +349,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     }
                 })
                 .exceptionally(t -> {
-                    // If we failed to send the result or the source node
-                    // rejected the result because the source task has been
-                    // terminated then terminate the task.
+                    // If we failed to send the result or the source node rejected the result because the source task has been terminated then terminate the task.
                     LOGGER.info("Terminating search because we were unable to send result");
                     task.terminate();
                     return null;
@@ -428,9 +415,8 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     }
                 };
 
-                // Create a transfer list to capture stored data from the index
-                // that can be used by coprocessors.
-                storedData = new TransferList<>(maxStoredDataQueueSize);
+                // Create a transfer list to capture stored data from the index that can be used by coprocessors.
+                storedData = new LinkedBlockingQueue<>(maxStoredDataQueueSize);
                 final AtomicLong hitCount = new AtomicLong();
 
                 // Update the configuration.
@@ -442,9 +428,10 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                 // Update config for the index shard search task executor.
                 indexShardSearchTaskExecutor.setMaxThreads(indexShardSearchTaskProperties.getMaxThreads());
 
-                // Make a task producer that will create event data extraction
-                // tasks when requested by the executor.
-                final IndexShardSearchTaskProducer indexShardSearchTaskProducer = new IndexShardSearchTaskProducer(task,
+                // Make a task producer that will create event data extraction tasks when requested by the executor.
+                final IndexShardSearchTaskProducer indexShardSearchTaskProducer = new IndexShardSearchTaskProducer(
+                        indexShardSearchTaskExecutor,
+                        task,
                         storedData,
                         indexShardSearcherCache,
                         task.getShards(),
@@ -453,66 +440,47 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                         this,
                         hitCount,
                         indexShardSearchTaskProperties.getMaxThreadsPerTask(),
+                        executorProvider,
                         indexShardSearchTaskHandlerProvider);
 
-                // Add the task producer to the task executor.
-                indexShardSearchTaskExecutor.addProducer(indexShardSearchTaskProducer);
-                try {
-                    // Kick off searching.
-                    indexShardSearchTaskExecutor.exec();
+                if (!filterStreams) {
+                    // If we aren't required to filter streams and aren't using pipelines to feed data to coprocessors then just do a simple data transfer to the coprocessors.
+                    transfer(extractionCoprocessorsMap, indexShardSearchTaskProducer);
 
-                    if (!filterStreams) {
-                        // If we aren't required to filter streams and aren't
-                        // using pipelines to feed data
-                        // to coprocessors then just do a simple data transfer
-                        // to the coprocessors.
-                        transfer(extractionCoprocessorsMap, indexShardSearchTaskProducer);
+                } else {
+                    // Update config for extraction task executor.
+                    extractionTaskExecutor.setMaxThreads(extractionTaskProperties.getMaxThreads());
 
-                    } else {
-                        // Update config for extraction task executor.
-                        extractionTaskExecutor.setMaxThreads(extractionTaskProperties.getMaxThreads());
+                    // Create an object to make event lists from raw index data.
+                    final StreamMapCreator streamMapCreator = new StreamMapCreator(task.getStoredFields(), this,
+                            streamStore, securityContext);
 
-                        // Create an object to make event lists from raw index
-                        // data.
-                        final StreamMapCreator streamMapCreator = new StreamMapCreator(task.getStoredFields(), this,
-                                streamStore, securityContext);
+                    // Make a task producer that will create event data extraction tasks when requested by the executor.
+                    final ExtractionTaskProducer extractionTaskProducer = new ExtractionTaskProducer(
+                            extractionTaskExecutor,
+                            task,
+                            streamMapCreator,
+                            storedData,
+                            extractionFieldIndexMap,
+                            extractionCoprocessorsMap,
+                            this,
+                            extractionTaskProperties.getMaxThreadsPerTask(),
+                            executorProvider,
+                            extractionTaskHandlerProvider,
+                            indexShardSearchTaskProducer,
+                            taskContext);
 
-                        // Make a task producer that will create event data
-                        // extraction tasks when requested by the executor.
-                        final ExtractionTaskProducer extractionTaskProducer = new ExtractionTaskProducer(task,
-                                streamMapCreator,
-                                storedData,
-                                extractionFieldIndexMap,
-                                extractionCoprocessorsMap,
-                                this,
-                                extractionTaskProperties.getMaxThreadsPerTask(),
-                                extractionTaskHandlerProvider);
+                    // Wait for completion.
+                    while (!indexShardSearchTaskProducer.isComplete() || !extractionTaskProducer.isComplete()) {
+                        taskContext.info(
+                                "Searching... " +
+                                        indexShardSearchTaskProducer.remainingTasks() +
+                                        " shards and " +
+                                        extractionTaskProducer.remainingTasks() +
+                                        " extractions remaining");
 
-                        // Add the task producer to the task executor.
-                        extractionTaskExecutor.addProducer(extractionTaskProducer);
-                        try {
-                            // Wait for completion.
-                            while (!task.isTerminated() && (!indexShardSearchTaskProducer.isComplete()
-                                    || !extractionTaskProducer.isComplete())) {
-                                taskContext.info(
-                                        "Searching... " +
-                                                indexShardSearchTaskProducer.remainingTasks() +
-                                                " shards and " +
-                                                extractionTaskProducer.remainingTasks() +
-                                                " extractions remaining");
-
-                                // Keep trying to execute extraction tasks.
-                                extractionTaskExecutor.exec();
-                                ThreadUtil.sleep(1000);
-                            }
-                        } finally {
-                            // Remove the task producer from the task executor.
-                            extractionTaskExecutor.removeProducer(extractionTaskProducer);
-                        }
+                        ThreadUtil.sleep(1000);
                     }
-                } finally {
-                    // Remove the task producer from the task executor.
-                    indexShardSearchTaskExecutor.removeProducer(indexShardSearchTaskProducer);
                 }
             }
         } catch (final Exception pEx) {
@@ -522,46 +490,27 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
     private void transfer(final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap,
                           final IndexShardSearchTaskProducer indexShardSearchTaskProducer) {
-        // If we aren't required to filter streams and aren't using pipelines to
-        // feed data to coprocessors then just do a simple data transfer to the
-        // coprocessors.
-        final Set<Coprocessor> coprocessors = extractionCoprocessorsMap.get(null);
-        boolean complete = false;
-        List<String[]> list = null;
+        try {
+            // If we aren't required to filter streams and aren't using pipelines to feed data to coprocessors then just do a simple data transfer to the coprocessors.
+            final Set<Coprocessor> coprocessors = extractionCoprocessorsMap.get(null);
+            boolean complete = false;
+            while (!complete && !task.isTerminated()) {
+                // Check if search is finished before polling for stored data.
+                final boolean searchComplete = indexShardSearchTaskProducer.isComplete();
+                // Poll for the next stored data result.
+                final String[] values = storedData.poll(1, TimeUnit.SECONDS);
 
-        while (!complete && !task.isTerminated()) {
-            complete = indexShardSearchTaskProducer.isComplete();
-
-            if (complete) {
-                // If we are finished then we don't need to wait for items to
-                // arrive in the list.
-                list = storedData.swap();
-            } else {
-                // Search is in progress so wait for items to arrive in the list
-                // if necessary.
-                try {
-                    list = storedData.swap(ONE_SECOND);
-                } catch (final InterruptedException e) {
-                    // Ignore.
-                }
-            }
-
-            // Get stored data for every doc id in the list.
-            if (list != null && list.size() > 0) {
-                // We are not filtering data which means we must also not be
-                // extracting data. In this case pass
-                // raw values to the set of coprocessors that require raw values
-                // with no extraction.
-                for (final String[] values : list) {
-                    if (task.isTerminated()) {
-                        throw new TerminatedException();
-                    }
-
+                if (values != null) {
+                    // Send the data to all coprocessors.
                     for (final Coprocessor coprocessor : coprocessors) {
                         coprocessor.receive(values);
                     }
+                } else {
+                    complete = searchComplete;
                 }
             }
+        } catch (final Exception e) {
+            error(e.getMessage(), e);
         }
     }
 
@@ -578,7 +527,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
         if (e == null || !(e instanceof TaskTerminatedException)) {
             final String msg = MessageUtil.getMessage(message, e);
-            errors.push(msg);
+            errors.offer(msg);
         }
     }
 

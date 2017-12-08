@@ -103,11 +103,5 @@ public class TestState {
         public int getClassTestCount() {
             return classTestCount;
         }
-
-        @Override
-        protected void finalize() throws Throwable {
-            destroy();
-            super.finalize();
-        }
     }
 }

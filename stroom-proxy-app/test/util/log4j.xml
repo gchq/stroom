@@ -11,10 +11,6 @@
   <logger name="stroom">
     <level value="debug" />
   </logger>
-
-  <logger name="net.sf.ehcache">
-    <level value="debug" />
-  </logger>
   
   <root>
     <level value="error" />

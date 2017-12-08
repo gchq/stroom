@@ -30,16 +30,13 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Component
 @Scope(StroomScope.TASK)
 public class StreamCloser implements Closeable {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamCloser.class);
     private final List<Closeable> list = new ArrayList<>();
-    private final Map<Closeable, IOException> map = new HashMap<>();
 
     @Resource
     private StreamStore streamStore;
@@ -72,12 +69,9 @@ public class StreamCloser implements Closeable {
     }
 
     public StreamCloser add(final Closeable closeable) {
-        final IOException ioException = new IOException();
-
         // Add items to the beginning of the list so that they are closed in the
         // opposite order to the order they were opened in.
         list.add(0, closeable);
-        map.put(closeable, ioException);
         return this;
     }
 
@@ -150,22 +144,11 @@ public class StreamCloser implements Closeable {
             }
         }
 
-        // Remove all items from the list and map as they are now closed.
+        // Remove all items from the list as they are now closed.
         list.clear();
-        map.clear();
 
         if (ioException != null) {
             throw ioException;
         }
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        // Error on all unclosed streams.
-        for (final Closeable closeable : list) {
-            final IOException e = map.get(closeable);
-            LOGGER.error("Failed to close " + closeable.getClass().getSimpleName() + " stream opened here", e);
-        }
-        super.finalize();
     }
 }

@@ -1,4 +1,5 @@
 dependencies {
+    //testCompile project(':stroom-core-server')
     compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
     compile project(':stroom-entity-shared')
@@ -14,6 +15,7 @@ dependencies {
     compile urlDependencies.get(urlLibs.hadoopCommonShaded)
     compile urlDependencies.get(urlLibs.hadoopHdfsShaded)
 
+    compile libs.stroomQueryApi
     compile libs.spring_beans
     compile libs.spring_context
     compile libs.spring_tx
@@ -21,7 +23,6 @@ dependencies {
     compile libs.slf4j_api
     compile libs.guava
     compile libs.commons_lang
-    compile libs.ehcache_core
     compile libs.saxon_he
     compile libs.jackson_core
     compile libs.xml_apis
@@ -30,10 +31,11 @@ dependencies {
     compile libs.ws_rs_api
     compile libs.javax_annotation_api
 
-    testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
+    testCompile project(':stroom-test-common')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
 
+    testCompile libs.commons_io
     testCompile libs.junit
 
     //the following logging libs are needed when running junits outside dropwizard

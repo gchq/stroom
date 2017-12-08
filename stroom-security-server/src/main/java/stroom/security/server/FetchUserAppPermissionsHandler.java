@@ -41,6 +41,6 @@ public class FetchUserAppPermissionsHandler
 
     @Override
     public UserAppPermissions exec(final FetchUserAppPermissionsAction action) {
-        return userAppPermissionsCache.getOrCreate(action.getUserRef());
+        return userAppPermissionsCache.get(action.getUserRef());
     }
 }

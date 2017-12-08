@@ -16,7 +16,6 @@
 
 package stroom.search.server.extraction;
 
-import net.sf.ehcache.CacheException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
@@ -108,7 +107,7 @@ public class ExtractionTaskHandler {
         try {
             securityContext.elevatePermissions();
 
-            taskMonitor.setName("Search data extraction");
+            taskMonitor.setName("Extraction");
             if (!taskMonitor.isTerminated()) {
                 final String streamId = String.valueOf(task.getStreamId());
                 taskMonitor.info("Extracting " + task.getEventIds().length + " records from stream " + streamId);
@@ -138,7 +137,7 @@ public class ExtractionTaskHandler {
             }
 
             // Create the parser.
-            final PipelineData pipelineData = pipelineDataCache.getOrCreate(pipelineEntity);
+            final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
             final Pipeline pipeline = pipelineFactory.create(pipelineData);
             if (pipeline == null) {
                 throw new SearchException("Unable to create parser for pipeline: " + pipelineRef);
@@ -164,12 +163,6 @@ public class ExtractionTaskHandler {
             // Process the stream segments.
             processData(task.getStreamId(), task.getEventIds(), pipelineEntity, pipeline);
 
-        } catch (final CacheException e) {
-            if (e.getCause() != null) {
-                error(e.getCause().getMessage(), e.getCause());
-            } else {
-                error(e.getMessage(), e);
-            }
         } catch (final Exception e) {
             error(e.getMessage(), e);
         }

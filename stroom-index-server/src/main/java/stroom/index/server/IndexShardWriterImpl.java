@@ -352,15 +352,6 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     }
 
     @Override
-    protected void finalize() throws Throwable {
-        if (open.get()) {
-            LAMBDA_LOGGER.error(() -> "finalize() - Failed to close index");
-        }
-
-        super.finalize();
-    }
-
-    @Override
     public IndexWriter getWriter() {
         return indexWriter;
     }

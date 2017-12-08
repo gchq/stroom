@@ -1,7 +1,5 @@
 package stroom.proxy.handler.remoteclient;
 
-import com.googlecode.ehcache.annotations.Cacheable;
-import com.googlecode.ehcache.annotations.KeyGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.server.GetFeedStatusRequest;
@@ -21,7 +19,6 @@ public class RemoteFeedServiceCacheable implements LocalFeedService {
 
     private Map<GetFeedStatusRequest, GetFeedStatusResponse> lastKnownRepsonse = new ConcurrentHashMap<GetFeedStatusRequest, GetFeedStatusResponse>();
 
-    @Cacheable(cacheName = "remoteCache", keyGenerator = @KeyGenerator(name = "ListCacheKeyGenerator"))
     public GetFeedStatusResponse getFeedStatus(GetFeedStatusRequest request) {
         GetFeedStatusResponse response = null;
         try {

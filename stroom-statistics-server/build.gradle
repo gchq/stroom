@@ -11,13 +11,15 @@ dependencies {
     compile project(':stroom-connectors')
 
     compile urlDependencies.get(urlLibs.hadoopCommonShaded)
-    compile urlDependencies.get(urlLibs.stroomExpression)
-    compile urlDependencies.get(urlLibs.stroomQueryCommon)
+
+    compile libs.stroomQueryApi
+    compile libs.stroomExpression
+    compile libs.stroomQueryCommon
+    compile libs.stroomStatsSchema
 
     compile libs.c3p0
     compile libs.commons_lang
     compile libs.commons_pool2
-    compile libs.ehcache_core
     compile libs.flyway_core
     compile libs.guava
     compile (libs.hbase) { transitive = false } //hbase-common is currently only used for its Bytes class, so exclude all its deps

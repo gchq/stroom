@@ -8,19 +8,27 @@ buildscript {
     dependencies {
         classpath group: 'gchq', name: 'urlDependencyPlugin', version: 'v0.2.0'
         classpath group: 'ca.cutterslade.gradle', name: 'gradle-dependency-analyze', version: '1.2.0'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
     }
 }
 
 plugins {
     //plugin for downloading content from the 'net
-    id "de.undercouch.download" version "3.2.0"
+    id "de.undercouch.download" version "3.2.0" apply false
 
     //plugin for producing a tree of task dependencies, run task 'taskTree'
-    id "com.dorongold.task-tree" version "1.3"
+    id "com.dorongold.task-tree" version "1.3" apply true
+
+    id 'com.github.johnrengelman.shadow' version '2.0.1' apply false
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.1'
 }
 
 apply plugin: 'gchq.urldependencies'
 apply plugin: 'ca.cutterslade.analyze'
+apply plugin: 'com.jfrog.bintray' 
 
 ext.stroomPluginsDir = System.getProperty("user.home") + "/.stroom/plugins"
 
@@ -28,12 +36,12 @@ ext.stroomPluginsDir = System.getProperty("user.home") + "/.stroom/plugins"
 //use that, else use a default value
 ext.getPropertyOrDefault = { propName, defaultValue -> 
     def val;
-    if (project.hasProperty(propName) && project.getProperty(propName) != "unspecified") {
+    if (project.hasProperty(propName) && project.getProperty(propName) != "unspecified" && project.getProperty(propName) != "") {
         val = project.getProperty(propName)
-        println "Using propery $propName with value $val"
+        println "Using property [$propName] with value [$val]"
     } else {
         val = defaultValue
-        println "Propery $propName has no value, using default value $val"
+        println "Property [$propName] has no value, using default value [$val]"
     }
     return val;
 }
@@ -52,12 +60,12 @@ ext.versions = [
 
     //------Stroom-repos---------------
 //    stroomProxyRepo: 'v5.1-beta.8',
-    eventLogging: 'v3.1.1_schema-v3.1.2',
+    eventLogging: 'v3.1.2_schema-v3.1.2',
     hadoopCommonShaded: 'v2.6.4-3',
     hadoopHdfsShaded: 'v2.6.4',
-    stroomExpression: 'v1.0.0', 
-    stroomQuery: 'v2.0.0-alpha.5', //same version for both stroom-query-api and stroom-query-common
-    stroomStats: 'v0.6.0-alpha',
+    stroomExpression: 'v1.0.1',
+    stroomQuery: 'v2.0.0-alpha.11', //same version for both stroom-query-api and stroom-query-common
+    stroomStats: 'v0.6.0-alpha.2',
 
     //------------3rd-party------------
     curator: '2.12.0', //must be chosen to be compatible with the ZK version in CDH 5.10
@@ -79,14 +87,6 @@ ext.versions = [
 
 //lib names for urlDependenciesPlugin
 ext.urlLibs = [
-    stroomQueryApi: "stroom-query-api-$versions.stroomQuery",
-    stroomQueryApiSources: "stroom-query-api-$versions.stroomQuery-sources",
-    stroomQueryCommon: "stroom-query-common-$versions.stroomQuery",
-    stroomQueryCommonSources: "stroom-query-common-$versions.stroomQuery-sources",
-    stroomExpression: "stroom-expression-$versions.stroomExpression",
-    stroomStatsSchema: "stroom-stats-schema-$versions.stroomStats",
-//    stroomProxyRepo: "stroom-proxy-repo-$versions.stroomProxyRepo",
-    eventLogging: "event-logging-$versions.eventLogging",
     hadoopCommonShaded: "hadoop-common-shaded-$versions.hadoopCommonShaded-all",
     hadoopHdfsShaded: "hadoop-hdfs-shaded-$versions.hadoopHdfsShaded-all",
     zzDUMMYzz: "makes sorting easier"
@@ -94,12 +94,22 @@ ext.urlLibs = [
 
 //dependency strings for use in sub projects
 ext.libs = [
+    //------Stroom-libs---------------
+    eventLogging: "event-logging:event-logging:$versions.eventLogging",
+    stroomQueryApi: "stroom:stroom-query-api:$versions.stroomQuery",
+    stroomQueryAudit: "stroom:stroom-query-audit:$versions.stroomQuery",
+    stroomQueryCommon: "stroom:stroom-query-common:$versions.stroomQuery",
+    stroomExpression: "stroom:stroom-expression:$versions.stroomExpression",
+    stroomStatsSchema: "stroom:stroom-stats-schema:$versions.stroomStats",
+
+    //------3rd Party-libs---------------
     aopalliance: "aopalliance:aopalliance:1.0",
     aspectjrt: "org.aspectj:aspectjrt:1.8.10",
     aspectjweaver: "org.aspectj:aspectjweaver:1.8.10",
     assertj_core: "org.assertj:assertj-core:3.6.2",
     c3p0: "com.mchange:c3p0:0.9.5.2",
     commons_compress: "org.apache.commons:commons-compress:1.12",
+    commons_exec: "org.apache.commons:commons-exec:1.3",
     commons_fileupload: "commons-fileupload:commons-fileupload:1.3.2",
     commons_io: "commons-io:commons-io:2.5",
     commons_lang: "commons-lang:commons-lang:2.6",
@@ -117,8 +127,6 @@ ext.libs = [
     dropwizard_metrics_healthchecks: "io.dropwizard.metrics:metrics-healthchecks:$versions.dropwizard_metrics",
     dropwizard_servlets: "io.dropwizard:dropwizard-servlets:$versions.dropwizard",
     dropwizard_testing: "io.dropwizard:dropwizard-testing:$versions.dropwizard",
-    ehcache_core: "net.sf.ehcache:ehcache-core:2.6.11",
-    ehcache_spring_annotations: "com.googlecode.ehcache-spring-annotations:ehcache-spring-annotations:1.2.0",
     flyway_core: "org.flywaydb:flyway-core:4.0.3",
     gin: "com.google.gwt.inject:gin:2.1.2",
     guava: "com.google.guava:guava:21.0", //>=v21 removes MoreExecutors.sameThreadExecutor() which is needed by curator 2.11
@@ -207,23 +215,40 @@ ext.contentPacks = [
     'event-logging-xml-schema': 'v3.1.1'
 ]
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.1'
+//defines a list of gradle projects that we will publish with maven/bintray
+def projectsToBePublished = subprojects.findAll { project -> 
+    project.path in [
+        ':stroom-entity-shared',
+        ':stroom-util',
+        ':stroom-util-shared',
+        'zzDUMMYzz to ease sorting'
+    ] 
 }
 
+//defines a list of gradle project paths that need to expose their test jars for other
+//projects to use
+def projectsWithSharedTestJars = subprojects.findAll { project -> 
+    project.path in [
+        ':stroom-core-server',
+        ':stroom-dashboard-server',
+        ':stroom-entity-shared',
+        ':stroom-index-server',
+        ':stroom-security-server',
+        ':stroom-util',
+        'zzDUMMYzz to ease sorting'
+    ]
+}
+
+//Configuration applicable to all projects
 allprojects {
-    apply plugin: 'maven'
-    apply plugin: 'maven-publish'
-
-    group = 'stroom'
-    version = versions.stroom
 }
 
+//Configuration applicable to all sub projects
 subprojects {
-    apply plugin: 'java'
-    //analyze missing dependencies for the code base
-    apply plugin: 'ca.cutterslade.analyze'
+    //println "Configuring subproject ${project.path}"
 
+    apply plugin: 'java'
+    apply plugin: 'ca.cutterslade.analyze' //analyze missing dependencies for the code base
     apply plugin: 'idea'
 
     sourceCompatibility = 1.8
@@ -242,9 +267,10 @@ subprojects {
     }
 
     configurations {
-        testArtifacts
-        sourceArtifacts
 
+        //ensure deps don't bring any logging implementations with them as this will
+        //conflict with logback. Also replace any log4j deps with log4j-over-slf4j
+        //so dependency jars work with slf4j
         all {
             exclude group: "org.slf4j", module: "slf4j-log4j12"
             exclude group: "log4j", module: "log4j"
@@ -268,28 +294,11 @@ subprojects {
         integrationTestRuntime.extendsFrom testRuntime
     }
 
-    task testJar(type: Jar) {
-        baseName = "${project.name}-test"
-        from sourceSets.test.output
-    }
-    task sources(type: Jar) {
-        baseName = "${project.name}-source"
-        from sourceSets.main.allSource
-    }
-    artifacts {
-        testArtifacts testJar
-        sourceArtifacts sources
-    }
-
-    task packageTests(type: Jar) {
-        from sourceSets.test.output
-        classifier = 'tests'
-    }
-    artifacts.archives packageTests
-
     repositories {
         mavenLocal()
-        maven { url "http://repo.maven.apache.org/maven2" }
+        jcenter()
+        maven { url "https://dl.bintray.com/stroom/event-logging" }
+        maven { url "https://dl.bintray.com/stroom/stroom" }
     }
 
     // This means the reports from our integration tests won't over-write the reports from our unit tests.
@@ -322,10 +331,10 @@ subprojects {
         }
     }
 
-clean{
-    //clear out the 'out' dirs used by intelliJ
-    delete "out"
-}
+    clean{
+        //clear out the 'out' dirs used by intelliJ
+        delete "out"
+    }
 
     //ensure we download our libs before compiling java
     tasks.compileJava.dependsOn downloadUrlDependencies
@@ -333,6 +342,128 @@ clean{
     // These lines pull the integration test task into our build process.
     tasks.check.dependsOn integrationTest
     tasks.integrationTest.mustRunAfter test
+}
+
+//configures only those projects in publishedProjectsPaths
+configure(projectsToBePublished) {
+
+    println "Configuring ${project.path} for publishing"
+
+    apply plugin: 'maven'
+    apply plugin: 'maven-publish'
+    apply plugin: 'com.jfrog.bintray' 
+
+    group = 'stroom'
+    version = versions.stroom
+
+    task sourcesJar(type: Jar, dependsOn: classes) {
+        classifier = 'sources'
+        from sourceSets.main.allSource
+    }
+
+    task javadocJar(type: Jar, dependsOn: javadoc) {
+        classifier = 'javadoc'
+        from javadoc.destinationDir
+    }
+
+    artifacts {
+        archives sourcesJar
+        archives javadocJar
+    }
+
+    def pomConfig = {
+        licenses {
+            license {
+                name "The Apache Software License, Version 2.0"
+                url "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                distribution "repo"
+            }
+        }
+        scm {
+           url "https://github.com/stroom/stroom"
+        }
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                artifact sourcesJar
+                artifact javadocJar
+                pom.withXml {
+                    def root = asNode()
+                    root.appendNode('name', project.name)
+                    root.children().last() + pomConfig
+                }
+            }
+        }
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+            }
+        }
+    }
+
+    //configuration for the bintray plugin for uploading maven artefacts to bintray
+    //see https://github.com/bintray/gradle-bintray-plugin
+    //run task bintrayUpload to push the files, assuming BINTRAY_USER/KEY are set as env vars
+    bintray {
+        //Must never write these to log or system out
+        user = System.getenv('BINTRAY_USER') //set in Travis UI
+        key = System.getenv('BINTRAY_KEY') //set in Travis UI
+
+        //The maven plugin publications to push to bintray
+        publications = ['mavenJava']
+
+        //immediately make the artefacts public
+        publish = true
+
+        pkg {
+            repo = 'stroom'
+            name = 'stroom'
+            userOrg = 'stroom'
+            licenses = ['Apache-2.0']
+            vcsUrl = 'https://github.com/gchq/stroom.git'
+            version {
+                name = "${versions.stroom}"
+                desc = "stroom-${versions.stroom}"
+                released  = new Date()
+                vcsTag = "${versions.stroom}"
+                gpg {
+                    //Bintray will self-sign the files
+                    sign = true //Determines whether to GPG sign the files. The default is false
+                }
+            }
+        }
+    }
+}
+
+//configuration specific to projects that expose their test jars for other projects to use
+configure(projectsWithSharedTestJars) {
+
+    println "Configuring ${project.path} to expose its test jars"
+
+    configurations {
+        testArtifacts
+    }
+
+    task testJar(type: Jar) {
+        baseName = "${project.name}-test"
+        from sourceSets.test.output
+    }
+
+    artifacts {
+        testArtifacts testJar
+    }
+
+    task packageTests(type: Jar) {
+        from sourceSets.test.output
+        classifier = 'tests'
+    }
+
+    artifacts.archives packageTests
 }
 
 // NOT SURE IF WE NEED THIS NOW
@@ -386,55 +517,8 @@ task setupSampleData() {
     dependsOn ':stroom-integrationtest:setupSampleData'
 }
 
-project(':stroom-util') {
-    publishing.publications {
-        mavenJava(MavenPublication) {
-            from components.java
-        }
-    }
-}
-
-project(':stroom-util-shared') {
-    publishing.publications {
-        mavenJava(MavenPublication) {
-            from components.java
-        }
-    }
-}
-
-project(':stroom-entity-shared') {
-    publishing.publications {
-        mavenJava(MavenPublication) {
-            from components.java
-        }
-    }
-}
-
 urlDependencies {
     libs "libs"
-    compile(urlLibs.stroomQueryApi,
-        "https://github.com/gchq/stroom-query/releases/download/$versions.stroomQuery/${urlLibs.stroomQueryApi}.jar")
-
-    compile(urlLibs.stroomQueryApiSources,
-        "https://github.com/gchq/stroom-query/releases/download/$versions.stroomQuery/${urlLibs.stroomQueryApiSources}.jar")
-
-    compile(urlLibs.stroomQueryCommon,
-            "https://github.com/gchq/stroom-query/releases/download/$versions.stroomQuery/${urlLibs.stroomQueryCommon}.jar")
-
-    compile(urlLibs.stroomQueryCommonSources,
-            "https://github.com/gchq/stroom-query/releases/download/$versions.stroomQuery/${urlLibs.stroomQueryCommonSources}.jar")
-
-    compile(urlLibs.stroomExpression,
-            "https://github.com/gchq/stroom-expression/releases/download/$versions.stroomExpression/${urlLibs.stroomExpression}.jar")
-
-    compile(urlLibs.stroomStatsSchema,
-            "https://github.com/gchq/stroom-stats/releases/download/$versions.stroomStats/${urlLibs.stroomStatsSchema}.jar")
-
-//    compile(urlLibs.stroomProxyRepo,
-//            "https://github.com/gchq/stroom-proxy/releases/download/$versions.stroomProxyRepo/${urlLibs.stroomProxyRepo}.jar")
-
-    compile(urlLibs.eventLogging,
-            "https://github.com/gchq/event-logging/releases/download/$versions.eventLogging/${urlLibs.eventLogging}.jar")
 
     compile(urlLibs.hadoopHdfsShaded,
             "https://github.com/gchq/hadoop-hdfs-shaded/releases/download/$versions.hadoopHdfsShaded/${urlLibs.hadoopHdfsShaded}.jar")

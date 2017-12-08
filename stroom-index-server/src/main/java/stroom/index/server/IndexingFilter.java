@@ -104,7 +104,7 @@ class IndexingFilter extends AbstractXMLFilter {
             }
 
             // Get the index and index fields from the cache.
-            final IndexConfig indexConfig = indexConfigCache.getOrCreate(DocRefUtil.create(index));
+            final IndexConfig indexConfig = indexConfigCache.get(DocRefUtil.create(index));
             if (indexConfig == null) {
                 log(Severity.FATAL_ERROR, "Unable to load index", null);
                 throw new LoggedException("Unable to load index");

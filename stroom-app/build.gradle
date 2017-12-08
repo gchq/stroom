@@ -1,5 +1,5 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '1.2.4'
+    //id 'com.github.johnrengelman.shadow' version '2.0.0'
     id "com.benjaminsproule.swagger" version "0.1.4"
 
     //plugin to generate a list of licennces for all deps and to check for incompatibilities
@@ -14,6 +14,7 @@ def jarName = 'stroom-app.jar'
 def fatJarName = 'stroom-app-all.jar'
 
 apply plugin: 'application'
+apply plugin: 'com.github.johnrengelman.shadow'
 mainClassName = 'stroom.startup.App'
 
 jar {
@@ -57,14 +58,6 @@ dependencies {
     compile project(':stroom-pipeline')
     compile project(':stroom-dashboard-server')
     compile project(':stroom-statistics-server')
-
-    compile urlDependencies.get(urlLibs.stroomQueryApi)
-    compile urlDependencies.get(urlLibs.stroomQueryCommon)
-
-
-
-
-
 
     //    compile project(':stroom-module')
 //
@@ -205,6 +198,11 @@ swagger {
         outputPath = "${swaggerDir}/document.html"
         swaggerDirectory = "${swaggerDir}"
     }
+}
+
+task dist(type: Zip) {
+    from 'src/dist'
+    from shadowJar.outputs.files
 }
 
 tasks.build.dependsOn generateSwaggerDocumentation

@@ -4,6 +4,7 @@ dependencies {
 
     runtime project(':stroom-security-api')
 
+    compile libs.stroomQueryApi
     compile libs.hibernate_jpa_api
     compile libs.validation_api
     compile libs.hibernate_core

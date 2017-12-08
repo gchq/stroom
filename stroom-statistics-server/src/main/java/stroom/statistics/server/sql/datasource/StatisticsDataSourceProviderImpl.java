@@ -20,9 +20,11 @@ import org.springframework.stereotype.Component;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
+import stroom.pool.SecurityHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.security.SecurityContext;
 import stroom.statistics.server.sql.Statistics;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
@@ -37,25 +39,30 @@ import java.util.List;
 public class StatisticsDataSourceProviderImpl implements StatisticsDataSourceProvider {
     private final StatisticStoreCache statisticStoreCache;
     private final Statistics statistics;
+    private final SecurityContext securityContext;
 
     @Inject
     StatisticsDataSourceProviderImpl(final StatisticStoreCache statisticStoreCache,
-                                     final Statistics statistics) {
+                                     final Statistics statistics,
+                                     final SecurityContext securityContext) {
 
         this.statisticStoreCache = statisticStoreCache;
         this.statistics = statistics;
+        this.securityContext = securityContext;
     }
 
     @Override
     public DataSource getDataSource(final DocRef docRef) {
-        final StatisticStoreEntity entity = statisticStoreCache.getStatisticsDataSource(docRef);
-        if (entity == null) {
-            return null;
+        try (final SecurityHelper securityHelper = SecurityHelper.elev(securityContext)) {
+            final StatisticStoreEntity entity = statisticStoreCache.getStatisticsDataSource(docRef);
+            if (entity == null) {
+                return null;
+            }
+
+            final List<DataSourceField> fields = buildFields(entity);
+
+            return new DataSource(fields);
         }
-
-        final List<DataSourceField> fields = buildFields(entity);
-
-        return new DataSource(fields);
     }
 
     /**

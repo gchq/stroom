@@ -75,8 +75,6 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     }
 
     private void buildCombinedData() throws PipelineModelException {
-        final PipelineDataMerger pipelineDataMerger = new PipelineDataMerger();
-
         // Merge pipeline data together.
         List<PipelineData> combined;
         if (baseStack != null) {
@@ -92,8 +90,8 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
             combined.add(pipelineData);
         }
 
+        final PipelineDataMerger pipelineDataMerger = new PipelineDataMerger();
         pipelineDataMerger.merge(combined);
-
         combinedData = pipelineDataMerger;
     }
 

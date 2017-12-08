@@ -25,8 +25,8 @@ import java.lang.annotation.Target;
 /**
  * Annotation to indicate that the annotated method will be called on application startup
  * For the avoidance of doubt
- * priority < 0 = low priority
- * priority > 0 = high priority
+ * priority less than 0 = low priority
+ * priority greater than 0 = high priority
  */
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
