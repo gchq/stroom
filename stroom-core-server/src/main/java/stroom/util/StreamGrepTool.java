@@ -128,7 +128,7 @@ public class StreamGrepTool extends AbstractCommandLineTool {
             createEndTime = createPeriodTo;
         }
 
-        builder.addTerm(StreamDataSource.CREATED, Condition.BETWEEN, createStartTime + "," + createEndTime);
+        builder.addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, createStartTime + "," + createEndTime);
 
         final StreamStore streamStore = appContext.getBean(StreamStore.class);
         final FeedServiceImpl feedService = appContext.getBean(FeedServiceImpl.class);

@@ -459,7 +459,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         criteria.obtainFindStreamCriteria().getFetchSet().add(PipelineEntity.ENTITY_TYPE);
         criteria.obtainFindStreamCriteria().getFetchSet().add(StreamProcessor.ENTITY_TYPE);
         criteria.obtainFindStreamCriteria().getFetchSet().add(StreamType.ENTITY_TYPE);
-        criteria.obtainFindStreamCriteria().setSort(StreamDataSource.CREATED, Direction.DESCENDING, false);
+        criteria.obtainFindStreamCriteria().setSort(StreamDataSource.CREATE_TIME, Direction.DESCENDING, false);
 
         return criteria;
     }

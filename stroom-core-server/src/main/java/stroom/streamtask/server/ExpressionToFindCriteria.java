@@ -39,7 +39,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
-public class SourceSelectorToFindCriteria {
+public class ExpressionToFindCriteria {
     private final FeedService feedService;
     private final PipelineService pipelineService;
     private final DictionaryStore dictionaryStore;
@@ -51,10 +51,10 @@ public class SourceSelectorToFindCriteria {
             .collect(Collectors.toMap(StreamType::getDisplayValue, StreamType::getId));
 
     @Inject
-    public SourceSelectorToFindCriteria(@Named("cachedFeedService") final FeedService feedService,
-                                        @Named("cachedPipelineService") final PipelineService pipelineService,
-                                        final DictionaryStore dictionaryStore,
-                                        final StreamAttributeKeyService streamAttributeKeyService) {
+    public ExpressionToFindCriteria(@Named("cachedFeedService") final FeedService feedService,
+                                    @Named("cachedPipelineService") final PipelineService pipelineService,
+                                    final DictionaryStore dictionaryStore,
+                                    final StreamAttributeKeyService streamAttributeKeyService) {
         this.feedService = feedService;
         this.pipelineService = pipelineService;
         this.dictionaryStore = dictionaryStore;
@@ -220,10 +220,10 @@ public class SourceSelectorToFindCriteria {
                 case StreamDataSource.PARENT_STREAM_ID:
                     criteria.setParentStreamIdSet(convertEntityIdSetLongValues(criteria.getParentStreamIdSet(), field, getAllValues(terms), Long::valueOf));
                     break;
-                case StreamDataSource.CREATED:
+                case StreamDataSource.CREATE_TIME:
                     setPeriod(criteria.obtainCreatePeriod(), terms);
                     break;
-                case StreamDataSource.EFFECTIVE:
+                case StreamDataSource.EFFECTIVE_TIME:
                     setPeriod(criteria.obtainEffectivePeriod(), terms);
                     break;
                 case StreamDataSource.STATUS_TIME:

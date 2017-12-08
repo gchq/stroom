@@ -94,7 +94,7 @@ public final class SendStreamDataClient {
         if (argsMap.containsKey(RECEIVED_PERIOD_FROM) || argsMap.containsKey(RECEIVED_PERIOD_TO)) {
             final String createStartTime = argsMap.get(RECEIVED_PERIOD_FROM);
             final String createEndTime = argsMap.get(RECEIVED_PERIOD_TO);
-            builder.addTerm(StreamDataSource.CREATED, Condition.BETWEEN, createStartTime + "," + createEndTime);
+            builder.addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, createStartTime + "," + createEndTime);
         }
         final URL url = new URL(argsMap.get(SEND_URL));
         final StreamStore streamStore = (StreamStore) appContext.getBean("streamStore");

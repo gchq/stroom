@@ -116,7 +116,7 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
 
             final FindStreamCriteria streamCriteria = new FindStreamCriteria();
             streamCriteria.copyFrom(criteria.getFindStreamCriteria());
-            streamCriteria.setSort(StreamDataSource.CREATED, Direction.DESCENDING, false);
+            streamCriteria.setSort(StreamDataSource.CREATE_TIME, Direction.DESCENDING, false);
 
             final boolean includeRelations = streamCriteria.getFetchSet().contains(Stream.ENTITY_TYPE);
             streamCriteria.setFetchSet(new HashSet<>());

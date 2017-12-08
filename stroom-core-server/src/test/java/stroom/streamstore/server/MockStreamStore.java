@@ -16,7 +16,6 @@
 
 package stroom.streamstore.server;
 
-import event.logging.BaseAdvancedQueryItem;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseResultList;
@@ -27,7 +26,7 @@ import stroom.io.SeekableInputStream;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.streamtask.server.SourceSelectorToFindCriteria;
+import stroom.streamtask.server.ExpressionToFindCriteria;
 import stroom.util.collections.TypedMap;
 import stroom.util.spring.StroomSpringProfiles;
 
@@ -55,7 +54,7 @@ public class MockStreamStore implements StreamStore, Clearable {
             .fromMap(new HashMap<>());
     private final Set<Stream> openInputStream = new HashSet<>();
     private final Map<Long, Stream> streamMap = new HashMap<>();
-    private final SourceSelectorToFindCriteria sourceSelectorToFindCriteria;
+    private final ExpressionToFindCriteria expressionToFindCriteria;
 
     private Stream lastStream;
 
@@ -65,12 +64,12 @@ public class MockStreamStore implements StreamStore, Clearable {
     private long currentId;
 
     public MockStreamStore() {
-        this.sourceSelectorToFindCriteria = null;
+        this.expressionToFindCriteria = null;
     }
 
     @Inject
-    public MockStreamStore(final SourceSelectorToFindCriteria sourceSelectorToFindCriteria) {
-        this.sourceSelectorToFindCriteria = sourceSelectorToFindCriteria;
+    public MockStreamStore(final ExpressionToFindCriteria expressionToFindCriteria) {
+        this.expressionToFindCriteria = expressionToFindCriteria;
     }
 
     /**
@@ -352,7 +351,7 @@ public class MockStreamStore implements StreamStore, Clearable {
 
     @Override
     public BaseResultList<Stream> find(final FindStreamCriteria criteria) throws RuntimeException {
-        final OldFindStreamCriteria oldFindStreamCriteria = sourceSelectorToFindCriteria.convert(criteria);
+        final OldFindStreamCriteria oldFindStreamCriteria = expressionToFindCriteria.convert(criteria);
         return find(oldFindStreamCriteria);
     }
 

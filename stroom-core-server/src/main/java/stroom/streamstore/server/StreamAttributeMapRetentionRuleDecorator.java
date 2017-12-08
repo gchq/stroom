@@ -101,7 +101,7 @@ public class StreamAttributeMapRetentionRuleDecorator {
         final Stream stream = streamAttributeMap.getStream();
         if (stream != null) {
             attributeMap.put(StreamDataSource.STREAM_ID, stream.getId());
-            attributeMap.put(StreamDataSource.CREATED, stream.getCreateMs());
+            attributeMap.put(StreamDataSource.CREATE_TIME, stream.getCreateMs());
             if (stream.getParentStreamId() != null) {
                 attributeMap.put(StreamDataSource.PARENT_STREAM_ID, stream.getParentStreamId());
             }

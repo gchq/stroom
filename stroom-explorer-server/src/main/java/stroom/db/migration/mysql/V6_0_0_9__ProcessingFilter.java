@@ -224,10 +224,10 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         });
 
         // Created Period
-        applyBoundedTerm(rootAnd, criteria.obtainCreatePeriod(), StreamDataSource.CREATED, Object::toString);
+        applyBoundedTerm(rootAnd, criteria.obtainCreatePeriod(), StreamDataSource.CREATE_TIME, Object::toString);
 
         // Effective Period
-        applyBoundedTerm(rootAnd, criteria.obtainEffectivePeriod(), StreamDataSource.EFFECTIVE, Object::toString);
+        applyBoundedTerm(rootAnd, criteria.obtainEffectivePeriod(), StreamDataSource.EFFECTIVE_TIME, Object::toString);
 
         // Status Time Period
         applyBoundedTerm(rootAnd, criteria.obtainStatusPeriod(), StreamDataSource.STATUS_TIME, Object::toString);

@@ -51,13 +51,13 @@ public class TestStreamAttributeMapServiceImpl extends AbstractCoreIntegrationTe
 
         FindStreamAttributeMapCriteria criteria = new FindStreamAttributeMapCriteria();
         criteria.obtainFindStreamCriteria().obtainSelectedIdSet().add(md.getId());
-        criteria.obtainFindStreamCriteria().setExpression(ExpressionUtil.createSimpleExpression(StreamDataSource.CREATED, Condition.EQUALS, DateUtil.createNormalDateTimeString(md.getCreateMs())));
+        criteria.obtainFindStreamCriteria().setExpression(ExpressionUtil.createSimpleExpression(StreamDataSource.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(md.getCreateMs())));
 
         Assert.assertEquals(1, streamAttributeMapService.find(criteria).size());
 
         criteria = new FindStreamAttributeMapCriteria();
         criteria.obtainFindStreamCriteria().obtainSelectedIdSet().add(md.getId());
-        criteria.obtainFindStreamCriteria().setExpression(ExpressionUtil.createSimpleExpression(StreamDataSource.CREATED, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L)));
+        criteria.obtainFindStreamCriteria().setExpression(ExpressionUtil.createSimpleExpression(StreamDataSource.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L)));
 
         Assert.assertEquals(0, streamAttributeMapService.find(criteria).size());
 

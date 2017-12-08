@@ -20,7 +20,6 @@ package stroom.streamstore.server.fs;
 import org.hibernate.LazyInitializationException;
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.entity.server.util.PeriodUtil;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.IdRange;
@@ -28,10 +27,12 @@ import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.Period;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.server.EffectiveMetaDataCriteria;
 import stroom.streamstore.server.FindStreamAttributeValueCriteria;
 import stroom.streamstore.server.FindStreamVolumeCriteria;
-import stroom.streamstore.server.OldFindStreamCriteria;
 import stroom.streamstore.server.StreamAttributeMapService;
 import stroom.streamstore.server.StreamAttributeValueFlush;
 import stroom.streamstore.server.StreamAttributeValueService;
@@ -124,56 +125,83 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
     @Test
     public void testBasic() throws Exception {
-        final OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
-        findStreamCriteria.setCreatePeriod(PeriodUtil.createYearPeriod(2014));
-        findStreamCriteria.setEffectivePeriod(PeriodUtil.createYearPeriod(2014));
-        findStreamCriteria.obtainFeeds().obtainInclude().add(feed1);
-        findStreamCriteria.obtainParentStreamIdSet().add(1L);
-        findStreamCriteria.obtainPipelineIdSet().add(1L);
-        findStreamCriteria.obtainStreamIdSet().add(1L);
-        findStreamCriteria.obtainStreamProcessorIdSet().add(1L);
-        findStreamCriteria.obtainStreamTypeIdSet().add(1L);
-        testCriteria(findStreamCriteria, 0);
+        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+                .addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, createYearPeriod(2014))
+                .addTerm(StreamDataSource.EFFECTIVE_TIME, Condition.BETWEEN, createYearPeriod(2014))
+                .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed1.getName())
+                .addTerm(StreamDataSource.PARENT_STREAM_ID, Condition.EQUALS, "1")
+                .addTerm(StreamDataSource.STREAM_ID, Condition.EQUALS, "1")
+//                .addTerm(StreamDataSource.PIPELINE, Condition.EQUALS, "1")
+//                .addTerm(StreamDataSource.STREAM_PROCESSOR_ID, Condition.EQUALS, "1")
+                .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.RAW_EVENTS.getDisplayValue())
+                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
+                .build();
+        testCriteria(new FindStreamCriteria(expression), 0);
+    }
+
+    private String createYearPeriod(final int year) {
+        return year + "-01-01T00:00:00.000Z," + (year + 1) + "-01-01T00:00:00.000Z";
+    }
+
+    private String createToDateWithOffset(long time, int offset) {
+        final long from = time;
+        final long to = time + (offset * 1000 * 60 * 60 * 24);
+        return DateUtil.createNormalDateTimeString(from) + "," + DateUtil.createNormalDateTimeString(to);
     }
 
     @Test
     public void testFeedFindAll() throws Exception {
-        final OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
-        findStreamCriteria.obtainFeeds().obtainInclude().add(feed1);
-        findStreamCriteria.obtainFeeds().obtainInclude().add(feed2);
-        testCriteria(findStreamCriteria, 2);
+        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+                .addOperator(new ExpressionOperator.Builder(Op.OR)
+                        .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed1.getName())
+                        .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed2.getName())
+                        .build())
+                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
+                .build();
+        testCriteria(new FindStreamCriteria(expression), 2);
     }
 
     @Test
     public void testFeedFindSome() throws Exception {
-        final OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
+        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+                .addOperator(new ExpressionOperator.Builder(Op.OR)
+                        .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed1.getName())
+                        .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed2.getName())
+                        .build())
+                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
+                .build();
+        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria(expression);
         findStreamCriteria.setPageRequest(new PageRequest(0L, 1));
-        findStreamCriteria.obtainFeeds().obtainInclude().add(feed1);
-        findStreamCriteria.obtainFeeds().obtainInclude().add(feed2);
         testCriteria(findStreamCriteria, 1);
     }
 
     @Test
     public void testFeedFindNone() throws Exception {
-        final OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
-        findStreamCriteria.obtainFeeds().obtainInclude().add(feed1);
-        findStreamCriteria.obtainFeeds().obtainExclude().add(feed1);
-        testCriteria(findStreamCriteria, 0);
+        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+                .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed1.getName())
+                .addOperator(new ExpressionOperator.Builder(Op.NOT)
+                        .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed1.getName())
+                        .build())
+                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
+                .build();
+        testCriteria(new FindStreamCriteria(expression), 0);
     }
 
     @Test
     public void testFeedFindOne() throws Exception {
-        final OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
-        findStreamCriteria.obtainFeeds().obtainExclude().add(feed2);
-        testCriteria(findStreamCriteria, 1);
+        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+                .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed2.getName())
+                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
+                .build();
+        testCriteria(new FindStreamCriteria(expression), 1);
     }
 
-    private void testCriteria(final OldFindStreamCriteria criteria, final int expectedStreams) throws Exception {
+    private void testCriteria(final FindStreamCriteria criteria, final int expectedStreams) throws Exception {
         streamStore.findDelete(new FindStreamCriteria());
 
         createStream(feed1, 1L, null);
         createStream(feed2, 1L, null);
-        criteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
+//        criteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
         final BaseResultList<Stream> streams = streamStore.find(criteria);
         Assert.assertEquals(expectedStreams, streams.size());
 
@@ -267,21 +295,22 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
     @Test
     public void testFindWithAllCriteria() throws Exception {
-        final OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
+        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+                .addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, createToDateWithOffset(System.currentTimeMillis(), 1))
+                .addTerm(StreamDataSource.EFFECTIVE_TIME, Condition.BETWEEN, createToDateWithOffset(System.currentTimeMillis(), 1))
+                .addTerm(StreamDataSource.STATUS_TIME, Condition.BETWEEN, createToDateWithOffset(System.currentTimeMillis(), 1))
+                .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed1.getName())
+                .addTerm(StreamDataSource.PARENT_STREAM_ID, Condition.EQUALS, "1")
+                .addTerm(StreamDataSource.STREAM_ID, Condition.EQUALS, "1")
+//                .addTerm(StreamDataSource.PIPELINE, Condition.EQUALS, "1")
+//                .addTerm(StreamDataSource.STREAM_PROCESSOR_ID, Condition.EQUALS, "1")
+                .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.RAW_EVENTS.getDisplayValue())
+                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
+                .build();
+        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria(expression);
         findStreamCriteria.setPageRequest(new PageRequest(0L, 100));
-        findStreamCriteria.obtainStatusSet().clear();
-        findStreamCriteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
-        findStreamCriteria.setSort(StreamDataSource.CREATED);
-
-        findStreamCriteria.setCreatePeriod(PeriodUtil.createToDateWithOffset(System.currentTimeMillis(), 1));
-        findStreamCriteria.setEffectivePeriod(PeriodUtil.createToDateWithOffset(System.currentTimeMillis(), 1));
-        findStreamCriteria.obtainFeeds().obtainInclude().add(feed1);
-        findStreamCriteria.setStatusPeriod(PeriodUtil.createToDateWithOffset(System.currentTimeMillis(), 1));
-        findStreamCriteria.obtainParentStreamIdSet().add(1L);
-        findStreamCriteria.obtainPipelineIdSet().add(1L);
+        findStreamCriteria.setSort(StreamDataSource.CREATE_TIME);
         findStreamCriteria.setStreamIdRange(new IdRange(0L, 1L));
-        findStreamCriteria.obtainStreamProcessorIdSet().add(1L);
-        findStreamCriteria.obtainStreamTypeIdSet().add(1L);
 
         Assert.assertEquals(0L, streamStore.find(findStreamCriteria).size());
     }
@@ -329,15 +358,14 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         Assert.assertTrue("Expecting to find at least that one file " + stream, foundOne);
 
-        final OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
-
         Assert.assertTrue("Expecting to find at least 1 with no criteria",
-                streamStore.find(findStreamCriteria).size() >= 1);
+                streamStore.find(new FindStreamCriteria()).size() >= 1);
 
-        findStreamCriteria.obtainStatusSet().clear();
-        findStreamCriteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
+        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
+                .build();
         Assert.assertTrue("Expecting to find at least 1 with UNLOCKED criteria",
-                streamStore.find(findStreamCriteria).size() >= 1);
+                streamStore.find(new FindStreamCriteria(expression)).size() >= 1);
 
         final FindStreamVolumeCriteria volumeCriteria = new FindStreamVolumeCriteria();
         volumeCriteria.obtainStreamStatusSet().add(StreamStatus.UNLOCKED);

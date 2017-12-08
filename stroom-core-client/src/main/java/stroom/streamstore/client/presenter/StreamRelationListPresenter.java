@@ -80,7 +80,7 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
             findStreamCriteria.getFetchSet().add(Feed.ENTITY_TYPE);
             findStreamCriteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
             findStreamCriteria.getFetchSet().add(StreamType.ENTITY_TYPE);
-            findStreamCriteria.setSort(StreamDataSource.CREATED, Direction.ASCENDING, false);
+            findStreamCriteria.setSort(StreamDataSource.CREATE_TIME, Direction.ASCENDING, false);
 
             setCriteria(criteria);
         }

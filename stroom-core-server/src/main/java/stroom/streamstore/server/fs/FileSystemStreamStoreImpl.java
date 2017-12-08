@@ -17,16 +17,10 @@
 
 package stroom.streamstore.server.fs;
 
-import event.logging.BaseAdvancedQueryItem;
-import event.logging.BaseAdvancedQueryOperator.And;
-import event.logging.BaseAdvancedQueryOperator.Or;
-import event.logging.TermCondition;
-import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.util.EntityServiceLogUtil;
 import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.HqlBuilder;
@@ -52,7 +46,6 @@ import stroom.node.shared.Volume;
 import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
-import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.Secured;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -74,7 +67,7 @@ import stroom.streamstore.shared.StreamPermissionException;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
-import stroom.streamtask.server.SourceSelectorToFindCriteria;
+import stroom.streamtask.server.ExpressionToFindCriteria;
 import stroom.streamtask.server.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.date.DateUtil;
@@ -115,7 +108,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     private static final Set<String> SOURCE_FETCH_SET;
     private static final FieldMap FIELD_MAP = new FieldMap()
             .add(OldFindStreamCriteria.FIELD_ID, BaseEntity.ID, "id")
-            .add(StreamDataSource.CREATED, Stream.CREATE_MS, "createMs");
+            .add(StreamDataSource.CREATE_TIME, Stream.CREATE_MS, "createMs");
 
     static {
         final Set<String> set = new HashSet<>();
@@ -132,7 +125,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     private final FeedService feedService;
     private final StreamTypeService streamTypeService;
     private final VolumeService volumeService;
-    private final SourceSelectorToFindCriteria sourceSelectorToFindCriteria;
+    private final ExpressionToFindCriteria expressionToFindCriteria;
     private final SecurityContext securityContext;
 
     // /**
@@ -182,7 +175,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                               @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
                               final VolumeService volumeService,
                               final StreamAttributeValueFlush streamAttributeValueFlush,
-                              final SourceSelectorToFindCriteria sourceSelectorToFindCriteria,
+                              final ExpressionToFindCriteria expressionToFindCriteria,
                               final SecurityContext securityContext) {
         this.entityManager = entityManager;
         this.stroomDatabaseInfo = stroomDatabaseInfo;
@@ -194,7 +187,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         this.volumeService = volumeService;
 //        this.fileSystemStreamStoreTransactionHelper = fileSystemStreamStoreTransactionHelper;
         this.streamAttributeValueFlush = streamAttributeValueFlush;
-        this.sourceSelectorToFindCriteria = sourceSelectorToFindCriteria;
+        this.expressionToFindCriteria = expressionToFindCriteria;
         this.securityContext = securityContext;
     }
 
@@ -202,7 +195,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         final int MAX = 200;
         final OldFindStreamCriteria outerCriteria = new OldFindStreamCriteria();
         outerCriteria.obtainPageRequest().setLength(1000);
-        outerCriteria.setSort(StreamDataSource.CREATED, Direction.DESCENDING, false);
+        outerCriteria.setSort(StreamDataSource.CREATE_TIME, Direction.DESCENDING, false);
         final FileSystemStreamStoreImpl fileSystemStreamStore = new FileSystemStreamStoreImpl(null, null, null, null,
                 null, null, null, null, null, null, null);
         final SqlBuilder sql = new SqlBuilder();
@@ -219,7 +212,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             findStreamCriteria.obtainPageRequest().setLength(1000);
             findStreamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS.getId());
             findStreamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_REFERENCE.getId());
-            findStreamCriteria.setSort(StreamDataSource.CREATED, Direction.DESCENDING, false);
+            findStreamCriteria.setSort(StreamDataSource.CREATE_TIME, Direction.DESCENDING, false);
             fileSystemStreamStore.rawBuildSQL(findStreamCriteria, sql);
             sql.append(") \n");
             doneOne = true;
@@ -240,7 +233,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         findStreamCriteria.obtainPageRequest().setLength(1000);
         findStreamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS.getId());
         findStreamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_REFERENCE.getId());
-        findStreamCriteria.setSort(StreamDataSource.CREATED, Direction.DESCENDING, false);
+        findStreamCriteria.setSort(StreamDataSource.CREATE_TIME, Direction.DESCENDING, false);
         fileSystemStreamStore.rawBuildSQL(findStreamCriteria, sql2);
         System.out.println(sql2.toString());
     }
@@ -714,7 +707,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
     @Override
     public BaseResultList<Stream> find(final FindStreamCriteria criteria) throws RuntimeException {
-        final OldFindStreamCriteria oldFindStreamCriteria = sourceSelectorToFindCriteria.convert(criteria);
+        final OldFindStreamCriteria oldFindStreamCriteria = expressionToFindCriteria.convert(criteria);
         return find(oldFindStreamCriteria);
     }
 
@@ -1332,7 +1325,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     @Override
     @Secured(Stream.DELETE_DATA_PERMISSION)
     public Long findDelete(final FindStreamCriteria criteria) throws RuntimeException {
-        final OldFindStreamCriteria oldFindStreamCriteria = sourceSelectorToFindCriteria.convert(criteria);
+        final OldFindStreamCriteria oldFindStreamCriteria = expressionToFindCriteria.convert(criteria);
         return findDelete(oldFindStreamCriteria);
     }
 

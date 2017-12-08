@@ -25,7 +25,6 @@ import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.proxy.repo.StroomZipOutputStream;
 import stroom.proxy.repo.StroomZipOutputStreamImpl;
-import stroom.streamstore.server.OldFindStreamCriteria;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.fs.serializable.NestedInputStream;
@@ -33,7 +32,6 @@ import stroom.streamstore.server.fs.serializable.RANestedInputStream;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.streamtask.server.SourceSelectorToFindCriteria;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.io.CloseableUtil;
@@ -61,29 +59,22 @@ public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloa
 
     private final TaskMonitor taskMonitor;
     private final StreamStore streamStore;
-    private final SourceSelectorToFindCriteria sourceSelectorToFindCriteria;
 
     @Inject
-    StreamDownloadTaskHandler(final TaskMonitor taskMonitor, final StreamStore streamStore, final SourceSelectorToFindCriteria sourceSelectorToFindCriteria) {
+    StreamDownloadTaskHandler(final TaskMonitor taskMonitor, final StreamStore streamStore) {
         this.taskMonitor = taskMonitor;
         this.streamStore = streamStore;
-        this.sourceSelectorToFindCriteria = sourceSelectorToFindCriteria;
     }
 
     @Override
     public StreamDownloadResult exec(final StreamDownloadTask task) {
-        StreamDownloadResult result = null;
         taskMonitor.info(task.getFile().toString());
-
-        result = downloadData(task, task.getCriteria(), task.getFile(), task.getSettings());
-
-        return result;
+        return downloadData(task, task.getCriteria(), task.getFile(), task.getSettings());
     }
 
     private StreamDownloadResult downloadData(final StreamDownloadTask task, final FindStreamCriteria findStreamCriteria,
                                               Path data, final StreamDownloadSettings settings) throws RuntimeException {
-        final OldFindStreamCriteria criteria = sourceSelectorToFindCriteria.convert(findStreamCriteria);
-        final BaseResultList<Stream> list = streamStore.find(criteria);
+        final BaseResultList<Stream> list = streamStore.find(findStreamCriteria);
 
         final StreamDownloadResult result = new StreamDownloadResult();
 

@@ -40,7 +40,6 @@ import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.task.TaskMonitor;
 
-import javax.annotation.Resource;
 import javax.inject.Inject;
 import java.util.List;
 
@@ -119,7 +118,7 @@ public class StreamRetentionExecutor {
             });
 
             final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                    .addTerm(StreamDataSource.CREATED, Condition.BETWEEN, DateUtil.createNormalDateTimeString(createPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(createPeriod.getToMs()))
+                    .addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(createPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(createPeriod.getToMs()))
                     .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName())
                     // we only want it to logically delete UNLOCKED items and not ones
                     // already marked as DELETED

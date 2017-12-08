@@ -47,7 +47,7 @@ public class TestXMLMarshallUtil extends StroomUnitTest {
                         .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, Long.toString(88L))
                         .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, Long.toString(889L))
                         .build())
-                    .addTerm(StreamDataSource.CREATED, ExpressionTerm.Condition.BETWEEN, createdPeriod)
+                    .addTerm(StreamDataSource.CREATE_TIME, ExpressionTerm.Condition.BETWEEN, createdPeriod)
                     .build())
                 .build();
 

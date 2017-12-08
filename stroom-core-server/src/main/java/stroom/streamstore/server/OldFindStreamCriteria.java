@@ -77,20 +77,6 @@ public class OldFindStreamCriteria extends BaseCriteria
     public OldFindStreamCriteria() {
     }
 
-    public static OldFindStreamCriteria createWithStream(final Stream stream) {
-        final OldFindStreamCriteria criteria = new OldFindStreamCriteria();
-        criteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
-        criteria.obtainStreamIdSet().add(stream);
-        return criteria;
-    }
-
-    public static OldFindStreamCriteria createWithStreamType(final StreamType streamType) {
-        final OldFindStreamCriteria criteria = new OldFindStreamCriteria();
-        criteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
-        criteria.obtainStreamTypeIdSet().add(streamType);
-        return criteria;
-    }
-
     @Override
     public boolean isMatch(final Stream stream) {
         if (streamProcessorIdSet != null) {

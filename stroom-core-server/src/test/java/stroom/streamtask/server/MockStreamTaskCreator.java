@@ -47,7 +47,7 @@ public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
     @Resource
     private StreamProcessorFilterService streamProcessorFilterService;
     @Resource
-    private SourceSelectorToFindCriteria sourceSelectorToFindCriteria;
+    private ExpressionToFindCriteria expressionToFindCriteria;
 
     @Override
     public void clear() {

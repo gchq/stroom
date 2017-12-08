@@ -75,7 +75,7 @@ public class DataRetentionTransactionHelper {
         // Find out which fields are used by the expressions so we don't have to do unnecessary joins.
         final Set<String> fieldSet = new HashSet<>();
         fieldSet.add(StreamDataSource.STREAM_ID);
-        fieldSet.add(StreamDataSource.CREATED);
+        fieldSet.add(StreamDataSource.CREATE_TIME);
 
         // Also make sure we create a list of rules that are enabled and have at least one enabled term.
         final List<DataRetentionRule> activeRules = new ArrayList<>();
@@ -116,7 +116,7 @@ public class DataRetentionTransactionHelper {
                             final DataRetentionRule matchingRule = findMatchingRule(expressionMatcher, attributeMap, activeRules);
                             if (matchingRule != null) {
                                 ageMap.get(matchingRule).ifPresent(age -> {
-                                    final Long createMs = (Long) attributeMap.get(StreamDataSource.CREATED);
+                                    final Long createMs = (Long) attributeMap.get(StreamDataSource.CREATE_TIME);
                                     if (createMs < age) {
                                         info(taskMonitor, "Deleting " + streamInfo);
                                         fileSystemStreamStore.deleteStream(Stream.createStub(streamId));

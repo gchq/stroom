@@ -343,7 +343,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
             final ExpressionOperator rawExpression = new ExpressionOperator.Builder(Op.AND)
-                    .addTerm(StreamDataSource.CREATED, Condition.BETWEEN, DateUtil.createNormalDateTimeString(createPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(createPeriod.getToMs()))
+                    .addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(createPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(createPeriod.getToMs()))
                     .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName())
                     .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, rawStreamType.getDisplayValue())
                     .build();
@@ -356,7 +356,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
             // Wait for the cluster to stop processing.
             final ExpressionOperator processedExpression = new ExpressionOperator.Builder(Op.AND)
-                    .addTerm(StreamDataSource.CREATED, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(startTime))
+                    .addTerm(StreamDataSource.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(startTime))
                     .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName())
                     .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, processedStreamType.getDisplayValue())
                     .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
@@ -477,7 +477,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                 .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName())
-                .addTerm(StreamDataSource.CREATED, Condition.BETWEEN, DateUtil.createNormalDateTimeString(processPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(processPeriod.getToMs()))
+                .addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(processPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(processPeriod.getToMs()))
                 .addOperator(new ExpressionOperator.Builder(Op.OR)
                         .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.EVENTS.getDisplayValue())
                         .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.REFERENCE.getDisplayValue())

@@ -105,7 +105,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     private final InternalStatisticsReceiver internalStatisticsReceiver;
     private final StreamStore streamStore;
     private final SecurityContext securityContext;
-    private final SourceSelectorToFindCriteria sourceSelectorToFindCriteria;
+    private final ExpressionToFindCriteria expressionToFindCriteria;
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
 
@@ -157,7 +157,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                           final InternalStatisticsReceiver internalStatisticsReceiver,
                           final StreamStore streamStore,
                           final SecurityContext securityContext,
-                          final SourceSelectorToFindCriteria sourceSelectorToFindCriteria) {
+                          final ExpressionToFindCriteria expressionToFindCriteria) {
 
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.streamTaskTransactionHelper = streamTaskTransactionHelper;
@@ -169,7 +169,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         this.internalStatisticsReceiver = internalStatisticsReceiver;
         this.streamStore = streamStore;
         this.securityContext = securityContext;
-        this.sourceSelectorToFindCriteria = sourceSelectorToFindCriteria;
+        this.expressionToFindCriteria = expressionToFindCriteria;
     }
 
     @StroomStartup
@@ -543,7 +543,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                             if (requiredTasks > 0 && !taskMonitor.isTerminated()) {
                                 final QueryData queryData = loadedFilter.getQueryData();
 
-                                final OldFindStreamCriteria findStreamCriteria = sourceSelectorToFindCriteria.convert(queryData);
+                                final OldFindStreamCriteria findStreamCriteria = expressionToFindCriteria.convert(queryData);
                                 boolean isStreamStoreSearch = (queryData.getDataSource() != null) && queryData.getDataSource().getType().equals(StreamDataSource.STREAM_STORE_TYPE);
 
                                 // Record the time before we are going to query for
