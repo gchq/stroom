@@ -7,7 +7,6 @@ import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
 
 import javax.annotation.concurrent.NotThreadSafe;
-import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -86,7 +85,7 @@ public class LmdbKeyValueStore implements KeyValueStore {
 
             return Optional
                     .ofNullable(valBuffer)
-                    .map(this::byteBufferToString);
+                    .map(LmdbKeyValueStore::byteBufferToString);
         }
     }
 
@@ -99,7 +98,7 @@ public class LmdbKeyValueStore implements KeyValueStore {
 
             return Optional
                     .ofNullable(valBuffer)
-                    .map(this::byteBufferToString);
+                    .map(LmdbKeyValueStore::byteBufferToString);
     }
 
     private Txn<ByteBuffer> getReadTxn() {
@@ -131,13 +130,13 @@ public class LmdbKeyValueStore implements KeyValueStore {
         }
     }
 
-    private ByteBuffer stringToBuffer(final String str, final int size) {
+    public static ByteBuffer stringToBuffer(final String str, final int size) {
         ByteBuffer buffer = ByteBuffer.allocateDirect(size);
         buffer.put(str.getBytes(StandardCharsets.UTF_8)).flip();
         return buffer;
     }
 
-    private String byteBufferToString(final ByteBuffer byteBuffer) {
+    public static String byteBufferToString(final ByteBuffer byteBuffer) {
         Preconditions.checkNotNull(byteBuffer);
         return StandardCharsets.UTF_8.decode(byteBuffer).toString();
     }

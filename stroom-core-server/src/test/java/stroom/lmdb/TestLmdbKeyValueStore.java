@@ -7,7 +7,12 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.lmdbjava.*;
+import org.lmdbjava.CursorIterator;
+import org.lmdbjava.Dbi;
+import org.lmdbjava.DbiFlags;
+import org.lmdbjava.Env;
+import org.lmdbjava.KeyRange;
+import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,12 +25,16 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -284,7 +293,7 @@ public class TestLmdbKeyValueStore {
     @Test
     public void testTimeScan() throws IOException {
 
-        Path path = Paths.get("/disk2/testTimeScan");
+        Path path = Paths.get("/tmp/testTimeScan");
         deleteDirRecursive(path);
         Files.createDirectories(path);
 
@@ -295,22 +304,80 @@ public class TestLmdbKeyValueStore {
 
         final Dbi<ByteBuffer> db = env.openDbi(DB_NAME, DbiFlags.MDB_CREATE);
 
+        Instant time0 = LocalDateTime.of(2017, 12, 8, 10, 0, 0).toInstant(ZoneOffset.UTC);
+        Instant time1 = time0.plus(1, ChronoUnit.HOURS);
+        Instant time2 = time0.plus(1, ChronoUnit.HOURS);
+        Instant time3 = time0.plus(1, ChronoUnit.HOURS);
 
 
-        //TODO load some data using TemporalKey, multiple times for each string part
-        //scan back from a time to get the first applicable key
-        final TemporalKey searchStartKey = new TemporalKey("MyKey", Instant.now().toEpochMilli());
-        final KeyRange<ByteBuffer> range = KeyRange.atLeastBackward(searchStartKey.toDbKey());
+        int maxStringKeys = 100;
+        int maxTimeDelta = 100;
+        LOGGER.info("Loading data, maxStringKeys: {}, maxTimeDelta: {}, firstTime: {}, lastTime {}",
+                maxStringKeys,
+                maxTimeDelta,
+                time0.toString(),
+                time0.plus(maxTimeDelta, ChronoUnit.HOURS));
 
-        try (Txn<ByteBuffer> txn = env.txnRead()) {
-            try (CursorIterator<ByteBuffer> it = db.iterate(txn, range)) {
-                for (final CursorIterator.KeyVal<ByteBuffer> kv : it.iterable()) {
-//                    assertThat(kv.key(), notNullValue());
-//                    assertThat(kv.val(), notNullValue());
+        doTimedWork("Loading data", () -> {
+            try (Txn<ByteBuffer> txn = env.txnWrite()) {
+                for (int i = 0; i < maxStringKeys; i++) {
+
+                    List<Map.Entry<TemporalKey, String>> entries = new ArrayList<>();
+                    for (int j = 0; j < 5; j++) {
+                        entries.add(createEntry(String.format("%05d", i), time0.plus(j, ChronoUnit.HOURS)));
+                    }
+                    Collections.shuffle(entries);
+
+                    entries.forEach(entry -> putValue(db, txn, entry.getKey(), entry.getValue()));
+                }
+                txn.commit();
+            }
+        });
+
+        LOGGER.info("Loaded data");
+
+        Random random = new Random();
+
+        LOGGER.info("Reading data");
+
+        boolean doAsserts = false;
+
+        doTimedWork(String.format("Looking up %s keys", maxStringKeys), () -> {
+            try (Txn<ByteBuffer> txn = env.txnRead()) {
+                for (int i = 0; i < maxStringKeys; i++) {
+                    //Pick a random time in our time range
+                    Instant searchTime = time0.plusMillis((int) (random.nextDouble() * maxTimeDelta * 1000 * 60 * 60));
+                    TemporalKey startKey = new TemporalKey(String.format("%05d", i), searchTime.toEpochMilli());
+                    final KeyRange<ByteBuffer> range = KeyRange.atLeastBackward(startKey.toDbKey());
+
+                    try (CursorIterator<ByteBuffer> it = db.iterate(txn, range)) {
+                        if (it.hasNext()) {
+                            CursorIterator.KeyVal<ByteBuffer> keyVal = it.next();
+                            TemporalKey foundKey = TemporalKey.fromDbKey(keyVal.key());
+                            String value = LmdbKeyValueStore.byteBufferToString(keyVal.val());
+
+                            if (doAsserts) {
+                                LOGGER.info("SearchKey: {}, foundKey {}", startKey.toString(), foundKey.toString());
+                                Assert.assertTrue(searchTime.isAfter(foundKey.getTime()));
+
+                                Duration timeBetween = Duration.between(foundKey.getTime(), searchTime);
+                                //All keys are one hour apart so our serach time must be within one hour of the found key
+                                Assert.assertTrue(timeBetween.toMillis() < Duration.ofHours(1).toMillis());
+                            }
+                        }else {
+                            Assert.fail(String.format("Couldn't find key %s", startKey));
+                        }
+                    }
+
                 }
             }
-        }
+        });
+    }
 
+
+
+    private Map.Entry<TemporalKey, String> createEntry(String key, Instant time) {
+        return Maps.immutableEntry(new TemporalKey(key, time.toEpochMilli()), "value-" + key);
     }
 
 
@@ -379,6 +446,13 @@ public class TestLmdbKeyValueStore {
         value.putLong(keyVal);
         value.put(valueArr).flip();
         db.put(txn, key, value);
+    }
+
+    private static void putValue(final Dbi<ByteBuffer> db, final Txn<ByteBuffer> txn, final TemporalKey temporalKey, final String value) {
+
+        final ByteBuffer keyBuf = temporalKey.toDbKey();
+        final ByteBuffer valueBuf = LmdbKeyValueStore.stringToBuffer(value, 100);
+        db.put(txn, keyBuf, valueBuf);
     }
 
 

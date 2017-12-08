@@ -86,6 +86,11 @@ public class TemporalKey {
         return result;
     }
 
+    @Override
+    public String toString() {
+        return key + " " + getTime().toString();
+    }
+
     private static void logByteBuffer(ByteBuffer byteBuffer) {
         LOGGER.info("Pos {}, limit {}, capacity {}",
                 byteBuffer.position(),
