@@ -1,11 +1,11 @@
 package stroom.lmdb;
 
-import com.google.common.primitives.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 
 public class TemporalKey {
 
@@ -54,6 +54,18 @@ public class TemporalKey {
 
         long timeMs = keyBuffer.getLong(timePos);
         return new TemporalKey(key, timeMs);
+    }
+
+    public long getTimeMs() {
+        return timeMs;
+    }
+
+    public Instant getTime() {
+        return Instant.ofEpochMilli(timeMs);
+    }
+
+    public String getKey() {
+        return key;
     }
 
     @Override

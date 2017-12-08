@@ -16,13 +16,22 @@ public class TestTemporalKey {
 
         String key = "MyKey";
 
-        TemporalKey temporalKey1 = new TemporalKey(key, nowMs);
+        TemporalKey temporalKey1 = new TemporalKey("MyKey", nowMs);
+        serDeser(temporalKey1);
 
-        ByteBuffer dbKey = temporalKey1.toDbKey();
+        TemporalKey temporalKey2 = new TemporalKey("", nowMs);
+        serDeser(temporalKey1);
+    }
+
+    private void serDeser(final TemporalKey inputKey) {
+
+        ByteBuffer dbKey = inputKey.toDbKey();
 
         TemporalKey temporalKey2 = TemporalKey.fromDbKey(dbKey);
 
-        Assert.assertEquals(temporalKey1, temporalKey2);
+        Assert.assertEquals(inputKey, temporalKey2);
+        Assert.assertEquals(inputKey.getKey(), temporalKey2.getKey());
+        Assert.assertEquals(inputKey.getTimeMs(), temporalKey2.getTimeMs());
 
     }
 }
