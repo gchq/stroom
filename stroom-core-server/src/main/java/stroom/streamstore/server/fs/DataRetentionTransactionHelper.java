@@ -34,8 +34,8 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.streamstore.server.ExpressionMatcher;
-import stroom.streamstore.server.StreamFields;
 import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.task.TaskMonitor;
@@ -74,8 +74,8 @@ public class DataRetentionTransactionHelper {
     public void deleteMatching(final Period ageRange, final List<DataRetentionRule> rules, final Map<DataRetentionRule, Optional<Long>> ageMap, final TaskMonitor taskMonitor) {
         // Find out which fields are used by the expressions so we don't have to do unnecessary joins.
         final Set<String> fieldSet = new HashSet<>();
-        fieldSet.add(StreamFields.STREAM_ID);
-        fieldSet.add(StreamFields.CREATED_ON);
+        fieldSet.add(StreamDataSource.STREAM_ID);
+        fieldSet.add(StreamDataSource.CREATED);
 
         // Also make sure we create a list of rules that are enabled and have at least one enabled term.
         final List<DataRetentionRule> activeRules = new ArrayList<>();
@@ -98,7 +98,7 @@ public class DataRetentionTransactionHelper {
         final long rowCount = getRowCount(ageRange, fieldSet);
         long rowNum = 1;
 
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamFields.getFieldMap(), dictionaryStore);
+        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamDataSource.getFieldMap(), dictionaryStore);
 
         final SqlBuilder sql = getSql(ageRange, fieldSet, false);
         try (final Connection connection = dataSource.getConnection()) {
@@ -108,7 +108,7 @@ public class DataRetentionTransactionHelper {
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
                         final Map<String, Object> attributeMap = createAttributeMap(resultSet, fieldSet);
-                        final Long streamId = (Long) attributeMap.get(StreamFields.STREAM_ID);
+                        final Long streamId = (Long) attributeMap.get(StreamDataSource.STREAM_ID);
                         try {
                             final String streamInfo = "stream " + rowNum++ + " of " + rowCount + " (stream id=" + streamId + ")";
                             info(taskMonitor, "Examining " + streamInfo);
@@ -116,7 +116,7 @@ public class DataRetentionTransactionHelper {
                             final DataRetentionRule matchingRule = findMatchingRule(expressionMatcher, attributeMap, activeRules);
                             if (matchingRule != null) {
                                 ageMap.get(matchingRule).ifPresent(age -> {
-                                    final Long createMs = (Long) attributeMap.get(StreamFields.CREATED_ON);
+                                    final Long createMs = (Long) attributeMap.get(StreamDataSource.CREATED);
                                     if (createMs < age) {
                                         info(taskMonitor, "Deleting " + streamInfo);
                                         fileSystemStreamStore.deleteStream(Stream.createStub(streamId));
@@ -162,10 +162,10 @@ public class DataRetentionTransactionHelper {
         final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT");
 
-        final boolean includeStream = addFieldsToQuery(StreamFields.getStreamFields(), fieldSet, sql, "S");
-        final boolean includeFeed = addFieldsToQuery(StreamFields.getFeedFields(), fieldSet, sql, "F");
-        final boolean includeStreamType = addFieldsToQuery(StreamFields.getStreamTypeFields(), fieldSet, sql, "ST");
-        final boolean includePipeline = addFieldsToQuery(StreamFields.getPipelineFields(), fieldSet, sql, "P");
+        final boolean includeStream = addFieldsToQuery(StreamDataSource.getStreamFields(), fieldSet, sql, "S");
+        final boolean includeFeed = addFieldsToQuery(StreamDataSource.getFeedFields(), fieldSet, sql, "F");
+        final boolean includeStreamType = addFieldsToQuery(StreamDataSource.getStreamTypeFields(), fieldSet, sql, "ST");
+        final boolean includePipeline = addFieldsToQuery(StreamDataSource.getPipelineFields(), fieldSet, sql, "P");
 
         if (count) {
             sql.setLength(0);
@@ -209,7 +209,7 @@ public class DataRetentionTransactionHelper {
         final Map<String, Object> attributeMap = new HashMap<>();
         fieldSet.forEach(fieldName -> {
             try {
-                final DataSourceField field = StreamFields.getFieldMap().get(fieldName);
+                final DataSourceField field = StreamDataSource.getFieldMap().get(fieldName);
                 switch (field.getType()) {
                     case FIELD:
                         final String string = resultSet.getString(fieldName);

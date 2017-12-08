@@ -37,7 +37,6 @@ import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityServiceFindDeleteAction;
 import stroom.entity.shared.IdSet;
 import stroom.entity.shared.PageRequest;
@@ -56,11 +55,11 @@ import stroom.streamstore.shared.DownloadDataAction;
 import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.ReprocessDataAction;
 import stroom.streamstore.shared.ReprocessDataInfo;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeMap;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamProcessor;
@@ -74,7 +73,6 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -216,10 +214,9 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     protected void onBind() {
         super.onBind();
 
-        final StreamStatus status = getSingleStatus(getCriteria());
         registerHandler(streamListPresenter.getSelectionModel().addSelectionHandler(event -> {
             streamRelationListPresenter.setSelectedStream(streamListPresenter.getSelectedStream(), true,
-                    !StreamStatus.UNLOCKED.equals(status));
+                    !StreamStatus.UNLOCKED.equals(getSingleStatus(getCriteria())));
             showData();
         }));
         registerHandler(streamListPresenter.addDataSelectionHandler(event -> setStreamListSelectableEnabled(event.getSelectedItem(),
@@ -282,7 +279,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
                 }
             };
 
-            final PopupSize popupSize = new PopupSize(412, 600, 412, 600, true);
+            final PopupSize popupSize = new PopupSize(800, 600, 400, 400, true);
             ShowPopupEvent.fire(StreamPresenter.this, presenter, PopupType.OK_CANCEL_DIALOG, popupSize,
                     "Filter Streams", streamFilterPUH);
         }));

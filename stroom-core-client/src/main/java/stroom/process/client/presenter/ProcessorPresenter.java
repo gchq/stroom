@@ -249,7 +249,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         };
 
         // Show the processor creation dialog.
-        final PopupSize popupSize = new PopupSize(800, 600, 412, 600, true);
+        final PopupSize popupSize = new PopupSize(800, 600, 400, 400, true);
         if (filter != null) {
             ShowPopupEvent.fire(this, filterPresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Filter",
                     popupUiHandlers);

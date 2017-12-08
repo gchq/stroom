@@ -2,12 +2,18 @@ package stroom.streamstore.shared;
 
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
+import stroom.feed.shared.Feed;
+import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class StreamDataSource {
     public static final String STREAM_STORE_TYPE = "StreamStore";
@@ -18,25 +24,23 @@ public class StreamDataSource {
             .build();
 
     private static final List<DataSourceField> FIELDS = new ArrayList<>();
-    public static List<DataSourceField> getFields() {
-        return new ArrayList<>(FIELDS);
-    }
-
+    private static final Map<String, DataSourceField> FIELD_MAP;
     private static final List<DataSourceField> EXTENDED_FIELDS = new ArrayList<>();
-
-    public static List<DataSourceField> getExtendedFields() {
-        return new ArrayList<>(EXTENDED_FIELDS);
-    }
+    private static final Map<String, DataSourceField> EXTENDED_FIELD_MAP;
+    private static final Map<String, String> STREAM_FIELDS = new HashMap<>();
+    private static final Map<String, String> FEED_FIELDS = new HashMap<>();
+    private static final Map<String, String> STREAM_TYPE_FIELDS = new HashMap<>();
+    private static final Map<String, String> PIPELINE_FIELDS = new HashMap<>();
 
     public static final String FEED = "Feed";
     public static final String PIPELINE = "Pipeline";
     public static final String STREAM_TYPE = "Stream Type";
     public static final String STREAM_ID = "Stream Id";
     public static final String PARENT_STREAM_ID = "Parent Stream Id";
-    public static final String CREATED = "Creation time";
-    public static final String EFFECTIVE = "Effective time";
+    public static final String CREATED = "Creation Time";
+    public static final String EFFECTIVE = "Effective Time";
     public static final String STATUS = "Status";
-    public static final String STATUS_TIME = "Status time";
+    public static final String STATUS_TIME = "Status Time";
 
     // Extended fields.
     public static final String NODE = "Node";
@@ -51,6 +55,16 @@ public class StreamDataSource {
     public static final String STREAM_SIZE = "StreamSize";
 
     static {
+        STREAM_FIELDS.put(STREAM_ID, Stream.ID);
+        STREAM_FIELDS.put(PARENT_STREAM_ID, Stream.PARENT_STREAM_ID);
+        STREAM_FIELDS.put(CREATED, Stream.CREATE_MS);
+
+        FEED_FIELDS.put(FEED, Feed.NAME);
+
+        STREAM_TYPE_FIELDS.put(STREAM_TYPE, StreamType.NAME);
+
+        PIPELINE_FIELDS.put(PIPELINE, PipelineEntity.NAME);
+
         FIELDS.add(createStringField(FEED));
         FIELDS.add(createStringField(PIPELINE));
         FIELDS.add(createStringField(STREAM_TYPE));
@@ -58,7 +72,9 @@ public class StreamDataSource {
         FIELDS.add(createIdField(PARENT_STREAM_ID));
         FIELDS.add(createDateField(CREATED));
         FIELDS.add(createDateField(EFFECTIVE));
+        FIELDS.add(createStringField(STATUS));
         FIELDS.add(createDateField(STATUS_TIME));
+        FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(DataSourceField::getName, Function.identity()));
 
         EXTENDED_FIELDS.addAll(FIELDS);
 
@@ -72,6 +88,7 @@ public class StreamDataSource {
         EXTENDED_FIELDS.add(createNumField(DURATION));
         EXTENDED_FIELDS.add(createNumField(FILE_SIZE));
         EXTENDED_FIELDS.add(createNumField(STREAM_SIZE));
+        EXTENDED_FIELD_MAP = EXTENDED_FIELDS.stream().collect(Collectors.toMap(DataSourceField::getName, Function.identity()));
     }
 
     private static DataSourceField createDateField(final String name) {
@@ -116,5 +133,37 @@ public class StreamDataSource {
                 .addConditions(Condition.LESS_THAN_OR_EQUAL_TO)
                 .type(DataSourceFieldType.NUMERIC_FIELD)
                 .build();
+    }
+
+    public static List<DataSourceField> getFields() {
+        return new ArrayList<>(FIELDS);
+    }
+
+    public static Map<String, DataSourceField> getFieldMap() {
+        return FIELD_MAP;
+    }
+
+    public static List<DataSourceField> getExtendedFields() {
+        return new ArrayList<>(EXTENDED_FIELDS);
+    }
+
+    public static Map<String, DataSourceField> getExtendedFieldMap() {
+        return EXTENDED_FIELD_MAP;
+    }
+
+    public static Map<String, String> getStreamFields() {
+        return STREAM_FIELDS;
+    }
+
+    public static Map<String, String> getFeedFields() {
+        return FEED_FIELDS;
+    }
+
+    public static Map<String, String> getStreamTypeFields() {
+        return STREAM_TYPE_FIELDS;
+    }
+
+    public static Map<String, String> getPipelineFields() {
+        return PIPELINE_FIELDS;
     }
 }

@@ -52,7 +52,7 @@ public class TestExpressionMatcher extends StroomUnitTest {
     }
 
     private void test(final Map<String, Object> attributeMap, final ExpressionOperator expression, final boolean outcome) {
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamFields.getFieldMap(), null);
+        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamDataSource.getFieldMap(), null);
         Assert.assertEquals(outcome, expressionMatcher.match(attributeMap, expression));
     }
 
@@ -64,8 +64,8 @@ public class TestExpressionMatcher extends StroomUnitTest {
 
     private Map<String, Object> createAttributeMap() {
         final Map<String, Object> attributeMap = new HashMap<>();
-        attributeMap.put(StreamFields.FEED, "TEST_FEED");
-        attributeMap.put(StreamFields.STREAM_TYPE, "Raw Events");
+        attributeMap.put(StreamDataSource.FEED, "TEST_FEED");
+        attributeMap.put(StreamDataSource.STREAM_TYPE, "Raw Events");
         return attributeMap;
     }
 }

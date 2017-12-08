@@ -26,6 +26,7 @@ import stroom.ruleset.shared.DataRetentionRule;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeMap;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.date.DateUtil;
 
@@ -44,7 +45,7 @@ public class StreamAttributeMapRetentionRuleDecorator {
 
     public StreamAttributeMapRetentionRuleDecorator(final DictionaryStore dictionaryStore, final List<DataRetentionRule> rules) {
         this.rules = rules;
-        expressionMatcher = new ExpressionMatcher(StreamFields.getFieldMap(), dictionaryStore);
+        expressionMatcher = new ExpressionMatcher(StreamDataSource.getFieldMap(), dictionaryStore);
     }
 
     public void addMatchingRetentionRuleInfo(final StreamAttributeMap streamAttributeMap) {
@@ -99,28 +100,28 @@ public class StreamAttributeMapRetentionRuleDecorator {
 
         final Stream stream = streamAttributeMap.getStream();
         if (stream != null) {
-            attributeMap.put(StreamFields.STREAM_ID, stream.getId());
-            attributeMap.put(StreamFields.CREATED_ON, stream.getCreateMs());
+            attributeMap.put(StreamDataSource.STREAM_ID, stream.getId());
+            attributeMap.put(StreamDataSource.CREATED, stream.getCreateMs());
             if (stream.getParentStreamId() != null) {
-                attributeMap.put(StreamFields.PARENT_STREAM_ID, stream.getParentStreamId());
+                attributeMap.put(StreamDataSource.PARENT_STREAM_ID, stream.getParentStreamId());
             }
             if (stream.getStreamType() != null) {
-                attributeMap.put(StreamFields.STREAM_TYPE, stream.getStreamType().getDisplayValue());
+                attributeMap.put(StreamDataSource.STREAM_TYPE, stream.getStreamType().getDisplayValue());
             }
             final Feed feed = stream.getFeed();
             if (feed != null) {
-                attributeMap.put(StreamFields.FEED, feed.getName());
+                attributeMap.put(StreamDataSource.FEED, feed.getName());
             }
             final StreamProcessor streamProcessor = stream.getStreamProcessor();
             if (streamProcessor != null) {
                 final PipelineEntity pipeline = streamProcessor.getPipeline();
                 if (pipeline != null) {
-                    attributeMap.put(StreamFields.PIPELINE, pipeline.getName());
+                    attributeMap.put(StreamDataSource.PIPELINE, pipeline.getName());
                 }
             }
         }
 
-        StreamFields.getFields().forEach(field -> {
+        StreamDataSource.getFields().forEach(field -> {
             final String value = streamAttributeMap.getAttributeValue(field.getName());
             if (value != null) {
                 try {
