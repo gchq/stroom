@@ -19,7 +19,7 @@ package stroom.streamtask.server;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.server.OldFindStreamCriteria;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterTracker;
 import stroom.util.test.StroomJUnit4ClassRunner;
@@ -32,7 +32,7 @@ public class TestStreamTaskCreatorRecentStreamDetails extends StroomUnitTest {
         final StreamProcessorFilter filter = new StreamProcessorFilter();
         filter.setStreamProcessorFilterTracker(new StreamProcessorFilterTracker());
         filter.getStreamProcessorFilterTracker().setMinStreamId(0L);
-        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
+        final OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
         findStreamCriteria.obtainFeeds().obtainInclude().add(1L);
 
         // No history

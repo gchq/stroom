@@ -21,15 +21,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-import stroom.entity.shared.Period;
 import stroom.feed.MetaMap;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTypeService;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.ArgsUtil;
 import stroom.util.date.DateUtil;
@@ -75,8 +78,7 @@ public final class SendStreamDataClient {
         final ApplicationContext appContext = new ClassPathXmlApplicationContext(
                 new String[]{"classpath:META-INF/spring/stroomCoreServerContext.xml"});
 
-        final FindStreamCriteria criteria = new FindStreamCriteria();
-
+        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
         // Check Args
         if (!argsMap.containsKey(FEED)) {
             throw new RuntimeException("Expecting Feed= Argument");
@@ -92,11 +94,7 @@ public final class SendStreamDataClient {
         if (argsMap.containsKey(RECEIVED_PERIOD_FROM) || argsMap.containsKey(RECEIVED_PERIOD_TO)) {
             final String createStartTime = argsMap.get(RECEIVED_PERIOD_FROM);
             final String createEndTime = argsMap.get(RECEIVED_PERIOD_TO);
-
-            final long createStartTimeDT = DateUtil.parseNormalDateTimeString(createStartTime);
-            final long createEndTimeDT = DateUtil.parseNormalDateTimeString(createEndTime);
-
-            criteria.setCreatePeriod(new Period(createStartTimeDT, createEndTimeDT));
+            builder.addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, createStartTime + "," + createEndTime);
         }
         final URL url = new URL(argsMap.get(SEND_URL));
         final StreamStore streamStore = (StreamStore) appContext.getBean("streamStore");
@@ -110,10 +108,12 @@ public final class SendStreamDataClient {
         if (streamType == null) {
             throw new RuntimeException("Unknown stream type " + argsMap.get(STREAM_TYPE));
         }
-        criteria.obtainFeeds().obtainInclude().add(definition.getId());
-        criteria.obtainStreamIdSet().add(streamType.getId());
+        builder.addTerm(StreamDataSource.FEED, Condition.EQUALS, definition.getName());
+        builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, streamType.getDisplayValue());
 
         // Query the stream store
+        final FindStreamCriteria criteria = new FindStreamCriteria();
+        criteria.setExpression(builder.build());
         final List<Stream> results = streamStore.find(criteria);
 
         for (final Stream stream : results) {

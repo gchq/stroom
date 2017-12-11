@@ -25,6 +25,7 @@ import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.feed.shared.Feed;
+import stroom.streamstore.server.OldFindStreamCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamTask;
@@ -64,21 +65,21 @@ public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrat
         commonTestScenarioCreator.createSample2LineRawFile(feed1, StreamType.RAW_EVENTS);
         Assert.assertEquals(0, commonTestControl.countEntity(StreamTask.class));
 
-        FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
+        OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
         Assert.assertEquals(1,
                 streamTaskCreatorTransactionHelper.runSelectStreamQuery(null, findStreamCriteria, 0, 100).size());
 
-        findStreamCriteria = new FindStreamCriteria();
+        findStreamCriteria = new OldFindStreamCriteria();
         findStreamCriteria.obtainFeeds().obtainInclude().add(feed1);
         Assert.assertEquals(1,
                 streamTaskCreatorTransactionHelper.runSelectStreamQuery(null, findStreamCriteria, 0, 100).size());
 
-        findStreamCriteria = new FindStreamCriteria();
+        findStreamCriteria = new OldFindStreamCriteria();
         findStreamCriteria.obtainFeeds().obtainInclude().add(feed1.getId() + 1);
         Assert.assertEquals(0,
                 streamTaskCreatorTransactionHelper.runSelectStreamQuery(null, findStreamCriteria, 0, 100).size());
 
-        findStreamCriteria = new FindStreamCriteria();
+        findStreamCriteria = new OldFindStreamCriteria();
         findStreamCriteria.obtainPipelineIdSet().add(1L);
         Assert.assertEquals(0,
                 streamTaskCreatorTransactionHelper.runSelectStreamQuery(null, findStreamCriteria, 0, 100).size());

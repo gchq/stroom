@@ -23,54 +23,44 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.process.client.presenter.ExpressionPresenter.ExpressionView;
+import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.ruleset.client.presenter.EditExpressionPresenter;
-import stroom.streamstore.shared.QueryData;
 
 import java.util.List;
 
-public class FilterPresenter extends MyPresenterWidget<FilterPresenter.FilterView> {
+public class ExpressionPresenter extends MyPresenterWidget<ExpressionView> {
     private final EditExpressionPresenter editExpressionPresenter;
     private final ClientDispatchAsync dispatcher;
 
     @Inject
-    public FilterPresenter(final EventBus eventBus,
-                           final FilterView view,
-                           final EditExpressionPresenter editExpressionPresenter,
-                           final ClientDispatchAsync dispatcher) {
+    public ExpressionPresenter(final EventBus eventBus,
+                               final ExpressionView view,
+                               final EditExpressionPresenter editExpressionPresenter,
+                               final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.editExpressionPresenter = editExpressionPresenter;
         this.dispatcher = dispatcher;
         view.setExpressionView(editExpressionPresenter.getView());
     }
 
-    void read(final QueryData queryData, final List<DataSourceField> fields) {
-        editExpressionPresenter.init(dispatcher, QueryData.STREAM_STORE_DOC_REF, fields);
-        editExpressionPresenter.read(getExpressionFromQueryData(queryData));
-    }
+    public void read(final ExpressionOperator expression, final DocRef dataSource, final List<DataSourceField> fields) {
+        editExpressionPresenter.init(dispatcher, dataSource, fields);
 
-    private ExpressionOperator getExpressionFromQueryData(final QueryData queryData) {
-        if (queryData != null && queryData.getExpression() != null) {
-            return queryData.getExpression();
+        if (expression != null) {
+            editExpressionPresenter.read(expression);
+        } else {
+            editExpressionPresenter.read(new ExpressionOperator.Builder(Op.AND).build());
         }
-
-        return new ExpressionOperator.Builder(Op.AND).build();
     }
 
-    private QueryData getQueryDataFromExpression(final ExpressionOperator expressionOperator) {
-        final QueryData queryData = new QueryData();
-        queryData.setExpression(expressionOperator);
-        queryData.setDataSource(QueryData.STREAM_STORE_DOC_REF);
-        return queryData;
+    public ExpressionOperator write() {
+        return editExpressionPresenter.write();
     }
 
-    QueryData write() {
-        final ExpressionOperator expression = editExpressionPresenter.write();
-        return getQueryDataFromExpression(expression);
-    }
-
-    public interface FilterView extends View {
+    public interface ExpressionView extends View {
         void setExpressionView(View view);
     }
 }

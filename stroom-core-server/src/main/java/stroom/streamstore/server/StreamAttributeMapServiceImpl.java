@@ -17,12 +17,10 @@
 
 package stroom.streamstore.server;
 
-import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.dictionary.server.DictionaryStore;
-import stroom.entity.server.SupportsCriteriaLogging;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
@@ -46,6 +44,7 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamAttributeValue;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
 import stroom.streamtask.server.StreamProcessorService;
@@ -66,8 +65,7 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-public class StreamAttributeMapServiceImpl
-        implements StreamAttributeMapService, SupportsCriteriaLogging<FindStreamAttributeMapCriteria> {
+public class StreamAttributeMapServiceImpl implements StreamAttributeMapService {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeMapServiceImpl.class);
 
     private final FeedService feedService;
@@ -84,7 +82,7 @@ public class StreamAttributeMapServiceImpl
 
     @Inject
     StreamAttributeMapServiceImpl(@Named("cachedFeedService") final FeedService feedService,
-                                  @Named("cachedPipelineEntityService") final PipelineService pipelineService,
+                                  @Named("cachedPipelineService") final PipelineService pipelineService,
                                   @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
                                   @Named("cachedStreamProcessorService") final StreamProcessorService streamProcessorService,
                                   final StreamStore streamStore,
@@ -118,7 +116,7 @@ public class StreamAttributeMapServiceImpl
 
             final FindStreamCriteria streamCriteria = new FindStreamCriteria();
             streamCriteria.copyFrom(criteria.getFindStreamCriteria());
-            streamCriteria.setSort(FindStreamCriteria.FIELD_CREATE_MS, Direction.DESCENDING, false);
+            streamCriteria.setSort(StreamDataSource.CREATE_TIME, Direction.DESCENDING, false);
 
             final boolean includeRelations = streamCriteria.getFetchSet().contains(Stream.ENTITY_TYPE);
             streamCriteria.setFetchSet(new HashSet<>());
@@ -360,10 +358,5 @@ public class StreamAttributeMapServiceImpl
     @Override
     public FindStreamAttributeMapCriteria createCriteria() {
         return new FindStreamAttributeMapCriteria();
-    }
-
-    @Override
-    public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindStreamAttributeMapCriteria criteria) {
-        streamStore.appendCriteria(items, criteria.getFindStreamCriteria());
     }
 }

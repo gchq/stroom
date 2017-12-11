@@ -26,6 +26,8 @@ import stroom.entity.server.SupportsCriteriaLogging;
 import stroom.entity.shared.BaseResultList;
 import stroom.node.server.NodeCache;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
+import stroom.security.UserTokenUtil;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskProgress;
@@ -34,7 +36,6 @@ import stroom.util.shared.Monitor;
 import stroom.util.shared.Task;
 import stroom.util.shared.TaskId;
 import stroom.util.shared.ThreadPool;
-import stroom.security.UserTokenUtil;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.task.ExternalShutdownController;
 import stroom.util.task.HasMonitor;
@@ -387,9 +388,7 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
                 }
             }
 
-            securityContext.pushUser(userToken);
-            try {
-
+            try (final SecurityHelper securityHelper = SecurityHelper.asUser(securityContext, userToken)) {
                 // Create a task monitor bean to be injected inside the handler.
                 final TaskMonitorImpl taskMonitor = beanStore.getBean(TaskMonitorImpl.class);
                 if (task instanceof HasMonitor) {
@@ -409,9 +408,6 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
                 } finally {
                     CurrentTaskState.popState();
                 }
-
-            } finally {
-                securityContext.popUser();
             }
 
         } finally {

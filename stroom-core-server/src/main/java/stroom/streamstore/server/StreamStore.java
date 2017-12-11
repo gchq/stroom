@@ -19,7 +19,7 @@ package stroom.streamstore.server;
 
 import stroom.entity.server.FindDeleteService;
 import stroom.entity.server.FindService;
-import stroom.entity.server.SupportsCriteriaLogging;
+import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
@@ -41,8 +41,7 @@ import java.util.List;
  * stream to unlock the file.
  * </p>
  */
-public interface StreamStore extends FindService<Stream, FindStreamCriteria>, FindDeleteService<FindStreamCriteria>,
-        SupportsCriteriaLogging<FindStreamCriteria> {
+public interface StreamStore extends FindService<Stream, FindStreamCriteria>, FindDeleteService<FindStreamCriteria> {
     /**
      * Load a stream by id.
      *
@@ -111,7 +110,7 @@ public interface StreamStore extends FindService<Stream, FindStreamCriteria>, Fi
      * Open a existing stream source.
      * </p>
      *
-     * @param id        The stream id to open a stream source for.
+     * @param streamId        The stream id to open a stream source for.
      * @param anyStatus Used to specify if this method will return stream sources that
      *                  are logically deleted or locked. If false only unlocked stream
      *                  sources will be returned, null otherwise.
@@ -165,15 +164,7 @@ public interface StreamStore extends FindService<Stream, FindStreamCriteria>, Fi
      */
     Long deleteStream(Stream stream);
 
-    /**
-     * <p>
-     * Delete a stream.
-     * </p>
-     *
-     * @return items deleted
-     */
-    @Override
-    Long findDelete(FindStreamCriteria findStreamCriteria);
+    BaseResultList<Stream> find(OldFindStreamCriteria findStreamCriteria) throws RuntimeException;
 
     /**
      * <p>

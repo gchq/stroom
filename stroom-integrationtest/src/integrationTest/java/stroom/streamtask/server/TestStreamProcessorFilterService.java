@@ -26,7 +26,7 @@ import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.streamstore.shared.FindStreamDataSource;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
@@ -107,15 +107,15 @@ public class TestStreamProcessorFilterService extends AbstractCoreIntegrationTes
 
 
         final QueryData findStreamQueryData = new QueryData.Builder()
-                .dataSource(QueryData.STREAM_STORE_DOC_REF)
+                .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                 .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                     .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                        .addTerm(FindStreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed1.getName())
-                        .addTerm(FindStreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed2.getName())
+                        .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed1.getName())
+                        .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed2.getName())
                         .build())
                     .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                        .addTerm(FindStreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
-                        .addTerm(FindStreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_REFERENCE.getName())
+                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
+                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_REFERENCE.getName())
                         .build())
                     .build())
                 .build();

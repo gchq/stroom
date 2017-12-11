@@ -19,7 +19,6 @@ package stroom.xmlschema.server;
 
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.logging.DocumentEventLog;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.HqlBuilder;
@@ -36,8 +35,10 @@ import javax.inject.Inject;
 public class XMLSchemaServiceImpl extends DocumentEntityServiceImpl<XMLSchema, FindXMLSchemaCriteria>
         implements XMLSchemaService {
     @Inject
-    XMLSchemaServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext, final DocumentEventLog documentEventLog) {
-        super(entityManager, importExportHelper, securityContext, documentEventLog);
+    XMLSchemaServiceImpl(final StroomEntityManager entityManager,
+                         final ImportExportHelper importExportHelper,
+                         final SecurityContext securityContext) {
+        super(entityManager, importExportHelper, securityContext);
     }
 
     @Override

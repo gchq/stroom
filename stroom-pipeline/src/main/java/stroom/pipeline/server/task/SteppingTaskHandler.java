@@ -402,7 +402,7 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
         if (filteredStreamIdList == null) {
             List<Long> filteredList = Collections.emptyList();
 
-            if (criteria.getStreamIdSet() == null || Boolean.TRUE.equals(criteria.getStreamIdSet().getMatchAll())) {
+            if (criteria.getSelectedIdSet() == null || Boolean.TRUE.equals(criteria.getSelectedIdSet().getMatchAll())) {
                 // Don't get back more than 1000 streams or we might run out of
                 // memory.
                 criteria.obtainPageRequest().setOffset(0L);
@@ -418,19 +418,19 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
                 allStreamIdList.add(stream.getId());
             }
 
-            if (criteria.getStreamIdSet() == null || Boolean.TRUE.equals(criteria.getStreamIdSet().getMatchAll())) {
+            if (criteria.getSelectedIdSet() == null || Boolean.TRUE.equals(criteria.getSelectedIdSet().getMatchAll())) {
                 // If we are including all tasks then don't filter the list.
                 filteredList = new ArrayList<>(allStreamList.size());
                 for (final Stream stream : allStreamList) {
                     filteredList.add(stream.getId());
                 }
 
-            } else if (criteria.getStreamIdSet() != null && criteria.getStreamIdSet().getSet() != null
-                    && criteria.getStreamIdSet().getSet().size() > 0) {
+            } else if (criteria.getSelectedIdSet() != null && criteria.getSelectedIdSet().getSet() != null
+                    && criteria.getSelectedIdSet().getSet().size() > 0) {
                 // Otherwise filter the list to just selected tasks.
-                filteredList = new ArrayList<>(criteria.getStreamIdSet().getSet().size());
+                filteredList = new ArrayList<>(criteria.getSelectedIdSet().getSet().size());
                 for (final Stream stream : allStreamList) {
-                    if (criteria.getStreamIdSet().isMatch(stream)) {
+                    if (criteria.getSelectedIdSet().isMatch(stream.getId())) {
                         filteredList.add(stream.getId());
                     }
                 }

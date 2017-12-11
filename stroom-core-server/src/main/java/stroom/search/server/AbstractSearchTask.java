@@ -17,23 +17,15 @@
 package stroom.search.server;
 
 import stroom.query.api.v2.Query;
-import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.util.shared.Task;
 import stroom.util.task.ServerTask;
 
 public abstract class AbstractSearchTask<R> extends ServerTask<R> {
-    private final FindStreamCriteria streamFilter;
     private final Query query;
 
-    public AbstractSearchTask(final Task<?> parentTask, final String userToken,
-                              final FindStreamCriteria streamFilter, final Query query) {
+    public AbstractSearchTask(final Task<?> parentTask, final String userToken, final Query query) {
         super(null, userToken);
-        this.streamFilter = streamFilter;
         this.query = query;
-    }
-
-    public FindStreamCriteria getStreamFilter() {
-        return streamFilter;
     }
 
     public Query getQuery() {

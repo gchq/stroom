@@ -287,7 +287,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
         // Set the stream id on the stepping action.
         final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
-        findStreamCriteria.obtainStreamIdSet().add(stream.getId());
+        findStreamCriteria.obtainSelectedIdSet().add(stream.getId());
         action.setCriteria(findStreamCriteria);
         action.setChildStreamType(childStreamType);
 

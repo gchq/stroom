@@ -19,6 +19,7 @@ package stroom.document.server;
 
 import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.DocumentServiceWriteAction;
+import stroom.logging.DocumentEventLog;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedObject;
@@ -30,10 +31,12 @@ import javax.inject.Inject;
 @Scope(value = StroomScope.TASK)
 class DocumentServiceWriteHandler extends AbstractTaskHandler<DocumentServiceWriteAction<SharedObject>, SharedObject> {
     private final DocumentService documentService;
+    private final DocumentEventLog documentEventLog;
 
     @Inject
-    DocumentServiceWriteHandler(final DocumentService documentService) {
+    DocumentServiceWriteHandler(final DocumentService documentService, final DocumentEventLog documentEventLog) {
         this.documentService = documentService;
+        this.documentEventLog = documentEventLog;
     }
 
     @SuppressWarnings("unchecked")
@@ -89,6 +92,13 @@ class DocumentServiceWriteHandler extends AbstractTaskHandler<DocumentServiceWri
 //
 //        return result;
 
-        return (SharedObject) documentService.writeDocument(action.getDocRef(), action.getDocument());
+        try {
+            final SharedObject doc = (SharedObject) documentService.writeDocument(action.getDocRef(), action.getDocument());
+            documentEventLog.delete(action.getDocRef(), null);
+            return doc;
+        } catch (final RuntimeException e) {
+            documentEventLog.delete(action.getDocRef(), e);
+            throw e;
+        }
     }
 }

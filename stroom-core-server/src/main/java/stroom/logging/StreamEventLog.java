@@ -17,7 +17,11 @@
 
 package stroom.logging;
 
+import event.logging.BaseAdvancedQueryItem;
+import event.logging.BaseAdvancedQueryOperator;
 import event.logging.BaseAdvancedQueryOperator.And;
+import event.logging.BaseAdvancedQueryOperator.Not;
+import event.logging.BaseAdvancedQueryOperator.Or;
 import event.logging.Criteria;
 import event.logging.Event;
 import event.logging.Export;
@@ -26,29 +30,36 @@ import event.logging.MultiObject;
 import event.logging.ObjectOutcome;
 import event.logging.Query;
 import event.logging.Query.Advanced;
+import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.feed.shared.Feed;
+import stroom.query.api.v2.ExpressionItem;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.Insecure;
-import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.Date;
+import java.util.List;
 
 @Component
 @Insecure
 public class StreamEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamEventLog.class);
 
-    @Resource
-    private StroomEventLoggingService eventLoggingService;
-    @Resource
-    private StreamStore streamStore;
+    private final StroomEventLoggingService eventLoggingService;
+
+    @Inject
+    StreamEventLog(final StroomEventLoggingService eventLoggingService) {
+        this.eventLoggingService = eventLoggingService;
+    }
 
     public void importStream(final Date receivedDate, final String feedName, final String path, final Throwable th) {
         try {
@@ -116,11 +127,8 @@ public class StreamEventLog {
 
     private Query createQuery(final FindStreamCriteria findStreamCriteria) {
         if (findStreamCriteria != null) {
-            final And and = new And();
-            streamStore.appendCriteria(and.getAdvancedQueryItems(), findStreamCriteria);
-
             final Advanced advanced = new Advanced();
-            advanced.getAdvancedQueryItems().add(and);
+            appendCriteria(advanced.getAdvancedQueryItems(), findStreamCriteria);
 
             final Query query = new Query();
             query.setAdvanced(advanced);
@@ -144,5 +152,129 @@ public class StreamEventLog {
         }
 
         return object;
+    }
+
+
+    private void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindStreamCriteria findStreamCriteria) {
+//        CriteriaLoggingUtil.appendEntityIdSet(items, "streamProcessorIdSet",
+//                findStreamCriteria.getStreamProcessorIdSet());
+//        CriteriaLoggingUtil.appendIncludeExcludeEntityIdSet(items, "feeds", findStreamCriteria.getFeeds());
+//        CriteriaLoggingUtil.appendEntityIdSet(items, "pipelineIdSet", findStreamCriteria.getPipelineIdSet());
+//        CriteriaLoggingUtil.appendEntityIdSet(items, "streamTypeIdSet", findStreamCriteria.getStreamTypeIdSet());
+//        CriteriaLoggingUtil.appendEntityIdSet(items, "streamIdSet", findStreamCriteria.getStreamIdSet());
+//        CriteriaLoggingUtil.appendCriteriaSet(items, "statusSet", findStreamCriteria.getStatusSet());
+//        CriteriaLoggingUtil.appendRangeTerm(items, "streamIdRange", findStreamCriteria.getStreamIdRange());
+//        CriteriaLoggingUtil.appendEntityIdSet(items, "parentStreamIdSet", findStreamCriteria.getParentStreamIdSet());
+//        CriteriaLoggingUtil.appendRangeTerm(items, "createPeriod", findStreamCriteria.getCreatePeriod());
+//        CriteriaLoggingUtil.appendRangeTerm(items, "effectivePeriod", findStreamCriteria.getEffectivePeriod());
+//        CriteriaLoggingUtil.appendRangeTerm(items, "statusPeriod", findStreamCriteria.getStatusPeriod());
+//        appendStreamAttributeConditionList(items, "attributeConditionList",
+//                findStreamCriteria.getAttributeConditionList());
+//
+//        CriteriaLoggingUtil.appendPageRequest(items, findStreamCriteria.getPageRequest());
+//
+//
+
+
+        if (findStreamCriteria.getSelectedIdSet() != null && findStreamCriteria.getSelectedIdSet().size() > 0) {
+            final BaseAdvancedQueryOperator and = new And();
+            items.add(and);
+
+            BaseAdvancedQueryOperator idSetOp = and;
+            if (findStreamCriteria.getSelectedIdSet().size() > 1) {
+                idSetOp = new Or();
+                and.getAdvancedQueryItems().add(idSetOp);
+            }
+
+            for (long id : findStreamCriteria.getSelectedIdSet()) {
+                idSetOp.getAdvancedQueryItems().add(EventLoggingUtil.createTerm(StreamDataSource.STREAM_ID, TermCondition.EQUALS, String.valueOf(id)));
+            }
+
+            appendOperator(and.getAdvancedQueryItems(), findStreamCriteria.getExpression());
+
+        } else {
+            appendOperator(items, findStreamCriteria.getExpression());
+        }
+    }
+
+    private void appendOperator(final List<BaseAdvancedQueryItem> items, final ExpressionOperator expressionOperator) {
+        if (expressionOperator != null && expressionOperator.enabled()) {
+            BaseAdvancedQueryOperator operator = null;
+            switch (expressionOperator.getOp()) {
+                case AND:
+                    operator = new And();
+                    break;
+                case OR:
+                    operator = new Or();
+                    break;
+                case NOT:
+                    operator = new Not();
+                    break;
+            }
+
+            items.add(operator);
+
+            if (expressionOperator.getChildren() != null) {
+                for (final ExpressionItem item : expressionOperator.getChildren()) {
+                    if (item.enabled()) {
+                        if (item instanceof ExpressionOperator) {
+                            appendOperator(operator.getAdvancedQueryItems(), (ExpressionOperator) item);
+                        } else if (item instanceof ExpressionTerm) {
+                            appendTerm(operator.getAdvancedQueryItems(), (ExpressionTerm) item);
+                        }
+                    }
+
+                }
+            }
+        }
+    }
+
+    private void appendTerm(final List<BaseAdvancedQueryItem> items, final ExpressionTerm expressionTerm) {
+        switch (expressionTerm.getCondition()) {
+            case CONTAINS:
+                items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.CONTAINS, expressionTerm.getValue()));
+                break;
+            case EQUALS:
+                items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.EQUALS, expressionTerm.getValue()));
+                break;
+            case GREATER_THAN:
+                items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.GREATER_THAN, expressionTerm.getValue()));
+                break;
+            case GREATER_THAN_OR_EQUAL_TO:
+                items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.GREATER_THAN_EQUAL_TO, expressionTerm.getValue()));
+                break;
+            case LESS_THAN:
+                items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.LESS_THAN, expressionTerm.getValue()));
+                break;
+            case LESS_THAN_OR_EQUAL_TO:
+                items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.LESS_THAN_EQUAL_TO, expressionTerm.getValue()));
+                break;
+            case BETWEEN: {
+                final String[] parts = expressionTerm.getValue().split(",");
+                if (parts.length >= 2) {
+                    items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.GREATER_THAN_EQUAL_TO, parts[0]));
+                    items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.LESS_THAN, parts[1]));
+                } else {
+                    items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.EQUALS, expressionTerm.getValue()));
+                }
+                break;
+            }
+            case IN: {
+                final String[] parts = expressionTerm.getValue().split(",");
+                if (parts.length >= 2) {
+                    final Or or = new Or();
+                    for (final String part : parts) {
+                        or.getAdvancedQueryItems().add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.EQUALS, part));
+                    }
+                    items.add(or);
+                } else {
+                    items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.EQUALS, expressionTerm.getValue()));
+                }
+                break;
+            }
+            case IN_DICTIONARY: {
+                items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.EQUALS, "dictionary: " + expressionTerm.getDictionary()));
+            }
+        }
     }
 }

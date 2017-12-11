@@ -25,20 +25,21 @@ import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.logging.AuthenticationEventLog;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
+import stroom.logging.AuthenticationEventLog;
 import stroom.node.server.StroomPropertyService;
 import stroom.security.Insecure;
 import stroom.security.Secured;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
+import stroom.security.UserTokenUtil;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserRef;
 import stroom.security.shared.UserStatus;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.util.cert.CertificateUtil;
 import stroom.util.config.StroomProperties;
-import stroom.security.UserTokenUtil;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -80,13 +81,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (userRef != null) {
             final boolean preventLogin = StroomProperties.getBooleanProperty(PREVENT_LOGIN_PROPERTY, false);
             if (preventLogin) {
-                securityContext.pushUser(UserTokenUtil.create(userRef.getName(), null));
-                try {
+                try (final SecurityHelper securityHelper = SecurityHelper.asUser(securityContext, UserTokenUtil.create(userRef.getName(), null))) {
                     if (!securityContext.isAdmin()) {
                         throw new AuthenticationException("You are not allowed to login at this time");
                     }
-                } finally {
-                    securityContext.popUser();
                 }
             }
         }

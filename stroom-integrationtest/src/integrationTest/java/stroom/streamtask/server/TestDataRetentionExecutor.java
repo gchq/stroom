@@ -26,7 +26,6 @@ import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.policy.server.DataRetentionExecutor;
 import stroom.policy.server.DataRetentionService;
-
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;

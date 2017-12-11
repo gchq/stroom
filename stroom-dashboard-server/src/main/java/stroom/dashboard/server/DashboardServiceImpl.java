@@ -49,8 +49,11 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
     private String xmlTemplate;
 
     @Inject
-    DashboardServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext, final DocumentEventLog documentEventLog, final ResourceLoader resourceLoader) {
-        super(entityManager, importExportHelper, securityContext, documentEventLog);
+    DashboardServiceImpl(final StroomEntityManager entityManager,
+                         final ImportExportHelper importExportHelper,
+                         final SecurityContext securityContext,
+                         final ResourceLoader resourceLoader) {
+        super(entityManager, importExportHelper, securityContext);
         this.resourceLoader = resourceLoader;
     }
 

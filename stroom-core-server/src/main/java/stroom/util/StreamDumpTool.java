@@ -19,9 +19,11 @@ package stroom.util;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import stroom.entity.shared.Period;
 import stroom.feed.server.FeedServiceImpl;
 import stroom.feed.shared.Feed;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.spring.PersistenceConfiguration;
 import stroom.spring.ScopeConfiguration;
 import stroom.spring.ServerComponentScanConfiguration;
@@ -31,8 +33,8 @@ import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTypeServiceImpl;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.spring.StroomSpringProfiles;
@@ -85,15 +87,15 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         // Boot up spring
         final ApplicationContext appContext = getAppContext();
 
-        final FindStreamCriteria criteria = new FindStreamCriteria();
+        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
 
-        Long createPeriodFromMs = null;
+        String createStartTime = null;
         if (StringUtils.isNotBlank(createPeriodFrom)) {
-            createPeriodFromMs = DateUtil.parseNormalDateTimeString(createPeriodFrom);
+            createStartTime = createPeriodFrom;
         }
-        Long createPeriodToMs = null;
+        String createEndTime = null;
         if (StringUtils.isNotBlank(createPeriodTo)) {
-            createPeriodToMs = DateUtil.parseNormalDateTimeString(createPeriodTo);
+            createEndTime = createPeriodTo;
         }
 
         if (outputDir == null || outputDir.length() == 0) {
@@ -110,7 +112,7 @@ public class StreamDumpTool extends AbstractCommandLineTool {
             }
         }
 
-        criteria.setCreatePeriod(new Period(createPeriodFromMs, createPeriodToMs));
+        builder.addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, createStartTime + "," + createEndTime);
 
         final StreamStore streamStore = appContext.getBean(StreamStore.class);
         final FeedServiceImpl feedService = appContext.getBean(FeedServiceImpl.class);
@@ -122,7 +124,7 @@ public class StreamDumpTool extends AbstractCommandLineTool {
             if (definition == null) {
                 throw new RuntimeException("Unable to locate Feed " + feed);
             }
-            criteria.obtainFeeds().obtainInclude().add(definition.getId());
+            builder.addTerm(StreamDataSource.FEED, Condition.EQUALS, definition.getName());
         }
 
         if (streamType != null) {
@@ -130,12 +132,14 @@ public class StreamDumpTool extends AbstractCommandLineTool {
             if (type == null) {
                 throw new RuntimeException("Unable to locate stream type " + streamType);
             }
-            criteria.obtainStreamTypeIdSet().add(type.getId());
+            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, type.getDisplayValue());
         } else {
-            criteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS.getId());
+            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.RAW_EVENTS.getDisplayValue());
         }
 
         // Query the stream store
+        final FindStreamCriteria criteria = new FindStreamCriteria();
+        criteria.setExpression(builder.build());
         final List<Stream> results = streamStore.find(criteria);
         System.out.println("Starting dump of " + results.size() + " streams");
 

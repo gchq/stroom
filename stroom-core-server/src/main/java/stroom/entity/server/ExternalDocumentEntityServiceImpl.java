@@ -221,7 +221,7 @@ public abstract class ExternalDocumentEntityServiceImpl
                     queryAppender.postLoad(entity);
                 }
                 checkReadPermission(DocRefUtil.create(entity));
-                documentEventLog.view(entity);
+                documentEventLog.view(entity, null);
             } catch (final RuntimeException e) {
                 documentEventLog.view(entity, e);
                 throw e;
@@ -301,7 +301,7 @@ public abstract class ExternalDocumentEntityServiceImpl
                     queryAppender.postLoad(entity);
                 }
                 checkReadPermission(DocRefUtil.create(entity));
-                documentEventLog.view(entity);
+                documentEventLog.view(entity, null);
             } catch (final RuntimeException e) {
                 documentEventLog.view(entity, e);
                 throw e;
@@ -337,7 +337,7 @@ public abstract class ExternalDocumentEntityServiceImpl
             try {
                 queryAppender.postLoad(entity);
 //                checkReadPermission(DocRefUtil.create(entity));
-                documentEventLog.view(entity);
+                documentEventLog.view(entity, null);
             } catch (final RuntimeException e) {
                 documentEventLog.view(entity, e);
                 throw e;

@@ -31,6 +31,7 @@ import stroom.streamstore.server.fs.serializable.NestedStreamTarget;
 import stroom.streamstore.server.udload.StreamDownloadSettings;
 import stroom.streamstore.server.udload.StreamDownloadTask;
 import stroom.streamstore.server.udload.StreamUploadTask;
+import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamStatus;
@@ -64,7 +65,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
 
         final Path file = Files.createTempFile(getCurrentTestDir(), "TestStreamDownloadTaskHandler", ".zip");
         final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
-        findStreamCriteria.obtainFeeds().obtainInclude().add(feed.getId());
+        findStreamCriteria.setExpression(ExpressionUtil.createFeedExpression(feed));
         final StreamDownloadSettings streamDownloadSettings = new StreamDownloadSettings();
 
         Assert.assertEquals(2, streamStore.find(findStreamCriteria).size());
@@ -90,7 +91,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
     public void testUploadFlatFile() throws IOException {
         final Feed feed = commonTestScenarioCreator.createSimpleFeed();
         final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
-        findStreamCriteria.obtainFeeds().obtainInclude().add(feed.getId());
+        findStreamCriteria.setExpression(ExpressionUtil.createFeedExpression(feed));
 
         final Path file = Files.createTempFile(getCurrentTestDir(), "TestStreamDownloadTaskHandler", ".dat");
         Files.write(file, "TEST".getBytes());
@@ -140,7 +141,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         streamStore.closeStreamTarget(streamTarget);
 
         final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
-        findStreamCriteria.obtainFeeds().obtainInclude().add(feed.getId());
+        findStreamCriteria.setExpression(ExpressionUtil.createFeedExpression(feed));
         final StreamDownloadSettings streamDownloadSettings = new StreamDownloadSettings();
 
         Assert.assertEquals(1, streamStore.find(findStreamCriteria).size());

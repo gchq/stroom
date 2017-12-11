@@ -18,7 +18,6 @@ package stroom.feed.server;
 
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import stroom.logging.DocumentEventLog;
 import stroom.entity.server.CachingEntityManager;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.security.SecurityContext;
@@ -29,7 +28,9 @@ import javax.inject.Inject;
 @Component("cachedFeedService")
 public class CachedFeedService extends FeedServiceImpl {
     @Inject
-    CachedFeedService(final CachingEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext, final DocumentEventLog documentEventLog) {
-        super(entityManager, importExportHelper, securityContext, documentEventLog);
+    CachedFeedService(final CachingEntityManager entityManager,
+                      final ImportExportHelper importExportHelper,
+                      final SecurityContext securityContext) {
+        super(entityManager, importExportHelper, securityContext);
     }
 }

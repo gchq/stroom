@@ -47,7 +47,6 @@ import stroom.search.server.EventRef;
 import stroom.search.server.EventRefs;
 import stroom.search.server.EventSearchTask;
 import stroom.security.UserTokenUtil;
-import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.task.server.TaskCallback;
 import stroom.task.server.TaskManager;
 import stroom.util.config.StroomProperties;
@@ -481,7 +480,7 @@ public class TestInteractiveSearch extends AbstractSearchTest {
 
         final CountDownLatch complete = new CountDownLatch(1);
 
-        final EventSearchTask eventSearchTask = new EventSearchTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, new FindStreamCriteria(), query,
+        final EventSearchTask eventSearchTask = new EventSearchTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, query,
                 new EventRef(1, 1), new EventRef(Long.MAX_VALUE, Long.MAX_VALUE), 1000, 1000, 1000, 100);
         final AtomicReference<EventRefs> results = new AtomicReference<>();
         taskManager.execAsync(eventSearchTask, new TaskCallback<EventRefs>() {

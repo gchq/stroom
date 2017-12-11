@@ -44,7 +44,7 @@ class DocumentServiceImpl implements DocumentService {
             final DocumentActionHandler documentActionHandler = getDocumentActionHandler(docRef.getType());
             result = documentActionHandler.readDocument(docRef);
             if (result != null) {
-                documentEventLog.view(result);
+                documentEventLog.view(result, null);
             }
         } catch (final RuntimeException e) {
             documentEventLog.view(docRef, e);

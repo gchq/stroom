@@ -294,11 +294,6 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     }
 
     @Override
-    public void view(final java.lang.Object object) {
-        view(object, null);
-    }
-
-    @Override
     public void view(final java.lang.Object object, final Throwable ex) {
         try {
             final Event event = createAction("View", "Viewing", object);

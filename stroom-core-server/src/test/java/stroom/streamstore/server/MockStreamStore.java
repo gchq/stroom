@@ -16,7 +16,6 @@
 
 package stroom.streamstore.server;
 
-import event.logging.BaseAdvancedQueryItem;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseResultList;
@@ -27,9 +26,11 @@ import stroom.io.SeekableInputStream;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
+import stroom.streamtask.server.ExpressionToFindCriteria;
 import stroom.util.collections.TypedMap;
 import stroom.util.spring.StroomSpringProfiles;
 
+import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -53,6 +54,7 @@ public class MockStreamStore implements StreamStore, Clearable {
             .fromMap(new HashMap<>());
     private final Set<Stream> openInputStream = new HashSet<>();
     private final Map<Long, Stream> streamMap = new HashMap<>();
+    private final ExpressionToFindCriteria expressionToFindCriteria;
 
     private Stream lastStream;
 
@@ -60,6 +62,15 @@ public class MockStreamStore implements StreamStore, Clearable {
      * This id is used to emulate the primary key on the database.
      */
     private long currentId;
+
+    public MockStreamStore() {
+        this.expressionToFindCriteria = null;
+    }
+
+    @Inject
+    public MockStreamStore(final ExpressionToFindCriteria expressionToFindCriteria) {
+        this.expressionToFindCriteria = expressionToFindCriteria;
+    }
 
     /**
      * Load a stream by id.
@@ -268,7 +279,7 @@ public class MockStreamStore implements StreamStore, Clearable {
      * Open a existing stream source.
      * </p>
      *
-     * @param id        The stream id to open a stream source for.
+     * @param streamId        The stream id to open a stream source for.
      * @param anyStatus Used to specify if this method will return stream sources that
      *                  are logically deleted or locked. If false only unlocked stream
      *                  sources will be returned, null otherwise.
@@ -338,15 +349,20 @@ public class MockStreamStore implements StreamStore, Clearable {
         return streamMap;
     }
 
+    @Override
+    public BaseResultList<Stream> find(final FindStreamCriteria criteria) throws RuntimeException {
+        final OldFindStreamCriteria oldFindStreamCriteria = expressionToFindCriteria.convert(criteria);
+        return find(oldFindStreamCriteria);
+    }
+
     /**
      * Overridden.
      *
      * @param findStreamCriteria NA
      * @return NA
-     * @see stroom.streamstore.server.StreamStore#find(stroom.streamstore.shared.FindStreamCriteria)
      */
     @Override
-    public BaseResultList<Stream> find(final FindStreamCriteria findStreamCriteria) {
+    public BaseResultList<Stream> find(final OldFindStreamCriteria findStreamCriteria) {
         final List<Stream> list = new ArrayList<>();
         for (final Stream stream : fileData.keySet()) {
             if (findStreamCriteria.isMatch(stream)) {
@@ -405,17 +421,13 @@ public class MockStreamStore implements StreamStore, Clearable {
     }
 
     @Override
-    public Long findDelete(final FindStreamCriteria findStreamCriteria) {
+    public Long findDelete(final FindStreamCriteria criteria) throws RuntimeException {
         return null;
     }
 
     @Override
     public FindStreamCriteria createCriteria() {
         return new FindStreamCriteria();
-    }
-
-    @Override
-    public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindStreamCriteria criteria) {
     }
 
     private Long getStreamTypeId(final StreamType streamType) {

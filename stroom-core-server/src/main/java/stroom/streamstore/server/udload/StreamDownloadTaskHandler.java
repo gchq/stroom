@@ -44,7 +44,7 @@ import stroom.util.task.MonitorImpl;
 import stroom.util.task.TaskMonitor;
 import stroom.util.thread.BufferFactory;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
@@ -57,24 +57,24 @@ public class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloa
 
     private static final String AGGREGATION_DELIMITER = "_";
 
-    @Resource
-    private TaskMonitor taskMonitor;
-    @Resource
-    private StreamStore streamStore;
+    private final TaskMonitor taskMonitor;
+    private final StreamStore streamStore;
+
+    @Inject
+    StreamDownloadTaskHandler(final TaskMonitor taskMonitor, final StreamStore streamStore) {
+        this.taskMonitor = taskMonitor;
+        this.streamStore = streamStore;
+    }
 
     @Override
     public StreamDownloadResult exec(final StreamDownloadTask task) {
-        StreamDownloadResult result = null;
         taskMonitor.info(task.getFile().toString());
-
-        result = downloadData(task, task.getCriteria(), task.getFile(), task.getSettings());
-
-        return result;
+        return downloadData(task, task.getCriteria(), task.getFile(), task.getSettings());
     }
 
-    private StreamDownloadResult downloadData(final StreamDownloadTask task, final FindStreamCriteria criteria,
+    private StreamDownloadResult downloadData(final StreamDownloadTask task, final FindStreamCriteria findStreamCriteria,
                                               Path data, final StreamDownloadSettings settings) throws RuntimeException {
-        final BaseResultList<Stream> list = streamStore.find(criteria);
+        final BaseResultList<Stream> list = streamStore.find(findStreamCriteria);
 
         final StreamDownloadResult result = new StreamDownloadResult();
 

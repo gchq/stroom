@@ -16,7 +16,6 @@
 
 package stroom.streamstore.shared;
 
-import stroom.entity.shared.Copyable;
 import stroom.entity.shared.FindNamedEntityCriteria;
 import stroom.entity.shared.PageRequest;
 
@@ -26,8 +25,7 @@ import stroom.entity.shared.PageRequest;
  * example.
  * </p>
  */
-public class FindStreamAttributeMapCriteria extends FindNamedEntityCriteria
-        implements Copyable<FindStreamAttributeMapCriteria> {
+public class FindStreamAttributeMapCriteria extends FindNamedEntityCriteria {
     private static final long serialVersionUID = -4777723504698304778L;
 
     private FindStreamCriteria findStreamCriteria = null;
@@ -36,12 +34,6 @@ public class FindStreamAttributeMapCriteria extends FindNamedEntityCriteria
     public FindStreamAttributeMapCriteria() {
         findStreamCriteria = new FindStreamCriteria();
         super.setPageRequest(null);
-    }
-
-    public static FindStreamAttributeMapCriteria create(final Stream stream) {
-        FindStreamAttributeMapCriteria criteria = new FindStreamAttributeMapCriteria();
-        criteria.obtainFindStreamCriteria().obtainStreamIdSet().add(stream);
-        return criteria;
     }
 
     public FindStreamCriteria getFindStreamCriteria() {
@@ -93,10 +85,5 @@ public class FindStreamAttributeMapCriteria extends FindNamedEntityCriteria
     @Override
     public int hashCode() {
         return findStreamCriteria.hashCode();
-    }
-
-    @Override
-    public void copyFrom(FindStreamAttributeMapCriteria other) {
-        this.findStreamCriteria.copyFrom(other.findStreamCriteria);
     }
 }

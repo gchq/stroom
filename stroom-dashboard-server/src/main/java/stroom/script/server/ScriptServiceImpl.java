@@ -42,8 +42,10 @@ public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScr
     public static final Set<String> FETCH_SET = Collections.singleton(Script.FETCH_RESOURCE);
 
     @Inject
-    ScriptServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext, final DocumentEventLog documentEventLog) {
-        super(entityManager, importExportHelper, securityContext, documentEventLog);
+    ScriptServiceImpl(final StroomEntityManager entityManager,
+                      final ImportExportHelper importExportHelper,
+                      final SecurityContext securityContext) {
+        super(entityManager, importExportHelper, securityContext);
     }
 
     @Override

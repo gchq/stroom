@@ -24,11 +24,12 @@ import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.StringCriteria;
 import stroom.entity.shared.StringCriteria.MatchStyle;
 import stroom.feed.server.FeedService;
+import stroom.node.server.NodeService;
 import stroom.pipeline.server.PipelineService;
 import stroom.query.shared.FetchSuggestionsAction;
-import stroom.streamstore.server.StreamFields;
 import stroom.streamstore.server.StreamTypeService;
-import stroom.streamstore.shared.QueryData;
+import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.shared.StreamStatus;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedList;
@@ -36,8 +37,11 @@ import stroom.util.shared.SharedString;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
+import javax.inject.Named;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @TaskHandlerBean(task = FetchSuggestionsAction.class)
 @Scope(StroomScope.TASK)
@@ -45,28 +49,45 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
     private final FeedService feedService;
     private final PipelineService pipelineService;
     private final StreamTypeService streamTypeService;
+    private final NodeService nodeService;
 
     @Inject
-    public FetchSuggestionsHandler(final FeedService feedService, final PipelineService pipelineService, final StreamTypeService streamTypeService) {
+    FetchSuggestionsHandler(@Named("cachedFeedService") final FeedService feedService,
+                            @Named("cachedPipelineService") final PipelineService pipelineService,
+                            @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
+                            @Named("cachedNodeService") final NodeService nodeService) {
         this.feedService = feedService;
         this.pipelineService = pipelineService;
         this.streamTypeService = streamTypeService;
+        this.nodeService = nodeService;
     }
 
     @Override
     public SharedList<SharedString> exec(final FetchSuggestionsAction task) {
         if (task.getDataSource() != null) {
-            if (QueryData.STREAM_STORE_DOC_REF.equals(task.getDataSource())) {
-                if (task.getField().getName().equals(StreamFields.FEED)) {
+            if (StreamDataSource.STREAM_STORE_DOC_REF.equals(task.getDataSource())) {
+                if (task.getField().getName().equals(StreamDataSource.FEED)) {
                     return createList(feedService, task.getText());
                 }
 
-                if (task.getField().getName().equals(StreamFields.PIPELINE)) {
+                if (task.getField().getName().equals(StreamDataSource.PIPELINE)) {
                     return createList(pipelineService, task.getText());
                 }
 
-                if (task.getField().getName().equals(StreamFields.STREAM_TYPE)) {
+                if (task.getField().getName().equals(StreamDataSource.STREAM_TYPE)) {
                     return createList(streamTypeService, task.getText());
+                }
+
+                if (task.getField().getName().equals(StreamDataSource.STATUS)) {
+                    return new SharedList<>(Arrays.stream(StreamStatus.values())
+                            .map(StreamStatus::getDisplayValue)
+                            .map(SharedString::wrap)
+                            .sorted()
+                            .collect(Collectors.toList()));
+                }
+
+                if (task.getField().getName().equals(StreamDataSource.NODE)) {
+                    return createList(nodeService, task.getText());
                 }
             }
         }

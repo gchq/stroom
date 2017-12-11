@@ -20,10 +20,13 @@ import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.HasIsConstrained;
+import stroom.entity.shared.Period;
+import stroom.feed.shared.Feed;
 import stroom.node.shared.Node;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamStatus;
+import stroom.streamstore.shared.StreamType;
 
 /**
  * <p>
@@ -53,6 +56,11 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
     /**
      * Find with a key
      */
+    private EntityIdSet<Stream> streamIdSet = null;
+
+    /**
+     * Find with a key
+     */
     private EntityIdSet<Node> nodeIdSet = null;
 
     /**
@@ -68,27 +76,40 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
     /**
      * Find with a key
      */
+    private EntityIdSet<Feed> feedIdSet = null;
+
+    /**
+     * Find with a key
+     */
+    private EntityIdSet<StreamType> streamTypeIdSet = null;
+
+    /**
+     * Find with a key
+     */
     private EntityIdSet<PipelineEntity> pipelineIdSet = null;
+
+    private CriteriaSet<StreamStatus> statusSet;
+
+    private Period createPeriod;
+    private Period effectivePeriod;
 
     /**
      * Create at a particular time
      */
     private Long createMs = null;
 
-    /**
-     * Sub Filter
-     */
-    private FindStreamCriteria findStreamCriteria = null;
-
-    public static final FindStreamTaskCriteria createWithStream(final Stream stream) {
+    public static FindStreamTaskCriteria createWithStream(final Stream stream) {
         final FindStreamTaskCriteria criteria = new FindStreamTaskCriteria();
-        criteria.obtainFindStreamCriteria().obtainStreamIdSet().add(stream.getId());
+        criteria.obtainStreamIdSet().add(stream.getId());
         return criteria;
     }
 
     @Override
     public boolean isConstrained() {
         if (streamTaskStatusSet != null && streamTaskStatusSet.isConstrained()) {
+            return true;
+        }
+        if (streamIdSet != null && streamIdSet.isConstrained()) {
             return true;
         }
         if (nodeIdSet != null && nodeIdSet.isConstrained()) {
@@ -100,8 +121,25 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
         if (streamProcessorFilterIdSet != null && streamProcessorFilterIdSet.isConstrained()) {
             return true;
         }
-
-        return findStreamCriteria != null && findStreamCriteria.isConstrained();
+        if (feedIdSet != null && feedIdSet.isConstrained()) {
+            return true;
+        }
+        if (streamTypeIdSet != null && streamTypeIdSet.isConstrained()) {
+            return true;
+        }
+        if (pipelineIdSet != null && pipelineIdSet.isConstrained()) {
+            return true;
+        }
+        if (statusSet != null && statusSet.isConstrained()) {
+            return true;
+        }
+        if (createPeriod != null && createPeriod.isConstrained()) {
+            return true;
+        }
+        if (effectivePeriod != null && effectivePeriod.isConstrained()) {
+            return true;
+        }
+        return false;
     }
 
     public CriteriaSet<TaskStatus> getStreamTaskStatusSet() {
@@ -117,6 +155,17 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
             streamTaskStatusSet = new CriteriaSet<>();
         }
         return streamTaskStatusSet;
+    }
+
+    public EntityIdSet<Stream> getStreamIdSet() {
+        return streamIdSet;
+    }
+
+    public EntityIdSet<Stream> obtainStreamIdSet() {
+        if (streamIdSet == null) {
+            streamIdSet = new EntityIdSet<>();
+        }
+        return streamIdSet;
     }
 
     public EntityIdSet<Node> getNodeIdSet() {
@@ -141,6 +190,28 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
         return pipelineIdSet;
     }
 
+    public EntityIdSet<Feed> getFeedIdSet() {
+        return feedIdSet;
+    }
+
+    public EntityIdSet<Feed> obtainFeedIdSet() {
+        if (feedIdSet == null) {
+            feedIdSet = new EntityIdSet<>();
+        }
+        return feedIdSet;
+    }
+
+    public EntityIdSet<StreamType> getStreamTypeIdSet() {
+        return streamTypeIdSet;
+    }
+
+    public EntityIdSet<StreamType> obtainStreamTypeIdSet() {
+        if (streamTypeIdSet == null) {
+            streamTypeIdSet = new EntityIdSet<>();
+        }
+        return streamTypeIdSet;
+    }
+
     public EntityIdSet<StreamTask> getStreamTaskIdSet() {
         return streamTaskIdSet;
     }
@@ -163,29 +234,40 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
         return streamTaskIdSet;
     }
 
-    public FindStreamCriteria getFindStreamCriteria() {
-        return findStreamCriteria;
+    public CriteriaSet<StreamStatus> getStatusSet() {
+        return statusSet;
     }
 
-    public FindStreamCriteria obtainFindStreamCriteria() {
-        if (findStreamCriteria == null) {
-            findStreamCriteria = new FindStreamCriteria();
+    public CriteriaSet<StreamStatus> obtainStatusSet() {
+        if (statusSet == null) {
+            statusSet = new CriteriaSet<>();
         }
-        return findStreamCriteria;
+        return statusSet;
     }
 
-    public void copyFrom(final FindStreamTaskCriteria other) {
-        if (other == null) {
-            return;
-        }
-        super.copyFrom(other);
+    //    public FindStreamCriteria getFindStreamCriteria() {
+//        return findStreamCriteria;
+//    }
+//
+//    public FindStreamCriteria obtainFindStreamCriteria() {
+//        if (findStreamCriteria == null) {
+//            findStreamCriteria = new FindStreamCriteria();
+//        }
+//        return findStreamCriteria;
+//    }
 
-        this.obtainStreamTaskStatusSet().copyFrom(other.obtainStreamTaskStatusSet());
-        this.obtainNodeIdSet().copyFrom(other.obtainNodeIdSet());
-        this.obtainStreamTaskIdSet().copyFrom(other.obtainStreamTaskIdSet());
-        this.obtainFindStreamCriteria().copyFrom(other.obtainFindStreamCriteria());
-
-    }
+//    public void copyFrom(final FindStreamTaskCriteria other) {
+//        if (other == null) {
+//            return;
+//        }
+//        super.copyFrom(other);
+//
+//        this.obtainStreamTaskStatusSet().copyFrom(other.obtainStreamTaskStatusSet());
+//        this.obtainNodeIdSet().copyFrom(other.obtainNodeIdSet());
+//        this.obtainStreamTaskIdSet().copyFrom(other.obtainStreamTaskIdSet());
+//        this.obtainFindStreamCriteria().copyFrom(other.obtainFindStreamCriteria());
+//
+//    }
 
     public Long getCreateMs() {
         return createMs;
@@ -193,6 +275,37 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
 
     public void setCreateMs(final Long createMs) {
         this.createMs = createMs;
+    }
+
+    public Period getCreatePeriod() {
+        return createPeriod;
+    }
+
+    public void setCreatePeriod(final Period createPeriod) {
+        this.createPeriod = createPeriod;
+    }
+
+    public Period obtainCreatePeriod() {
+        if (createPeriod == null) {
+            createPeriod = new Period();
+        }
+        return createPeriod;
+
+    }
+
+    public Period getEffectivePeriod() {
+        return effectivePeriod;
+    }
+
+    public void setEffectivePeriod(final Period effectivePeriod) {
+        this.effectivePeriod = effectivePeriod;
+    }
+
+    public Period obtainEffectivePeriod() {
+        if (effectivePeriod == null) {
+            effectivePeriod = new Period();
+        }
+        return effectivePeriod;
     }
 
     @Override
@@ -205,27 +318,40 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
 
         if (streamTaskStatusSet != null ? !streamTaskStatusSet.equals(that.streamTaskStatusSet) : that.streamTaskStatusSet != null)
             return false;
+        if (streamIdSet != null ? !streamIdSet.equals(that.streamIdSet) : that.streamIdSet != null) return false;
         if (nodeIdSet != null ? !nodeIdSet.equals(that.nodeIdSet) : that.nodeIdSet != null) return false;
         if (streamTaskIdSet != null ? !streamTaskIdSet.equals(that.streamTaskIdSet) : that.streamTaskIdSet != null)
             return false;
         if (streamProcessorFilterIdSet != null ? !streamProcessorFilterIdSet.equals(that.streamProcessorFilterIdSet) : that.streamProcessorFilterIdSet != null)
             return false;
-        if (pipelineIdSet != null ? !pipelineIdSet.equals(that.pipelineIdSet) : that.pipelineIdSet != null)
-            return false;
         if (createMs != null ? !createMs.equals(that.createMs) : that.createMs != null) return false;
-        return findStreamCriteria != null ? findStreamCriteria.equals(that.findStreamCriteria) : that.findStreamCriteria == null;
+        if (feedIdSet != null ? feedIdSet.equals(that.feedIdSet) : that.feedIdSet == null) return false;
+        if (streamTypeIdSet != null ? !streamTypeIdSet.equals(that.streamTypeIdSet) : that.streamTypeIdSet != null)
+            return false;
+        if (pipelineIdSet != null ? pipelineIdSet.equals(that.pipelineIdSet) : that.pipelineIdSet == null) return false;
+        if (statusSet != null ? statusSet.equals(that.statusSet) : that.statusSet == null) return false;
+        if (createPeriod != null ? createPeriod.equals(that.createPeriod) : that.createPeriod == null) return false;
+        if (effectivePeriod != null ? effectivePeriod.equals(that.effectivePeriod) : that.effectivePeriod == null) return false;
+
+        return true;
+
     }
 
     @Override
     public int hashCode() {
         int result = super.hashCode();
         result = 31 * result + (streamTaskStatusSet != null ? streamTaskStatusSet.hashCode() : 0);
+        result = 31 * result + (streamIdSet != null ? streamIdSet.hashCode() : 0);
         result = 31 * result + (nodeIdSet != null ? nodeIdSet.hashCode() : 0);
         result = 31 * result + (streamTaskIdSet != null ? streamTaskIdSet.hashCode() : 0);
         result = 31 * result + (streamProcessorFilterIdSet != null ? streamProcessorFilterIdSet.hashCode() : 0);
-        result = 31 * result + (pipelineIdSet != null ? pipelineIdSet.hashCode() : 0);
         result = 31 * result + (createMs != null ? createMs.hashCode() : 0);
-        result = 31 * result + (findStreamCriteria != null ? findStreamCriteria.hashCode() : 0);
+        result = 31 * result + (feedIdSet != null ? feedIdSet.hashCode() : 0);
+        result = 31 * result + (streamTypeIdSet != null ? streamTypeIdSet.hashCode() : 0);
+        result = 31 * result + (pipelineIdSet != null ? pipelineIdSet.hashCode() : 0);
+        result = 31 * result + (statusSet != null ? statusSet.hashCode() : 0);
+        result = 31 * result + (createPeriod != null ? createPeriod.hashCode() : 0);
+        result = 31 * result + (effectivePeriod != null ? effectivePeriod.hashCode() : 0);
         return result;
     }
 }

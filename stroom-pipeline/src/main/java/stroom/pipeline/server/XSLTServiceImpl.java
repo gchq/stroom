@@ -33,8 +33,10 @@ import javax.inject.Inject;
 @Transactional
 public class XSLTServiceImpl extends DocumentEntityServiceImpl<XSLT, FindXSLTCriteria> implements XSLTService {
     @Inject
-    XSLTServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext, final DocumentEventLog documentEventLog) {
-        super(entityManager, importExportHelper, securityContext, documentEventLog);
+    XSLTServiceImpl(final StroomEntityManager entityManager,
+                    final ImportExportHelper importExportHelper,
+                    final SecurityContext securityContext) {
+        super(entityManager, importExportHelper, securityContext);
     }
 
     @Override

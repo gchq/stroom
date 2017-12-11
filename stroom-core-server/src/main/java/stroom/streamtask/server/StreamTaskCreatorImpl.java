@@ -30,22 +30,30 @@ import stroom.search.server.EventRef;
 import stroom.search.server.EventRefs;
 import stroom.search.server.EventSearchTask;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
+import stroom.security.UserTokenUtil;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
+import stroom.streamstore.server.OldFindStreamCriteria;
 import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Limits;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamtask.server.StreamTaskCreatorTransactionHelper.CreatedTasks;
-import stroom.streamtask.shared.*;
+import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
+import stroom.streamtask.shared.FindStreamTaskCriteria;
+import stroom.streamtask.shared.StreamProcessor;
+import stroom.streamtask.shared.StreamProcessorFilter;
+import stroom.streamtask.shared.StreamProcessorFilterTracker;
+import stroom.streamtask.shared.StreamTask;
+import stroom.streamtask.shared.TaskStatus;
 import stroom.task.server.TaskCallbackAdaptor;
 import stroom.task.server.TaskManager;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
-import stroom.security.UserTokenUtil;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomShutdown;
@@ -97,7 +105,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     private final InternalStatisticsReceiver internalStatisticsReceiver;
     private final StreamStore streamStore;
     private final SecurityContext securityContext;
-    private final SourceSelectorToFindCriteria sourceSelectorToFindCriteria;
+    private final ExpressionToFindCriteria expressionToFindCriteria;
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
 
@@ -149,7 +157,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                           final InternalStatisticsReceiver internalStatisticsReceiver,
                           final StreamStore streamStore,
                           final SecurityContext securityContext,
-                          final SourceSelectorToFindCriteria sourceSelectorToFindCriteria) {
+                          final ExpressionToFindCriteria expressionToFindCriteria) {
 
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.streamTaskTransactionHelper = streamTaskTransactionHelper;
@@ -161,7 +169,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         this.internalStatisticsReceiver = internalStatisticsReceiver;
         this.streamStore = streamStore;
         this.securityContext = securityContext;
-        this.sourceSelectorToFindCriteria = sourceSelectorToFindCriteria;
+        this.expressionToFindCriteria = expressionToFindCriteria;
     }
 
     @StroomStartup
@@ -502,8 +510,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
             if (loadedFilter != null) {
 
                 // Set the current user to be the one who created the filter so that only streams that that user has access to are processed.
-                securityContext.pushUser(UserTokenUtil.create(loadedFilter.getCreateUser(), null));
-                try {
+                try (final SecurityHelper securityHelper = SecurityHelper.asUser(securityContext, UserTokenUtil.create(loadedFilter.getCreateUser(), null))) {
                     LOGGER.debug("createTasksForFilter() - streamProcessorFilter {}", loadedFilter.toString());
 
                     // Only try and create tasks if the processor is enabled.
@@ -536,8 +543,8 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                             if (requiredTasks > 0 && !taskMonitor.isTerminated()) {
                                 final QueryData queryData = loadedFilter.getQueryData();
 
-                                final FindStreamCriteria findStreamCriteria = sourceSelectorToFindCriteria.convert(queryData);
-                                boolean isStreamStoreSearch = (queryData.getDataSource() != null) && queryData.getDataSource().getType().equals(QueryData.STREAM_STORE_TYPE);
+                                final OldFindStreamCriteria findStreamCriteria = expressionToFindCriteria.convert(queryData);
+                                boolean isStreamStoreSearch = (queryData.getDataSource() != null) && queryData.getDataSource().getType().equals(StreamDataSource.STREAM_STORE_TYPE);
 
                                 // Record the time before we are going to query for
                                 // streams for tracking purposes.
@@ -613,8 +620,14 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                                         // Create stream tasks by executing a
                                         // search.
                                         searching = true;
-                                        createTasksFromSearchQuery(loadedFilter, findStreamCriteria, queryData, taskMonitor, logPrefix,
-                                                streamQueryTime, node, requiredTasks, queue, recentStreamInfo, tracker);
+                                        createTasksFromSearchQuery(loadedFilter,
+                                                queryData,
+                                                streamQueryTime,
+                                                node,
+                                                requiredTasks,
+                                                queue,
+                                                recentStreamInfo,
+                                                tracker);
 
                                     } else {
                                         // Create tasks from a standard stream
@@ -632,8 +645,6 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                             exhaustedFilterMap.put(loadedFilter.getId(), Boolean.FALSE);
                         }
                     }
-                } finally {
-                    securityContext.popUser();
                 }
             }
         } catch (final Throwable t) {
@@ -655,7 +666,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
             final FindStreamTaskCriteria findStreamTaskCriteria = new FindStreamTaskCriteria();
             findStreamTaskCriteria.obtainStreamTaskStatusSet().add(TaskStatus.UNPROCESSED);
             findStreamTaskCriteria.obtainNodeIdSet().setMatchNull(true);
-            findStreamTaskCriteria.obtainFindStreamCriteria().obtainStatusSet().add(StreamStatus.UNLOCKED);
+            findStreamTaskCriteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
             findStreamTaskCriteria.obtainStreamProcessorFilterIdSet().add(filter.getId());
             findStreamTaskCriteria.obtainPageRequest().setLength(tasksToCreate);
 
@@ -693,10 +704,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     }
 
     private void createTasksFromSearchQuery(final StreamProcessorFilter filter,
-                                            final FindStreamCriteria findStreamCriteria,
                                             final QueryData queryData,
-                                            final TaskMonitor taskMonitor,
-                                            final String logPrefix,
                                             final long streamQueryTime,
                                             final Node node, final int requiredTasks, final StreamTaskQueue queue,
                                             final StreamTaskCreatorRecentStreamDetails recentStreamInfo, final StreamProcessorFilterTracker tracker) {
@@ -759,7 +767,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         tracker.setStatus("Searching...");
         final StreamProcessorFilterTracker updatedTracker = streamTaskTransactionHelper.saveTracker(tracker);
 
-        final EventSearchTask eventSearchTask = new EventSearchTask(UserTokenUtil.create(filter.getUpdateUser(), null), findStreamCriteria, query,
+        final EventSearchTask eventSearchTask = new EventSearchTask(UserTokenUtil.create(filter.getUpdateUser(), null), query,
                 minEvent, maxEvent, maxStreams, maxEvents, maxEventsPerStream, POLL_INTERVAL_MS);
         taskManager.execAsync(eventSearchTask, new TaskCallbackAdaptor<EventRefs>() {
             @Override
@@ -783,8 +791,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                 // Transfer the newly created (and available) tasks to the
                 // queue.
                 createdTasks.getAvailableTaskList().forEach(queue::add);
-                LOGGER.debug("createTasks() - Created {} tasks (tasksToCreate={}) for filter {}",
-                        new Object[]{createdTasks.getTotalTasksCreated(), requiredTasks, filter.toString()});
+                LOGGER.debug("createTasks() - Created {} tasks (tasksToCreate={}) for filter {}", createdTasks.getTotalTasksCreated(), requiredTasks, filter.toString());
 
                 exhaustedFilterMap.put(filter.getId(), resultSize == 0 || reachedLimit);
 
@@ -799,7 +806,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     }
 
     private void createTasksFromCriteria(final StreamProcessorFilter filter,
-                                         final FindStreamCriteria findStreamCriteria,
+                                         final OldFindStreamCriteria findStreamCriteria,
                                          final TaskMonitor taskMonitor,
                                          final String logPrefix,
                                          final long streamQueryTime,
@@ -826,8 +833,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                 streamQueryTime, map, node, recentStreamInfo, false);
         // Transfer the newly created (and available) tasks to the queue.
         createdTasks.getAvailableTaskList().forEach(queue::add);
-        LOGGER.debug("createTasks() - Created {} tasks (tasksToCreate={}) for filter {}",
-                new Object[]{createdTasks.getTotalTasksCreated(), requiredTasks, filter.toString()});
+        LOGGER.debug("createTasks() - Created {} tasks (tasksToCreate={}) for filter {}", createdTasks.getTotalTasksCreated(), requiredTasks, filter.toString());
         exhaustedFilterMap.put(filter.getId(), createdTasks.getTotalTasksCreated() == 0);
     }
 

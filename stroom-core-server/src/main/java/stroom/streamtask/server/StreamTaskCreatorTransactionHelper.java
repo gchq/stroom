@@ -25,7 +25,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.server.util.SqlBuilder;
-import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.CriteriaSet;
@@ -35,9 +34,16 @@ import stroom.feed.shared.Feed;
 import stroom.jobsystem.server.ClusterLockService;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
+import stroom.query.api.v2.ExpressionItem;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.streamstore.server.OldFindStreamCriteria;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamtask.server.InclusiveRanges.InclusiveRange;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
@@ -47,7 +53,8 @@ import stroom.streamtask.shared.StreamProcessorFilterTracker;
 import stroom.streamtask.shared.StreamTask;
 import stroom.streamtask.shared.TaskStatus;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
+import javax.inject.Named;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.util.ArrayList;
@@ -79,23 +86,27 @@ public class StreamTaskCreatorTransactionHelper {
     }
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
-    @Resource
-    private NodeCache nodeCache;
-    @Resource
-    private ClusterLockService clusterLockService;
-    @Resource
-    private StreamTaskService streamTaskService;
-    @Resource
-    private StreamStore streamStore;
-    @Resource
-    private StroomEntityManager stroomEntityManager;
-    @Resource
-    private StroomDatabaseInfo stroomDatabaseInfo;
-    @Resource
-    private StreamProcessorFilterService streamProcessorFilterService;
-    @Resource(name = "dataSource")
-    DataSource dataSource;
+    private final NodeCache nodeCache;
+    private final ClusterLockService clusterLockService;
+    private final StreamTaskService streamTaskService;
+    private final StreamStore streamStore;
+    private final StroomEntityManager stroomEntityManager;
+    private final DataSource dataSource;
 
+    @Inject
+    StreamTaskCreatorTransactionHelper(final NodeCache nodeCache,
+                                       final ClusterLockService clusterLockService,
+                                       final StreamTaskService streamTaskService,
+                                       final StreamStore streamStore,
+                                       final StroomEntityManager stroomEntityManager,
+                                       @Named("dataSource") final DataSource dataSource) {
+        this.nodeCache = nodeCache;
+        this.clusterLockService = clusterLockService;
+        this.streamTaskService = streamTaskService;
+        this.streamStore = streamStore;
+        this.stroomEntityManager = stroomEntityManager;
+        this.dataSource = dataSource;
+    }
 
     /**
      * Anything that we owned release
@@ -129,10 +140,10 @@ public class StreamTaskCreatorTransactionHelper {
      * @return streams that have not yet got a stream task for a particular
      * stream processor
      */
-    public List<Stream> runSelectStreamQuery(final StreamProcessor streamProcessor, final FindStreamCriteria criteria,
+    public List<Stream> runSelectStreamQuery(final StreamProcessor streamProcessor, final OldFindStreamCriteria criteria,
                                              final long minStreamId, final int max) {
         // Copy the filter
-        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
+        final OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
         findStreamCriteria.copyFrom(criteria);
         findStreamCriteria.setSort(FindStreamCriteria.FIELD_ID, Direction.ASCENDING, false);
         findStreamCriteria.setStreamIdRange(new IdRange(minStreamId, null));
@@ -142,6 +153,51 @@ public class StreamTaskCreatorTransactionHelper {
         findStreamCriteria.obtainPageRequest().setLength(max);
 
         return streamStore.find(findStreamCriteria);
+    }
+
+    private ExpressionOperator copyExpression(final ExpressionOperator expression) {
+        ExpressionOperator.Builder builder;
+
+        if (expression != null) {
+            builder = new ExpressionOperator.Builder(expression.getOp());
+
+            if (expression.enabled() && expression.getChildren() != null) {
+                addChildren(builder, expression);
+            }
+
+        } else {
+            builder = new ExpressionOperator.Builder(Op.AND);
+        }
+
+        final ExpressionOperator.Builder or = new ExpressionOperator.Builder(Op.OR)
+                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.LOCKED.getDisplayValue())
+                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue());
+        builder.addOperator(or.build());
+        return builder.build();
+    }
+
+    private void addChildren(final ExpressionOperator.Builder builder, final ExpressionOperator parent) {
+        for (final ExpressionItem item : parent.getChildren()) {
+            if (item.enabled()) {
+                if (item instanceof ExpressionOperator) {
+                    final ExpressionOperator expressionOperator = (ExpressionOperator) item;
+                    final ExpressionOperator.Builder child = new ExpressionOperator.Builder(Op.OR);
+                    addChildren(child, expressionOperator);
+                    builder.addOperator(child.build());
+                } else if (item instanceof ExpressionTerm) {
+                    final ExpressionTerm expressionTerm = (ExpressionTerm) item;
+
+                    // Don't copy stream status terms as we are going to set them later.
+                    if (!StreamDataSource.STATUS.equals(expressionTerm.getField())) {
+                        if (Condition.IN_DICTIONARY.equals(expressionTerm.getCondition())) {
+                            builder.addDictionaryTerm(expressionTerm.getField(), expressionTerm.getCondition(), expressionTerm.getDictionary());
+                        } else {
+                            builder.addTerm(expressionTerm.getField(), expressionTerm.getCondition(), expressionTerm.getValue());
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**

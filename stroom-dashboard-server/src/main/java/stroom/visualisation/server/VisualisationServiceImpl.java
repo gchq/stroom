@@ -40,8 +40,10 @@ import javax.inject.Inject;
 public class VisualisationServiceImpl extends DocumentEntityServiceImpl<Visualisation, FindVisualisationCriteria>
         implements VisualisationService {
     @Inject
-    VisualisationServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext, final DocumentEventLog documentEventLog) {
-        super(entityManager, importExportHelper, securityContext, documentEventLog);
+    VisualisationServiceImpl(final StroomEntityManager entityManager,
+                             final ImportExportHelper importExportHelper,
+                             final SecurityContext securityContext) {
+        super(entityManager, importExportHelper, securityContext);
     }
 
     @Override

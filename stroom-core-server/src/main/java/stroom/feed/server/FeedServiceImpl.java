@@ -28,7 +28,6 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.importexport.server.ImportExportHelper;
-import stroom.logging.DocumentEventLog;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.streamstore.shared.StreamType;
@@ -48,8 +47,10 @@ public class FeedServiceImpl extends DocumentEntityServiceImpl<Feed, FindFeedCri
     private static final Set<String> FETCH_SET = Collections.singleton(StreamType.ENTITY_TYPE);
 
     @Inject
-    FeedServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext, final DocumentEventLog documentEventLog) {
-        super(entityManager, importExportHelper, securityContext, documentEventLog);
+    FeedServiceImpl(final StroomEntityManager entityManager,
+                    final ImportExportHelper importExportHelper,
+                    final SecurityContext securityContext) {
+        super(entityManager, importExportHelper, securityContext);
     }
 
     @SuppressWarnings("unchecked")

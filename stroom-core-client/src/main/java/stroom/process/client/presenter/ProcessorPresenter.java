@@ -36,7 +36,7 @@ import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.client.ExpressionTreePresenter;
-import stroom.streamstore.shared.FindStreamDataSource;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.svg.client.SvgPresets;
@@ -52,7 +52,7 @@ import stroom.widget.util.client.MultiSelectionModel;
 public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.ProcessorView>
         implements HasRead<BaseEntity> {
     private final ProcessorListPresenter processorListPresenter;
-    private final FilterPresenter filterPresenter;
+    private final ExpressionPresenter filterPresenter;
     private final ExpressionTreePresenter expressionPresenter;
     private final ClientDispatchAsync dispatcher;
 
@@ -68,7 +68,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     public ProcessorPresenter(final EventBus eventBus,
                               final ProcessorView view,
                               final ProcessorListPresenter processorListPresenter,
-                              final FilterPresenter filterPresenter,
+                              final ExpressionPresenter filterPresenter,
                               final ExpressionTreePresenter expressionPresenter,
                               final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
@@ -215,17 +215,15 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     }
 
     private void addOrEditProcessor(final StreamProcessorFilter filter) {
-        QueryData queryData = new QueryData();
-        if (filter != null && filter.getQueryData() != null) {
-            queryData = filter.getQueryData();
-        }
-        filterPresenter.read(queryData, FindStreamDataSource.getFields());
+        final QueryData queryData = getOrCreateQueryData(filter);
+        filterPresenter.read(queryData.getExpression(), StreamDataSource.STREAM_STORE_DOC_REF, StreamDataSource.getFields());
 
         final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
-                    final QueryData queryData = filterPresenter.write();
+                    final ExpressionOperator expression = filterPresenter.write();
+                    queryData.setExpression(expression);
 
                     if (filter != null) {
                         ConfirmEvent.fire(ProcessorPresenter.this,
@@ -251,7 +249,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         };
 
         // Show the processor creation dialog.
-        final PopupSize popupSize = new PopupSize(800, 600, 412, 600, true);
+        final PopupSize popupSize = new PopupSize(800, 600, 400, 400, true);
         if (filter != null) {
             ShowPopupEvent.fire(this, filterPresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Filter",
                     popupUiHandlers);
@@ -261,10 +259,17 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         }
     }
 
+    private QueryData getOrCreateQueryData(final StreamProcessorFilter filter) {
+        if (filter != null && filter.getQueryData() != null) {
+            return filter.getQueryData();
+        }
+        return new QueryData();
+    }
+
     private void validateFeed(final StreamProcessorFilter filter, final QueryData queryData) {
-        final int feedCount = termCount(queryData, FindStreamDataSource.FEED);
-        final int streamIdCount = termCount(queryData, FindStreamDataSource.STREAM_ID);
-        final int parentStreamIdCount = termCount(queryData, FindStreamDataSource.PARENT_STREAM_ID);
+        final int feedCount = termCount(queryData, StreamDataSource.FEED);
+        final int streamIdCount = termCount(queryData, StreamDataSource.STREAM_ID);
+        final int parentStreamIdCount = termCount(queryData, StreamDataSource.PARENT_STREAM_ID);
 
         if (streamIdCount == 0
                 && parentStreamIdCount == 0
@@ -281,9 +286,9 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     }
 
     private void validateStreamType(final StreamProcessorFilter filter, final QueryData queryData) {
-        final int streamTypeCount = termCount(queryData, FindStreamDataSource.STREAM_TYPE);
-        final int streamIdCount = termCount(queryData, FindStreamDataSource.STREAM_ID);
-        final int parentStreamIdCount = termCount(queryData, FindStreamDataSource.PARENT_STREAM_ID);
+        final int streamTypeCount = termCount(queryData, StreamDataSource.STREAM_TYPE);
+        final int streamIdCount = termCount(queryData, StreamDataSource.STREAM_ID);
+        final int parentStreamIdCount = termCount(queryData, StreamDataSource.PARENT_STREAM_ID);
 
         if (streamIdCount == 0
                 && parentStreamIdCount == 0

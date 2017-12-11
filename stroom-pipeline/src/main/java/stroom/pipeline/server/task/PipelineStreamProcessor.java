@@ -56,6 +56,7 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
+import stroom.streamstore.server.OldFindStreamCriteria;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
@@ -131,7 +132,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     public PipelineStreamProcessor(final PipelineFactory pipelineFactory,
                                    final StreamStore streamStore,
                                    @Named("cachedFeedService") final FeedService feedService,
-                                   @Named("cachedPipelineEntityService") final PipelineService pipelineService,
+                                   @Named("cachedPipelineService") final PipelineService pipelineService,
                                    final TaskMonitor taskMonitor,
                                    final PipelineHolder pipelineHolder,
                                    final FeedHolder feedHolder,
@@ -296,7 +297,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
      * unlock it).
      */
     private void checkSuperseded(final long processStartTime) {
-        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
+        final OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
         findStreamCriteria.obtainParentStreamIdSet().add(streamSource.getStream());
         findStreamCriteria.obtainStatusSet().setMatchAll(true);
         findStreamCriteria.obtainStreamProcessorIdSet().add(streamProcessor);
@@ -333,11 +334,11 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             // and is not already deleted then select it for deletion.
             if ((latestStreamTaskId == null || !latestStreamTaskId.equals(stream.getStreamTaskId()))
                     && !StreamStatus.DELETED.equals(stream.getStatus())) {
-                findDeleteStreamCriteria.obtainStreamIdSet().add(stream);
+                findDeleteStreamCriteria.obtainSelectedIdSet().add(stream.getId());
             }
         }
         // If we have found any to delete then delete them now.
-        if (findDeleteStreamCriteria.obtainStreamIdSet().isConstrained()) {
+        if (findDeleteStreamCriteria.obtainSelectedIdSet().isConstrained()) {
             final long deleteCount = streamStore.findDelete(findDeleteStreamCriteria);
             LOGGER.info("checkSuperseded() - Removed {}", deleteCount);
         }

@@ -41,8 +41,10 @@ public class StatisticStoreEntityServiceImpl
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticStoreEntityServiceImpl.class);
 
     @Inject
-    StatisticStoreEntityServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext, final DocumentEventLog documentEventLog) {
-        super(entityManager, importExportHelper, securityContext, documentEventLog);
+    StatisticStoreEntityServiceImpl(final StroomEntityManager entityManager,
+                                    final ImportExportHelper importExportHelper,
+                                    final SecurityContext securityContext) {
+        super(entityManager, importExportHelper, securityContext);
         LOGGER.debug("StatisticsDataSourceServiceImpl initialised");
     }
 
