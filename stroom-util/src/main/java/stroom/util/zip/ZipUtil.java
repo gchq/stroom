@@ -73,7 +73,7 @@ public final class ZipUtil {
                     .sorted(Comparator.naturalOrder())
                     .forEach(p -> {
                         try {
-                            final String fullPath = FileUtil.getCanonicalPath(p);
+                            final String fullPath = path + p.getFileName();
                             if (Files.isDirectory(p)) {
                                 zip(p, fullPath + "/", zip, includePattern, excludePattern);
                             } else {

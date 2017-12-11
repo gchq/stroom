@@ -16,6 +16,10 @@
 
 package stroom.entity.server;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.HqlBuilder;
@@ -39,15 +43,20 @@ import stroom.logging.DocumentEventLog;
 import stroom.node.server.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
 import stroom.query.audit.DocRefResourceHttpClient;
+import stroom.query.audit.ExportDTO;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.Message;
+import stroom.util.shared.QueryApiException;
 import stroom.util.shared.Severity;
 
 import javax.persistence.Transient;
+import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -71,12 +80,13 @@ public abstract class ExternalDocumentEntityServiceImpl
     public static final String BASE_URL_PROPERTY = "stroom.url.doc-ref.%s";
 
     private final StroomEntityManager entityManager;
+    private final ImportExportHelper importExportHelper;
     private final SecurityContext securityContext;
     private final DocumentEventLog documentEventLog;
     private final EntityServiceHelper<E> entityServiceHelper;
     private final FindServiceHelper<E, C> findServiceHelper;
-    private final ImportExportHelper importExportHelper;
     private DocRefResourceHttpClient docRefHttpClient = null;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private final QueryAppender<E, ?> queryAppender;
     private String entityType;
@@ -552,6 +562,8 @@ public abstract class ExternalDocumentEntityServiceImpl
                 entity = getEntityClass().newInstance();
             }
 
+            docRefHttpClient.importDocument(docRef.getUuid(), docRef.getName(), importState.ok(importMode), dataMap);
+
             importExportHelper.performImport(entity, dataMap, importState, importMode);
 
             // Save directly so there is no marshalling of objects that would destroy imported data.
@@ -559,7 +571,7 @@ public abstract class ExternalDocumentEntityServiceImpl
                 entity = internalSave(entity);
             }
 
-        } catch (final Exception e) {
+        } catch (final Throwable e) {
             importState.addMessage(Severity.ERROR, e.getMessage());
         }
 
@@ -575,7 +587,26 @@ public abstract class ExternalDocumentEntityServiceImpl
         if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.EXPORT)) {
             final E entity = entityServiceHelper.loadByUuid(docRef.getUuid(), Collections.emptySet(), queryAppender);
             if (entity != null) {
-                return importExportHelper.performExport(entity, omitAuditFields, messageList);
+                final Map<String, String> combinedExport = new HashMap<>();
+
+                try {
+                    final Response response = docRefHttpClient.exportDocument(docRef.getUuid());
+
+                    final ExportDTO exportDTO = objectMapper.readValue(response.getEntity().toString(), ExportDTO.class);
+
+                    exportDTO.getMessages().stream()
+                            .map(m -> new Message(Severity.INFO, m))
+                            .forEach(messageList::add);
+
+                    combinedExport.putAll(exportDTO.getValues());
+                } catch (Throwable e) {
+                    return Collections.emptyMap();
+                }
+
+                final Map<String, String> localExport = importExportHelper.performExport(entity, omitAuditFields, messageList);
+                combinedExport.putAll(localExport);
+
+                return combinedExport;
             }
         }
 
