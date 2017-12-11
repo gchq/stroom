@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#515** : Fix handling of errors that occur before search starts sending.
 
+* Issue **#506** : In v5 dashboard table filters were enhanced to allow parameters to be used in include/exclude filters. The implementation included the use of `\` to escape `$` characters that were not to be considered part of a parameter reference. This change resulted in regular expressions requiring `\` being escaped with additional `\` characters. This escaping has now been removed and instead only `$` chars before `{` chars need escaping when necessary with double `$$` chars, e.g. use `$${something` if you actually want `${something` not to be replaced with a parameter.
+
 ## [v5.0-beta.67] - 2017-12-05
 
 * Issue **#508** : Fix directory creation for index shards.
