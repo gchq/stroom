@@ -22,15 +22,19 @@ import stroom.index.shared.IndexShardKey;
  * API into our index shard writer cache.
  */
 public interface IndexShardWriterCache {
-    IndexShardWriter getWriterByShardId(Long indexShardId);
+    IndexShardWriter getWriterByShardId(long indexShardId);
 
     IndexShardWriter getWriterByShardKey(IndexShardKey indexShardKey);
 
     void sweep();
 
+    void flush(long indexShardId);
+
     void flushAll();
 
     void close(IndexShardWriter indexShardWriter);
+
+    void delete(long indexShardId);
 
     void shutdown();
 }

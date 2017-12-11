@@ -92,17 +92,19 @@ public class IndexShardSearchTaskProducer extends TaskProducer {
 
     @Override
     public boolean isComplete() {
-        return remainingTasks() == 0;
-    }
-
-    public int remainingTasks() {
-        return getTasksTotal().get() - getTasksCompleted().get();
+        return clusterSearchTask.isTerminated() || super.isComplete();
     }
 
     @Override
     protected Runnable getNext() {
         IndexShardSearchRunnable task = null;
-        if (!clusterSearchTask.isTerminated()) {
+
+        if (clusterSearchTask.isTerminated()) {
+            // Drain the queue and increment the complete task count.
+            while (taskQueue.poll() != null) {
+                getTasksCompleted().getAndIncrement();
+            }
+        } else {
             // First try and get a task that will make use of an open shard.
             for (final IndexShardSearchRunnable t : taskQueue) {
                 if (indexShardSearcherCache.isCached(t.getTask().getIndexShardId())) {
@@ -117,12 +119,12 @@ public class IndexShardSearchTaskProducer extends TaskProducer {
             if (task == null) {
                 task = taskQueue.poll();
             }
-        }
 
-        if (task != null) {
-            final int no = tasksRequested.incrementAndGet();
-            task.getTask().setShardTotal(getTasksTotal().get());
-            task.getTask().setShardNumber(no);
+            if (task != null) {
+                final int no = tasksRequested.incrementAndGet();
+                task.getTask().setShardTotal(getTasksTotal().get());
+                task.getTask().setShardNumber(no);
+            }
         }
 
         return task;

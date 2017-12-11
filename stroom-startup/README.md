@@ -31,3 +31,13 @@ To use HTTPS with a specific keystore and password file
 `-startupUrl stroom.jsp -server :keystore=/path/to/keystore,pwfile=/path/to/password/file,clientAuth=WANT -style PRETTY -logLevel INFO -war . -logdir . -gen . -extra . -workDir . stroom.app.AppSuperDevMode`
 
 `clientAuth` can be `WANT` or `REQUIRED`
+
+To run multiple nodes:
+
+* node1a
+`-startupUrl stroom.jsp  -port 8111 -codeServerPort 9111 -style PRETTY -logLevel INFO -war . -logdir . -gen . -extra . -workDir . stroom.app.AppSuperDevMode`
+Set environment variable `STROOM_NODE=node1a`
+
+* node2a
+`-startupUrl stroom.jsp  -port 8222 -codeServerPort 9222 -style PRETTY -logLevel INFO -war . -logdir . -gen . -extra . -workDir . stroom.app.AppSuperDevMode`
+Set environment variable `STROOM_NODE=node2a`

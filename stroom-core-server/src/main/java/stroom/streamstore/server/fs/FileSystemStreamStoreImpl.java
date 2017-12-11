@@ -25,6 +25,8 @@ import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryDataLogUtil;
@@ -1350,6 +1352,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
     @Override
     @Secured(Stream.DELETE_DATA_PERMISSION)
+    @Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRES_NEW)
     public Long findDelete(final FindStreamCriteria criteria) {
         // Turn all folders in the criteria into feeds.
         convertFoldersToFeeds(criteria, DocumentPermissionNames.READ);

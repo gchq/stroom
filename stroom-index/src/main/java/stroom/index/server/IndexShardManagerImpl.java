@@ -222,19 +222,15 @@ public class IndexShardManagerImpl implements IndexShardManager {
                     try {
                         switch (action) {
                             case FLUSH:
-                                final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardId(shard.getId());
-                                if (indexShardWriter != null) {
-                                    LOGGER.debug(() -> action.getActivity() + " index shard " + shard.getId());
-                                    shardCount.incrementAndGet();
-                                    indexShardWriter.flush();
-                                }
+                                shardCount.incrementAndGet();
+                                indexShardWriterCache.flush(shard.getId());
                                 break;
 //                                case CLOSE:
 //                                    indexShardWriter.close();
 //                                    break;
                             case DELETE:
                                 shardCount.incrementAndGet();
-                                setStatus(shard.getId(), IndexShardStatus.DELETED);
+                                indexShardWriterCache.delete(shard.getId());
                                 break;
                         }
                     } catch (final Exception e) {
@@ -321,6 +317,8 @@ public class IndexShardManagerImpl implements IndexShardManager {
                         indexShardService.save(indexShard);
                     }
                 });
+            } catch (final Exception e) {
+                LOGGER.error(e::getMessage, e);
             } finally {
                 lock.unlock();
             }

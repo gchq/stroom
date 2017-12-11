@@ -18,8 +18,6 @@ package stroom.streamstore.server;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.jobsystem.server.ClusterLockService;
 import stroom.jobsystem.server.JobTrackedSchedule;
@@ -55,7 +53,6 @@ public class StreamAttributeValueDeleteExecutor extends AbstractBatchDeleteExecu
     @StroomFrequencySchedule("1h")
     @JobTrackedSchedule(jobName = "Stream Attributes Retention", description = "Delete attributes older than system property "
             + STREAM_ATTRIBUTE_DELETE_AGE_PROPERTY + ")")
-    @Transactional(propagation = Propagation.NEVER)
     public void exec() {
         lockAndDelete();
     }

@@ -82,15 +82,15 @@ public class TaskExecutor {
         executor.shutdown();
     }
 
-    void addProducer(final TaskProducer producer) {
+    final void addProducer(final TaskProducer producer) {
         producers.add(producer);
     }
 
-    void removeProducer(final TaskProducer producer) {
+    final void removeProducer(final TaskProducer producer) {
         producers.remove(producer);
     }
 
-    void signalAll() {
+    final void signalAll() {
         taskLock.lock();
         try {
             condition.signalAll();
@@ -122,7 +122,13 @@ public class TaskExecutor {
 
                 if (currentTask != null) {
                     executing = true;
-                    CompletableFuture.runAsync(currentTask, currentProducer.getExecutor()).thenAccept(result -> taskComplete(currentProducer, currentTask));
+                    CompletableFuture.runAsync(currentTask, currentProducer.getExecutor())
+                            .thenAccept(result -> complete())
+                            .exceptionally(t -> {
+                                complete();
+                                LOGGER.error(t.getMessage(), t);
+                                return null;
+                            });
                 }
             }
         } finally {
@@ -134,13 +140,9 @@ public class TaskExecutor {
         return task;
     }
 
-    private void taskComplete(final TaskProducer producer, final Runnable task) {
-        try {
-            totalThreads.decrementAndGet();
-            producer.complete(task);
-        } finally {
-            signalAll();
-        }
+    private void complete() {
+        totalThreads.decrementAndGet();
+        signalAll();
     }
 
     private TaskProducer nextProducer() {
