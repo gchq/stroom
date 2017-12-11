@@ -17,6 +17,7 @@ env:
     #where ***** is '<github username>:<github personal access token>'
     #Required for curling the gh api to get the latest release sha
     - secure: "lfyHgJXGIUdZstOoMtwvyQp5UqS4A1m0lYkCgoXNpQPjWIrcloloQMWafIJ4eluJ5ro0HF8UQYkagwoWQrGX57KRQQOMHrg4bYzQGLbEFWSLciI5EABDyj1NXpPOhNN+sOViwKj+rKaDZ9DE/fo4PzsC6aDoA8zZ/Zlc34q/2YIQm6yiKp+OQWI0COeBaEZi9BW0nY44koVG7MRhB3m8RNYuWmO33rDgPKZBpsoXgnqmBi/seFBp8lJTC4ESUud1zHcHm/VfD/AO+nhWtUEFMxqGk2fHEFxmQE/jr2d1WxvGk4mmqU+lSNCTStchGQetuTbFSRE885qHmlRn7UUAxrQhYIOE18z+ZTqccCgSqvcp5EunZCTNIN8ps0HyvJHN3ewasyvyusKIJWsU/V4gRRSpGzsIWSsnlHV35RjKbJ13Er/Yt5Xp8EXW50AbOOuzFCI0pGyAf1NUpjf14dBix02OLNv+zn8/xITmcLc3wciuv0g3utkqW7xj7K1HHTKdUK9zQnk4qgN/q1zEepke0NxD39NwCtLgCdZt/BKu1X2gJzlT6xDRpn5aDB2QXpC56dmlQwEH5d1GyLSHSDrdwtxx/h0RgJ2NybMyHAlhIIhk6ACSBStwwpGjC/ya+Owyhp+aE6lFYkArq/XkcbZXBkInuDzs+avPdUYz7VlmQaU="
+    - RESOURCES_BRANCH: auth
     
 install: echo "skip 'gradle assemble' step to speed up build"
 
