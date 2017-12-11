@@ -16,21 +16,25 @@
 
 package stroom.streamstore.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import stroom.datasource.api.v2.DataSourceField;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Period;
 import stroom.feed.MetaMap;
 import stroom.io.SeekableInputStream;
+import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamAttributeMap;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
-import stroom.streamtask.server.ExpressionToFindCriteria;
 import stroom.util.collections.TypedMap;
 import stroom.util.spring.StroomSpringProfiles;
 
-import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -41,11 +45,16 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Component
 @Profile(StroomSpringProfiles.TEST)
 public class MockStreamStore implements StreamStore, Clearable {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MockStreamStore.class);
+
     /**
      * Our stream data.
      */
@@ -54,7 +63,6 @@ public class MockStreamStore implements StreamStore, Clearable {
             .fromMap(new HashMap<>());
     private final Set<Stream> openInputStream = new HashSet<>();
     private final Map<Long, Stream> streamMap = new HashMap<>();
-    private final ExpressionToFindCriteria expressionToFindCriteria;
 
     private Stream lastStream;
 
@@ -62,15 +70,6 @@ public class MockStreamStore implements StreamStore, Clearable {
      * This id is used to emulate the primary key on the database.
      */
     private long currentId;
-
-    public MockStreamStore() {
-        this.expressionToFindCriteria = null;
-    }
-
-    @Inject
-    public MockStreamStore(final ExpressionToFindCriteria expressionToFindCriteria) {
-        this.expressionToFindCriteria = expressionToFindCriteria;
-    }
 
     /**
      * Load a stream by id.
@@ -351,8 +350,17 @@ public class MockStreamStore implements StreamStore, Clearable {
 
     @Override
     public BaseResultList<Stream> find(final FindStreamCriteria criteria) throws RuntimeException {
-        final OldFindStreamCriteria oldFindStreamCriteria = expressionToFindCriteria.convert(criteria);
-        return find(oldFindStreamCriteria);
+        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamDataSource.getExtendedFieldMap(), null);
+        final List<Stream> list = new ArrayList<>();
+        for (final Stream stream : fileData.keySet()) {
+            final StreamAttributeMap streamAttributeMap = new StreamAttributeMap(stream);
+            final Map<String, Object> attributeMap = StreamAttributeMapUtil.createAttributeMap(streamAttributeMap);
+            if (expressionMatcher.match(attributeMap, criteria.getExpression())) {
+                list.add(stream);
+            }
+        }
+
+        return BaseResultList.createUnboundedList(list);
     }
 
     /**

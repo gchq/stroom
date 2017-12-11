@@ -46,7 +46,7 @@ public class ExpressionMatcher {
     }
 
     public boolean match(final Map<String, Object> attributeMap, final ExpressionItem item) {
-        if (!item.enabled()) {
+        if (item == null || !item.enabled()) {
             return true;
         }
 

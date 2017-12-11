@@ -10,6 +10,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class ExpressionUtil {
@@ -87,19 +88,20 @@ public final class ExpressionUtil {
                 .build();
     }
 
-//    public static int termCount(final QueryData queryData, final String field) {
-//        if (queryData == null || queryData.getExpression() == null) {
-//            return 0;
-//        }
-//        return termCount(queryData.getExpression(), field);
-//    }
-//
-//    static long termCount(final ExpressionOperator expressionOperator, final String field) {
-//        return terms(expressionOperator, field).size();
-//    }
-
     static int termCount(final ExpressionOperator expressionOperator) {
         return terms(expressionOperator, null).size();
+    }
+
+    public static List<String> fields(final ExpressionOperator expressionOperator) {
+        return terms(expressionOperator, null).stream().map(ExpressionTerm::getField).collect(Collectors.toList());
+    }
+
+    public static List<String> fields(final ExpressionOperator expressionOperator, final String field) {
+        return terms(expressionOperator, field).stream().map(ExpressionTerm::getField).collect(Collectors.toList());
+    }
+
+    public static List<String> values(final ExpressionOperator expressionOperator) {
+        return terms(expressionOperator, null).stream().map(ExpressionTerm::getValue).collect(Collectors.toList());
     }
 
     public static List<String> values(final ExpressionOperator expressionOperator, final String field) {
@@ -128,20 +130,4 @@ public final class ExpressionUtil {
             }
         }
     }
-
-//    public static int termCount(final QueryData queryData) {
-//        if (queryData == null || queryData.getExpression() == null) {
-//            return 0;
-//        }
-//        return termCount(queryData.getExpression());
-//    }
-
-
-//    public static boolean isConstrained(final QueryData queryData) {
-//        if (queryData == null) {
-//            return false;
-//        }
-//
-//        return termCount(queryData) > 0;
-//    }
 }

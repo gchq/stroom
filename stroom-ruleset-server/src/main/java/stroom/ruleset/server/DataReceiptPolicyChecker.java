@@ -29,6 +29,7 @@ import stroom.ruleset.shared.DataReceiptAction;
 import stroom.ruleset.shared.Rule;
 import stroom.ruleset.shared.RuleSet;
 import stroom.streamstore.server.ExpressionMatcher;
+import stroom.streamstore.shared.ExpressionUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -119,20 +120,8 @@ class DataReceiptPolicyChecker {
     }
 
     private void addToFieldSet(final Rule rule, final Set<String> fieldSet) {
-        if (rule.isEnabled() && rule.getExpression() != null) {
-            addChildren(rule.getExpression(), fieldSet);
-        }
-    }
-
-    private void addChildren(final ExpressionItem item, final Set<String> fieldSet) {
-        if (item.enabled()) {
-            if (item instanceof ExpressionOperator) {
-                final ExpressionOperator operator = (ExpressionOperator) item;
-                operator.getChildren().forEach(i -> addChildren(i, fieldSet));
-            } else if (item instanceof ExpressionTerm) {
-                final ExpressionTerm term = (ExpressionTerm) item;
-                fieldSet.add(term.getField());
-            }
+        if (rule.isEnabled()) {
+            fieldSet.addAll(ExpressionUtil.fields(rule.getExpression()));
         }
     }
 

@@ -34,6 +34,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.streamstore.server.ExpressionMatcher;
+import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
@@ -249,20 +250,8 @@ public class DataRetentionTransactionHelper {
     }
 
     private void addToFieldSet(final DataRetentionRule rule, final Set<String> fieldSet) {
-        if (rule.isEnabled() && rule.getExpression() != null) {
-            addChildren(rule.getExpression(), fieldSet);
-        }
-    }
-
-    private void addChildren(final ExpressionItem item, final Set<String> fieldSet) {
-        if (item.enabled()) {
-            if (item instanceof ExpressionOperator) {
-                final ExpressionOperator operator = (ExpressionOperator) item;
-                operator.getChildren().forEach(i -> addChildren(i, fieldSet));
-            } else if (item instanceof ExpressionTerm) {
-                final ExpressionTerm term = (ExpressionTerm) item;
-                fieldSet.add(term.getField());
-            }
+        if (rule.isEnabled()) {
+            fieldSet.addAll(ExpressionUtil.fields(rule.getExpression()));
         }
     }
 }

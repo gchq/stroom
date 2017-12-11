@@ -4,6 +4,7 @@ dependencies {
     compile project(':stroom-ruleset-shared')
 
     compile project(':stroom-core-server')
+    compile project(':stroom-core-shared')
     compile project(':stroom-docstore-server')
 
     compile libs.stroomQueryApi

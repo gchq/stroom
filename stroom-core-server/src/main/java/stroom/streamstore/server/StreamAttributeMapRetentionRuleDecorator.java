@@ -17,29 +17,20 @@
 
 package stroom.streamstore.server;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.dictionary.server.DictionaryStore;
-import stroom.feed.shared.Feed;
-import stroom.pipeline.shared.PipelineEntity;
 import stroom.ruleset.shared.DataRetentionRule;
-import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.date.DateUtil;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class StreamAttributeMapRetentionRuleDecorator {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeMapRetentionRuleDecorator.class);
-
     private final List<DataRetentionRule> rules;
     private final ExpressionMatcher expressionMatcher;
 
@@ -54,7 +45,7 @@ public class StreamAttributeMapRetentionRuleDecorator {
         // If there are no active rules then we aren't going to process anything.
         if (rules.size() > 0) {
             // Create an attribute map we can match on.
-            final Map<String, Object> attributeMap = createAttributeMap(streamAttributeMap);
+            final Map<String, Object> attributeMap = StreamAttributeMapUtil.createAttributeMap(streamAttributeMap);
             index = findMatchingRuleIndex(attributeMap);
         }
 
@@ -93,54 +84,5 @@ public class StreamAttributeMapRetentionRuleDecorator {
         }
 
         return -1;
-    }
-
-    private Map<String, Object> createAttributeMap(final StreamAttributeMap streamAttributeMap) {
-        final Map<String, Object> attributeMap = new HashMap<>();
-
-        final Stream stream = streamAttributeMap.getStream();
-        if (stream != null) {
-            attributeMap.put(StreamDataSource.STREAM_ID, stream.getId());
-            attributeMap.put(StreamDataSource.CREATE_TIME, stream.getCreateMs());
-            if (stream.getParentStreamId() != null) {
-                attributeMap.put(StreamDataSource.PARENT_STREAM_ID, stream.getParentStreamId());
-            }
-            if (stream.getStreamType() != null) {
-                attributeMap.put(StreamDataSource.STREAM_TYPE, stream.getStreamType().getDisplayValue());
-            }
-            final Feed feed = stream.getFeed();
-            if (feed != null) {
-                attributeMap.put(StreamDataSource.FEED, feed.getName());
-            }
-            final StreamProcessor streamProcessor = stream.getStreamProcessor();
-            if (streamProcessor != null) {
-                final PipelineEntity pipeline = streamProcessor.getPipeline();
-                if (pipeline != null) {
-                    attributeMap.put(StreamDataSource.PIPELINE, pipeline.getName());
-                }
-            }
-        }
-
-        StreamDataSource.getFields().forEach(field -> {
-            final String value = streamAttributeMap.getAttributeValue(field.getName());
-            if (value != null) {
-                try {
-                    switch (field.getType()) {
-                        case FIELD:
-                            attributeMap.put(field.getName(), value);
-                            break;
-                        case DATE_FIELD:
-                            attributeMap.put(field.getName(), DateUtil.parseNormalDateTimeString(value));
-                            break;
-                        default:
-                            attributeMap.put(field.getName(), Long.valueOf(value));
-                            break;
-                    }
-                } catch (final Exception e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
-            }
-        });
-        return attributeMap;
     }
 }
