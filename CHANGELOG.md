@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#505** : Fix the property UI so all edited value whitespace is trimmed
 
+* Issue **#513** : Now only actively executing tasks are visible as server tasks
+
 ## [v5.0-beta.67] - 2017-12-05
 
 * Issue **#508** : Fix directory creation for index shards.
