@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.68] - 2017-12-11
+
 * Issue **#515** : Fix handling of errors that occur before search starts sending.
 
 * Issue **#506** : In v5 dashboard table filters were enhanced to allow parameters to be used in include/exclude filters. The implementation included the use of `\` to escape `$` characters that were not to be considered part of a parameter reference. This change resulted in regular expressions requiring `\` being escaped with additional `\` characters. This escaping has now been removed and instead only `$` chars before `{` chars need escaping when necessary with double `$$` chars, e.g. use `$${something` if you actually want `${something` not to be replaced with a parameter.
@@ -716,7 +718,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.67...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.68...HEAD
+[v5.0-beta.68]: https://github.com/gchq/stroom/compare/v5.0-beta.67...v5.0-beta.68
 [v5.0-beta.67]: https://github.com/gchq/stroom/compare/v5.0-beta.66...v5.0-beta.67
 [v5.0-beta.66]: https://github.com/gchq/stroom/compare/v5.0-beta.65...v5.0-beta.66
 [v5.0-beta.65]: https://github.com/gchq/stroom/compare/v5.0-beta.64...v5.0-beta.65
