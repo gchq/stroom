@@ -69,7 +69,12 @@ public final class ManageGlobalPropertyEditPresenter
 
     @Override
     protected void write(final boolean hideOnSave) {
-        getEntity().setValue(getView().getValue().getText());
+        String value = getView().getValue().getText();
+        if (value != null) {
+            getEntity().setValue(value.trim());
+        } else {
+            getEntity().setValue(null);
+        }
 
         // Save the device.
         dispatcher.exec(new EntityServiceSaveAction<>(getEntity())).onSuccess(result -> {
