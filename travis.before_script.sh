@@ -32,7 +32,7 @@ else
     echo "Clone our stroom-resources repo"
     git clone https://github.com/gchq/stroom-resources.git
     pushd stroom-resources/dev-resources/compose
-    git checkout $RESOURCES_BRANCH
+    git checkout $STROOM_RESOURCES_BRANCH
 
     echo "Start all the services we need to run the integration tests in stroom"
     docker-compose -f kafka-stroomDb-stroomStatsDb-zk.yml up -d
