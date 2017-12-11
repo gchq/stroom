@@ -11,6 +11,13 @@ Data can be streamed in it's raw form from the stream store to multiple destinat
 ## HDFS appender
 Pipeline XML/text data can be writen out to a HDFS (Hadoop Distributed File System) cluster. This increases the options for using Stroom's data for other purposes.
 
+## Dashboard enhancements
+Date and time operators can be used to specify times in search expressions. These include constants such as `now()`, `second()`, `minute()`, `hour()`, `day()`, `week()`, `month()` and `year()`. You can also perform simple date time artithmetic in expressions such as 'day() - 2d` or `hour() - 30m`.
+
+Dashboards can be configured to automatically run/query when they are opened and can also refresh on a configurable time interval.
+
+Dashboards can use replacement variables in query expressions. The value to use for any variable can be set for the whole dashboard in a text area at the top of the dashboard.
+
 # v6.0
 
 ## OAuth 2.0/OpenID Connect authentication
@@ -39,6 +46,9 @@ The search system used by Dashboards can be used via a restful API. This provide
 ## Kafka appender and filter
 New pipeline elements for writing XML or text data to a Kafka topic. This provides more options for using Stroom's data in other systems.
 
+## Elastic search integration
+Elastic search can be used for indexing data. Data can be sent to an elastic index via a pipeline element and an elastic index can be queried from a Stroom dashboard.
+
 # v7.0
 
 ## Authorisation enhancements
@@ -53,13 +63,14 @@ Stroom proxy is capable of pipeline processing in the same way as a full Stroom 
 ## Multiple input sources
 Stroom is capable of processing data from a Kafka topic, HDFS, the local file system, HTTP POST in addition to the included stream store.
 
-In addition to processing data from multiple sources Stroom now has improved support for writing to various destinations.
+## Multiple output destinations
+Stroom has improved support for writing to various destinations such as Kafka, HDFS etc. Improvements include compression and meta data wrapping for future import.
 
 ## Improved field extraction
 Enhancements to data splitter and associated UI to make the process of extracting field data from raw content much easier.
 
-## Kafka backed processing
-Stroom uses Apache Kafka more extensively for quueing processing tasks and is capable of exposing the use of Kafka Streams for performing certain analytics.
+## Kafka analytics
+Stroom exposes the use of Apache Kafka Streams for performing certain complex analytics.
 
 ## Query fusion
 Stroom allows multiple data sources to be queried at the same time and the results of the queries to be fused. This might be for fusing data from multiple search indexes, e.g. events and annotations, or to effectively decorate results with additional data at search time.
