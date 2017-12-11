@@ -10,7 +10,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.1-beta.1] - 2017-12-11
+
 * Issue **#348** : Fixed new menu icons.
+
+* Merged [v5.0-beta.68]
 
 ## [v5.1-alpha.2] - 2017-06-22
 
@@ -728,7 +732,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.1-alpha.2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.1-beta.1...HEAD
+[v5.1-beta.1]: https://github.com/gchq/stroom/compare/v5.1-alpha.2...v5.1-beta.1
 [v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
 [v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
 
