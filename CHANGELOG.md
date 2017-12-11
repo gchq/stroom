@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#515** : Fix handling of errors that occur before search starts sending.
+
 ## [v5.0-beta.67] - 2017-12-05
 
 * Issue **#508** : Fix directory creation for index shards.
