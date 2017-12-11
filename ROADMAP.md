@@ -12,7 +12,7 @@ Data can be streamed in it's raw form from the stream store to multiple destinat
 Pipeline XML/text data can be writen out to a HDFS (Hadoop Distributed File System) cluster. This increases the options for using Stroom's data for other purposes.
 
 ## Dashboard enhancements
-Date and time operators can be used to specify times in search expressions. These include constants such as `now()`, `second()`, `minute()`, `hour()`, `day()`, `week()`, `month()` and `year()`. You can also perform simple date time artithmetic in expressions such as 'day() - 2d` or `hour() - 30m`.
+Date and time operators can be used to specify times in search expressions. These include constants such as `now()`, `second()`, `minute()`, `hour()`, `day()`, `week()`, `month()` and `year()`. You can also perform simple date time artithmetic in expressions such as `day() - 2d` or `hour() - 30m`.
 
 Dashboards can be configured to automatically run/query when they are opened and can also refresh on a configurable time interval.
 
