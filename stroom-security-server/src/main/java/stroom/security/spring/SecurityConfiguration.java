@@ -76,15 +76,13 @@ public class SecurityConfiguration {
             final String authenticationServiceUrl,
             @Value("#{propertyConfigurer.getProperty('stroom.advertisedUrl')}")
             final String advertisedStroomUrl,
-            @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.verificationkey')}")
-            final String jwtVerificationKey,
             @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.issuer')}")
             final String jwtIssuer,
             JWTService jwtService,
             NonceManager nonceManager,
             AuthenticationServiceClients authenticationServiceClients) {
         return new JWTAuthenticationFilter(
-                authenticationServiceUrl, advertisedStroomUrl, jwtVerificationKey, jwtIssuer,
+                authenticationServiceUrl, advertisedStroomUrl, jwtIssuer,
                 jwtService, nonceManager, authenticationServiceClients);
     }
 

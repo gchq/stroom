@@ -990,14 +990,6 @@
             <property name="requireUiRestart" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
-            <property name="name" value="stroom.auth.jwt.verificationkey"/>
-            <property name="value" value="CHANGE_ME"/>
-            <property name="description"
-                      value="The verification key for the auth service. Used to verify the JWTs we receive really come from the auth service." />
-            <property name="editable" value="true"/>
-            <property name="requireUiRestart" value="true"/>
-        </bean>
-        <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.auth.jwt.issuer"/>
             <property name="value" value="stroom"/>
             <property name="description"

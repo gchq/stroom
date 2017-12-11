@@ -49,7 +49,6 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
 
     private final String authenticationServiceUrl;
     private final String advertisedStroomUrl;
-    private final String jwtVerificationKey;
     private final String jwtIssuer;
     private final JWTService jwtService;
     private final NonceManager nonceManager;
@@ -58,14 +57,12 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
     public JWTAuthenticationFilter(
             final String authenticationServiceUrl,
             final String advertisedStroomUrl,
-            final String jwtVerificationKey,
             final String jwtIssuer,
             final JWTService jwtService,
             final NonceManager nonceManager,
             final AuthenticationServiceClients authenticationServiceClients) {
         this.authenticationServiceUrl = authenticationServiceUrl;
         this.advertisedStroomUrl = advertisedStroomUrl;
-        this.jwtVerificationKey = jwtVerificationKey;
         this.jwtIssuer = jwtIssuer;
         this.jwtService = jwtService;
         this.nonceManager = nonceManager;
@@ -151,9 +148,13 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
         if(path.contains("/api/")){
             Optional<String> optionalJws = jwtService.getJws(request);
             if(optionalJws.isPresent()){
-                JwtConsumer consumer = jwtService.newJwsConsumer();
-                final JwtClaims claims = consumer.processToClaims(optionalJws.get());
-                return new JWTAuthenticationToken(claims.getSubject(), optionalJws.get());
+                Optional<JwtClaims> jwtClaimsOptional = jwtService.verifyToken(optionalJws.get());
+                if(jwtClaimsOptional.isPresent()) {
+                    return new JWTAuthenticationToken(jwtClaimsOptional.get().getSubject(), optionalJws.get());
+                }
+                else {
+                    return new JWTAuthenticationToken("","");
+                }
             }
             else{
                 LOGGER.error("Cannot get a JWS for an API request!");
@@ -184,9 +185,12 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
                 }
             }
 
-            JwtConsumer consumer = jwtService.newJwsConsumer();
-            final JwtClaims claims = consumer.processToClaims(idToken);
-            String nonceHash = (String) claims.getClaimsMap().get("nonce");
+
+            Optional<JwtClaims> jwtClaimsOptional = jwtService.verifyToken(idToken);
+            if(!jwtClaimsOptional.isPresent()){
+                return new JWTAuthenticationToken("","");
+            }
+            String nonceHash = (String) jwtClaimsOptional.get().getClaimsMap().get("nonce");
             boolean doNoncesMatch = nonceManager.match(sessionId, nonceHash);
             if (!doNoncesMatch) {
                 LOGGER.info("Received a bad nonce!");
@@ -200,7 +204,7 @@ public class JWTAuthenticationFilter extends AuthenticatingFilter {
             LOGGER.info("User is authenticated for sessionId " + sessionId);
             // The user is authenticated now.
             nonceManager.forget(sessionId);
-            return new JWTAuthenticationToken(claims.getSubject(), idToken);
+            return new JWTAuthenticationToken(jwtClaimsOptional.get().getSubject(), idToken);
         } else {
             LOGGER.error("Attempted access without an access code!");
             // We still need to return a token. We'll return an empty one and it'll end up being judged
