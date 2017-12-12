@@ -7,6 +7,7 @@ dependencies {
     compile project(':stroom-security-client-api')
     compile project(':stroom-util-shared')
 
+    compile libs.stroomQueryApi
     compile libs.gin
     compile libs.guice3
     compile libs.gwt_user

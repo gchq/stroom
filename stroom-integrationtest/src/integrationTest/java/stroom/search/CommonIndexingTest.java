@@ -93,7 +93,7 @@ public class CommonIndexingTest {
 
     public int flushIndex() {
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getIndexIdSet().setMatchAll(true);
+        criteria.getIndexSet().setMatchAll(true);
         indexShardManager.findFlush(criteria);
 
         return 1;

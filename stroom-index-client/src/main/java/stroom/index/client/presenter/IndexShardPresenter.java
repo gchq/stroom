@@ -36,6 +36,7 @@ import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasPermissionCheck;
 import stroom.entity.client.presenter.HasRead;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.ResultList;
 import stroom.index.shared.DeleteIndexShardAction;
@@ -45,6 +46,7 @@ import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
+import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.client.presenter.ActionDataProvider;
@@ -356,12 +358,14 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
 
     @Override
     public void read(final Index index) {
+        final DocRef docRef = DocRefUtil.create(index);
+
         this.index = index;
-        selectionCriteria.getIndexIdSet().add(index);
+        selectionCriteria.getIndexSet().add(docRef);
         selectionCriteria.getFetchSet().add(Node.ENTITY_TYPE);
         selectionCriteria.getFetchSet().add(Volume.ENTITY_TYPE);
 
-        queryCriteria.getIndexIdSet().add(index);
+        queryCriteria.getIndexSet().add(docRef);
         queryCriteria.getFetchSet().add(Node.ENTITY_TYPE);
         queryCriteria.getFetchSet().add(Volume.ENTITY_TYPE);
 

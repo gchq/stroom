@@ -145,7 +145,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         criteria.getNodeIdSet().add(nodeCache.getDefaultNode());
         criteria.getFetchSet().add(Index.ENTITY_TYPE);
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
-        criteria.getIndexIdSet().add(indexShardKey.getIndex());
+        criteria.getIndexSet().add(DocRefUtil.create(indexShardKey.getIndex()));
         criteria.getPartition().setString(indexShardKey.getPartition());
         final List<IndexShard> list = indexShardService.find(criteria);
         for (final IndexShard indexShard : list) {
