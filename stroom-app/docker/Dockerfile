@@ -50,6 +50,9 @@ ADD https://github.com/gchq/stroom-content/releases/download/internal-statistics
 ADD https://github.com/gchq/stroom-content/releases/download/internal-statistics-stroom-stats-v2.0/internal-statistics-stroom-stats-v2.0.zip /stroom/contentPackImport/
 ADD https://github.com/gchq/stroom-content/releases/download/stroom-101-v1.0/stroom-101-v1.0.zip /stroom/contentPackImport/
 
+#Add in the visualisations for import on startup
+ADD https://github.com/gchq/stroom-visualisations-dev/releases/download/v3.0.4/visualisations-production-v3.0.4.zip /stroom/contentPackImport/
+
 #Create Docker volume for Stroom's volumes dir
 VOLUME /stroom/volumes/
 
