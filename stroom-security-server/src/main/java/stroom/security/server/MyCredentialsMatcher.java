@@ -25,6 +25,7 @@ import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 
+//TODO We don't really need this any more but it's required by Shiro. Can we remove it somehow?
 @Component
 public class MyCredentialsMatcher implements CredentialsMatcher {
     private static final Logger LOGGER = LoggerFactory.getLogger(MyCredentialsMatcher.class);

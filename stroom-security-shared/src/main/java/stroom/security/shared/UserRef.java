@@ -38,27 +38,11 @@ public class UserRef extends DocRef implements SharedObject {
         this.jSessionId = "";
     }
 
-    public UserRef (final String type, final String uuid, final String name,
-                    final boolean group, final boolean enabled, final String jSessionId) {
-        super(type, uuid, name);
-        this.group = group;
-        this.enabled = enabled;
-        this.jSessionId = jSessionId;
-    }
-
     public boolean isGroup() {
         return group;
     }
 
     public boolean isEnabled() {
         return enabled;
-    }
-
-    public String getJSessionId() {
-        return jSessionId;
-    }
-
-    public void setjSessionId(String jSessionId) {
-        this.jSessionId = jSessionId;
     }
 }

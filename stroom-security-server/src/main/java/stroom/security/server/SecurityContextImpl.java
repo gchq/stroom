@@ -106,7 +106,6 @@ class SecurityContextImpl implements SecurityContext {
             } else if (USER.equals(type)) {
                 if (name.length() > 0) {
                     userRef = userService.getUserByName(name);
-                    userRef.setjSessionId(jSessionId);
                     if (userRef == null) {
                         final String message = "Unable to push user '" + name + "' as user is unknown";
                         LOGGER.error(message);

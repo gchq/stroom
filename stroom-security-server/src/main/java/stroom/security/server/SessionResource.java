@@ -13,6 +13,11 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+/**
+ * This is used by the OpenId flow - when a user request a log out the remote authentication service
+ * needs to ask all relying parties to log out. This is the back-channel resource that allows this to
+ * happen.
+ */
 @Api(
     value = "session - /v1",
     description = "Stroom Session API")
