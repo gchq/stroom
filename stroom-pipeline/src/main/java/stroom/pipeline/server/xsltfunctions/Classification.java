@@ -17,6 +17,7 @@
 package stroom.pipeline.server.xsltfunctions;
 
 import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
@@ -25,29 +26,45 @@ import org.springframework.stereotype.Component;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.pipeline.state.FeedHolder;
+import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
-public class Classification extends StroomExtensionFunctionCall {
-    @Resource
-    private FeedHolder feedHolder;
-    @Resource
-    private FeedService feedService;
+class Classification extends StroomExtensionFunctionCall {
+    private final FeedHolder feedHolder;
+    private final FeedService feedService;
 
     private Feed feed;
     private String classification;
 
+    @Inject
+    Classification(final FeedHolder feedHolder, final FeedService feedService) {
+        this.feedHolder = feedHolder;
+        this.feedService = feedService;
+    }
+
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments)
             throws XPathException {
-        if (feed == null || feed != feedHolder.getFeed()) {
-            feed = feedHolder.getFeed();
-            classification = feedService.getDisplayClassification(feed);
+        String result = null;
+
+        try {
+            if (feed == null || feed != feedHolder.getFeed()) {
+                feed = feedHolder.getFeed();
+                classification = feedService.getDisplayClassification(feed);
+            }
+
+            result = classification;
+        } catch (final Exception e) {
+            log(context, Severity.ERROR, e.getMessage(), e);
         }
 
-        return StringValue.makeStringValue(classification);
+        if (result == null) {
+            return EmptyAtomicSequence.getInstance();
+        }
+        return StringValue.makeStringValue(result);
     }
 }

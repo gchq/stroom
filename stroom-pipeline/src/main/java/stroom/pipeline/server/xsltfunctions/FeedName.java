@@ -17,6 +17,7 @@
 package stroom.pipeline.server.xsltfunctions;
 
 import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
@@ -24,26 +25,37 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.state.FeedHolder;
+import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
-public class FeedName extends StroomExtensionFunctionCall {
-    @Resource
-    private FeedHolder feedHolder;
+class FeedName extends StroomExtensionFunctionCall {
+    private final FeedHolder feedHolder;
+
+    @Inject
+    FeedName(final FeedHolder feedHolder) {
+        this.feedHolder = feedHolder;
+    }
 
     @Override
     protected Sequence call(String functionName, XPathContext context, Sequence[] arguments) throws XPathException {
-        final Feed feed = feedHolder.getFeed();
-        String feedName;
-        if (feed == null) {
-            feedName = "";
-        } else {
-            feedName = feed.getName();
+        String result = null;
+
+        try {
+            final Feed feed = feedHolder.getFeed();
+            if (feed != null) {
+                result = feed.getName();
+            }
+        } catch (final Exception e) {
+            log(context, Severity.ERROR, e.getMessage(), e);
         }
 
-        return StringValue.makeStringValue(feedName);
+        if (result == null) {
+            return EmptyAtomicSequence.getInstance();
+        }
+        return StringValue.makeStringValue(result);
     }
 }

@@ -161,7 +161,7 @@ public class ProxyAggregationExecutor {
                 .map(ThreadPool::getPriority)
                 .orElse(3);
 
-        final ThreadPool threadPool = new ThreadPoolImpl("Proxy Aggregation Thread Pool",
+        final ThreadPool threadPool = new ThreadPoolImpl("Proxy Aggregation",
                 priority,
                 threadCount,
                 threadCount);

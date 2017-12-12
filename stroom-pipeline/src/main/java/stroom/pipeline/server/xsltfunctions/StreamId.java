@@ -17,6 +17,7 @@
 package stroom.pipeline.server.xsltfunctions;
 
 import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
@@ -24,27 +25,38 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.pipeline.state.StreamHolder;
 import stroom.streamstore.shared.Stream;
+import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
-public class StreamId extends StroomExtensionFunctionCall {
-    @Resource
-    private StreamHolder streamHolder;
+class StreamId extends StroomExtensionFunctionCall {
+    private final StreamHolder streamHolder;
+
+    @Inject
+    StreamId(final StreamHolder streamHolder) {
+        this.streamHolder = streamHolder;
+    }
 
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments)
             throws XPathException {
-        final Stream stream = streamHolder.getStream();
-        String streamId;
-        if (stream == null) {
-            streamId = "";
-        } else {
-            streamId = String.valueOf(streamHolder.getStream().getId());
+        String result = null;
+
+        try {
+            final Stream stream = streamHolder.getStream();
+            if (stream != null) {
+                result = String.valueOf(streamHolder.getStream().getId());
+            }
+        } catch (final Exception e) {
+            log(context, Severity.ERROR, e.getMessage(), e);
         }
 
-        return StringValue.makeStringValue(streamId);
+        if (result == null) {
+            return EmptyAtomicSequence.getInstance();
+        }
+        return StringValue.makeStringValue(result);
     }
 }

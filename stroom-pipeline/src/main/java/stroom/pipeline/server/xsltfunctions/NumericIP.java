@@ -17,30 +17,40 @@
 package stroom.pipeline.server.xsltfunctions;
 
 import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
-public class NumericIP extends StroomExtensionFunctionCall {
+class NumericIP extends StroomExtensionFunctionCall {
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments)
             throws XPathException {
-        final String ipAddress = getSafeString(functionName, context, arguments, 0);
+        String result = null;
+
         try {
-            final String coversion = convert(ipAddress);
-            return StringValue.makeStringValue(coversion);
+            final String ipAddress = getSafeString(functionName, context, arguments, 0);
+            try {
+                result = convert(ipAddress);
+            } catch (final Exception e) {
+                final StringBuilder sb = new StringBuilder();
+                sb.append(e.getMessage());
+                outputWarning(context, sb, e);
+            }
         } catch (final Exception e) {
-            final StringBuilder sb = new StringBuilder();
-            sb.append(e.getMessage());
-            outputWarning(context, sb, e);
+            log(context, Severity.ERROR, e.getMessage(), e);
         }
 
-        return StringValue.EMPTY_STRING;
+        if (result == null) {
+            return EmptyAtomicSequence.getInstance();
+        }
+        return StringValue.makeStringValue(result);
     }
 
     String convert(final String ipAddress) {
