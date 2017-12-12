@@ -6,7 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-alpha.4]
+
 ### Added
+
+* New authentication flow based around OpenId
+* New user management screens
+* The ability to issue API keys
 
 ### Changed
 
