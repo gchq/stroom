@@ -50,11 +50,13 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.XSLT;
 import stroom.script.shared.Script;
+import stroom.security.server.AppPermission;
 import stroom.security.server.DocumentPermission;
 import stroom.security.server.Permission;
 import stroom.security.server.User;
 import stroom.security.server.UserGroupUser;
 import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.streamstore.server.StreamAttributeValueFlush;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.Stream;
@@ -91,7 +93,9 @@ import java.util.Map;
 public class DatabaseCommonTestControl implements CommonTestControl, ApplicationContextAware {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(DatabaseCommonTestControl.class);
 
-    private static final List<String> TABLES_TO_TRUNCATE = Arrays.asList(
+    private static final List<String> TABLES_TO_CLEAR = Arrays.asList(
+            AppPermission.TABLE_NAME,
+//            ClusterLock.TABLE_NAME,
             Dashboard.TABLE_NAME,
             Dictionary.TABLE_NAME,
             DocumentPermission.TABLE_NAME,
@@ -135,6 +139,8 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
     private ImportExportSerializer importExportSerializer;
     @Resource
     private StreamAttributeKeyService streamAttributeKeyService;
+    @Resource
+    private StreamAttributeValueFlush streamAttributeValueFlush;
     @Resource
     private IndexShardManager indexShardManager;
     @Resource
@@ -191,10 +197,18 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
             FileSystemUtil.deleteContents(FileSystemUtil.createFileTypeRoot(volume).getParentFile());
         }
 
+        //Clear any un-flushed stream attributes
+        streamAttributeValueFlush.clear();
+
+        //ensure any hibernate entities are flushed down before we clear the tables
         databaseCommonTestControlTransactionHelper.clearContext();
 
-        //truncate all the tables using a different connection
-        databaseCommonTestControlTransactionHelper.truncateTables(TABLES_TO_TRUNCATE);
+        //clear all the tables using direct sql on a different connection
+        //in theory trncating the tables should be quicker but it was takeing 1.5s to trancate all the tables
+        //so used delete with no constraint checks instead
+        databaseCommonTestControlTransactionHelper.clearTables(TABLES_TO_CLEAR);
+
+        //ensure all the caches are empty
         stroomCacheManager.clear();
 
         final Map<String, Clearable> clearableBeanMap = applicationContext.getBeansOfType(Clearable.class, false,
@@ -208,6 +222,8 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
     public void createStreamAttributeKeys() {
         final BaseResultList<StreamAttributeKey> list = streamAttributeKeyService
                 .find(new FindStreamAttributeKeyCriteria());
+        LOGGER.info("Existing stream attribute keys: [%s]", list);
+
         final HashSet<String> existingItems = new HashSet<String>();
         for (final StreamAttributeKey streamAttributeKey : list) {
             existingItems.add(streamAttributeKey.getName());

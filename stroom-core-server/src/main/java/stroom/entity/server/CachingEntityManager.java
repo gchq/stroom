@@ -209,6 +209,12 @@ public class CachingEntityManager implements StroomEntityManager, Clearable {
     }
 
     @Override
+    public void clearContext() {
+        clear();
+        stroomEntityManager.clearContext();
+    }
+
+    @Override
     public void clear() {
         CacheUtil.clear(cache);
     }

@@ -47,7 +47,6 @@ public class DatabaseCommonTestControlTransactionHelper {
     private final StroomEntityManager entityManager;
     private final DataSource dataSource;
 
-
     @Inject
     public DatabaseCommonTestControlTransactionHelper(final StroomEntityManager entityManager,
                                                       final DataSource dataSource) {
@@ -59,7 +58,7 @@ public class DatabaseCommonTestControlTransactionHelper {
      * Clear a HIBERNATE context.
      */
     public void clearContext() {
-        entityManager.flush();
+        entityManager.clearContext();
     }
 
     /**
@@ -137,6 +136,14 @@ public class DatabaseCommonTestControlTransactionHelper {
         executeStatementsWithNoConstraints(truncateStatements);
     }
 
+    public void clearTables(final List<String> tableNames) {
+        List<String> deleteStatements = tableNames.stream()
+                .map(tableName -> "DELETE FROM " + tableName)
+                .collect(Collectors.toList());
+
+        executeStatementsWithNoConstraints(deleteStatements);
+    }
+
     public void enableConstraints() {
         Connection connection = null;
         try {
@@ -149,6 +156,8 @@ public class DatabaseCommonTestControlTransactionHelper {
             ConnectionUtil.executeStatement(connection, sql);
         } catch (SQLException e) {
             throw new RuntimeException(String.format("Error executing %s", sql), e);
+        } finally {
+            ConnectionUtil.close(connection);
         }
     }
 
@@ -168,6 +177,8 @@ public class DatabaseCommonTestControlTransactionHelper {
             ConnectionUtil.executeStatements(connection, allStatements);
         } catch (SQLException e) {
             throw new RuntimeException(String.format("Error executing %s", allStatements), e);
+        } finally {
+            ConnectionUtil.close(connection);
         }
     }
 }

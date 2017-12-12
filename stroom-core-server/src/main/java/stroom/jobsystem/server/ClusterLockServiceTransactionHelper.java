@@ -16,20 +16,18 @@
 
 package stroom.jobsystem.server;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import javax.annotation.Resource;
-
-import stroom.entity.server.util.HqlBuilder;
-import stroom.entity.server.util.StroomEntityManager;
-import stroom.util.logging.StroomLogger;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
+import stroom.entity.server.util.HqlBuilder;
+import stroom.entity.server.util.StroomEntityManager;
 import stroom.jobsystem.shared.ClusterLock;
+import stroom.util.logging.StroomLogger;
+
+import javax.annotation.Resource;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Transactional
 @Component
@@ -90,4 +88,5 @@ public class ClusterLockServiceTransactionHelper {
     private ClusterLock save(final ClusterLock lock) {
         return entityManager.saveEntity(lock);
     }
+
 }
