@@ -16,27 +16,43 @@
 
 package stroom.pipeline.server.xsltfunctions;
 
-import javax.annotation.Resource;
-
-import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-
-import stroom.pipeline.state.SearchIdHolder;
 import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import stroom.pipeline.state.SearchIdHolder;
+import stroom.util.shared.Severity;
+import stroom.util.spring.StroomScope;
+
+import javax.inject.Inject;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
-public class SearchId extends StroomExtensionFunctionCall {
-    @Resource
-    private SearchIdHolder searchIdHolder;
+class SearchId extends StroomExtensionFunctionCall {
+    private final SearchIdHolder searchIdHolder;
+
+    @Inject
+    SearchId(final SearchIdHolder searchIdHolder) {
+        this.searchIdHolder = searchIdHolder;
+    }
 
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments)
             throws XPathException {
-        return StringValue.makeStringValue(searchIdHolder.getSearchId());
+        String result = null;
+
+        try {
+            result = searchIdHolder.getSearchId();
+        } catch (final Exception e) {
+            log(context, Severity.ERROR, e.getMessage(), e);
+        }
+
+        if (result == null) {
+            return EmptyAtomicSequence.getInstance();
+        }
+        return StringValue.makeStringValue(result);
     }
 }

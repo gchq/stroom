@@ -16,28 +16,36 @@
 
 package stroom.pipeline.server.xsltfunctions;
 
-import javax.annotation.Resource;
-
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-
-import stroom.util.spring.StroomScope;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import stroom.util.shared.Severity;
+import stroom.util.spring.StroomScope;
+
+import javax.inject.Inject;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
-public class Put extends StroomExtensionFunctionCall {
-    @Resource
-    private TaskScopeMap map;
+class Put extends StroomExtensionFunctionCall {
+    private final TaskScopeMap map;
+
+    @Inject
+    Put(final TaskScopeMap map) {
+        this.map = map;
+    }
 
     @Override
     protected Sequence call(String functionName, XPathContext context, Sequence[] arguments) throws XPathException {
-        final String key = getSafeString(functionName, context, arguments, 0);
-        final String value = getSafeString(functionName, context, arguments, 1);
-        map.put(key, value);
+        try {
+            final String key = getSafeString(functionName, context, arguments, 0);
+            final String value = getSafeString(functionName, context, arguments, 1);
+            map.put(key, value);
+        } catch (final Exception e) {
+            log(context, Severity.ERROR, e.getMessage(), e);
+        }
 
         return EmptyAtomicSequence.getInstance();
     }

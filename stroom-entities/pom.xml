@@ -38,7 +38,7 @@
   <parent>
     <groupId>stroom</groupId>
     <artifactId>stroom</artifactId>
-    <version>5.0-beta.68</version>
+    <version>5.0-beta.69</version>
   </parent>
 
   <artifactId>stroom-entities</artifactId>

@@ -16,14 +16,6 @@
 
 package stroom.pipeline.server.xsltfunctions;
 
-import java.io.StringReader;
-
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import org.xml.sax.InputSource;
-
-import stroom.util.spring.StroomScope;
-import stroom.xml.converter.json.JSONParser;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.Builder;
 import net.sf.saxon.event.PipelineConfiguration;
@@ -33,44 +25,57 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.tree.tiny.TinyBuilder;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import org.xml.sax.InputSource;
+import stroom.util.shared.Severity;
+import stroom.util.spring.StroomScope;
+import stroom.xml.converter.json.JSONParser;
+
+import java.io.StringReader;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
-public class JsonToXml extends StroomExtensionFunctionCall {
+class JsonToXml extends StroomExtensionFunctionCall {
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments)
             throws XPathException {
-        // Get the json string.
-        final String json = getSafeString(functionName, context, arguments, 0);
+        Sequence result = EmptyAtomicSequence.getInstance();
 
-        Sequence sequence = EmptyAtomicSequence.getInstance();
-        if (json != null && json.length() > 0) {
-            try {
-                final Configuration configuration = context.getConfiguration();
-                final PipelineConfiguration pipe = configuration.makePipelineConfiguration();
-                final Builder builder = new TinyBuilder(pipe);
+        try {
+            // Get the json string.
+            final String json = getSafeString(functionName, context, arguments, 0);
 
-                final ReceivingContentHandler contentHandler = new ReceivingContentHandler();
-                contentHandler.setPipelineConfiguration(pipe);
-                contentHandler.setReceiver(builder);
+            if (json != null && json.length() > 0) {
+                try {
+                    final Configuration configuration = context.getConfiguration();
+                    final PipelineConfiguration pipe = configuration.makePipelineConfiguration();
+                    final Builder builder = new TinyBuilder(pipe);
 
-                final JSONParser parser = new JSONParser(false);
-                parser.setContentHandler(contentHandler);
+                    final ReceivingContentHandler contentHandler = new ReceivingContentHandler();
+                    contentHandler.setPipelineConfiguration(pipe);
+                    contentHandler.setReceiver(builder);
 
-                parser.parse(new InputSource(new StringReader(json)));
+                    final JSONParser parser = new JSONParser(false);
+                    parser.setContentHandler(contentHandler);
 
-                sequence = builder.getCurrentRoot();
+                    parser.parse(new InputSource(new StringReader(json)));
 
-                // Reset the builder, detaching it from the constructed
-                // document.
-                builder.reset();
+                    result = builder.getCurrentRoot();
 
-            } catch (final Throwable t) {
-                createWarning(context, t);
+                    // Reset the builder, detaching it from the constructed
+                    // document.
+                    builder.reset();
+
+                } catch (final Throwable t) {
+                    createWarning(context, t);
+                }
             }
+        } catch (final Exception e) {
+            log(context, Severity.ERROR, e.getMessage(), e);
         }
 
-        return sequence;
+        return result;
     }
 
     private void createWarning(final XPathContext context, final Throwable t) {

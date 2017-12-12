@@ -16,24 +16,23 @@
 
 package stroom.pipeline.server.xsltfunctions;
 
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import stroom.util.spring.StroomScope;
+
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-
-import stroom.util.spring.StroomScope;
-
 @Component
 @Scope(value = StroomScope.TASK)
-public class TaskScopeMap {
-    private final Map<String, String> map = new HashMap<String, String>();
+class TaskScopeMap {
+    private final Map<String, String> map = new HashMap<>();
 
-    public void put(final String key, final String value) {
+    void put(final String key, final String value) {
         map.put(key, value);
     }
 
-    public String get(final String key) {
+    String get(final String key) {
         return map.get(key);
     }
 }
