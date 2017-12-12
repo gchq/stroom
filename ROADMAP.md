@@ -23,6 +23,9 @@ Dashboards can use replacement variables in query expressions. The value to use 
 ## OAuth 2.0/OpenID Connect authentication
 Authentication for Stroom provided by an external service rather than a service internal to Stroom. This change allows support for broader corporate authentication schemes and is a key requirement for enabling the future microservice architecture for Stroom.
 
+## API keys for third party clients
+Anyone wishing to make use of the data exposed by Stroom's services can request an API key. This key acts as a password for their own applications. It allows administrators to secure and manage access to Stroom's data.
+
 ## HBase backed statistics store
 This new implementation of statistics (Stroom-Stats) provides a vastly more scalable time series DB for large scale collection of Stroom's data aggregated to various time buckets. Stroom-Stats uses Kafka for ingesting the source data.
 
@@ -48,9 +51,6 @@ New pipeline elements for writing XML or text data to a Kafka topic. This provid
 
 ## Elastic search integration
 Elastic search can be used for indexing data. Data can be sent to an elastic index via a pipeline element and an elastic index can be queried from a Stroom dashboard.
-
-## API keys for third party clients
-Anyone wishing to make use of the data exposed by Stroom's services can request an API key. This key acts as a password for their own applications. It allows administrators to secure and manage access to Stroom's data.
 
 # v7.0
 
