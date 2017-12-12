@@ -12,8 +12,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#501** : Improve the database teardown process in integration tests to speed up builds
 
-* Issue **#497** : Change stream task creation to use straight JDBC rather than hibernate for inserts and use a configurable batch size (stroom.databaseMultiInsertMaxBatchSize) for the inserts
-
 ## [v5.0-beta.68] - 2017-12-11
 
 * Issue **#515** : Fix handling of errors that occur before search starts sending.
