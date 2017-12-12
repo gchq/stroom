@@ -42,11 +42,6 @@ public class HeadlessSecurityContext implements SecurityContext {
     }
 
     @Override
-    public String getJSessionId() {
-        return null;
-    }
-
-    @Override
     public boolean isLoggedIn() {
         return true;
     }

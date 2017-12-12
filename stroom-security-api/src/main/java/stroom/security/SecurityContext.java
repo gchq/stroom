@@ -46,11 +46,6 @@ public interface SecurityContext {
     String getUserUuid();
 
     /**
-     * Get the jSessionId associated with this user's current Stroom session
-     */
-    String getJSessionId();
-
-    /**
      * Check if the user associated with this security context is logged in.
      *
      * @return True if the user is logged in.
