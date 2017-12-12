@@ -11,7 +11,7 @@ FLOATING_TAG=""
 SPECIFIC_TAG=""
 #This is a whitelist of branches to produce docker builds for
 BRANCH_WHITELIST_REGEX='(^dev$|^master$|^v[0-9].*$)'
-RELEASE_VERSION_REGEX='^v[0-9]+\.[0-9]+.*$'
+RELEASE_VERSION_REGEX='^v[0-9]+\.[0-9]+\.[0-9].*$'
 CRON_TAG_SUFFIX="DAILY"
 doDockerBuild=false
 

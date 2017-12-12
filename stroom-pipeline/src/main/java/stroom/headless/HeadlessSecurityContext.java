@@ -37,7 +37,7 @@ public class HeadlessSecurityContext implements SecurityContext {
     }
 
     @Override
-    public String getToken() {
+    public String getUserUuid() {
         return null;
     }
 

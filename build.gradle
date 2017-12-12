@@ -63,6 +63,7 @@ ext.versions = [
     eventLogging: 'v3.1.2_schema-v3.1.2',
     hadoopCommonShaded: 'v2.6.4-3',
     hadoopHdfsShaded: 'v2.6.4',
+    stroomAuth: 'v0.1-alpha.3',
     stroomExpression: 'v1.0.1',
     stroomQuery: 'v2.0.0-alpha.11', //same version for both stroom-query-api and stroom-query-common
     stroomStats: 'v0.6.0-alpha.2',
@@ -101,6 +102,7 @@ ext.libs = [
     stroomQueryCommon: "stroom:stroom-query-common:$versions.stroomQuery",
     stroomExpression: "stroom:stroom-expression:$versions.stroomExpression",
     stroomStatsSchema: "stroom:stroom-stats-schema:$versions.stroomStats",
+    stroomAuthApi: "stroom:stroom-auth-service-api:$versions.stroomAuth",
 
     //------3rd Party-libs---------------
     aopalliance: "aopalliance:aopalliance:1.0",
@@ -127,6 +129,7 @@ ext.libs = [
     dropwizard_metrics_healthchecks: "io.dropwizard.metrics:metrics-healthchecks:$versions.dropwizard_metrics",
     dropwizard_servlets: "io.dropwizard:dropwizard-servlets:$versions.dropwizard",
     dropwizard_testing: "io.dropwizard:dropwizard-testing:$versions.dropwizard",
+    dropwizard_configuration: "io.dropwizard:dropwizard-configuration:$versions.dropwizard",
     flyway_core: "org.flywaydb:flyway-core:4.0.3",
     gin: "com.google.gwt.inject:gin:2.1.2",
     guava: "com.google.guava:guava:21.0", //>=v21 removes MoreExecutors.sameThreadExecutor() which is needed by curator 2.11
@@ -154,6 +157,7 @@ ext.libs = [
     javax_el_api: "javax.el:javax.el-api:3.0.0",
     javax_inject: "javax.inject:javax.inject:1",
     javax_servlet_api: "javax.servlet:javax.servlet-api:3.1.0",
+    javax_validation: 'javax.validation:validation-api:1.1.0.Final',
     jcl_over_slf4j: "org.slf4j:jcl-over-slf4j:$versions.slf4j",
     jersey_client: "org.glassfish.jersey.core:jersey-client:$versions.jersey",
     jersey_common: "org.glassfish.jersey.core:jersey-common:$versions.jersey",
@@ -240,6 +244,10 @@ def projectsWithSharedTestJars = subprojects.findAll { project ->
 
 //Configuration applicable to all projects
 allprojects {
+    // Make doclint be quiet - we don't care about JavaDoc warnings.
+    tasks.withType(Javadoc) {
+        options.addStringOption('Xdoclint:none', '-quiet')
+    }
 }
 
 //Configuration applicable to all sub projects

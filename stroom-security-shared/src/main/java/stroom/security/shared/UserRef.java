@@ -24,15 +24,18 @@ public class UserRef extends DocRef implements SharedObject {
 
     private boolean group;
     private boolean enabled;
+    private String jSessionId;
 
     public UserRef() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public UserRef(final String type, final String uuid, final String name, final boolean group, final boolean enabled) {
+    public UserRef(final String type, final String uuid, final String name,
+                   final boolean group, final boolean enabled) {
         super(type, uuid, name);
         this.group = group;
         this.enabled = enabled;
+        this.jSessionId = "";
     }
 
     public boolean isGroup() {

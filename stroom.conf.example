@@ -30,9 +30,16 @@ stroom.statistics.sql.jdbcDriverUrl=jdbc:mysql://localhost:3308/statistics?useUn
 stroom.statistics.sql.jdbcDriverUsername=stroomuser
 stroom.statistics.sql.jdbcDriverPassword=stroompassword1
 
-#Authentication properties
-stroom.auth.jwt.secret=CHANGE_ME
+stroom.security.apiToken=eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MzgyMDQyMDgsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIn0.H6P2BjLMKKsuSsjG3Yb6yax_KiJI-pJMipneXV-7czo
+stroom.advertisedUrl=http://localhost:8080
 stroom.auth.jwt.issuer=stroom
+stroom.auth.jwt.enableTokenRevocationCheck=true
+stroom.auth.service.url=http://localhost:8099
+stroom.auth.ui.url=http://localhost:5000
+
+stroom.users.ui.url=http://localhost:5000/userSearch
+stroom.apikeys.ui.url=http://localhost:5000/tokens
+stroom.changepassword.url=http://localhost:5000/changepassword
 
 #Service discovery
 #Set this to false to local service lookup when you do not have Zookeeper

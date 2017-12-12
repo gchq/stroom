@@ -1,6 +1,6 @@
 plugins {
     //id 'com.github.johnrengelman.shadow' version '2.0.0'
-    id "com.benjaminsproule.swagger" version "0.1.4"
+    id "com.benjaminsproule.swagger" version "0.1.9"
 
     //plugin to generate a list of licennces for all deps and to check for incompatibilities
     //usage: honkerCheck honkerGenNotice honkerGenDependencies
@@ -51,9 +51,14 @@ dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-core-server')
     compile project(':stroom-security-server')
+    permitUnusedDeclared project(':stroom-security-server') //not clear why it thinks this is unused
     compile project(':stroom-index-server')
     compile project(':stroom-statistics-api')
-    permitUnusedDeclared project(':stroom-statistics-api') // not clear why it thinks this is unused
+    permitUnusedDeclared project(':stroom-statistics-api') //not clear why it thinks this is unused
+    compile project(':stroom-entity-shared')
+    permitUnusedDeclared project(':stroom-entity-shared') //not clear why it thinks this is unused
+    compile project(':stroom-index-shared')
+    permitUnusedDeclared project(':stroom-index-shared') // not clear why it thinks this is unused
     compile project(':stroom-util')
     compile project(':stroom-pipeline')
     compile project(':stroom-dashboard-server')
@@ -107,6 +112,12 @@ dependencies {
     compile libs.dropwizard_jetty
     compile libs.dropwizard_metrics_healthchecks
     compile libs.dropwizard_servlets
+    compile libs.dropwizard_configuration
+    compile libs.guava
+//    compile libs.jackson_annotations
+    compile libs.javax_inject
+    compile libs.javax_servlet_api
+//    compile libs.javax_validation
     compile libs.javax_servlet_api
     compile libs.jetty_server
     compile libs.jetty_servlets

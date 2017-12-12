@@ -30,10 +30,11 @@ import javax.inject.Inject;
 @Scope(value = StroomScope.TASK)
 @Insecure
 public class LogoutHandler extends AbstractTaskHandler<LogoutAction, VoidResult> {
+
     private final AuthenticationService authenticationService;
 
     @Inject
-    LogoutHandler(final AuthenticationService authenticationService) {
+    LogoutHandler(AuthenticationService authenticationService) {
         this.authenticationService = authenticationService;
     }
 

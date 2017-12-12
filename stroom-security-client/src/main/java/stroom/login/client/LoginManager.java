@@ -21,42 +21,43 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.alert.client.event.AlertEvent;
-import stroom.alert.client.event.ConfirmEvent;
+import stroom.core.client.LocationManager;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.node.client.ClientPropertyCache;
+import stroom.node.shared.ClientProperties;
 import stroom.security.client.CurrentUser;
-import stroom.security.client.event.ChangePasswordEvent;
-import stroom.security.client.event.EmailResetPasswordEvent;
 import stroom.security.client.event.LoginEvent;
 import stroom.security.client.event.LoginFailedEvent;
 import stroom.security.client.event.LogoutEvent;
 import stroom.security.shared.AutoLoginAction;
-import stroom.security.shared.CanEmailPasswordResetAction;
-import stroom.security.shared.EmailPasswordResetForUserNameAction;
-import stroom.security.shared.LoginAction;
 import stroom.security.shared.LogoutAction;
-import stroom.security.shared.UserRef;
 
 public class LoginManager implements HasHandlers {
     private final EventBus eventBus;
     private final CurrentUser currentUser;
     private final ClientDispatchAsync dispatcher;
+    private String authServiceUrl;
+    private LocationManager locationManager;
 
     @Inject
-    public LoginManager(final EventBus eventBus, final CurrentUser currentUser, final ClientDispatchAsync dispatcher) {
+    public LoginManager(
+            final EventBus eventBus,
+            final CurrentUser currentUser,
+            final ClientDispatchAsync dispatcher,
+            final LocationManager locationManager,
+            final ClientPropertyCache clientPropertyCache) {
         this.eventBus = eventBus;
         this.currentUser = currentUser;
         this.dispatcher = dispatcher;
-
-        // Listen for login events.
-        eventBus.addHandler(LoginEvent.getType(), event -> login(event.getUserName(), event.getPassword()));
+        this.locationManager = locationManager;
 
         // Listen for logout events.
         eventBus.addHandler(LogoutEvent.getType(), event -> logout());
 
-        // Listen for email reset password events.
-        eventBus.addHandler(EmailResetPasswordEvent.getType(), event -> emailResetPassword(event.getUserName()));
-
+        clientPropertyCache.get()
+                .onSuccess(result -> {
+                    this.authServiceUrl = result.get(ClientProperties.AUTH_SERVICE_URL);
+                });
     }
 
     public void autoLogin() {
@@ -75,94 +76,13 @@ public class LoginManager implements HasHandlers {
         }).onFailure(caught -> LoginFailedEvent.fire(LoginManager.this, caught.getMessage()));
     }
 
-    private void login(final String userName, final String password) {
-        dispatcher.exec(new LoginAction(userName, password), "Logging on. Please wait...").onSuccess(userAndPermissions -> {
-            if (userAndPermissions == null || userAndPermissions.getUserRef() == null) {
-                LoginFailedEvent.fire(LoginManager.this, "Incorrect user name or password!");
-
-            } else {
-                final UserRef userRef = userAndPermissions.getUserRef();
-
-                // Some accounts never expire (e.g. in dev mode)
-                if (userAndPermissions.getDaysToPasswordExpiry() != null) {
-                    final int daysToExpiry = userAndPermissions.getDaysToPasswordExpiry();
-
-                    if (daysToExpiry < 1) {
-                        ConfirmEvent.fire(LoginManager.this,
-                                "Your password has expired.  You must change it now",
-                                result -> {
-                                    if (result) {
-                                        ChangePasswordEvent.fire(LoginManager.this, userRef, true);
-                                    }
-                                });
-
-                    } else if (daysToExpiry < 10) {
-                        final StringBuilder message = new StringBuilder();
-                        message.append("The password for this account will expire in ");
-                        message.append(daysToExpiry);
-                        if (daysToExpiry == 1) {
-                            message.append(" day");
-                        } else {
-                            message.append(" days");
-                        }
-                        message.append(". Would you like to change the password now?");
-                        ConfirmEvent.fire(LoginManager.this, message.toString(), result -> {
-                            if (result) {
-                                ChangePasswordEvent.fire(LoginManager.this, userRef, true);
-                            } else {
-                                currentUser.setUserAndPermissions(userAndPermissions);
-                            }
-                        });
-
-                    } else {
-                        currentUser.setUserAndPermissions(userAndPermissions);
-                    }
-                } else {
-                    currentUser.setUserAndPermissions(userAndPermissions);
-                }
-            }
-        }).onFailure(caught -> {
-//                            // TODO: Sort out what happens when a password
-//                            // expires.
-//                            // message
-//                            // .append(
-//                            // " Would you like to change the password now?"
-//                            // );
-//                            //
-//                            // final boolean change =
-//                            // ConfirmEvent.fire(this, message.toString());
-//                            // if (change) {
-//                            // changePassword(user);
-//                            // }
-            LoginFailedEvent.fire(LoginManager.this, caught.getMessage());
-        });
-    }
-
     private void logout() {
         // Clear everything we know about the current user.
         currentUser.clear();
-        // When we start the application we will try and auto login using a client certificate.
+        // Perform logout on the server
         dispatcher.exec(new LogoutAction(), null);
-    }
-
-    private void emailResetPassword(final String userName) {
-        if (userName.length() == 0) {
-            AlertEvent.fireWarn(this, "No user name entered!", null);
-        } else {
-            dispatcher.exec(new CanEmailPasswordResetAction()).onSuccess(ok -> {
-                if (Boolean.TRUE.equals(ok.getBoolean())) {
-                    ConfirmEvent.fire(LoginManager.this,
-                            "Are you sure you want to reset the password for " + userName + "?",
-                            result -> {
-                                if (result) {
-                                    dispatcher.exec(new EmailPasswordResetForUserNameAction(userName));
-                                }
-                            });
-                } else {
-                    AlertEvent.fireError(LoginManager.this, "System is not configured to send emails", null);
-                }
-            });
-        }
+        // Send the user's browser to the remote Authentication Service's logout endpoint.
+        locationManager.replace(authServiceUrl + "/authentication/v1/logout");
     }
 
     @Override

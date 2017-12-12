@@ -64,7 +64,6 @@ class SecurityContextImpl implements SecurityContext {
     private final UserService userService;
     private final DocumentPermissionService documentPermissionService;
     private final GenericEntityService genericEntityService;
-    private final JWTService jwtService;
 
     @Inject
     SecurityContextImpl(
@@ -73,15 +72,13 @@ class SecurityContextImpl implements SecurityContext {
             final UserAppPermissionsCache userAppPermissionsCache,
             final UserService userService,
             final DocumentPermissionService documentPermissionService,
-            final GenericEntityService genericEntityService,
-            final JWTService jwtService) {
+            final GenericEntityService genericEntityService) {
         this.documentPermissionsCache = documentPermissionsCache;
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
         this.userService = userService;
         this.documentPermissionService = documentPermissionService;
         this.genericEntityService = genericEntityService;
-        this.jwtService = jwtService;
     }
 
     @Override
@@ -90,14 +87,14 @@ class SecurityContextImpl implements SecurityContext {
 
         if (token != null) {
             final String[] parts = token.split("\\|", -1);
-            if (parts.length < 2) {
+            if (parts.length < 4) {
                 LOGGER.error("Unexpected token format '" + token + "'");
                 throw new AuthenticationServiceException("Unexpected token format '" + token + "'");
             }
 
             final String type = parts[0];
             final String name = parts[1];
-//            final String sessionId = parts[2];
+            final String jSessionId = parts[2];
 
             if (SYSTEM.equals(type)) {
                 if (INTERNAL.equals(name)) {
@@ -173,8 +170,12 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     @Override
-    public String getToken() {
-        return jwtService.getTokenFor(getUserId());
+    public String getUserUuid() {
+        final UserRef userRef = getUserRef();
+        if (userRef == null) {
+            return null;
+        }
+        return userRef.getUuid();
     }
 
     @Override

@@ -4,12 +4,14 @@
 node_modules
 _book
 .gradle/
+.project
+.classpath
 classes/
 generated/
-.settings
 libs/
 jars/
 bin/
+.settings/
 stroom-dashboard-gwt/hs_err_pid*.log
 stroom-app-gwt/hs_err_pid*.log
 stroom-util-build.properties
@@ -23,9 +25,6 @@ stroom-core-server/src/test/resources/transientContentPacks/
 /.idea/*
 !/.idea/runConfigurations
 # END OF IntelliJ
-
-.classpath
-.project
 
 #Gradle stuff (from https://github.com/github/gitignore/blob/master/Gradle.gitignore)
 .gradle

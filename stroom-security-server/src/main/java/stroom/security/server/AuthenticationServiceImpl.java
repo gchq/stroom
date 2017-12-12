@@ -25,8 +25,9 @@ import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import stroom.apiclients.AuthenticationServiceClients;
+import stroom.auth.service.ApiException;
 import stroom.dashboard.server.logging.AuthenticationEventLog;
-import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.EntityServiceException;
 import stroom.node.server.StroomPropertyService;
 import stroom.security.Insecure;
@@ -36,7 +37,6 @@ import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserRef;
 import stroom.security.shared.UserStatus;
 import stroom.servlet.HttpServletRequestHolder;
-import stroom.util.cert.CertificateUtil;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.UserTokenUtil;
 
@@ -46,6 +46,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.Optional;
 
 @Component
 @Secured(FindUserCriteria.MANAGE_USERS_PERMISSION)
@@ -64,9 +66,18 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final SecurityContext securityContext;
+    private AuthenticationServiceClients authenticationServiceClients;
 
     @Inject
-    AuthenticationServiceImpl(final StroomPropertyService stroomPropertyService, final HttpServletRequestHolder httpServletRequestHolder, final AuthenticationEventLog eventLog, final Provider<AuthenticationServiceMailSender> mailSenderProvider, final UserService userService, final PasswordEncoder passwordEncoder, final SecurityContext securityContext) {
+    AuthenticationServiceImpl(
+            final StroomPropertyService stroomPropertyService,
+            final HttpServletRequestHolder httpServletRequestHolder,
+            final AuthenticationEventLog eventLog,
+            final Provider<AuthenticationServiceMailSender> mailSenderProvider,
+            final UserService userService,
+            final PasswordEncoder passwordEncoder,
+            final SecurityContext securityContext,
+            final AuthenticationServiceClients authenticationServiceClients) {
         this.stroomPropertyService = stroomPropertyService;
         this.httpServletRequestHolder = httpServletRequestHolder;
         this.eventLog = eventLog;
@@ -74,6 +85,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
         this.securityContext = securityContext;
+        this.authenticationServiceClients = authenticationServiceClients;
     }
 
     private void checkLoginAllowed(final UserRef userRef) {
@@ -176,25 +188,24 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     @Insecure
     public String logout() {
-        final HttpServletRequest request = httpServletRequestHolder.get();
-        final UserRef user = getCurrentUser();
+        // We don't need to call the authentication service to log out - the login manager will
+        // redirect the user's browser to the authentication service's logout endpoint.
 
+        // Remove the user authentication object
+        SecurityUtils.getSubject().logout();
+
+        // Invalidate the current user session
+        httpServletRequestHolder.get().getSession().invalidate();
+
+        final UserRef user = getCurrentUser();
         if (user != null) {
             // Create an event for logout
             eventLog.logoff(user.getName());
-
-            // Remove the user authentication object
-            SecurityUtils.getSubject().logout();
-
-            // Invalidate the current user session
-            request.getSession().invalidate();
-
             return user.getName();
         }
 
         return null;
     }
-
 
     @Override
     @Insecure
@@ -342,68 +353,15 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return Boolean.TRUE;
     }
 
+    /**
+     * TODO JC 2017-06-06: This is invoked by GWT using AutoLoginAction. But because we're logging in using
+     * a token the characterisation of this flow as 'logging in' is incorrect. I.e. change the naming.
+     */
     @Override
     @Insecure
     public UserRef autoLogin() throws RuntimeException {
-        UserRef userRef = getCurrentUser();
-        if (userRef != null) {
-            return userRef;
-        }
-        return loginWithCertificate();
-    }
-
-    private UserRef loginWithCertificate() {
-        UserRef userRef;
-
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("loginWithCertificate()");
-        }
-
-        final HttpServletRequest request = httpServletRequestHolder.get();
-        final String certificateDn = CertificateUtil.extractCertificateDN(request);
-
-        try {
-            if (certificateDn == null) {
-                return null;
-            }
-
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("loginWithCertificate() - certificateDn=" + certificateDn);
-            }
-
-            // Create the authentication token from the certificate
-            final CertificateAuthenticationToken token = new CertificateAuthenticationToken(certificateDn, true,
-                    request.getRemoteHost());
-
-            // Attempt authentication
-            final Subject subject = SecurityUtils.getSubject();
-            subject.login(token);
-
-            userRef = (UserRef) subject.getPrincipal();
-        } catch (final RuntimeException ex) {
-            final String message = EntityServiceExceptionUtil.unwrapMessage(ex, ex);
-
-            // Audit the failed login
-            eventLog.logon(certificateDn, false, message, AuthenticateOutcomeReason.OTHER);
-
-            throw EntityServiceExceptionUtil.create(ex);
-        }
-
-        // Ensure regular users are allowed to login at this time.
-        checkLoginAllowed(userRef);
-
-        try {
-            // Pass back the user info
-            return handleLogin(request, userRef, certificateDn);
-
-        } catch (final RuntimeException ex) {
-            final String message = EntityServiceExceptionUtil.unwrapMessage(ex, ex);
-
-            // Audit the failed login
-            eventLog.logon(certificateDn, false, message, AuthenticateOutcomeReason.OTHER);
-
-            throw EntityServiceExceptionUtil.create(ex);
-        }
+        User user = userService.loadByUuid(securityContext.getUserUuid());
+        return UserRefFactory.create(user);
     }
 
     private UserRef handleLogin(final HttpServletRequest request, final UserRef userRef, final String userId) {
@@ -420,9 +378,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         // Audit the successful login
         eventLog.logon(userId);
 
-        final HttpSession session = request.getSession(true);
-        session.setAttribute(USER_SESSION_KEY, newRef);
-        session.setAttribute(USER_ID_SESSION_KEY, newRef.getName());
+        if(request != null) {
+            final HttpSession session = request.getSession(true);
+            session.setAttribute(USER_SESSION_KEY, user);
+            session.setAttribute(USER_ID_SESSION_KEY, userId);
+        }
 
         return newRef;
     }

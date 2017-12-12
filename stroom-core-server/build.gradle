@@ -9,6 +9,7 @@ dependencies {
     compile project(':stroom-connectors')
 
     compile libs.eventLogging
+    compile libs.stroomAuthApi
     compile libs.stroomQueryApi
 
     compile libs.curator_client

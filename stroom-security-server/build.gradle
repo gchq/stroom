@@ -22,6 +22,7 @@ dependencies {
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
+    compile libs.stroomAuthApi
     compile libs.stroomQueryApi
     compile libs.eventLogging
     compile libs.aspectjrt
@@ -29,13 +30,12 @@ dependencies {
     compile libs.guava
     compile libs.hibernate_jpa_api
     compile libs.jBCrypt
-    compile libs.java_jwt
     compile libs.jackson_annotations
     compile libs.javax_annotation_api
     compile libs.javax_annotation_api
     compile libs.javax_inject
     compile libs.javax_servlet_api
-    compile libs.jose4j
+    compile libs.javax_validation
     compile libs.shiro_core
     compile libs.shiro_spring
     compile libs.shiro_web
@@ -45,11 +45,10 @@ dependencies {
     compile libs.spring_context_support
     compile libs.spring_core
     compile libs.spring_tx
-    compile libs.swagger_annotations
-    compile libs.jersey_server
+    compile libs.jose4j
     compile libs.ws_rs_api
-
-    compile libs.dropwizard_metrics_annotation
+    compile libs.swagger_annotations
+    compile libs.ws_rs_api
 
     runtime libs.shiro_aspectj
 
