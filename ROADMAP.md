@@ -49,6 +49,9 @@ New pipeline elements for writing XML or text data to a Kafka topic. This provid
 ## Elastic search integration
 Elastic search can be used for indexing data. Data can be sent to an elastic index via a pipeline element and an elastic index can be queried from a Stroom dashboard.
 
+## API keys for third party clients
+Anyone wishing to make use of the data exposed by Stroom's services can request an API key. This key acts as a password for their own applications. It allows administrators to secure and manage access to Stroom's data.
+
 # v7.0
 
 ## Authorisation enhancements
