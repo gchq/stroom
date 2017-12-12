@@ -7,6 +7,7 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.shared.DocRefInfo;
 
 import java.util.UUID;
 
@@ -85,5 +86,10 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
         if (!securityContext.hasDocumentPermission(FOLDER, uuid, DocumentPermissionNames.DELETE)) {
             throw new PermissionException(securityContext.getUserId(), "You do not have permission to delete (" + FOLDER + ")");
         }
+    }
+
+    @Override
+    public DocRefInfo info(final String uuid) {
+        throw new PermissionException(securityContext.getUserId(), "You cannot get info about a folder");
     }
 }

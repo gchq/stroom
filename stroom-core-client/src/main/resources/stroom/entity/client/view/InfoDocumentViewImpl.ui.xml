@@ -1,0 +1,17 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui">
+  <ui:style>
+    .docInfo {
+
+    }
+  </ui:style>
+    <g:FlowPanel styleName="{style.docInfo}">
+        <g:Label ui:field="docType" />
+        <g:Label ui:field="docUuid" />
+        <g:Label ui:field="docName" />
+        <g:Label ui:field="createdUser" />
+        <g:Label ui:field="createdTime" />
+        <g:Label ui:field="updatedUser" />
+        <g:Label ui:field="updatedTime" />
+    </g:FlowPanel>
+</ui:UiBinder>

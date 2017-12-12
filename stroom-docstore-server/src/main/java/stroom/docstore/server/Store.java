@@ -31,6 +31,7 @@ import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.shared.DocRefInfo;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
@@ -162,6 +163,22 @@ public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActi
         try (final RWLock lock = persistence.getLockFactory().lock(uuid)) {
             persistence.delete(new DocRef(type, uuid));
         }
+    }
+
+    @Override
+    public DocRefInfo info(final String uuid) {
+        final D document = read(uuid);
+        return new DocRefInfo.Builder()
+                .docRef(new DocRef.Builder()
+                        .type(document.getType())
+                        .uuid(document.getUuid())
+                        .name(document.getName())
+                        .build())
+                .createTime(document.getCreateTime())
+                .createUser(document.getCreateUser())
+                .updateTime(document.getUpdateTime())
+                .updateUser(document.getUpdateUser())
+                .build();
     }
 
     ////////////////////////////////////////////////////////////////////////

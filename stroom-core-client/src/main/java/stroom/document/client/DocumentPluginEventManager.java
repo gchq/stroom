@@ -19,7 +19,9 @@ package stroom.document.client;
 
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+import stroom.about.client.presenter.AboutPresenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.core.client.KeyboardInterceptor;
@@ -34,11 +36,13 @@ import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.document.client.event.RenameDocumentEvent;
 import stroom.document.client.event.ShowCopyDocumentDialogEvent;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
+import stroom.document.client.event.ShowInfoDocumentDialogEvent;
 import stroom.document.client.event.ShowMoveDocumentDialogEvent;
 import stroom.document.client.event.ShowPermissionsDialogEvent;
 import stroom.document.client.event.ShowRenameDocumentDialogEvent;
 import stroom.document.client.event.WriteDocumentEvent;
 import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.InfoDocumentPresenter;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.entity.shared.SharedDocRef;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
@@ -57,6 +61,7 @@ import stroom.explorer.shared.ExplorerPermissions;
 import stroom.explorer.shared.ExplorerServiceCopyAction;
 import stroom.explorer.shared.ExplorerServiceCreateAction;
 import stroom.explorer.shared.ExplorerServiceDeleteAction;
+import stroom.explorer.shared.ExplorerServiceInfoAction;
 import stroom.explorer.shared.ExplorerServiceMoveAction;
 import stroom.explorer.shared.ExplorerServiceRenameAction;
 import stroom.explorer.shared.FetchExplorerPermissionsAction;
@@ -108,8 +113,10 @@ public class DocumentPluginEventManager extends Plugin {
 
     @Inject
     public DocumentPluginEventManager(final EventBus eventBus,
-                                      final KeyboardInterceptor keyboardInterceptor, final ClientDispatchAsync dispatcher,
-                                      final DocumentTypeCache documentTypeCache, final MenuListPresenter menuListPresenter) {
+                                      final KeyboardInterceptor keyboardInterceptor,
+                                      final ClientDispatchAsync dispatcher,
+                                      final DocumentTypeCache documentTypeCache,
+                                      final MenuListPresenter menuListPresenter) {
         super(eventBus);
         this.keyboardInterceptor = keyboardInterceptor;
         this.dispatcher = dispatcher;
@@ -265,7 +272,6 @@ public class DocumentPluginEventManager extends Plugin {
                 }));
             }
         }));
-
 
 //////////////////////////////
         // END EXPLORER EVENTS
@@ -510,16 +516,17 @@ public class DocumentPluginEventManager extends Plugin {
         final boolean allowUpdate = updatableItems.size() > 0;
         final boolean allowDelete = deletableItems.size() > 0;
 
-        menuItems.add(createCopyMenuItem(readableItems, 3, allowRead));
-        menuItems.add(createMoveMenuItem(updatableItems, 4, allowUpdate));
-        menuItems.add(createRenameMenuItem(updatableItems, 5, singleSelection && allowUpdate));
-        menuItems.add(createDeleteMenuItem(deletableItems, 6, allowDelete));
+        menuItems.add(createInfoMenuItem(readableItems, 3, allowRead));
+        menuItems.add(createCopyMenuItem(readableItems, 4, allowRead));
+        menuItems.add(createMoveMenuItem(updatableItems, 5, allowUpdate));
+        menuItems.add(createRenameMenuItem(updatableItems, 6, singleSelection && allowUpdate));
+        menuItems.add(createDeleteMenuItem(deletableItems, 7, allowDelete));
 
         // Only allow users to change permissions if they have a single item selected.
         if (singleSelection) {
             final List<ExplorerNode> ownedItems = getExplorerNodeListWithPermission(documentPermissionMap, DocumentPermissionNames.OWNER);
             if (ownedItems.size() == 1) {
-                menuItems.add(new Separator(7));
+                menuItems.add(new Separator(8));
                 menuItems.add(createPermissionsMenuItem(ownedItems.get(0), 8, true));
             }
         }
@@ -580,6 +587,18 @@ public class DocumentPluginEventManager extends Plugin {
                 "Ctrl+Shift+S", enabled, command);
     }
 
+
+    private MenuItem createInfoMenuItem(final List<ExplorerNode> explorerNodeList, final int priority, final boolean enabled) {
+        final Command command = () ->
+            explorerNodeList.forEach(explorerNode ->
+                dispatcher.exec(new ExplorerServiceInfoAction(explorerNode.getDocRef()))
+                        .onSuccess(s ->  ShowInfoDocumentDialogEvent.fire(DocumentPluginEventManager.this, s))
+                        .onFailure(t -> AlertEvent.fireError(DocumentPluginEventManager.this, t.getMessage(), null))
+            );
+
+        return new IconMenuItem(priority, SvgPresets.INFO, SvgPresets.INFO, "Info", null,
+                enabled, command);
+    }
 
     private MenuItem createCopyMenuItem(final List<ExplorerNode> explorerNodeList, final int priority, final boolean enabled) {
         final Command command = () -> ShowCopyDocumentDialogEvent.fire(DocumentPluginEventManager.this, explorerNodeList);

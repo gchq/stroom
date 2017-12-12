@@ -18,6 +18,7 @@
 package stroom.explorer.server;
 
 import stroom.query.api.v2.DocRef;
+import stroom.util.shared.DocRefInfo;
 
 /**
  * This interface is intended to be used by the explorer for document store operations that need not know much about the
@@ -66,4 +67,11 @@ public interface ExplorerActionHandler {
      * @param uuid The uuid of the document you want to delete.
      */
     void deleteDocument(String uuid);
+
+    /**
+     * Retrieve the audit information for a particular doc ref
+     * @param uuid The UUID to return the information for
+     * @return The Audit information about the given DocRef.
+     */
+    DocRefInfo info(String uuid);
 }

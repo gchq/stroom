@@ -24,6 +24,7 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.query.api.v2.DocRef;
 import stroom.ruleset.shared.RuleSet;
+import stroom.util.shared.DocRefInfo;
 import stroom.util.shared.Message;
 
 import javax.inject.Inject;
@@ -71,6 +72,11 @@ public class RuleSetServiceImpl implements RuleSetService {
     @Override
     public void deleteDocument(final String uuid) {
         store.deleteDocument(uuid);
+    }
+
+    @Override
+    public DocRefInfo info(final String uuid) {
+        return store.info(uuid);
     }
 
     ////////////////////////////////////////////////////////////////////////
