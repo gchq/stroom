@@ -108,21 +108,36 @@ public final class KVMapUtil {
         char[] chars = value.toCharArray();
         for (int i = 0; i < chars.length; i++) {
             switch (chars[i]) {
-                case '\\':
-                    if (paramStart == -1) {
-                        if (i + 1 < chars.length && (chars[i + 1] == '\\' || chars[i + 1] == '$')) {
-                            i++;
-                            sb.append(chars[i]);
-                        }
-                    }
-
-                    break;
                 case '$':
                     if (paramStart == -1) {
-                        if (i + 1 < chars.length && chars[i + 1] == '{') {
-                            paramStart = i;
+                        int dollarCount = 0;
+                        int bracketCount = 0;
+                        for (int j = i; j < chars.length; j++) {
+                            if (chars[j] == '$') {
+                                dollarCount++;
+                            } else if (chars[j] == '{') {
+                                bracketCount++;
+                                break;
+                            } else {
+                                break;
+                            }
+                        }
+
+                        i += dollarCount - 1;
+                        if (bracketCount == 1) {
+                            final int size = dollarCount / 2;
+                            for (int j = 0; j < size; j++) {
+                                sb.append("$");
+                            }
+
+                            if (dollarCount % 2 != 0) {
+                                paramStart = i;
+                            }
                         } else {
-                            sb.append(chars[i]);
+                            final int size = dollarCount;
+                            for (int j = 0; j < size; j++) {
+                                sb.append("$");
+                            }
                         }
                     }
 

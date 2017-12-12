@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.main;
+package stroom.util.client;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.util.client.KVMapUtil;
 import stroom.util.test.StroomUnitTest;
 
 import java.util.Map;
@@ -48,8 +47,20 @@ public class TestKVMapUtil extends StroomUnitTest {
         Assert.assertEquals("this is value1", result);
 
         map = KVMapUtil.parse("key1=value1 key2=value2");
-        result = KVMapUtil.replaceParameters("this is \\${key1} ${key2}", map);
+        result = KVMapUtil.replaceParameters("this is $${key1} ${key2}", map);
         Assert.assertEquals("this is ${key1} value2", result);
+
+        result = KVMapUtil.replaceParameters("this is $$${key1} ${key2}", map);
+        Assert.assertEquals("this is $value1 value2", result);
+
+        result = KVMapUtil.replaceParameters("this is $$$${key1} ${key2}", map);
+        Assert.assertEquals("this is $${key1} value2", result);
+
+        result = KVMapUtil.replaceParameters("this is $$$$${key1} ${key2}", map);
+        Assert.assertEquals("this is $$value1 value2", result);
+
+        result = KVMapUtil.replaceParameters("$this is $$$$${key1} ${key2}", map);
+        Assert.assertEquals("$this is $$value1 value2", result);
 
         map = KVMapUtil.parse("user=user1 user2");
         result = KVMapUtil.replaceParameters("${user}", map);

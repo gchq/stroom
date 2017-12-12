@@ -19,7 +19,9 @@ package stroom.streamstore.client.presenter;
 import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.Range;
+import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.ClientDispatchAsyncImpl;
 import stroom.dispatch.shared.Action;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.entity.shared.BaseCriteria;
@@ -130,6 +132,8 @@ public class ActionDataProvider<R extends SharedObject> extends AsyncDataProvide
         }).onFailure(caught -> {
             fetching = false;
             refetch = false;
+
+            AlertEvent.fireErrorFromException((ClientDispatchAsyncImpl) dispatcher, caught, null);
         });
     }
 

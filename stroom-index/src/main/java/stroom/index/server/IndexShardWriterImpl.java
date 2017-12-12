@@ -31,6 +31,7 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.query.shared.IndexField;
 import stroom.query.shared.IndexField.AnalyzerType;
+import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LoggerPrintStream;
@@ -39,10 +40,13 @@ import stroom.util.shared.ModelStringUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 public class IndexShardWriterImpl implements IndexShardWriter {
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(IndexShardWriterImpl.class);
@@ -124,21 +128,31 @@ public class IndexShardWriterImpl implements IndexShardWriter {
 
         // Open the index writer.
         // If we already have a directory then this is an existing index.
-        if (dir.isDirectory()) {
-            final File[] files = dir.listFiles();
-            if (files == null || files.length == 0) {
-                throw new IndexException("Unable to find any index shard data in directory: " + dir.getCanonicalPath());
+        final String path = FileUtil.getCanonicalPath(dir);
+        final Path p = dir.toPath();
+        if (Files.isDirectory(p)) {
+            try (final Stream<Path> stream = Files.list(p)) {
+                final long count = stream.count();
+                if (count == 0) {
+                    throw new IndexException("Unable to find any index shard data in directory: " + path);
+                }
+            } catch (final IOException e) {
+                LAMBDA_LOGGER.error(e::getMessage, e);
+                throw new IndexException("Unable to find any index shard data in directory: " + path, e);
             }
 
         } else {
             // Make sure the index hasn't been deleted.
             if (indexShard.getDocumentCount() > 0) {
-                throw new IndexException("Unable to find any index shard data in directory: " + dir.getCanonicalPath());
+                throw new IndexException("Unable to find any index shard data in directory: " + path);
             }
 
             // Try and make all required directories.
-            if (!dir.mkdirs()) {
-                throw new IndexException("Unable to create directories for new index in \"" + dir.getAbsolutePath() + "\"");
+            try {
+                Files.createDirectories(p);
+            } catch (final IOException e) {
+                LAMBDA_LOGGER.error(e::getMessage, e);
+                throw new IndexException("Unable to create directories for new index in \"" + path + "\"", e);
             }
         }
 

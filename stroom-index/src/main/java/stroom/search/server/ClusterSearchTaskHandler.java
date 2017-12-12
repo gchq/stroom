@@ -111,7 +111,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     private final int maxStoredDataQueueSize;
     private final LinkedBlockingQueue<String> errors = new LinkedBlockingQueue<>();
     private final AtomicBoolean searchComplete = new AtomicBoolean();
-    private final AtomicBoolean sendingComplete = new AtomicBoolean();
+    private final AtomicBoolean sendingData = new AtomicBoolean();
     private final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider;
     private final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider;
     private final ExecutorProvider executorProvider;
@@ -261,7 +261,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
                 // Now we must wait for results to be sent to the requesting node.
                 taskContext.info("Sending final results");
-                while (!task.isTerminated() && !sendingComplete.get()) {
+                while (!task.isTerminated() && sendingData.get()) {
                     ThreadUtil.sleep(1000);
                 }
             }
@@ -318,11 +318,12 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
         };
 
         // Run the sending code asynchronously.
+        sendingData.set(true);
         CompletableFuture.supplyAsync(supplier, executor)
                 .thenAccept(complete -> {
                     if (complete) {
                         // We have sent the last data we were expected to so tell the parent cluster search that we have finished sending data.
-                        sendingComplete.set(true);
+                        sendingData.set(false);
 
                     } else {
                         // If we aren't complete then send more using the supplied sending frequency.
@@ -457,16 +458,15 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                             extractionTaskProperties.getMaxThreadsPerTask(),
                             executorProvider,
                             extractionTaskHandlerProvider,
-                            indexShardSearchTaskProducer,
-                            taskContext);
+                            indexShardSearchTaskProducer);
 
                     // Wait for completion.
                     while (!indexShardSearchTaskProducer.isComplete() || !extractionTaskProducer.isComplete()) {
                         taskContext.info(
                                 "Searching... " +
-                                        indexShardSearchTaskProducer.remainingTasks() +
+                                        indexShardSearchTaskProducer.getRemainingTasks() +
                                         " shards and " +
-                                        extractionTaskProducer.remainingTasks() +
+                                        extractionTaskProducer.getRemainingTasks() +
                                         " extractions remaining");
 
                         ThreadUtil.sleep(1000);

@@ -14,6 +14,40 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#497** : Change stream task creation to use straight JDBC rather than hibernate for inserts and use a configurable batch size (stroom.databaseMultiInsertMaxBatchSize) for the inserts
 
+## [v5.0-beta.68] - 2017-12-11
+
+* Issue **#515** : Fix handling of errors that occur before search starts sending.
+
+* Issue **#506** : In v5 dashboard table filters were enhanced to allow parameters to be used in include/exclude filters. The implementation included the use of `\` to escape `$` characters that were not to be considered part of a parameter reference. This change resulted in regular expressions requiring `\` being escaped with additional `\` characters. This escaping has now been removed and instead only `$` chars before `{` chars need escaping when necessary with double `$$` chars, e.g. use `$${something` if you actually want `${something` not to be replaced with a parameter.
+
+* Issue **#505** : Fix the property UI so all edited value whitespace is trimmed
+
+* Issue **#513** : Now only actively executing tasks are visible as server tasks
+
+* Issue **#483** : When running stream retention jobs the transactions are now set to REQUIRE_NEW to hopefully ensure that the job is done in small batches rather than a larger transaction spanning multiple changes.
+
+## [v5.0-beta.67] - 2017-12-05
+
+* Issue **#508** : Fix directory creation for index shards.
+
+## [v5.0-beta.66] - 2017-11-30
+
+* Issue **#492** : Task producers were still not being marked as complete on termination which meant that the parent cluster task was not completing. This has now been fixed.
+
+## [v5.0-beta.65] - 2017-11-29
+
+* Issue **#497** : DB connections obtained from the data source are now released back to the pool after use.
+
+* Issue **#492** : Task producers were not being marked as complete on termination which meant that the parent cluster task was not completing. This has now been fixed.
+
+## [v5.0-beta.64] - 2017-11-27
+
+* Issue **#497** : Change stream task creation to use straight JDBC rather than hibernate for inserts and use a configurable batch size (stroom.databaseMultiInsertMaxBatchSize) for the inserts.
+
+* Issue **#502** : The task executor was not responding to shutdown and was therefore preventing the app from stopping gracefully.
+
+* Issue **#476** : Stepping with dynamic XSLT or text converter properties now correctly falls back to the specified entity if a match cannot be found by name.
+
 ## [v5.0-beta.63] - 2017-11-20
 
 * Issue **#498** : The UI was adding more than one link between 'Source' and 'Parser' elements, this is now fixed.
@@ -688,7 +722,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.63...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.68...HEAD
+[v5.0-beta.68]: https://github.com/gchq/stroom/compare/v5.0-beta.67...v5.0-beta.68
+[v5.0-beta.67]: https://github.com/gchq/stroom/compare/v5.0-beta.66...v5.0-beta.67
+[v5.0-beta.66]: https://github.com/gchq/stroom/compare/v5.0-beta.65...v5.0-beta.66
+[v5.0-beta.65]: https://github.com/gchq/stroom/compare/v5.0-beta.64...v5.0-beta.65
+[v5.0-beta.64]: https://github.com/gchq/stroom/compare/v5.0-beta.63...v5.0-beta.64
 [v5.0-beta.63]: https://github.com/gchq/stroom/compare/v5.0-beta.62...v5.0-beta.63
 [v5.0-beta.62]: https://github.com/gchq/stroom/compare/v5.0-beta.61...v5.0-beta.62
 [v5.0-beta.61]: https://github.com/gchq/stroom/compare/v5.0-beta.60...v5.0-beta.61

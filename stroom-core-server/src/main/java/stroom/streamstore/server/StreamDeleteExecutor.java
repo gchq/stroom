@@ -18,8 +18,6 @@ package stroom.streamstore.server;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.jobsystem.server.ClusterLockService;
@@ -60,7 +58,6 @@ public class StreamDeleteExecutor extends AbstractBatchDeleteExecutor {
     @StroomSimpleCronSchedule(cron = "0 0 *")
     @JobTrackedSchedule(jobName = "Stream Delete", description = "Physically delete streams that have been logically deleted based on age of delete ("
             + STREAM_DELETE_PURGE_AGE_PROPERTY + ")")
-    @Transactional(propagation = Propagation.NEVER)
     public void exec() {
         lockAndDelete();
     }
