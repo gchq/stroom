@@ -19,6 +19,7 @@ package stroom.headless;
 import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.StringCriteria;
+import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
@@ -58,9 +59,12 @@ import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
-import stroom.util.zip.HeaderMap;
 import stroom.util.zip.StroomHeaderArguments;
-import stroom.feed.MetaMap;
+
+import javax.annotation.Resource;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
 
 @TaskHandlerBean(task = HeadlessTranslationTask.class)
 @Scope(StroomScope.TASK)
