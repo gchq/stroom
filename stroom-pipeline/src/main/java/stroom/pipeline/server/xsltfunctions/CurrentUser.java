@@ -16,28 +16,43 @@
 
 package stroom.pipeline.server.xsltfunctions;
 
-import javax.annotation.Resource;
-
-import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-
-import stroom.pipeline.state.CurrentUserHolder;
 import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import stroom.pipeline.state.CurrentUserHolder;
+import stroom.util.shared.Severity;
+import stroom.util.spring.StroomScope;
+
+import javax.inject.Inject;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
-public class CurrentUser extends StroomExtensionFunctionCall {
-    @Resource
-    private CurrentUserHolder currentUserHolder;
+class CurrentUser extends StroomExtensionFunctionCall {
+    private final CurrentUserHolder currentUserHolder;
+
+    @Inject
+    CurrentUser(final CurrentUserHolder currentUserHolder) {
+        this.currentUserHolder = currentUserHolder;
+    }
 
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments)
             throws XPathException {
-        final String result = currentUserHolder.getCurrentUser();
+        String result = null;
+
+        try {
+            result = currentUserHolder.getCurrentUser();
+        } catch (final Exception e) {
+            log(context, Severity.ERROR, e.getMessage(), e);
+        }
+
+        if (result == null) {
+            return EmptyAtomicSequence.getInstance();
+        }
         return StringValue.makeStringValue(result);
     }
 }

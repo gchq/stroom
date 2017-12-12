@@ -16,25 +16,33 @@
 
 package stroom.pipeline.server.xsltfunctions;
 
-import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-
-import stroom.xml.event.np.NPEventList;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import stroom.pipeline.state.StreamHolder;
+import stroom.refdata.ReferenceData;
+import stroom.util.spring.StroomScope;
+import stroom.xml.event.np.NPEventList;
+
+import javax.inject.Inject;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
-public class BitmapLookup extends AbstractLookup {
+class BitmapLookup extends AbstractLookup {
+    @Inject
+    BitmapLookup(final ReferenceData referenceData, final StreamHolder streamHolder) {
+        super(referenceData, streamHolder);
+    }
+
     @Override
     protected Sequence doLookup(final XPathContext context, final String map, final String key, final long eventTime,
-            final boolean ignoreWarnings, final StringBuilder lookupIdentifier) throws XPathException {
+                                final boolean ignoreWarnings, final StringBuilder lookupIdentifier) throws XPathException {
         SequenceMaker sequenceMaker = null;
 
-        int val = 0;
+        int val;
         try {
             if (key.startsWith("0x")) {
                 val = Integer.valueOf(key.substring(2), 16);

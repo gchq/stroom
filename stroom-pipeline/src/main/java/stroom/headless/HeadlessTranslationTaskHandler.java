@@ -16,15 +16,7 @@
 
 package stroom.headless;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-
-import javax.annotation.Resource;
-
-import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
-
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.StringCriteria;
 import stroom.feed.shared.Feed;
@@ -44,7 +36,6 @@ import stroom.pipeline.server.filter.RecordOutputFilter;
 import stroom.pipeline.server.filter.SchemaFilter;
 import stroom.pipeline.server.filter.XMLFilter;
 import stroom.pipeline.server.filter.XSLTFilter;
-import stroom.pipeline.server.xsltfunctions.Lookup;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
@@ -66,8 +57,14 @@ import stroom.util.date.DateUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
-import stroom.util.zip.StroomHeaderArguments;
+import stroom.util.spring.StroomScope;
 import stroom.util.zip.HeaderMap;
+import stroom.util.zip.StroomHeaderArguments;
+
+import javax.annotation.Resource;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
 
 @TaskHandlerBean(task = HeadlessTranslationTask.class)
 @Scope(StroomScope.TASK)
@@ -112,8 +109,6 @@ public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<Headless
     private ContextDataLoader contextDataLoader;
     @Resource
     private MetaData metaData;
-    @Resource
-    private Lookup lookup;
     @Resource
     private PipelineHolder pipelineHolder;
     @Resource

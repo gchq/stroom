@@ -16,79 +16,85 @@
 
 package stroom.pipeline.server.xsltfunctions;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-
-import stroom.dictionary.shared.DictionaryService;
-import stroom.dictionary.shared.FindDictionaryCriteria;
-import stroom.entity.shared.BaseResultList;
-import stroom.util.shared.Severity;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import stroom.dictionary.shared.DictionaryService;
+import stroom.dictionary.shared.FindDictionaryCriteria;
+import stroom.entity.shared.BaseResultList;
+import stroom.util.shared.Severity;
+import stroom.util.spring.StroomScope;
+
+import javax.inject.Inject;
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 @Scope(value = StroomScope.TASK)
-public class Dictionary extends StroomExtensionFunctionCall {
-    @Resource
-    private DictionaryService dictionaryService;
+class Dictionary extends StroomExtensionFunctionCall {
+    private final DictionaryService dictionaryService;
 
     private Map<String, String> cachedData;
+
+    @Inject
+    Dictionary(final DictionaryService dictionaryService) {
+        this.dictionaryService = dictionaryService;
+    }
 
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments)
             throws XPathException {
-        String data = null;
+        String result = null;
 
-        final String name = getSafeString(functionName, context, arguments, 0);
-        if (name != null && name.length() > 0) {
-            if (cachedData == null) {
-                cachedData = new HashMap<>();
-            }
-
-            if (cachedData.containsKey(name)) {
-                data = cachedData.get(name);
-
-            } else {
-                try {
-                    // Try and load a dictionary with the supplied name.
-                    final FindDictionaryCriteria criteria = new FindDictionaryCriteria(name);
-                    criteria.setSort(FindDictionaryCriteria.FIELD_ID);
-                    final BaseResultList<stroom.dictionary.shared.Dictionary> list = dictionaryService
-                            .find(criteria);
-
-                    if (list == null || list.size() == 0) {
-                        log(context, Severity.WARNING, "Dictionary not found with name '" + name
-                                + "'. You might not have permission to access this dictionary", null);
-                    } else {
-                        if (list.size() > 1) {
-                            log(context, Severity.INFO, "Multple dictionaries found with name '" + name
-                                    + "' - using the first one that was created", null);
-                        }
-
-                        final stroom.dictionary.shared.Dictionary dictionary = list.getFirst();
-                        data = dictionary.getData();
-                    }
-                } catch (final Exception e) {
-                    log(context, Severity.ERROR, e.getMessage(), e);
+        try {
+            final String name = getSafeString(functionName, context, arguments, 0);
+            if (name != null && name.length() > 0) {
+                if (cachedData == null) {
+                    cachedData = new HashMap<>();
                 }
 
-                // Remember this data for the next call.
-                cachedData.put(name, data);
+                if (cachedData.containsKey(name)) {
+                    result = cachedData.get(name);
+
+                } else {
+                    try {
+                        // Try and load a dictionary with the supplied name.
+                        final FindDictionaryCriteria criteria = new FindDictionaryCriteria(name);
+                        criteria.setSort(FindDictionaryCriteria.FIELD_ID);
+                        final BaseResultList<stroom.dictionary.shared.Dictionary> list = dictionaryService
+                                .find(criteria);
+
+                        if (list == null || list.size() == 0) {
+                            log(context, Severity.WARNING, "Dictionary not found with name '" + name
+                                    + "'. You might not have permission to access this dictionary", null);
+                        } else {
+                            if (list.size() > 1) {
+                                log(context, Severity.INFO, "Multiple dictionaries found with name '" + name
+                                        + "' - using the first one that was created", null);
+                            }
+
+                            final stroom.dictionary.shared.Dictionary dictionary = list.getFirst();
+                            result = dictionary.getData();
+                        }
+                    } catch (final Exception e) {
+                        log(context, Severity.ERROR, e.getMessage(), e);
+                    }
+
+                    // Remember this data for the next call.
+                    cachedData.put(name, result);
+                }
             }
+        } catch (final Exception e) {
+            log(context, Severity.ERROR, e.getMessage(), e);
         }
 
-        if (data == null) {
+        if (result == null) {
             return EmptyAtomicSequence.getInstance();
         }
-        return StringValue.makeStringValue(data);
+        return StringValue.makeStringValue(result);
     }
 }
