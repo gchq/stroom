@@ -244,6 +244,10 @@ def projectsWithSharedTestJars = subprojects.findAll { project ->
 
 //Configuration applicable to all projects
 allprojects {
+    // Make doclint be quiet - we don't care about JavaDoc warnings.
+    tasks.withType(Javadoc) {
+        options.addStringOption('Xdoclint:none', '-quiet')
+    }
 }
 
 //Configuration applicable to all sub projects
