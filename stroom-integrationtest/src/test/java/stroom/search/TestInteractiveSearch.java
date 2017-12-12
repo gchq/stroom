@@ -20,6 +20,8 @@ package stroom.search;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.CommonIndexingTest;
 import stroom.dashboard.server.ActiveQuery;
@@ -77,6 +79,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestInteractiveSearch.class);
+
     @Resource
     private CommonIndexingTest commonIndexingTest;
     @Resource
@@ -532,9 +536,10 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
                 complete = result.isComplete();
 
                 if (!complete) {
-                    ThreadUtil.sleep(100);
+                    ThreadUtil.sleep(10);
                 }
             }
+            LOGGER.info("Search completed");
         } finally {
             searchResultCollector.destroy();
         }
@@ -560,7 +565,6 @@ public class TestInteractiveSearch extends AbstractCoreIntegrationTest {
                     }
                 }
             }
-            complete = result.isComplete();
         }
 
         if (expectResultCount == 0) {

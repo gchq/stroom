@@ -16,26 +16,28 @@
 
 package stroom;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-
-import javax.annotation.Resource;
-
-import stroom.util.logging.StroomLogger;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TestRule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 import org.junit.runner.RunWith;
-
 import stroom.util.io.FileUtil;
+import stroom.util.logging.StroomLogger;
+import stroom.util.test.IntegrationTest;
 import stroom.util.test.StroomSpringJUnit4ClassRunner;
 import stroom.util.test.StroomTest;
-import stroom.util.test.IntegrationTest;
 import stroom.util.test.TestState;
 import stroom.util.test.TestState.State;
+
+import javax.annotation.Resource;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 
 /**
  * This class should be common to all component and integration tests.
@@ -48,6 +50,13 @@ import stroom.util.test.TestState.State;
 public abstract class StroomIntegrationTest implements StroomTest {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(StroomIntegrationTest.class);
     private static final boolean TEAR_DOWN_DATABASE_BETWEEEN_TESTS = true;
+
+    @Rule
+    public TestRule watcher = new TestWatcher() {
+        protected void starting(Description description) {
+            LOGGER.info(String.format("Started test: %s::%s", description.getClassName(), description.getMethodName()));
+        }
+    };
 
     @Resource
     private CommonTestControl commonTestControl;

@@ -16,19 +16,11 @@
 
 package stroom.node.server;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.inject.Inject;
-
-import stroom.entity.server.util.StroomEntityManager;
-import stroom.util.spring.StroomSpringProfiles;
 import org.springframework.aop.framework.Advised;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-
 import stroom.entity.server.util.BaseEntityUtil;
+import stroom.entity.server.util.StroomEntityManager;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeService;
@@ -38,6 +30,12 @@ import stroom.node.shared.VolumeService;
 import stroom.node.shared.VolumeState;
 import stroom.util.config.StroomProperties;
 import stroom.util.logging.StroomLogger;
+import stroom.util.spring.StroomSpringProfiles;
+
+import javax.inject.Inject;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 @Profile(StroomSpringProfiles.IT)
@@ -131,6 +129,7 @@ public class NodeConfigForTesting implements NodeConfig {
                 if (realNode == null) {
                     realNode = BaseEntityUtil.clone(node);
                     realNode.setRack(BaseEntityUtil.findByName(realRackList, realNode.getRack().getName()));
+                    LOGGER.debug("Persisting node %s", realNode);
                     realNode = stroomEntityManager.saveEntity(realNode);
                 }
                 realNodeList.add(realNode);

@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#501** : Improve the database teardown process in integration tests to speed up builds
+
 ## [v5.0-beta.69] - 2017-12-12
 
 * Issue **#511** : Fix for XSLT functions to allow null return values where a value cannot be returned due to an error etc.

@@ -426,4 +426,9 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
     public void setBeanFactory(final BeanFactory beanFactory) throws BeansException {
         this.beanFactory = beanFactory;
     }
+
+    @Override
+    public void clearContext() {
+        entityManager.clear();
+    }
 }
