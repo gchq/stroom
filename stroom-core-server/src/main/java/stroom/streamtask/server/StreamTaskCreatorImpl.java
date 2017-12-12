@@ -41,6 +41,7 @@ import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
+import stroom.streamtask.server.ExpressionToFindCriteria.Context;
 import stroom.streamtask.server.StreamTaskCreatorTransactionHelper.CreatedTasks;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
@@ -543,7 +544,8 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                             if (requiredTasks > 0 && !taskMonitor.isTerminated()) {
                                 final QueryData queryData = loadedFilter.getQueryData();
 
-                                final OldFindStreamCriteria findStreamCriteria = expressionToFindCriteria.convert(queryData);
+                                final Context context = new Context(null, System.currentTimeMillis());
+                                final OldFindStreamCriteria findStreamCriteria = expressionToFindCriteria.convert(queryData, context);
                                 boolean isStreamStoreSearch = (queryData.getDataSource() != null) && queryData.getDataSource().getType().equals(StreamDataSource.STREAM_STORE_TYPE);
 
                                 // Record the time before we are going to query for

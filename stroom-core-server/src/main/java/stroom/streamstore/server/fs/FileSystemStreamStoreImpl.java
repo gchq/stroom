@@ -61,6 +61,7 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeCondition;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeFieldUse;
+import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamPermissionException;
@@ -68,6 +69,7 @@ import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
 import stroom.streamtask.server.ExpressionToFindCriteria;
+import stroom.streamtask.server.ExpressionToFindCriteria.Context;
 import stroom.streamtask.server.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.date.DateUtil;
@@ -707,7 +709,8 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
     @Override
     public BaseResultList<Stream> find(final FindStreamCriteria criteria) throws RuntimeException {
-        final OldFindStreamCriteria oldFindStreamCriteria = expressionToFindCriteria.convert(criteria);
+        final Context context = new Context(null, System.currentTimeMillis());
+        final OldFindStreamCriteria oldFindStreamCriteria = expressionToFindCriteria.convert(criteria, context);
         return find(oldFindStreamCriteria);
     }
 
@@ -952,7 +955,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         if (criteria.getAttributeConditionList() != null) {
             for (int i = 0; i < criteria.getAttributeConditionList().size(); i++) {
                 final StreamAttributeCondition streamAttributeCondition = criteria.getAttributeConditionList().get(i);
-                final DocRef streamAttributeKey = streamAttributeCondition.getStreamAttributeKey();
+                final StreamAttributeKey streamAttributeKey = streamAttributeCondition.getStreamAttributeKey();
 
                 sql.append(" JOIN ");
                 sql.append(StreamAttributeValue.TABLE_NAME);
@@ -1325,7 +1328,8 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     @Override
     @Secured(Stream.DELETE_DATA_PERMISSION)
     public Long findDelete(final FindStreamCriteria criteria) throws RuntimeException {
-        final OldFindStreamCriteria oldFindStreamCriteria = expressionToFindCriteria.convert(criteria);
+        final Context context = new Context(null, System.currentTimeMillis());
+        final OldFindStreamCriteria oldFindStreamCriteria = expressionToFindCriteria.convert(criteria, context);
         return findDelete(oldFindStreamCriteria);
     }
 

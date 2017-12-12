@@ -27,6 +27,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TermQuery;
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.entity.shared.DocRefUtil;
 import stroom.index.server.FieldFactory;
 import stroom.index.server.IndexShardKeyUtil;
 import stroom.index.server.IndexShardService;
@@ -94,7 +95,7 @@ public class TestBasicSearch extends AbstractCoreIntegrationTest {
         indexShardWriterCache.flushAll();
 
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getIndexIdSet().add(index);
+        criteria.getIndexSet().add(DocRefUtil.create(index));
         final List<IndexShard> shards = indexShardService.find(criteria);
 
         // Open readers and add reader searcher to the multi searcher.

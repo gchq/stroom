@@ -5,17 +5,16 @@ import stroom.dictionary.server.DictionaryStore;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.CriteriaSet;
-import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.Period;
 import stroom.feed.server.FeedService;
 import stroom.pipeline.server.PipelineService;
-import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.common.v2.DateExpressionParser;
 import stroom.streamstore.server.OldFindStreamCriteria;
 import stroom.streamstore.server.StreamAttributeKeyService;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
@@ -26,7 +25,6 @@ import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -61,10 +59,10 @@ public class ExpressionToFindCriteria {
         this.streamAttributeKeyService = streamAttributeKeyService;
     }
 
-    public OldFindStreamCriteria convert(final FindStreamCriteria findStreamCriteria) {
+    public OldFindStreamCriteria convert(final FindStreamCriteria findStreamCriteria, final Context context) {
         final OldFindStreamCriteria criteria = new OldFindStreamCriteria();
 
-        convertExpression(findStreamCriteria.getExpression(), criteria);
+        convertExpression(findStreamCriteria.getExpression(), criteria, context);
 
         criteria.setFetchSet(findStreamCriteria.getFetchSet());
         criteria.setPageRequest(findStreamCriteria.getPageRequest());
@@ -82,26 +80,26 @@ public class ExpressionToFindCriteria {
         return criteria;
     }
 
-    public OldFindStreamCriteria convert(final QueryData queryData) {
+    public OldFindStreamCriteria convert(final QueryData queryData, final Context context) {
         final OldFindStreamCriteria newCriteria = new OldFindStreamCriteria();
 
         if ((queryData.getDataSource() == null) || !queryData.getDataSource().getType().equals(StreamDataSource.STREAM_STORE_TYPE)) {
             return newCriteria;
         }
 
-        convertExpression(queryData.getExpression(), newCriteria);
+        convertExpression(queryData.getExpression(), newCriteria, context);
         return newCriteria;
     }
 
-    private void convertExpression(final ExpressionOperator expression, final OldFindStreamCriteria criteria) {
+    private void convertExpression(final ExpressionOperator expression, final OldFindStreamCriteria criteria, final Context context) {
         if (expression != null && expression.enabled() && expression.getChildren() != null) {
             final List<Op> opStack = new ArrayList<>();
             opStack.add(expression.getOp());
-            addChildren(expression.getChildren(), opStack, criteria);
+            addChildren(expression.getChildren(), opStack, criteria, context);
         }
     }
 
-    private void addChildren(final List<ExpressionItem> children, final List<Op> opStack, final OldFindStreamCriteria criteria) {
+    private void addChildren(final List<ExpressionItem> children, final List<Op> opStack, final OldFindStreamCriteria criteria, final Context context) {
         final Op currentOp = opStack.get(opStack.size() - 1);
         if (opStack.size() > 3) {
             final String errorMsg = "We do not support the following set of nested operations " + opStack;
@@ -139,7 +137,7 @@ public class ExpressionToFindCriteria {
                     throw new EntityServiceException(errorMsg);
                 }
 
-                addTerms(terms, criteria, opStack.contains(Op.NOT));
+                addTerms(terms, criteria, opStack.contains(Op.NOT), context);
 
             } else if (currentOp.equals(Op.AND)) {
                 // Check that the same field does not occur more than once.
@@ -155,7 +153,7 @@ public class ExpressionToFindCriteria {
                     throw new EntityServiceException(errorMsg);
                 }
 
-                addTerms(terms, criteria, opStack.contains(Op.NOT));
+                addTerms(terms, criteria, opStack.contains(Op.NOT), context);
             } else if (currentOp.equals(Op.NOT)) {
                 // Validate that all terms are of the same field type.
                 final Set<String> fieldNames = terms.stream().map(ExpressionTerm::getField).collect(Collectors.toSet());
@@ -169,7 +167,7 @@ public class ExpressionToFindCriteria {
                     throw new EntityServiceException(errorMsg);
                 }
 
-                addTerms(terms, criteria, opStack.contains(Op.NOT));
+                addTerms(terms, criteria, opStack.contains(Op.NOT), context);
             }
         }
 
@@ -181,11 +179,11 @@ public class ExpressionToFindCriteria {
                 .forEach(expressionOperator -> {
                     final List<Op> childOpStack = new ArrayList<>(opStack);
                     childOpStack.add(expressionOperator.getOp());
-                    addChildren(expressionOperator.getChildren(), childOpStack, criteria);
+                    addChildren(expressionOperator.getChildren(), childOpStack, criteria, context);
                 });
     }
 
-    private void addTerms(final List<ExpressionTerm> allTerms, final OldFindStreamCriteria criteria, final boolean negate) {
+    private void addTerms(final List<ExpressionTerm> allTerms, final OldFindStreamCriteria criteria, final boolean negate, final Context context) {
         // Group terms by field.
         final Map<String, List<ExpressionTerm>> map = allTerms.stream()
                 .collect(Collectors.groupingBy(ExpressionTerm::getField, Collectors.toList()));
@@ -221,13 +219,13 @@ public class ExpressionToFindCriteria {
                     criteria.setParentStreamIdSet(convertEntityIdSetLongValues(criteria.getParentStreamIdSet(), field, getAllValues(terms), Long::valueOf));
                     break;
                 case StreamDataSource.CREATE_TIME:
-                    setPeriod(criteria.obtainCreatePeriod(), terms);
+                    setPeriod(criteria.obtainCreatePeriod(), terms, context);
                     break;
                 case StreamDataSource.EFFECTIVE_TIME:
-                    setPeriod(criteria.obtainEffectivePeriod(), terms);
+                    setPeriod(criteria.obtainEffectivePeriod(), terms, context);
                     break;
                 case StreamDataSource.STATUS_TIME:
-                    setPeriod(criteria.obtainStatusPeriod(), terms);
+                    setPeriod(criteria.obtainStatusPeriod(), terms, context);
                     break;
                 default:
                     // Assume all other field names are extended fields.
@@ -236,36 +234,36 @@ public class ExpressionToFindCriteria {
         });
     }
 
-    private void setPeriod(final Period period, final List<ExpressionTerm> terms) {
+    private void setPeriod(final Period period, final List<ExpressionTerm> terms, final Context context) {
         for (final ExpressionTerm term : terms) {
             switch (term.getCondition()) {
                 case CONTAINS:
-                    period.setFromMs(getMillis(term, term.getValue()));
-                    period.setToMs(getMillis(term, term.getValue()));
+                    period.setFromMs(getMillis(term, term.getValue(), context));
+                    period.setToMs(getMillis(term, term.getValue(), context));
                     break;
                 case EQUALS:
-                    period.setFromMs(getMillis(term, term.getValue()));
-                    period.setToMs(getMillis(term, term.getValue()));
+                    period.setFromMs(getMillis(term, term.getValue(), context));
+                    period.setToMs(getMillis(term, term.getValue(), context));
                     break;
                 case GREATER_THAN:
-                    period.setFromMs(getMillis(term, term.getValue()) + 1);
+                    period.setFromMs(getMillis(term, term.getValue(), context) + 1);
                     break;
                 case GREATER_THAN_OR_EQUAL_TO:
-                    period.setFromMs(getMillis(term, term.getValue()));
+                    period.setFromMs(getMillis(term, term.getValue(), context));
                     break;
                 case LESS_THAN:
-                    period.setToMs(getMillis(term, term.getValue()) - 1);
+                    period.setToMs(getMillis(term, term.getValue(), context) - 1);
                     break;
                 case LESS_THAN_OR_EQUAL_TO:
-                    period.setToMs(getMillis(term, term.getValue()));
+                    period.setToMs(getMillis(term, term.getValue(), context));
                     break;
                 case BETWEEN:
                     final String[] values = term.getValue().split(ExpressionTerm.Condition.IN_CONDITION_DELIMITER);
                     if (values.length > 0) {
-                        period.setFromMs(getMillis(term, values[0]));
+                        period.setFromMs(getMillis(term, values[0], context));
                     }
                     if (values.length > 1) {
-                        period.setToMs(getMillis(term, values[1]));
+                        period.setToMs(getMillis(term, values[1], context));
                     }
                     break;
 //                case IN:
@@ -284,7 +282,7 @@ public class ExpressionToFindCriteria {
         }
     }
 
-    private Long getMillis(final ExpressionTerm term, final String value) {
+    private Long getMillis(final ExpressionTerm term, final String value, final Context context) {
         if (value == null) {
             return null;
         }
@@ -295,10 +293,20 @@ public class ExpressionToFindCriteria {
         }
 
         try {
-            return DateUtil.parseNormalDateTimeString(trimmed);
+            return getDate(term.getField(), trimmed, context);
         } catch (final RuntimeException e) {
             final String errorMsg = "Unexpected value '" + value + "' used for " + term.getField();
             throw new EntityServiceException(errorMsg);
+        }
+    }
+
+    private long getDate(final String fieldName, final String value, final Context context) {
+        try {
+            //empty optional will be caught below
+            return DateExpressionParser.parse(value, context.timeZoneId, context.nowEpochMilli).get().toInstant().toEpochMilli();
+        } catch (final Exception e) {
+            throw new EntityServiceException("Expected a standard date value for field \"" + fieldName
+                    + "\" but was given string \"" + value + "\"");
         }
     }
 
@@ -439,8 +447,16 @@ public class ExpressionToFindCriteria {
             throw new EntityServiceException(errorMsg);
         }
 
-        final DocRef key = DocRefUtil.create(keys.getFirst());
+        return terms.stream().map(term -> new StreamAttributeCondition(keys.getFirst(), term.getCondition(), term.getValue())).collect(Collectors.toList());
+    }
 
-        return terms.stream().map(term -> new StreamAttributeCondition(key, term.getCondition(), term.getValue())).collect(Collectors.toList());
+    public static class Context {
+        private final String timeZoneId;
+        private final long nowEpochMilli;
+
+        public Context(final String timeZoneId, final long nowEpochMilli) {
+            this.timeZoneId = timeZoneId;
+            this.nowEpochMilli = nowEpochMilli;
+        }
     }
 }

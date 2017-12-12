@@ -62,7 +62,7 @@ public class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
         criteria.getNodeIdSet().add(nodeCache.getDefaultNode());
         criteria.getFetchSet().add(Index.ENTITY_TYPE);
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
-        criteria.getIndexIdSet().add(indexRef.getId());
+        criteria.getIndexSet().add(indexRef);
 
         final List<IndexShard> shards = indexShardService.find(criteria);
         shards.forEach(shard -> {

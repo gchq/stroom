@@ -88,13 +88,13 @@ public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
         Assert.assertEquals(4, indexShardService.find(criteria).size());
 
         // Find shards for index 1
-        criteria.getIndexIdSet().clear();
-        criteria.getIndexIdSet().add(index1);
+        criteria.getIndexSet().clear();
+        criteria.getIndexSet().add(DocRefUtil.create(index1));
         Assert.assertEquals(3, indexShardService.find(criteria).size());
 
         // Find shards for index 2
-        criteria.getIndexIdSet().clear();
-        criteria.getIndexIdSet().add(index2);
+        criteria.getIndexSet().clear();
+        criteria.getIndexSet().add(DocRefUtil.create(index2));
         Assert.assertEquals(1, indexShardService.find(criteria).size());
 
         // Set all the filters

@@ -16,7 +16,6 @@
 
 package stroom.streamstore.shared;
 
-import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
@@ -26,7 +25,7 @@ import java.io.Serializable;
 public class StreamAttributeCondition implements Serializable {
     private static final long serialVersionUID = -2063409357774838870L;
 
-    private DocRef streamAttributeKey;
+    private StreamAttributeKey streamAttributeKey;
     private Condition condition;
     private String fieldValue;
 
@@ -34,7 +33,7 @@ public class StreamAttributeCondition implements Serializable {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public StreamAttributeCondition(final DocRef streamAttributeKey, final Condition condition,
+    public StreamAttributeCondition(final StreamAttributeKey streamAttributeKey, final Condition condition,
                                     final String fieldValue) {
         this.streamAttributeKey = streamAttributeKey;
         this.condition = condition;
@@ -57,11 +56,11 @@ public class StreamAttributeCondition implements Serializable {
         this.fieldValue = fieldValue;
     }
 
-    public DocRef getStreamAttributeKey() {
+    public StreamAttributeKey getStreamAttributeKey() {
         return streamAttributeKey;
     }
 
-    public void setStreamAttributeKey(final DocRef streamAttributeKey) {
+    public void setStreamAttributeKey(final StreamAttributeKey streamAttributeKey) {
         this.streamAttributeKey = streamAttributeKey;
     }
 

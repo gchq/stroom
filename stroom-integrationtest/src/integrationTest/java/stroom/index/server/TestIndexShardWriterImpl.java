@@ -77,7 +77,7 @@ public class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         Assert.assertEquals(2, commonTestControl.countEntity(IndexShard.class));
 
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getIndexIdSet().setMatchAll(true);
+        criteria.getIndexSet().setMatchAll(true);
 
         checkDocCount(0, writer1);
         checkDocCount(0, writer1.getIndexShardId());

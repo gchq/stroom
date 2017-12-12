@@ -36,9 +36,7 @@ public class SharedDocRef extends DocRef implements SharedObject {
             return null;
         }
 
-        final SharedDocRef sharedDocRef = new SharedDocRef(docRef.getType(), docRef.getUuid(), docRef.getName());
-        sharedDocRef.setId(docRef.getId());
-        return sharedDocRef;
+        return new SharedDocRef(docRef.getType(), docRef.getUuid(), docRef.getName());
     }
 
     protected static abstract class BaseBuilder<T extends SharedDocRef, CHILD_CLASS extends BaseBuilder<T, ?>> {

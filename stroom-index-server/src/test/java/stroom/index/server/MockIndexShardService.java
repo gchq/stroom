@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.MockEntityService;
 import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.DocRefUtil;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
@@ -66,7 +67,7 @@ public class MockIndexShardService extends MockEntityService<IndexShard, FindInd
 
             } else if (!criteria.getNodeIdSet().isMatch(indexShard.getNode())) {
                 include = false;
-            } else if (!criteria.getIndexIdSet().isMatch(indexShard.getIndex())) {
+            } else if (!criteria.getIndexSet().isMatch(DocRefUtil.create(indexShard.getIndex()))) {
                 include = false;
 
             } else if (!criteria.getIndexShardStatusSet().isMatch(indexShard.getStatus())) {

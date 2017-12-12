@@ -13,6 +13,7 @@ dependencies {
 
     compile libs.eventLogging
     compile libs.stroomQueryApi
+    compile libs.stroomQueryCommon
     compile libs.stroomQueryAudit
     compile urlDependencies.get(urlLibs.stroomStatsSchema)
 
@@ -29,6 +30,7 @@ dependencies {
     compile libs.commons_lang
     compile libs.commons_compress
     compile libs.jackson_annotations
+    compile libs.jackson_databind
     compile libs.javax_annotation_api
     compile libs.javax_inject
     compile libs.javax_servlet_api

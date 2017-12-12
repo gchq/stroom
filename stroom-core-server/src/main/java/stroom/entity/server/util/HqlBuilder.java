@@ -19,6 +19,7 @@ package stroom.entity.server.util;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.HasPrimitiveValue;
+import stroom.query.api.v2.DocRef;
 
 public class HqlBuilder extends AbstractSqlBuilder {
     public HqlBuilder() {
@@ -78,6 +79,28 @@ public class HqlBuilder extends AbstractSqlBuilder {
         for (final Long item : set) {
             if (item != null) {
                 arg(item);
+                append(",");
+                added = true;
+            }
+        }
+
+        if (added) {
+            // Remove the last comma.
+            setLength(length() - 1);
+        }
+
+        append(")");
+    }
+
+    @Override
+    void appendDocRefSet(final String fieldOrEntity, final CriteriaSet<DocRef> set) {
+        append(fieldOrEntity);
+        append(".uuid IN (");
+
+        boolean added = false;
+        for (final DocRef item : set) {
+            if (item != null) {
+                arg(item.getUuid());
                 append(",");
                 added = true;
             }
