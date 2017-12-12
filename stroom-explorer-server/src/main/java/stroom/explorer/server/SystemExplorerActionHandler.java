@@ -6,6 +6,7 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.shared.DocRefInfo;
 
 import java.util.UUID;
 
@@ -55,5 +56,10 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
     @Override
     public void deleteDocument(final String uuid) {
         throw new PermissionException(securityContext.getUserId(), "You cannot delete the System node");
+    }
+
+    @Override
+    public DocRefInfo info(final String uuid) {
+        throw new PermissionException(securityContext.getUserId(), "You cannot get info about the System node");
     }
 }

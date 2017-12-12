@@ -23,6 +23,7 @@ import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.query.api.v2.DocRef;
+import stroom.util.shared.DocRefInfo;
 
 import java.util.List;
 
@@ -40,6 +41,8 @@ public interface ExplorerService {
     DocRef rename(DocRef docRef, String docName);
 
     BulkActionResult delete(List<DocRef> docRefs);
+
+    DocRefInfo info(DocRef docRef);
 
     void rebuildTree();
 }

@@ -47,6 +47,7 @@ import stroom.query.audit.ExportDTO;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.config.StroomProperties;
+import stroom.util.shared.DocRefInfo;
 import stroom.util.shared.Message;
 import stroom.util.shared.QueryApiException;
 import stroom.util.shared.Severity;
@@ -682,6 +683,25 @@ public abstract class ExternalDocumentEntityServiceImpl
             throw new EntityServiceException("Entity not found");
         }
         delete(entity);
+    }
+
+    @Override
+    public DocRefInfo info(final String uuid) {
+        final E entity = loadByUuid(uuid);
+        if (entity == null) {
+            throw new EntityServiceException("Entity not found");
+        }
+        return new DocRefInfo.Builder()
+                .docRef(new DocRef.Builder()
+                        .type(entity.getType())
+                        .uuid(entity.getUuid())
+                        .name(entity.getName())
+                        .build())
+                .createUser(entity.getCreateUser())
+                .createTime(entity.getCreateTime())
+                .updateUser(entity.getUpdateUser())
+                .updateTime(entity.getUpdateTime())
+                .build();
     }
 
     ////////////////////////////////////////////////////////////////////////

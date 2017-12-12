@@ -19,6 +19,7 @@ package stroom.explorer.server;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import stroom.entity.shared.SharedDocRefInfo;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
@@ -30,6 +31,7 @@ import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.shared.DocRefInfo;
 import stroom.util.shared.HasNodeState;
 import stroom.util.spring.StroomScope;
 
@@ -453,6 +455,13 @@ class ExplorerServiceImpl implements ExplorerService {
         rebuildTree();
 
         return new BulkActionResult(resultDocRefs, resultMessage.toString());
+    }
+
+    @Override
+    public DocRefInfo info(final DocRef docRef) {
+        final ExplorerActionHandler handler = explorerActionHandlers.getHandler(docRef.getType());
+
+        return handler.info(docRef.getUuid());
     }
 
     @Override

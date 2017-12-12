@@ -38,4 +38,61 @@ public class SharedDocRef extends DocRef implements SharedObject {
 
         return new SharedDocRef(docRef.getType(), docRef.getUuid(), docRef.getName());
     }
+
+    protected static abstract class BaseBuilder<T extends SharedDocRef, CHILD_CLASS extends BaseBuilder<T, ?>> {
+        private String type;
+
+        private String uuid;
+
+        private String name;
+
+        protected BaseBuilder() {
+        }
+
+        public CHILD_CLASS type(final String value) {
+            this.type = value;
+            return self();
+        }
+
+        public CHILD_CLASS uuid(final String value) {
+            this.uuid = value;
+            return self();
+        }
+
+        public CHILD_CLASS name(final String value) {
+            this.name = value;
+            return self();
+        }
+
+        protected String getType() {
+            return type;
+        }
+
+        protected String getUuid() {
+            return uuid;
+        }
+
+        protected String getName() {
+            return name;
+        }
+
+        protected abstract CHILD_CLASS self();
+
+        public abstract T build();
+    }
+
+    public static class Builder extends BaseBuilder<SharedDocRef, Builder> {
+        public Builder() {
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        @Override
+        public SharedDocRef build() {
+            return new SharedDocRef(getType(), getUuid(), getName());
+        }
+    }
 }

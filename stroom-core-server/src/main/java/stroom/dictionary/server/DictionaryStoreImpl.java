@@ -30,6 +30,7 @@ import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.shared.DocRefInfo;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
@@ -90,6 +91,11 @@ public class DictionaryStoreImpl implements DictionaryStore {
     @Override
     public void deleteDocument(final String uuid) {
         store.deleteDocument(uuid);
+    }
+
+    @Override
+    public DocRefInfo info(String uuid) {
+        return store.info(uuid);
     }
 
     ////////////////////////////////////////////////////////////////////////
