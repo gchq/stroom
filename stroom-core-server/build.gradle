@@ -8,9 +8,8 @@ dependencies {
     compile project(':stroom-util-shared')
     compile project(':stroom-connectors')
 
-    compile urlDependencies.get(urlLibs.stroomAuthServiceApi)
-
     compile libs.eventLogging
+    compile libs.stroomAuthApi
     compile libs.stroomQueryApi
 
     compile libs.curator_client

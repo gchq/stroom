@@ -63,7 +63,7 @@ ext.versions = [
     eventLogging: 'v3.1.2_schema-v3.1.2',
     hadoopCommonShaded: 'v2.6.4-3',
     hadoopHdfsShaded: 'v2.6.4',
-    stroomAuthServiceApi: 'dev-SNAPSHOT-all',
+    stroomAuth: 'v0.1-alpha.3',
     stroomExpression: 'v1.0.1',
     stroomQuery: 'v2.0.0-alpha.11', //same version for both stroom-query-api and stroom-query-common
     stroomStats: 'v0.6.0-alpha.2',
@@ -90,7 +90,6 @@ ext.versions = [
 ext.urlLibs = [
     hadoopCommonShaded: "hadoop-common-shaded-$versions.hadoopCommonShaded-all",
     hadoopHdfsShaded: "hadoop-hdfs-shaded-$versions.hadoopHdfsShaded-all",
-    stroomAuthServiceApi: "stroom-auth-service-api-$versions.stroomAuthServiceApi",
     zzDUMMYzz: "makes sorting easier"
 ]
 
@@ -103,6 +102,7 @@ ext.libs = [
     stroomQueryCommon: "stroom:stroom-query-common:$versions.stroomQuery",
     stroomExpression: "stroom:stroom-expression:$versions.stroomExpression",
     stroomStatsSchema: "stroom:stroom-stats-schema:$versions.stroomStats",
+    stroomAuthApi: "stroom:stroom-auth-service-api:$versions.stroomAuth",
 
     //------3rd Party-libs---------------
     aopalliance: "aopalliance:aopalliance:1.0",
@@ -526,8 +526,6 @@ task setupSampleData() {
 
 urlDependencies {
     libs "libs"
-    compile(urlLibs.stroomAuthServiceApi,
-            "https://github.com/gchq/stroom-auth/releases/download/dev-SNAPSHOT/stroom-auth-service-api-SNAPSHOT-all.jar")
 
     compile(urlLibs.hadoopHdfsShaded,
             "https://github.com/gchq/hadoop-hdfs-shaded/releases/download/$versions.hadoopHdfsShaded/${urlLibs.hadoopHdfsShaded}.jar")
