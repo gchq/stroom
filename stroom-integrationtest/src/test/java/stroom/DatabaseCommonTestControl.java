@@ -36,6 +36,7 @@ import stroom.index.server.IndexShardWriterCache;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardService;
+import stroom.jobsystem.shared.ClusterLock;
 import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobNode;
 import stroom.lifecycle.LifecycleServiceImpl;
@@ -95,7 +96,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
 
     private static final List<String> TABLES_TO_CLEAR = Arrays.asList(
             AppPermission.TABLE_NAME,
-//            ClusterLock.TABLE_NAME,
+            ClusterLock.TABLE_NAME,
             Dashboard.TABLE_NAME,
             Dictionary.TABLE_NAME,
             DocumentPermission.TABLE_NAME,
