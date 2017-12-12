@@ -13,8 +13,7 @@ import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
 import stroom.util.spring.StroomScope;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -23,16 +22,13 @@ import java.util.Map;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
-public class FetchJson extends StroomExtensionFunctionCall {
+class FetchJson extends StroomExtensionFunctionCall {
     private static final Logger LOGGER = LoggerFactory.getLogger(FetchJson.class);
 
-    @Resource
-    private StroomPropertyService propertyService;
+    private final Map<String, String> namedUrls;
 
-    private Map<String, String> namedUrls;
-
-    @PostConstruct
-    public void postConstruct() {
+    @Inject
+    FetchJson(final StroomPropertyService propertyService) {
         namedUrls = propertyService.getLookupTable(ClientProperties.URL_LIST, ClientProperties.URL_BASE);
     }
 

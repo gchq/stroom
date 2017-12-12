@@ -107,7 +107,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     }
 
     @Override
-    public IndexShardWriter getWriterByShardId(final Long indexShardId) {
+    public IndexShardWriter getWriterByShardId(final long indexShardId) {
         return openWritersByShardId.get(indexShardId);
     }
 
@@ -225,6 +225,15 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         return ramBufferSizeMB;
     }
 
+    @Override
+    public void flush(final long indexShardId) {
+        final IndexShardWriter indexShardWriter = openWritersByShardId.get(indexShardId);
+        if (indexShardWriter != null) {
+            LOGGER.debug(() -> "Flush index shard " + indexShardId);
+            indexShardWriter.flush();
+        }
+    }
+
     /**
      * This is called by the lifecycle service and will call flush on all open writers.
      */
@@ -333,6 +342,16 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     @Override
     public void close(final IndexShardWriter indexShardWriter) {
         close(indexShardWriter, asyncRunner);
+    }
+
+    @Override
+    public void delete(final long indexShardId) {
+        indexShardManager.setStatus(indexShardId, IndexShardStatus.DELETED);
+        openWritersByShardKey.values().forEach(indexShardWriter -> {
+            if (indexShardWriter.getIndexShardId() == indexShardId) {
+                close(indexShardWriter);
+            }
+        });
     }
 
     private CompletableFuture<IndexShardWriter> flush(final IndexShardWriter indexShardWriter, final Runner exec) {

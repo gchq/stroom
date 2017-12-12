@@ -132,6 +132,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                     throw new IndexException("Unable to find any index shard data in directory: " + path);
                 }
             } catch (final IOException e) {
+                LAMBDA_LOGGER.error(e::getMessage, e);
                 throw new IndexException("Unable to find any index shard data in directory: " + path);
             }
 
@@ -145,6 +146,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
             try {
                 Files.createDirectories(dir);
             } catch (final IOException e) {
+                LAMBDA_LOGGER.error(e::getMessage, e);
                 throw new IndexException("Unable to create directories for new index in \"" + path + "\"");
             }
         }

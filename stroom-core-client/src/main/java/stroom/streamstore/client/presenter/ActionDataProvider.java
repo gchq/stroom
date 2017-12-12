@@ -21,6 +21,7 @@ import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.Range;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.ClientDispatchAsyncImpl;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.entity.shared.Action;
 import stroom.entity.shared.BaseCriteria;

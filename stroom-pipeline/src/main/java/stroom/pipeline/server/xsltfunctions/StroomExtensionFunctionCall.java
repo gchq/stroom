@@ -22,24 +22,24 @@ import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.BooleanValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.pipeline.server.LocationFactory;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.util.logging.StroomLogger;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
 import java.util.List;
 
 abstract class StroomExtensionFunctionCall {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(StroomExtensionFunctionCall.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomExtensionFunctionCall.class);
 
     private ErrorReceiver errorReceiver;
     private LocationFactory locationFactory;
     private List<PipelineReference> pipelineReferences;
 
-    abstract Sequence call(String functionName, XPathContext context, Sequence[] arguments)
-            throws XPathException;
+    abstract Sequence call(String functionName, XPathContext context, Sequence[] arguments) throws XPathException;
 
     String getSafeString(final String functionName, final XPathContext context, final Sequence[] arguments, final int index) throws XPathException {
         String string = null;
@@ -86,9 +86,6 @@ abstract class StroomExtensionFunctionCall {
     }
 
     void outputWarning(final XPathContext context, final StringBuilder msg, final Throwable e) {
-        // Tell the logger.
-        LOGGER.debug(msg, e);
-
         if (e != null) {
             msg.append(' ');
             msg.append(e.getMessage());
@@ -115,8 +112,7 @@ abstract class StroomExtensionFunctionCall {
         return locationFactory.create();
     }
 
-    void configure(final ErrorReceiver errorReceiver, final LocationFactory locationFactory,
-                   final List<PipelineReference> pipelineReferences) {
+    void configure(final ErrorReceiver errorReceiver, final LocationFactory locationFactory, final List<PipelineReference> pipelineReferences) {
         this.errorReceiver = errorReceiver;
         this.locationFactory = locationFactory;
         this.pipelineReferences = pipelineReferences;

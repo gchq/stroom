@@ -17,12 +17,14 @@
 package stroom.pipeline.server.xsltfunctions;
 
 import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.util.date.DateUtil;
+import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
 import java.time.Instant;
@@ -152,8 +154,7 @@ class FormatDate extends StroomExtensionFunctionCall {
                     // zone.
                     final ZonedDateTime dateTime = Instant.ofEpochMilli(ms).atZone(zoneId);
                     final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(patternOut);
-                    final String time = dateTimeFormatter.format(dateTime);
-                    result = StringValue.makeStringValue(time);
+                    result = dateTimeFormatter.format(dateTime);
                 } catch (final Throwable e) {
                     final StringBuilder sb = new StringBuilder();
                     sb.append("Failed to format date: \"");
