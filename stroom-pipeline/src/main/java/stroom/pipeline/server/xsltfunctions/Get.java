@@ -16,32 +16,42 @@
 
 package stroom.pipeline.server.xsltfunctions;
 
-import javax.annotation.Resource;
-
-import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import stroom.util.shared.Severity;
+import stroom.util.spring.StroomScope;
+
+import javax.inject.Inject;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
-public class Get extends StroomExtensionFunctionCall {
-    @Resource
-    private TaskScopeMap map;
+class Get extends StroomExtensionFunctionCall {
+    private final TaskScopeMap map;
+
+    @Inject
+    Get(final TaskScopeMap map) {
+        this.map = map;
+    }
 
     @Override
     protected Sequence call(String functionName, XPathContext context, Sequence[] arguments) throws XPathException {
-        final String key = getSafeString(functionName, context, arguments, 0);
-        final String value = map.get(key);
+        String result = null;
 
-        if (value == null) {
+        try {
+            final String key = getSafeString(functionName, context, arguments, 0);
+            result = map.get(key);
+        } catch (final Exception e) {
+            log(context, Severity.ERROR, e.getMessage(), e);
+        }
+
+        if (result == null) {
             return EmptyAtomicSequence.getInstance();
         }
-        return StringValue.makeStringValue(value);
+        return StringValue.makeStringValue(result);
     }
 }

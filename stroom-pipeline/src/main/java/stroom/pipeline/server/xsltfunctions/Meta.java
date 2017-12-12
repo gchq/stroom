@@ -24,13 +24,14 @@ import net.sf.saxon.value.StringValue;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.pipeline.state.MetaDataHolder;
+import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
-public class Meta extends StroomExtensionFunctionCall {
+class Meta extends StroomExtensionFunctionCall {
     private final MetaDataHolder metaDataHolder;
 
     @Inject
@@ -41,19 +42,23 @@ public class Meta extends StroomExtensionFunctionCall {
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments)
             throws XPathException {
-        String key = null;
-        String value = null;
+        String result = null;
 
         try {
-            key = getSafeString(functionName, context, arguments, 0);
-            value = metaDataHolder.get(key);
+            String key = null;
+            try {
+                key = getSafeString(functionName, context, arguments, 0);
+                result = metaDataHolder.get(key);
+            } catch (final Exception e) {
+                outputWarning(context, new StringBuilder("Error fetching meta value for key '" + key + "'"), e);
+            }
         } catch (final Exception e) {
-            outputWarning(context, new StringBuilder("Error fetching meta value for key '" + key + "'"), e);
+            log(context, Severity.ERROR, e.getMessage(), e);
         }
 
-        if (value == null) {
+        if (result == null) {
             return EmptyAtomicSequence.getInstance();
         }
-        return StringValue.makeStringValue(value);
+        return StringValue.makeStringValue(result);
     }
 }

@@ -24,6 +24,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
+## [v5.0-beta.69] - 2017-12-12
+
+* Issue **#511** : Fix for XSLT functions to allow null return values where a value cannot be returned due to an error etc.
+
 ## [v5.0-beta.68] - 2017-12-11
 
 * Issue **#515** : Fix handling of errors that occur before search starts sending.
@@ -737,6 +741,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
 [v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
 
+[v5.0-beta.69]: https://github.com/gchq/stroom/compare/v5.0-beta.68...v5.0-beta.69
 [v5.0-beta.68]: https://github.com/gchq/stroom/compare/v5.0-beta.67...v5.0-beta.68
 [v5.0-beta.67]: https://github.com/gchq/stroom/compare/v5.0-beta.66...v5.0-beta.67
 [v5.0-beta.66]: https://github.com/gchq/stroom/compare/v5.0-beta.65...v5.0-beta.66

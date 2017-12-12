@@ -16,29 +16,32 @@
 
 package stroom.pipeline.server.xsltfunctions;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-
-import stroom.util.shared.Severity;
-import stroom.util.spring.StroomScope;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import stroom.util.shared.Severity;
+import stroom.util.spring.StroomScope;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
-public class Log extends StroomExtensionFunctionCall {
+class Log extends StroomExtensionFunctionCall {
     @Override
     protected Sequence call(String functionName, XPathContext context, Sequence[] arguments) throws XPathException {
-        final String severity = getSafeString(functionName, context, arguments, 0);
-        final String message = getSafeString(functionName, context, arguments, 1);
+        try {
+            final String severity = getSafeString(functionName, context, arguments, 0);
+            final String message = getSafeString(functionName, context, arguments, 1);
 
-        final Severity sev = Severity.getSeverity(severity);
-        if (sev == null) {
-            log(context, Severity.ERROR, "Unknown severity specified in XSLT: " + severity, null);
-        } else {
-            log(context, sev, message, null);
+            final Severity sev = Severity.getSeverity(severity);
+            if (sev == null) {
+                log(context, Severity.ERROR, "Unknown severity specified in XSLT: " + severity, null);
+            } else {
+                log(context, sev, message, null);
+            }
+        } catch (final Exception e) {
+            log(context, Severity.ERROR, e.getMessage(), e);
         }
 
         return EmptyAtomicSequence.getInstance();

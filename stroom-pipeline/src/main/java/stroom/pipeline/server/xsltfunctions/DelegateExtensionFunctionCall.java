@@ -21,12 +21,12 @@ import net.sf.saxon.lib.ExtensionFunctionCall;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 
-public class DelegateExtensionFunctionCall extends ExtensionFunctionCall {
+class DelegateExtensionFunctionCall extends ExtensionFunctionCall {
     private final String functionName;
     private final Class<?> delegateClass;
     private transient StroomExtensionFunctionCall delegate;
 
-    public DelegateExtensionFunctionCall(final String functionName, final Class<?> delegateClass) {
+    DelegateExtensionFunctionCall(final String functionName, final Class<?> delegateClass) {
         this.functionName = functionName;
         this.delegateClass = delegateClass;
     }
@@ -36,11 +36,11 @@ public class DelegateExtensionFunctionCall extends ExtensionFunctionCall {
         return delegate.call(functionName, context, arguments);
     }
 
-    public void setDelegate(final StroomExtensionFunctionCall delegate) {
+    void setDelegate(final StroomExtensionFunctionCall delegate) {
         this.delegate = delegate;
     }
 
-    public Class<?> getDelegateClass() {
+    Class<?> getDelegateClass() {
         return delegateClass;
     }
 }
