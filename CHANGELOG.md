@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [v5.0-beta.69] - 2017-12-12
+
 * Issue **#511** : Fix for XSLT functions to allow null return values where a value cannot be returned due to an error etc.
 
 ## [v5.0-beta.68] - 2017-12-11
@@ -720,7 +722,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.0-beta.4] - 2016-10-03
 * Initial open source release
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.68...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.0-beta.69...HEAD
+[v5.0-beta.69]: https://github.com/gchq/stroom/compare/v5.0-beta.68...v5.0-beta.69
 [v5.0-beta.68]: https://github.com/gchq/stroom/compare/v5.0-beta.67...v5.0-beta.68
 [v5.0-beta.67]: https://github.com/gchq/stroom/compare/v5.0-beta.66...v5.0-beta.67
 [v5.0-beta.66]: https://github.com/gchq/stroom/compare/v5.0-beta.65...v5.0-beta.66
