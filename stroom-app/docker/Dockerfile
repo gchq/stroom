@@ -37,21 +37,18 @@ RUN echo "http_proxy: $http_proxy" && \
 WORKDIR /stroom
 
 #Copy the content packs in so they get imported on first run of Stroom
-#TODO this should be a singley named jar
-ADD ./stroom-app/build/libs/stroom-app-all.jar /stroom/stroom-app-all.jar
-ADD ./stroom-kafka-client-impl_0_10_0_1/build/libs/stroom-kafka-client-impl_0_10_0_1-all.jar /stroom/plugins/stroom-kafka-client-impl_0_10_0_1-all.jar
-ADD ./stroom-app/prod.yml /stroom/config.yml
-ADD ./stroom-app/docker/docker-entrypoint.sh /usr/local/bin/
+ADD ./build/stroom-app-all.jar /stroom/stroom-app-all.jar
+ADD ./build/stroom-kafka-client-impl_0_10_0_1-all.jar /stroom/plugins/stroom-kafka-client-impl_0_10_0_1-all.jar
+ADD ./build/prod.yml /stroom/config.yml
+ADD docker-entrypoint.sh /usr/local/bin/
 
-#TODO ContentPackImport is finding the contentPackImport dir but not importing anything. Not sure why yet.
-ADD https://github.com/gchq/stroom-content/releases/download/core-xml-schemas-v1.1/core-xml-schemas-v1.1.zip /stroom/contentPackImport/
-ADD https://github.com/gchq/stroom-content/releases/download/event-logging-xml-schema-v1.0/event-logging-xml-schema-v1.0.zip /stroom/contentPackImport/
+#Add in all the content packs so stroom imports them on startup
+ADD https://github.com/gchq/stroom-content/releases/download/core-xml-schemas-v2.0/core-xml-schemas-v2.0.zip /stroom/contentPackImport/
+ADD https://github.com/gchq/stroom-content/releases/download/event-logging-xml-schema-v3.1.1/event-logging-xml-schema-v3.1.1.zip /stroom/contentPackImport/
 ADD https://github.com/gchq/stroom-content/releases/download/internal-dashboards-v1.1/internal-dashboards-v1.1.zip /stroom/contentPackImport/
 ADD https://github.com/gchq/stroom-content/releases/download/internal-statistics-sql-v2.0/internal-statistics-sql-v2.0.zip /stroom/contentPackImport/
 ADD https://github.com/gchq/stroom-content/releases/download/internal-statistics-stroom-stats-v2.0/internal-statistics-stroom-stats-v2.0.zip /stroom/contentPackImport/
 ADD https://github.com/gchq/stroom-content/releases/download/stroom-101-v1.0/stroom-101-v1.0.zip /stroom/contentPackImport/
-
-ADD https://github.com/gchq/stroom-visualisations-dev/releases/download/v3.0.4/visualisations-production-v3.0.4.zip /stroom/contentPackImport/
 
 #Create Docker volume for Stroom's volumes dir
 VOLUME /stroom/volumes/
