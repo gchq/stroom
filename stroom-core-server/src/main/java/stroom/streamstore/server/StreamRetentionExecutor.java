@@ -52,7 +52,7 @@ public class StreamRetentionExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamRetentionExecutor.class);
 
     private static final String LOCK_NAME = "StreamRetentionExecutor";
-    private static final int DELETE_STREAM_BATCH_SIZE = 10000;
+    private static final int DELETE_STREAM_BATCH_SIZE = 1000;
 
     private final FeedService feedService;
     private final StreamStore streamStore;

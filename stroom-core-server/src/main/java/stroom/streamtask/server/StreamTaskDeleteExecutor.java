@@ -21,8 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.shared.Period;
 import stroom.jobsystem.server.ClusterLockService;
@@ -72,7 +70,6 @@ public class StreamTaskDeleteExecutor extends AbstractBatchDeleteExecutor {
     @StroomFrequencySchedule("1m")
     @JobTrackedSchedule(jobName = "Stream Task Retention", description = "Physically delete stream tasks that have been logically deleted or complete based on age ("
             + STREAM_TASKS_DELETE_AGE_PROPERTY + ")")
-    @Transactional(propagation = Propagation.NEVER)
     public void exec() {
         final AtomicLong nextDeleteMs = streamTaskCreator.getNextDeleteMs();
 

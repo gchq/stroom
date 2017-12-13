@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Scope("prototype")
-public class Random extends StroomExtensionFunctionCall {
+class Random extends StroomExtensionFunctionCall {
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments)
             throws XPathException {

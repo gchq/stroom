@@ -22,6 +22,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.StringCriteria;
 import stroom.feed.MetaMap;
 import stroom.feed.server.FeedService;
+import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.pipeline.server.ErrorWriterProxy;
@@ -39,7 +40,6 @@ import stroom.pipeline.server.filter.RecordOutputFilter;
 import stroom.pipeline.server.filter.SchemaFilter;
 import stroom.pipeline.server.filter.XMLFilter;
 import stroom.pipeline.server.filter.XSLTFilter;
-import stroom.pipeline.server.xsltfunctions.Lookup;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineData;
@@ -61,7 +61,6 @@ import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
-import stroom.feed.StroomHeaderArguments;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -83,8 +82,6 @@ public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<Headless
     private ContextDataLoader contextDataLoader;
     @Resource
     private MetaData metaData;
-    @Resource
-    private Lookup lookup;
     @Resource
     private PipelineHolder pipelineHolder;
     @Resource
@@ -254,22 +251,22 @@ public class HeadlessTranslationTaskHandler extends AbstractTaskHandler<Headless
     private static class BasicInputStreamProvider implements StreamSourceInputStreamProvider {
         private final StreamSourceInputStream inputStream;
 
-        public BasicInputStreamProvider(final InputStream inputStream, final long size) {
+        BasicInputStreamProvider(final InputStream inputStream, final long size) {
             this.inputStream = new StreamSourceInputStream(inputStream, size);
         }
 
         @Override
-        public long getStreamCount() throws IOException {
+        public long getStreamCount() {
             return 1;
         }
 
         @Override
-        public StreamSourceInputStream getStream(final long streamNo) throws IOException {
+        public StreamSourceInputStream getStream(final long streamNo) {
             return inputStream;
         }
 
         @Override
-        public RASegmentInputStream getSegmentInputStream(final long streamNo) throws IOException {
+        public RASegmentInputStream getSegmentInputStream(final long streamNo) {
             return null;
         }
 

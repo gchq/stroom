@@ -36,34 +36,34 @@ import java.util.HashMap;
  * </p>
  * <p>
  * E.g.
- * <p>
- * <code>
+ * </p>
+ * <pre>
  * # Server
  * export SERVER=example
- * <p>
+ *
  * # Gen Private Key
  * openssl genrsa -des3 -out $SERVER.key 1024
- * <p>
+ *
  * # Gen CSR
  * openssl req -new -key $SERVER.key -out $SERVER.csr
- * <p>
+ *
  * # Copy CSR then Create Cert (cat then paste contents from CA)
  * cat $SERVER.csr
  * vi $SERVER.crt
- * <p>
+ *
  * # Create DER format Keys
  * openssl pkcs8 -topk8 -nocrypt -in $SERVER.key -inform PEM -out $SERVER.key.der -outform DER
  * openssl x509 -in $SERVER.crt -inform PEM -out $SERVER.crt.der -outform DER
- * <p>
+ *
  * # Now Import the Key using this tool
  * java ImportKey keystore=$SERVER.jks keypass=$SERVER alias=$SERVER keyfile=$SERVER.key.der certfile=$SERVER.crt.der
- * <p>
+ *
  * # Also inport the CA if required
  * keytool -import -alias CA -file root_ca.crt -keystore $SERVER.jks -storepass $SERVER
- * <p>
+ *
  * # List contents at end
  * keytool -list -keystore $SERVER.jks -storepass $SERVER
- * </code>
+ * </pre>
  */
 public final class ImportKey {
     private ImportKey() {

@@ -20,8 +20,8 @@ dependencies {
     //Needed only for the GwtCompilerWrapper
     compileOnly libs.gwt_dev
 
-    testCompile project(path: ':stroom-util')
-    testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
+    testCompile project(':stroom-util')
+    testCompile project(':stroom-test-common')
     testCompile libs.junit
 
     //the following logging libs are needed when running junits outside dropwizard

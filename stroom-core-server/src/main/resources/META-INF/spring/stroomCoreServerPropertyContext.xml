@@ -315,6 +315,14 @@
             <property name="editable" value="true"/>
         </bean>
         <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name"
+                      value="stroom.security.loginUrl"/>
+            <property name="value" value="http://localhost/login"/>
+            <property name="description"
+                      value="The location of the login app"/>
+            <property name="editable" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
             <property name="name" value="stroom.security.certificateDNPattern"/>
             <property name="value" value="CN=[^ ]+ [^ ]+ \(?([a-zA-Z0-9]+)\)?"/>
             <property name="description"
@@ -955,6 +963,55 @@
             <property name="editable" value="true"/>
             <property name="requireUiRestart" value="true"/>
         </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.advertisedUrl"/>
+            <property name="value" value="localhost:8080"/>
+            <property name="description"
+                      value="The URL of Stroom as provided to the browser" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.auth.service.url"/>
+            <property name="value" value="localhost:8099"/>
+            <property name="description"
+                      value="The URL of the auth service" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.auth.ui.url"/>
+            <property name="value" value="localhost:5000"/>
+            <property name="description"
+                      value="The URL of the auth UI" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.auth.jwt.issuer"/>
+            <property name="value" value="stroom"/>
+            <property name="description"
+                      value="The issuer to expect when verifying JWTs." />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.auth.jwt.enabletokenrevocationcheck"/>
+            <property name="value" value="true"/>
+            <property name="description"
+                      value="Whether or not to enable remote calls to the auth service to check if a token we have has been revoked." />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+        <bean class="stroom.node.shared.GlobalProperty">
+            <property name="name" value="stroom.security.apitoken"/>
+            <property name="value" value="eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1Mzg2NDM1NTQsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIn0.J8dqtQf9gGXQlKU_rAye46lUKlJR8-vcyrYhOD0Rxoc"/>
+            <property name="description"
+                      value="The API token Stroom will use to authenticate itself when accessing other services" />
+            <property name="editable" value="true"/>
+            <property name="requireUiRestart" value="true"/>
+        </bean>
+
 
         <!-- Authorisation -->
         <bean class="stroom.node.shared.GlobalProperty">

@@ -18,27 +18,20 @@ package stroom.login.client.view;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.ui.Anchor;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.UiHandlers;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.login.client.presenter.LoginPresenter;
-import stroom.login.client.presenter.LoginUiHandlers;
 import stroom.util.shared.EqualsUtil;
 
-public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implements LoginPresenter.LoginView {
+public class LoginViewImpl extends ViewWithUiHandlers<UiHandlers> implements LoginPresenter.LoginView {
     private final Widget widget;
 
     @UiField
@@ -55,16 +48,6 @@ public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implement
     Label upDate;
     @UiField
     Label nodeName;
-    @UiField
-    TextBox userName;
-    @UiField
-    PasswordTextBox password;
-    @UiField
-    Button login;
-    @UiField
-    Label error;
-    @UiField
-    Anchor reset;
 
     private String currentBanner;
 
@@ -106,26 +89,6 @@ public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implement
     }
 
     @Override
-    public String getUserName() {
-        return userName.getText();
-    }
-
-    @Override
-    public String getPassword() {
-        return password.getText();
-    }
-
-    @Override
-    public void setPassword(final String password) {
-        this.password.setText(password);
-    }
-
-    @Override
-    public void setError(final String error) {
-        this.error.setText(error);
-    }
-
-    @Override
     public void setBanner(final String text) {
         if (!EqualsUtil.isEquals(currentBanner, text)) {
             currentBanner = text;
@@ -139,38 +102,6 @@ public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implement
                 Document.get().getElementById("logo").getStyle().setTop(20, Unit.PX);
                 banner.setVisible(true);
                 banner.getElement().setInnerText(text);
-            }
-        }
-    }
-
-    @UiHandler("login")
-    void login(final ClickEvent event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().login();
-        }
-    }
-
-    @UiHandler("reset")
-    void reset(final ClickEvent event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().emailResetPassword();
-        }
-    }
-
-    @UiHandler("userName")
-    void onUserNameKeyDown(final KeyDownEvent event) {
-        if (event.getNativeKeyCode() == '\r') {
-            if (getUiHandlers() != null) {
-                getUiHandlers().login();
-            }
-        }
-    }
-
-    @UiHandler("password")
-    void onPasswordKeyDown(final KeyDownEvent event) {
-        if (event.getNativeKeyCode() == '\r') {
-            if (getUiHandlers() != null) {
-                getUiHandlers().login();
             }
         }
     }

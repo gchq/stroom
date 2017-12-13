@@ -20,6 +20,8 @@ package stroom.streamstore.server.fs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.EntityServiceLogUtil;
 import stroom.entity.server.util.FieldMap;
@@ -1327,6 +1329,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
     @Override
     @Secured(Stream.DELETE_DATA_PERMISSION)
+    @Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRES_NEW)
     public Long findDelete(final FindStreamCriteria criteria) throws RuntimeException {
         final Context context = new Context(null, System.currentTimeMillis());
         final OldFindStreamCriteria oldFindStreamCriteria = expressionToFindCriteria.convert(criteria, context);

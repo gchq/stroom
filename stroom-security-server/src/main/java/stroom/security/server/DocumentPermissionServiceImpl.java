@@ -204,7 +204,8 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                 final byte status = (Byte) arr[3];
                 final String permission = (String) arr[4];
 
-                final UserRef userRef = new UserRef(User.ENTITY_TYPE, uuid, name, group, UserStatus.ENABLED.getPrimitiveValue() == status);
+                final UserRef userRef = new UserRef(User.ENTITY_TYPE, uuid, name, group,
+                    UserStatus.ENABLED.getPrimitiveValue() == status);
 
                 userPermissions.computeIfAbsent(userRef, k -> new HashSet<>()).add(permission);
             });

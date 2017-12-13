@@ -62,14 +62,6 @@ public class UserEditPresenter extends MyPresenterWidget<UserEditPresenter.UserE
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(getView().getLoginNeverExpires().addValueChangeHandler(event -> {
-            final UserProperties userProperties = new UserProperties(null, !getView().getLoginNeverExpires().getBooleanValue());
-            dispatcher.exec(new SaveUserPropertiesAction(userRef, userProperties)).onSuccess(up -> getView().getLoginNeverExpires().setBooleanValue(!up.getLoginExpires()));
-        }));
-        registerHandler(getView().getStatusNotEnabled().addValueChangeHandler(event -> {
-            final UserProperties userProperties = new UserProperties(!getView().getStatusNotEnabled().getBooleanValue(), null);
-            dispatcher.exec(new SaveUserPropertiesAction(userRef, userProperties)).onSuccess(up -> getView().getStatusNotEnabled().setBooleanValue(!up.getStatus()));
-        }));
     }
 
     public void show(final UserRef userRef, final PopupUiHandlers popupUiHandlers) {
@@ -96,54 +88,12 @@ public class UserEditPresenter extends MyPresenterWidget<UserEditPresenter.UserE
     private void read(UserRef userRef) {
         this.userRef = userRef;
 
-        dispatcher.exec(new LoadUserPropertiesAction(userRef)).onSuccess(up -> {
-            if (up.getStatus()) {
-                getView().getStatusNotEnabled().setValue(TickBoxState.UNTICK);
-            } else {
-                getView().getStatusNotEnabled().setValue(TickBoxState.TICK);
-            }
-
-            getView().getLoginNeverExpires().setBooleanValue(!up.getLoginExpires());
-        });
-
         userListAddRemovePresenter.setUser(userRef);
         appPermissionsPresenter.setUser(userRef);
     }
 
-    @Override
-    public void resetPassword() {
-        doResetPassword(false);
-    }
-
-    @Override
-    public void emailResetPassword() {
-        doResetPassword(true);
-    }
-
-    private void doResetPassword(final boolean email) {
-        if (email) {
-            dispatcher.exec(new CanEmailPasswordResetAction()).onSuccess(result -> {
-                if (result.getBoolean()) {
-                    dispatcher.exec(new EmailPasswordResetForUserNameAction(userRef.getName())).onSuccess(user ->
-                            AlertEvent.fireInfo(UserEditPresenter.this,
-                                    "The password has been reset. An email with the new password has been sent to the users email account.",
-                                    null)
-                    );
-                } else {
-                    AlertEvent.fireError(UserEditPresenter.this, "System is not set up to email passwords!",
-                            null);
-                }
-            });
-        } else {
-            ResetPasswordEvent.fire(UserEditPresenter.this, userRef);
-        }
-    }
 
     public interface UserEditView extends View, HasUiHandlers<UserEditUiHandlers> {
-        TickBox getStatusNotEnabled();
-
-        TickBox getLoginNeverExpires();
-
         void setUserGroupsView(View view);
 
         void setAppPermissionsView(View view);

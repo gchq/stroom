@@ -17,12 +17,14 @@
 package stroom.pipeline.server.xsltfunctions;
 
 import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.util.date.DateUtil;
+import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
 import java.time.Instant;
@@ -33,37 +35,43 @@ import java.time.format.DateTimeFormatter;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
-public class FormatDate extends StroomExtensionFunctionCall {
+class FormatDate extends StroomExtensionFunctionCall {
     private static final String GMT_BST_GUESS = "GMT/BST";
     private static final ZoneId EUROPE_LONDON_TIME_ZONE = ZoneId.of("Europe/London");
 
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments)
             throws XPathException {
-        Sequence result = StringValue.EMPTY_STRING;
+        String result = null;
 
-        if (arguments.length == 1) {
-            result = convertMilliseconds(functionName, context, arguments);
+        try {
+            if (arguments.length == 1) {
+                result = convertMilliseconds(functionName, context, arguments);
 
-        } else if (arguments.length >= 2 && arguments.length <= 3) {
-            result = convertToStandardDateFormat(functionName, context, arguments);
+            } else if (arguments.length >= 2 && arguments.length <= 3) {
+                result = convertToStandardDateFormat(functionName, context, arguments);
 
-        } else if (arguments.length >= 4 && arguments.length <= 5) {
-            result = convertToSpecifiedDateFormat(functionName, context, arguments);
+            } else if (arguments.length >= 4 && arguments.length <= 5) {
+                result = convertToSpecifiedDateFormat(functionName, context, arguments);
+            }
+        } catch (final Exception e) {
+            log(context, Severity.ERROR, e.getMessage(), e);
         }
 
-        return result;
+        if (result == null) {
+            return EmptyAtomicSequence.getInstance();
+        }
+        return StringValue.makeStringValue(result);
     }
 
-    private Sequence convertMilliseconds(final String functionName, final XPathContext context,
-                                         final Sequence[] arguments) throws XPathException {
-        Sequence result = StringValue.EMPTY_STRING;
+    private String convertMilliseconds(final String functionName, final XPathContext context,
+                                       final Sequence[] arguments) throws XPathException {
+        String result = null;
         final String milliseconds = getSafeString(functionName, context, arguments, 0);
 
         try {
             final long ms = Long.parseLong(milliseconds);
-            final String time = DateUtil.createNormalDateTimeString(ms);
-            result = StringValue.makeStringValue(time);
+            result = DateUtil.createNormalDateTimeString(ms);
 
         } catch (final Throwable e) {
             final StringBuilder sb = new StringBuilder();
@@ -76,9 +84,9 @@ public class FormatDate extends StroomExtensionFunctionCall {
         return result;
     }
 
-    private Sequence convertToStandardDateFormat(final String functionName, final XPathContext context,
-                                                 final Sequence[] arguments) throws XPathException {
-        Sequence result = StringValue.EMPTY_STRING;
+    private String convertToStandardDateFormat(final String functionName, final XPathContext context,
+                                               final Sequence[] arguments) throws XPathException {
+        String result = null;
         final String date = getSafeString(functionName, context, arguments, 0);
         final String pattern = getSafeString(functionName, context, arguments, 1);
         String timeZone = null;
@@ -103,16 +111,15 @@ public class FormatDate extends StroomExtensionFunctionCall {
         }
 
         if (ms != -1) {
-            final String time = DateUtil.createNormalDateTimeString(ms);
-            result = StringValue.makeStringValue(time);
+            result = DateUtil.createNormalDateTimeString(ms);
         }
 
         return result;
     }
 
-    private Sequence convertToSpecifiedDateFormat(final String functionName, final XPathContext context,
-                                                  final Sequence[] arguments) throws XPathException {
-        Sequence result = StringValue.EMPTY_STRING;
+    private String convertToSpecifiedDateFormat(final String functionName, final XPathContext context,
+                                                final Sequence[] arguments) throws XPathException {
+        String result = null;
         final String date = getSafeString(functionName, context, arguments, 0);
         final String patternIn = getSafeString(functionName, context, arguments, 1);
         final String timeZoneIn = getSafeString(functionName, context, arguments, 2);
@@ -147,8 +154,7 @@ public class FormatDate extends StroomExtensionFunctionCall {
                     // zone.
                     final ZonedDateTime dateTime = Instant.ofEpochMilli(ms).atZone(zoneId);
                     final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(patternOut);
-                    final String time = dateTimeFormatter.format(dateTime);
-                    result = StringValue.makeStringValue(time);
+                    result = dateTimeFormatter.format(dateTime);
                 } catch (final Throwable e) {
                     final StringBuilder sb = new StringBuilder();
                     sb.append("Failed to format date: \"");

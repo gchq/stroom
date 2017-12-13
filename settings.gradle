@@ -85,4 +85,3 @@ include 'stroom-elastic-shared'
 include 'stroom-elastic-client-impl_5_6_4'
 include 'stroom-annotations-shared'
 include 'stroom-annotations-client'
-

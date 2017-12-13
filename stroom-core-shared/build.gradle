@@ -19,6 +19,7 @@ dependencies {
     compile project(':stroom-util-shared')
     compile project(':stroom-docstore-shared')
     compile project(':stroom-explorer-api')
+
     compile libs.stroomQueryApi
 
     compile libs.gwt_servlet

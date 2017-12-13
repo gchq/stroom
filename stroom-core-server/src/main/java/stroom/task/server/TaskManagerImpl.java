@@ -303,6 +303,7 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
                 @Override
                 protected void exec() {
                     try {
+                        currentTasks.put(task.getId(), taskThread);
                         LOGGER.debug("execAsync()->exec() - {} {} took {}",
                                 task.getClass().getSimpleName(),
                                 task.getTaskName(),
@@ -345,7 +346,6 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
             final Executor executor = getExecutor(threadPool);
             if (executor != null) {
                 currentAsyncTaskCount.incrementAndGet();
-                currentTasks.put(task.getId(), taskThread);
 
                 try {
                     // We might run out of threads and get a can't fork
@@ -361,7 +361,6 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
                         taskThread.setThread(null);
                         // Decrease the count of the number of async tasks.
                         currentAsyncTaskCount.decrementAndGet();
-                        currentTasks.remove(task.getId());
                     }
                 }
             }

@@ -22,7 +22,7 @@ import net.sf.saxon.om.StructuredQName;
 import net.sf.saxon.value.SequenceType;
 import stroom.xml.NamespaceConstants;
 
-public class DelegateExtensionFunctionDefinition extends ExtensionFunctionDefinition {
+class DelegateExtensionFunctionDefinition extends ExtensionFunctionDefinition {
     private transient final StroomXSLTFunctionLibrary library;
     private final String functionName;
     private final int minArgs;
@@ -34,13 +34,9 @@ public class DelegateExtensionFunctionDefinition extends ExtensionFunctionDefini
 
     private DelegateExtensionFunctionCall functionCall;
 
-    private DelegateExtensionFunctionDefinition(final StroomXSLTFunctionLibrary library,
-                                               final String functionName,
-                                               final int minArgs,
-                                               final int maxArgs,
-                                               final SequenceType[] argTypes,
-                                               final SequenceType resultType,
-                                               final Class<?> delegateClass) {
+    DelegateExtensionFunctionDefinition(final StroomXSLTFunctionLibrary library, final String functionName,
+                                        final int minArgs, final int maxArgs, final SequenceType[] argTypes, final SequenceType resultType,
+                                        final Class<?> delegateClass) {
         this.functionName = functionName;
         this.minArgs = minArgs;
         this.maxArgs = maxArgs;
@@ -84,10 +80,6 @@ public class DelegateExtensionFunctionDefinition extends ExtensionFunctionDefini
             library.registerInUse(functionCall);
         }
 
-        return functionCall;
-    }
-
-    public DelegateExtensionFunctionCall getFunctionCall() {
         return functionCall;
     }
 

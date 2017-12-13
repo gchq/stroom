@@ -1,4 +1,5 @@
 dependencies {
+    //testCompile project(':stroom-core-server')
     compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
     compile project(':stroom-entity-shared')
@@ -30,10 +31,11 @@ dependencies {
     compile libs.ws_rs_api
     compile libs.javax_annotation_api
 
-    testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
+    testCompile project(':stroom-test-common')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
 
+    testCompile libs.commons_io
     testCompile libs.junit
 
     //the following logging libs are needed when running junits outside dropwizard

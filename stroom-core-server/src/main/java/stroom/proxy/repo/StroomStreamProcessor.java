@@ -41,7 +41,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -113,28 +112,7 @@ public class StroomStreamProcessor {
             if (StringUtils.hasText(httpServletRequest.getRemoteHost())) {
                 globalMetaMap.put(StroomHeaderArguments.REMOTE_HOST, httpServletRequest.getRemoteHost());
             }
-
-            if (httpServletRequest.getAttribute(CertificateUtil.SERVLET_CERT_ARG) != null) {
-                // Here we pull out the SSL client certificate and check that it
-                // is OK based on the settings of the group the feed belongs to.
-                try {
-                    final Object[] certs = (Object[]) httpServletRequest.getAttribute(CertificateUtil.SERVLET_CERT_ARG);
-
-                    final X509Certificate cert = CertificateUtil.extractCertificate(certs);
-                    final String dn = CertificateUtil.extractDNFromCertificate(cert);
-                    final Long expiryDate = CertificateUtil.extractExpiryDateFromCertificate(cert);
-                    if (expiryDate != null) {
-                        globalMetaMap.put(StroomHeaderArguments.REMOTE_CERT_EXPIRY,
-                                DateUtil.createNormalDateTimeString(expiryDate));
-                    }
-
-                    globalMetaMap.put(StroomHeaderArguments.REMOTE_DN, dn);
-                } catch (final Exception ex) {
-                    LOGGER.error("doPost() - Failed to extract certificate", ex);
-                }
-            }
         }
-
     }
 
     /**

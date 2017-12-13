@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.util;
+package stroom.util.cert;
 
 import org.springframework.util.Base64Utils;
 

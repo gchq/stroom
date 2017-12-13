@@ -17,6 +17,7 @@
 package stroom.pipeline.server.xsltfunctions;
 
 import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
@@ -24,27 +25,38 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.state.PipelineHolder;
+import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
-public class PipelineName extends StroomExtensionFunctionCall {
-    @Resource
-    private PipelineHolder pipelineHolder;
+class PipelineName extends StroomExtensionFunctionCall {
+    private final PipelineHolder pipelineHolder;
+
+    @Inject
+    PipelineName(final PipelineHolder pipelineHolder) {
+        this.pipelineHolder = pipelineHolder;
+    }
 
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments)
             throws XPathException {
-        final PipelineEntity pipelineEntity = pipelineHolder.getPipeline();
-        String pipelineName;
-        if (pipelineEntity == null) {
-            pipelineName = "";
-        } else {
-            pipelineName = pipelineEntity.getName();
+        String result = null;
+
+        try {
+            final PipelineEntity pipelineEntity = pipelineHolder.getPipeline();
+            if (pipelineEntity != null) {
+                result = pipelineEntity.getName();
+            }
+        } catch (final Exception e) {
+            log(context, Severity.ERROR, e.getMessage(), e);
         }
 
-        return StringValue.makeStringValue(pipelineName);
+        if (result == null) {
+            return EmptyAtomicSequence.getInstance();
+        }
+        return StringValue.makeStringValue(result);
     }
 }

@@ -1,7 +1,7 @@
 language: java
 dist: trusty
 group: edge
-jdk: oraclejdk8
+jdk: openjdk8
 sudo: required #to ensure we get a VM rather than a container for more memory and for all the apt-get stuff
 
 env:
@@ -17,6 +17,7 @@ env:
     #where ***** is '<github username>:<github personal access token>'
     #Required for curling the gh api to get the latest release sha
     - secure: "lfyHgJXGIUdZstOoMtwvyQp5UqS4A1m0lYkCgoXNpQPjWIrcloloQMWafIJ4eluJ5ro0HF8UQYkagwoWQrGX57KRQQOMHrg4bYzQGLbEFWSLciI5EABDyj1NXpPOhNN+sOViwKj+rKaDZ9DE/fo4PzsC6aDoA8zZ/Zlc34q/2YIQm6yiKp+OQWI0COeBaEZi9BW0nY44koVG7MRhB3m8RNYuWmO33rDgPKZBpsoXgnqmBi/seFBp8lJTC4ESUud1zHcHm/VfD/AO+nhWtUEFMxqGk2fHEFxmQE/jr2d1WxvGk4mmqU+lSNCTStchGQetuTbFSRE885qHmlRn7UUAxrQhYIOE18z+ZTqccCgSqvcp5EunZCTNIN8ps0HyvJHN3ewasyvyusKIJWsU/V4gRRSpGzsIWSsnlHV35RjKbJ13Er/Yt5Xp8EXW50AbOOuzFCI0pGyAf1NUpjf14dBix02OLNv+zn8/xITmcLc3wciuv0g3utkqW7xj7K1HHTKdUK9zQnk4qgN/q1zEepke0NxD39NwCtLgCdZt/BKu1X2gJzlT6xDRpn5aDB2QXpC56dmlQwEH5d1GyLSHSDrdwtxx/h0RgJ2NybMyHAlhIIhk6ACSBStwwpGjC/ya+Owyhp+aE6lFYkArq/XkcbZXBkInuDzs+avPdUYz7VlmQaU="
+    - STROOM_RESOURCES_BRANCH: auth
     
 install: echo "skip 'gradle assemble' step to speed up build"
 
@@ -39,7 +40,9 @@ deploy:
   - provider: releases
     api_key:
       secure: xUPJboaSjxs3lKCqXu5zYzdV75S+lu5EZ6RD+RigmQ5MSjeuFBhoBKYaJUz+ejaoFLfF8WSUbmlgTeRMK7QI4MtCqjy08uREext8sm0behMREz4mmPEb9eTLu+WfIXFbnOPG4pKzkAtHA3x+hNQN3EWga1Xa2WXGYdOuK1B7vnrYOPo9D2zI12JCaoXt0KUQ70LwE07uwBIuDn+0EbVsAftFatJh7jZXeMsE8GmdcwsM/DObKjtTLBH3bpE8pPPJ8H0ssuIsQk2jHg91cTgrlB0q0K1a5TjeKKMGPMY6S6UR9cB7l7FqCVEsOd7T/ExdKp1TflMRyuuKG9ACBXTaegfBt7pP7KYEpYtidC5p/b1J4cYvazVTIfo6m93wnOJAdcD1XeMqNIQZVSxNuflmgM8xZz+UuqPBF4dk3Z5Eoh4sTH+t6WmZY6YoIt6tRMQ8xRyvkTfzsfYUtsV4csyeB2oy5s/GJmYGtR5GjjK6T+mh8RmI/DVWW50ubdFaAYYdz+LSgfpGhBXEBkYPghMSjYiPDsJStXsOwRSQbR9LmRO7jk08PxxT33pLr8Ct0HoQPpSP8Fom4q1ntrZBDjeHL8/2cQtRKqUg3X9G0sU7aW5i0G4U7BE42Xkcc/VVJhFrVbRj5+xQq70uMyUmHi2Wh+mBQSY+ZlBrvr6FRcKj42E=
-    file: 
+    file_glob: true # this needs to be turned on for wildcards to work
+    file:
+      - stroom-app/build/distributions/stroom-app-*.zip
       - stroom-app/build/libs/stroom-app-all.jar
       - stroom-app/src/main/resources/ui/swagger/swagger.json
       - stroom-app/src/main/resources/ui/swagger/swagger.yaml
@@ -57,7 +60,6 @@ cache:
   directories:
     - .autoconf
     - $HOME/.m2
-    - libs
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
 

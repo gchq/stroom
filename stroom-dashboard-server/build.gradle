@@ -41,7 +41,7 @@ dependencies {
     compile libs.spring_tx
     compile libs.ws_rs_api
 
-    testCompile project(path: ':stroom-test-common', configuration: 'testArtifacts')
+    testCompile project(':stroom-test-common')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
 
     testCompile libs.hamcrest_core

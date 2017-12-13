@@ -23,6 +23,7 @@ import org.apache.shiro.web.filter.authc.AnonymousFilter;
 import org.apache.shiro.web.servlet.AbstractShiroFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -31,9 +32,10 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
-import stroom.security.server.CertificateAuthenticationFilter;
+import stroom.apiclients.AuthenticationServiceClients;
 import stroom.security.server.JWTAuthenticationFilter;
 import stroom.security.server.JWTService;
+import stroom.security.server.NonceManager;
 import stroom.util.config.StroomProperties;
 import stroom.util.spring.StroomScope;
 
@@ -71,26 +73,37 @@ public class SecurityConfiguration {
     private SecurityManager securityManager;
 
     @Bean(name = "jwtFilter")
-    public JWTAuthenticationFilter jwtAuthenticationFilter(JWTService jwtService) {
-        return new JWTAuthenticationFilter(jwtService);
+    public JWTAuthenticationFilter jwtAuthenticationFilter(
+            @Value("#{propertyConfigurer.getProperty('stroom.auth.service.url')}")
+            final String authenticationServiceUrl,
+            @Value("#{propertyConfigurer.getProperty('stroom.advertisedUrl')}")
+            final String advertisedStroomUrl,
+            @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.issuer')}")
+            final String jwtIssuer,
+            JWTService jwtService,
+            NonceManager nonceManager,
+            AuthenticationServiceClients authenticationServiceClients) {
+        return new JWTAuthenticationFilter(
+                authenticationServiceUrl, advertisedStroomUrl, jwtIssuer,
+                jwtService, nonceManager, authenticationServiceClients);
     }
 
     @Bean(name = "shiroFilter")
-    public AbstractShiroFilter shiroFilter(final JWTAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+    public AbstractShiroFilter shiroFilter(final JWTAuthenticationFilter jwtAuthenticationFilter,
+       @Value("#{propertyConfigurer.getProperty('stroom.ui.login.url')}") final String loginUrl) throws Exception {
         final ShiroFilterFactoryBean shiroFilter = new ShiroFilterFactoryBean();
         shiroFilter.setSecurityManager(securityManager);
-        shiroFilter.setLoginUrl("/login.html");
+        shiroFilter.setLoginUrl(loginUrl);
         shiroFilter.setSuccessUrl("/stroom.jsp");
 
         Map<String, Filter> filters = shiroFilter.getFilters();
-        filters.put("certFilter", new CertificateAuthenticationFilter());
         filters.put("jwtFilter", jwtAuthenticationFilter);
         filters.put("anonymousFilter", new AnonymousFilter());
 
         shiroFilter.getFilterChainDefinitionMap().put("/**/secure/**", "authc, roles[USER]");
-        shiroFilter.getFilterChainDefinitionMap().put("/export", "certFilter");
         // Allow anonymous access to the getToken resource.
         shiroFilter.getFilterChainDefinitionMap().put("/api/authentication/v*/getToken", "anonymousFilter");
+        shiroFilter.getFilterChainDefinitionMap().put("/**", "jwtFilter");
         shiroFilter.getFilterChainDefinitionMap().put("/api/**", "jwtFilter");
         return (AbstractShiroFilter) shiroFilter.getObject();
     }

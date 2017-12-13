@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.main;
+package stroom.util.client;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -47,8 +47,20 @@ public class TestKVMapUtil {
         Assert.assertEquals("this is value1", result);
 
         map = KVMapUtil.parse("key1=value1 key2=value2");
-        result = KVMapUtil.replaceParameters("this is \\${key1} ${key2}", map);
+        result = KVMapUtil.replaceParameters("this is $${key1} ${key2}", map);
         Assert.assertEquals("this is ${key1} value2", result);
+
+        result = KVMapUtil.replaceParameters("this is $$${key1} ${key2}", map);
+        Assert.assertEquals("this is $value1 value2", result);
+
+        result = KVMapUtil.replaceParameters("this is $$$${key1} ${key2}", map);
+        Assert.assertEquals("this is $${key1} value2", result);
+
+        result = KVMapUtil.replaceParameters("this is $$$$${key1} ${key2}", map);
+        Assert.assertEquals("this is $$value1 value2", result);
+
+        result = KVMapUtil.replaceParameters("$this is $$$$${key1} ${key2}", map);
+        Assert.assertEquals("$this is $$value1 value2", result);
 
         map = KVMapUtil.parse("user=user1 user2");
         result = KVMapUtil.replaceParameters("${user}", map);

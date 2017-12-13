@@ -30,32 +30,37 @@ import stroom.query.api.v2.DocRef;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Component
 @Scope(value = StroomScope.TASK)
-public class Dictionary extends StroomExtensionFunctionCall {
-    @Resource
-    private DictionaryStore dictionaryStore;
+class Dictionary extends StroomExtensionFunctionCall {
+    private final DictionaryStore dictionaryStore;
 
     private Map<String, String> cachedData;
+
+    @Inject
+    Dictionary(final DictionaryStore dictionaryStore) {
+        this.dictionaryStore = dictionaryStore;
+    }
 
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments)
             throws XPathException {
-        String data = null;
+        String result = null;
 
-        final String name = getSafeString(functionName, context, arguments, 0);
-        if (name != null && name.length() > 0) {
-            if (cachedData == null) {
-                cachedData = new HashMap<>();
-            }
+        try {
+            final String name = getSafeString(functionName, context, arguments, 0);
+            if (name != null && name.length() > 0) {
+                if (cachedData == null) {
+                    cachedData = new HashMap<>();
+                }
 
-            if (cachedData.containsKey(name)) {
-                data = cachedData.get(name);
+                if (cachedData.containsKey(name)) {
+                    result = cachedData.get(name);
 
             } else {
                 try {
@@ -77,21 +82,24 @@ public class Dictionary extends StroomExtensionFunctionCall {
                         if (doc == null) {
                             log(context, Severity.INFO, "Unable to find dictionary " + docRef, null);
                         } else {
-                            data = doc.getData();
+                            result = doc.getData();
                         }
                     }
                 } catch (final Exception e) {
                     log(context, Severity.ERROR, e.getMessage(), e);
                 }
 
-                // Remember this data for the next call.
-                cachedData.put(name, data);
+                    // Remember this data for the next call.
+                    cachedData.put(name, result);
+                }
             }
+        } catch (final Exception e) {
+            log(context, Severity.ERROR, e.getMessage(), e);
         }
 
-        if (data == null) {
+        if (result == null) {
             return EmptyAtomicSequence.getInstance();
         }
-        return StringValue.makeStringValue(data);
+        return StringValue.makeStringValue(result);
     }
 }

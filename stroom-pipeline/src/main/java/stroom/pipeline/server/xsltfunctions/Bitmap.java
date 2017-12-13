@@ -16,8 +16,8 @@
 
 package stroom.pipeline.server.xsltfunctions;
 
-public class Bitmap {
-    public static int[] getBits(final int bitmap) {
+class Bitmap {
+    static int[] getBits(final int bitmap) {
         int[] bits = new int[10];
 
         int value = bitmap;

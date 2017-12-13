@@ -26,7 +26,6 @@ import stroom.search.server.extraction.ExtractionTask.ResultReceiver;
 import stroom.search.server.taskqueue.TaskExecutor;
 import stroom.search.server.taskqueue.TaskProducer;
 import stroom.task.server.ExecutorProvider;
-import stroom.task.server.TaskContext;
 import stroom.task.server.ThreadPoolImpl;
 import stroom.util.shared.Severity;
 import stroom.util.shared.ThreadPool;
@@ -70,8 +69,7 @@ public class ExtractionTaskProducer extends TaskProducer {
                                   final int maxThreadsPerTask,
                                   final ExecutorProvider executorProvider,
                                   final Provider<ExtractionTaskHandler> handlerProvider,
-                                  final TaskProducer searchTaskProducer,
-                                  final TaskContext taskContext) {
+                                  final TaskProducer searchTaskProducer) {
         super(taskExecutor, maxThreadsPerTask, executorProvider.getExecutor(THREAD_POOL));
         this.clusterSearchTask = clusterSearchTask;
         this.extractionFieldIndexMap = extractionFieldIndexMap;
@@ -87,7 +85,7 @@ public class ExtractionTaskProducer extends TaskProducer {
         streamEventMapperCompletableFuture = CompletableFuture.runAsync(() -> {
             try {
                 boolean complete = false;
-                while (!complete && !taskContext.isTerminated()) {
+                while (!complete && !clusterSearchTask.isTerminated()) {
                     // Check if search is finished before attempting to add to the stream map.
                     final boolean searchFinished = searchTaskProducer.isComplete();
                     // Poll for the next set of values.
@@ -96,19 +94,23 @@ public class ExtractionTaskProducer extends TaskProducer {
                     if (values != null) {
                         // If we have some values then map them.
                         streamMapCreator.addEvent(streamEventMap, values);
+
+                        // Tell the supplied executor that we are ready to deliver tasks.
+                        signalAvailable();
                     } else {
                         // If we did not get any values then there are no more to get if the search task producer is complete.
                         complete = searchFinished;
                     }
-
-                    // Tell the supplied executor that we are ready to deliver tasks.
-                    signalAvailable();
                 }
 
                 // Clear the event map if we have terminated so that other processing does not occur.
-                if (taskContext.isTerminated()) {
+                if (clusterSearchTask.isTerminated()) {
                     streamEventMap.clear();
                 }
+
+                // Tell the supplied executor that we are ready to deliver final tasks.
+                signalAvailable();
+
             } catch (final Throwable t) {
                 error(t.getMessage(), t);
             }
@@ -118,11 +120,7 @@ public class ExtractionTaskProducer extends TaskProducer {
     @Override
     public boolean isComplete() {
         // If we haven't finished mapping all of the streams then we aren't complete.
-        return finishedAddingTasks && getTasksTotal().get() == getTasksCompleted().get();
-    }
-
-    public int remainingTasks() {
-        return getTasksTotal().get() - getTasksCompleted().get();
+        return clusterSearchTask.isTerminated() || (finishedAddingTasks && super.isComplete());
     }
 
     @Override
@@ -131,6 +129,11 @@ public class ExtractionTaskProducer extends TaskProducer {
 
         if (clusterSearchTask.isTerminated()) {
             finishedAddingTasks = true;
+
+            // Drain the queue and increment the complete task count.
+            while (taskQueue.poll() != null) {
+                getTasksCompleted().getAndIncrement();
+            }
         } else {
             task = taskQueue.poll();
             if (task == null) {

@@ -24,86 +24,96 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.tree.tiny.TinyBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.StreamHolder;
 import stroom.refdata.ReferenceData;
 import stroom.util.date.DateUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.util.shared.Severity;
 import stroom.xml.event.EventList;
 import stroom.xml.event.np.EventListConsumer;
 import stroom.xml.event.np.NPEventList;
 
-import javax.annotation.Resource;
 import java.util.List;
 
-public abstract class AbstractLookup extends StroomExtensionFunctionCall {
+abstract class AbstractLookup extends StroomExtensionFunctionCall {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLookup.class);
-    @Resource
-    private ReferenceData referenceData;
-    @Resource
-    private StreamHolder streamHolder;
+
+    private final ReferenceData referenceData;
+    private final StreamHolder streamHolder;
+
     private long defaultMs = -1;
+
+    AbstractLookup(final ReferenceData referenceData, final StreamHolder streamHolder) {
+        this.referenceData = referenceData;
+        this.streamHolder = streamHolder;
+    }
 
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments)
             throws XPathException {
-        // Setup the defaultMs to be the received time of the stream.
-        if (defaultMs == -1) {
-            if (streamHolder.getStream() != null) {
-                defaultMs = streamHolder.getStream().getCreateMs();
-            } else {
-                defaultMs = System.currentTimeMillis();
-            }
-        }
+        Sequence result = EmptyAtomicSequence.getInstance();
 
-        // Get the map and key names.
-        final String map = getSafeString(functionName, context, arguments, 0);
-        final String key = getSafeString(functionName, context, arguments, 1);
-
-        // Find out if we are going to ignore warnings.
-        boolean ignoreWarnings = false;
-        if (arguments.length > 3) {
-            final Boolean ignore = getSafeBoolean(functionName, context, arguments, 3);
-            if (ignore != null) {
-                ignoreWarnings = ignore;
-            }
-        }
-
-        // Make sure we can get the date ok.
-        long ms = defaultMs;
-        if (arguments.length > 2) {
-            final String time = getSafeString(functionName, context, arguments, 2);
-            try {
-                ms = DateUtil.parseNormalDateTimeString(time);
-            } catch (final Throwable e) {
-                if (!ignoreWarnings) {
-                    final StringBuilder sb = new StringBuilder("Lookup failed to parse date: " + time);
-                    outputWarning(context, sb, e);
-                }
-
-                return EmptyAtomicSequence.getInstance();
-            }
-        }
-
-        // Create a lookup identifier if we are going to output debug.
-        StringBuilder lookupIdentifier = null;
-        if (LOGGER.isDebugEnabled()) {
-            lookupIdentifier = new StringBuilder();
-            getLookupIdentifier(lookupIdentifier, map, key, ms);
-        }
-
-        // If we have got the date then continue to do the lookup.
-        Sequence sequence = EmptyAtomicSequence.getInstance();
         try {
-            sequence = doLookup(context, map, key, ms, ignoreWarnings, lookupIdentifier);
-        } catch (final Throwable t) {
-            if (!ignoreWarnings) {
-                createLookupFailWarning(context, map, key, ms, t);
+            // Setup the defaultMs to be the received time of the stream.
+            if (defaultMs == -1) {
+                if (streamHolder.getStream() != null) {
+                    defaultMs = streamHolder.getStream().getCreateMs();
+                } else {
+                    defaultMs = System.currentTimeMillis();
+                }
             }
+
+            // Get the map and key names.
+            final String map = getSafeString(functionName, context, arguments, 0);
+            final String key = getSafeString(functionName, context, arguments, 1);
+
+            // Find out if we are going to ignore warnings.
+            boolean ignoreWarnings = false;
+            if (arguments.length > 3) {
+                final Boolean ignore = getSafeBoolean(functionName, context, arguments, 3);
+                if (ignore != null) {
+                    ignoreWarnings = ignore;
+                }
+            }
+
+            // Make sure we can get the date ok.
+            long ms = defaultMs;
+            if (arguments.length > 2) {
+                final String time = getSafeString(functionName, context, arguments, 2);
+                try {
+                    ms = DateUtil.parseNormalDateTimeString(time);
+                } catch (final Throwable e) {
+                    if (!ignoreWarnings) {
+                        final StringBuilder sb = new StringBuilder("Lookup failed to parse date: " + time);
+                        outputWarning(context, sb, e);
+                    }
+
+                    return result;
+                }
+            }
+
+            // Create a lookup identifier if we are going to output debug.
+            StringBuilder lookupIdentifier = null;
+            if (LOGGER.isDebugEnabled()) {
+                lookupIdentifier = new StringBuilder();
+                getLookupIdentifier(lookupIdentifier, map, key, ms);
+            }
+
+            // If we have got the date then continue to do the lookup.
+            try {
+                result = doLookup(context, map, key, ms, ignoreWarnings, lookupIdentifier);
+            } catch (final Throwable t) {
+                if (!ignoreWarnings) {
+                    createLookupFailWarning(context, map, key, ms, t);
+                }
+            }
+        } catch (final Exception e) {
+            log(context, Severity.ERROR, e.getMessage(), e);
         }
 
-        return sequence;
+        return result;
     }
 
     protected abstract Sequence doLookup(final XPathContext context, final String map, final String key,
@@ -152,31 +162,29 @@ public abstract class AbstractLookup extends StroomExtensionFunctionCall {
         sb.append(")");
     }
 
-    public static class SequenceMaker {
+    static class SequenceMaker {
         private final XPathContext context;
         private Builder builder;
         private EventListConsumer consumer;
 
-        public SequenceMaker(final XPathContext context) {
+        SequenceMaker(final XPathContext context) {
             this.context = context;
         }
 
-        public void open() throws XPathException {
+        void open() throws XPathException {
             // Make sure we have made a consumer.
             ensureConsumer();
 
-            // TODO : Possibly replace NPEventList with TinyTree to improve
-            // performance.
+            // TODO : Possibly replace NPEventList with TinyTree to improve performance.
             consumer.startDocument();
         }
 
-        public void close() throws XPathException {
+        void close() throws XPathException {
             consumer.endDocument();
         }
 
-        public void consume(final NPEventList eventList) throws XPathException {
-            // TODO : Possibly replace NPEventList with TinyTree to improve
-            // performance.
+        void consume(final NPEventList eventList) throws XPathException {
+            // TODO : Possibly replace NPEventList with TinyTree to improve performance.
             consumer.consume(eventList);
         }
 
@@ -192,7 +200,7 @@ public abstract class AbstractLookup extends StroomExtensionFunctionCall {
             }
         }
 
-        public Sequence toSequence() {
+        Sequence toSequence() {
             if (builder == null) {
                 return EmptyAtomicSequence.getInstance();
             }

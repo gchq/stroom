@@ -60,6 +60,7 @@
     <inherits name="stroom.elastic.ElasticIndex" />
     <inherits name="stroom.about.About" />
     <inherits name="stroom.alert.Alert" />
+    <inherits name="stroom.apikeys.ApiKeys" />
     <inherits name="stroom.content.Content" />
     <inherits name="stroom.dispatch.Dispatch" />
     <inherits name='stroom.document.Document'/>
@@ -67,6 +68,7 @@
     <inherits name="stroom.explorer.Explorer" />
     <inherits name="stroom.menubar.Menubar" />
     <inherits name="stroom.node.Node" />
+    <inherits name="stroom.users.Users" />
     <inherits name="stroom.util.Util" />
     <inherits name="stroom.welcome.Welcome" />
 
