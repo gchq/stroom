@@ -56,6 +56,7 @@ import stroom.security.server.Permission;
 import stroom.security.server.User;
 import stroom.security.server.UserGroupUser;
 import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.streamstore.server.StreamAttributeValueFlush;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
@@ -118,6 +119,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
             StreamProcessor.TABLE_NAME,
             StreamProcessorFilter.TABLE_NAME,
             StreamProcessorFilterTracker.TABLE_NAME,
+            StroomStatsStoreEntity.TABLE_NAME,
             StreamTask.TABLE_NAME,
             StreamVolume.TABLE_NAME,
             TextConverter.TABLE_NAME,
