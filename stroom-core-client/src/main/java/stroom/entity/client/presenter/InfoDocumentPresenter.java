@@ -28,6 +28,7 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.document.client.event.ShowInfoDocumentDialogEvent;
 import stroom.entity.shared.SharedDocRefInfo;
+import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -48,7 +49,7 @@ public class InfoDocumentPresenter
 
     @Override
     protected void revealInParent() {
-        ShowPopupEvent.fire(this, this, PopupType.CLOSE_DIALOG, "DocRef Info");
+        ShowPopupEvent.fire(this, this, PopupType.CLOSE_DIALOG, "Info");
     }
 
     @ProxyEvent
@@ -56,13 +57,16 @@ public class InfoDocumentPresenter
     public void onCreate(final ShowInfoDocumentDialogEvent event) {
         final SharedDocRefInfo info = event.getInfo();
 
-        getView().getDocUuid().setText("UUID - " + info.getUuid());
+        getView().getDocUuid().setText(info.getUuid());
         getView().getDocType().setText("Type - " + info.getType());
         getView().getDocName().setText("Name - " + info.getName());
-        getView().getCreatedUser().setText("Created by - " + info.getCreateUser());
-        getView().getCreatedTime().setText("Created at - " + info.getCreateTime());
-        getView().getUpdatedUser().setText("Updated by - " + info.getUpdateUser());
-        getView().getUpdatedTime().setText("Updated at - " + info.getUpdateTime());
+
+        final String created = "Created by " + info.getCreateUser() + " at";
+        getView().getCreatedUser().setText(created);
+        getView().getCreatedTime().setText(ClientDateUtil.toISOString(info.getCreateTime()));
+        final String updated = "Updated by " + info.getUpdateUser() + " at";
+        getView().getUpdatedUser().setText(updated);
+        getView().getUpdatedTime().setText(ClientDateUtil.toISOString(info.getUpdateTime()));
 
         forceReveal();
     }

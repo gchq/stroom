@@ -2,12 +2,15 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui">
   <ui:style>
     .docInfo {
-
+        width: 270px;
+    }
+    .docUuid {
+        width: 100%;
     }
   </ui:style>
     <g:FlowPanel styleName="{style.docInfo}">
+        <g:TextBox styleName="{style.docUuid}" ui:field="docUuid" />
         <g:Label ui:field="docType" />
-        <g:Label ui:field="docUuid" />
         <g:Label ui:field="docName" />
         <g:Label ui:field="createdUser" />
         <g:Label ui:field="createdTime" />
