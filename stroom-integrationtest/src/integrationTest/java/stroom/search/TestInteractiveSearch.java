@@ -247,8 +247,8 @@ public class TestInteractiveSearch extends AbstractSearchTest {
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567")
                 .addOperator(Op.NOT)
-                    .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
-                    .end();
+                .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
+                .end();
         test(expression, 24);
     }
 
@@ -260,11 +260,11 @@ public class TestInteractiveSearch extends AbstractSearchTest {
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567")
                 .addOperator(Op.NOT)
-                    .addOperator(Op.OR)
-                        .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
-                        .addTerm("EventTime", Condition.EQUALS, "2007-01-18T13:56:42.000Z")
-                        .end()
-                    .end();
+                .addOperator(Op.OR)
+                .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
+                .addTerm("EventTime", Condition.EQUALS, "2007-01-18T13:56:42.000Z")
+                .end()
+                .end();
         test(expression, 23);
     }
 
@@ -276,11 +276,11 @@ public class TestInteractiveSearch extends AbstractSearchTest {
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567")
                 .addOperator(Op.NOT)
-                    .addOperator(Op.AND)
-                        .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
-                        .addTerm("UserId", Condition.EQUALS, "user4")
-                        .end()
-                    .end();
+                .addOperator(Op.AND)
+                .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
+                .addTerm("UserId", Condition.EQUALS, "user4")
+                .end()
+                .end();
         test(expression, 24);
     }
 
@@ -292,13 +292,13 @@ public class TestInteractiveSearch extends AbstractSearchTest {
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567")
                 .addOperator(Op.NOT)
-                    .addOperator(Op.OR)
-                        .addTerm("EventTime", Condition.EQUALS, "2007-01-18T13:56:42.000Z")
-                        .addOperator(Op.AND)
-                        .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
-                        .addTerm("UserId", Condition.EQUALS, "user4")
-                        .end()
-                    .end()
+                .addOperator(Op.OR)
+                .addTerm("EventTime", Condition.EQUALS, "2007-01-18T13:56:42.000Z")
+                .addOperator(Op.AND)
+                .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
+                .addTerm("UserId", Condition.EQUALS, "user4")
+                .end()
+                .end()
                 .end();
         test(expression, 23);
     }
@@ -525,7 +525,7 @@ public class TestInteractiveSearch extends AbstractSearchTest {
     }
 
     private ExpressionOperator.Builder buildExpression(final String userField, final String userTerm, final String from,
-                                              final String to, final String wordsField, final String wordsTerm) {
+                                                       final String to, final String wordsField, final String wordsTerm) {
         final ExpressionOperator.Builder operator = new ExpressionOperator.Builder();
         operator.addTerm(userField, Condition.CONTAINS, userTerm);
         operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);
@@ -534,7 +534,7 @@ public class TestInteractiveSearch extends AbstractSearchTest {
     }
 
     private ExpressionOperator.Builder buildInExpression(final String userField, final String userTerm, final String from,
-                                                final String to, final String wordsField, final String wordsTerm) {
+                                                         final String to, final String wordsField, final String wordsTerm) {
         final ExpressionOperator.Builder operator = new ExpressionOperator.Builder();
         operator.addTerm(userField, Condition.CONTAINS, userTerm);
         operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);

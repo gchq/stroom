@@ -16,15 +16,16 @@
 
 package stroom.jobsystem.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.jobsystem.shared.ClusterLock;
-import stroom.util.logging.StroomLogger;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -32,12 +33,15 @@ import java.util.Set;
 @Transactional
 @Component
 public class ClusterLockServiceTransactionHelperImpl implements ClusterLockServiceTransactionHelper {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ClusterLockServiceTransactionHelperImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockServiceTransactionHelper.class);
 
-    @Resource
-    private StroomEntityManager entityManager;
-
+    private final StroomEntityManager entityManager;
     private final Set<String> registeredLockSet = new HashSet<>();
+
+    @Inject
+    ClusterLockServiceTransactionHelperImpl(final StroomEntityManager entityManager) {
+        this.entityManager = entityManager;
+    }
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -59,7 +63,7 @@ public class ClusterLockServiceTransactionHelperImpl implements ClusterLockServi
                 try {
                     save(clusterLock);
                 } catch (final Exception e) {
-                    LOGGER.warn("checkLockCreated() - %s %s", name, e.getMessage());
+                    LOGGER.warn("checkLockCreated() - {} {}", name, e.getMessage());
                 }
             }
             registeredLockSet.add(name);

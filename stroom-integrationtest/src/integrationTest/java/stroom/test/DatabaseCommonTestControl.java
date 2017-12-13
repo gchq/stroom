@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,9 @@ import stroom.index.server.IndexShardManager;
 import stroom.index.server.IndexShardWriterCache;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShardService;
+import stroom.jobsystem.shared.ClusterLock;
 import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobNode;
-import stroom.lifecycle.LifecycleServiceImpl;
 import stroom.node.server.NodeConfig;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
@@ -51,12 +50,13 @@ import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.XSLT;
 import stroom.policy.shared.Policy;
 import stroom.script.shared.Script;
+import stroom.security.server.AppPermission;
 import stroom.security.server.DocumentPermission;
 import stroom.security.server.Permission;
 import stroom.security.server.User;
 import stroom.security.server.UserGroupUser;
 import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.stats.shared.StroomStatsStoreEntity;
+import stroom.streamstore.server.StreamAttributeValueFlush;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.Stream;
@@ -73,9 +73,10 @@ import stroom.streamtask.shared.StreamTask;
 import stroom.visualisation.shared.Visualisation;
 import stroom.xmlschema.shared.XMLSchema;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -89,30 +90,80 @@ import java.util.Map;
 public class DatabaseCommonTestControl implements CommonTestControl, ApplicationContextAware {
     private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseCommonTestControl.class);
 
-    @Resource
-    private VolumeService volumeService;
-    @Resource
-    private IndexShardService indexShardService;
-    @Resource
-    private ContentImportService contentImportService;
-    @Resource
-    private StreamAttributeKeyService streamAttributeKeyService;
-    @Resource
-    private IndexShardManager indexShardManager;
-    @Resource
-    private IndexShardWriterCache indexShardWriterCache;
-    @Resource
-    private DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper;
-    @Resource
-    private NodeConfig nodeConfig;
-    @Resource
-    private StreamTaskCreator streamTaskCreator;
-    @Resource
-    private LifecycleServiceImpl lifecycleServiceImpl;
-    @Resource
-    private StroomCacheManager stroomCacheManager;
+    private static final List<String> TABLES_TO_CLEAR = Arrays.asList(
+            AppPermission.TABLE_NAME,
+            ClusterLock.TABLE_NAME,
+            Dashboard.TABLE_NAME,
+            Dictionary.TABLE_NAME,
+            DocumentPermission.TABLE_NAME,
+            Feed.TABLE_NAME,
+            Folder.TABLE_NAME,
+            Index.TABLE_NAME,
+            Index.TABLE_NAME_INDEX_VOLUME, //link table between IDX and VOL so no entity of its own
+            IndexShard.TABLE_NAME,
+            Job.TABLE_NAME,
+            JobNode.TABLE_NAME,
+            Node.TABLE_NAME,
+            Permission.TABLE_NAME,
+            PipelineEntity.TABLE_NAME,
+            Policy.TABLE_NAME,
+            QueryEntity.TABLE_NAME,
+            Rack.TABLE_NAME,
+            Res.TABLE_NAME,
+            Script.TABLE_NAME,
+            StatisticStoreEntity.TABLE_NAME,
+            Stream.TABLE_NAME,
+            StreamAttributeKey.TABLE_NAME,
+            StreamAttributeValue.TABLE_NAME,
+            StreamProcessor.TABLE_NAME,
+            StreamProcessorFilter.TABLE_NAME,
+            StreamProcessorFilterTracker.TABLE_NAME,
+            StreamTask.TABLE_NAME,
+            StreamVolume.TABLE_NAME,
+            TextConverter.TABLE_NAME,
+            User.TABLE_NAME,
+            UserGroupUser.TABLE_NAME,
+            Visualisation.TABLE_NAME,
+            Volume.TABLE_NAME,
+            VolumeState.TABLE_NAME,
+            XMLSchema.TABLE_NAME,
+            XSLT.TABLE_NAME);
+
+    private final VolumeService volumeService;
+    private final ContentImportService contentImportService;
+    private final StreamAttributeKeyService streamAttributeKeyService;
+    private final StreamAttributeValueFlush streamAttributeValueFlush;
+    private final IndexShardManager indexShardManager;
+    private final IndexShardWriterCache indexShardWriterCache;
+    private final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper;
+    private final NodeConfig nodeConfig;
+    private final StreamTaskCreator streamTaskCreator;
+    private final StroomCacheManager stroomCacheManager;
 
     private ApplicationContext applicationContext;
+
+    @Inject
+    DatabaseCommonTestControl(final VolumeService volumeService,
+                              final ContentImportService contentImportService,
+                              final StreamAttributeKeyService streamAttributeKeyService,
+                              final StreamAttributeValueFlush streamAttributeValueFlush,
+                              final IndexShardManager indexShardManager,
+                              final IndexShardWriterCache indexShardWriterCache,
+                              final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper,
+                              final NodeConfig nodeConfig,
+                              final StreamTaskCreator streamTaskCreator,
+                              final StroomCacheManager stroomCacheManager) {
+        this.volumeService = volumeService;
+        this.contentImportService = contentImportService;
+        this.streamAttributeKeyService = streamAttributeKeyService;
+        this.streamAttributeValueFlush = streamAttributeValueFlush;
+        this.indexShardManager = indexShardManager;
+        this.indexShardWriterCache = indexShardWriterCache;
+        this.databaseCommonTestControlTransactionHelper = databaseCommonTestControlTransactionHelper;
+        this.nodeConfig = nodeConfig;
+        this.streamTaskCreator = streamTaskCreator;
+        this.stroomCacheManager = stroomCacheManager;
+    }
 
     @Override
     public void setApplicationContext(final ApplicationContext applicationContext) throws BeansException {
@@ -122,6 +173,8 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
     @Override
     public void setup() {
         Instant startTime = Instant.now();
+        //ensure the constraints are enabled in case teardown did not happen on a previous test
+        databaseCommonTestControlTransactionHelper.enableConstraints();
         nodeConfig.setup();
         createStreamAttributeKeys();
 
@@ -136,57 +189,12 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
     @Override
     public void teardown() {
         Instant startTime = Instant.now();
-        deleteEntity(StreamTask.class);
-
-        deleteEntity(StreamVolume.class);
-        deleteEntity(StreamAttributeValue.class);
-        deleteEntity(Stream.class);
-
-        deleteEntity(Policy.class);
-
-        deleteEntity(QueryEntity.class);
-        deleteEntity(Dashboard.class);
-        deleteEntity(Visualisation.class);
-        deleteEntity(Script.class);
-        deleteEntity(Res.class);
-        deleteEntity(Dictionary.class);
-        deleteEntity(StatisticStoreEntity.class);
-        deleteEntity(StroomStatsStoreEntity.class);
-
         // Make sure we are no longer creating tasks.
         streamTaskCreator.shutdown();
 
         // Make sure we don't delete database entries without clearing the pool.
         indexShardWriterCache.shutdown();
         indexShardManager.deleteFromDisk();
-
-        deleteEntity(IndexShard.class);
-        deleteEntity(Index.class);
-
-        deleteEntity(Feed.class);
-
-        deleteEntity(XMLSchema.class);
-        deleteEntity(TextConverter.class);
-        deleteEntity(XSLT.class);
-
-        deleteEntity(StreamProcessorFilter.class);
-        deleteEntity(StreamProcessorFilterTracker.class);
-        deleteEntity(StreamProcessor.class);
-
-        deleteEntity(PipelineEntity.class);
-
-        deleteEntity(UserGroupUser.class);
-        deleteEntity(DocumentPermission.class);
-        deleteEntity(Permission.class);
-        deleteEntity(User.class);
-
-        // Delete folders last as they are the parent for many other entities.
-        deleteEntity(Folder.class);
-
-        // deleteTable("sys_user_role");
-        // deleteTable("sys_user_group");
-        // deleteTable("sys_user");
-        // deleteTable("sys_group");
 
         // Delete the contents of all volumes.
         final List<Volume> volumes = volumeService.find(new FindVolumeCriteria());
@@ -196,16 +204,18 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
             FileSystemUtil.deleteContents(FileSystemUtil.createFileTypeRoot(volume).getParentFile());
         }
 
-        // These are static
-        deleteEntity(JobNode.class);
-        deleteEntity(Job.class);
+        //Clear any un-flushed stream attributes
+        streamAttributeValueFlush.clear();
 
-        deleteEntity(Volume.class);
-        deleteEntity(VolumeState.class);
-        deleteEntity(Node.class);
-        deleteEntity(Rack.class);
-
+        //ensure any hibernate entities are flushed down before we clear the tables
         databaseCommonTestControlTransactionHelper.clearContext();
+
+        //clear all the tables using direct sql on a different connection
+        //in theory trncating the tables should be quicker but it was takeing 1.5s to trancate all the tables
+        //so used delete with no constraint checks instead
+        databaseCommonTestControlTransactionHelper.clearTables(TABLES_TO_CLEAR);
+
+        //ensure all the caches are empty
         stroomCacheManager.clear();
 
         final Map<String, Clearable> clearableBeanMap = applicationContext.getBeansOfType(Clearable.class, false,
@@ -216,7 +226,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
         LOGGER.info("test environment teardown completed in {}", Duration.between(startTime, Instant.now()));
     }
 
-    public void createStreamAttributeKeys() {
+    private void createStreamAttributeKeys() {
         final BaseResultList<StreamAttributeKey> list = streamAttributeKeyService
                 .find(new FindStreamAttributeKeyCriteria());
         final HashSet<String> existingItems = new HashSet<>();

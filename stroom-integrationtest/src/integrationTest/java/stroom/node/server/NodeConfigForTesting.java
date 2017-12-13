@@ -130,6 +130,7 @@ public class NodeConfigForTesting implements NodeConfig {
                 if (realNode == null) {
                     realNode = BaseEntityUtil.clone(node);
                     realNode.setRack(BaseEntityUtil.findByName(realRackList, realNode.getRack().getName()));
+                    LOGGER.debug("Persisting node {}", realNode);
                     realNode = stroomEntityManager.saveEntity(realNode);
                 }
                 realNodeList.add(realNode);

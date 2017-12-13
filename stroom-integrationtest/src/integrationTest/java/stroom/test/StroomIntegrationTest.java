@@ -20,7 +20,11 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TestRule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,8 +52,14 @@ public abstract class StroomIntegrationTest implements StroomTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomIntegrationTest.class);
 
     private static final boolean TEAR_DOWN_DATABASE_BETWEEEN_TESTS = true;
-
     private static boolean XML_SCHEMAS_DOWNLOADED = false;
+
+    @Rule
+    public TestRule watcher = new TestWatcher() {
+        protected void starting(Description description) {
+            LOGGER.info(String.format("Started test: %s::%s", description.getClassName(), description.getMethodName()));
+        }
+    };
 
     @Resource
     private CommonTestControl commonTestControl;
@@ -58,18 +68,13 @@ public abstract class StroomIntegrationTest implements StroomTest {
     private ContentImportService contentImportService;
 
     @BeforeClass
-    public static final void beforeClass() throws IOException {
+    public static void beforeClass() throws IOException {
         final State state = TestState.getState();
         state.reset();
     }
 
     @AfterClass
-    public static final void afterClass() throws IOException {
-    }
-
-    public static int getTestCount() {
-        final State state = TestState.getState();
-        return state.getClassTestCount();
+    public static void afterClass() throws IOException {
     }
 
     protected void onBefore() {
@@ -82,7 +87,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
      * Initialise required database entities.
      */
     @Before
-    public final void before() throws Exception {
+    public final void before() {
         final State state = TestState.getState();
         state.incrementTestCount();
 
@@ -116,8 +121,6 @@ public abstract class StroomIntegrationTest implements StroomTest {
      * executed and then no teardown to occur. If this is the case then they
      * should override this method, perform their one time setup task and then
      * return true.
-     *
-     * @return
      */
     protected boolean doSingleSetup() {
         return false;
@@ -145,7 +148,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
     /**
      * Initialise required database entities.
      */
-    private final void setup(final boolean force) {
+    private void setup(final boolean force) {
         // Only bother to manually setup the database if we have run at least
         // one test in this test class.
         if (force || getTestCount() > 1) {
@@ -167,19 +170,24 @@ public abstract class StroomIntegrationTest implements StroomTest {
     /**
      * Remove all entities from the database.
      */
-    private final void teardown() {
+    private void teardown() {
         teardown(false);
     }
 
     /**
      * Remove all entities from the database.
      */
-    private final void teardown(final boolean force) {
+    private void teardown(final boolean force) {
         // Only bother to tear down the database if we have run at least one
         // test in this test class.
         if (force || getTestCount() > 1) {
             commonTestControl.teardown();
         }
+    }
+
+    public static int getTestCount() {
+        final State state = TestState.getState();
+        return state.getClassTestCount();
     }
 
     @Override

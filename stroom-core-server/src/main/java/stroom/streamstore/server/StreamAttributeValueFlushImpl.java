@@ -47,11 +47,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeValueFlushImpl.class);
 
-    public static final String LOCK_NAME = "StreamAttributeDelete";
-    public static final int MONTH_OLD_MS = 1000 * 60 * 60 * 24 * 30;
     public static final int BATCH_SIZE = 1000;
 
-    final Queue<AsyncFlush> queue = new ConcurrentLinkedQueue<>();
     @Resource
     private StreamAttributeKeyService streamAttributeKeyService;
     @Resource
@@ -62,6 +59,8 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
     private StroomPropertyService stroomPropertyService;
     @Resource
     private ClusterLockService clusterLockService;
+
+    private final Queue<AsyncFlush> queue = new ConcurrentLinkedQueue<>();
 
     @Override
     public void persitAttributes(final Stream stream, final boolean append, final MetaMap metaMap) {
