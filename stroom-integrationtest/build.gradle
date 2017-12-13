@@ -14,10 +14,6 @@ dependencies {
     permitUnusedDeclared project(':stroom-security-server')
     compile project(':stroom-statistics-server')
     permitUnusedDeclared project(':stroom-statistics-server')
-    compile project(':stroom-docstore-server')
-    permitUnusedDeclared project(':stroom-docstore-server')
-    compile project(':stroom-ruleset-server')
-    permitUnusedDeclared project(':stroom-ruleset-server')
     compile project(':stroom-headless')
     permitUnusedDeclared project(':stroom-headless')
 
@@ -29,7 +25,6 @@ dependencies {
     integrationTestCompile project(path: ':stroom-security-server', configuration: 'testArtifacts')
     integrationTestCompile project(':stroom-test-common')
     integrationTestCompile project(path: ':stroom-util', configuration: 'testArtifacts')
-    integrationTestCompile project(path: ':stroom-pipeline', configuration: 'testArtifacts')
 
     integrationTestCompile libs.slf4j_api
     integrationTestCompile libs.junit

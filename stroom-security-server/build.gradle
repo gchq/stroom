@@ -25,7 +25,6 @@ dependencies {
 
     compile libs.stroomAuthApi
     compile libs.stroomQueryApi
-    compile libs.stroomAuthApi
     compile libs.eventLogging
     compile libs.aspectjrt
     compile libs.commons_lang

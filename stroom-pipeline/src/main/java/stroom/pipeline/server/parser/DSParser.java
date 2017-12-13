@@ -40,7 +40,6 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pool.PoolItem;
 import stroom.query.api.v2.DocRef;
-import stroom.security.SecurityContext;
 import stroom.util.spring.StroomScope;
 import stroom.xml.converter.ParserFactory;
 

@@ -18,7 +18,6 @@
 package stroom.pipeline.server.util;
 
 import stroom.pipeline.server.LocationFactoryProxy;
-import stroom.pipeline.server.TextConverterService;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.factory.Processor;
 import stroom.pipeline.server.factory.ProcessorFactory;
