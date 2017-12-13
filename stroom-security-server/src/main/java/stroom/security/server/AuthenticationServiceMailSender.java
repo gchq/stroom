@@ -18,12 +18,11 @@ package stroom.security.server;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.stereotype.Component;
-import stroom.dashboard.server.logging.AuthenticationEventLog;
+import stroom.logging.AuthenticationEventLog;
 import stroom.security.shared.UserRef;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.util.spring.StroomScope;

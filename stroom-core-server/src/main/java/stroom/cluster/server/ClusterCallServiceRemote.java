@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import stroom.node.shared.Node;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomBeanStore;
-import stroom.util.thread.ThreadScopeContextHolder;
 
 import javax.inject.Inject;
 import java.lang.reflect.Method;
@@ -50,7 +49,7 @@ class ClusterCallServiceRemote implements ClusterCallService {
     private final StroomBeanStore beanStore;
     private final boolean clusterCallUseLocal;
     private final Long clusterCallReadTimeout;
-    private final Map<Node, ClusterCallService> proxyMap = new HashMap();
+    private final Map<Node, ClusterCallService> proxyMap = new HashMap<>();
 
     private HessianProxyFactory proxyFactory = null;
     private boolean ignoreSSLHostnameVerifier = true;
@@ -110,9 +109,6 @@ class ClusterCallServiceRemote implements ClusterCallService {
         if (targetNode == null) {
             throw new RuntimeException("Must have target node to call remote service");
         }
-
-        ThreadScopeContextHolder.getContext().put("sourceNode", sourceNode);
-        ThreadScopeContextHolder.getContext().put("targetNode", targetNode);
 
         // Make a local call ?
         boolean local = false;

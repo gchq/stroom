@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class GWTModuleCreator {
     private static final String MODULE_EXTENSION = ".gwt.xml";
@@ -36,9 +40,9 @@ public class GWTModuleCreator {
         sb.append("\n");
         sb.append("  <!-- Import Stroom widgets -->\n");
 
-        final File rootDir = new File(System.getProperty("user.home") + "/workspace/trunk/stroom-ui-mvp/src");
+        final Path rootDir = Paths.get(System.getProperty("user.home") + "/workspace/trunk/stroom-ui-mvp/src");
         final List<String> modules = new ArrayList<>();
-        processDir(rootDir, rootDir.getAbsolutePath(), modules);
+        processDir(rootDir, rootDir.toAbsolutePath().normalize().toString(), modules);
         Collections.sort(modules);
 
         for (final String module : modules) {
@@ -50,18 +54,20 @@ public class GWTModuleCreator {
         sb.append("</module>");
     }
 
-    private void processDir(final File dir, final String rootPath, final List<String> modules) {
-        final File[] files = dir.listFiles();
-        for (final File file : files) {
-            if (file.isDirectory()) {
-                processDir(file, rootPath, modules);
-            } else if (file.getName().endsWith(MODULE_EXTENSION)) {
-                String module = file.getAbsolutePath();
-                module = module.substring(rootPath.length() + 1);
-                module = module.substring(0, module.length() - MODULE_EXTENSION.length());
-                module = module.replaceAll("/", ".");
-                modules.add(module);
-            }
+    private void processDir(final Path dir, final String rootPath, final List<String> modules) {
+        try (final Stream<Path> stream = Files.walk(dir)) {
+            stream
+                    .filter(p -> p.getFileName().toString().endsWith(MODULE_EXTENSION))
+                    .forEach(p -> {
+                        String module = p.toAbsolutePath().normalize().toString();
+                        module = module.substring(rootPath.length() + 1);
+                        module = module.substring(0, module.length() - MODULE_EXTENSION.length());
+                        module = module.replaceAll("/", ".");
+                        modules.add(module);
+                    });
+
+        } catch (final IOException e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 }

@@ -23,9 +23,9 @@ import org.slf4j.LoggerFactory;
 import stroom.statistics.shared.StatisticType;
 import stroom.util.date.DateUtil;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -58,21 +58,15 @@ public class GenerateSampleStatisticsData {
     public static void main(final String[] args) throws Exception {
         System.out.println("Writing value data...");
 
-        Writer writer = new FileWriter(new File("StatsTestData_Values.xml"));
-
-        writer.write(generateValueData(DEFAULT_ITERATION_COUNT, getStartTime()));
-        writer.close();
-
+        try (final Writer writer = Files.newBufferedWriter(Paths.get("StatsTestData_Values.xml"))) {
+            writer.write(generateValueData(DEFAULT_ITERATION_COUNT, getStartTime()));
+        }
         System.out.println("Writing count data...");
 
-        writer = new FileWriter(new File("StatsTestData_Counts.xml"));
-
-        writer.write(generateCountData(DEFAULT_ITERATION_COUNT, getStartTime()));
-
-        writer.close();
-
+        try (final Writer writer = Files.newBufferedWriter(Paths.get("StatsTestData_Counts.xml"))) {
+            writer.write(generateCountData(DEFAULT_ITERATION_COUNT, getStartTime()));
+        }
         System.out.println("Finished!");
-
     }
 
     private static Instant getStartTime() {

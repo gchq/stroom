@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-import stroom.entity.shared.DocRefUtil;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldType;
@@ -36,12 +35,14 @@ import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ErrorStatistics;
 import stroom.pipeline.server.errorhandler.LoggedException;
 import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.ElementIcons;
 import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.server.factory.PipelinePropertyDocRef;
 import stroom.pipeline.server.filter.AbstractXMLFilter;
+import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.StreamHolder;
+import stroom.query.api.v2.DocRef;
 import stroom.util.CharBuffer;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
@@ -71,7 +72,7 @@ class IndexingFilter extends AbstractXMLFilter {
     private final IndexConfigCache indexConfigCache;
     private final CharBuffer debugBuffer = new CharBuffer(10);
     private IndexFieldsMap indexFieldsMap;
-    private Index index;
+    private DocRef indexRef;
     private IndexShardKey indexShardKey;
     private Document document;
 
@@ -98,19 +99,19 @@ class IndexingFilter extends AbstractXMLFilter {
     @Override
     public void startProcessing() {
         try {
-            if (index == null) {
+            if (indexRef == null) {
                 log(Severity.FATAL_ERROR, "Index has not been set", null);
                 throw new LoggedException("Index has not been set");
             }
 
             // Get the index and index fields from the cache.
-            final IndexConfig indexConfig = indexConfigCache.get(DocRefUtil.create(index));
+            final IndexConfig indexConfig = indexConfigCache.get(indexRef);
             if (indexConfig == null) {
                 log(Severity.FATAL_ERROR, "Unable to load index", null);
                 throw new LoggedException("Unable to load index");
             }
 
-            index = indexConfig.getIndex();
+            final Index index = indexConfig.getIndex();
             indexFieldsMap = indexConfig.getIndexFieldsMap();
 
             // Create a key to create shards with.
@@ -226,8 +227,8 @@ class IndexingFilter extends AbstractXMLFilter {
             if (field != null) {
                 // Output some debug.
                 if (LOGGER.isDebugEnabled()) {
-                    debugBuffer.append("endElement() - Adding index indexName=");
-                    debugBuffer.append(index);
+                    debugBuffer.append("processIndexContent() - Adding to index indexName=");
+                    debugBuffer.append(indexRef.getName());
                     debugBuffer.append(" name=");
                     debugBuffer.append(indexField.getFieldName());
                     debugBuffer.append(" value=");
@@ -248,8 +249,9 @@ class IndexingFilter extends AbstractXMLFilter {
     }
 
     @PipelineProperty(description = "The index to send records to.")
-    public void setIndex(final Index index) {
-        this.index = index;
+    @PipelinePropertyDocRef(types=Index.ENTITY_TYPE)
+    public void setIndex(final DocRef indexRef) {
+        this.indexRef = indexRef;
     }
 
     private void log(final Severity severity, final String message, final Exception e) {

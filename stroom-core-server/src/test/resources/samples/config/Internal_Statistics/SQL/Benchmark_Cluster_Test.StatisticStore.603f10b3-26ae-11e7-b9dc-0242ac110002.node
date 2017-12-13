@@ -1,0 +1,5 @@
+name=Benchmark-Cluster Test
+path=Internal Statistics/SQL
+tags=DataSource
+type=StatisticStore
+uuid=603f10b3-26ae-11e7-b9dc-0242ac110002

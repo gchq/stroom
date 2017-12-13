@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.explorer.shared;
@@ -20,7 +21,9 @@ import stroom.util.shared.SharedObject;
 
 public class DocumentType implements SharedObject {
     public static final String DOC_IMAGE_URL = "document/";
+
     private static final long serialVersionUID = -7826692935161793565L;
+
     private int priority;
     private String type;
     private String displayType;
@@ -41,32 +44,16 @@ public class DocumentType implements SharedObject {
         return priority;
     }
 
-    public void setPriority(final int priority) {
-        this.priority = priority;
-    }
-
     public String getDisplayType() {
         return displayType;
-    }
-
-    public void setDisplayType(final String displayType) {
-        this.displayType = displayType;
     }
 
     public String getType() {
         return type;
     }
 
-    public void setType(final String type) {
-        this.type = type;
-    }
-
     public String getIconUrl() {
         return iconUrl;
-    }
-
-    public void setIconUrl(final String iconUrl) {
-        this.iconUrl = iconUrl;
     }
 
     @Override

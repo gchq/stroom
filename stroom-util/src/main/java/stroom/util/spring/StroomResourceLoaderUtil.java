@@ -25,17 +25,17 @@ public class StroomResourceLoaderUtil {
 //
 //    static {
 //        try {
-//            File parent = new File(".");
-//            parent = new File(parent.getCanonicalPath());
+//            Path parent = Paths.get(".");
+//            parent = parent.toAbsolutePath().normalize();
 //
 //            // Go back up through parents to try and find the config directory.
-//            File configDir = null;
+//            Path configDir = null;
 //            while (parent != null && (configDir == null || !configDir.isDirectory())) {
-//                configDir = new File(parent, TEST_CONFIG_PATH);
-//                parent = parent.getParentFile();
+//                configDir = parent.resolve(TEST_CONFIG_PATH);
+//                parent = parent.getParent();
 //            }
 //
-//            if (configDir != null && configDir.isDirectory()) {
+//            if (configDir != null && Files.isDirectory(configDir)) {
 //                configReplace = "file://" + configDir.getCanonicalPath() + "/";
 //            }
 //        } catch (final Exception e) {

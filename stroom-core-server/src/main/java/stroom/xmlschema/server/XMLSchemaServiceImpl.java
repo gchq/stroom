@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.xmlschema.server;
@@ -26,7 +27,6 @@ import stroom.importexport.server.ImportExportHelper;
 import stroom.security.SecurityContext;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XMLSchema;
-import stroom.xmlschema.shared.XMLSchemaService;
 
 import javax.inject.Inject;
 
@@ -35,7 +35,9 @@ import javax.inject.Inject;
 public class XMLSchemaServiceImpl extends DocumentEntityServiceImpl<XMLSchema, FindXMLSchemaCriteria>
         implements XMLSchemaService {
     @Inject
-    XMLSchemaServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext) {
+    XMLSchemaServiceImpl(final StroomEntityManager entityManager,
+                         final ImportExportHelper importExportHelper,
+                         final SecurityContext securityContext) {
         super(entityManager, importExportHelper, securityContext);
     }
 
@@ -55,7 +57,7 @@ public class XMLSchemaServiceImpl extends DocumentEntityServiceImpl<XMLSchema, F
     }
 
     private static class XMLSchemaQueryAppender extends QueryAppender<XMLSchema, FindXMLSchemaCriteria> {
-        public XMLSchemaQueryAppender(final StroomEntityManager entityManager) {
+        XMLSchemaQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
         }
 

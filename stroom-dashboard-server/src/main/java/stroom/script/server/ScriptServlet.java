@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,17 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.script.server;
 
-import org.springframework.aop.framework.Advised;
 import org.springframework.stereotype.Component;
-import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.shared.Res;
 import stroom.script.shared.Script;
-import stroom.script.shared.ScriptService;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.util.task.TaskScopeContextHolder;
 
 import javax.inject.Inject;
@@ -63,10 +62,9 @@ public class ScriptServlet extends HttpServlet {
     protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
             throws ServletException, IOException {
         TaskScopeContextHolder.addContext();
-        try {
-            // Elevate the users permissions for the duration of this task so they can read the script if they have 'use' permission.
-            securityContext.elevatePermissions();
 
+        // Elevate the users permissions for the duration of this task so they can read the script if they have 'use' permission.
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             response.setContentType("text/javascript");
             response.setCharacterEncoding("UTF-8");
 
@@ -84,67 +82,13 @@ public class ScriptServlet extends HttpServlet {
                         pw.close();
                     }
 
-                } else {
-                    final String idString = queryParamMap.get("id");
-                    if (idString != null && idString.length() > 0) {
-                        final long id = Long.parseLong(idString);
-                        final Script script = getScript(id);
-                        final Res res = script.getResource();
-                        if (res != null && res.getData() != null) {
-                            final PrintWriter pw = response.getWriter();
-                            pw.write(res.getData());
-                            pw.close();
-                        }
-                    }
                 }
             }
-
-        } finally {
-            securityContext.restorePermissions();
-            TaskScopeContextHolder.removeContext();
         }
-    }
-
-    private Script getScript(final long id) {
-        // TODO : Remove this when the explorer service is broken out as a separate micro service.
-        final DocumentEntityServiceImpl documentEntityService = getDocEntityService();
-        if (documentEntityService != null) {
-            return (Script) documentEntityService.loadByIdInsecure(id, FETCH_SET);
-        }
-
-        return scriptService.loadById(id, FETCH_SET);
     }
 
     private Script getScript(final String uuid) {
-        // TODO : Remove this when the explorer service is broken out as a separate micro service.
-        final DocumentEntityServiceImpl documentEntityService = getDocEntityService();
-        if (documentEntityService != null) {
-            return (Script) documentEntityService.loadByUuidInsecure(uuid, FETCH_SET);
-        }
-
-        return scriptService.loadByUuid(uuid, FETCH_SET);
-    }
-
-    private DocumentEntityServiceImpl getDocEntityService() {
-        final Object target = getTarget(scriptService);
-        if (target instanceof DocumentEntityServiceImpl) {
-            return (DocumentEntityServiceImpl) target;
-        }
-
-        return null;
-    }
-
-    private Object getTarget(Object obj) {
-        if (obj instanceof Advised) {
-            try {
-                final Advised advised = (Advised) obj;
-                return advised.getTargetSource().getTarget();
-            } catch (final Exception e) {
-                // Ignore
-            }
-        }
-
-        return obj;
+        return scriptService.loadByUuidInsecure(uuid, FETCH_SET);
     }
 
     private Map<String, String> createQueryParamMap(final String query) {

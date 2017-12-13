@@ -80,9 +80,9 @@ public class TestTranslationStreamTaskServiceImportExport extends AbstractCoreIn
     //
     // translationStreamTaskService.save(translationStreamTask);
     //
-    // File testDir = FileSystemTestUtil.getTestDir();
+    // Path testDir = FileSystemTestUtil.getTestDir();
     //
-    // File testFile = new File(testDir, "export.zip");
+    // Path testFile = testDir.resolve("export.zip");
     //
     // final TranslationStreamTaskExportTask exportTask = new
     // TranslationStreamTaskExportTask(

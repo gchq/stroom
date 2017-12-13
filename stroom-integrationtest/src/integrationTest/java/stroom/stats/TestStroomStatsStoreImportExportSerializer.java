@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.stats;
@@ -19,10 +20,9 @@ package stroom.stats;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
-import stroom.entity.shared.FolderService;
-import stroom.entity.shared.ImportState;
+import stroom.importexport.shared.ImportState;
+import stroom.explorer.server.ExplorerService;
 import stroom.importexport.server.ImportExportSerializer;
 import stroom.query.api.v2.DocRef;
 import stroom.statistics.server.sql.datasource.StatisticsDataSourceProvider;
@@ -35,20 +35,20 @@ import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.stats.shared.StroomStatsStoreEntityData;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.util.test.FileSystemTestUtil;
+import stroom.util.io.FileUtil;
 
 import javax.annotation.Resource;
-import java.io.File;
+import java.nio.file.Path;
 
 public class TestStroomStatsStoreImportExportSerializer extends AbstractCoreIntegrationTest {
     @Resource
     private ImportExportSerializer importExportSerializer;
     @Resource
-    private FolderService folderService;
-    @Resource
     private StroomStatsStoreEntityService stroomStatsStoreEntityService;
     @Resource
     private StatisticsDataSourceProvider statisticsDataSourceProvider;
+    @Resource
+    private ExplorerService explorerService;
 
     private DocRefs buildFindFolderCriteria(DocRef folderDocRef) {
         final DocRefs docRefs = new DocRefs();
@@ -63,9 +63,8 @@ public class TestStroomStatsStoreImportExportSerializer extends AbstractCoreInte
      */
     @Test
     public void testStatisticsDataSource() {
-        final DocRef folder = DocRefUtil.create(folderService.create(null, FileSystemTestUtil.getUniqueTestString()));
-
-        final StroomStatsStoreEntity entity = stroomStatsStoreEntityService.create(folder, "StatName1");
+        final DocRef docRef = explorerService.create(StroomStatsStoreEntity.ENTITY_TYPE,"StatName1", null, null);
+        final StroomStatsStoreEntity entity = stroomStatsStoreEntityService.readDocument(docRef);
         entity.setDescription("My Description");
         entity.setStatisticType(StatisticType.COUNT);
         entity.setDataObject(new StroomStatsStoreEntityData());
@@ -75,21 +74,23 @@ public class TestStroomStatsStoreImportExportSerializer extends AbstractCoreInte
 
         Assert.assertEquals(1, stroomStatsStoreEntityService.find(FindStroomStatsStoreEntityCriteria.instance()).size());
 
-        final File testDataDir = new File(getCurrentTestDir(), "ExportTest");
+        final Path testDataDir = getCurrentTestDir().resolve("ExportTest");
 
         FileSystemUtil.deleteDirectory(testDataDir);
         FileSystemUtil.mkdirs(null, testDataDir);
 
-        importExportSerializer.write(testDataDir.toPath(), buildFindFolderCriteria(folder), true, null);
+        final DocRefs docRefs = new DocRefs();
+        docRefs.add(docRef);
+        importExportSerializer.write(testDataDir, docRefs, true, null);
 
-        Assert.assertEquals(2, testDataDir.listFiles().length);
+        Assert.assertEquals(3, FileUtil.list(testDataDir).size());
 
         // now clear out the java entities and import from file
         clean(true);
 
         Assert.assertEquals(0, stroomStatsStoreEntityService.find(FindStroomStatsStoreEntityCriteria.instance()).size());
 
-        importExportSerializer.read(testDataDir.toPath(), null, ImportState.ImportMode.IGNORE_CONFIRMATION);
+        importExportSerializer.read(testDataDir, null, ImportState.ImportMode.IGNORE_CONFIRMATION);
 
         final BaseResultList<StroomStatsStoreEntity> dataSources = stroomStatsStoreEntityService
                 .find(FindStroomStatsStoreEntityCriteria.instance());
@@ -104,6 +105,4 @@ public class TestStroomStatsStoreImportExportSerializer extends AbstractCoreInte
 
         Assert.assertEquals(entity.getDataObject(), importedDataSource.getDataObject());
     }
-
-
 }

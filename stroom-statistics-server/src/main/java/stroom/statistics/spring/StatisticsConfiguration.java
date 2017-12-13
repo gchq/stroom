@@ -25,11 +25,19 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
+import stroom.explorer.server.ExplorerActionHandlers;
+import stroom.importexport.server.ImportExportActionHandlers;
 import stroom.node.server.GlobalProperties;
+import stroom.statistics.server.sql.datasource.StatisticStoreEntityService;
+import stroom.statistics.server.stroomstats.entity.StroomStatsStoreEntityService;
+import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.Version;
 
+import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 import java.beans.PropertyVetoException;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -44,6 +52,17 @@ import java.sql.Statement;
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
 public class StatisticsConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsConfiguration.class);
+
+    @Inject
+    public StatisticsConfiguration(final ExplorerActionHandlers explorerActionHandlers,
+                                   final ImportExportActionHandlers importExportActionHandlers,
+                                   final StatisticStoreEntityService statisticStoreEntityService,
+                                   final StroomStatsStoreEntityService stroomStatsStoreEntityService) {
+        explorerActionHandlers.add(11, StatisticStoreEntity.ENTITY_TYPE, StatisticStoreEntity.ENTITY_TYPE_FOR_DISPLAY, statisticStoreEntityService);
+        explorerActionHandlers.add(12, StroomStatsStoreEntity.ENTITY_TYPE, StroomStatsStoreEntity.ENTITY_TYPE_FOR_DISPLAY, stroomStatsStoreEntityService);
+        importExportActionHandlers.add(StatisticStoreEntity.ENTITY_TYPE, statisticStoreEntityService);
+        importExportActionHandlers.add(StroomStatsStoreEntity.ENTITY_TYPE, stroomStatsStoreEntityService);
+    }
 
     @Bean
     public ComboPooledDataSource statisticsDataSource(final GlobalProperties globalProperties) throws PropertyVetoException {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.visualisation.client.presenter;
@@ -20,7 +21,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.dashboard.client.vis.ClearFunctionCacheEvent;
 import stroom.entity.client.presenter.ContentCallback;
-import stroom.entity.client.presenter.EntityEditTabPresenter;
+import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.shared.DocRefUtil;
 import stroom.security.client.ClientSecurityContext;
@@ -28,7 +29,7 @@ import stroom.visualisation.shared.Visualisation;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
-public class VisualisationPresenter extends EntityEditTabPresenter<LinkTabPanelView, Visualisation> {
+public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Visualisation> {
     private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
 
     private final VisualisationSettingsPresenter settingsPresenter;
@@ -63,7 +64,7 @@ public class VisualisationPresenter extends EntityEditTabPresenter<LinkTabPanelV
     @Override
     public void onRead(final Visualisation visualisation) {
         loadCount++;
-        settingsPresenter.read(visualisation);
+        settingsPresenter.read(getDocRef(), visualisation);
 
         if (loadCount > 1) {
             // Remove the visualisation function from the cache so dashboards

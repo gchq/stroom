@@ -26,19 +26,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.apiclients.AuthenticationServiceClients;
-import stroom.auth.service.ApiException;
-import stroom.dashboard.server.logging.AuthenticationEventLog;
 import stroom.entity.shared.EntityServiceException;
+import stroom.logging.AuthenticationEventLog;
 import stroom.node.server.StroomPropertyService;
 import stroom.security.Insecure;
 import stroom.security.Secured;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
+import stroom.security.UserTokenUtil;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserRef;
 import stroom.security.shared.UserStatus;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.util.config.StroomProperties;
-import stroom.util.shared.UserTokenUtil;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -46,8 +46,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
-import java.util.Optional;
 
 @Component
 @Secured(FindUserCriteria.MANAGE_USERS_PERMISSION)
@@ -92,13 +90,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (userRef != null) {
             final boolean preventLogin = StroomProperties.getBooleanProperty(PREVENT_LOGIN_PROPERTY, false);
             if (preventLogin) {
-                securityContext.pushUser(UserTokenUtil.create(userRef.getName(), null));
-                try {
+                try (final SecurityHelper securityHelper = SecurityHelper.asUser(securityContext, UserTokenUtil.create(userRef.getName(), null))) {
                     if (!securityContext.isAdmin()) {
                         throw new AuthenticationException("You are not allowed to login at this time");
                     }
-                } finally {
-                    securityContext.popUser();
                 }
             }
         }
@@ -378,7 +373,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         // Audit the successful login
         eventLog.logon(userId);
 
-        if(request != null) {
+        if (request != null) {
             final HttpSession session = request.getSession(true);
             session.setAttribute(USER_SESSION_KEY, user);
             session.setAttribute(USER_ID_SESSION_KEY, userId);

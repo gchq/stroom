@@ -204,8 +204,6 @@ public class PersistenceConfiguration {
         entityManagerFactory.setDataSource(dataSource);
         entityManagerFactory.setPersistenceUnitName("StroomPersistenceUnit");
         entityManagerFactory.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
-        // entityManagerFactory.setPackagesToScan("stroom.**.shared",
-        // "stroom.**.shared");
         entityManagerFactory.setPackagesToScan("stroom");
 
         final Properties jpaProperties = new Properties();

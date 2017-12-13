@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.node.client.presenter;
@@ -23,8 +24,8 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.entity.shared.DocumentServiceWriteAction;
 import stroom.entity.shared.EntityServiceFindAction;
-import stroom.entity.shared.EntityServiceSaveAction;
 import stroom.item.client.ItemListBox;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
@@ -103,7 +104,7 @@ public class VolumeEditPresenter extends MyPresenterWidget<VolumeEditPresenter.V
             }
             volume.setBytesLimit(bytesLimit);
 
-            clientDispatchAsync.exec(new EntityServiceSaveAction<>(volume)).onSuccess(result -> {
+            clientDispatchAsync.exec(new DocumentServiceWriteAction<Volume>(volume)).onSuccess(result -> {
                 volume = result;
                 HidePopupEvent.fire(VolumeEditPresenter.this, VolumeEditPresenter.this, false, true);
                 // Only fire this event here as the parent only

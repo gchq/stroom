@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,30 +31,28 @@ import stroom.pipeline.server.filter.XMLFilter;
 import stroom.pipeline.server.filter.XMLFilterFork;
 import stroom.pipeline.server.parser.CombinedParser;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
-import stroom.pipeline.shared.TextConverterService;
 import stroom.pipeline.shared.XSLT;
-import stroom.pipeline.shared.XSLTService;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.RecordCount;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.ComparisonHelper;
-import stroom.test.PipelineTestUtil;
-import stroom.test.StroomProcessTestFileUtil;
+import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
 import javax.annotation.Resource;
 import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
-import java.util.Arrays;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
     @Resource
@@ -68,9 +66,7 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
     @Resource
     private TextConverterService textConverterService;
     @Resource
-    private PipelineEntityService pipelineEntityService;
-    @Resource
-    private PipelineMarshaller pipelineMarshaller;
+    private PipelineService pipelineService;
     @Resource
     private PipelineDataCache pipelineDataCache;
     @Resource
@@ -103,8 +99,8 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
     private PipelineEntity createPipeline(final String pipelineFile, final TextConverter textConverter,
                                           final XSLT xslt) {
         // Load the pipeline config.
-        final String data = StroomProcessTestFileUtil.getString(pipelineFile);
-        final PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineEntityService, pipelineMarshaller, data);
+        final String data = StroomPipelineTestFileUtil.getString(pipelineFile);
+        final PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService, data);
 
         if (textConverter != null) {
             pipelineEntity.getPipelineData().addProperty(
@@ -115,14 +111,14 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
                     .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xslt));
         }
 
-        return pipelineEntityService.save(pipelineEntity);
+        return pipelineService.save(pipelineEntity);
     }
 
     private TextConverter createTextConverter(final String textConverterFile, final String name,
                                               final TextConverterType textConverterType) {
         // Create a record for the TextConverter.
-        final InputStream textConverterInputStream = StroomProcessTestFileUtil.getInputStream(textConverterFile);
-        TextConverter textConverter = textConverterService.create(null, name);
+        final InputStream textConverterInputStream = StroomPipelineTestFileUtil.getInputStream(textConverterFile);
+        TextConverter textConverter = textConverterService.create(name);
         textConverter.setConverterType(textConverterType);
         textConverter.setData(StreamUtil.streamToString(textConverterInputStream));
         textConverter = textConverterService.save(textConverter);
@@ -131,8 +127,8 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
 
     private XSLT createXSLT(final String xsltPath, final String name) {
         // Create a record for the XSLT.
-        final InputStream xsltInputStream = StroomProcessTestFileUtil.getInputStream(xsltPath);
-        XSLT xslt = xsltService.create(null, name);
+        final InputStream xsltInputStream = StroomPipelineTestFileUtil.getInputStream(xsltPath);
+        XSLT xslt = xsltService.create(name);
         xslt.setData(StreamUtil.streamToString(xsltInputStream));
         xslt = xsltService.save(xslt);
         return xslt;
@@ -140,13 +136,13 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
 
     private void test(final PipelineEntity pipelineEntity, final String dir, final String inputStem,
                       final String outputXMLStem, final String outputSAXStem, final String encoding) throws Exception {
-        final File tempDir = getCurrentTestDir();
+        final Path tempDir = getCurrentTestDir();
 
-        final File outputFile = new File(tempDir, "TestRecordOutputFilter.xml");
-        final File outputLockFile = new File(tempDir, "TestRecordOutputFilter.xml.lock");
+        final Path outputFile = tempDir.resolve("TestRecordOutputFilter.xml");
+        final Path outputLockFile = tempDir.resolve("TestRecordOutputFilter.xml.lock");
 
         // Make sure the config dir is set.
-        System.setProperty("stroom.temp", tempDir.getCanonicalPath());
+        System.setProperty("stroom.temp", FileUtil.getCanonicalPath(tempDir));
 
         // Delete any output file.
         FileUtil.deleteFile(outputFile);
@@ -165,19 +161,29 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
         insertFilter(pipeline, RecordOutputFilter.class, testSAXEventFilter);
 
         // Get the input streams.
-        final File inputDir = new File(StroomProcessTestFileUtil.getTestResourcesDir(), dir);
-        Assert.assertTrue("Can't find input dir", inputDir.isDirectory());
+        final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(dir);
+        Assert.assertTrue("Can't find input dir", Files.isDirectory(inputDir));
 
-        final File[] inputFiles = inputDir
-                .listFiles((dir1, name) -> name.startsWith(inputStem) && name.endsWith(".in"));
-        Arrays.sort(inputFiles);
+        List<Path> inputFiles;
+        try (final Stream<Path> stream = Files.list(inputDir)) {
+            inputFiles = stream
+                    .filter(p -> {
+                        final String fileName = p.getFileName().toString();
+                        return fileName.startsWith(inputStem) && fileName.endsWith(".in");
+                    })
+                    .sorted(Comparator.naturalOrder())
+                    .collect(Collectors.toList());
+        }
+//        final List<Path> inputFiles = inputDir
+//                .listFiles((dir1, name) -> name.startsWith(inputStem) && name.endsWith(".in"));
+//        Arrays.sort(inputFiles);
 
-        Assert.assertTrue("Can't find any input files", inputFiles.length > 0);
+        Assert.assertTrue("Can't find any input files", inputFiles.size() > 0);
 
         pipeline.startProcessing();
 
-        for (final File inputFile : inputFiles) {
-            final InputStream inputStream = new BufferedInputStream(new FileInputStream(inputFile));
+        for (final Path inputFile : inputFiles) {
+            final InputStream inputStream = new BufferedInputStream(Files.newInputStream(inputFile));
             pipeline.process(inputStream, encoding);
             inputStream.close();
         }
@@ -196,15 +202,15 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
         Assert.assertEquals(59, loggingErrorReceiver.getRecords(Severity.ERROR));
         Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.FATAL_ERROR));
 
-        final File refFile = StroomProcessTestFileUtil.getTestResourcesFile(dir + outputXMLStem + ".out");
-        final File tmpFile = new File(refFile.getParentFile(), outputXMLStem + ".out_tmp");
-        tmpFile.delete();
+        final Path refFile = StroomPipelineTestFileUtil.getTestResourcesFile(dir + outputXMLStem + ".out");
+        final Path tmpFile = refFile.getParent().resolve(outputXMLStem + ".out_tmp");
+        Files.delete(tmpFile);
         StreamUtil.copyFile(outputFile, tmpFile);
         ComparisonHelper.compareFiles(refFile, tmpFile);
 
-        final File refSAXFile = new File(refFile.getParentFile(), outputSAXStem + ".sax");
-        final File tmpSAXFile = new File(refFile.getParentFile(), outputSAXStem + ".sax_tmp");
-        tmpSAXFile.delete();
+        final Path refSAXFile = refFile.getParent().resolve(outputSAXStem + ".sax");
+        final Path tmpSAXFile = refFile.getParent().resolve(outputSAXStem + ".sax_tmp");
+        Files.delete(tmpSAXFile);
         final String actualSax = testSAXEventFilter.getOutput().trim();
         StreamUtil.stringToFile(actualSax, tmpSAXFile);
         ComparisonHelper.compareFiles(refSAXFile, tmpSAXFile);

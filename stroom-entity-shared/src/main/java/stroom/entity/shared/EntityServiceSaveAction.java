@@ -16,14 +16,25 @@
 
 package stroom.entity.shared;
 
-public class EntityServiceSaveAction<E extends Entity> extends AbstractEntityAction<E> {
+public class EntityServiceSaveAction<E extends Entity> extends Action<E> {
     private static final long serialVersionUID = 800905016214418723L;
+
+    private E entity;
 
     public EntityServiceSaveAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
     public EntityServiceSaveAction(final E entity) {
-        super(entity, "Save: " + entity);
+        this.entity = entity;
+    }
+
+    public E getEntity() {
+        return entity;
+    }
+
+    @Override
+    public String getTaskName() {
+        return "Save: " + entity;
     }
 }

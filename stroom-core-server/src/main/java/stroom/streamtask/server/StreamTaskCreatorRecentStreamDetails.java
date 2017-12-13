@@ -16,7 +16,7 @@
 
 package stroom.streamtask.server;
 
-import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.server.OldFindStreamCriteria;
 import stroom.streamtask.shared.StreamProcessorFilter;
 
 import java.util.Collections;
@@ -86,7 +86,7 @@ public class StreamTaskCreatorRecentStreamDetails {
     /**
      * Given this RecentStreamInfo will this filter criteria pick anything up?
      */
-    public boolean isApplicable(final StreamProcessorFilter filter, final FindStreamCriteria findStreamCriteria) {
+    public boolean isApplicable(final StreamProcessorFilter filter, final OldFindStreamCriteria findStreamCriteria) {
         // No history so yes
         if (earliestStreamId == null || recentStreamId == null) {
             return true;

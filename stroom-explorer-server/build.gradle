@@ -1,0 +1,22 @@
+dependencies {
+    compile files('libs/jpatreedao-1.0.jar')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-core-server')
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-util')
+    compile project(':stroom-security-api')
+    compile project(':stroom-explorer-api')
+
+    compile libs.stroomQueryApi
+    compile libs.eventLogging
+    compile libs.hibernate_jpa_api
+    compile libs.javax_inject
+    compile libs.spring_tx
+    compile libs.spring_context
+    compile libs.slf4j_api
+    compile libs.flyway_core
+
+    integrationTestRuntime libs.mysql_connector_java
+    integrationTestCompile libs.junit
+}

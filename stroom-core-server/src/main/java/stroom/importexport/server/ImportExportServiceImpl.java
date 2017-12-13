@@ -21,8 +21,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.DocRefs;
-import stroom.entity.shared.ImportState;
-import stroom.entity.shared.ImportState.ImportMode;
+import stroom.importexport.shared.ImportState;
+import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.shared.Message;
 import stroom.util.shared.SharedList;
@@ -101,7 +101,7 @@ public class ImportExportServiceImpl implements ImportExportService {
             importExportSerializer.write(explodeDir, docRefs, false, messageList);
 
             // Now zip the dir.
-            ZipUtil.zip(zipFile.toFile(), explodeDir.toFile());
+            ZipUtil.zip(zipFile, explodeDir);
 
         } catch (final Exception ex) {
             throw EntityServiceExceptionUtil.create(ex);

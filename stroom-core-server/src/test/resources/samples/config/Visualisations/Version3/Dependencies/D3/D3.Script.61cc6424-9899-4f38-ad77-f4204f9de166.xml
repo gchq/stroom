@@ -1,0 +1,10 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<script>
+   <dependenciesXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
+	&lt;docs&gt;
+	&lt;/docs&gt;
+    </dependenciesXML>
+   <description>The D3 library v3.4.8</description>
+   <name>D3</name>
+   <uuid>61cc6424-9899-4f38-ad77-f4204f9de166</uuid>
+</script>

@@ -19,82 +19,108 @@ package stroom.streamtask.server;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.BaseResultList;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
+import stroom.internalstatistics.MetaDataStatistic;
 import stroom.io.SeekableInputStream;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.fs.serializable.NestedInputStream;
 import stroom.streamstore.server.fs.serializable.RANestedInputStream;
+import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
+import stroom.task.server.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.DummyTask;
+import stroom.util.task.TaskMonitor;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.util.test.StroomExpectedException;
 
 import javax.annotation.Resource;
 import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipOutputStream;
 
 public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
+    private final static long DEFAULT_MAX_STREAM_SIZE = ModelStringUtil.parseIECByteSizeString("10G");
+
     @Resource
     private StreamStore streamStore;
     @Resource
-    private CommonTestScenarioCreator commonTestScenarioCreator;
+    private FeedService feedService;
     @Resource
-    private ProxyAggregationExecutor proxyAggregationExecutor;
+    private MetaDataStatistic metaDataStatistic;
+    @Resource
+    private TaskMonitor taskMonitor;
+    @Resource
+    private TaskManager taskManager;
+    @Resource
+    private CommonTestScenarioCreator commonTestScenarioCreator;
+
+    private void aggregate(final String proxyDir,
+                           final int maxAggregation, final long maxStreamSize) {
+        final ProxyAggregationExecutor proxyAggregationExecutor = new ProxyAggregationExecutor(streamStore, feedService, metaDataStatistic, taskMonitor, taskManager, proxyDir, 10, maxAggregation, maxStreamSize, 10000);
+        proxyAggregationExecutor.exec(new DummyTask());
+    }
+
+    private void aggregate(final String proxyDir,
+                           final int maxAggregation) {
+        aggregate(proxyDir, maxAggregation, DEFAULT_MAX_STREAM_SIZE);
+    }
 
     @Test
     public void testImport() throws IOException {
         // commonTestControl.deleteAll();
 
-        final File proxyDir = new File(getCurrentTestDir(), "proxy" + FileSystemTestUtil.getUniqueTestString());
+        final Path proxyDir = getCurrentTestDir().resolve("proxy" + FileSystemTestUtil.getUniqueTestString());
 
         final Feed eventFeed1 = commonTestScenarioCreator.createSimpleFeed();
         final Feed eventFeed2 = commonTestScenarioCreator.createSimpleFeed();
 
-        proxyDir.mkdirs();
+        Files.createDirectories(proxyDir);
 
-        final File testFile1 = new File(proxyDir, "sample1.zip");
+        final Path testFile1 = proxyDir.resolve("sample1.zip");
         writeTestFile(testFile1, eventFeed1, "data1\ndata1\n");
 
-        final File testFile2 = new File(proxyDir, "sample2.zip.lock");
+        final Path testFile2 = proxyDir.resolve("sample2.zip.lock");
         writeTestFile(testFile2, eventFeed1, "data2\ndata2\n");
 
-        final File testFile3 = new File(proxyDir, "sample3.zip");
+        final Path testFile3 = proxyDir.resolve("sample3.zip");
         writeTestFile(testFile3, eventFeed1, "data3\ndata3\n");
 
-        final File testFile4 = new File(proxyDir, "some/nested/dir/sample4.zip");
+        final Path testFile4 = proxyDir.resolve("some/nested/dir/sample4.zip");
         writeTestFile(testFile4, eventFeed2, "data4\ndata4\n");
 
-        Assert.assertTrue("Built test zip file", testFile1.isFile());
-        Assert.assertTrue("Built test zip file", testFile2.isFile());
-        Assert.assertTrue("Built test zip file", testFile3.isFile());
-        Assert.assertTrue("Built test zip file", testFile4.isFile());
+        Assert.assertTrue("Built test zip file", Files.isRegularFile(testFile1));
+        Assert.assertTrue("Built test zip file", Files.isRegularFile(testFile2));
+        Assert.assertTrue("Built test zip file", Files.isRegularFile(testFile3));
+        Assert.assertTrue("Built test zip file", Files.isRegularFile(testFile4));
 
-        proxyAggregationExecutor.aggregate(new DummyTask(), proxyDir.getAbsolutePath());
+        aggregate(FileUtil.getCanonicalPath(proxyDir), 10);
 
-        Assert.assertFalse("Expecting task to delete file once loaded into stream store", testFile1.isFile());
-        Assert.assertTrue("Expecting task to not delete file as it was still locked", testFile2.isFile());
-        Assert.assertFalse("Expecting task to delete file once loaded into stream store", testFile3.isFile());
-        Assert.assertFalse("Expecting task to delete file once loaded into stream store", testFile4.isFile());
+        Assert.assertFalse("Expecting task to delete file once loaded into stream store", Files.isRegularFile(testFile1));
+        Assert.assertTrue("Expecting task to not delete file as it was still locked", Files.isRegularFile(testFile2));
+        Assert.assertFalse("Expecting task to delete file once loaded into stream store", Files.isRegularFile(testFile3));
+        Assert.assertFalse("Expecting task to delete file once loaded into stream store", Files.isRegularFile(testFile4));
 
         final FindStreamCriteria findStreamCriteria1 = new FindStreamCriteria();
-        findStreamCriteria1.obtainFeeds().obtainInclude().add(eventFeed1.getId());
+        findStreamCriteria1.setExpression(ExpressionUtil.createFeedExpression(eventFeed1));
         final BaseResultList<Stream> resultList1 = streamStore.find(findStreamCriteria1);
         Assert.assertEquals("Expecting 2 files to get merged", 1, resultList1.size());
 
@@ -120,7 +146,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         streamStore.closeStreamSource(streamSource);
 
         final FindStreamCriteria findStreamCriteria2 = new FindStreamCriteria();
-        findStreamCriteria2.obtainFeeds().obtainInclude().add(eventFeed2.getId());
+        findStreamCriteria2.setExpression(ExpressionUtil.createFeedExpression(eventFeed2));
 
         final BaseResultList<Stream> resultList2 = streamStore.find(findStreamCriteria2);
 
@@ -131,28 +157,28 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     public void testImportLots() throws IOException {
         // commonTestControl.deleteAll();
 
-        final File proxyDir = new File(getCurrentTestDir(), "proxy" + FileSystemTestUtil.getUniqueTestString());
+        final Path proxyDir = getCurrentTestDir().resolve("proxy" + FileSystemTestUtil.getUniqueTestString());
 
         final Feed eventFeed1 = commonTestScenarioCreator.createSimpleFeed();
 
-        proxyDir.mkdirs();
+        Files.createDirectory(proxyDir);
 
-        final File testFile1 = new File(proxyDir, "001.zip");
+        final Path testFile1 = proxyDir.resolve("001.zip");
         writeTestFileWithManyEntries(testFile1, eventFeed1, 10);
 
-        final File testFile2 = new File(proxyDir, "002.zip");
+        final Path testFile2 = proxyDir.resolve("002.zip");
         writeTestFileWithManyEntries(testFile2, eventFeed1, 5);
 
-        final File testFile3 = new File(proxyDir, "003.zip");
+        final Path testFile3 = proxyDir.resolve("003.zip");
         writeTestFileWithManyEntries(testFile3, eventFeed1, 5);
 
-        final File testFile4 = new File(proxyDir, "004.zip");
+        final Path testFile4 = proxyDir.resolve("004.zip");
         writeTestFileWithManyEntries(testFile4, eventFeed1, 10);
 
-        proxyAggregationExecutor.aggregate(new DummyTask(), proxyDir.getAbsolutePath(), true, 10, null);
+        aggregate(FileUtil.getCanonicalPath(proxyDir), 10);
 
         final FindStreamCriteria criteria = new FindStreamCriteria();
-        criteria.obtainFeeds().obtainInclude().add(eventFeed1.getId());
+        criteria.setExpression(ExpressionUtil.createFeedExpression(eventFeed1));
         final List<Stream> list = streamStore.find(criteria);
         Assert.assertEquals(3, list.size());
 
@@ -176,34 +202,33 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     @StroomExpectedException(exception = ZipException.class)
     public void testImportLockedFiles() throws IOException {
         // commonTestControl.deleteAll();
-
-        final File proxyDir = new File(getCurrentTestDir(), "proxy" + FileSystemTestUtil.getUniqueTestString());
+        final Path proxyDir = getCurrentTestDir().resolve("proxy" + FileSystemTestUtil.getUniqueTestString());
 
         final Feed eventFeed1 = commonTestScenarioCreator.createSimpleFeed();
 
         FileUtil.mkdirs(proxyDir);
 
-        final File testFile1 = new File(proxyDir, "sample1.zip");
+        final Path testFile1 = proxyDir.resolve("sample1.zip");
         try (OutputStream lockedBadFile = writeLockedTestFile(testFile1, eventFeed1)) {
-            final File testFile2 = new File(proxyDir, "sample2.zip");
+            final Path testFile2 = proxyDir.resolve("sample2.zip");
             writeTestFile(testFile2, eventFeed1, "some\ntest\ndataa\n");
 
-            Assert.assertTrue("Built test zip file", testFile1.isFile());
-            Assert.assertTrue("Built test zip file", testFile2.isFile());
+            Assert.assertTrue("Built test zip file", Files.isRegularFile(testFile1));
+            Assert.assertTrue("Built test zip file", Files.isRegularFile(testFile2));
 
-            proxyAggregationExecutor.aggregate(new DummyTask(), proxyDir.getAbsolutePath());
+            aggregate(FileUtil.getCanonicalPath(proxyDir), 10);
 
-            Assert.assertFalse("Expecting task to rename bad zip file", testFile1.isFile());
+            Assert.assertFalse("Expecting task to rename bad zip file", Files.isRegularFile(testFile1));
             Assert.assertTrue("Expecting task to rename bad zip file",
-                    new File(testFile1.getAbsolutePath() + ".bad").isFile());
-            Assert.assertFalse("Expecting good file to go", testFile2.isFile());
+                    Files.isRegularFile(Paths.get(FileUtil.getCanonicalPath(testFile1) + ".bad")));
+            Assert.assertFalse("Expecting good file to go", Files.isRegularFile(testFile2));
 
             // run again and it should clear down the one
-            proxyAggregationExecutor.aggregate(new DummyTask(), proxyDir.getAbsolutePath());
+            aggregate(FileUtil.getCanonicalPath(proxyDir), 10);
 
             Assert.assertTrue("Expecting bad zip file to still be there",
-                    new File(testFile1.getAbsolutePath() + ".bad").isFile());
-            Assert.assertFalse("Expecting task to just send the one file and leave the bad one", testFile2.isFile());
+                    Files.isRegularFile(Paths.get(FileUtil.getCanonicalPath(testFile1) + ".bad")));
+            Assert.assertFalse("Expecting task to just send the one file and leave the bad one", Files.isRegularFile(testFile2));
         }
     }
 
@@ -211,21 +236,21 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     public void testImportZipWithContextFiles() throws IOException {
         // commonTestControl.deleteAll();
 
-        final File proxyDir = new File(getCurrentTestDir(), "proxy" + FileSystemTestUtil.getUniqueTestString());
+        final Path proxyDir = getCurrentTestDir().resolve("proxy" + FileSystemTestUtil.getUniqueTestString());
 
         final Feed eventFeed1 = commonTestScenarioCreator.createSimpleFeed();
 
         FileUtil.mkdirs(proxyDir);
 
-        final File testFile1 = new File(proxyDir, "sample1.zip");
+        final Path testFile1 = proxyDir.resolve("sample1.zip");
         writeTestFileWithContext(testFile1, eventFeed1, "data1\ndata1\n", "context1\ncontext1\n");
 
-        Assert.assertTrue("Built test zip file", testFile1.isFile());
+        Assert.assertTrue("Built test zip file", Files.isRegularFile(testFile1));
 
-        proxyAggregationExecutor.aggregate(new DummyTask(), proxyDir.getAbsolutePath());
+        aggregate(FileUtil.getCanonicalPath(proxyDir), 10);
 
         final FindStreamCriteria criteria = new FindStreamCriteria();
-        criteria.obtainFeeds().obtainInclude().add(eventFeed1.getId());
+        criteria.setExpression(ExpressionUtil.createFeedExpression(eventFeed1));
         final List<Stream> list = streamStore.find(criteria);
         Assert.assertEquals(1, list.size());
 
@@ -262,21 +287,21 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     public void testImportZipWithContextFiles2() throws IOException {
         // commonTestControl.deleteAll();
 
-        final File proxyDir = new File(getCurrentTestDir(), "proxy" + FileSystemTestUtil.getUniqueTestString());
+        final Path proxyDir = getCurrentTestDir().resolve("proxy" + FileSystemTestUtil.getUniqueTestString());
 
         final Feed eventFeed1 = commonTestScenarioCreator.createSimpleFeed();
 
         FileUtil.mkdirs(proxyDir);
 
-        final File testFile1 = new File(proxyDir, "sample1.zip");
+        final Path testFile1 = proxyDir.resolve("sample1.zip");
         writeTestFileWithContext(testFile1, eventFeed1, "data1\ndata1\n", "context1\ncontext1\n");
-        final File testFile2 = new File(proxyDir, "sample2.zip");
+        final Path testFile2 = proxyDir.resolve("sample2.zip");
         writeTestFileWithContext(testFile2, eventFeed1, "data2\ndata2\n", "context2\ncontext2\n");
 
-        proxyAggregationExecutor.aggregate(new DummyTask(), proxyDir.getAbsolutePath());
+        aggregate(FileUtil.getCanonicalPath(proxyDir), 10);
 
         final FindStreamCriteria criteria = new FindStreamCriteria();
-        criteria.obtainFeeds().obtainInclude().add(eventFeed1.getId());
+        criteria.setExpression(ExpressionUtil.createFeedExpression(eventFeed1));
         final List<Stream> list = streamStore.find(criteria);
         Assert.assertEquals(1, list.size());
 
@@ -323,10 +348,10 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         is.getInputStream().close();
     }
 
-    private OutputStream writeLockedTestFile(final File testFile, final Feed eventFeed)
+    private OutputStream writeLockedTestFile(final Path testFile, final Feed eventFeed)
             throws IOException {
-        FileUtil.mkdirs(testFile.getParentFile());
-        final ZipOutputStream zipOutputStream = new ZipOutputStream(new FileOutputStream(testFile));
+        Files.createDirectories(testFile.getParent());
+        final ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(testFile));
 
         zipOutputStream.putNextEntry(new ZipEntry(StroomZipFile.SINGLE_META_ENTRY.getFullName()));
         PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(zipOutputStream, StreamUtil.DEFAULT_CHARSET));
@@ -343,10 +368,10 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         return zipOutputStream;
     }
 
-    private void writeTestFileWithContext(final File testFile, final Feed eventFeed, final String content,
+    private void writeTestFileWithContext(final Path testFile, final Feed eventFeed, final String content,
                                           final String context) throws IOException {
-        testFile.getParentFile().mkdirs();
-        final FileOutputStream fileOutputStream = new FileOutputStream(testFile);
+        Files.createDirectories(testFile.getParent());
+        final OutputStream fileOutputStream = Files.newOutputStream(testFile);
         final ZipOutputStream zipOutputStream = new ZipOutputStream(fileOutputStream);
         zipOutputStream.putNextEntry(new ZipEntry("file1.meta"));
         final PrintWriter printWriter = new PrintWriter(zipOutputStream);
@@ -368,10 +393,10 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
     }
 
-    private void writeTestFile(final File testFile, final Feed eventFeed, final String data)
+    private void writeTestFile(final Path testFile, final Feed eventFeed, final String data)
             throws IOException {
-        FileUtil.mkdirs(testFile.getParentFile());
-        final ZipOutputStream zipOutputStream = new ZipOutputStream(new FileOutputStream(testFile));
+        Files.createDirectories(testFile.getParent());
+        final ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(testFile));
         zipOutputStream.putNextEntry(new ZipEntry(StroomZipFile.SINGLE_META_ENTRY.getFullName()));
         PrintWriter printWriter = new PrintWriter(zipOutputStream);
         printWriter.println("Feed:" + eventFeed.getName());
@@ -387,11 +412,11 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         zipOutputStream.close();
     }
 
-    private void writeTestFileWithManyEntries(final File testFile, final Feed eventFeed, final int count)
+    private void writeTestFileWithManyEntries(final Path testFile, final Feed eventFeed, final int count)
             throws IOException {
-        FileUtil.mkdirs(testFile.getParentFile());
+        Files.createDirectories(testFile.getParent());
         final ZipOutputStream zipOutputStream = new ZipOutputStream(
-                new BufferedOutputStream(new FileOutputStream(testFile)));
+                new BufferedOutputStream(Files.newOutputStream(testFile)));
 
         for (int i = 1; i <= count; i++) {
             final String name = String.valueOf(i);
@@ -417,21 +442,21 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     public void testAggregationLimits_SmallFiles() throws IOException {
         // commonTestControl.deleteAll();
 
-        final File proxyDir = new File(getCurrentTestDir(), "proxy" + FileSystemTestUtil.getUniqueTestString());
+        final Path proxyDir = getCurrentTestDir().resolve("proxy" + FileSystemTestUtil.getUniqueTestString());
 
         final Feed eventFeed1 = commonTestScenarioCreator.createSimpleFeed();
 
         FileUtil.mkdirs(proxyDir);
 
         for (int i = 1; i <= 50; i++) {
-            final File testFile1 = new File(proxyDir, "sample" + i + ".zip");
+            final Path testFile1 = proxyDir.resolve("sample" + i + ".zip");
             writeTestFile(testFile1, eventFeed1, "data1\ndata1\n");
         }
 
-        proxyAggregationExecutor.aggregate(new DummyTask(), proxyDir.getAbsolutePath(), true, 50, 1L);
+        aggregate(FileUtil.getCanonicalPath(proxyDir), 50, 1L);
 
         final FindStreamCriteria findStreamCriteria1 = new FindStreamCriteria();
-        findStreamCriteria1.obtainFeeds().obtainInclude().add(eventFeed1);
+        findStreamCriteria1.setExpression(ExpressionUtil.createFeedExpression(eventFeed1));
         Assert.assertEquals(50, streamStore.find(findStreamCriteria1).size());
     }
 
@@ -439,21 +464,21 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     public void testAggregationLimits_SmallCount() throws IOException {
         // commonTestControl.deleteAll();
 
-        final File proxyDir = new File(getCurrentTestDir(), "proxy" + FileSystemTestUtil.getUniqueTestString());
+        final Path proxyDir = getCurrentTestDir().resolve("proxy" + FileSystemTestUtil.getUniqueTestString());
 
         final Feed eventFeed1 = commonTestScenarioCreator.createSimpleFeed();
 
-        proxyDir.mkdirs();
+        Files.createDirectories(proxyDir);
 
         for (int i = 1; i <= 50; i++) {
-            final File testFile1 = new File(proxyDir, "sample" + i + ".zip");
+            final Path testFile1 = proxyDir.resolve("sample" + i + ".zip");
             writeTestFile(testFile1, eventFeed1, "data1\ndata1\n");
         }
 
-        proxyAggregationExecutor.aggregate(new DummyTask(), proxyDir.getAbsolutePath(), true, 25, null);
+        aggregate(FileUtil.getCanonicalPath(proxyDir), 25);
 
         final FindStreamCriteria findStreamCriteria1 = new FindStreamCriteria();
-        findStreamCriteria1.obtainFeeds().obtainInclude().add(eventFeed1);
+        findStreamCriteria1.setExpression(ExpressionUtil.createFeedExpression(eventFeed1));
         Assert.assertEquals(2, streamStore.find(findStreamCriteria1).size());
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.xml.converter;
@@ -28,11 +29,11 @@ import stroom.util.test.FileSystemTestUtil;
 import stroom.xml.converter.ds3.DS3ParserFactory;
 import stroom.xmlschema.server.MockXMLSchemaService;
 import stroom.xmlschema.server.XMLSchemaCache;
+import stroom.xmlschema.server.XMLSchemaService;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XMLSchema;
-import stroom.xmlschema.shared.XMLSchemaService;
 
-import java.io.File;
+import java.nio.file.Path;
 
 public class SchemaFilterFactory {
     private final XMLSchemaService xmlSchemaService = new MockXMLSchemaService();
@@ -68,9 +69,9 @@ public class SchemaFilterFactory {
 
     public void loadXMLSchema(final String schemaGroup, final String schemaName, final String namespaceURI,
                               final String systemId, final String fileName) {
-        final File dir = FileSystemTestUtil.getConfigXSDDir();
+        final Path dir = FileSystemTestUtil.getConfigXSDDir();
 
-        final File file = new File(dir, fileName);
+        final Path file = dir.resolve(fileName);
 
         final XMLSchema xmlSchema = new XMLSchema();
         xmlSchema.setSchemaGroup(schemaGroup);

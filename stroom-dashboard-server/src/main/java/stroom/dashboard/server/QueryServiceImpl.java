@@ -16,7 +16,6 @@
 
 package stroom.dashboard.server;
 
-import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -24,24 +23,20 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.dashboard.shared.FindQueryCriteria;
 import stroom.dashboard.shared.QueryEntity;
-import stroom.dashboard.shared.QueryService;
 import stroom.entity.server.AutoMarshal;
-import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.shared.EntityServiceException;
 import stroom.importexport.server.ImportExportHelper;
-import stroom.query.api.v2.DocRef;
+import stroom.logging.DocumentEventLog;
 import stroom.security.SecurityContext;
 import stroom.util.spring.StroomSpringProfiles;
 
 import javax.inject.Inject;
 import java.util.List;
-import java.util.UUID;
 
 @Profile(StroomSpringProfiles.PROD)
 @Component("queryService")
@@ -71,23 +66,9 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
         return new FindQueryCriteria();
     }
 
-    // TODO : Remove this when document entities no longer reference a folder.
-    // Don't do any create permission checking as a query doesn't live in a folder and all users are allowed to create queries.
     @Override
-    public QueryEntity create(final DocRef folder, final String name) throws RuntimeException {
-        // Create a new entity instance.
-        QueryEntity entity;
-        try {
-            entity = getEntityClass().newInstance();
-        } catch (final IllegalAccessException | InstantiationException e) {
-            throw new EntityServiceException(e.getMessage());
-        }
-
-        entity.setName(name);
-        if (entity.getUuid() == null) {
-            entity.setUuid(UUID.randomUUID().toString());
-        }
-        entity = super.create(entity);
+    public QueryEntity create(final String name) throws RuntimeException {
+        final QueryEntity entity = super.create(name);
 
         // Create the initial user permissions for this new document.
         securityContext.addDocumentPermissions(null, null, entity.getType(), entity.getUuid(), true);
@@ -193,12 +174,12 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
         // Ignore.
     }
 
-    @Override
-    public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindQueryCriteria criteria) {
-        CriteriaLoggingUtil.appendLongTerm(items, "dashboardId", criteria.getDashboardId());
-        CriteriaLoggingUtil.appendStringTerm(items, "queryId", criteria.getQueryId());
-        super.appendCriteria(items, criteria);
-    }
+//    @Override
+//    public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindQueryCriteria criteria) {
+//        CriteriaLoggingUtil.appendLongTerm(items, "dashboardId", criteria.getDashboardId());
+//        CriteriaLoggingUtil.appendStringTerm(items, "queryId", criteria.getQueryId());
+//        super.appendCriteria(items, criteria);
+//    }
 
     @Override
     protected QueryAppender<QueryEntity, FindQueryCriteria> createQueryAppender(final StroomEntityManager entityManager) {
@@ -218,8 +199,11 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
     }
 
     private static class QueryQueryAppender extends QueryAppender<QueryEntity, FindQueryCriteria> {
-        public QueryQueryAppender(final StroomEntityManager entityManager) {
+        private final QueryEntityMarshaller marshaller;
+
+        QueryQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
+            marshaller = new QueryEntityMarshaller();
         }
 
         @Override
@@ -232,6 +216,18 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
 
             sql.appendValueQuery(alias + ".dashboardId", criteria.getDashboardId());
             sql.appendValueQuery(alias + ".queryId", criteria.getQueryId());
+        }
+
+        @Override
+        protected void preSave(final QueryEntity entity) {
+            super.preSave(entity);
+            marshaller.marshal(entity);
+        }
+
+        @Override
+        protected void postLoad(final QueryEntity entity) {
+            marshaller.unmarshal(entity);
+            super.postLoad(entity);
         }
     }
 }

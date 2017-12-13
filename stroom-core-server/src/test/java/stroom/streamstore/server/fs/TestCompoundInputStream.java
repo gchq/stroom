@@ -34,21 +34,22 @@ import stroom.util.io.StreamUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestCompoundInputStream extends StroomUnitTest {
-    private File datFile;
-    private File segFile;
-    private File bdyFile;
+    private Path datFile;
+    private Path segFile;
+    private Path bdyFile;
 
     @Before
     public void setup() {
-        final File dir = getCurrentTestDir();
-        datFile = new File(dir, "test.bzg");
-        segFile = new File(dir, "test.seg.dat");
-        bdyFile = new File(dir, "test.bdy.dat");
+        final Path dir = getCurrentTestDir();
+        datFile = dir.resolve("test.bzg");
+        segFile = dir.resolve("test.seg.dat");
+        bdyFile = dir.resolve("test.bdy.dat");
     }
 
     @After
@@ -78,16 +79,16 @@ public class TestCompoundInputStream extends StroomUnitTest {
 
         boundaryStream.close();
 
-        Assert.assertTrue(datFile.isFile());
+        Assert.assertTrue(Files.isRegularFile(datFile));
         if (segPerBdy > 1) {
-            Assert.assertTrue(segFile.isFile());
+            Assert.assertTrue(Files.isRegularFile(segFile));
         } else {
-            Assert.assertFalse(segFile.isFile());
+            Assert.assertFalse(Files.isRegularFile(segFile));
         }
         if (bdyCount > 1) {
-            Assert.assertTrue(bdyFile.isFile());
+            Assert.assertTrue(Files.isRegularFile(bdyFile));
         } else {
-            Assert.assertFalse(bdyFile.isFile());
+            Assert.assertFalse(Files.isRegularFile(bdyFile));
         }
 
     }

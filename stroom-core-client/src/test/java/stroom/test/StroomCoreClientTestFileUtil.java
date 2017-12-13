@@ -16,15 +16,19 @@
 
 package stroom.test;
 
-import java.io.File;
+import stroom.util.io.FileUtil;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public final class StroomCoreClientTestFileUtil {
-    private static final File TEST_DATA_DIR;
+    private static final Path TEST_DATA_DIR;
 
     static {
-        final File dir = new File("../stroom-core-client/src/test/resources");
-        if (!dir.isDirectory()) {
-            throw new RuntimeException("Test data directory not found: " + dir.getAbsolutePath());
+        final Path dir = Paths.get("../stroom-core-client/src/test/resources");
+        if (!Files.isDirectory(dir)) {
+            throw new RuntimeException("Test data directory not found: " + FileUtil.getCanonicalPath(dir));
         }
         TEST_DATA_DIR = dir;
     }
@@ -33,7 +37,7 @@ public final class StroomCoreClientTestFileUtil {
         // Utility class.
     }
 
-    public static File getTestResourcesDir() {
+    public static Path getTestResourcesDir() {
         return TEST_DATA_DIR;
     }
 }

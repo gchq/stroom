@@ -44,9 +44,6 @@ public class TextWriter extends AbstractWriter {
     private byte[] header;
     private byte[] footer;
 
-    public TextWriter() {
-    }
-
     @Inject
     public TextWriter(final ErrorReceiverProxy errorReceiverProxy) {
         super(errorReceiverProxy);

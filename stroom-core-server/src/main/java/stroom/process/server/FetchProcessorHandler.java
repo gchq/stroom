@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.process.server;
@@ -25,12 +26,12 @@ import stroom.process.shared.StreamProcessorFilterRow;
 import stroom.process.shared.StreamProcessorRow;
 import stroom.security.Secured;
 import stroom.security.SecurityContext;
+import stroom.streamtask.server.StreamProcessorFilterService;
+import stroom.streamtask.server.StreamProcessorService;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
-import stroom.streamtask.shared.StreamProcessorFilterService;
-import stroom.streamtask.shared.StreamProcessorService;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.Expander;
@@ -64,10 +65,6 @@ public class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAct
         if (action.getPipelineId() != null) {
             criteria.obtainPipelineIdSet().add(action.getPipelineId());
             criteriaRoot.obtainPipelineIdSet().add(action.getPipelineId());
-        }
-        if (action.getFolderId() != null) {
-            criteria.obtainFolderIdSet().add(action.getFolderId());
-            criteriaRoot.obtainFolderIdSet().add(action.getFolderId());
         }
 
         // If the user is not an admin then only show them filters that were created by them.

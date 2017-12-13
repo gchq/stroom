@@ -21,7 +21,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 
 @Configuration
-@ComponentScan(basePackages = {"stroom.search.server", "stroom.search.shared"}, excludeFilters = {
+@ComponentScan(basePackages = {"stroom.search.server"}, excludeFilters = {
         // Exclude other configurations that might be found accidentally during
         // a component scan as configurations should be specified explicitly.
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})

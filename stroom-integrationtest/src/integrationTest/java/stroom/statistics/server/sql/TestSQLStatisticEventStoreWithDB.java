@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.server.util.StroomDatabaseInfo;
-import stroom.query.api.v2.ExpressionOperator;
+
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;

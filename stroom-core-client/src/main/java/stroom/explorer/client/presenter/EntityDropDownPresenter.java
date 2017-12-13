@@ -21,11 +21,11 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
-import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.query.api.v2.DocRef;
 import stroom.widget.dropdowntree.client.presenter.DropDownPresenter;
 
-public class EntityDropDownPresenter extends DropDownPresenter implements HasDataSelectionHandlers<ExplorerData> {
+public class EntityDropDownPresenter extends DropDownPresenter implements HasDataSelectionHandlers<ExplorerNode> {
     private final ExplorerDropDownTreePresenter explorerDropDownTreePresenter;
 
     @Inject
@@ -72,11 +72,11 @@ public class EntityDropDownPresenter extends DropDownPresenter implements HasDat
     }
 
     @Override
-    public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<ExplorerData> handler) {
+    public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<ExplorerNode> handler) {
         return explorerDropDownTreePresenter.addDataSelectionHandler(handler);
     }
 
-    private void changeSelection(final ExplorerData selection) {
+    private void changeSelection(final ExplorerNode selection) {
         if (selection == null) {
             getView().setText("None");
         } else {

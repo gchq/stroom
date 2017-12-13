@@ -4,10 +4,11 @@ import stroom.proxy.repo.StroomZipFile;
 import stroom.util.io.FileUtil;
 import stroom.util.thread.ThreadUtil;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -17,11 +18,11 @@ import java.util.zip.ZipOutputStream;
  */
 public class ProxyAggregationLoader {
 
-    private static void writeTestFile(final File testFile, final String feedName, final String data)
+    private static void writeTestFile(final Path testFile, final String feedName, final String data)
             throws IOException {
 
-        FileUtil.mkdirs(testFile.getParentFile());
-        final ZipOutputStream zipOutputStream = new ZipOutputStream(new FileOutputStream(testFile));
+        FileUtil.mkdirs(testFile.getParent());
+        final ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(testFile));
         zipOutputStream.putNextEntry(new ZipEntry(StroomZipFile.SINGLE_META_ENTRY.getFullName()));
         PrintWriter printWriter = new PrintWriter(zipOutputStream);
         printWriter.println("Feed:" + feedName);
@@ -39,13 +40,13 @@ public class ProxyAggregationLoader {
     //main method for manually testing proxy aggregation with a running stroom instance
     public static void main(final String[] args) throws IOException {
 
-        final File proxyDir = new File("/home/dev/tmp/dev/proxy");
+        final Path proxyDir = Paths.get("/home/dev/tmp/dev/proxy");
 //        final File proxyDir = new File("/tmp/stroom/dev/proxy");
 
         FileUtil.mkdirs(proxyDir);
 
         for (int i = 1; i <= 1000000000; i++) {
-            final File testFile1 = new File(proxyDir, String.format("%08d", i) + ".zip");
+            final Path testFile1 = proxyDir.resolve(String.format("%08d", i) + ".zip");
             int feedNo = (i % 4) + 1;
             writeTestFile(testFile1, "TEST_FEED_" + feedNo, i + "-data1\n" + i + "-data1\n");
             ThreadUtil.sleep(200);

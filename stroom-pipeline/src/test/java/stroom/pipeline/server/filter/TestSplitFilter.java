@@ -25,7 +25,7 @@ import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.server.util.ProcessorUtil;
 import stroom.test.ComparisonHelper;
-import stroom.test.StroomProcessTestFileUtil;
+import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
@@ -201,7 +201,7 @@ public class TestSplitFilter extends StroomUnitTest {
 
     private String getString(final String resourceName) {
         try {
-            final InputStream is = StroomProcessTestFileUtil.getInputStream(resourceName);
+            final InputStream is = StroomPipelineTestFileUtil.getInputStream(resourceName);
 
             final byte[] buffer = new byte[BUF_SIZE];
             int len;

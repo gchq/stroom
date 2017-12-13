@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.pipeline.client;
@@ -21,26 +22,27 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.EntityPlugin;
-import stroom.entity.client.EntityPluginEventManager;
-import stroom.entity.client.presenter.EntityEditPresenter;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.shared.DocRefUtil;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.process.client.presenter.ProcessorPresenter;
 import stroom.query.api.v2.DocRef;
-import stroom.security.client.ClientSecurityContext;
 import stroom.streamtask.shared.StreamProcessor;
 
 public class PipelinePlugin extends EntityPlugin<PipelineEntity> {
     private final Provider<PipelinePresenter> editorProvider;
 
     @Inject
-    public PipelinePlugin(final EventBus eventBus, final Provider<PipelinePresenter> editorProvider,
-                          final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
-                          final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager) {
-        super(eventBus, dispatcher, securityContext, contentManager, entityPluginEventManager);
+    public PipelinePlugin(final EventBus eventBus,
+                          final Provider<PipelinePresenter> editorProvider,
+                          final ClientDispatchAsync dispatcher,
+                          final ContentManager contentManager,
+                          final DocumentPluginEventManager entityPluginEventManager) {
+        super(eventBus, dispatcher, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
     }
 
@@ -48,14 +50,14 @@ public class PipelinePlugin extends EntityPlugin<PipelineEntity> {
     protected void onBind() {
         super.onBind();
 
-        registerHandler(getEventBus().addHandler(CreateProcessorEvent.getType(), event -> {
-            final StreamProcessor streamProcessor = event.getStreamProcessorFilter().getStreamProcessor();
-            final PipelineEntity pipelineEntity = streamProcessor.getPipeline();
-            final DocRef docRef = DocRefUtil.create(pipelineEntity);
-            // Open the item in the content pane.
-            final PipelinePresenter pipelinePresenter = (PipelinePresenter) open(docRef, true);
-            // Highlight the item in the explorer tree.
-            highlight(docRef);
+        registerHandler(getEventBus().addHandler(CreateProcessorEvent.getType(),  event-> {
+                final StreamProcessor streamProcessor = event.getStreamProcessorFilter().getStreamProcessor();
+                final PipelineEntity pipelineEntity = streamProcessor.getPipeline();
+                final DocRef docRef = DocRefUtil.create(pipelineEntity);
+                // Open the item in the content pane.
+                final PipelinePresenter pipelinePresenter = (PipelinePresenter) open(docRef, true);
+                // Highlight the item in the explorer tree.
+    //            highlight(docRef);
 
             pipelinePresenter.selectTab(PipelinePresenter.PROCESSORS);
             pipelinePresenter.getContent(PipelinePresenter.PROCESSORS, content -> ((ProcessorPresenter) content).refresh(event.getStreamProcessorFilter()));
@@ -63,7 +65,7 @@ public class PipelinePlugin extends EntityPlugin<PipelineEntity> {
     }
 
     @Override
-    protected EntityEditPresenter<?, ?> createEditor() {
+    protected DocumentEditPresenter<?, ?> createEditor() {
         return editorProvider.get();
     }
 

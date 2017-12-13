@@ -1,0 +1,15 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<visualisation>
+   <description>Git commit: a1e3bba4e658189a7de874fd1c6748624084d7e4
+Git commit time: 2016-09-21 17:03:32 +0100</description>
+   <functionName>visualisations.StackedArea</functionName>
+   <name>StackedArea</name>
+   <scriptRefXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
+           &lt;doc&gt;
+&lt;type&gt;Script&lt;/type&gt;
+&lt;uuid&gt;187f4abd-db8b-43d6-ade5-eea19c0b1bf4&lt;/uuid&gt;
+&lt;name&gt;StackedArea&lt;/name&gt;
+&lt;/doc&gt;
+    </scriptRefXML>
+   <uuid>e4c3baee-2a5c-4d6e-93af-aadfe374835c</uuid>
+</visualisation>

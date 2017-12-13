@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.search.server;
@@ -20,32 +21,30 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.dashboard.server.DashboardService;
 import stroom.dashboard.server.QueryHistoryCleanExecutor;
+import stroom.dashboard.server.QueryService;
 import stroom.dashboard.shared.Dashboard;
-import stroom.dashboard.shared.DashboardService;
 import stroom.dashboard.shared.FindQueryCriteria;
 import stroom.dashboard.shared.QueryEntity;
-import stroom.dashboard.shared.QueryService;
 import stroom.entity.server.util.BaseEntityDeProxyProcessor;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.FolderService;
 import stroom.entity.shared.Sort.Direction;
+import stroom.index.server.IndexService;
 import stroom.index.shared.Index;
-import stroom.index.shared.IndexService;
 import stroom.query.api.v2.DocRef;
-import stroom.query.api.v2.ExpressionOperator;
+
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
 import stroom.security.server.UserService;
-import stroom.security.shared.UserRef;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.thread.ThreadUtil;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
+import java.util.Collections;
 
 public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
     private static final String QUERY_COMPONENT = "Test Component";
@@ -59,11 +58,9 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
     @Resource
     private UserService userService;
     @Resource
-    private FolderService folderService;
-    @Resource
     private QueryHistoryCleanExecutor queryHistoryCleanExecutor;
+
     private Dashboard dashboard;
-    private UserRef userRef;
     private QueryEntity testQuery;
     private QueryEntity refQuery;
 
@@ -72,19 +69,15 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         // need an explicit teardown and setup of the DB before each test method
         clean();
 
-        userRef = userService.createUser("testuser");
+        dashboard = dashboardService.create("Test");
 
-        final DocRef testFolder = DocRefUtil.create(folderService.create(null, "Test Folder"));
-
-        dashboard = dashboardService.create(testFolder, "Test");
-
-        final Index index = indexService.create(testFolder, "Test index");
+        final Index index = indexService.create("Test index");
         final DocRef dataSourceRef = DocRefUtil.create(index);
 
-        refQuery = queryService.create(null, "Ref query");
+        refQuery = queryService.create("Ref query");
         refQuery.setDashboardId(dashboard.getId());
         refQuery.setQueryId(QUERY_COMPONENT);
-        refQuery.setQuery(new Query(dataSourceRef, new ExpressionOperator(null, Op.AND, Arrays.asList())));
+        refQuery.setQuery(new Query(dataSourceRef, new ExpressionOperator(null, Op.AND, Collections.emptyList())));
         queryService.save(refQuery);
 
         // Ensure the two query creation times are separated by one second so that ordering by time works correctly in
@@ -96,7 +89,7 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
 
         LOGGER.info(root.toString());
 
-        testQuery = queryService.create(null, "Test query");
+        testQuery = queryService.create("Test query");
         testQuery.setDashboardId(dashboard.getId());
         testQuery.setQueryId(QUERY_COMPONENT);
         testQuery.setQuery(new Query(dataSourceRef, root.build()));
@@ -159,7 +152,7 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
 
         // Now insert the same query over 100 times.
         for (int i = 0; i < 120; i++) {
-            final QueryEntity newQuery = queryService.create(null, "History");
+            final QueryEntity newQuery = queryService.create("History");
             newQuery.setDashboardId(query.getDashboardId());
             newQuery.setQueryId(query.getQueryId());
             newQuery.setFavourite(false);
@@ -188,39 +181,39 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         Assert.assertEquals(1, root.getChildren().size());
     }
 
-    @Test
-    public void testLoadById() {
-        final QueryEntity query = queryService.loadById(testQuery.getId());
-
-        Assert.assertNotNull(query);
-        Assert.assertEquals("Test query", query.getName());
-        Assert.assertNotNull(query.getData());
-        final ExpressionOperator root = query.getQuery().getExpression();
-        Assert.assertEquals(1, root.getChildren().size());
-    }
+//    @Test
+//    public void testLoadById() {
+//        final QueryEntity query = queryService.loadById(testQuery.getId());
+//
+//        Assert.assertNotNull(query);
+//        Assert.assertEquals("Test query", query.getName());
+//        Assert.assertNotNull(query.getData());
+//        final ExpressionOperator root = query.getQuery().getExpression();
+//        Assert.assertEquals(1, root.getChildren().size());
+//    }
 
     @Test
     public void testClientSideStuff1() {
-        QueryEntity query = queryService.loadById(refQuery.getId());
+        QueryEntity query = queryService.loadByUuid(refQuery.getUuid());
         query = ((QueryEntity) new BaseEntityDeProxyProcessor(true).process(query));
         queryService.save(query);
     }
 
     @Test
     public void testClientSideStuff2() {
-        QueryEntity query = queryService.loadById(testQuery.getId());
+        QueryEntity query = queryService.loadByUuid(testQuery.getUuid());
         query = ((QueryEntity) new BaseEntityDeProxyProcessor(true).process(query));
         queryService.save(query);
     }
 
 //    @Test
 //    public void testDeleteKids() {
-//        QueryEntity query = queryService.loadById(testQuery.getId());
+//        QueryEntity query = queryService.loadByUuid(testQuery.getUuid());
 //        ExpressionOperator root = query.getQuery().getExpression();
 //        root.remove(0);
 //        queryService.save(query);
 //
-//        query = queryService.loadById(testQuery.getId());
+//        query = queryService.loadByUuid(testQuery.getUuid());
 //
 //        Assert.assertEquals("Test query", query.getName());
 //        root = query.getQuery().getExpression();

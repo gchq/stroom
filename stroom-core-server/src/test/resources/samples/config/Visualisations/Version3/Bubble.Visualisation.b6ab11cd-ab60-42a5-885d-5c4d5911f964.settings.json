@@ -1,0 +1,164 @@
+{
+    "tabs": [
+        {
+            "name": "Data",
+            "controls": [
+                {
+                    "id": "name",
+                    "type": "field",
+                    "label": "Name"
+                },
+                {
+                    "id": "value",
+                    "type": "field",
+                    "label": "Value"
+                },
+                {
+                    "id": "series",
+                    "type": "field",
+                    "label": "Series"
+                },
+                {
+                    "id": "gridSeries",
+                    "type": "field",
+                    "label": "Grid Series"
+                }
+            ]
+        },
+        {
+            "name": "Bubble",
+            "controls": [
+                {
+                    "id" : "nameDateFormat",
+                    "type" : "text",
+                    "label" : "Name Date Format (opt.)",
+                    "defaultValue" : ""
+                },
+                {
+                    "id": "flattenSeries",
+                    "type": "selection",
+                    "label": "Flatten",
+                    "values": [
+                        "True",
+                        "False"
+                    ],
+                    "defaultValue": "True"
+                },
+                {
+                    "id": "sortSeries",
+                    "type": "selection",
+                    "label": "Sort Series",
+                    "values": [
+                        "",
+                        "Ascending",
+                        "Descending"
+                    ],
+                    "defaultValue": "Ascending"
+                },
+                {
+                    "id": "maxSeries",
+                    "type": "number",
+                    "label": "Max Series",
+                    "defaultValue": "100",
+                    "min": "1",
+                    "max": "10000"
+                },
+                {
+                    "id" : "seriesDateFormat",
+                    "type" : "text",
+                    "label" : "Series Date Format (opt.)",
+                    "defaultValue" : ""
+                },
+                {
+                    "id": "sortGridSeries",
+                    "type": "selection",
+                    "label": "Sort Grid Series",
+                    "values": [
+                        "",
+                        "Ascending",
+                        "Descending"
+                    ],
+                    "defaultValue": "Ascending"
+                },
+                {
+                    "id": "maxGridSeries",
+                    "type": "number",
+                    "label": "Max Grid Series",
+                    "defaultValue": "20",
+                    "min": "1",
+                    "max": "36"
+                },
+                {
+                    "id" : "gridSeriesDateFormat",
+                    "type" : "text",
+                    "label" : "Grid Series Date Format (opt.)",
+                    "defaultValue" : ""
+                },
+                {
+                    "id": "synchSeries",
+                    "type": "selection",
+                    "label": "Synch Series",
+                    "values": [
+                        "True",
+                        "False"
+                    ],
+                    "defaultValue": "True"
+                },
+                {
+                    "id" : "showLabels",
+                    "type" : "selection",
+                    "label" : "Show Labels",
+                    "values" : [
+                        "True",
+                        "False"
+                    ],
+                    "defaultValue" : "False"
+                }
+            ]
+        }
+    ],
+    "data": {
+        "structure": {
+            "nest": {
+                "key": {
+                    "id": "${gridSeries}",
+                    "sort": {
+                        "direction": "${sortGridSeries}",
+                        "enabled": "true"
+                    }
+                },
+                "nest": {
+                    "key": {
+                        "id": "${series}",
+                        "sort": {
+                            "direction": "${sortSeries}",
+                            "enabled": "true"
+                        }
+                    },
+                    "values": {
+                        "fields": [
+                            {
+                                "id": "${name}",
+                                "sort": {
+                                    "direction": "Ascending",
+                                    "enabled": "true"
+                                }
+                            },
+                            {
+                                "id": "${value}"
+                            }
+                        ]
+                    },
+                    "limit": {
+                        "enabled": "true",
+                        "size": "${maxSeries}"
+                    }
+                },
+                "limit": {
+                    "enabled": "true",
+                    "size": "${maxGridSeries}"
+                }
+            }
+        }
+    }
+}

@@ -18,7 +18,7 @@ package stroom.servlet;
 
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.DocRefs;
-import stroom.entity.shared.Folder;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.server.ImportExportService;
 import stroom.node.server.StroomPropertyService;
 import stroom.query.api.v2.DocRef;
@@ -69,7 +69,7 @@ public class ExportConfigServlet extends HttpServlet {
                 final Path tempFile = resourceStore.getTempFile(tempResourceKey);
 
                 final DocRefs docRefs = new DocRefs();
-                docRefs.add(new DocRef(Folder.ENTITY_TYPE, "0", "System"));
+                docRefs.add(ExplorerConstants.ROOT_DOC_REF);
 
                 importExportService.exportConfig(docRefs, tempFile, new ArrayList<>());
 

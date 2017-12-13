@@ -19,7 +19,7 @@ package stroom.explorer.client.presenter;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.widget.util.client.SelectionType;
 
 public class EntityChooser extends ExplorerDropDownTreePresenter {
@@ -31,7 +31,7 @@ public class EntityChooser extends ExplorerDropDownTreePresenter {
     }
 
     @Override
-    protected void setSelectedTreeItem(final ExplorerData selectedItem, final SelectionType selectionType, final boolean fireEvents) {
+    protected void setSelectedTreeItem(final ExplorerNode selectedItem, final SelectionType selectionType, final boolean fireEvents) {
         super.setSelectedTreeItem(selectedItem, selectionType, false);
     }
 }

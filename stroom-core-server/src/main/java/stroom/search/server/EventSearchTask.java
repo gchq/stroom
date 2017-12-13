@@ -17,7 +17,6 @@
 package stroom.search.server;
 
 import stroom.query.api.v2.Query;
-import stroom.streamstore.shared.FindStreamCriteria;
 
 public class EventSearchTask extends AbstractSearchTask<EventRefs> {
     private final EventRef minEvent;
@@ -28,10 +27,10 @@ public class EventSearchTask extends AbstractSearchTask<EventRefs> {
 
     private final int resultSendFrequency;
 
-    public EventSearchTask(final String userToken, final FindStreamCriteria streamFilter,
+    public EventSearchTask(final String userToken,
                            final Query query, final EventRef minEvent, final EventRef maxEvent, final long maxStreams,
                            final long maxEvents, final long maxEventsPerStream, final int resultSendFrequency) {
-        super(null, userToken, streamFilter, query);
+        super(null, userToken, query);
         this.minEvent = minEvent;
         this.maxEvent = maxEvent;
         this.maxStreams = maxStreams;

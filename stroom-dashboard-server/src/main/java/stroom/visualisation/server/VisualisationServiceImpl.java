@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.visualisation.server;
@@ -19,6 +20,7 @@ package stroom.visualisation.server;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import stroom.logging.DocumentEventLog;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.ObjectMarshaller;
 import stroom.entity.server.QueryAppender;
@@ -29,7 +31,6 @@ import stroom.security.SecurityContext;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.visualisation.shared.FindVisualisationCriteria;
 import stroom.visualisation.shared.Visualisation;
-import stroom.visualisation.shared.VisualisationService;
 
 import javax.inject.Inject;
 
@@ -39,7 +40,9 @@ import javax.inject.Inject;
 public class VisualisationServiceImpl extends DocumentEntityServiceImpl<Visualisation, FindVisualisationCriteria>
         implements VisualisationService {
     @Inject
-    VisualisationServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext) {
+    VisualisationServiceImpl(final StroomEntityManager entityManager,
+                             final ImportExportHelper importExportHelper,
+                             final SecurityContext securityContext) {
         super(entityManager, importExportHelper, securityContext);
     }
 

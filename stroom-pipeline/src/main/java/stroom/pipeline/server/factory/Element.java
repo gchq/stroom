@@ -19,6 +19,7 @@ package stroom.pipeline.server.factory;
 import java.util.List;
 
 public interface Element extends HasElementId {
+
     /**
      * Called just before a pipeline begins processing.
      */
@@ -47,4 +48,10 @@ public interface Element extends HasElementId {
      * @return A list of processors.
      */
     List<Processor> createProcessors();
+
+    /**
+     * Set an object to check for early process termination.
+     * @param terminator An object to check for early process termination.
+     */
+    void setTerminator(Terminator terminator);
 }

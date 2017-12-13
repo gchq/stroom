@@ -20,8 +20,6 @@ import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.Entity;
-import stroom.entity.shared.FindDocumentEntityCriteria;
-import stroom.entity.shared.FindFolderCriteria;
 import stroom.entity.shared.FindNamedEntityCriteria;
 
 import java.util.List;
@@ -38,23 +36,6 @@ public class QueryAppender<E extends Entity, C extends BaseCriteria> {
     }
 
     protected void appendBasicCriteria(final HqlBuilder sql, final String alias, final C criteria) {
-        if (criteria instanceof FindDocumentEntityCriteria) {
-            final FindDocumentEntityCriteria findDocumentEntityCriteria = (FindDocumentEntityCriteria) criteria;
-            if (findDocumentEntityCriteria instanceof FindFolderCriteria) {
-                final FindFolderCriteria findFolderCriteria = (FindFolderCriteria) findDocumentEntityCriteria;
-                if (findFolderCriteria.isSelf()) {
-                    sql.appendEntityIdSetQuery(alias, findFolderCriteria.getFolderIdSet());
-                } else {
-                    UserManagerQueryUtil.appendFolderCriteria(findDocumentEntityCriteria.getFolderIdSet(),
-                            alias + ".folder", sql, entityManager);
-                }
-
-            } else {
-                UserManagerQueryUtil.appendFolderCriteria(findDocumentEntityCriteria.getFolderIdSet(), alias + ".folder",
-                        sql, entityManager);
-            }
-        }
-
         if (criteria instanceof FindNamedEntityCriteria) {
             final FindNamedEntityCriteria findNamedEntityCriteria = (FindNamedEntityCriteria) criteria;
             sql.appendValueQuery(alias + ".name", findNamedEntityCriteria.getName());

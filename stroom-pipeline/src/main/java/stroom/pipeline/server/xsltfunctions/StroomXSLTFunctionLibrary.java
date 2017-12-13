@@ -27,12 +27,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StroomXSLTFunctionLibrary {
-    private final Configuration config;
     private final List<DelegateExtensionFunctionCall> callsInUse = new ArrayList<>();
 
     public StroomXSLTFunctionLibrary(final Configuration config) {
-        this.config = config;
-
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
                 .functionName("bitmap-lookup")
                 .library(this)
@@ -52,21 +49,21 @@ public class StroomXSLTFunctionLibrary {
                 .functionName("classification")
                 .library(this)
                 .delegateClass(Classification.class)
-                .resultType(SequenceType.SINGLE_STRING)
+                .resultType(SequenceType.OPTIONAL_STRING)
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
                 .functionName("current-time")
                 .library(this)
                 .delegateClass(CurrentTime.class)
-                .resultType(SequenceType.SINGLE_STRING)
+                .resultType(SequenceType.OPTIONAL_STRING)
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
                 .functionName("current-user")
                 .library(this)
                 .delegateClass(CurrentUser.class)
-                .resultType(SequenceType.SINGLE_STRING)
+                .resultType(SequenceType.OPTIONAL_STRING)
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
@@ -98,7 +95,7 @@ public class StroomXSLTFunctionLibrary {
                 .functionName("feed-name")
                 .library(this)
                 .delegateClass(FeedName.class)
-                .resultType(SequenceType.SINGLE_STRING)
+                .resultType(SequenceType.OPTIONAL_STRING)
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
@@ -127,7 +124,7 @@ public class StroomXSLTFunctionLibrary {
                         SequenceType.OPTIONAL_STRING,
                         SequenceType.OPTIONAL_STRING
                 })
-                .resultType(SequenceType.SINGLE_STRING)
+                .resultType(SequenceType.OPTIONAL_STRING)
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
@@ -142,7 +139,7 @@ public class StroomXSLTFunctionLibrary {
                         SequenceType.SINGLE_STRING
                 })
                 .delegateClass(GenerateURL.class)
-                .resultType(SequenceType.SINGLE_STRING)
+                .resultType(SequenceType.OPTIONAL_STRING)
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
@@ -218,7 +215,7 @@ public class StroomXSLTFunctionLibrary {
                 .argTypes(new SequenceType[]{
                         SequenceType.SINGLE_STRING
                 })
-                .resultType(SequenceType.SINGLE_STRING)
+                .resultType(SequenceType.OPTIONAL_STRING)
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
@@ -232,14 +229,14 @@ public class StroomXSLTFunctionLibrary {
                 .functionName("search-id")
                 .library(this)
                 .delegateClass(SearchId.class)
-                .resultType(SequenceType.SINGLE_STRING)
+                .resultType(SequenceType.OPTIONAL_STRING)
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
                 .functionName("stream-id")
                 .library(this)
                 .delegateClass(StreamId.class)
-                .resultType(SequenceType.SINGLE_STRING)
+                .resultType(SequenceType.OPTIONAL_STRING)
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
@@ -251,7 +248,7 @@ public class StroomXSLTFunctionLibrary {
                 .argTypes(new SequenceType[]{
                         SequenceType.SINGLE_STRING
                 })
-                .resultType(SequenceType.SINGLE_STRING)
+                .resultType(SequenceType.OPTIONAL_STRING)
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
@@ -263,14 +260,14 @@ public class StroomXSLTFunctionLibrary {
                 .argTypes(new SequenceType[]{
                         SequenceType.SINGLE_STRING
                 })
-                .resultType(SequenceType.SINGLE_STRING)
+                .resultType(SequenceType.OPTIONAL_STRING)
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
                 .functionName("pipeline-name")
                 .library(this)
                 .delegateClass(PipelineName.class)
-                .resultType(SequenceType.SINGLE_STRING)
+                .resultType(SequenceType.OPTIONAL_STRING)
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()

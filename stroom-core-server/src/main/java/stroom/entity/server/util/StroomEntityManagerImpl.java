@@ -73,21 +73,19 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
                                    final Provider<StroomDatabaseInfo> stroomDatabaseInfoProvider) {
         this.eventBusProvider = eventBusProvider;
         this.stroomDatabaseInfoProvider = stroomDatabaseInfoProvider;
+    }
 
-        // Ensure that all base entities record the create and update user ids.
-        AuditedEntity.setCurrentUserResolver(() -> {
-            try {
-                if (beanFactory != null) {
-                    final SecurityContext securityContext = beanFactory.getBean(SecurityContext.class);
-                    if (securityContext != null) {
-                        return securityContext.getUserId();
-                    }
-                }
-                return null;
-            } catch (final Exception ex) {
-                return null;
+    private String getCurrentUser() {
+        try {
+            final SecurityContext securityContext = beanFactory.getBean(SecurityContext.class);
+            if (securityContext != null) {
+                return securityContext.getUserId();
             }
-        });
+        } catch (final Exception e) {
+            LOGGER.debug(e.getMessage(), e);
+        }
+
+        return null;
     }
 
     @Override
@@ -111,6 +109,17 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
     }
 
     private <T extends Entity> T internalSaveEntity(final T entity, final boolean performChecksAndEvents) {
+        if (entity instanceof AuditedEntity) {
+            final AuditedEntity auditedEntity = (AuditedEntity) entity;
+            final long now = System.currentTimeMillis();
+            if (!entity.isPersistent()) {
+                auditedEntity.setCreateTime(now);
+                auditedEntity.setCreateUser(getCurrentUser());
+            }
+            auditedEntity.setUpdateTime(now);
+            auditedEntity.setUpdateUser(getCurrentUser());
+        }
+
         // Update?
         if (entity.isPersistent()) {
             final Object originalKey = entity.getPrimaryKey();
@@ -426,5 +435,10 @@ public class StroomEntityManagerImpl implements StroomEntityManager, BeanFactory
     @Override
     public void setBeanFactory(final BeanFactory beanFactory) throws BeansException {
         this.beanFactory = beanFactory;
+    }
+
+    @Override
+    public void clearContext() {
+        entityManager.clear();
     }
 }

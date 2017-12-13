@@ -12,23 +12,19 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.streamstore.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
+import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamAttributeCondition;
-import stroom.streamstore.shared.StreamAttributeConstants;
-import stroom.streamstore.shared.StreamAttributeKey;
-import stroom.streamstore.shared.StreamAttributeKeyService;
-import stroom.streamstore.shared.StreamAttributeMapService;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
@@ -44,49 +40,36 @@ public class TestStreamAttributeMapServiceImpl extends AbstractCoreIntegrationTe
     private StreamAttributeValueFlush streamAttributeValueFlush;
     @Resource
     private StreamAttributeMapService streamAttributeMapService;
-    @Resource
-    private StreamAttributeKeyService streamAttributeKeyService;
 
     @Test
     public void testSimple() throws IOException {
         final Feed eventFeed = commonTestScenarioCreator.createSimpleFeed();
-
-        final StreamAttributeKey createTimeAttributeKey = streamAttributeKeyService
-                .find(new FindStreamAttributeKeyCriteria(StreamAttributeConstants.CREATE_TIME)).getFirst();
-        final StreamAttributeKey fileSizeAttributeKey = streamAttributeKeyService
-                .find(new FindStreamAttributeKeyCriteria(StreamAttributeConstants.FILE_SIZE)).getFirst();
 
         final Stream md = commonTestScenarioCreator.createSample2LineRawFile(eventFeed, StreamType.RAW_EVENTS);
 
         streamAttributeValueFlush.flush();
 
         FindStreamAttributeMapCriteria criteria = new FindStreamAttributeMapCriteria();
-        criteria.obtainFindStreamCriteria().obtainStreamIdSet().add(md);
-        criteria.obtainFindStreamCriteria().obtainAttributeConditionList()
-                .add(new StreamAttributeCondition(DocRefUtil.create(createTimeAttributeKey), Condition.EQUALS,
-                        DateUtil.createNormalDateTimeString(md.getCreateMs())));
+        criteria.obtainFindStreamCriteria().obtainSelectedIdSet().add(md.getId());
+        criteria.obtainFindStreamCriteria().setExpression(ExpressionUtil.createSimpleExpression(StreamDataSource.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(md.getCreateMs())));
 
         Assert.assertEquals(1, streamAttributeMapService.find(criteria).size());
 
         criteria = new FindStreamAttributeMapCriteria();
-        criteria.obtainFindStreamCriteria().obtainStreamIdSet().add(md);
-        criteria.obtainFindStreamCriteria().obtainAttributeConditionList()
-                .add(new StreamAttributeCondition(DocRefUtil.create(createTimeAttributeKey), Condition.EQUALS,
-                        DateUtil.createNormalDateTimeString(0L)));
+        criteria.obtainFindStreamCriteria().obtainSelectedIdSet().add(md.getId());
+        criteria.obtainFindStreamCriteria().setExpression(ExpressionUtil.createSimpleExpression(StreamDataSource.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L)));
 
         Assert.assertEquals(0, streamAttributeMapService.find(criteria).size());
 
         criteria = new FindStreamAttributeMapCriteria();
-        criteria.obtainFindStreamCriteria().obtainStreamIdSet().add(md);
-        criteria.obtainFindStreamCriteria().obtainAttributeConditionList().add(new StreamAttributeCondition(
-                DocRefUtil.create(fileSizeAttributeKey), Condition.GREATER_THAN, "0"));
+        criteria.obtainFindStreamCriteria().obtainSelectedIdSet().add(md.getId());
+        criteria.obtainFindStreamCriteria().setExpression(ExpressionUtil.createSimpleExpression(StreamDataSource.FILE_SIZE, Condition.GREATER_THAN, "0"));
 
         Assert.assertEquals(1, streamAttributeMapService.find(criteria).size());
 
         criteria = new FindStreamAttributeMapCriteria();
-        criteria.obtainFindStreamCriteria().obtainStreamIdSet().add(md);
-        criteria.obtainFindStreamCriteria().obtainAttributeConditionList().add(new StreamAttributeCondition(
-                DocRefUtil.create(fileSizeAttributeKey), Condition.BETWEEN, "0,1000000"));
+        criteria.obtainFindStreamCriteria().obtainSelectedIdSet().add(md.getId());
+        criteria.obtainFindStreamCriteria().setExpression(ExpressionUtil.createSimpleExpression(StreamDataSource.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
 
         Assert.assertEquals(1, streamAttributeMapService.find(criteria).size());
     }

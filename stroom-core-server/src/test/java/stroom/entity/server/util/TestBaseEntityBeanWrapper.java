@@ -19,8 +19,8 @@ package stroom.entity.server.util;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.entity.shared.Folder;
 import stroom.feed.shared.Feed;
+import stroom.streamstore.shared.StreamType;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
@@ -34,7 +34,7 @@ public class TestBaseEntityBeanWrapper extends StroomUnitTest {
         final BaseEntityBeanWrapper wrapper = new BaseEntityBeanWrapper(eventFeed);
 
         // Assert.assertTrue(wrapper.isPropertyBaseEntitySet("referenceFeed"));
-        Assert.assertTrue(wrapper.isPropertyBaseEntity("folder"));
+        Assert.assertTrue(wrapper.isPropertyBaseEntity("streamType"));
 
         // Assert.assertEquals(1, eventFeed.getReferenceFeed().size());
         // wrapper.clearPropertySet("referenceFeed");
@@ -47,7 +47,7 @@ public class TestBaseEntityBeanWrapper extends StroomUnitTest {
 
         // Assert.assertEquals(Feed.class,
         // wrapper.getPropertyBaseEntityType("referenceFeed"));
-        Assert.assertEquals(Folder.class, wrapper.getPropertyBaseEntityType("folder"));
+        Assert.assertEquals(StreamType.class, wrapper.getPropertyBaseEntityType("streamType"));
 
     }
 }

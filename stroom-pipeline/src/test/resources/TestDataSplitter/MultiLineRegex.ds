@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataSplitter xmlns="data-splitter:3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="data-splitter:3 file://data-splitter-v3.0.xsd" version="3.0">
+  <split delimiter="\n">
+    <group>
+      <regex pattern="(?x)
+&#10;^(.{10})
+&#10;# Stops the regex here - remove this line to fix it
+&#10;(.{5})
+&#10; .+$
+&#10;# Comment here is fine
+ ">
+        <data value="$1"></data>
+        <data value="$2"></data>
+      </regex>
+    </group>
+  </split>
+</dataSplitter>

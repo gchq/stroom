@@ -26,6 +26,8 @@ import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.filter.SafeXMLFilter;
 import stroom.pipeline.server.filter.XMLFilterContentHandlerAdaptor;
+import stroom.util.io.FileUtil;
+import stroom.util.io.StreamUtil;
 import stroom.util.xml.SAXParserFactoryFactory;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -33,10 +35,11 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class Sanitiser {
     private static final SAXParserFactory PARSER_FACTORY;
@@ -46,7 +49,7 @@ public class Sanitiser {
         PARSER_FACTORY.setNamespaceAware(true);
     }
 
-    public Sanitiser(final File in, final File out) {
+    public Sanitiser(final Path in, final Path out) {
         process(in, out);
     }
 
@@ -55,13 +58,14 @@ public class Sanitiser {
             System.out.println("Bad arguments - provide input and output files.");
         }
 
-        new Sanitiser(new File(args[0]), new File(args[1]));
+        new Sanitiser(Paths.get(args[0]), Paths.get(args[1]));
     }
 
-    private void process(final File in, final File out) {
-        try {
+    private void process(final Path in, final Path out) {
+        try (final Reader reader = Files.newBufferedReader(in, StreamUtil.DEFAULT_CHARSET);
+             final Writer writer = Files.newBufferedWriter(out, StreamUtil.DEFAULT_CHARSET)) {
             final TransformerHandler th = XMLUtil.createTransformerHandler(true);
-            th.setResult(new StreamResult(new FileOutputStream(out)));
+            th.setResult(new StreamResult(writer));
 
             SAXParser parser = null;
             try {
@@ -78,10 +82,10 @@ public class Sanitiser {
             final XMLReader xmlReader = parser.getXMLReader();
             xmlReader.setContentHandler(filter);
             xmlReader.setErrorHandler(new ErrorHandlerAdaptor("XMLReader", locationFactory, new FatalErrorReceiver()));
-            xmlReader.parse(new InputSource(new InputStreamReader(new FileInputStream(in), "UTF8")));
+            xmlReader.parse(new InputSource(reader));
 
         } catch (final Exception e) {
-            System.out.println("Error processing file: " + in.getAbsolutePath());
+            System.out.println("Error processing file: " + FileUtil.getCanonicalPath(in));
             e.printStackTrace();
         }
     }

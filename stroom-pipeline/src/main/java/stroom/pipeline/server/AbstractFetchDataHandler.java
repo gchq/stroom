@@ -18,10 +18,10 @@ package stroom.pipeline.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dashboard.server.logging.StreamEventLog;
+import stroom.logging.StreamEventLog;
 import stroom.entity.shared.EntityServiceException;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.io.StreamCloser;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
@@ -38,11 +38,11 @@ import stroom.pipeline.shared.FetchDataAction;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.FetchMarkerResult;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
+import stroom.security.SecurityHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.resource.server.BOMRemovalInputStream;
 import stroom.security.SecurityContext;
@@ -86,7 +86,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
     private final FeedHolder feedHolder;
     private final PipelineHolder pipelineHolder;
     private final StreamHolder streamHolder;
-    private final PipelineEntityService pipelineEntityService;
+    private final PipelineService pipelineService;
     private final PipelineFactory pipelineFactory;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final PipelineDataCache pipelineDataCache;
@@ -105,7 +105,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                              final FeedHolder feedHolder,
                              final PipelineHolder pipelineHolder,
                              final StreamHolder streamHolder,
-                             final PipelineEntityService pipelineEntityService,
+                             final PipelineService pipelineService,
                              final PipelineFactory pipelineFactory,
                              final ErrorReceiverProxy errorReceiverProxy,
                              final PipelineDataCache pipelineDataCache,
@@ -116,7 +116,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
         this.feedHolder = feedHolder;
         this.pipelineHolder = pipelineHolder;
         this.streamHolder = streamHolder;
-        this.pipelineEntityService = pipelineEntityService;
+        this.pipelineService = pipelineService;
         this.pipelineFactory = pipelineFactory;
         this.errorReceiverProxy = errorReceiverProxy;
         this.pipelineDataCache = pipelineDataCache;
@@ -127,10 +127,8 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
     protected AbstractFetchDataResult getData(final Long streamId, final StreamType childStreamType,
                                               final OffsetRange<Long> streamsRange, final OffsetRange<Long> pageRange, final boolean markerMode,
                                               final DocRef pipeline, final boolean showAsHtml, final Severity... expandedSeverities) {
-        try {
-            // Allow users with 'Use' permission to read data, pipelines and XSLT.
-            securityContext.elevatePermissions();
-
+        // Allow users with 'Use' permission to read data, pipelines and XSLT.
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             final StreamCloser streamCloser = new StreamCloser();
             List<StreamType> availableChildStreamTypes;
             Feed feed = null;
@@ -228,8 +226,6 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                     }
                 }
             }
-        } finally {
-            securityContext.restorePermissions();
         }
     }
 
@@ -425,14 +421,14 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
     }
 
     private String usePipeline(final StreamSource streamSource, final String string, final Feed feed,
-                               final DocRef pipelineEntity) throws IOException, TransformerException {
+                               final DocRef pipelineRef) throws IOException, TransformerException {
         String data;
 
         final LoggingErrorReceiver errorReceiver = new LoggingErrorReceiver();
         errorReceiverProxy.setErrorReceiver(errorReceiver);
 
         // Set the pipeline so it can be used by a filter if needed.
-        final PipelineEntity loadedPipeline = pipelineEntityService.loadByUuid(pipelineEntity.getUuid());
+        final PipelineEntity loadedPipeline = pipelineService.loadByUuid(pipelineRef.getUuid());
         if (loadedPipeline == null) {
             throw new EntityServiceException("Unable to load pipeline");
         }

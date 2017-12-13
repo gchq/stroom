@@ -22,7 +22,7 @@ import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import stroom.pool.SecurityHelper;
+import stroom.security.SecurityHelper;
 import stroom.security.SecurityContext;
 import stroom.util.cache.CacheManager;
 
@@ -68,7 +68,7 @@ public final class MapStoreCache {
     }
 
     private MapStore create(final MapStoreCacheKey mapStoreCacheKey) {
-        try (SecurityHelper securityHelper = SecurityHelper.asProcUser(securityContext)) {
+        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
             MapStore mapStore = null;
 
             try {

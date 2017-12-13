@@ -17,11 +17,10 @@
 package stroom.entity.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.dashboard.server.logging.EntityEventLog;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.EntityService;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.EntityServiceSaveAction;
+import stroom.logging.DocumentEventLog;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;
@@ -32,10 +31,10 @@ import javax.inject.Inject;
 @Scope(value = StroomScope.TASK)
 class EntityServiceSaveHandler extends AbstractTaskHandler<EntityServiceSaveAction<BaseEntity>, BaseEntity> {
     private final EntityServiceBeanRegistry beanRegistry;
-    private final EntityEventLog entityEventLog;
+    private final DocumentEventLog entityEventLog;
 
     @Inject
-    EntityServiceSaveHandler(final EntityServiceBeanRegistry beanRegistry, final EntityEventLog entityEventLog) {
+    EntityServiceSaveHandler(final EntityServiceBeanRegistry beanRegistry, final DocumentEventLog entityEventLog) {
         this.beanRegistry = beanRegistry;
         this.entityEventLog = entityEventLog;
     }
@@ -62,18 +61,18 @@ class EntityServiceSaveHandler extends AbstractTaskHandler<EntityServiceSaveActi
                 // Get the before version.
                 final BaseEntity before = entityService.load(entity);
 
-                // Validate the entity name.
-                NameValidationUtil.validate(entityService, before, entity);
+//                // Validate the entity name.
+//                NameValidationUtil.validate(entityService, before, entity);
 
                 result = entityService.save(entity);
-                entityEventLog.update(before, result);
+                entityEventLog.update(before, result, null);
 
             } else {
-                // Validate the entity name.
-                NameValidationUtil.validate(entityService, entity);
+//                // Validate the entity name.
+//                NameValidationUtil.validate(entityService, entity);
 
                 result = entityService.save(entity);
-                entityEventLog.create(result);
+                entityEventLog.create(result, null);
             }
         } catch (final RuntimeException e) {
             if (persistent) {

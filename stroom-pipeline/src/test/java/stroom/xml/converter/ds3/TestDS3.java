@@ -34,7 +34,7 @@ import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.server.filter.MergeFilter;
 import stroom.pipeline.server.filter.SchemaFilter;
 import stroom.test.ComparisonHelper;
-import stroom.test.StroomProcessTestFileUtil;
+import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
@@ -48,17 +48,15 @@ import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -97,32 +95,36 @@ public class TestDS3 extends StroomUnitTest {
     @Test
     public void testProcessAll() throws Exception {
         // Get the testing directory.
-        final File testDir = getTestDir();
-        final File[] files = testDir.listFiles();
-        if (files != null) {
-            for (final File file : files) {
-                if (file.getName().endsWith(".ds2")) {
-                    final String name = file.getName();
-                    String type = null;
-                    String variant = null;
-                    // String extension = null;
+        final Path testDir = getTestDir();
+        List<Path> paths = null;
+        try (final Stream<Path> stream = Files.list(testDir)) {
+            paths = stream
+                    .filter(p -> p.getFileName().toString().endsWith(".ds2"))
+                    .collect(Collectors.toList());
+        }
 
-                    int index = name.lastIndexOf(".");
+        for (final Path path : paths) {
+            final String name = path.getFileName().toString();
+            if (name.endsWith(".ds2")) {
+                String type = null;
+                String variant = null;
+                // String extension = null;
+
+                int index = name.lastIndexOf(".");
+                if (index != -1) {
+                    type = name.substring(0, index);
+                    // extension = name.substring(index + 1);
+
+                    index = type.indexOf("~");
                     if (index != -1) {
-                        type = name.substring(0, index);
-                        // extension = name.substring(index + 1);
-
-                        index = type.indexOf("~");
-                        if (index != -1) {
-                            variant = type.substring(index + 1);
-                            type = type.substring(0, index);
-                        }
+                        variant = type.substring(index + 1);
+                        type = type.substring(0, index);
                     }
+                }
 
-                    // Only process non variants.
-                    if (variant == null) {
-                        positiveTest(type);
-                    }
+                // Only process non variants.
+                if (variant == null) {
+                    positiveTest(type);
                 }
             }
         }
@@ -142,34 +144,34 @@ public class TestDS3 extends StroomUnitTest {
 
     private void test(final String stem, final String testType, final boolean expectedErrors) throws Exception {
         // Get the testing directory.
-        final File testDir = getTestDir();
+        final Path testDir = getTestDir();
 
         LOGGER.info("Testing: " + stem);
 
         boolean zipInput = false;
-        File input = new File(testDir, stem + ".in");
-        if (!input.isFile()) {
-            final File zip = new File(testDir, stem + ".zip");
-            if (zip.isFile()) {
+        Path input = testDir.resolve(stem + ".in");
+        if (!Files.isRegularFile(input)) {
+            final Path zip = testDir.resolve(stem + ".zip");
+            if (Files.isRegularFile(zip)) {
                 input = zip;
                 zipInput = true;
             }
         }
 
-        final File config = new File(testDir, stem + testType + ".ds2");
-        final File out = new File(testDir, stem + testType + ".out");
-        final File outtmp = new File(testDir, stem + testType + ".out_tmp");
-        final File err = new File(testDir, stem + testType + ".err");
-        final File errtmp = new File(testDir, stem + testType + ".err_tmp");
+        final Path config = testDir.resolve(stem + testType + ".ds2");
+        final Path out = testDir.resolve(stem + testType + ".out");
+        final Path outtmp = testDir.resolve(stem + testType + ".out_tmp");
+        final Path err = testDir.resolve(stem + testType + ".err");
+        final Path errtmp = testDir.resolve(stem + testType + ".err_tmp");
 
         // Delete temporary files.
         FileUtil.deleteFile(outtmp);
         FileUtil.deleteFile(errtmp);
 
-        Assert.assertTrue(config.getAbsolutePath() + " does not exist", config.isFile());
-        Assert.assertTrue(input.getAbsolutePath() + " does not exist", input.isFile());
+        Assert.assertTrue(FileUtil.getCanonicalPath(config) + " does not exist", Files.isRegularFile(config));
+        Assert.assertTrue(FileUtil.getCanonicalPath(input) + " does not exist", Files.isRegularFile(input));
 
-        final OutputStream os = new BufferedOutputStream(new FileOutputStream(outtmp));
+        final OutputStream os = new BufferedOutputStream(Files.newOutputStream(outtmp));
 
         // Create an output writer.
         final TransformerHandler th = XMLUtil.createTransformerHandler(true);
@@ -191,8 +193,7 @@ public class TestDS3 extends StroomUnitTest {
                 final StreamLocationFactory locationFactory = new StreamLocationFactory();
                 reader.setErrorHandler(new ErrorHandlerAdaptor("DS3Parser", locationFactory, errorReceiver));
 
-                final FileInputStream inputStream = new FileInputStream(input);
-                final ZipInputStream zipInputStream = new ZipInputStream(inputStream);
+                final ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(input));
                 try {
                     ZipEntry entry = zipInputStream.getNextEntry();
                     long streamNo = 0;
@@ -218,7 +219,7 @@ public class TestDS3 extends StroomUnitTest {
                 final DefaultLocationFactory locationFactory = new DefaultLocationFactory();
                 reader.setErrorHandler(new ErrorHandlerAdaptor("DS3Parser", locationFactory, errorReceiver));
 
-                reader.parse(new InputSource(new BufferedReader(new FileReader(input))));
+                reader.parse(new InputSource(Files.newBufferedReader(input)));
             }
         } catch (final Exception e) {
             e.printStackTrace();
@@ -232,7 +233,7 @@ public class TestDS3 extends StroomUnitTest {
 
         // Write errors.
         if (!errorReceiver.isAllOk()) {
-            final Writer errWriter = new BufferedWriter(new FileWriter(errtmp));
+            final Writer errWriter = Files.newBufferedWriter(errtmp);
 
             for (final Entry<String, Indicators> entry : errorReceiver.getIndicatorsMap().entrySet()) {
                 final Indicators indicators = entry.getValue();
@@ -256,14 +257,14 @@ public class TestDS3 extends StroomUnitTest {
         }
     }
 
-    private File getTestDir() {
+    private Path getTestDir() {
         // Get the testing directory.
-        final File testDataDir = StroomProcessTestFileUtil.getTestResourcesDir();
-        final File testDir = new File(testDataDir, "TestDS3");
+        final Path testDataDir = StroomPipelineTestFileUtil.getTestResourcesDir();
+        final Path testDir = testDataDir.resolve("TestDS3");
         return testDir;
     }
 
-    private XMLReader createReader(final File config) throws Exception {
+    private XMLReader createReader(final Path config) throws Exception {
         final LoggingErrorReceiver errorReceiver = new LoggingErrorReceiver();
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(errorReceiver);
 
@@ -273,7 +274,7 @@ public class TestDS3 extends StroomUnitTest {
         factory.setSchemaFilter(schemaFilter);
 
         final LocationFactory locationFactory = new DefaultLocationFactory();
-        factory.configure(new BufferedReader(new FileReader(config)),
+        factory.configure(Files.newBufferedReader(config),
                 new ErrorHandlerAdaptor("DS3ParserFactory", locationFactory, errorReceiver));
 
         Assert.assertTrue("Configuration of parser failed: " + errorReceiver.getMessage(), errorReceiver.isAllOk());
@@ -283,7 +284,7 @@ public class TestDS3 extends StroomUnitTest {
         return reader;
     }
 
-    private void compareFiles(final File actualFile, final File expectedFile) throws FileNotFoundException {
+    private void compareFiles(final Path actualFile, final Path expectedFile) {
         ComparisonHelper.compareFiles(expectedFile, actualFile);
         // If the files matched then delete the temporary file.
         FileUtil.deleteFile(actualFile);

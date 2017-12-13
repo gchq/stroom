@@ -36,9 +36,8 @@ import stroom.task.server.TaskHandlerBeanRegistry;
 import stroom.task.server.TaskManager;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.SharedObject;
-import stroom.util.shared.UserTokenUtil;
+import stroom.security.UserTokenUtil;
 import stroom.util.task.TaskIdFactory;
-import stroom.util.thread.ThreadScopeContextHolder;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;
@@ -141,10 +140,6 @@ public class DispatchServiceImpl extends RemoteServiceServlet implements Dispatc
     @Override
     protected void service(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
         try {
-            if (!ThreadScopeContextHolder.contextExists()) {
-                throw new IllegalStateException("ThreadScopeContext MUST EXIST");
-            }
-
             SessionListListener.setLastRequest(req);
 
             super.service(req, resp);

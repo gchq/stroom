@@ -23,11 +23,10 @@ import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.EntityIdSet;
-import stroom.streamstore.shared.Stream;
+import stroom.entity.shared.IdSet;
 
 public class ClassificationWrappedStreamPresenter extends ClassificationWrapperPresenter
-        implements HasDataSelectionHandlers<EntityIdSet<Stream>>, HasRead<BaseEntity> {
+        implements HasDataSelectionHandlers<IdSet>, HasRead<BaseEntity> {
     private final StreamPresenter streamPresenter;
 
     @Inject
@@ -46,7 +45,7 @@ public class ClassificationWrappedStreamPresenter extends ClassificationWrapperP
     }
 
     @Override
-    public HandlerRegistration addDataSelectionHandler(DataSelectionHandler<EntityIdSet<Stream>> handler) {
+    public HandlerRegistration addDataSelectionHandler(DataSelectionHandler<IdSet> handler) {
         return streamPresenter.addDataSelectionHandler(handler);
     }
 }

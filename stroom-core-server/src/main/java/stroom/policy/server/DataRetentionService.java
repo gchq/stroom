@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.policy.server;
@@ -20,10 +21,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.util.XMLMarshallerUtil;
-import stroom.policy.shared.DataRetentionPolicy;
-import stroom.policy.shared.FindPolicyCriteria;
-import stroom.policy.shared.Policy;
-import stroom.policy.shared.PolicyService;
+import stroom.ruleset.shared.DataRetentionPolicy;
+import stroom.ruleset.shared.FindPolicyCriteria;
+import stroom.ruleset.shared.Policy;
 
 import javax.inject.Inject;
 import javax.xml.bind.JAXBContext;

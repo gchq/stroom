@@ -1,0 +1,29 @@
+//apply plugin: 'war'
+
+dependencies {
+    compile project(':stroom-core-server')
+    compile project(':stroom-ruleset-server')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-util')
+    compile project(':stroom-security-api')
+    compile project(':stroom-docstore-server')
+
+    compile libs.slf4j_api
+    compile libs.commons_lang
+    compile libs.jackson_annotations
+    compile libs.findbugs_jsr
+
+    compile libs.guice4
+    compile libs.javax_inject
+
+    compile libs.javax_servlet_api
+    compile libs.dropwizard_lifecycle
+
+    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
+    testCompile libs.junit
+}
+//
+//war {
+//    exclude 'WEB-INF/lib/**'
+//    exclude 'WEB-INF/classes/**'
+//}

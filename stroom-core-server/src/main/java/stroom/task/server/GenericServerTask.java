@@ -1,5 +1,6 @@
 package stroom.task.server;
 
+import stroom.security.UserTokenUtil;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
 import stroom.util.task.ServerTask;
@@ -16,13 +17,13 @@ public final class GenericServerTask extends ServerTask<VoidResult> {
     }
 
     public static GenericServerTask create(final String taskName, final String message) {
-        return new GenericServerTask(null, ServerTask.INTERNAL_PROCESSING_USER_TOKEN, taskName, message);
+        return new GenericServerTask(null, UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, taskName, message);
     }
 
     public static GenericServerTask create(final Task<?> parentTask,
                                            final String taskName, final String message) {
         if (parentTask == null) {
-            return new GenericServerTask(null, ServerTask.INTERNAL_PROCESSING_USER_TOKEN, taskName, message);
+            return new GenericServerTask(null, UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, taskName, message);
         }
 
         return new GenericServerTask(parentTask, parentTask.getUserToken(), taskName, message);

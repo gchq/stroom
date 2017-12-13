@@ -92,15 +92,15 @@ public final class DocumentPermissionNames {
         // Constants
     }
 
-    public static final String getDocumentCreatePermission(final String docType) {
+    public static String getDocumentCreatePermission(final String docType) {
         return CREATE + " - " + docType;
     }
 
-    public static final String getLowerPermission(final String permission) {
+    public static String getLowerPermission(final String permission) {
         return LOWER_PERMISSIONS.get(permission);
     }
 
-    public static final String getHigherPermission(final String permission) {
+    public static String getHigherPermission(final String permission) {
         return HIGHER_PERMISSIONS.get(permission);
     }
 

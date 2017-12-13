@@ -17,25 +17,26 @@
 package stroom.pipeline.shared;
 
 import stroom.entity.shared.Action;
+import stroom.query.api.v2.DocRef;
 import stroom.util.shared.VoidResult;
 
 public class SavePipelineXMLAction extends Action<VoidResult> {
     private static final long serialVersionUID = -1773544031158236156L;
 
-    private long pipelineId;
+    private DocRef pipeline;
     private String xml;
 
     public SavePipelineXMLAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public SavePipelineXMLAction(final long pipelineId, final String xml) {
-        this.pipelineId = pipelineId;
+    public SavePipelineXMLAction(final DocRef pipeline, final String xml) {
+        this.pipeline = pipeline;
         this.xml = xml;
     }
 
-    public long getPipelineId() {
-        return pipelineId;
+    public DocRef getPipeline() {
+        return pipeline;
     }
 
     public String getXml() {

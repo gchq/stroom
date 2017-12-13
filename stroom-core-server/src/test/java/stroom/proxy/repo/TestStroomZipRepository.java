@@ -1,27 +1,22 @@
 package stroom.proxy.repo;
 
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import stroom.feed.MetaMap;
+import stroom.util.io.FileUtil;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.HashSet;
 import java.util.stream.Stream;
 
 public class TestStroomZipRepository {
-    @Before
-    public void setup() throws IOException {
-        TestUtil.clearTestDir();
-    }
-
     @Test
     public void testScan() throws IOException {
-        final String repoDir = TestUtil.getCurrentTestPath().toAbsolutePath().toString() + File.separator + "repo1";
+        final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo1"));
 
         final StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, null, true, 100);
 
@@ -58,12 +53,12 @@ public class TestStroomZipRepository {
         }
 
         Assert.assertTrue(reopenStroomZipRepository.deleteIfEmpty());
-        Assert.assertFalse("Deleted REPO", new File(repoDir).isDirectory());
+        Assert.assertFalse("Deleted REPO", Files.isDirectory(Paths.get(repoDir)));
     }
 
     @Test
     public void testClean() throws IOException {
-        final String repoDir = TestUtil.getCurrentTestPath().toAbsolutePath().toString() + File.separator + "repo2";
+        final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo2"));
 
         StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, null, false, 10000);
 
@@ -109,7 +104,7 @@ public class TestStroomZipRepository {
         // template should be case insensitive as far as key names go as the metamap is case insensitive
         final String repositoryFormat = "${id}_${FEED}_${key2}_${kEy1}_${Key3}";
 
-        final String repoDir = TestUtil.getCurrentTestPath().toAbsolutePath().toString() + File.separator + "repo3";
+        final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo3"));
         StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, repositoryFormat, false, 10000);
 
         MetaMap metaMap = new MetaMap();
@@ -142,7 +137,7 @@ public class TestStroomZipRepository {
         metaMap.put("key1", "myKey1");
 
         final String repositoryFormat = "%{id}_${id}_${FEED}_${kEy1}";
-        final String repoDir = TestUtil.getCurrentTestPath().toAbsolutePath().toString() + File.separator + "repo3";
+        final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo3"));
 
         final StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, repositoryFormat, false, 10000);
         final StroomZipOutputStreamImpl out1 = (StroomZipOutputStreamImpl) stroomZipRepository.getStroomZipOutputStream(metaMap);

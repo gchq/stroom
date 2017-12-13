@@ -15,8 +15,9 @@
  */
 
 dependencies {
-    compile project(':stroom-core-server')
     compile project(':stroom-entity-shared')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-core-server')
     compile project(':stroom-security-api')
     compile project(':stroom-security-shared')
     compile project(':stroom-util')
@@ -31,7 +32,6 @@ dependencies {
     compile libs.hibernate_jpa_api
     compile libs.jBCrypt
     compile libs.jackson_annotations
-    compile libs.javax_annotation_api
     compile libs.javax_annotation_api
     compile libs.javax_inject
     compile libs.javax_servlet_api
@@ -50,9 +50,12 @@ dependencies {
     compile libs.swagger_annotations
     compile libs.ws_rs_api
 
+    // Do not remove this as it is needed by Spring to send emails.
+    compile libs.javax_mail_api
+    permitUnusedDeclared libs.javax_mail_api
+
     runtime libs.shiro_aspectj
 
-    testCompile project(path: ':stroom-entity-shared', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
 

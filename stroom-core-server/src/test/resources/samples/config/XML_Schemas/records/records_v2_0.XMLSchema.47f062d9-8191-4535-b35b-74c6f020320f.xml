@@ -1,0 +1,10 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<xmlSchema>
+   <deprecated>false</deprecated>
+   <description/>
+   <name>records v2.0</name>
+   <namespaceURI>records:2</namespaceURI>
+   <schemaGroup>RECORDS</schemaGroup>
+   <systemId>file://records-v2.0.xsd</systemId>
+   <uuid>47f062d9-8191-4535-b35b-74c6f020320f</uuid>
+</xmlSchema>

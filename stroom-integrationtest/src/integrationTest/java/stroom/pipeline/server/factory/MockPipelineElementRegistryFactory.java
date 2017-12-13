@@ -91,7 +91,7 @@ public class MockPipelineElementRegistryFactory implements ElementRegistryFactor
                 return (T) new XMLParser(null, null);
             }
             if (elementClass.equals(RecordCountFilter.class)) {
-                return (T) new RecordCountFilter();
+                return (T) new RecordCountFilter(null, null);
             }
             if (elementClass.equals(SplitFilter.class)) {
                 return (T) new SplitFilter();
@@ -104,16 +104,16 @@ public class MockPipelineElementRegistryFactory implements ElementRegistryFactor
                         new SchemaFilter(null, null, null, new LocationFactoryProxy(), new PipelineContext()), null);
             }
             if (elementClass.equals(RecordOutputFilter.class)) {
-                return (T) new RecordOutputFilter();
+                return (T) new RecordOutputFilter(null);
             }
             if (elementClass.equals(XMLWriter.class)) {
                 return (T) new XMLWriter();
             }
             if (elementClass.equals(JSONWriter.class)) {
-                return (T) new JSONWriter();
+                return (T) new JSONWriter(null);
             }
             if (elementClass.equals(TextWriter.class)) {
-                return (T) new TextWriter();
+                return (T) new TextWriter(null);
             }
             if (elementClass.equals(StreamAppender.class)) {
                 return (T) new StreamAppender(null, null, null, null, null, null, null, null);

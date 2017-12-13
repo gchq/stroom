@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.streamtask.server;
@@ -22,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.SystemEntityServiceImpl;
-import stroom.entity.server.UserManagerQueryUtil;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.pipeline.shared.PipelineEntity;
@@ -30,7 +30,6 @@ import stroom.security.Insecure;
 import stroom.security.Secured;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamProcessorService;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -65,7 +64,6 @@ public class StreamProcessorServiceImpl extends SystemEntityServiceImpl<StreamPr
     @Override
     public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindStreamProcessorCriteria criteria) {
         CriteriaLoggingUtil.appendEntityIdSet(items, "pipelineIdSet", criteria.getPipelineIdSet());
-        CriteriaLoggingUtil.appendEntityIdSet(items, "folderIdSet", criteria.getFolderIdSet());
         super.appendCriteria(items, criteria);
     }
 
@@ -83,7 +81,7 @@ public class StreamProcessorServiceImpl extends SystemEntityServiceImpl<StreamPr
         protected void appendBasicJoin(final HqlBuilder sql, final String alias, final Set<String> fetchSet) {
             super.appendBasicJoin(sql, alias, fetchSet);
             if (fetchSet != null && fetchSet.contains(PipelineEntity.ENTITY_TYPE)) {
-                sql.append(" LEFT	OUTER JOIN FETCH ");
+                sql.append(" LEFT OUTER JOIN FETCH ");
                 sql.append(alias);
                 sql.append(".pipeline");
             }
@@ -94,9 +92,6 @@ public class StreamProcessorServiceImpl extends SystemEntityServiceImpl<StreamPr
                                            final FindStreamProcessorCriteria criteria) {
             super.appendBasicCriteria(sql, entityName, criteria);
             sql.appendEntityIdSetQuery(entityName + ".pipeline", criteria.getPipelineIdSet());
-
-            UserManagerQueryUtil.appendFolderCriteria(criteria.getFolderIdSet(), entityName + ".pipeline.folder", sql,
-                    getEntityManager());
         }
     }
 }

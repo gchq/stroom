@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,14 @@ package stroom.index.server;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import stroom.logging.DocumentEventLog;
 import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.DocumentEntityServiceImpl;
+import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
-import stroom.index.shared.IndexService;
 import stroom.security.SecurityContext;
 import stroom.util.spring.StroomSpringProfiles;
 
@@ -37,7 +38,9 @@ import javax.inject.Inject;
 @AutoMarshal
 public class IndexServiceImpl extends DocumentEntityServiceImpl<Index, FindIndexCriteria> implements IndexService {
     @Inject
-    IndexServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext) {
+    IndexServiceImpl(final StroomEntityManager entityManager,
+                     final ImportExportHelper importExportHelper,
+                     final SecurityContext securityContext) {
         super(entityManager, importExportHelper, securityContext);
     }
 
@@ -49,5 +52,31 @@ public class IndexServiceImpl extends DocumentEntityServiceImpl<Index, FindIndex
     @Override
     public FindIndexCriteria createCriteria() {
         return new FindIndexCriteria();
+    }
+
+    @Override
+    protected QueryAppender<Index, FindIndexCriteria> createQueryAppender(final StroomEntityManager entityManager) {
+        return new IndexQueryAppender(entityManager);
+    }
+
+    private static class IndexQueryAppender extends QueryAppender<Index, FindIndexCriteria> {
+        private final IndexMarshaller marshaller;
+
+        IndexQueryAppender(final StroomEntityManager entityManager) {
+            super(entityManager);
+            marshaller = new IndexMarshaller();
+        }
+
+        @Override
+        protected void preSave(final Index entity) {
+            super.preSave(entity);
+            marshaller.marshal(entity);
+        }
+
+        @Override
+        protected void postLoad(final Index entity) {
+            marshaller.unmarshal(entity);
+            super.postLoad(entity);
+        }
     }
 }

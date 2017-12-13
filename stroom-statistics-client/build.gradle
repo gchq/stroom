@@ -9,6 +9,6 @@ dependencies {
 
     compile libs.gwt_user
     compile libs.gin
-    compile libs.guice
+    compile libs.guice3
     compile libs.gwtp_mvp_client
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,26 +27,22 @@ import stroom.pipeline.server.factory.PipelineDataCache;
 import stroom.pipeline.server.factory.PipelineFactory;
 import stroom.pipeline.server.parser.CombinedParser;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
-import stroom.pipeline.shared.TextConverterService;
 import stroom.pipeline.shared.XSLT;
-import stroom.pipeline.shared.XSLTService;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.RecordCount;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.ComparisonHelper;
-import stroom.test.PipelineTestUtil;
-import stroom.test.StroomProcessTestFileUtil;
+import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Path;
 
 public class TestXMLTransformer extends AbstractProcessIntegrationTest {
     private static final String DIR = "TestXMLTransformer/";
@@ -80,9 +76,7 @@ public class TestXMLTransformer extends AbstractProcessIntegrationTest {
     @Resource
     private TextConverterService textConverterService;
     @Resource
-    private PipelineEntityService pipelineEntityService;
-    @Resource
-    private PipelineMarshaller pipelineMarshaller;
+    private PipelineService pipelineService;
     @Resource
     private PipelineDataCache pipelineDataCache;
     @Resource
@@ -136,46 +130,46 @@ public class TestXMLTransformer extends AbstractProcessIntegrationTest {
 
     private PipelineEntity createFragmentPipeline() {
         // Create a record for the TextConverter.
-        final InputStream textConverterInputStream = StroomProcessTestFileUtil.getInputStream(FRAGMENT_WRAPPER);
-        TextConverter textConverter = textConverterService.create(null, "Test Text Converter");
+        final InputStream textConverterInputStream = StroomPipelineTestFileUtil.getInputStream(FRAGMENT_WRAPPER);
+        TextConverter textConverter = textConverterService.create("Test Text Converter");
         textConverter.setConverterType(TextConverterType.XML_FRAGMENT);
         textConverter.setData(StreamUtil.streamToString(textConverterInputStream));
         textConverter = textConverterService.save(textConverter);
 
         // Get the pipeline config.
-        final String data = StroomProcessTestFileUtil.getString(FRAGMENT_PIPELINE);
-        final PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineEntityService, pipelineMarshaller, data);
+        final String data = StroomPipelineTestFileUtil.getString(FRAGMENT_PIPELINE);
+        final PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService, data);
         pipelineEntity.getPipelineData().addProperty(
                 PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", textConverter));
         pipelineEntity.setParentPipeline(DocRefUtil.create(createTransformerPipeline()));
-        return pipelineEntityService.save(pipelineEntity);
+        return pipelineService.save(pipelineEntity);
     }
 
     private PipelineEntity createTransformerPipeline() {
         // Create a record for the XSLT.
-        final InputStream xsltInputStream = StroomProcessTestFileUtil.getInputStream(XSLT_PATH);
-        XSLT xslt = xsltService.create(null, "Test XSLT");
+        final InputStream xsltInputStream = StroomPipelineTestFileUtil.getInputStream(XSLT_PATH);
+        XSLT xslt = xsltService.create("Test XSLT");
         xslt.setData(StreamUtil.streamToString(xsltInputStream));
         xslt = xsltService.save(xslt);
 
         // Get the pipeline config.
-        final String data = StroomProcessTestFileUtil.getString(TRANSFORMER_PIPELINE);
-        final PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineEntityService, pipelineMarshaller, data);
+        final String data = StroomPipelineTestFileUtil.getString(TRANSFORMER_PIPELINE);
+        final PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService, data);
         pipelineEntity.getPipelineData()
                 .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xslt));
-        return pipelineEntityService.save(pipelineEntity);
+        return pipelineService.save(pipelineEntity);
     }
 
     private void test(final PipelineEntity pipelineEntity, final String inputResource, final String encoding)
             throws Exception {
-        final File tempDir = getCurrentTestDir();
+        final Path tempDir = getCurrentTestDir();
 
         // Make sure the config dir is set.
-        System.setProperty("stroom.temp", tempDir.getCanonicalPath());
+        System.setProperty("stroom.temp", FileUtil.getCanonicalPath(tempDir));
 
         // Delete any output file.
-        final File outputFile = new File(tempDir, "TestXMLTransformer.xml");
-        final File outputLockFile = new File(tempDir, "TestXMLTransformer.xml.lock");
+        final Path outputFile = tempDir.resolve("TestXMLTransformer.xml");
+        final Path outputLockFile = tempDir.resolve("TestXMLTransformer.xml.lock");
         FileUtil.deleteFile(outputFile);
         FileUtil.deleteFile(outputLockFile);
 
@@ -188,7 +182,7 @@ public class TestXMLTransformer extends AbstractProcessIntegrationTest {
         final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
         // Get the input stream.
-        final InputStream inputStream = StroomProcessTestFileUtil.getInputStream(inputResource);
+        final InputStream inputStream = StroomPipelineTestFileUtil.getInputStream(inputResource);
 
         pipeline.startProcessing();
 
@@ -212,7 +206,7 @@ public class TestXMLTransformer extends AbstractProcessIntegrationTest {
             Assert.fail(loggingErrorReceiver.toString());
         }
 
-        final File refFile = StroomProcessTestFileUtil.getTestResourcesFile(REFERENCE);
+        final Path refFile = StroomPipelineTestFileUtil.getTestResourcesFile(REFERENCE);
         ComparisonHelper.compareFiles(refFile, outputFile);
     }
 }

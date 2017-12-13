@@ -23,10 +23,10 @@ import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
-import java.io.FileInputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryUsage;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -94,7 +94,7 @@ public class NodeStatusServiceUtil {
      */
     protected String readSystemStatsInfo() {
         try {
-            return StreamUtil.streamToString(new FileInputStream("/proc/stat"));
+            return StreamUtil.fileToString(Paths.get("/proc/stat"));
         } catch (Exception ex) {
             return null;
         }

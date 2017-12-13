@@ -26,9 +26,10 @@ import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * A file system implementation of StreamSource.
@@ -41,7 +42,7 @@ public final class FileSystemStreamSource implements StreamSource {
     private StreamType streamType;
     private MetaMap attributeMap;
     private InputStream inputStream;
-    private File file;
+    private Path file;
     private FileSystemStreamSource parent;
 
     private FileSystemStreamSource(final Stream stream, final StreamVolume volume, final StreamType streamType) {
@@ -52,7 +53,7 @@ public final class FileSystemStreamSource implements StreamSource {
         validate();
     }
 
-    private FileSystemStreamSource(final FileSystemStreamSource parent, final StreamType streamType, final File file) {
+    private FileSystemStreamSource(final FileSystemStreamSource parent, final StreamType streamType, final Path file) {
         this.stream = parent.stream;
         this.volume = parent.volume;
         this.parent = parent;
@@ -83,7 +84,7 @@ public final class FileSystemStreamSource implements StreamSource {
         streamCloser.close();
     }
 
-    public File getFile() {
+    public Path getFile() {
         if (file == null) {
             if (parent == null) {
                 file = FileSystemStreamTypeUtil.createRootStreamFile(volume.getVolume(), stream, getType());
@@ -124,9 +125,9 @@ public final class FileSystemStreamSource implements StreamSource {
 
     @Override
     public StreamSource getChildStream(final StreamType type) {
-        File childFile = FileSystemStreamTypeUtil.createChildStreamFile(getFile(), type);
+        Path childFile = FileSystemStreamTypeUtil.createChildStreamFile(getFile(), type);
         boolean lazy = type.isStreamTypeLazy();
-        boolean isFile = childFile.isFile();
+        boolean isFile = Files.isRegularFile(childFile);
         if (lazy || isFile) {
             final FileSystemStreamSource child = new FileSystemStreamSource(this, type, childFile);
             streamCloser.add(child);

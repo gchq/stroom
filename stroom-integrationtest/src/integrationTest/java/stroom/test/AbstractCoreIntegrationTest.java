@@ -18,10 +18,13 @@ package stroom.test;
 
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import stroom.dashboard.server.logging.spring.EventLoggingConfiguration;
+import stroom.logging.spring.EventLoggingConfiguration;
 import stroom.dashboard.spring.DashboardConfiguration;
+import stroom.dictionary.spring.DictionaryConfiguration;
+import stroom.explorer.server.ExplorerConfiguration;
 import stroom.index.spring.IndexConfiguration;
 import stroom.pipeline.spring.PipelineConfiguration;
+import stroom.ruleset.spring.RuleSetConfiguration;
 import stroom.script.spring.ScriptConfiguration;
 import stroom.search.spring.SearchConfiguration;
 import stroom.security.spring.SecurityConfiguration;
@@ -45,12 +48,15 @@ import stroom.visualisation.spring.VisualisationConfiguration;
         IndexConfiguration.class,
         MetaDataStatisticConfiguration.class,
         PersistenceConfiguration.class,
+        DictionaryConfiguration.class,
         PipelineConfiguration.class,
+        RuleSetConfiguration.class,
         ScopeConfiguration.class,
         ScopeTestConfiguration.class,
         ScriptConfiguration.class,
         SearchConfiguration.class,
         SecurityConfiguration.class,
+        ExplorerConfiguration.class,
         ServerComponentScanTestConfiguration.class,
         ServerConfiguration.class,
         StatisticsConfiguration.class,

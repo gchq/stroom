@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.search.server;
@@ -23,13 +24,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import stroom.dashboard.expression.v1.FieldIndexMap;
-import stroom.dictionary.shared.DictionaryService;
+import stroom.dictionary.server.DictionaryStore;
+import stroom.index.server.IndexService;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
-import stroom.index.shared.IndexService;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.MessageUtil;
+import stroom.security.SecurityHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Param;
@@ -100,7 +102,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Search Result Sender", 5, 0, Integer.MAX_VALUE);
 
     private final IndexService indexService;
-    private final DictionaryService dictionaryService;
+    private final DictionaryStore dictionaryStore;
     private final TaskContext taskContext;
     private final CoprocessorFactory coprocessorFactory;
     private final IndexShardSearchTaskExecutor indexShardSearchTaskExecutor;
@@ -114,7 +116,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     private final int maxStoredDataQueueSize;
     private final LinkedBlockingQueue<String> errors = new LinkedBlockingQueue<>();
     private final AtomicBoolean searchComplete = new AtomicBoolean();
-    private final AtomicBoolean sendingComplete = new AtomicBoolean();
+    private final AtomicBoolean sendingData = new AtomicBoolean();
     private final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider;
     private final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider;
     private final ExecutorProvider executorProvider;
@@ -125,7 +127,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
     @Inject
     ClusterSearchTaskHandler(final IndexService indexService,
-                             final DictionaryService dictionaryService,
+                             final DictionaryStore dictionaryStore,
                              final TaskContext taskContext,
                              final CoprocessorFactory coprocessorFactory,
                              final IndexShardSearchTaskExecutor indexShardSearchTaskExecutor,
@@ -141,7 +143,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                              final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider,
                              final ExecutorProvider executorProvider) {
         this.indexService = indexService;
-        this.dictionaryService = dictionaryService;
+        this.dictionaryStore = dictionaryStore;
         this.taskContext = taskContext;
         this.coprocessorFactory = coprocessorFactory;
         this.indexShardSearchTaskExecutor = indexShardSearchTaskExecutor;
@@ -160,9 +162,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
     @Override
     public void exec(final ClusterSearchTask task, final TaskCallback<NodeResult> callback) {
-        try {
-            securityContext.elevatePermissions();
-
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             if (!taskContext.isTerminated()) {
                 taskContext.info("Initialising...");
 
@@ -271,12 +271,10 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
                 // Now we must wait for results to be sent to the requesting node.
                 taskContext.info("Sending final results");
-                while (!task.isTerminated() && !sendingComplete.get()) {
+                while (!task.isTerminated() && sendingData.get()) {
                     ThreadUtil.sleep(1000);
                 }
             }
-        } finally {
-            securityContext.restorePermissions();
         }
     }
 
@@ -328,11 +326,12 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
         };
 
         // Run the sending code asynchronously.
+        sendingData.set(true);
         CompletableFuture.supplyAsync(supplier, executor)
                 .thenAccept(complete -> {
                     if (complete) {
                         // We have sent the last data we were expected to so tell the parent cluster search that we have finished sending data.
-                        sendingComplete.set(true);
+                        sendingData.set(false);
 
                     } else {
                         // If we aren't complete then send more using the supplied sending frequency.
@@ -394,7 +393,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                         SearchExpressionQuery query = null;
                         try {
                             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
-                                    dictionaryService, indexFieldsMap, maxBooleanClauseCount, task.getDateTimeLocale(), task.getNow());
+                                    dictionaryStore, indexFieldsMap, maxBooleanClauseCount, task.getDateTimeLocale(), task.getNow());
                             query = searchExpressionQueryBuilder.buildQuery(version, expression);
 
                             // Make sure the query was created successfully.
@@ -467,16 +466,15 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                             extractionTaskProperties.getMaxThreadsPerTask(),
                             executorProvider,
                             extractionTaskHandlerProvider,
-                            indexShardSearchTaskProducer,
-                            taskContext);
+                            indexShardSearchTaskProducer);
 
                     // Wait for completion.
                     while (!indexShardSearchTaskProducer.isComplete() || !extractionTaskProducer.isComplete()) {
                         taskContext.info(
                                 "Searching... " +
-                                        indexShardSearchTaskProducer.remainingTasks() +
+                                        indexShardSearchTaskProducer.getRemainingTasks() +
                                         " shards and " +
-                                        extractionTaskProducer.remainingTasks() +
+                                        extractionTaskProducer.getRemainingTasks() +
                                         " extractions remaining");
 
                         ThreadUtil.sleep(1000);

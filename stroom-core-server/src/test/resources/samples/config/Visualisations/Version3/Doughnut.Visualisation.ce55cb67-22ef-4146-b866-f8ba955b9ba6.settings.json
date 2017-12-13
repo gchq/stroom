@@ -1,0 +1,125 @@
+{
+    "tabs" : [
+        {
+            "name" : "Data",
+            "controls" : [
+                {
+                    "id" : "names",
+                    "type" : "field",
+                    "label" : "Names"
+                },
+                {
+                    "id" : "values",
+                    "type" : "field",
+                    "label" : "Values"
+                },
+                {
+                    "id" : "gridSeries",
+                    "type" : "field",
+                    "label" : "Grid Series"
+                }
+            ]
+        },
+        {
+            "name" : "Doughnut",
+            "controls" : [
+                {
+                    "id" : "maxValues",
+                    "type" : "number",
+                    "label" : "Max Values",
+                    "defaultValue" : "20",
+                    "max" : "100",
+                    "min" : "1"
+                },
+                {
+                    "id" : "sort",
+                    "type" : "boolean",
+                    "label" : "Sort By Value",
+                    "defaultValue" : "true"
+                },
+                {
+                    "id" : "synchNames",
+                    "type" : "selection",
+                    "label" : "Synchronise Names",
+                    "values" : [
+                        "True",
+                        "False"
+                    ],
+                    "defaultValue" : "True"
+                },
+                {
+                    "id" : "nameDateFormat",
+                    "type" : "text",
+                    "label" : "Name Date Format (opt.)",
+                    "defaultValue" : ""
+                },
+                {
+                    "id" : "sortGridSeries",
+                    "type" : "selection",
+                    "label" : "Sort Grid Series",
+                    "values" : [
+                        "",
+                        "Ascending",
+                        "Descending"
+                    ],
+                    "defaultValue" : "Ascending"
+                },
+                {
+                    "id" : "maxGridSeries",
+                    "type" : "number",
+                    "label" : "Max Grid Series",
+                    "defaultValue": "20",
+                    "max": "36",
+                    "min": "1"
+                },
+                {
+                    "id" : "gridSeriesDateFormat",
+                    "type" : "text",
+                    "label" : "Grid Series Date Format (opt.)",
+                    "defaultValue" : ""
+                },
+                {
+                    "id" : "showLabels",
+                    "type" : "selection",
+                    "label" : "Show Segment Labels",
+                    "values" : [
+                        "True",
+                        "False"
+                    ],
+                    "defaultValue" : "False"
+                }
+            ]
+        }
+    ],
+    "data" : {
+        "structure" : {
+            "nest" : {
+                "key" : {
+                    "sort" : {
+                        "direction" : "${sortGridSeries}",
+                        "enabled" : "true"
+                    },
+                    "id" : "${gridSeries}"
+                },
+                "values" : {
+                    "fields" : [
+                        {
+                            "id" : "${names}"
+                        },
+                        {
+                            "id" : "${values}"
+                        }
+                    ],
+                    "limit" : {
+                        "enabled" : "true",
+                        "size" : "${maxValues}"
+                    }
+                },
+                "limit" : {
+                    "size" : "${maxGridSeries}",
+                    "enabled" : "true"
+                }
+            }
+        }
+    }
+}

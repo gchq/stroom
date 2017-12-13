@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.search.server;
@@ -29,19 +30,19 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.util.Version;
-import stroom.dictionary.shared.Dictionary;
-import stroom.dictionary.shared.DictionaryService;
+import stroom.dictionary.server.DictionaryStore;
+import stroom.dictionary.shared.DictionaryDoc;
 import stroom.index.server.analyzer.AnalyzerFactory;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFieldType;
 import stroom.index.shared.IndexFieldsMap;
-import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.common.v2.DateExpressionParser;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -60,14 +61,14 @@ public class SearchExpressionQueryBuilder {
     private static final Pattern MULTIPLE_WILDCARD = Pattern.compile("[+]+");
     private static final Pattern MULTIPLE_SPACE = Pattern.compile("[ ]+");
     private final IndexFieldsMap indexFieldsMap;
-    private final DictionaryService dictionaryService;
+    private final DictionaryStore dictionaryStore;
     private final int maxBooleanClauseCount;
     private final String timeZoneId;
     private final long nowEpochMilli;
 
-    public SearchExpressionQueryBuilder(final DictionaryService dictionaryService, final IndexFieldsMap indexFieldsMap,
+    public SearchExpressionQueryBuilder(final DictionaryStore dictionaryStore, final IndexFieldsMap indexFieldsMap,
                                         final int maxBooleanClauseCount, final String timeZoneId, final long nowEpochMilli) {
-        this.dictionaryService = dictionaryService;
+        this.dictionaryStore = dictionaryStore;
         this.indexFieldsMap = indexFieldsMap;
         this.maxBooleanClauseCount = maxBooleanClauseCount;
         this.timeZoneId = timeZoneId;
@@ -407,7 +408,7 @@ public class SearchExpressionQueryBuilder {
                 }
 
                 if (query != null) {
-                    // Dictionary terms on one line must all exist in the
+                    // DictionaryDocument terms on one line must all exist in the
                     // matching documents so change to must.
                     query = modifyOccurrence(query, Occur.MUST);
                     builder.add(query, Occur.SHOULD);
@@ -420,7 +421,7 @@ public class SearchExpressionQueryBuilder {
     }
 
     private String[] loadWords(final DocRef docRef) {
-        final Dictionary dictionary = dictionaryService.loadByUuid(docRef.getUuid());
+        final DictionaryDoc dictionary = dictionaryStore.read(docRef.getUuid());
         if (dictionary == null) {
             throw new SearchException("Dictionary \"" + docRef + "\" not found");
         }

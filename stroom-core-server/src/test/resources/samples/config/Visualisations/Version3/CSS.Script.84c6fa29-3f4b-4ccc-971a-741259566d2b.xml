@@ -1,0 +1,16 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<script>
+   <dependenciesXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
+	&lt;docs&gt;
+        &lt;doc&gt;
+&lt;type&gt;Script&lt;/type&gt;
+&lt;uuid&gt;61cc6424-9899-4f38-ad77-f4204f9de166&lt;/uuid&gt;
+&lt;name&gt;D3&lt;/name&gt;
+&lt;/doc&gt;
+	&lt;/docs&gt;
+    </dependenciesXML>
+   <description>Git commit: 54ee8ab06163f37c179b38616a4b1e3a6cf473ae
+Git commit time: 2016-09-21 17:10:16 +0100</description>
+   <name>CSS</name>
+   <uuid>84c6fa29-3f4b-4ccc-971a-741259566d2b</uuid>
+</script>

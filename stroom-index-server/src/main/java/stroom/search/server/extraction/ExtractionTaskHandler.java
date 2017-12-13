@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.search.server.extraction;
@@ -20,8 +21,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ProcessException;
@@ -32,12 +34,12 @@ import stroom.pipeline.server.factory.PipelineFactory;
 import stroom.pipeline.server.filter.IdEnrichmentFilter;
 import stroom.pipeline.server.filter.XMLFilter;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.CurrentUserHolder;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
+import stroom.security.SecurityHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.search.server.SearchException;
 import stroom.security.SecurityContext;
@@ -69,7 +71,7 @@ public class ExtractionTaskHandler {
     private final PipelineHolder pipelineHolder;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final PipelineFactory pipelineFactory;
-    private final PipelineEntityService pipelineEntityService;
+    private final PipelineService pipelineService;
     private final PipelineDataCache pipelineDataCache;
     private final TaskMonitor taskMonitor;
     private final SecurityContext securityContext;
@@ -85,7 +87,7 @@ public class ExtractionTaskHandler {
                           final PipelineHolder pipelineHolder,
                           final ErrorReceiverProxy errorReceiverProxy,
                           final PipelineFactory pipelineFactory,
-                          @Named("cachedPipelineEntityService") final PipelineEntityService pipelineEntityService,
+                          @Named("cachedPipelineService") final PipelineService pipelineService,
                           final PipelineDataCache pipelineDataCache,
                           final TaskMonitor taskMonitor,
                           final SecurityContext securityContext) {
@@ -97,16 +99,14 @@ public class ExtractionTaskHandler {
         this.pipelineHolder = pipelineHolder;
         this.errorReceiverProxy = errorReceiverProxy;
         this.pipelineFactory = pipelineFactory;
-        this.pipelineEntityService = pipelineEntityService;
+        this.pipelineService = pipelineService;
         this.pipelineDataCache = pipelineDataCache;
         this.taskMonitor = taskMonitor;
         this.securityContext = securityContext;
     }
 
     public VoidResult exec(final ExtractionTask task) {
-        try {
-            securityContext.elevatePermissions();
-
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             taskMonitor.setName("Extraction");
             if (!taskMonitor.isTerminated()) {
                 final String streamId = String.valueOf(task.getStreamId());
@@ -114,8 +114,6 @@ public class ExtractionTaskHandler {
 
                 extract(task);
             }
-        } finally {
-            securityContext.restorePermissions();
         }
 
         return VoidResult.INSTANCE;
@@ -131,7 +129,7 @@ public class ExtractionTaskHandler {
             final DocRef pipelineRef = task.getPipelineRef();
 
             // Get the translation that will be used to display results.
-            final PipelineEntity pipelineEntity = pipelineEntityService.loadByUuid(pipelineRef.getUuid());
+            final PipelineEntity pipelineEntity = pipelineService.loadByUuid(pipelineRef.getUuid());
             if (pipelineEntity == null) {
                 throw new SearchException("Unable to find result pipeline: " + pipelineRef);
             }

@@ -28,8 +28,9 @@ import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.FileUtil;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 public class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrationTest {
@@ -50,11 +51,11 @@ public class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrat
 
         commonTestScenarioCreator.createSampleBlankProcessedFile(eventFeed, md);
 
-        final List<File> files = streamMaintenanceService.findAllStreamFile(md);
+        final List<Path> files = streamMaintenanceService.findAllStreamFile(md);
 
         Assert.assertTrue(files.size() > 0);
 
-        final String path = files.get(0).getParent();
+        final String path = FileUtil.getCanonicalPath(files.get(0).getParent());
         final String volPath = path.substring(path.indexOf("RAW_EVENTS"));
 
         final StreamRange streamRange = new StreamRange(volPath);
@@ -62,11 +63,11 @@ public class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrat
         findStreamVolumeCriteria.setStreamRange(streamRange);
         Assert.assertTrue(streamMaintenanceService.find(findStreamVolumeCriteria).size() > 0);
 
-        final File dir = files.iterator().next().getParentFile();
+        final Path dir = files.iterator().next().getParent();
 
-        final File test1 = new File(dir, "badfile.dat");
+        final Path test1 = dir.resolve( "badfile.dat");
 
-        FileUtil.createNewFile(test1);
+        Files.createFile(test1);
 
         fileSystemCleanTaskExecutor.exec(new MockTask("Test"));
     }

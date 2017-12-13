@@ -19,13 +19,14 @@ package stroom.process.shared;
 import stroom.entity.shared.Action;
 import stroom.query.api.v2.DocRef;
 import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.StreamProcessorFilter;
 
 public class CreateProcessorAction extends Action<StreamProcessorFilter> {
     private static final long serialVersionUID = -1773544031158236156L;
 
     private DocRef pipeline;
-    private FindStreamCriteria findStreamCriteria;
+    private QueryData queryData;
     private boolean enabled;
     private int priority;
 
@@ -33,10 +34,12 @@ public class CreateProcessorAction extends Action<StreamProcessorFilter> {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public CreateProcessorAction(final DocRef pipeline, final FindStreamCriteria findStreamCriteria, boolean enabled,
+    public CreateProcessorAction(final DocRef pipeline,
+                                 final QueryData queryData,
+                                 boolean enabled,
                                  int priority) {
         this.pipeline = pipeline;
-        this.findStreamCriteria = findStreamCriteria;
+        this.queryData = queryData;
         this.enabled = enabled;
         this.priority = priority;
     }
@@ -49,12 +52,12 @@ public class CreateProcessorAction extends Action<StreamProcessorFilter> {
         this.pipeline = pipeline;
     }
 
-    public FindStreamCriteria getFindStreamCriteria() {
-        return findStreamCriteria;
+    public QueryData getQueryData() {
+        return queryData;
     }
 
-    public void setFindStreamCriteria(final FindStreamCriteria findStreamCriteria) {
-        this.findStreamCriteria = findStreamCriteria;
+    public void setQueryData(final QueryData queryData) {
+        this.queryData = queryData;
     }
 
     public boolean isEnabled() {

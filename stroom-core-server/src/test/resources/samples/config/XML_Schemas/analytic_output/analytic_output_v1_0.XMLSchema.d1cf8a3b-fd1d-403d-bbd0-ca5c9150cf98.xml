@@ -1,0 +1,10 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<xmlSchema>
+   <deprecated>false</deprecated>
+   <description/>
+   <name>analytic-output v1.0</name>
+   <namespaceURI>analytic-output:1</namespaceURI>
+   <schemaGroup>ANALYTIC_OUTPUT</schemaGroup>
+   <systemId>file://analytic-output-v1.0.xsd</systemId>
+   <uuid>d1cf8a3b-fd1d-403d-bbd0-ca5c9150cf98</uuid>
+</xmlSchema>

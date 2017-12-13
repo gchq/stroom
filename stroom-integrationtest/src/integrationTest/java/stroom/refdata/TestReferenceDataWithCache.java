@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.refdata;
@@ -22,13 +23,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.FolderService;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.query.api.v2.DocRef;
 import stroom.streamstore.shared.StreamType;
@@ -51,34 +51,27 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     private final EventListBuilder builder = EventListBuilderFactory.createBuilder();
 
     @Resource
-    private FolderService folderService;
-    @Resource
     private FeedService feedService;
     @Resource
-    private PipelineEntityService pipelineEntityService;
+    private PipelineService pipelineService;
     @Resource
     private StroomBeanStore beanStore;
-
-    @Override
-    protected void onBefore() {
-        folder = DocRefUtil.create(folderService.create(null, "TEST_FOLDER"));
-    }
 
     /**
      * Test.
      */
     @Test
     public void testSimple() {
-        Feed feed1 = feedService.create(folder, "TEST_FEED_1");
+        Feed feed1 = feedService.create("TEST_FEED_1");
         feed1.setReference(true);
         feed1 = feedService.save(feed1);
 
-        Feed feed2 = feedService.create(folder, "TEST_FEED_2");
+        Feed feed2 = feedService.create("TEST_FEED_2");
         feed2.setReference(true);
         feed2 = feedService.save(feed2);
 
-        final PipelineEntity pipeline1 = pipelineEntityService.create(null, "TEST_PIPELINE_1");
-        final PipelineEntity pipeline2 = pipelineEntityService.create(null, "TEST_PIPELINE_2");
+        final PipelineEntity pipeline1 = pipelineService.create("TEST_PIPELINE_1");
+        final PipelineEntity pipeline2 = pipelineService.create("TEST_PIPELINE_2");
 
         final PipelineReference pipelineReference1 = new PipelineReference(DocRefUtil.create(pipeline1),
                 DocRefUtil.create(feed1), StreamType.REFERENCE.getName());
@@ -172,7 +165,7 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
      */
     @Test
     public void testNestedMaps() {
-        Feed feed = feedService.create(folder, "TEST_FEED_V3");
+        Feed feed = feedService.create("TEST_FEED_V3");
         feed.setReference(true);
         feed = feedService.save(feed);
 

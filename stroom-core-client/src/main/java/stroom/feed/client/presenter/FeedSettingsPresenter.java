@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.feed.client.presenter;
@@ -27,9 +28,8 @@ import com.gwtplatform.mvp.client.View;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.presenter.EntitySettingsPresenter;
-import stroom.entity.client.presenter.HasRead;
-import stroom.entity.client.presenter.HasWrite;
+import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.feed.client.presenter.FeedSettingsPresenter.FeedSettingsView;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
 import stroom.feed.shared.FetchSupportedEncodingsAction;
@@ -43,8 +43,7 @@ import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.SharedString;
 import stroom.widget.tickbox.client.view.TickBox;
 
-public class FeedSettingsPresenter extends EntitySettingsPresenter<FeedSettingsPresenter.FeedSettingsView, Feed>
-        implements HasRead<Feed>, HasWrite<Feed> {
+public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSettingsView, Feed> {
     @Inject
     public FeedSettingsPresenter(final EventBus eventBus, final FeedSettingsView view,
                                  final ClientSecurityContext securityContext, final StreamTypeUiManager streamTypeUiManager,

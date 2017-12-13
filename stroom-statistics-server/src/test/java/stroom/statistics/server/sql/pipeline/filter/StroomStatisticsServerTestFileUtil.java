@@ -16,72 +16,64 @@
 
 package stroom.statistics.server.sql.pipeline.filter;
 
+import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public final class StroomStatisticsServerTestFileUtil {
-    private static final File TEST_RESOURCES_DIR;
-    private static final File TEST_OUTPUT_DIR;
+    private static final Path TEST_RESOURCES_DIR;
+//    private static final Path TEST_OUTPUT_DIR;
 
     private static final String PROJECT_NAME = "stroom-statistics-server";
 
     static {
-        File dir = new File("../" + PROJECT_NAME + "/src/test/resources");
-        if (!dir.isDirectory()) {
-            throw new RuntimeException("Test data directory not found: " + dir.getAbsolutePath());
+        Path dir = Paths.get("../" + PROJECT_NAME + "/src/test/resources");
+        if (!Files.isDirectory(dir)) {
+            throw new RuntimeException("Test data directory not found: " + FileUtil.getCanonicalPath(dir));
         }
         TEST_RESOURCES_DIR = dir;
 
-        dir = new File("../" + PROJECT_NAME + "/test-output");
-        if (!dir.isDirectory()) {
-            dir.mkdirs();
-            if (!dir.isDirectory()) {
-                throw new RuntimeException("Test output directory not found: " + dir.getAbsolutePath());
-            }
-        }
-
-        TEST_OUTPUT_DIR = dir;
+//        dir = Paths.get("../" + PROJECT_NAME + "/test-output");
+//        if (!Files.isDirectory(dir)) {
+//            try {
+//                Files.createDirectories(dir);
+//            } catch (final IOException e) {
+//                throw new RuntimeException("Test output directory not found: " + FileUtil.getCanonicalPath(dir));
+//            }
+//        }
+//
+//        TEST_OUTPUT_DIR = dir;
     }
 
     private StroomStatisticsServerTestFileUtil() {
         // Utility class.
     }
 
-    public static File getTestResourcesDir() {
+    public static Path getTestResourcesDir() {
         return TEST_RESOURCES_DIR;
     }
 
-    public static File getTestOutputDir() {
-        return TEST_OUTPUT_DIR;
-    }
-
-    public static File getFile(final String path) {
-        final File file = new File(getTestResourcesDir(), path);
-        if (!file.isFile()) {
-            throw new RuntimeException("File not found: " + file.getAbsolutePath());
-        }
-        return file;
-    }
-
-    public static InputStream getInputStream(final String path) {
-        final File file = new File(getTestResourcesDir(), path);
-        if (!file.isFile()) {
-            throw new RuntimeException("File not found: " + file.getAbsolutePath());
-        }
-        try {
-            return new BufferedInputStream(new FileInputStream(file));
-        } catch (final FileNotFoundException e) {
-            throw new RuntimeException("File not found: " + file.getAbsolutePath());
-        }
-    }
+//    public static Path getTestOutputDir() {
+//        return TEST_OUTPUT_DIR;
+//    }
+//
+//    public static Path getFile(final String path) {
+//        final Path file = getTestResourcesDir().resolve(path);
+//        if (!Files.isRegularFile(file)) {
+//            throw new RuntimeException("File not found: " + FileUtil.getCanonicalPath(file));
+//        }
+//        return file;
+//    }
 
     public static String getString(final String path) {
-        final InputStream is = getInputStream(path);
-        return StreamUtil.streamToString(is);
+        final Path file = getTestResourcesDir().resolve(path);
+        if (!Files.isRegularFile(file)) {
+            throw new RuntimeException("File not found: " + FileUtil.getCanonicalPath(file));
+        }
+        return StreamUtil.fileToString(file);
     }
 }

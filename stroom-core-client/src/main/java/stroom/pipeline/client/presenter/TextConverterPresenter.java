@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.pipeline.client.presenter;
@@ -20,7 +21,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
-import stroom.entity.client.presenter.EntityEditTabPresenter;
+import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.pipeline.shared.TextConverter;
 import stroom.security.client.ClientSecurityContext;
@@ -29,7 +30,7 @@ import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import javax.inject.Provider;
 
-public class TextConverterPresenter extends EntityEditTabPresenter<LinkTabPanelView, TextConverter> {
+public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPanelView, TextConverter> {
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData CONVERSION = new TabDataImpl("Conversion");
 
@@ -75,7 +76,7 @@ public class TextConverterPresenter extends EntityEditTabPresenter<LinkTabPanelV
 
     @Override
     public void onRead(final TextConverter textConverter) {
-        settingsPresenter.read(textConverter);
+        settingsPresenter.read(getDocRef(), textConverter);
 
         if (codePresenter != null) {
             codePresenter.setText(textConverter.getData());

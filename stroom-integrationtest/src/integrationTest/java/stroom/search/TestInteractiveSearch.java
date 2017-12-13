@@ -12,24 +12,24 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.search;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.dictionary.shared.Dictionary;
-import stroom.dictionary.shared.DictionaryService;
+import stroom.dictionary.server.DictionaryStore;
+import stroom.dictionary.shared.DictionaryDoc;
 import stroom.entity.shared.DocRefUtil;
+import stroom.index.server.IndexService;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
-import stroom.index.shared.IndexService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Query;
@@ -46,11 +46,10 @@ import stroom.query.shared.v2.ParamUtil;
 import stroom.search.server.EventRef;
 import stroom.search.server.EventRefs;
 import stroom.search.server.EventSearchTask;
-import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.security.UserTokenUtil;
 import stroom.task.server.TaskCallback;
 import stroom.task.server.TaskManager;
 import stroom.util.config.StroomProperties;
-import stroom.util.task.ServerTask;
 
 import javax.annotation.Resource;
 import java.time.ZoneOffset;
@@ -70,7 +69,7 @@ public class TestInteractiveSearch extends AbstractSearchTest {
     @Resource
     private IndexService indexService;
     @Resource
-    private DictionaryService dictionaryService;
+    private DictionaryStore dictionaryStore;
     @Resource
     private TaskManager taskManager;
 
@@ -245,10 +244,10 @@ public class TestInteractiveSearch extends AbstractSearchTest {
     @Test
     public void notEqualsTest() {
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
-                "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567")
-                .addOperator(Op.NOT)
-                    .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
-                    .end();
+                "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567");
+        expression.addOperator(new ExpressionOperator.Builder(Op.NOT)
+                .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
+                .build());
         test(expression, 24);
     }
 
@@ -259,12 +258,12 @@ public class TestInteractiveSearch extends AbstractSearchTest {
     public void notEqualsTest2() {
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567")
-                .addOperator(Op.NOT)
-                    .addOperator(Op.OR)
+                .addOperator(new ExpressionOperator.Builder(Op.NOT)
+                    .addOperator(new ExpressionOperator.Builder(Op.OR)
                         .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
                         .addTerm("EventTime", Condition.EQUALS, "2007-01-18T13:56:42.000Z")
-                        .end()
-                    .end();
+                        .build())
+                    .build());
         test(expression, 23);
     }
 
@@ -275,12 +274,12 @@ public class TestInteractiveSearch extends AbstractSearchTest {
     public void notEqualsTest3() {
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567")
-                .addOperator(Op.NOT)
-                    .addOperator(Op.AND)
+                .addOperator(new ExpressionOperator.Builder(Op.NOT)
+                    .addOperator(new ExpressionOperator.Builder(Op.AND)
                         .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
                         .addTerm("UserId", Condition.EQUALS, "user4")
-                        .end()
-                    .end();
+                        .build())
+                    .build());
         test(expression, 24);
     }
 
@@ -291,15 +290,15 @@ public class TestInteractiveSearch extends AbstractSearchTest {
     public void notEqualsTest4() {
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567")
-                .addOperator(Op.NOT)
-                    .addOperator(Op.OR)
+                .addOperator(new ExpressionOperator.Builder(Op.NOT)
+                    .addOperator(new ExpressionOperator.Builder(Op.OR)
+                        .addOperator(new ExpressionOperator.Builder(Op.AND)
+                            .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
+                            .addTerm("UserId", Condition.EQUALS, "user4")
+                            .build())
                         .addTerm("EventTime", Condition.EQUALS, "2007-01-18T13:56:42.000Z")
-                        .addOperator(Op.AND)
-                        .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
-                        .addTerm("UserId", Condition.EQUALS, "user4")
-                        .end()
-                    .end()
-                .end();
+                        .build())
+                    .build());
         test(expression, 23);
     }
 
@@ -308,16 +307,17 @@ public class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     public void dictionaryTest1() {
-        Dictionary dic = dictionaryService.create(null, "users");
+        final DocRef docRef = dictionaryStore.createDocument("users", null);
+        final DictionaryDoc dic = dictionaryStore.read(docRef.getUuid());
         dic.setData("user1\nuser2\nuser5");
-        dic = dictionaryService.save(dic);
+        dictionaryStore.update(dic);
 
-        final ExpressionOperator.Builder and = new ExpressionOperator.Builder(Op.AND)
-                .addDictionaryTerm("UserId", Condition.IN_DICTIONARY, DocRefUtil.create(dic));
+        final ExpressionOperator.Builder and = new ExpressionOperator.Builder(Op.AND);
+        and.addDictionaryTerm("UserId", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic));
 
         test(and, 15);
 
-        dictionaryService.delete(dic);
+        dictionaryStore.deleteDocument(dic.getUuid());
     }
 
     /**
@@ -325,22 +325,24 @@ public class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     public void dictionaryTest2() {
-        Dictionary dic1 = dictionaryService.create(null, "users");
+        final DocRef docRef1 = dictionaryStore.createDocument("users", null);
+        DictionaryDoc dic1 = dictionaryStore.read(docRef1.getUuid());
         dic1.setData("user1\nuser2\nuser5");
-        dic1 = dictionaryService.save(dic1);
+        dictionaryStore.update(dic1);
 
-        Dictionary dic2 = dictionaryService.create(null, "command");
+        final DocRef docRef2 = dictionaryStore.createDocument("command", null);
+        DictionaryDoc dic2 = dictionaryStore.read(docRef2.getUuid());
         dic2.setData("msg");
-        dic2 = dictionaryService.save(dic2);
+        dictionaryStore.update(dic2);
 
-        final ExpressionOperator.Builder and = new ExpressionOperator.Builder(Op.AND)
-                .addDictionaryTerm("UserId", Condition.IN_DICTIONARY, DocRefUtil.create(dic1))
-                .addDictionaryTerm("Command", Condition.IN_DICTIONARY, DocRefUtil.create(dic2));
+        final ExpressionOperator.Builder and = new ExpressionOperator.Builder(Op.AND);
+        and.addDictionaryTerm("UserId", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic1));
+        and.addDictionaryTerm("Command", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic2));
 
         test(and, 10);
 
-        dictionaryService.delete(dic1);
-        dictionaryService.delete(dic2);
+        dictionaryStore.deleteDocument(dic1.getUuid());
+        dictionaryStore.deleteDocument(dic2.getUuid());
     }
 
     /**
@@ -348,22 +350,24 @@ public class TestInteractiveSearch extends AbstractSearchTest {
      */
     @Test
     public void dictionaryTest3() {
-        Dictionary dic1 = dictionaryService.create(null, "users");
+        final DocRef docRef1 = dictionaryStore.createDocument("users", null);
+        DictionaryDoc dic1 = dictionaryStore.read(docRef1.getUuid());
         dic1.setData("user1\nuser2\nuser5");
-        dic1 = dictionaryService.save(dic1);
+        dictionaryStore.update(dic1);
 
-        Dictionary dic2 = dictionaryService.create(null, "command");
+        final DocRef docRef2 = dictionaryStore.createDocument("command", null);
+        DictionaryDoc dic2 = dictionaryStore.read(docRef2.getUuid());
         dic2.setData("msg foo bar");
-        dic2 = dictionaryService.save(dic2);
+        dictionaryStore.update(dic2);
 
-        final ExpressionOperator.Builder and = new ExpressionOperator.Builder(Op.AND)
-                .addDictionaryTerm("UserId", Condition.IN_DICTIONARY, DocRefUtil.create(dic1))
-                .addDictionaryTerm("Command", Condition.IN_DICTIONARY, DocRefUtil.create(dic2));
+        final ExpressionOperator.Builder and = new ExpressionOperator.Builder(Op.AND);
+        and.addDictionaryTerm("UserId", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic1));
+        and.addDictionaryTerm("Command", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic2));
 
         test(and, 10);
 
-        dictionaryService.delete(dic1);
-        dictionaryService.delete(dic2);
+        dictionaryStore.deleteDocument(dic1.getUuid());
+        dictionaryStore.deleteDocument(dic2.getUuid());
     }
 
     /**
@@ -476,7 +480,7 @@ public class TestInteractiveSearch extends AbstractSearchTest {
 
         final CountDownLatch complete = new CountDownLatch(1);
 
-        final EventSearchTask eventSearchTask = new EventSearchTask(ServerTask.INTERNAL_PROCESSING_USER_TOKEN, new FindStreamCriteria(), query,
+        final EventSearchTask eventSearchTask = new EventSearchTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, query,
                 new EventRef(1, 1), new EventRef(Long.MAX_VALUE, Long.MAX_VALUE), 1000, 1000, 1000, 100);
         final AtomicReference<EventRefs> results = new AtomicReference<>();
         taskManager.execAsync(eventSearchTask, new TaskCallback<EventRefs>() {
@@ -510,7 +514,7 @@ public class TestInteractiveSearch extends AbstractSearchTest {
 
     private TableSettings createTableSettings(final Index index, final boolean extractValues) {
         final Field idField = new Field.Builder()
-                .name("Id")
+                .name("IdTreeNode")
                 .expression(ParamUtil.makeParam("StreamId"))
                 .build();
 
@@ -525,7 +529,7 @@ public class TestInteractiveSearch extends AbstractSearchTest {
     }
 
     private ExpressionOperator.Builder buildExpression(final String userField, final String userTerm, final String from,
-                                              final String to, final String wordsField, final String wordsTerm) {
+                                                       final String to, final String wordsField, final String wordsTerm) {
         final ExpressionOperator.Builder operator = new ExpressionOperator.Builder();
         operator.addTerm(userField, Condition.CONTAINS, userTerm);
         operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);
@@ -534,7 +538,7 @@ public class TestInteractiveSearch extends AbstractSearchTest {
     }
 
     private ExpressionOperator.Builder buildInExpression(final String userField, final String userTerm, final String from,
-                                                final String to, final String wordsField, final String wordsTerm) {
+                                                         final String to, final String wordsField, final String wordsTerm) {
         final ExpressionOperator.Builder operator = new ExpressionOperator.Builder();
         operator.addTerm(userField, Condition.CONTAINS, userTerm);
         operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);

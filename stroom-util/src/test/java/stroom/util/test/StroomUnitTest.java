@@ -20,13 +20,13 @@ import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import stroom.util.io.FileUtil;
 
-import java.io.File;
+import java.nio.file.Path;
 
 @Category(UnitTest.class)
 @RunWith(StroomJUnit4ClassRunner.class)
 public abstract class StroomUnitTest implements StroomTest {
     @Override
-    public File getCurrentTestDir() {
+    public Path getCurrentTestDir() {
         return FileUtil.getTempDir();
     }
 }

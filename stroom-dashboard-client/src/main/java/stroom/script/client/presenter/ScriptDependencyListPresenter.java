@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.script.client.presenter;
@@ -22,14 +23,14 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.entity.client.event.DirtyEvent;
-import stroom.entity.client.event.DirtyEvent.DirtyHandler;
-import stroom.entity.client.event.HasDirtyHandlers;
+import stroom.document.client.event.DirtyEvent;
+import stroom.document.client.event.DirtyEvent.DirtyHandler;
+import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.client.presenter.EntityChooser;
-import stroom.explorer.shared.EntityData;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.node.client.view.WrapperView;
 import stroom.query.api.v2.DocRef;
 import stroom.script.shared.Script;
@@ -79,7 +80,7 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
             removeButton.setEnabled(selected != null);
         }));
         registerHandler(explorerDropDownTreePresenter.addDataSelectionHandler(event -> {
-            final EntityData selectedItem = (EntityData) event.getSelectedItem();
+            final ExplorerNode selectedItem = (ExplorerNode) event.getSelectedItem();
             if (selectedItem != null) {
                 final DocRef script = selectedItem.getDocRef();
                 if (script != null) {

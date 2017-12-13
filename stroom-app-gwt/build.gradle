@@ -9,6 +9,8 @@ def extraDir = "${gwtBuildDir}/extra"
 
 dependencies {
     compile project(':stroom-index-client')
+    compile project(':stroom-annotations-client')
+    compile project(':stroom-elastic-client')
     compile project(':stroom-statistics-client')
     compile project(':stroom-dashboard-client')
     compile project(':stroom-security-shared')
@@ -27,7 +29,7 @@ dependencies {
     permitUnusedDeclared "${libs.stroomQueryCommon}:sources"
 
     compile libs.gin
-    compile libs.guice
+    compile libs.guice3
     compile libs.gwt_dev
     permitUnusedDeclared libs.gwt_dev
     compile libs.gwt_user
@@ -124,7 +126,7 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
         file(extraDir).mkdirs()
     }
 
-    main = gwtCompilerProps.mainClass
+    main = 'com.google.gwt.dev.Compiler'
 
     classpath {
         gwtSourceDirs
@@ -138,7 +140,7 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
             '-XfragmentCount', '0',
             '-optimize', '0',
             '-failOnError',
-            '-localWorkers', gwtCompilerProps.workers,
+            '-localWorkers', '5',
             '-incremental',
             '-war', warDir,
             '-deploy', deployDir,
@@ -148,8 +150,8 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
         ]
 
     jvmArgs = ["-Djava.io.tmpdir=${tmpDir}"]
-    minHeapSize = gwtCompilerProps.minHeap
-    maxHeapSize = gwtCompilerProps.maxHeap
+    minHeapSize = '1G'//gwtCompilerProps.minHeap
+    maxHeapSize = '4G'//gwtCompilerProps.maxHeap
 }
 
 task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {

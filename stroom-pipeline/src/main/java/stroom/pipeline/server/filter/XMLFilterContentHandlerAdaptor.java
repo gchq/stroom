@@ -18,6 +18,7 @@ package stroom.pipeline.server.filter;
 
 import org.xml.sax.ContentHandler;
 import stroom.pipeline.server.factory.Processor;
+import stroom.pipeline.server.factory.Terminator;
 
 import java.util.Collections;
 import java.util.List;
@@ -55,5 +56,9 @@ public class XMLFilterContentHandlerAdaptor extends ContentHandlerAdaptor implem
 
     @Override
     public void setElementId(final String elementId) {
+    }
+
+    @Override
+    public void setTerminator(final Terminator terminator) {
     }
 }

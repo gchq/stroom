@@ -13,7 +13,7 @@ public class TestStroomZipOutputStream {
 
     @Test
     public void testBigFile() throws Exception {
-        final Path testFile = Files.createTempFile(TestUtil.getCurrentTestPath(), "TestStroomZipFile", ".zip");
+        final Path testFile = Files.createTempFile(Files.createTempDirectory("stroom"), "TestStroomZipFile", ".zip");
         final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(testFile);
         try {
             String uuid;
@@ -21,13 +21,13 @@ public class TestStroomZipOutputStream {
 
             for (int i = 0; i < TEST_SIZE; i++) {
                 uuid = UUID.randomUUID().toString();
-                stream = stroomZipOutputStream.addEntry(new StroomZipEntry(null, uuid, StroomZipFileType.Meta));
+                stream = stroomZipOutputStream.addEntry(new StroomZipEntry(null, uuid, StroomZipFileType.Meta).getFullName());
                 stream.write("Header".getBytes(CharsetConstants.DEFAULT_CHARSET));
                 stream.close();
-                stream = stroomZipOutputStream.addEntry(new StroomZipEntry(null, uuid, StroomZipFileType.Context));
+                stream = stroomZipOutputStream.addEntry(new StroomZipEntry(null, uuid, StroomZipFileType.Context).getFullName());
                 stream.write("Context".getBytes(CharsetConstants.DEFAULT_CHARSET));
                 stream.close();
-                stream = stroomZipOutputStream.addEntry(new StroomZipEntry(null, uuid, StroomZipFileType.Data));
+                stream = stroomZipOutputStream.addEntry(new StroomZipEntry(null, uuid, StroomZipFileType.Data).getFullName());
                 stream.write("Data".getBytes(CharsetConstants.DEFAULT_CHARSET));
                 stream.close();
             }
@@ -46,7 +46,7 @@ public class TestStroomZipOutputStream {
 
     @Test
     public void testBlankProducesNothing() throws Exception {
-        final Path testFile = Files.createTempFile(TestUtil.getCurrentTestPath(), "TestStroomZipFile", ".zip");
+        final Path testFile = Files.createTempFile(Files.createTempDirectory("stroom"), "TestStroomZipFile", ".zip");
         final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(testFile);
         stroomZipOutputStream.close();
         Assert.assertFalse("Not expecting to write a file", Files.isRegularFile(testFile));

@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#501** : Improve the database teardown process in integration tests to speed up builds
+
+### Merged
+
+* Merged in [v5.1-beta.2]
+
 ## [v6.0-alpha.3] - 2017-12-05
 
 ### Changed
@@ -44,6 +50,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Added ability to put clickable hyperlinks in Dashboard tables
 
+* Added an HTTP appender.
+
+* Added an appender for the proxy store.
+
 ### Changed
 
 * Issue **#412** : Fixed no-column table breakage
@@ -62,6 +72,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Merged in [v5.0-beta.63]
 
+## [v5.1-beta.2] - 2017-12-12
+
+* Merged [v5.0-beta.69]
+
+## [v5.1-beta.1] - 2017-12-11
+
+* Issue **#348** : Fixed new menu icons.
+
+* Merged [v5.0-beta.68]
+
 ## [v5.1-alpha.2] - 2017-06-22
 
 * Issue **#203** : Initial release of the new data receipt policy functionality.
@@ -69,6 +89,36 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v5.1-alpha.1] - 2017-06-07
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
+
+## [v5.0-beta.69] - 2017-12-12
+
+* Issue **#511** : Fix for XSLT functions to allow null return values where a value cannot be returned due to an error etc.
+
+## [v5.0-beta.68] - 2017-12-11
+
+* Issue **#515** : Fix handling of errors that occur before search starts sending.
+
+* Issue **#506** : In v5 dashboard table filters were enhanced to allow parameters to be used in include/exclude filters. The implementation included the use of `\` to escape `$` characters that were not to be considered part of a parameter reference. This change resulted in regular expressions requiring `\` being escaped with additional `\` characters. This escaping has now been removed and instead only `$` chars before `{` chars need escaping when necessary with double `$$` chars, e.g. use `$${something` if you actually want `${something` not to be replaced with a parameter.
+
+* Issue **#505** : Fix the property UI so all edited value whitespace is trimmed
+
+* Issue **#513** : Now only actively executing tasks are visible as server tasks
+
+* Issue **#483** : When running stream retention jobs the transactions are now set to REQUIRE_NEW to hopefully ensure that the job is done in small batches rather than a larger transaction spanning multiple changes.
+
+## [v5.0-beta.67] - 2017-12-05
+
+* Issue **#508** : Fix directory creation for index shards.
+
+## [v5.0-beta.66] - 2017-11-30
+
+* Issue **#492** : Task producers were still not being marked as complete on termination which meant that the parent cluster task was not completing. This has now been fixed.
+
+## [v5.0-beta.65] - 2017-11-29
+
+* Issue **#497** : DB connections obtained from the data source are now released back to the pool after use.
+
+* Issue **#492** : Task producers were not being marked as complete on termination which meant that the parent cluster task was not completing. This has now been fixed.
 
 ## [v5.0-beta.64] - 2017-11-27
 
@@ -758,9 +808,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [v6.0-alpha.2]: https://github.com/gchq/stroom/compare/v6.0-alpha.1...v6.0-alpha.2
 [v6.0-alpha.1]: https://github.com/gchq/stroom/releases/tag/v6.0-alpha.1
 
-[v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.1-alpha.1...v5.1-alpha.2
+[v5.1-beta.2]: https://github.com/gchq/stroom/compare/v5.1-beta.1...v5.1-beta.2
+[v5.1-beta.1]: https://github.com/gchq/stroom/compare/v5.1-alpha.2...v5.1-beta.1
+[v5.1-alpha.2]: https://github.com/gchq/stroom/compare/v5.0-alpha.1...v5.1-alpha.2
 [v5.1-alpha.1]: https://github.com/gchq/stroom/releases/tag/v5.1-alpha.1
 
+[v5.0-beta.69]: https://github.com/gchq/stroom/compare/v5.0-beta.68...v5.0-beta.69
+[v5.0-beta.68]: https://github.com/gchq/stroom/compare/v5.0-beta.67...v5.0-beta.68
+[v5.0-beta.67]: https://github.com/gchq/stroom/compare/v5.0-beta.66...v5.0-beta.67
+[v5.0-beta.66]: https://github.com/gchq/stroom/compare/v5.0-beta.65...v5.0-beta.66
+[v5.0-beta.65]: https://github.com/gchq/stroom/compare/v5.0-beta.64...v5.0-beta.65
 [v5.0-beta.64]: https://github.com/gchq/stroom/compare/v5.0-beta.63...v5.0-beta.64
 [v5.0-beta.63]: https://github.com/gchq/stroom/compare/v5.0-beta.62...v5.0-beta.63
 [v5.0-beta.62]: https://github.com/gchq/stroom/compare/v5.0-beta.61...v5.0-beta.62

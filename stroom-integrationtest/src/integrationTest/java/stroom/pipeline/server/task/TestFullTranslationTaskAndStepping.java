@@ -19,9 +19,9 @@ package stroom.pipeline.server.task;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.test.StroomProcessTestFileUtil;
+import stroom.test.StroomPipelineTestFileUtil;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.time.Duration;
 
 public class TestFullTranslationTaskAndStepping extends TranslationTest {
@@ -74,8 +74,7 @@ public class TestFullTranslationTaskAndStepping extends TranslationTest {
     }
 
     private void testStepping(final String feedName) throws Exception {
-        final File outDir = new File(StroomProcessTestFileUtil.getTestResourcesDir(),
-                "TestFullTranslationTaskAndStepping");
+        final Path outDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve("TestFullTranslationTaskAndStepping");
 
         final long time = System.currentTimeMillis();
         testSteppingTask(feedName, outDir);

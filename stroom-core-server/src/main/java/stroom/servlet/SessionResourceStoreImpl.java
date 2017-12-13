@@ -18,6 +18,7 @@ package stroom.servlet;
 
 import org.springframework.stereotype.Component;
 import stroom.resource.server.ResourceStore;
+import stroom.util.io.FileUtil;
 import stroom.util.shared.ResourceKey;
 
 import javax.inject.Inject;
@@ -114,7 +115,7 @@ public class SessionResourceStoreImpl extends HttpServlet implements SessionReso
                 try {
                     final Path file = getTempFile(resourceKey);
                     if (file != null && Files.isRegularFile(file)) {
-                        if (file.toAbsolutePath().toString().toLowerCase().endsWith(".zip")) {
+                        if (FileUtil.getCanonicalPath(file).toLowerCase().endsWith(".zip")) {
                             resp.setContentType("application/zip");
                         } else {
                             resp.setContentType("application/octet-stream");

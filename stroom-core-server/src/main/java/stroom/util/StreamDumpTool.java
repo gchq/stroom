@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,11 @@ package stroom.util;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import stroom.entity.shared.Period;
 import stroom.feed.server.FeedServiceImpl;
 import stroom.feed.shared.Feed;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.spring.PersistenceConfiguration;
 import stroom.spring.ScopeConfiguration;
 import stroom.spring.ServerComponentScanConfiguration;
@@ -31,14 +33,17 @@ import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTypeServiceImpl;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.date.DateUtil;
+import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.spring.StroomSpringProfiles;
-import stroom.util.thread.ThreadScopeRunnable;
 
-import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 /**
@@ -82,70 +87,69 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         // Boot up spring
         final ApplicationContext appContext = getAppContext();
 
-        final FindStreamCriteria criteria = new FindStreamCriteria();
+        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
 
-        Long createPeriodFromMs = null;
+        String createStartTime = null;
         if (StringUtils.isNotBlank(createPeriodFrom)) {
-            createPeriodFromMs = DateUtil.parseNormalDateTimeString(createPeriodFrom);
+            createStartTime = createPeriodFrom;
         }
-        Long createPeriodToMs = null;
+        String createEndTime = null;
         if (StringUtils.isNotBlank(createPeriodTo)) {
-            createPeriodToMs = DateUtil.parseNormalDateTimeString(createPeriodTo);
+            createEndTime = createPeriodTo;
         }
 
         if (outputDir == null || outputDir.length() == 0) {
             throw new RuntimeException("Output directory must be specified");
         }
 
-        final File dir = new File(outputDir);
-        if (!dir.isDirectory()) {
+        final Path dir = Paths.get(outputDir);
+        if (!Files.isDirectory(dir)) {
             System.out.println("Creating directory '" + outputDir + "'");
-            if (!dir.mkdirs()) {
+            try {
+                Files.createDirectories(dir);
+            } catch (final IOException e) {
                 throw new RuntimeException("Unable to create output directory '" + outputDir + "'");
             }
         }
 
-        criteria.setCreatePeriod(new Period(createPeriodFromMs, createPeriodToMs));
+        builder.addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, createStartTime + "," + createEndTime);
 
         final StreamStore streamStore = appContext.getBean(StreamStore.class);
         final FeedServiceImpl feedService = appContext.getBean(FeedServiceImpl.class);
         final StreamTypeServiceImpl streamTypeService = appContext.getBean(StreamTypeServiceImpl.class);
 
-        new ThreadScopeRunnable() {
-            @Override
-            protected void exec() {
-                Feed definition = null;
-                if (feed != null) {
-                    definition = feedService.loadByName(feed);
-                    if (definition == null) {
-                        throw new RuntimeException("Unable to locate Feed " + feed);
-                    }
-                    criteria.obtainFeeds().obtainInclude().add(definition.getId());
-                }
-
-                if (streamType != null) {
-                    final StreamType type = streamTypeService.loadByName(streamType);
-                    if (type == null) {
-                        throw new RuntimeException("Unable to locate stream type " + streamType);
-                    }
-                    criteria.obtainStreamTypeIdSet().add(type.getId());
-                } else {
-                    criteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS.getId());
-                }
-
-                // Query the stream store
-                final List<Stream> results = streamStore.find(criteria);
-                System.out.println("Starting dump of " + results.size() + " streams");
-
-                int count = 0;
-                for (final Stream stream : results) {
-                    count++;
-                    processFile(count, results.size(), streamStore, stream.getId(), dir);
-                }
-
-                System.out.println("Finished dumping " + results.size() + " streams");
+        Feed definition = null;
+        if (feed != null) {
+            definition = feedService.loadByName(feed);
+            if (definition == null) {
+                throw new RuntimeException("Unable to locate Feed " + feed);
             }
-        }.run();
+            builder.addTerm(StreamDataSource.FEED, Condition.EQUALS, definition.getName());
+        }
+
+        if (streamType != null) {
+            final StreamType type = streamTypeService.loadByName(streamType);
+            if (type == null) {
+                throw new RuntimeException("Unable to locate stream type " + streamType);
+            }
+            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, type.getDisplayValue());
+        } else {
+            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.RAW_EVENTS.getDisplayValue());
+        }
+
+        // Query the stream store
+        final FindStreamCriteria criteria = new FindStreamCriteria();
+        criteria.setExpression(builder.build());
+        final List<Stream> results = streamStore.find(criteria);
+        System.out.println("Starting dump of " + results.size() + " streams");
+
+        int count = 0;
+        for (final Stream stream : results) {
+            count++;
+            processFile(count, results.size(), streamStore, stream.getId(), dir);
+        }
+
+        System.out.println("Finished dumping " + results.size() + " streams");
     }
 
     private ApplicationContext getAppContext() {
@@ -167,7 +171,7 @@ public class StreamDumpTool extends AbstractCommandLineTool {
      * Scan a file
      */
     private void processFile(final int count, final int total, final StreamStore streamStore, final long streamId,
-                             final File outputDir) {
+                             final Path outputDir) {
         StreamSource streamSource = null;
         try {
             streamSource = streamStore.openStreamSource(streamId);
@@ -175,9 +179,9 @@ public class StreamDumpTool extends AbstractCommandLineTool {
                 InputStream inputStream = null;
                 try {
                     inputStream = streamSource.getInputStream();
-                    final File outputFile = new File(outputDir, streamId + ".dat");
+                    final Path outputFile = outputDir.resolve(streamId + ".dat");
                     System.out.println(
-                            "Dumping stream " + count + " of " + total + " to file '" + outputFile.getName() + "'");
+                            "Dumping stream " + count + " of " + total + " to file '" + FileUtil.getCanonicalPath(outputFile) + "'");
                     StreamUtil.streamToFile(inputStream, outputFile);
                 } catch (final Exception ex) {
                     ex.printStackTrace();

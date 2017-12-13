@@ -30,7 +30,7 @@ import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "XSLT", uniqueConstraints = @UniqueConstraint(columnNames = {"FK_FOLDER_ID", "NAME"}))
+@Table(name = "XSLT")
 public class XSLT extends DocumentEntity implements Copyable<XSLT>, HasData {
     public static final String TABLE_NAME = SQLNameConstants.XSLT;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;

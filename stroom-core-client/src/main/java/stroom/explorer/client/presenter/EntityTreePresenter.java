@@ -23,7 +23,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.shared.ExplorerNode;
 
 public class EntityTreePresenter extends MyPresenterWidget<EntityTreePresenter.EntityTreeView>
         implements EntityTreeUiHandlers {
@@ -62,11 +62,11 @@ public class EntityTreePresenter extends MyPresenterWidget<EntityTreePresenter.E
         return explorerTree.getTreeModel();
     }
 
-    public ExplorerData getSelectedItem() {
+    public ExplorerNode getSelectedItem() {
         return explorerTree.getSelectionModel().getSelected();
     }
 
-    public void setSelectedItem(final ExplorerData selection) {
+    public void setSelectedItem(final ExplorerNode selection) {
         explorerTree.getSelectionModel().setSelected(selection);
     }
 

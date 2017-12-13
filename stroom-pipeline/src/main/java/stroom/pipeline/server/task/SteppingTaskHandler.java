@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.pipeline.server.task;
@@ -19,11 +20,12 @@ package stroom.pipeline.server.task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.io.StreamCloser;
 import stroom.pipeline.server.EncodingSelection;
 import stroom.pipeline.server.LocationFactoryProxy;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.server.StreamLocationFactory;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggedException;
@@ -33,7 +35,6 @@ import stroom.pipeline.server.factory.Pipeline;
 import stroom.pipeline.server.factory.PipelineDataCache;
 import stroom.pipeline.server.factory.PipelineFactory;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.StepType;
 import stroom.pipeline.shared.SteppingResult;
@@ -46,8 +47,11 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.security.Secured;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
+import stroom.security.UserTokenUtil;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
+import stroom.streamstore.server.StreamTypeService;
 import stroom.streamstore.server.fs.serializable.NestedInputStream;
 import stroom.streamstore.server.fs.serializable.RANestedInputStream;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStream;
@@ -55,12 +59,10 @@ import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.streamstore.shared.StreamTypeService;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Highlight;
-import stroom.util.shared.UserTokenUtil;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 
@@ -111,7 +113,7 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
     @Resource
     private SteppingController controller;
     @Resource
-    private PipelineEntityService pipelineEntityService;
+    private PipelineService pipelineService;
     @Resource
     private PipelineFactory pipelineFactory;
     @Resource
@@ -139,8 +141,7 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
     @Override
     public SteppingResult exec(final SteppingTask request) {
         // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
-        securityContext.elevatePermissions();
-        try {
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             // Set the current user so they are visible during translation.
             currentUserHolder.setCurrentUser(UserTokenUtil.getUserId(request.getUserToken()));
 
@@ -201,9 +202,6 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
 
             return new SteppingResult(request.getStepFilterMap(), currentLocation, stepData.convertToShared(),
                     curentStreamOffset, controller.isFound(), generalErrors);
-
-        } finally {
-            securityContext.restorePermissions();
         }
     }
 
@@ -404,7 +402,7 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
         if (filteredStreamIdList == null) {
             List<Long> filteredList = Collections.emptyList();
 
-            if (criteria.getStreamIdSet() == null || Boolean.TRUE.equals(criteria.getStreamIdSet().getMatchAll())) {
+            if (criteria.getSelectedIdSet() == null || Boolean.TRUE.equals(criteria.getSelectedIdSet().getMatchAll())) {
                 // Don't get back more than 1000 streams or we might run out of
                 // memory.
                 criteria.obtainPageRequest().setOffset(0L);
@@ -420,19 +418,19 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
                 allStreamIdList.add(stream.getId());
             }
 
-            if (criteria.getStreamIdSet() == null || Boolean.TRUE.equals(criteria.getStreamIdSet().getMatchAll())) {
+            if (criteria.getSelectedIdSet() == null || Boolean.TRUE.equals(criteria.getSelectedIdSet().getMatchAll())) {
                 // If we are including all tasks then don't filter the list.
                 filteredList = new ArrayList<>(allStreamList.size());
                 for (final Stream stream : allStreamList) {
                     filteredList.add(stream.getId());
                 }
 
-            } else if (criteria.getStreamIdSet() != null && criteria.getStreamIdSet().getSet() != null
-                    && criteria.getStreamIdSet().getSet().size() > 0) {
+            } else if (criteria.getSelectedIdSet() != null && criteria.getSelectedIdSet().getSet() != null
+                    && criteria.getSelectedIdSet().getSet().size() > 0) {
                 // Otherwise filter the list to just selected tasks.
-                filteredList = new ArrayList<>(criteria.getStreamIdSet().getSet().size());
+                filteredList = new ArrayList<>(criteria.getSelectedIdSet().getSet().size());
                 for (final Stream stream : allStreamList) {
-                    if (criteria.getStreamIdSet().isMatch(stream)) {
+                    if (criteria.getSelectedIdSet().isMatch(stream.getId())) {
                         filteredList.add(stream.getId());
                     }
                 }
@@ -607,7 +605,7 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
     private Pipeline createPipeline(final SteppingController controller, final Feed feed) {
         if (pipeline == null) {
             // Set the pipeline so it can be used by a filter if needed.
-            final PipelineEntity pipelineEntity = pipelineEntityService
+            final PipelineEntity pipelineEntity = pipelineService
                     .loadByUuid(controller.getRequest().getPipeline().getUuid());
 
             feedHolder.setFeed(feed);

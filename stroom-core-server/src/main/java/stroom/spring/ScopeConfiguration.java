@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ public class ScopeConfiguration {
         CustomScopeConfigurer customScopeConfigurer = new CustomScopeConfigurer();
         Map<String, Object> scopes = new HashMap<>();
         scopes.put(StroomScope.TASK, "stroom.util.task.TaskScope");
-        scopes.put(StroomScope.THREAD, "stroom.util.thread.ThreadScope");
         customScopeConfigurer.setScopes(scopes);
         return customScopeConfigurer;
     }

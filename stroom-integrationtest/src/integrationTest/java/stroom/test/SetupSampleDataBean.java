@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.test;
@@ -19,29 +20,30 @@ package stroom.test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.shared.Dashboard;
+import stroom.db.migration.mysql.V6_0_0_21__Dictionary;
+import stroom.entity.server.util.ConnectionUtil;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.Folder;
-import stroom.entity.shared.FolderService;
-import stroom.entity.shared.ImportState.ImportMode;
+import stroom.importexport.shared.ImportState.ImportMode;
+import stroom.feed.server.FeedService;
 import stroom.entity.shared.NamedEntity;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
-import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.importexport.server.ImportExportSerializer;
+import stroom.index.server.IndexService;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
-import stroom.index.shared.IndexService;
-import stroom.jobsystem.shared.JobNodeService;
-import stroom.jobsystem.shared.JobService;
+import stroom.jobsystem.server.JobNodeService;
+import stroom.jobsystem.server.JobService;
+import stroom.node.server.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
-import stroom.node.shared.VolumeService;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.server.DBRealm;
 import stroom.statistics.server.sql.datasource.FindStatisticsEntityCriteria;
 import stroom.statistics.server.sql.datasource.StatisticStoreEntityService;
@@ -50,15 +52,12 @@ import stroom.statistics.server.stroomstats.entity.StroomStatsStoreEntityService
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.stats.shared.StroomStatsStoreEntity;
+import stroom.streamstore.server.StreamAttributeKeyService;
 import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.StreamAttributeConstants;
-import stroom.streamstore.shared.StreamAttributeKey;
-import stroom.streamstore.shared.StreamAttributeKeyService;
-import stroom.streamstore.shared.StreamType;
-import stroom.streamtask.shared.StreamProcessorFilterService;
-import stroom.streamtask.shared.StreamProcessorService;
+import stroom.streamstore.shared.*;
+import stroom.streamtask.server.StreamProcessorFilterService;
+import stroom.streamtask.server.StreamProcessorService;
+import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
 import javax.annotation.Resource;
@@ -66,6 +65,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Connection;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -102,8 +102,6 @@ public final class SetupSampleDataBean {
     @Resource
     private FeedService feedService;
     @Resource
-    private FolderService folderService;
-    @Resource
     private StreamStore streamStore;
     @Resource
     private StreamAttributeKeyService streamAttributeKeyService;
@@ -116,7 +114,7 @@ public final class SetupSampleDataBean {
     @Resource
     private StreamProcessorService streamProcessorService;
     @Resource
-    private PipelineEntityService pipelineEntityService;
+    private PipelineService pipelineService;
     @Resource
     private VolumeService volumeService;
     @Resource
@@ -159,12 +157,12 @@ public final class SetupSampleDataBean {
         LOGGER.info("Creating admin user");
         dbRealm.createOrRefreshAdmin();
 
-//        createRandomExplorerData(null, "", 0, 2);
+//        createRandomExplorerNode(null, "", 0, 2);
 
         // Sample data/config can exist in many projects so here we define all
         // the root directories that we want to
         // process
-        final Path[] rootDirs = new Path[]{StroomCoreServerTestFileUtil.getTestResourcesDir().toPath().resolve(ROOT_DIR_NAME),
+        final Path[] rootDirs = new Path[]{StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(ROOT_DIR_NAME),
                 Paths.get("./stroom-statistics-server/src/test/resources").resolve(ROOT_DIR_NAME)};
 
         // process each root dir in turn
@@ -186,7 +184,7 @@ public final class SetupSampleDataBean {
             indexService.save(index);
 
             // Find the pipeline for this index.
-            final BaseResultList<PipelineEntity> pipelines = pipelineEntityService
+            final BaseResultList<PipelineEntity> pipelines = pipelineService
                     .find(new FindPipelineEntityCriteria(index.getName()));
 
             if (pipelines == null || pipelines.size() == 0) {
@@ -197,8 +195,13 @@ public final class SetupSampleDataBean {
                 final PipelineEntity pipeline = pipelines.getFirst();
 
                 // Create a processor for this index.
-                final FindStreamCriteria criteria = new FindStreamCriteria();
-                criteria.obtainStreamTypeIdSet().add(StreamType.EVENTS);
+                final QueryData criteria = new QueryData.Builder()
+                        .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
+                        .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+                            .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.EVENTS.getName())
+                            .build())
+                        .build();
+
                 streamProcessorFilterService.createNewFilter(pipeline, criteria, true, 10);
                 // final StreamProcessorFilter filter =
                 // streamProcessorFilterService.createNewFilter(pipeline,
@@ -234,7 +237,7 @@ public final class SetupSampleDataBean {
         // Create stream processors for all feeds.
         for (final Feed feed : feeds) {
             // Find the pipeline for this feed.
-            final BaseResultList<PipelineEntity> pipelines = pipelineEntityService
+            final BaseResultList<PipelineEntity> pipelines = pipelineService
                     .find(new FindPipelineEntityCriteria(feed.getName()));
 
             if (pipelines == null || pipelines.size() == 0) {
@@ -245,10 +248,16 @@ public final class SetupSampleDataBean {
                 final PipelineEntity pipeline = pipelines.getFirst();
 
                 // Create a processor for this feed.
-                final FindStreamCriteria criteria = new FindStreamCriteria();
-                criteria.obtainFeeds().obtainInclude().add(feed);
-                criteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS);
-                criteria.obtainStreamTypeIdSet().add(StreamType.RAW_REFERENCE);
+                final QueryData criteria = new QueryData.Builder()
+                        .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
+                        .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+                            .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
+                            .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
+                                .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
+                                .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_REFERENCE.getName())
+                                .build())
+                            .build())
+                        .build();
                 streamProcessorFilterService.createNewFilter(pipeline, criteria, true, 10);
                 // final StreamProcessorFilter filter =
                 // streamProcessorFilterService.createNewFilter(pipeline,
@@ -264,6 +273,12 @@ public final class SetupSampleDataBean {
                 // streamProcessor.setEnabled(true);
                 // streamProcessorService.save(streamProcessor);
             }
+        }
+
+        try (final Connection connection = ConnectionUtil.getConnection()) {
+            new V6_0_0_21__Dictionary().migrate(connection);
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage());
         }
 
         if (shutdown) {
@@ -283,7 +298,7 @@ public final class SetupSampleDataBean {
     }
 
     public void loadDirectory(final boolean shutdown, final Path importRootDir) throws IOException {
-        LOGGER.info("Loading sample data for directory: {}", importRootDir.toAbsolutePath());
+        LOGGER.info("Loading sample data for directory: " + FileUtil.getCanonicalPath(importRootDir));
 
         final Path configDir = importRootDir.resolve("config");
         final Path dataDir = importRootDir.resolve("input");
@@ -455,26 +470,6 @@ public final class SetupSampleDataBean {
         return sb.toString();
     }
 
-    private void createRandomExplorerData(final Folder parentFolder, final String path, final int depth, final int maxDepth) {
-        for (int i = 0; i < 100; i++) {
-            final String folderName = "TEST_FOLDER_" + path + i;
-            LOGGER.info("Creating folder: {}", folderName);
-            final Folder folder = folderService.create(DocRefUtil.create(parentFolder), folderName);
-
-            for (int j = 0; j < 20; j++) {
-                final String newPath = path + String.valueOf(i) + "_";
-                final String feedName = "TEST_FEED_" + newPath + j;
-
-                LOGGER.info("Creating feed: " + feedName);
-                feedService.create(DocRefUtil.create(folder), feedName);
-
-                if (depth < maxDepth) {
-                    createRandomExplorerData(folder, newPath, depth + 1, maxDepth);
-                }
-            }
-        }
-    }
-
     private String createNum(final int max) {
         return String.valueOf((int) (Math.random() * max) + 1);
     }
@@ -556,7 +551,7 @@ public final class SetupSampleDataBean {
     // expression.setFolder(folder);
     // searchExpressionService.save(expression);
     //
-    // final Dictionary dictionary = new Dictionary();
+    // final DictionaryDocument dictionary = new Dictionary();
     // dictionary.setName("User list");
     // dictionary.setWords("userone\nuser1");
     // }
@@ -565,12 +560,12 @@ public final class SetupSampleDataBean {
     // final Folder folder = get(SEARCH + "/Search Examples");
     // final XSLT resultXSLT = findXSLT("Search Result Table - Show XML");
     //
-    // final Dictionary dictionary = new Dictionary();
+    // final DictionaryDocument dictionary = new Dictionary();
     // dictionary.setName("User list");
     // dictionary.setWords("userone\nuser1");
     // dictionary.setFolder(folder);
     //
-    // dictionaryService.save(dictionary);
+    // dictionaryStore.save(dictionary);
     //
     // final SearchExpressionTerm content1 = new SearchExpressionTerm();
     // content1.setField("UserId");

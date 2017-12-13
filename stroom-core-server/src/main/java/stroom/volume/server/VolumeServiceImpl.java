@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.volume.server;
@@ -35,25 +36,26 @@ import stroom.entity.shared.Sort.Direction;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;
+import stroom.node.server.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.Volume.VolumeUseStatus;
-import stroom.node.shared.VolumeService;
 import stroom.node.shared.VolumeState;
 import stroom.security.Insecure;
 import stroom.security.Secured;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.config.StroomProperties;
+import stroom.util.io.FileUtil;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomStartup;
 
 import javax.inject.Inject;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -385,24 +387,39 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     private VolumeState updateVolumeState(final Volume volume) {
         final VolumeState volumeState = volume.getVolumeState();
         volumeState.setStatusMs(System.currentTimeMillis());
-        final File path = new File(volume.getPath());
+        final Path path = Paths.get(volume.getPath());
+
         // Ensure the path exists
-        if (path.mkdirs()) {
-            LOGGER.debug("updateVolumeState() path created: " + path);
-        } else {
+        if (Files.isDirectory(path)) {
             LOGGER.debug("updateVolumeState() path exists: " + path);
+            setSizes(path, volumeState);
+        } else {
+            try {
+                Files.createDirectories(path);
+                LOGGER.debug("updateVolumeState() path created: " + path);
+                setSizes(path, volumeState);
+            } catch (final IOException e) {
+                LOGGER.error("updateVolumeState() path not created: " + path);
+            }
         }
-
-        final long usableSpace = path.getUsableSpace();
-        final long freeSpace = path.getFreeSpace();
-        final long totalSpace = path.getTotalSpace();
-
-        volumeState.setBytesTotal(totalSpace);
-        volumeState.setBytesFree(usableSpace);
-        volumeState.setBytesUsed(totalSpace - freeSpace);
 
         LOGGER.debug("updateVolumeState() exit" + volume);
         return volumeState;
+    }
+
+    private void setSizes(final Path path, final VolumeState volumeState) {
+        try {
+            final FileStore fileStore = Files.getFileStore(path);
+            final long usableSpace = fileStore.getUsableSpace();
+            final long freeSpace = fileStore.getUnallocatedSpace();
+            final long totalSpace = fileStore.getTotalSpace();
+
+            volumeState.setBytesTotal(totalSpace);
+            volumeState.setBytesFree(usableSpace);
+            volumeState.setBytesUsed(totalSpace - freeSpace);
+        } catch (final IOException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
     }
 
     /**
@@ -535,7 +552,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     }
 
     private void createVolume(final Path path, final Node node, final Optional<Volume> optVolume) {
-        String pathStr = path.toAbsolutePath().toString();
+        String pathStr = FileUtil.getCanonicalPath(path);
         try {
             Files.createDirectories(path);
             LOGGER.info("Creating volume in {} on node {}",
@@ -564,7 +581,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
             //this.updateVolumeState()
             return OptionalLong.of((long) (totalBytes * 0.9));
         } catch (IOException e) {
-            LOGGER.warn("Unable to determine the total space on the filesystem for path: ", path.toAbsolutePath().toString());
+            LOGGER.warn("Unable to determine the total space on the filesystem for path: ", FileUtil.getCanonicalPath(path));
             return OptionalLong.empty();
         }
     }

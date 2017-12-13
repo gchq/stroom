@@ -110,13 +110,13 @@ public class Stream extends BaseEntityBig {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public static final Stream createStub(final long pk) {
+    public static Stream createStub(final long pk) {
         final Stream stream = new Stream();
         stream.setStub(pk);
         return stream;
     }
 
-    public static final Stream createStream(final StreamType type, final Feed feed, final Long effectiveMs) {
+    public static Stream createStream(final StreamType type, final Feed feed, final Long effectiveMs) {
         final Stream stream = new Stream();
 
         stream.streamType = type;
@@ -133,7 +133,7 @@ public class Stream extends BaseEntityBig {
         return stream;
     }
 
-    public static final Stream createStreamForTesting(final StreamType type, final Feed feed, final Long effectiveMs,
+    public static Stream createStreamForTesting(final StreamType type, final Feed feed, final Long effectiveMs,
                                                       final long createMs) {
         final Stream stream = new Stream();
 
@@ -151,7 +151,7 @@ public class Stream extends BaseEntityBig {
         return stream;
     }
 
-    public static final Stream createProcessedStream(final Stream parent, final Feed feed, final StreamType streamType,
+    public static Stream createProcessedStream(final Stream parent, final Feed feed, final StreamType streamType,
                                                      final StreamProcessor streamProcessor, final StreamTask streamTask) {
         final Stream stream = new Stream();
 
@@ -299,15 +299,6 @@ public class Stream extends BaseEntityBig {
     @PostLoad
     public void postLoad() {
         checkImmutable = true;
-    }
-
-    @PrePersist
-    @Override
-    public void prePersist() {
-        if (createMs == 0) {
-            throw new RuntimeException("CreateMs must be set to a valid value before saving");
-        }
-        super.prePersist();
     }
 
     @Transient

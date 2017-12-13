@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.datafeed.server;
@@ -26,14 +27,13 @@ import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.StroomStatusCode;
 import stroom.feed.StroomStreamException;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.internalstatistics.MetaDataStatistic;
-import stroom.policy.shared.DataReceiptAction;
-import stroom.pool.SecurityHelper;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamtask.server.StreamTargetStroomStreamHandler;
 import stroom.util.spring.StroomScope;
@@ -62,35 +62,27 @@ public class DataFeedRequestHandler implements RequestHandler {
     private final StreamStore streamStore;
     private final FeedService feedService;
     private final MetaDataStatistic metaDataStatistics;
-    private final DataReceiptPolicyChecker dataReceiptPolicyChecker;
+    private final MetaMapFilter metaMapFilter;
 
     @Inject
     DataFeedRequestHandler(final SecurityContext securityContext,
                            final StreamStore streamStore,
                            @Named("cachedFeedService") final FeedService feedService,
                            final MetaDataStatistic metaDataStatistics,
-                           final DataReceiptPolicyChecker dataReceiptPolicyChecker) {
+                           final MetaMapFilterFactory metaMapFilterFactory) {
         this.securityContext = securityContext;
         this.streamStore = streamStore;
         this.feedService = feedService;
         this.metaDataStatistics = metaDataStatistics;
-        this.dataReceiptPolicyChecker = dataReceiptPolicyChecker;
+        this.metaMapFilter = metaMapFilterFactory.create("dataFeed");
     }
 
     @Override
     @Insecure
     public void handle(final HttpServletRequest request, final HttpServletResponse response) {
-        try (SecurityHelper securityHelper = SecurityHelper.asProcUser(securityContext)) {
+        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
             final MetaMap metaMap = MetaMapFactory.create(request);
-
-            // We need to examine the meta map and ensure we aren't dropping or rejecting this data.
-            final DataReceiptAction dataReceiptAction = dataReceiptPolicyChecker.check(metaMap);
-
-            if (DataReceiptAction.REJECT.equals(dataReceiptAction)) {
-                debug("Rejecting data", metaMap);
-                throw new StroomStreamException(StroomStatusCode.RECEIPT_POLICY_SET_TO_REJECT_DATA);
-
-            } else if (DataReceiptAction.RECEIVE.equals(dataReceiptAction)) {
+            if (metaMapFilter.filter(metaMap)) {
                 debug("Receiving data", metaMap);
                 final String feedName = metaMap.get(StroomHeaderArguments.FEED);
 
@@ -129,6 +121,10 @@ public class DataFeedRequestHandler implements RequestHandler {
                 // Drop the data.
                 debug("Dropping data", metaMap);
             }
+
+            // Set the response status.
+            response.setStatus(StroomStatusCode.OK.getHttpCode());
+            LOGGER.info("handleRequest response " + StroomStatusCode.OK);
         }
     }
 

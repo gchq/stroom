@@ -21,21 +21,21 @@ import stroom.util.shared.SharedMap;
 
 import java.util.List;
 
-public class FetchExplorerPermissionsAction extends Action<SharedMap<ExplorerData, ExplorerPermissions>> {
+public class FetchExplorerPermissionsAction extends Action<SharedMap<ExplorerNode, ExplorerPermissions>> {
     private static final long serialVersionUID = 6474393620176001033L;
 
-    private List<ExplorerData> explorerDataList;
+    private List<ExplorerNode> explorerNodeList;
 
     public FetchExplorerPermissionsAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public FetchExplorerPermissionsAction(final List<ExplorerData> explorerDataList) {
-        this.explorerDataList = explorerDataList;
+    public FetchExplorerPermissionsAction(final List<ExplorerNode> explorerNodeList) {
+        this.explorerNodeList = explorerNodeList;
     }
 
-    public List<ExplorerData> getExplorerDataList() {
-        return explorerDataList;
+    public List<ExplorerNode> getExplorerNodeList() {
+        return explorerNodeList;
     }
 
     @Override

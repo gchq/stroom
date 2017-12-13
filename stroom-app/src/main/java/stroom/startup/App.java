@@ -17,6 +17,8 @@
 package stroom.startup;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.dropwizard.Application;
 import io.dropwizard.Configuration;
 import io.dropwizard.assets.AssetsBundle;
@@ -28,22 +30,33 @@ import io.dropwizard.setup.Environment;
 import org.apache.shiro.web.servlet.AbstractShiroFilter;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import stroom.annotations.spring.AnnotationsIndexConfiguration;
 import stroom.cluster.server.ClusterCallServiceRPC;
-import stroom.dashboard.server.logging.spring.EventLoggingConfiguration;
 import stroom.dashboard.spring.DashboardConfiguration;
-import stroom.datafeed.server.DataFeedServiceImpl;
+import stroom.datafeed.server.DataFeedServlet;
+import stroom.dictionary.spring.DictionaryConfiguration;
 import stroom.dispatch.shared.DispatchService;
+import stroom.elastic.spring.ElasticIndexConfiguration;
 import stroom.entity.server.SpringRequestFactoryServlet;
+import stroom.explorer.server.ExplorerConfiguration;
 import stroom.feed.server.RemoteFeedServiceRPC;
 import stroom.index.server.StroomIndexQueryResource;
 import stroom.index.spring.IndexConfiguration;
 import stroom.lifecycle.LifecycleService;
+import stroom.logging.spring.EventLoggingConfiguration;
 import stroom.pipeline.spring.PipelineConfiguration;
+import stroom.proxy.guice.ProxyModule;
+import stroom.proxy.repo.ProxyLifecycle;
+import stroom.proxy.servlet.ConfigServlet;
+import stroom.proxy.servlet.ProxyStatusServlet;
+import stroom.proxy.servlet.ProxyWelcomeServlet;
+import stroom.ruleset.spring.RuleSetConfiguration;
 import stroom.script.server.ScriptServlet;
 import stroom.script.spring.ScriptConfiguration;
 import stroom.search.spring.SearchConfiguration;
@@ -72,33 +85,38 @@ import stroom.spring.ServerConfiguration;
 import stroom.statistics.server.sql.search.SqlStatisticsQueryResource;
 import stroom.statistics.spring.StatisticsConfiguration;
 import stroom.util.spring.StroomSpringProfiles;
-import stroom.util.thread.ThreadScopeContextFilter;
 import stroom.visualisation.spring.VisualisationConfiguration;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import java.util.EnumSet;
 
-public class App extends Application<Configuration> {
+public class App extends Application<Config> {
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
+    private static String configPath;
+
     public static void main(final String[] args) throws Exception {
+        if (args.length > 0) {
+            configPath = args[args.length - 1];
+        }
+
         // Hibernate requires JBoss Logging. The SLF4J API jar wasn't being detected so this sets it manually.
         System.setProperty("org.jboss.logging.provider", "slf4j");
         new App().run(args);
     }
 
     @Override
-    public void initialize(final Bootstrap<Configuration> bootstrap) {
+    public void initialize(final Bootstrap<Config> bootstrap) {
         // This allows us to use templating in the YAML configuration.
         bootstrap.setConfigurationSourceProvider(new SubstitutingSourceProvider(
-            bootstrap.getConfigurationSourceProvider(),
-            new EnvironmentVariableSubstitutor(false)));
+                bootstrap.getConfigurationSourceProvider(),
+                new EnvironmentVariableSubstitutor(false)));
         bootstrap.addBundle(new AssetsBundle("/ui", "/", "stroom.jsp", "ui"));
     }
 
     @Override
-    public void run(final Configuration configuration, final Environment environment) throws Exception {
+    public void run(final Config configuration, final Environment environment) {
         // Add useful logging setup.
         registerLogConfiguration(environment);
         environment.healthChecks().register(LogLevelInspector.class.getName(), new LogLevelInspector());
@@ -113,6 +131,34 @@ public class App extends Application<Configuration> {
         // Configure Cross-Origin Resource Sharing.
         configureCors(environment);
 
+        if ("proxy".equalsIgnoreCase(configuration.getMode())) {
+            startProxy(configuration, environment);
+        } else {
+            // Adding asset bundles this way is not normal but it is done so that proxy can serve it's own root page for now.
+            new AssetsBundle("/ui", "/", "stroom.jsp", "ui").run(environment);
+            startApp(configuration, environment);
+        }
+    }
+
+    private void startProxy(final Config configuration, final Environment environment) {
+        final ProxyModule proxyModule = new ProxyModule(configuration.getProxyConfig());
+        final Injector injector = Guice.createInjector(proxyModule);
+
+        final ServletContextHandler servletContextHandler = environment.getApplicationContext();
+
+        // Add servlets
+        servletContextHandler.addServlet(new ServletHolder(new ConfigServlet(configPath)), "/config");
+        GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, "/datafeed");
+        GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, "/datafeed/*");
+        GuiceUtil.addServlet(servletContextHandler, injector, ProxyWelcomeServlet.class, "/");
+        GuiceUtil.addServlet(servletContextHandler, injector, ProxyStatusServlet.class, "/status");
+        GuiceUtil.addServlet(servletContextHandler, injector, DebugServlet.class, "/debug");
+
+        // Listen to the lifecycle of the Dropwizard app.
+        GuiceUtil.manage(environment.lifecycle(), injector, ProxyLifecycle.class);
+    }
+
+    private void startApp(final Config configuration, final Environment environment) {
         // Start the spring context.
         LOGGER.info("Loading Spring context");
         final ApplicationContext applicationContext = loadApplcationContext(configuration, environment);
@@ -128,7 +174,6 @@ public class App extends Application<Configuration> {
 
         // Add filters
         SpringUtil.addFilter(servletContextHandler, applicationContext, HttpServletRequestFilter.class, "/*");
-        FilterUtil.addFilter(servletContextHandler, ThreadScopeContextFilter.class, "threadScopeContextFilter", null);
         FilterUtil.addFilter(servletContextHandler, RejectPostFilter.class, "rejectPostFilter", ImmutableMap.<String, String>builder().put("rejectUri", "/").build());
         SpringUtil.addFilter(servletContextHandler, applicationContext, AbstractShiroFilter.class, "/*");
 
@@ -146,8 +191,8 @@ public class App extends Application<Configuration> {
         SpringUtil.addServlet(servletContextHandler, applicationContext, SessionResourceStoreImpl.class, "/resourcestore/*");
         SpringUtil.addServlet(servletContextHandler, applicationContext, SpringRequestFactoryServlet.class, "/gwtRequest");
         SpringUtil.addServlet(servletContextHandler, applicationContext, RemoteFeedServiceRPC.class, "/remoting/remotefeedservice.rpc");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, DataFeedServiceImpl.class, "/datafeed");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, DataFeedServiceImpl.class, "/datafeed/*");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, DataFeedServlet.class, "/datafeed");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, DataFeedServlet.class, "/datafeed/*");
 
         // Add session listeners.
         SpringUtil.addServletListener(environment.servlets(), applicationContext, SessionListListener.class);
@@ -173,7 +218,9 @@ public class App extends Application<Configuration> {
                 ServerComponentScanConfiguration.class,
                 ServerConfiguration.class,
                 EventLoggingConfiguration.class,
+                DictionaryConfiguration.class,
                 PipelineConfiguration.class,
+                ExplorerConfiguration.class,
                 IndexConfiguration.class,
                 SearchConfiguration.class,
                 ScriptConfiguration.class,
@@ -181,13 +228,16 @@ public class App extends Application<Configuration> {
                 DashboardConfiguration.class,
                 MetaDataStatisticConfiguration.class,
                 StatisticsConfiguration.class,
-                SecurityConfiguration.class
+                SecurityConfiguration.class,
+                AnnotationsIndexConfiguration.class,
+                ElasticIndexConfiguration.class,
+                RuleSetConfiguration.class
         );
         applicationContext.refresh();
         return applicationContext;
     }
 
-    private static final void configureCors(io.dropwizard.setup.Environment environment) {
+    private static void configureCors(io.dropwizard.setup.Environment environment) {
         FilterRegistration.Dynamic cors = environment.servlets().addFilter("CORS", CrossOriginFilter.class);
         cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, new String[]{"/*"});
         cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "GET,PUT,POST,DELETE,OPTIONS");

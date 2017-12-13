@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,13 @@ package stroom.spring;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Scope;
-import stroom.node.shared.Node;
+import stroom.explorer.server.ExplorerActionHandlers;
+import stroom.feed.server.FeedService;
+import stroom.feed.shared.Feed;
+import stroom.importexport.server.ImportExportActionHandlers;
 import stroom.util.spring.StroomBeanStore;
-import stroom.util.spring.StroomScope;
+
+import javax.inject.Inject;
 
 /**
  * Defines the application context configuration for the server module.
@@ -31,18 +33,12 @@ import stroom.util.spring.StroomScope;
 @Configuration
 @EnableAspectJAutoProxy
 public class ServerConfiguration {
-    @Bean
-    @Lazy
-    @Scope(StroomScope.THREAD)
-    public Node sourceNode() {
-        return new Node();
-    }
-
-    @Bean
-    @Lazy
-    @Scope(StroomScope.THREAD)
-    public Node targetNode() {
-        return new Node();
+    @Inject
+    public ServerConfiguration(final ExplorerActionHandlers explorerActionHandlers,
+                               final ImportExportActionHandlers importExportActionHandlers,
+                               final FeedService feedService) {
+        explorerActionHandlers.add(3, Feed.ENTITY_TYPE, Feed.ENTITY_TYPE, feedService);
+        importExportActionHandlers.add(Feed.ENTITY_TYPE, feedService);
     }
 
     @Bean

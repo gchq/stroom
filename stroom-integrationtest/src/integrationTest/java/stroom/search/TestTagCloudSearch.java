@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.search;
@@ -21,26 +22,14 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.DocRefUtil;
+import stroom.index.server.IndexService;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
-import stroom.index.shared.IndexService;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.query.api.v2.DocRef;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.*;
+
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.Field;
-import stroom.query.api.v2.Field;
-import stroom.query.api.v2.Format;
-import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.Query;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
-import stroom.query.api.v2.Row;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchResponse;
-import stroom.query.api.v2.TableResult;
-import stroom.query.api.v2.TableSettings;
 import stroom.query.shared.v2.ParamUtil;
 
 import javax.annotation.Resource;

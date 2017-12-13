@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.xmlschema.client.presenter;
@@ -21,7 +22,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.PresenterWidget;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
-import stroom.entity.client.presenter.EntityEditTabPresenter;
+import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
@@ -30,7 +31,7 @@ import stroom.widget.xsdbrowser.client.presenter.XSDBrowserPresenter;
 import stroom.widget.xsdbrowser.client.view.XSDModel;
 import stroom.xmlschema.shared.XMLSchema;
 
-public class XMLSchemaPresenter extends EntityEditTabPresenter<LinkTabPanelView, XMLSchema> {
+public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelView, XMLSchema> {
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData GRAPHICAL = new TabDataImpl("Graphical");
     private static final TabData TEXT = new TabDataImpl("Text");
@@ -109,7 +110,7 @@ public class XMLSchemaPresenter extends EntityEditTabPresenter<LinkTabPanelView,
 
     @Override
     protected void onRead(final XMLSchema xmlSchema) {
-        settingsPresenter.read(xmlSchema);
+        settingsPresenter.read(getDocRef(), xmlSchema);
 
         shownText = false;
         updateDiagram = false;

@@ -23,6 +23,7 @@ import stroom.index.shared.IndexField;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.search.server.Event;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamPermissionException;
@@ -77,8 +78,7 @@ public class StreamMapCreator {
     }
 
     void addEvent(final Map<Long, List<Event>> storedDataMap, final String[] storedData) {
-        securityContext.elevatePermissions();
-        try {
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             final Long longStreamId = getLong(storedData, streamIdIndex);
             final Long longEventId = getLong(storedData, eventIdIndex);
 
@@ -95,8 +95,6 @@ public class StreamMapCreator {
                     });
                 }
             }
-        } finally {
-            securityContext.restorePermissions();
         }
     }
 

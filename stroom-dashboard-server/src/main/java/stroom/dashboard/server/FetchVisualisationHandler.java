@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.dashboard.server;
@@ -19,11 +20,12 @@ package stroom.dashboard.server;
 import org.springframework.context.annotation.Scope;
 import stroom.dashboard.shared.FetchVisualisationAction;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;
+import stroom.visualisation.server.VisualisationService;
 import stroom.visualisation.shared.Visualisation;
-import stroom.visualisation.shared.VisualisationService;
 
 import javax.inject.Inject;
 
@@ -41,13 +43,9 @@ class FetchVisualisationHandler extends AbstractTaskHandler<FetchVisualisationAc
 
     @Override
     public Visualisation exec(final FetchVisualisationAction action) {
-        try {
-            // Elevate the users permissions for the duration of this task so they can read the visualisation if they have 'use' permission.
-            securityContext.elevatePermissions();
-
+        // Elevate the users permissions for the duration of this task so they can read the visualisation if they have 'use' permission.
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             return visualisationService.loadByUuid(action.getVisualisation().getUuid());
-        } finally {
-            securityContext.restorePermissions();
         }
     }
 }
