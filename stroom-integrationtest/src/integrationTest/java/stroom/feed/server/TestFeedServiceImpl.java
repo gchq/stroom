@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.feed.server;
@@ -19,16 +20,11 @@ package stroom.feed.server;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.Folder;
-import stroom.entity.shared.FolderService;
-import stroom.entity.shared.PermissionInheritance;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
@@ -47,11 +43,9 @@ public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
     @Resource
     private FeedService feedService;
     @Resource
-    private PipelineEntityService pipelineEntityService;
+    private PipelineService pipelineService;
     @Resource
     private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Resource
-    private FolderService folderService;
 
     /**
      * Test.
@@ -59,7 +53,7 @@ public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
     @Test
     public void test1() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        Feed fd = feedService.create(commonTestScenarioCreator.getTestFolder(), feedName);
+        Feed fd = feedService.create(feedName);
         fd = feedService.save(fd);
         fd = feedService.save(fd);
 
@@ -83,26 +77,13 @@ public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
     }
 
     /**
-     * Test.
-     */
-    @Test
-    public void testSaveAs() {
-        final String feedName = FileSystemTestUtil.getUniqueTestString();
-        Feed fd = feedService.create(commonTestScenarioCreator.getTestFolder(), feedName);
-
-        fd = feedService.copy(fd, DocRefUtil.create(fd.getFolder()), fd.getName() + "COPY", PermissionInheritance.INHERIT);
-
-        feedService.save(fd);
-    }
-
-    /**
      * Added this test to ensure that deletion works on the database correctly
      * and cascades to the join table. Previously this was broken as the
      * deletion was violating the integrity constraint placed on the join table.
      */
     @Test
     public void test2() {
-        Feed rfd = feedService.create(commonTestScenarioCreator.getTestFolder(), "REF_FEED_1");
+        Feed rfd = feedService.create("REF_FEED_1");
         rfd.setDescription("Junit");
         rfd.setReference(true);
         rfd = feedService.save(rfd);
@@ -110,7 +91,7 @@ public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
         final Set<Feed> refFeed = new HashSet<>();
         refFeed.add(rfd);
 
-        Feed fd = feedService.create(commonTestScenarioCreator.getTestFolder(), "EVT_FEED_1");
+        Feed fd = feedService.create("EVT_FEED_1");
         fd.setDescription("Junit");
         fd = feedService.save(fd);
 
@@ -135,7 +116,6 @@ public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
 
         final List<String> sortList = new ArrayList<>();
         sortList.add(FindFeedCriteria.FIELD_NAME);
-        sortList.add(FindFeedCriteria.FIELD_FOLDER);
         sortList.add(FindFeedCriteria.FIELD_TYPE);
         sortList.add(FindFeedCriteria.FIELD_CLASSIFICATION);
 
@@ -160,7 +140,7 @@ public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
     @Test
     public void testPaging() {
         for (int i = 0; i < TEST_SIZE; i++) {
-            final Feed rfd = feedService.create(commonTestScenarioCreator.getTestFolder(), "REF_FEED_" + i);
+            final Feed rfd = feedService.create("REF_FEED_" + i);
             rfd.setDescription("Junit");
             feedService.save(rfd);
         }
@@ -187,11 +167,11 @@ public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
     @Test
     public void testNonLazyLoad() {
         try {
-            final Feed fd1 = feedService.create(commonTestScenarioCreator.getTestFolder(), "K1_12345");
+            final Feed fd1 = feedService.create("K1_12345");
             fd1.setDescription("Junit");
             feedService.save(fd1);
 
-            final Feed fd2 = feedService.create(commonTestScenarioCreator.getTestFolder(), "K2_12345");
+            final Feed fd2 = feedService.create("K2_12345");
             fd2.setDescription("Junit");
             feedService.save(fd2);
 
@@ -205,24 +185,5 @@ public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
             ex.printStackTrace();
             Assert.fail(ex.getMessage());
         }
-    }
-
-    /**
-     * Check the relationships.
-     */
-    @Test
-    public void testParentJPAStuff() {
-        Folder folder = folderService.create(null, "JUNIT");
-        folder = folderService.save(folder);
-
-        PipelineEntity translation1 = pipelineEntityService.create(DocRefUtil.create(folder), "JUNIT");
-        translation1.setDescription("Junit");
-        translation1 = pipelineEntityService.save(translation1);
-
-        final FindPipelineEntityCriteria findTranslationCriteria = new FindPipelineEntityCriteria();
-        findTranslationCriteria.getName().setString("JUNIT");
-        translation1 = pipelineEntityService.find(findTranslationCriteria).getFirst();
-
-        Assert.assertNotNull(translation1.getFolder().getId());
     }
 }

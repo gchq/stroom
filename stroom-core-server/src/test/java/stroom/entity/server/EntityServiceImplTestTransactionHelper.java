@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.entity.server;
@@ -20,8 +21,8 @@ import org.junit.Assert;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 
 import javax.annotation.Resource;
 
@@ -37,7 +38,7 @@ public class EntityServiceImplTestTransactionHelper {
     Feed feed;
 
     public void init() {
-        feed = feedService.create(null, "FEED_" + System.currentTimeMillis());
+        feed = feedService.create("FEED_" + System.currentTimeMillis());
     }
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)

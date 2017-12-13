@@ -24,20 +24,30 @@ import org.junit.runner.RunWith;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
+import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.node.shared.Node;
+import stroom.node.shared.Volume;
+import stroom.node.shared.Volume.VolumeType;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.concurrent.SimpleExecutor;
+import stroom.util.io.FileUtil;
+import stroom.util.test.CheckedLimit;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
-import java.io.File;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestIndexShardPoolImpl2 extends StroomUnitTest {
+    public static int getRandomNumber(final int size) {
+        return (int) Math.floor((Math.random() * size));
+    }
+
     @Before
     public void before() {
-        FileSystemUtil.deleteContents(new File(getCurrentTestDir(), "index"));
+        FileSystemUtil.deleteContents(getCurrentTestDir().resolve( "index"));
     }
 
     @Test
@@ -46,31 +56,60 @@ public class TestIndexShardPoolImpl2 extends StroomUnitTest {
         final IndexFields indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(indexField);
 
+        // 10 threads, 1000 jobs, 10 different indexes, max 3 shards per index.
+        final CheckedLimit checkedLimit = new CheckedLimit(1);
+        final AtomicLong indexShardId = new AtomicLong(0);
+        final AtomicInteger indexShardsCreated = new AtomicInteger(0);
+
         final Node defaultNode = new Node();
         defaultNode.setName("TEST");
 
-        final Indexer indexer = new MockIndexer();
+        final MockIndexShardService mockIndexShardService = new MockIndexShardService() {
+            @Override
+            public IndexShard createIndexShard(final IndexShardKey indexShardKey, final Node ownerNode) {
+                checkedLimit.increment();
+                indexShardsCreated.incrementAndGet();
+                final IndexShard indexShard = new IndexShard();
+                indexShard.setIndex(indexShardKey.getIndex());
+                indexShard.setPartition(indexShardKey.getPartition());
+                indexShard.setPartitionFromTime(indexShardKey.getPartitionFromTime());
+                indexShard.setPartitionToTime(indexShardKey.getPartitionToTime());
+                indexShard.setNode(ownerNode);
+                indexShard.setId(indexShardId.incrementAndGet());
+                indexShard.setVolume(
+                        Volume.create(defaultNode, FileUtil.getCanonicalPath(getCurrentTestDir()), VolumeType.PUBLIC));
+                indexShard.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
+                FileSystemUtil.deleteContents(IndexShardUtil.getIndexPath(indexShard));
+                return indexShard;
+            }
+        };
 
-        final Index index = new Index();
-        index.setId(1);
-        index.setIndexFieldsObject(indexFields);
-        index.setMaxDocsPerShard(1000);
+        try {
+            final Indexer indexer = new MockIndexer();
 
-        final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
-        final SimpleExecutor simpleExecutor = new SimpleExecutor(10);
+            final Index index = new Index();
+            index.setId(1);
+            index.setIndexFieldsObject(indexFields);
+            index.setMaxDocsPerShard(1000);
 
-        for (int i = 0; i < 1000; i++) {
-            simpleExecutor.execute(() -> {
-                for (int i1 = 0; i1 < 100; i1++) {
-                    // Do some work.
-                    final Field field = FieldFactory.create(indexField, "test");
-                    final Document document = new Document();
-                    document.add(field);
-                    indexer.addDocument(indexShardKey, document);
-                }
-            });
+            final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
+            final SimpleExecutor simpleExecutor = new SimpleExecutor(10);
+
+            for (int i = 0; i < 1000; i++) {
+                simpleExecutor.execute(() -> {
+                    for (int i1 = 0; i1 < 100; i1++) {
+                        // Do some work.
+                        final Field field = FieldFactory.create(indexField, "test");
+                        final Document document = new Document();
+                        document.add(field);
+                        indexer.addDocument(indexShardKey, document);
+                    }
+                });
+            }
+
+            simpleExecutor.stop(false);
+        } catch (final Exception e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
-
-        simpleExecutor.stop(false);
     }
 }

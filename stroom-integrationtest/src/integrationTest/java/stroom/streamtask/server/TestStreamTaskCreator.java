@@ -23,7 +23,10 @@ import org.slf4j.LoggerFactory;
 import stroom.feed.shared.Feed;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
-import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
+import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamTask;
 import stroom.task.server.TaskMonitorImpl;
@@ -106,11 +109,18 @@ public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
         Assert.assertNotNull(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails());
         Assert.assertFalse(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails().hasRecentDetail());
 
-        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
-        findStreamCriteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS.getId());
-        findStreamCriteria.obtainFeeds().obtainInclude().add(feed1.getId());
-        findStreamCriteria.obtainFeeds().obtainInclude().add(feed2.getId());
-        commonTestScenarioCreator.createStreamProcessor(findStreamCriteria);
+        final QueryData findStreamQueryData = new QueryData.Builder()
+                .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
+                .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+                    .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
+                        .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed1.getName())
+                        .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed2.getName())
+                        .build())
+                    .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
+                    .build())
+                .build();
+
+        commonTestScenarioCreator.createStreamProcessor(findStreamQueryData);
 
         for (int i = 0; i < 3000; i++) {
             commonTestScenarioCreator.createSample2LineRawFile(feed1, StreamType.RAW_EVENTS);

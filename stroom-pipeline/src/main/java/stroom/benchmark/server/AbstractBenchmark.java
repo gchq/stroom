@@ -21,13 +21,18 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.server.util.XMLUtil;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.shared.Feed;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.server.fs.serializable.RawInputSegmentWriter;
+import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.StreamUtil;
 import stroom.util.task.TaskMonitor;
@@ -73,28 +78,21 @@ public abstract class AbstractBenchmark {
     }
 
     protected Stream writeData(final Feed feed, final StreamType streamType, final String data) {
-        try {
-            // Add the associated data to the stream store.
-            final Stream stream = Stream.createStream(streamType, feed, System.currentTimeMillis());
+        // Add the associated data to the stream store.
+        final Stream stream = Stream.createStream(streamType, feed, System.currentTimeMillis());
 
-            final StreamTarget dataTarget = streamStore.openStreamTarget(stream);
+        final StreamTarget dataTarget = streamStore.openStreamTarget(stream);
 
-            final InputStream dataInputStream = StreamUtil.stringToStream(data);
+        final InputStream dataInputStream = StreamUtil.stringToStream(data);
 
-            final RASegmentOutputStream dataOutputStream = new RASegmentOutputStream(dataTarget);
+        final RASegmentOutputStream dataOutputStream = new RASegmentOutputStream(dataTarget);
 
-            final RawInputSegmentWriter dataWriter = new RawInputSegmentWriter();
-            dataWriter.write(dataInputStream, dataOutputStream);
+        final RawInputSegmentWriter dataWriter = new RawInputSegmentWriter();
+        dataWriter.write(dataInputStream, dataOutputStream);
 
-            streamStore.closeStreamTarget(dataTarget);
+        streamStore.closeStreamTarget(dataTarget);
 
-            return dataTarget.getStream();
-
-        } catch (final IOException e) {
-            LOGGER.error("Unable to write data!", e);
-        }
-
-        return null;
+        return dataTarget.getStream();
     }
 
     protected String readData(final long streamId) throws IOException {
@@ -130,13 +128,15 @@ public abstract class AbstractBenchmark {
     }
 
     protected void verifyData(final Feed feed, final String verificationString) {
-        final FindStreamCriteria criteria = new FindStreamCriteria();
-        criteria.obtainFeeds().obtainInclude().add(feed.getId());
+        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
+        builder.addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName());
         if (feed.isReference()) {
-            criteria.obtainStreamTypeIdSet().add(StreamType.REFERENCE.getId());
+            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.REFERENCE.getDisplayValue());
         } else {
-            criteria.obtainStreamTypeIdSet().add(StreamType.EVENTS.getId());
+            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.EVENTS.getDisplayValue());
         }
+        final FindStreamCriteria criteria = new FindStreamCriteria();
+        criteria.setExpression(builder.build());
         final BaseResultList<Stream> streams = streamStore.find(criteria);
         final Stream targetStream = streams.getFirst();
 
@@ -158,9 +158,7 @@ public abstract class AbstractBenchmark {
 
     protected void deleteData(final Feed... feeds) {
         final FindStreamCriteria criteria = new FindStreamCriteria();
-        for (final Feed feed : feeds) {
-            criteria.obtainFeeds().obtainInclude().add(feed.getId());
-        }
+        criteria.setExpression(ExpressionUtil.createFeedsExpression(feeds));
         streamStore.findDelete(criteria);
     }
 

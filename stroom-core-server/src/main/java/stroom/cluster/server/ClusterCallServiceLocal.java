@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import stroom.node.shared.Node;
 import stroom.security.Insecure;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.spring.StroomBeanStore;
-import stroom.util.thread.ThreadScopeContextHolder;
 
 import javax.inject.Inject;
 import java.lang.reflect.Method;
@@ -60,9 +59,6 @@ class ClusterCallServiceLocal implements ClusterCallService {
         }
 
         try {
-            ThreadScopeContextHolder.getContext().put("sourceNode", sourceNode);
-            ThreadScopeContextHolder.getContext().put("targetNode", targetNode);
-
             final Object service = beanStore.getBean(beanName);
             final Method method = service.getClass().getMethod(methodName, parameterTypes);
 

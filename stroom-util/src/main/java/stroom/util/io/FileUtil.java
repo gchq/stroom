@@ -20,13 +20,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.util.config.StroomProperties;
-import stroom.util.thread.ThreadUtil;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
+import java.nio.file.attribute.PosixFilePermission;
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class FileUtil {
     public static final int MKDIR_RETRY_COUNT = 2;
@@ -35,13 +44,13 @@ public final class FileUtil {
     /**
      * JVM wide temp dir
      */
-    private volatile static File tempDir = null;
+    private volatile static Path tempDir = null;
 
     private FileUtil() {
         // Utility.
     }
 
-    public static File getInitialTempDir() {
+    public static Path getInitialTempDir() {
         final String pathString = StroomProperties.getProperty(StroomProperties.STROOM_TEMP);
         if (pathString == null) {
             throw new RuntimeException("No temp path is specified");
@@ -57,10 +66,10 @@ public final class FileUtil {
             }
         }
 
-        return path.toFile();
+        return path;
     }
 
-    public static File getTempDir() {
+    public static Path getTempDir() {
         if (tempDir == null) {
             synchronized (FileUtil.class) {
                 if (tempDir == null) {
@@ -74,12 +83,12 @@ public final class FileUtil {
 
     public static void useDevTempDir() {
         try {
-            final File tempDir = getTempDir();
+            final Path tempDir = getTempDir();
 
-            final File devDir = new File(tempDir, "dev");
-            mkdirs(devDir);
+            final Path devDir = tempDir.resolve("dev");
+            Files.createDirectories(devDir);
 
-            final String path = devDir.getCanonicalPath();
+            final String path = FileUtil.getCanonicalPath(devDir);
 
             // Redirect the temp dir for dev.
 
@@ -103,120 +112,107 @@ public final class FileUtil {
         }
     }
 
-    public static void createNewFile(final File file) throws IOException {
-        if (!file.createNewFile()) {
-            throw new FileUtilException("Unable to create new file: " + file.getAbsolutePath());
+    public static boolean delete(final Path file) {
+        try {
+            Files.delete(file);
+            return true;
+        } catch (final IOException e) {
+            return false;
         }
     }
 
-    public static void deleteFile(final File file) {
-        if (file.exists()) {
-            if (!file.isFile()) {
-                throw new FileUtilException("Path is directory not file \"" + file.getAbsolutePath() + "\"");
-            }
-
-            if (!file.delete()) {
-                throw new FileUtilException("Unable to delete \"" + file.getAbsolutePath() + "\"");
-            }
-        }
-    }
-
-    public static void deleteDir(final File file) {
-        if (file.exists()) {
-            if (!file.delete()) {
-                throw new FileUtilException("Unable to delete \"" + file.getAbsolutePath() + "\"");
-            }
-        }
-    }
-
-    public static void forceDelete(final Path path) {
-        forceDelete(path.toFile());
-    }
-
-    public static void forceDelete(final File file) {
-        if (file.exists()) {
-            if (file.isDirectory()) {
-                for (final File f : file.listFiles()) {
-                    forceDelete(f);
-                }
+    public static void deleteFile(final Path file) {
+        if (Files.exists(file)) {
+            if (Files.isDirectory(file)) {
+                throw new FileUtilException("Path is directory not file \"" + FileUtil.getCanonicalPath(file) + "\"");
             }
 
             try {
-                if (!file.delete()) {
-                    file.deleteOnExit();
-                }
-            } catch (final Exception e) {
+                Files.deleteIfExists(file);
+            } catch (final IOException e) {
+                throw new FileUtilException("Unable to delete \"" + FileUtil.getCanonicalPath(file) + "\"");
             }
         }
     }
 
-    public static void mkdirs(final File dir) {
-        if (!dir.isDirectory()) {
-            if (!doMkdirs(null, dir, MKDIR_RETRY_COUNT)) {
-                throw new FileUtilException("Unable to make directory: " + dir.getAbsolutePath());
-            }
-
-            if (!dir.isDirectory()) {
-                throw new FileUtilException("Directory not found: " + dir.getAbsolutePath());
-            }
-        }
-    }
-
-    public static boolean doMkdirs(final File superDir, final File dir, int retry) {
-        // Make sure the parent exists first
-        final File parentDir = dir.getParentFile();
-        if (parentDir != null && !parentDir.isDirectory()) {
-            if (superDir != null && superDir.equals(parentDir)) {
-                // Unable to make parent as it is the super dir
-                return false;
-
-            }
-            if (!doMkdirs(superDir, parentDir, retry)) {
-                // Unable to make parent :(
-                return false;
-            }
-        }
-        // No Make us
-        if (!dir.isDirectory()) {
-            // * CONCURRENT PROBLEM AREA *
-            if (!dir.mkdir()) {
-                // Someone could have made it in the * CONCURRENT PROBLEM AREA *
-                if (!dir.isDirectory()) {
-                    if (retry > 0) {
-                        retry = retry - 1;
-                        LOGGER.warn("doMkdirs() - Sleep and Retry due to unable to create " + dir.getAbsolutePath());
-                        ThreadUtil.sleep(MKDIR_RETRY_SLEEP_MS);
-                        return doMkdirs(superDir, dir, retry);
-                    } else {
-                        return false;
+    public static void deleteAll(final Path path) {
+        if (Files.exists(path)) {
+            try (final Stream<Path> stream = Files.walk(path).sorted(Comparator.reverseOrder())) {
+                stream.forEach(f -> {
+                    try {
+                        Files.delete(f);
+                    } catch (final IOException e) {
+                        throw new FileUtilException("Unable to delete \"" + FileUtil.getCanonicalPath(f) + "\"");
                     }
-                }
+                });
+            } catch (final IOException e) {
+                throw new FileUtilException("Unable to delete \"" + FileUtil.getCanonicalPath(path) + "\"");
             }
         }
-        return true;
-
     }
 
-    public static void rename(final File src, final File dest) {
-        if (!src.renameTo(dest)) {
-            throw new FileUtilException(
-                    "Unable to rename file \"" + src.getAbsolutePath() + "\" to \"" + dest.getAbsolutePath() + "\"");
+    /**
+     * Similar to the unix touch cammand. Sets the last modified time to now if the file
+     * exists else, creates the file
+     *
+     * @param file
+     * @throws IOException
+     */
+    public static void touch(Path file) throws IOException {
+        Objects.requireNonNull(file, "file is null");
+        if (Files.exists(file)) {
+            if (!Files.isRegularFile(file)) {
+                throw new RuntimeException(String.format("File %s is not a regular file", FileUtil.getCanonicalPath(file)));
+            }
+            Files.setLastModifiedTime(file, FileTime.from(Instant.now()));
+        } else {
+            Files.createFile(file);
         }
     }
 
-    public static void setLastModified(final File file, final long time) throws IOException {
-        if (!file.setLastModified(time)) {
-            throw new FileUtilException("Unable to set last modified on file: " + file.getAbsolutePath());
+    public static void mkdirs(final Path dir) {
+        if (!Files.isDirectory(dir)) {
+            try {
+                Files.createDirectories(dir);
+            } catch (final IOException e) {
+                throw new FileUtilException("Unable to make directory: " + FileUtil.getCanonicalPath(dir));
+            }
         }
     }
 
-    public static String getCanonicalPath(final File file) {
+    public static void rename(final Path src, final Path dest) {
         try {
-            return file.getCanonicalPath();
+            Files.move(src, dest);
         } catch (final IOException e) {
+            throw new FileUtilException(
+                    "Unable to rename file \"" + FileUtil.getCanonicalPath(src) + "\" to \"" + FileUtil.getCanonicalPath(dest) + "\"");
         }
+    }
 
-        return file.getAbsolutePath();
+    public static void setLastModified(final Path file, final long time) throws IOException {
+        Files.setLastModifiedTime(file, FileTime.fromMillis(time));
+    }
+
+    public static Collection<Path> list(final Path path) {
+        try (final Stream<Path> steam = Files.list(path)) {
+            return steam.collect(Collectors.toList());
+        } catch (final IOException e) {
+            throw new FileUtilException(e.getMessage());
+        }
+    }
+
+    public static void addFilePermision(final Path path, final PosixFilePermission... posixFilePermission) throws IOException {
+        final Set<PosixFilePermission> filePermissions = Files.getPosixFilePermissions(path);
+        final Set<PosixFilePermission> newPermissions = new HashSet<>(filePermissions);
+        newPermissions.addAll(Arrays.asList(posixFilePermission));
+        Files.setPosixFilePermissions(path, newPermissions);
+    }
+
+    public static void removeFilePermision(final Path path, final PosixFilePermission... posixFilePermission) throws IOException {
+        final Set<PosixFilePermission> filePermissions = Files.getPosixFilePermissions(path);
+        final Set<PosixFilePermission> newPermissions = new HashSet<>(filePermissions);
+        newPermissions.removeAll(Arrays.asList(posixFilePermission));
+        Files.setPosixFilePermissions(path, newPermissions);
     }
 
     public static String getCanonicalPath(final Path file) {

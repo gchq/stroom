@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.streamstore.server;
@@ -21,22 +22,26 @@ import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.EntityIdSet;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.Secured;
 import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.ReprocessDataAction;
 import stroom.streamstore.shared.ReprocessDataInfo;
 import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamtask.server.StreamProcessorFilterService;
 import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamProcessorFilterService;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.Severity;
 import stroom.util.shared.SharedList;
 import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,10 +52,14 @@ import java.util.Map;
 public class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, SharedList<ReprocessDataInfo>> {
     public static final int MAX_STREAM_TO_REPROCESS = 1000;
 
-    @Resource
-    private StreamProcessorFilterService streamProcessorFilterService;
-    @Resource
-    private StreamStore streamStore;
+    private final StreamProcessorFilterService streamProcessorFilterService;
+    private final StreamStore streamStore;
+
+    @Inject
+    ReprocessDataHandler(final StreamProcessorFilterService streamProcessorFilterService, final StreamStore streamStore) {
+        this.streamProcessorFilterService = streamProcessorFilterService;
+        this.streamStore = streamStore;
+    }
 
     @Override
     public SharedList<ReprocessDataInfo> exec(final ReprocessDataAction action) {
@@ -96,13 +105,20 @@ public class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataActio
                 }
 
                 final List<StreamProcessor> list = new ArrayList<>(streamToProcessorSet.keySet());
-                Collections.sort(list, (o1, o2) -> o1.getPipeline().getName().compareTo(o2.getPipeline().getName()));
+                list.sort(Comparator.comparing(o -> o.getPipeline().getName()));
 
                 for (final StreamProcessor streamProcessor : list) {
                     final EntityIdSet<Stream> streamSet = streamToProcessorSet.get(streamProcessor);
 
-                    final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
-                    findStreamCriteria.setStreamIdSet(streamSet);
+                    final QueryData queryData = new QueryData();
+                    final ExpressionOperator.Builder operator = new ExpressionOperator.Builder(ExpressionOperator.Op.AND);
+
+                    final ExpressionOperator.Builder streamIdTerms = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
+                    streamSet.forEach(streamId -> streamIdTerms.addTerm(StreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(streamId)));
+                    operator.addOperator(streamIdTerms.build());
+
+                    queryData.setDataSource(StreamDataSource.STREAM_STORE_DOC_REF);
+                    queryData.setExpression(operator.build());
 
                     if (!streamProcessor.isEnabled()) {
                         unableListSB.append(streamProcessor.getPipeline().getName());
@@ -115,7 +131,7 @@ public class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataActio
                         submittedListSB.append(streamSet.size());
                         submittedListSB.append(" streams\n");
 
-                        streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 10, findStreamCriteria);
+                        streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 10, queryData);
                     }
                 }
 

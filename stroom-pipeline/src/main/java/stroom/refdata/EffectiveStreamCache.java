@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.Period;
 import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.pool.SecurityHelper;
+import stroom.security.SecurityHelper;
 import stroom.security.SecurityContext;
 import stroom.streamstore.server.EffectiveMetaDataCriteria;
 import stroom.streamstore.server.StreamStore;
@@ -87,7 +87,7 @@ public class EffectiveStreamCache {
     }
 
     protected NavigableSet<EffectiveStream> create(final EffectiveStreamKey key) {
-        try (SecurityHelper securityHelper = SecurityHelper.asProcUser(securityContext)) {
+        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
             NavigableSet<EffectiveStream> effectiveStreamSet = Collections.emptyNavigableSet();
 
             try {

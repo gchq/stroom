@@ -32,7 +32,7 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.RecordCount;
 import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 /**
  * A SAX filter used to count the number of first level elements in an XML
@@ -48,19 +48,23 @@ public class RecordCountFilter extends AbstractXMLFilter implements RecordCounte
 
     private static final int LOG_COUNT = 10000;
 
+    private final RecordCountService recordCountService;
+    private final RecordCount recordCount;
+
     private boolean countRead = true;
     private int depth = 0;
     private long count = 0;
     private long lastSnapshot;
     private long startMs;
 
-    private RecordCount recordCount;
-
-    @Resource
-    private RecordCountService recordCountService;
+    @Inject
+    public RecordCountFilter(final RecordCountService recordCountService,
+                             final RecordCount recordCount) {
+        this.recordCountService = recordCountService;
+        this.recordCount = recordCount;
+    }
 
     /**
-     * @throws SAXException Not thrown.
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#startProcessing()
      */
     @Override
@@ -80,7 +84,6 @@ public class RecordCountFilter extends AbstractXMLFilter implements RecordCounte
     }
 
     /**
-     * @throws SAXException Not thrown.
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#endProcessing()
      */
     @Override
@@ -101,8 +104,6 @@ public class RecordCountFilter extends AbstractXMLFilter implements RecordCounte
     /**
      * This method tells filters that a stream is about to be parsed so that
      * they can complete any setup necessary.
-     *
-     * @throws SAXException Could be thrown by an implementing class.
      */
     @Override
     public void startStream() {
@@ -116,8 +117,6 @@ public class RecordCountFilter extends AbstractXMLFilter implements RecordCounte
     /**
      * This method tells filters that a stream has finished parsing so cleanup
      * can be performed.
-     *
-     * @throws SAXException Could be thrown by an implementing class.
      */
     @Override
     public void endStream() {
@@ -211,10 +210,5 @@ public class RecordCountFilter extends AbstractXMLFilter implements RecordCounte
         final long delta = snapshot - lastSnapshot;
         lastSnapshot = snapshot;
         return delta;
-    }
-
-    @Resource
-    public void setRecordCount(final RecordCount recordCount) {
-        this.recordCount = recordCount;
     }
 }

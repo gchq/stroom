@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,22 @@
 
 package stroom.streamtask.server;
 
-import org.springframework.stereotype.Component;
 import stroom.entity.server.EntityMarshaller;
-import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.StreamProcessorFilter;
 
-@Component
-public class StreamProcessorFilterMarshaller extends EntityMarshaller<StreamProcessorFilter, FindStreamCriteria> {
-    @Override
-    public FindStreamCriteria getObject(final StreamProcessorFilter entity) {
-        return entity.getFindStreamCriteria();
+class StreamProcessorFilterMarshaller extends EntityMarshaller<StreamProcessorFilter, QueryData> {
+    StreamProcessorFilterMarshaller() {
     }
 
     @Override
-    public void setObject(final StreamProcessorFilter entity, final FindStreamCriteria object) {
-        entity.setFindStreamCriteria(object);
+    public QueryData getObject(final StreamProcessorFilter entity) {
+        return entity.getQueryData();
+    }
+
+    @Override
+    public void setObject(final StreamProcessorFilter entity, final QueryData object) {
+        entity.setQueryData(object);
     }
 
     @Override
@@ -44,8 +45,8 @@ public class StreamProcessorFilterMarshaller extends EntityMarshaller<StreamProc
     }
 
     @Override
-    protected Class<FindStreamCriteria> getObjectType() {
-        return FindStreamCriteria.class;
+    protected Class<QueryData> getObjectType() {
+        return QueryData.class;
     }
 
     @Override

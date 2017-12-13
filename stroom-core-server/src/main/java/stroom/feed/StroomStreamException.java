@@ -125,8 +125,7 @@ public class StroomStreamException extends RuntimeException {
         }
     }
 
-    public static int sendErrorResponse(final HttpServletResponse httpServletResponse, Exception exception)
-            throws IOException {
+    public static int sendErrorResponse(final HttpServletResponse httpServletResponse, Exception exception) {
         exception = unwrap(exception);
 
         StroomStatusCode stroomStatusCode = StroomStatusCode.UNKNOWN_ERROR;
@@ -143,7 +142,13 @@ public class StroomStreamException extends RuntimeException {
         LOGGER.error("sendErrorResponse() - " + stroomStatusCode.getHttpCode() + " " + message);
 
         httpServletResponse.setHeader(StroomHeaderArguments.STROOM_STATUS, String.valueOf(stroomStatusCode.getCode()));
-        httpServletResponse.sendError(stroomStatusCode.getHttpCode(), message);
+
+        try {
+            httpServletResponse.sendError(stroomStatusCode.getHttpCode(), message);
+        } catch (final IOException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+
         return stroomStatusCode.getHttpCode();
 
     }

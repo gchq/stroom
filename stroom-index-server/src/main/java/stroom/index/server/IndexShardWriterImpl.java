@@ -35,6 +35,7 @@ import stroom.index.shared.IndexShardKey;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.io.FileUtil;
 import stroom.util.logging.LoggerPrintStream;
 import stroom.util.shared.ModelStringUtil;
 

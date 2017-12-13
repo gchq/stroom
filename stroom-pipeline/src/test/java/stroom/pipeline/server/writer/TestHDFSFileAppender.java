@@ -75,11 +75,6 @@ public class TestHDFSFileAppender extends StroomUnitTest {
 
     @After
     public void teardown() throws IOException {
-        // if (hdfs != null) {
-        // hdfs.close();
-        // }
-
-        // FileUtil.deleteDir(new File(ROOT_TEST_PATH));
     }
 
     @Ignore

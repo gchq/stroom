@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.jobsystem.server;
@@ -23,7 +24,6 @@ import stroom.jobsystem.shared.FindJobNodeCriteria;
 import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobNode;
 import stroom.jobsystem.shared.JobNode.JobType;
-import stroom.jobsystem.shared.JobNodeService;
 import stroom.node.server.NodeCache;
 import stroom.node.shared.Node;
 import stroom.util.scheduler.FrequencyScheduler;

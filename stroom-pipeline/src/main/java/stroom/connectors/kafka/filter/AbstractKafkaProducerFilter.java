@@ -23,10 +23,9 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
 
     private Locator locator;
 
-    public AbstractKafkaProducerFilter(
-            final ErrorReceiverProxy errorReceiverProxy,
-            final LocationFactoryProxy locationFactory,
-            final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService) {
+    public AbstractKafkaProducerFilter(final ErrorReceiverProxy errorReceiverProxy,
+                                       final LocationFactoryProxy locationFactory,
+                                       final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService) {
 
         super(errorReceiverProxy, locationFactory);
         this.errorReceiverProxy = errorReceiverProxy;
@@ -66,7 +65,7 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
         }
     }
 
-    @PipelineProperty(description="Flush the producer each time a message is sent")
+    @PipelineProperty(description = "Flush the producer each time a message is sent")
     public void setFlushOnSend(final boolean flushOnSend) {
         this.flushOnSend = flushOnSend;
     }

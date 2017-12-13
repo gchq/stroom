@@ -17,6 +17,12 @@
 package stroom.explorer.client.presenter;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import stroom.explorer.shared.DocumentType;
+import stroom.util.client.ImageUtil;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
@@ -37,13 +43,7 @@ import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.table.client.CellTableView;
 import stroom.data.table.client.CellTableViewImpl;
 import stroom.data.table.client.CellTableViewImpl.BasicResources;
-import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
-import stroom.util.client.ImageUtil;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<DocumentType>>
         implements HasDataSelectionHandlers<TypeFilterPresenter> {

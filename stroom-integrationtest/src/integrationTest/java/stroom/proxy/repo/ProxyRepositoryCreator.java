@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.proxy.repo;
@@ -21,10 +22,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.MetaMap;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.util.date.DateUtil;
+import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.feed.StroomHeaderArguments;
 
@@ -80,7 +82,7 @@ public class ProxyRepositoryCreator {
 
         try {
             if (feed.isReference() == mandateEffectiveDate) {
-                LOGGER.info("Loading data: " + file.toAbsolutePath().toString());
+                LOGGER.info("Loading data: " + FileUtil.getCanonicalPath(file));
 
                 final StroomZipOutputStream zipOutputStream = repository.getStroomZipOutputStream();
 
@@ -90,18 +92,18 @@ public class ProxyRepositoryCreator {
                 newName = StringUtils.leftPad(newName, 3, '0');
 
                 // Add meta data.
-                OutputStream zipPart = zipOutputStream.addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Meta));
+                OutputStream zipPart = zipOutputStream.addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Meta).getFullName());
                 final MetaMap map = createMap(feed, effectiveMs);
                 map.write(zipPart, true);
 
                 // Add data.
-                zipPart = zipOutputStream.addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Data));
+                zipPart = zipOutputStream.addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Data).getFullName());
                 StreamUtil.streamToStream(new BufferedInputStream(Files.newInputStream(file)), zipPart);
 
                 zipOutputStream.close();
             }
         } catch (final IOException e) {
-            throw new RuntimeException("Error loading file: " + file.toAbsolutePath().toString(), e);
+            throw new RuntimeException("Error loading file: " + FileUtil.getCanonicalPath(file), e);
         }
     }
 
@@ -110,7 +112,7 @@ public class ProxyRepositoryCreator {
         final Feed feed = getFeed(file);
 
         if (feed.isReference() == mandateEffectiveDate) {
-            LOGGER.info("Loading data: " + file.toAbsolutePath().toString());
+            LOGGER.info("Loading data: " + FileUtil.getCanonicalPath(file));
 
             try {
                 final StroomZipOutputStream zipOutputStream = repository.getStroomZipOutputStream();
@@ -130,20 +132,20 @@ public class ProxyRepositoryCreator {
                         map.read(inputStream, true);
                     }
                     OutputStream outputStream = zipOutputStream
-                            .addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Meta));
+                            .addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Meta).getFullName());
                     map.write(outputStream, true);
 
                     // Add context data.
                     inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Context);
                     if (inputStream != null) {
-                        outputStream = zipOutputStream.addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Context));
+                        outputStream = zipOutputStream.addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Context).getFullName());
                         StreamUtil.streamToStream(inputStream, outputStream);
                     }
 
                     // Add data.
                     inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Data);
                     if (inputStream != null) {
-                        outputStream = zipOutputStream.addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Data));
+                        outputStream = zipOutputStream.addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Data).getFullName());
                         StreamUtil.streamToStream(inputStream, outputStream);
                     }
                 }
@@ -152,7 +154,7 @@ public class ProxyRepositoryCreator {
                 zipOutputStream.close();
 
             } catch (final IOException e) {
-                throw new RuntimeException("Error loading file: " + file.toAbsolutePath().toString(), e);
+                throw new RuntimeException("Error loading file: " + FileUtil.getCanonicalPath(file), e);
             }
         }
     }

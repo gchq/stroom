@@ -27,7 +27,7 @@ import stroom.pipeline.server.LocationFactory;
 import stroom.pipeline.server.errorhandler.ErrorHandlerAdaptor;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
-import stroom.test.StroomProcessTestFileUtil;
+import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.xml.converter.SchemaFilterFactory;
 
@@ -35,13 +35,6 @@ import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -49,6 +42,8 @@ import java.io.Reader;
 import java.io.Writer;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class DS3PerformanceTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(DS3PerformanceTest.class);
@@ -70,12 +65,12 @@ public class DS3PerformanceTest {
     private void process(final String stem) throws Exception {
         LOGGER.info("Testing: " + stem);
 
-        final File testDir = new File(getDS3TestDir(), "tmp");
+        final Path testDir = getDS3TestDir().resolve("tmp");
         FileUtil.mkdirs(testDir);
 
-        final File ds3Config = new File(getDS3TestDir(), stem + ".ds2");
-        final File input = new File(testDir, stem + ".in");
-        final File output = new File(testDir, stem + ".out");
+        final Path ds3Config = getDS3TestDir().resolve(stem + ".ds2");
+        final Path input = testDir.resolve(stem + ".in");
+        final Path output = testDir.resolve(stem + ".out");
 
         // Create an input file.
         createInput(input);
@@ -89,7 +84,7 @@ public class DS3PerformanceTest {
         System.out.println("DS3 Elapsed Time = " + ds3Elapsed);
     }
 
-    private long process(final File input, final File output, final XMLReader parser) throws Exception {
+    private long process(final Path input, final Path output, final XMLReader parser) throws Exception {
         final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
         threadMXBean.setThreadContentionMonitoringEnabled(true);
         threadMXBean.setThreadCpuTimeEnabled(true);
@@ -100,7 +95,7 @@ public class DS3PerformanceTest {
         final OutputStream os = createWriter(parser, output);
 
         for (int i = 0; i < ITERATIONS; i++) {
-            parser.parse(new InputSource(new BufferedReader(new FileReader(input))));
+            parser.parse(new InputSource(Files.newBufferedReader(input)));
         }
 
         os.flush();
@@ -110,8 +105,8 @@ public class DS3PerformanceTest {
         return cpuTimeEnd - cpuTimeStart;
     }
 
-    private void createInput(final File input) throws IOException {
-        final Writer writer = new BufferedWriter(new FileWriter(input));
+    private void createInput(final Path input) throws IOException {
+        final Writer writer = Files.newBufferedWriter(input);
         writer.write("Time,Action,User,File\n");
         for (int i = 1; i <= INPUT_LINES; i++) {
             writer.write("01/01/2009:00:00:01" + i + ",OPEN" + i + ",userone" + i
@@ -121,10 +116,10 @@ public class DS3PerformanceTest {
         writer.close();
     }
 
-    private OutputStream createWriter(final XMLReader reader, final File tmp) throws Exception {
+    private OutputStream createWriter(final XMLReader reader, final Path tmp) throws Exception {
         // Create an output writer.
         final TransformerHandler th = XMLUtil.createTransformerHandler(true);
-        final OutputStream os = new BufferedOutputStream(new FileOutputStream(tmp));
+        final OutputStream os = new BufferedOutputStream(Files.newOutputStream(tmp));
         th.setResult(new StreamResult(os));
 
         reader.setContentHandler(th);
@@ -132,14 +127,14 @@ public class DS3PerformanceTest {
         return os;
     }
 
-    private File getDS3TestDir() {
+    private Path getDS3TestDir() {
         // Get the testing directory.
-        final File testDataDir = StroomProcessTestFileUtil.getTestResourcesDir();
-        final File testDir = new File(testDataDir, "TestDS3");
+        final Path testDataDir = StroomPipelineTestFileUtil.getTestResourcesDir();
+        final Path testDir = testDataDir.resolve("TestDS3");
         return testDir;
     }
 
-    private XMLReader createDS3Reader(final File config) throws Exception {
+    private XMLReader createDS3Reader(final Path config) throws Exception {
         final LoggingErrorReceiver errorReceiver = new LoggingErrorReceiver();
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(errorReceiver);
 
@@ -148,7 +143,7 @@ public class DS3PerformanceTest {
                 schemaFilterFactory.getSchemaFilter(DS3ParserFactory.NAMESPACE_URI, errorReceiverProxy));
 
         final LocationFactory locationFactory = new DefaultLocationFactory();
-        ds3ParserFactory.configure(new BufferedReader(new FileReader(config)),
+        ds3ParserFactory.configure(Files.newBufferedReader(config),
                 new ErrorHandlerAdaptor("DS3ParserFactory", locationFactory, errorReceiver));
 
         Assert.assertTrue("Configuration of parser failed: " + errorReceiver.getMessage(), errorReceiver.isAllOk());
@@ -158,18 +153,18 @@ public class DS3PerformanceTest {
         return reader;
     }
 
-    private void compareFiles(final File input, final File actualFile, final File expectedFile) throws IOException {
+    private void compareFiles(final Path input, final Path actualFile, final Path expectedFile) throws IOException {
         // Make sure the file exists.
-        Assert.assertTrue("Cannot find actual output file " + actualFile.getAbsolutePath(), actualFile.isFile());
+        Assert.assertTrue("Cannot find actual output file " + FileUtil.getCanonicalPath(actualFile), Files.isRegularFile(actualFile));
         // Make sure the file exists.
-        Assert.assertTrue("Cannot find expected output file " + expectedFile.getAbsolutePath(), expectedFile.isFile());
+        Assert.assertTrue("Cannot find expected output file " + FileUtil.getCanonicalPath(expectedFile), Files.isRegularFile(expectedFile));
 
         // Normalise both files.
         normalise(actualFile);
         normalise(expectedFile);
 
-        final InputStream actualIS = new BufferedInputStream(new FileInputStream(actualFile));
-        final InputStream expectedIS = new BufferedInputStream(new FileInputStream(expectedFile));
+        final InputStream actualIS = new BufferedInputStream(Files.newInputStream(actualFile));
+        final InputStream expectedIS = new BufferedInputStream(Files.newInputStream(expectedFile));
 
         boolean success = false;
         try {
@@ -177,11 +172,11 @@ public class DS3PerformanceTest {
             int a = 0;
             int b = 0;
             while (a != -1 && b != -1) {
-                Assert.assertEquals("Expected and actual files do not match for: " + actualFile.getName(), a, b);
+                Assert.assertEquals("Expected and actual files do not match for: " + FileUtil.getCanonicalPath(actualFile), a, b);
                 a = actualIS.read();
                 b = expectedIS.read();
             }
-            Assert.assertEquals("Expected and actual files do not match for: " + actualFile.getName(), a, b);
+            Assert.assertEquals("Expected and actual files do not match for: " + FileUtil.getCanonicalPath(actualFile), a, b);
 
             success = true;
         } finally {
@@ -198,11 +193,11 @@ public class DS3PerformanceTest {
         }
     }
 
-    private void normalise(final File file) throws IOException {
-        final File temp = new File(file.getParentFile(), file.getName() + ".tmp");
+    private void normalise(final Path file) throws IOException {
+        final Path temp = file.getParent().resolve(file.getFileName().toString() + ".tmp");
 
-        final Reader reader = new BufferedReader(new FileReader(file));
-        final Writer writer = new BufferedWriter(new FileWriter(temp));
+        final Reader reader = Files.newBufferedReader(file);
+        final Writer writer = Files.newBufferedWriter(temp);
 
         int i = 0;
         final StringBuilder sb = new StringBuilder();

@@ -20,7 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.resource.server.BOMRemovalInputStream;
-import stroom.test.StroomProcessTestFileUtil;
+import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
@@ -64,7 +64,7 @@ public class TestStreamUtil extends StroomUnitTest {
 
     private void test(final String resourceName, final String charsetName) {
         // Test using byte buffer.
-        InputStream inputStream = StroomProcessTestFileUtil.getInputStream(resourceName);
+        InputStream inputStream = StroomPipelineTestFileUtil.getInputStream(resourceName);
         BOMRemovalInputStream bomRemovalIS = new BOMRemovalInputStream(inputStream, charsetName);
 
         try {
@@ -73,7 +73,7 @@ public class TestStreamUtil extends StroomUnitTest {
             Assert.assertEquals("Strings don't match", REF_STRING, string);
 
             // Test reading single bytes.
-            inputStream = StroomProcessTestFileUtil.getInputStream(resourceName);
+            inputStream = StroomPipelineTestFileUtil.getInputStream(resourceName);
             bomRemovalIS = new BOMRemovalInputStream(inputStream, charsetName);
 
             final byte[] buffer = new byte[1024];

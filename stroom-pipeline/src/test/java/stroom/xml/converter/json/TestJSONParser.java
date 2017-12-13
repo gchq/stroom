@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.xml.converter.json;
@@ -36,7 +37,7 @@ import stroom.pipeline.server.writer.JSONWriter;
 import stroom.pipeline.server.writer.OutputStreamAppender;
 import stroom.pipeline.server.writer.XMLWriter;
 import stroom.test.ComparisonHelper;
-import stroom.test.StroomProcessTestFileUtil;
+import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
@@ -45,23 +46,18 @@ import stroom.util.test.FileSystemTestUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 import stroom.xmlschema.server.MockXMLSchemaService;
+import stroom.xmlschema.server.XMLSchemaService;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XMLSchema;
-import stroom.xmlschema.shared.XMLSchemaService;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map.Entry;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -101,36 +97,36 @@ public class TestJSONParser extends StroomUnitTest {
 
     private void test(final String stem, final String testType, final boolean expectedErrors) throws Exception {
         // Get the testing directory.
-        final File testDir = getTestDir();
+        final Path testDir = getTestDir();
 
         LOGGER.info("Testing: " + stem);
 
         boolean zipInput = false;
-        File input = new File(testDir, stem + ".in");
-        if (!input.isFile()) {
-            final File zip = new File(testDir, stem + ".zip");
-            if (zip.isFile()) {
+        Path input = testDir.resolve(stem + ".in");
+        if (!Files.isRegularFile(input)) {
+            final Path zip = testDir.resolve(stem + ".zip");
+            if (Files.isRegularFile(zip)) {
                 input = zip;
                 zipInput = true;
             }
         }
 
-        final File outXML = new File(testDir, stem + testType + ".xml_out");
-        final File outTempXML = new File(testDir, stem + testType + ".xml_out_tmp");
-        final File outJSON = new File(testDir, stem + testType + ".json_out");
-        final File outTempJSON = new File(testDir, stem + testType + ".json_out_tmp");
-        final File err = new File(testDir, stem + testType + ".err");
-        final File errTemp = new File(testDir, stem + testType + ".err_tmp");
+        final Path outXML = testDir.resolve(stem + testType + ".xml_out");
+        final Path outTempXML = testDir.resolve(stem + testType + ".xml_out_tmp");
+        final Path outJSON = testDir.resolve(stem + testType + ".json_out");
+        final Path outTempJSON = testDir.resolve(stem + testType + ".json_out_tmp");
+        final Path err = testDir.resolve(stem + testType + ".err");
+        final Path errTemp = testDir.resolve(stem + testType + ".err_tmp");
 
         // Delete temporary files.
         FileUtil.deleteFile(outTempXML);
         FileUtil.deleteFile(outTempJSON);
         FileUtil.deleteFile(errTemp);
 
-        Assert.assertTrue(input.getAbsolutePath() + " does not exist", input.isFile());
+        Assert.assertTrue(FileUtil.getCanonicalPath(input) + " does not exist", Files.isRegularFile(input));
 
-        final OutputStream xmlOS = new BufferedOutputStream(new FileOutputStream(outTempXML));
-        final OutputStream jsonOS = new BufferedOutputStream(new FileOutputStream(outTempJSON));
+        final OutputStream xmlOS = new BufferedOutputStream(Files.newOutputStream(outTempXML));
+        final OutputStream jsonOS = new BufferedOutputStream(Files.newOutputStream(outTempJSON));
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
         final OutputStreamAppender xmlAppender = new OutputStreamAppender(errorReceiverProxy, xmlOS);
@@ -162,8 +158,7 @@ public class TestJSONParser extends StroomUnitTest {
                 final StreamLocationFactory locationFactory = new StreamLocationFactory();
                 reader.setErrorHandler(new ErrorHandlerAdaptor("JSONParser", locationFactory, errorReceiver));
 
-                final FileInputStream inputStream = new FileInputStream(input);
-                final ZipInputStream zipInputStream = new ZipInputStream(inputStream);
+                final ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(input));
                 try {
                     ZipEntry entry = zipInputStream.getNextEntry();
                     long streamNo = 0;
@@ -189,7 +184,7 @@ public class TestJSONParser extends StroomUnitTest {
                 final DefaultLocationFactory locationFactory = new DefaultLocationFactory();
                 reader.setErrorHandler(new ErrorHandlerAdaptor("JSONParser", locationFactory, errorReceiver));
 
-                reader.parse(new InputSource(new BufferedReader(new FileReader(input))));
+                reader.parse(new InputSource(Files.newBufferedReader(input)));
             }
         } catch (final Exception e) {
             e.printStackTrace();
@@ -205,7 +200,7 @@ public class TestJSONParser extends StroomUnitTest {
 
         // Write errors.
         if (!errorReceiver.isAllOk()) {
-            final Writer errWriter = new BufferedWriter(new FileWriter(errTemp));
+            final Writer errWriter = Files.newBufferedWriter(errTemp);
 
             for (final Entry<String, Indicators> entry : errorReceiver.getIndicatorsMap().entrySet()) {
                 final Indicators indicators = entry.getValue();
@@ -230,10 +225,10 @@ public class TestJSONParser extends StroomUnitTest {
         }
     }
 
-    private File getTestDir() {
+    private Path getTestDir() {
         // Get the testing directory.
-        final File testDataDir = StroomProcessTestFileUtil.getTestResourcesDir();
-        final File testDir = new File(testDataDir, "TestJSON");
+        final Path testDataDir = StroomPipelineTestFileUtil.getTestResourcesDir();
+        final Path testDir = testDataDir.resolve("TestJSON");
         return testDir;
     }
 
@@ -251,9 +246,9 @@ public class TestJSONParser extends StroomUnitTest {
 
     public void loadXMLSchema(final String schemaGroup, final String schemaName, final String namespaceURI,
                               final String systemId, final String fileName) throws IOException {
-        final File dir = FileSystemTestUtil.getConfigXSDDir();
+        final Path dir = FileSystemTestUtil.getConfigXSDDir();
 
-        final File file = new File(dir, fileName);
+        final Path file = dir.resolve(fileName);
 
         final XMLSchema xmlSchema = new XMLSchema();
         xmlSchema.setSchemaGroup(schemaGroup);
@@ -270,7 +265,7 @@ public class TestJSONParser extends StroomUnitTest {
         }
     }
 
-    private void compareFiles(final File actualFile, final File expectedFile) throws FileNotFoundException {
+    private void compareFiles(final Path actualFile, final Path expectedFile) {
         ComparisonHelper.compareFiles(expectedFile, actualFile, true, false);
         // If the files matched then delete the temporary file.
         FileUtil.deleteFile(actualFile);

@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.pipeline.stepping.client.presenter;
@@ -27,9 +28,9 @@ import com.gwtplatform.mvp.client.PresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.event.DirtyEvent;
-import stroom.entity.client.event.DirtyEvent.DirtyHandler;
-import stroom.entity.client.event.HasDirtyHandlers;
+import stroom.document.client.event.DirtyEvent;
+import stroom.document.client.event.DirtyEvent.DirtyHandler;
+import stroom.document.client.event.HasDirtyHandlers;
 import stroom.pipeline.shared.FetchPipelineDataAction;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.PipelineStepAction;
@@ -286,7 +287,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
         // Set the stream id on the stepping action.
         final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
-        findStreamCriteria.obtainStreamIdSet().add(stream.getId());
+        findStreamCriteria.obtainSelectedIdSet().add(stream.getId());
         action.setCriteria(findStreamCriteria);
         action.setChildStreamType(childStreamType);
 

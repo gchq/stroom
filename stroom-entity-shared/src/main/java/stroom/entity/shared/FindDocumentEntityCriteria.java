@@ -20,13 +20,8 @@ import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 
 public abstract class FindDocumentEntityCriteria extends FindNamedEntityCriteria
-        implements HasFolderIdSet, Copyable<FindDocumentEntityCriteria> {
-    public static final String FIELD_FOLDER = "Folder";
+        implements Copyable<FindDocumentEntityCriteria> {
     private static final long serialVersionUID = -970306839701196839L;
-    /**
-     * Sub Filter - used for restricting items to their parent folder
-     */
-    private FolderIdSet folderIdSet = new FolderIdSet();
 
     private String requiredPermission;
 
@@ -36,16 +31,6 @@ public abstract class FindDocumentEntityCriteria extends FindNamedEntityCriteria
 
     public FindDocumentEntityCriteria(final String name) {
         super(name);
-    }
-
-    @Override
-    public FolderIdSet getFolderIdSet() {
-        return folderIdSet;
-    }
-
-    @Override
-    public FolderIdSet obtainFolderIdSet() {
-        return folderIdSet;
     }
 
     public String getRequiredPermission() {
@@ -59,7 +44,6 @@ public abstract class FindDocumentEntityCriteria extends FindNamedEntityCriteria
     @Override
     public int hashCode() {
         final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(folderIdSet);
         builder.append(requiredPermission);
         return builder.toHashCode();
     }
@@ -74,14 +58,12 @@ public abstract class FindDocumentEntityCriteria extends FindNamedEntityCriteria
 
         final FindDocumentEntityCriteria criteria = (FindDocumentEntityCriteria) o;
         final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(folderIdSet, criteria.folderIdSet);
         builder.append(requiredPermission, criteria.requiredPermission);
         return builder.isEquals();
     }
 
     @Override
     public void copyFrom(final FindDocumentEntityCriteria other) {
-        this.folderIdSet.copyFrom(other.folderIdSet);
         this.requiredPermission = other.requiredPermission;
         super.copyFrom(other);
     }

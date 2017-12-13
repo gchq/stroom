@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import stroom.logging.DocumentEventLog;
 import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.QueryAppender;
@@ -65,9 +66,11 @@ public class StroomStatsStoreEntityServiceImpl
 
     private static class StroomStatsStoreEntityQueryAppender extends
             QueryAppender<StroomStatsStoreEntity, FindStroomStatsStoreEntityCriteria> {
+        private final StroomStatsStoreEntityMarshaller marshaller;
 
-        public StroomStatsStoreEntityQueryAppender(final StroomEntityManager entityManager) {
+        StroomStatsStoreEntityQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
+            marshaller = new StroomStatsStoreEntityMarshaller();
         }
 
         @Override
@@ -77,6 +80,18 @@ public class StroomStatsStoreEntityServiceImpl
             if (criteria.getStatisticType() != null) {
                 sql.appendValueQuery(alias + ".pStatisticType", criteria.getStatisticType().getPrimitiveValue());
             }
+        }
+
+        @Override
+        protected void preSave(final StroomStatsStoreEntity entity) {
+            super.preSave(entity);
+            marshaller.marshal(entity);
+        }
+
+        @Override
+        protected void postLoad(final StroomStatsStoreEntity entity) {
+            marshaller.unmarshal(entity);
+            super.postLoad(entity);
         }
     }
 }

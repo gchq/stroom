@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.dashboard.client.query;
@@ -46,9 +47,9 @@ import stroom.datasource.api.v2.DataSourceField;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.ExportFileCompleteUtil;
-import stroom.entity.client.event.DirtyEvent;
-import stroom.entity.client.event.DirtyEvent.DirtyHandler;
-import stroom.entity.client.event.HasDirtyHandlers;
+import stroom.document.client.event.DirtyEvent;
+import stroom.document.client.event.DirtyEvent.DirtyHandler;
+import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
@@ -56,7 +57,7 @@ import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.process.shared.CreateProcessorAction;
 import stroom.query.api.v2.DocRef;
-import stroom.query.api.v2.ExpressionOperator;
+
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.client.ExpressionTreePresenter;
@@ -410,9 +411,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     private void openEditor(final QueryData queryData, final DocRef pipeline) {
         // Now create the processor filter using the find stream criteria.
-        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
-        findStreamCriteria.setQueryData(queryData);
-        dispatcher.exec(new CreateProcessorAction(pipeline, findStreamCriteria, true, 1)).onSuccess(streamProcessorFilter -> CreateProcessorEvent.fire(QueryPresenter.this, streamProcessorFilter));
+        dispatcher.exec(new CreateProcessorAction(pipeline, queryData, true, 1)).onSuccess(streamProcessorFilter -> CreateProcessorEvent.fire(QueryPresenter.this, streamProcessorFilter));
     }
 
     private void showWarnings() {

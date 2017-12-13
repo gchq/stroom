@@ -41,7 +41,6 @@ public class BlockGZipOutputStream extends OutputStream implements SeekableOutpu
     // The stream - we hold a buffer onto it as well
     private BufferedOutputStream currentStreamBuffer;
     private GZIPOutputStream currentStreamGzip;
-    private long currentRawBlockStartPos = 0;
     // The block size we are using
     private int blockSize;
     // The current 'logical' uncompressed data item we have written
@@ -125,7 +124,7 @@ public class BlockGZipOutputStream extends OutputStream implements SeekableOutpu
         currentBlockEndPos = (blockCount + 1) * blockSize;
 
         // Record the start Pos
-        currentRawBlockStartPos = mainStream.getPosition();
+        final long currentRawBlockStartPos = mainStream.getPosition();
 
         // Record the index
         indexBuffer.writeLong(currentRawBlockStartPos);
@@ -252,11 +251,11 @@ public class BlockGZipOutputStream extends OutputStream implements SeekableOutpu
         }
     }
 
-    public long getBlockCount() {
+    long getBlockCount() {
         return blockCount;
     }
 
-    public long getBlockSize() {
+    long getBlockSize() {
         return blockSize;
     }
 

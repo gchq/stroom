@@ -31,21 +31,23 @@ import stroom.util.io.StreamUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestRASegmentStreamsWithBoundary extends StroomUnitTest {
-    private File datFile;
-    private File segFile;
-    private File bdyFile;
+    private Path datFile;
+    private Path segFile;
+    private Path bdyFile;
 
     @Before
     public void setup() {
-        final File dir = getCurrentTestDir();
-        datFile = new File(dir, "test.bzg");
-        segFile = new File(dir, "test.seg.dat");
-        bdyFile = new File(dir, "test.bdy.dat");
+        final Path dir = getCurrentTestDir();
+        datFile = dir.resolve("test.bzg");
+        segFile = dir.resolve("test.seg.dat");
+        bdyFile = dir.resolve("test.bdy.dat");
     }
 
     @After
@@ -80,15 +82,15 @@ public class TestRASegmentStreamsWithBoundary extends StroomUnitTest {
         // This will flush all the index files (to create them)
         boundaryStream.flush();
 
-        Assert.assertTrue(new File(datFile.getAbsolutePath() + ".lock").isFile());
-        Assert.assertTrue(new File(segFile.getAbsolutePath() + ".lock").isFile());
-        Assert.assertTrue(new File(bdyFile.getAbsolutePath() + ".lock").isFile());
+        Assert.assertTrue(Files.isRegularFile(Paths.get(datFile.toString() + ".lock")));
+        Assert.assertTrue(Files.isRegularFile(Paths.get(segFile.toString() + ".lock")));
+        Assert.assertTrue(Files.isRegularFile(Paths.get(bdyFile.toString() + ".lock")));
 
         boundaryStream.close();
 
-        Assert.assertTrue(datFile.isFile());
-        Assert.assertTrue(segFile.isFile());
-        Assert.assertTrue(bdyFile.isFile());
+        Assert.assertTrue(Files.isRegularFile(datFile));
+        Assert.assertTrue(Files.isRegularFile(segFile));
+        Assert.assertTrue(Files.isRegularFile(bdyFile));
 
         final RASegmentInputStream boundaryInputStream = new RASegmentInputStream(new BlockGZIPInputFile(datFile),
                 new UncompressedInputStream(bdyFile, true));
@@ -125,15 +127,15 @@ public class TestRASegmentStreamsWithBoundary extends StroomUnitTest {
         // This will flush all the index files (to create them)
         boundaryStream.flush();
 
-        Assert.assertTrue(new File(datFile.getAbsolutePath() + ".lock").isFile());
-        Assert.assertTrue(new File(segFile.getAbsolutePath() + ".lock").isFile());
-        Assert.assertTrue(new File(bdyFile.getAbsolutePath() + ".lock").isFile());
+        Assert.assertTrue(Files.isRegularFile(Paths.get(datFile.toString() + ".lock")));
+        Assert.assertTrue(Files.isRegularFile(Paths.get(segFile.toString() + ".lock")));
+        Assert.assertTrue(Files.isRegularFile(Paths.get(bdyFile.toString() + ".lock")));
 
         boundaryStream.close();
 
-        Assert.assertTrue(datFile.isFile());
-        Assert.assertTrue(segFile.isFile());
-        Assert.assertTrue(bdyFile.isFile());
+        Assert.assertTrue(Files.isRegularFile(datFile));
+        Assert.assertTrue(Files.isRegularFile(segFile));
+        Assert.assertTrue(Files.isRegularFile(bdyFile));
 
         final RANestedInputStream boundaryInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile),
                 new UncompressedInputStream(bdyFile, true));
@@ -245,9 +247,9 @@ public class TestRASegmentStreamsWithBoundary extends StroomUnitTest {
 
         boundaryStream.close();
 
-        Assert.assertTrue(datFile.isFile());
-        Assert.assertTrue(segFile.isFile());
-        Assert.assertFalse(bdyFile.isFile());
+        Assert.assertTrue(Files.isRegularFile(datFile));
+        Assert.assertTrue(Files.isRegularFile(segFile));
+        Assert.assertFalse(Files.isRegularFile(bdyFile));
 
         final RANestedInputStream boundaryInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile),
                 new UncompressedInputStream(bdyFile, true));
@@ -289,9 +291,9 @@ public class TestRASegmentStreamsWithBoundary extends StroomUnitTest {
 
         boundaryStream.close();
 
-        Assert.assertTrue(datFile.isFile());
-        Assert.assertTrue(segFile.isFile());
-        Assert.assertTrue(bdyFile.isFile());
+        Assert.assertTrue(Files.isRegularFile(datFile));
+        Assert.assertTrue(Files.isRegularFile(segFile));
+        Assert.assertTrue(Files.isRegularFile(bdyFile));
 
         final RANestedInputStream boundaryInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile),
                 new UncompressedInputStream(bdyFile, true));

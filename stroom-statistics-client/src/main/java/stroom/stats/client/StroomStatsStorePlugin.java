@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.stats.client;
@@ -23,13 +24,11 @@ import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.document.client.DocumentPluginEventManager;
+import stroom.document.client.DocumentTabData;
 import stroom.entity.client.EntityPlugin;
-import stroom.entity.client.EntityPluginEventManager;
-import stroom.entity.client.EntityTabData;
-import stroom.entity.client.presenter.EntityEditPresenter;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.shared.DocRefUtil;
-import stroom.node.client.ClientPropertyCache;
-import stroom.security.client.ClientSecurityContext;
 import stroom.statistics.shared.StatisticType;
 import stroom.stats.client.presenter.StroomStatsStorePresenter;
 import stroom.stats.shared.CustomRollUpMask;
@@ -44,11 +43,12 @@ public class StroomStatsStorePlugin extends EntityPlugin<StroomStatsStoreEntity>
     private final Provider<StroomStatsStorePresenter> editorProvider;
 
     @Inject
-    public StroomStatsStorePlugin(final EventBus eventBus, final Provider<StroomStatsStorePresenter> editorProvider,
-                                  final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
-                                  final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager,
-                                  final ClientPropertyCache clientPropertyCache) {
-        super(eventBus, dispatcher, securityContext, contentManager, entityPluginEventManager);
+    public StroomStatsStorePlugin(final EventBus eventBus,
+                                  final Provider<StroomStatsStorePresenter> editorProvider,
+                                  final ClientDispatchAsync dispatcher,
+                                  final ContentManager contentManager,
+                                  final DocumentPluginEventManager entityPluginEventManager) {
+        super(eventBus, dispatcher, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
     }
 
@@ -58,14 +58,14 @@ public class StroomStatsStorePlugin extends EntityPlugin<StroomStatsStoreEntity>
     }
 
     @Override
-    protected EntityEditPresenter<?, ?> createEditor() {
+    protected DocumentEditPresenter<?, ?> createEditor() {
         return editorProvider.get();
     }
 
     @Override
-    public void save(final EntityTabData tabData) {
-        if (tabData != null && tabData instanceof EntityEditPresenter<?, ?>) {
-            final EntityEditPresenter<?, StroomStatsStoreEntity> presenter = (EntityEditPresenter<?, StroomStatsStoreEntity>) tabData;
+    public void save(final DocumentTabData tabData) {
+        if (tabData != null && tabData instanceof DocumentEditPresenter<?, ?>) {
+            final DocumentEditPresenter<?, StroomStatsStoreEntity> presenter = (DocumentEditPresenter<?, StroomStatsStoreEntity>) tabData;
             if (presenter.isDirty()) {
                 final StroomStatsStoreEntity entity = presenter.getEntity();
 
@@ -77,7 +77,7 @@ public class StroomStatsStorePlugin extends EntityPlugin<StroomStatsStoreEntity>
         }
     }
 
-    private void doConfirmSave(final EntityEditPresenter<?, StroomStatsStoreEntity> presenter,
+    private void doConfirmSave(final DocumentEditPresenter<?, StroomStatsStoreEntity> presenter,
                                final StroomStatsStoreEntity entity, final StroomStatsStoreEntity entityFromDb) {
         // get the persisted versions of the fields we care about
         final StatisticType prevType = entityFromDb.getStatisticType();
@@ -116,8 +116,8 @@ public class StroomStatsStorePlugin extends EntityPlugin<StroomStatsStoreEntity>
         }
     }
 
-    private void doSave(final EntityEditPresenter<?, StroomStatsStoreEntity> presenter,
+    private void doSave(final DocumentEditPresenter<?, StroomStatsStoreEntity> presenter,
                         final StroomStatsStoreEntity entity) {
-        save(entity).onSuccess(presenter::read);
+        save(DocRefUtil.create(entity), entity).onSuccess(doc -> presenter.read(DocRefUtil.create(doc), doc));
     }
 }

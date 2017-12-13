@@ -23,10 +23,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
 import stroom.util.io.CloseableUtil;
+import stroom.util.io.FileUtil;
 import stroom.util.spring.StroomResourceLoaderUtil;
 
-import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -49,7 +51,6 @@ public class StroomProperties {
     private static final PropertyMap override = new PropertyMap();
 
     private static volatile boolean doneInit;
-    private static volatile File propertiesDir;
 
     private static void init() {
         if (!doneInit) {
@@ -97,25 +98,24 @@ public class StroomProperties {
 
                 String path = "";
                 try {
-                    final File file = resource.getFile();
-                    final File dir = file.getParentFile();
-                    path = dir.getPath();
-                    path = dir.getCanonicalPath();
+                    final Path file = Paths.get(resource.getURI());
+                    final Path dir = file.getParent();
+                    path = FileUtil.getCanonicalPath(dir);
                 } catch (final Exception e) {
                     // Ignore.
                 }
 
                 LOGGER.info("Using properties '{}' from '{}'", resourceName, path);
 
-                // Is this this web app property file?
-                if (Source.WAR.equals(source)) {
-                    try {
-                        final File resourceFile = resource.getFile();
-                        propertiesDir = resourceFile.getParentFile();
-                    } catch (final Exception ex) {
-                        LOGGER.warn("Unable to locate properties dir ... maybe running in maven?");
-                    }
-                }
+//                // Is this this web app property file?
+//                if (Source.WAR.equals(source)) {
+//                    try {
+//                        final Path resourceFile = resource.getFile();
+//                        propertiesDir = resourceFile.getParentFile();
+//                    } catch (final Exception ex) {
+//                        LOGGER.warn("Unable to locate properties dir ... maybe running in maven?");
+//                    }
+//                }
             } else {
                 LOGGER.info("Properties not found at '{}'", resourceName);
             }
@@ -153,7 +153,11 @@ public class StroomProperties {
     }
 
     public static String getProperty(final String key) {
-        return getProperty(key, key, null);
+        return getProperty(key, key, true, null);
+    }
+
+    public static String getProperty(final String key, final boolean replaceNestedProperties) {
+        return getProperty(key, key, replaceNestedProperties, null);
     }
 
     public static String getProperty(final String key, final String defaultValue) {
@@ -207,7 +211,7 @@ public class StroomProperties {
     /**
      * Precedence: environment variables override ~/.stroom/stroom.conf which overrides stroom.properties.
      */
-    private static String getProperty(final String propertyName, final String name, final Set<String> cyclicCheckSet) {
+    private static String getProperty(final String propertyName, final String name, final boolean replaceNestedProperties, final Set<String> cyclicCheckSet) {
         // Ensure properties are initialised.
         init();
 
@@ -237,7 +241,9 @@ public class StroomProperties {
         }
 
         // Replace any nested properties.
-        value = replaceProperties(propertyName, value, cyclicCheckSet);
+        if (replaceNestedProperties) {
+            value = replaceProperties(propertyName, value, cyclicCheckSet);
+        }
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("getProperty( {} ) returns '{}'", name, makeSafe(name, value));
@@ -300,9 +306,9 @@ public class StroomProperties {
                         // reference.
                         String prop = null;
                         if (propertyName == null) {
-                            prop = getProperty(name, name, checkSet);
+                            prop = getProperty(name, name, true, checkSet);
                         } else {
-                            prop = getProperty(propertyName, name, checkSet);
+                            prop = getProperty(propertyName, name, true, checkSet);
                         }
 
                         if (prop == null) {

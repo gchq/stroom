@@ -18,7 +18,6 @@ package stroom.streamtask.shared;
 
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.EntityIdSet;
-import stroom.entity.shared.FolderIdSet;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
 import stroom.pipeline.shared.PipelineEntity;
@@ -33,7 +32,6 @@ public class FindStreamProcessorFilterCriteria extends BaseCriteria {
     private Period lastPollPeriod = null;
     private EntityIdSet<StreamProcessor> streamProcessorIdSet = null;
     private EntityIdSet<PipelineEntity> pipelineIdSet = null;
-    private FolderIdSet folderIdSet = null;
     private Boolean streamProcessorEnabled = null;
     private Boolean streamProcessorFilterEnabled = null;
     private String createUser;
@@ -108,21 +106,6 @@ public class FindStreamProcessorFilterCriteria extends BaseCriteria {
             streamProcessorIdSet = new EntityIdSet<>();
         }
         return streamProcessorIdSet;
-    }
-
-    public FolderIdSet getFolderIdSet() {
-        return folderIdSet;
-    }
-
-    public void setFolderIdSet(FolderIdSet folderIdSet) {
-        this.folderIdSet = folderIdSet;
-    }
-
-    public FolderIdSet obtainFolderIdSet() {
-        if (folderIdSet == null) {
-            folderIdSet = new FolderIdSet();
-        }
-        return folderIdSet;
     }
 
     public Boolean getStreamProcessorEnabled() {

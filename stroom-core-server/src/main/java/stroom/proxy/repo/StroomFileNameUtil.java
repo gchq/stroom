@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
 
-import java.io.File;
 import java.util.Arrays;
 
 /**
@@ -68,7 +67,7 @@ public final class StroomFileNameUtil {
         for (final String part : parts) {
             if (part.length() > 0) {
                 sb.append(cleanPart(part));
-                sb.append(File.separator);
+                sb.append("/");
             }
         }
         if (sb.length() > 0) {

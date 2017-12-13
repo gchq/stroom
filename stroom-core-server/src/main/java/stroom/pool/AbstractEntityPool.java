@@ -21,6 +21,7 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.PermissionException;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.cache.CacheManager;
 
@@ -52,7 +53,7 @@ public abstract class AbstractEntityPool<K extends DocumentEntity, V> extends Ab
     @Override
     @SuppressWarnings("unchecked")
     protected V internalCreateValue(final Object key) {
-        try (SecurityHelper securityHelper = SecurityHelper.asProcUser(securityContext)) {
+        try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
             final VersionedEntityDecorator<K> versionedEntityDecorator = (VersionedEntityDecorator<K>) key;
             return createValue(versionedEntityDecorator.getEntity());
         }

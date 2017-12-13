@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,14 +12,15 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.test;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-import stroom.entity.shared.ImportState.ImportMode;
-import stroom.feed.shared.FeedService;
+import stroom.importexport.shared.ImportState.ImportMode;
+import stroom.feed.server.FeedService;
 import stroom.importexport.server.ImportExportSerializer;
 import stroom.node.server.NodeCache;
 import stroom.proxy.repo.ProxyRepositoryCreator;
@@ -28,8 +29,8 @@ import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.spring.StroomSpringProfiles;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
@@ -41,7 +42,7 @@ public final class SampleRepositoryCreator {
     private final FeedService feedService;
     private final CommonTestControl commonTestControl;
     private final ImportExportSerializer importExportSerializer;
-    private final File testDir;
+    private final Path testDir;
 
     public SampleRepositoryCreator() {
         FileSystemUtil.deleteContents(FileUtil.getTempDir());
@@ -63,7 +64,7 @@ public final class SampleRepositoryCreator {
 
         importExportSerializer = appContext.getBean(ImportExportSerializer.class);
 
-        testDir = new File(StroomCoreServerTestFileUtil.getTestResourcesDir(), "samples/config");
+        testDir = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve("samples/config");
     }
 
     /**
@@ -83,13 +84,13 @@ public final class SampleRepositoryCreator {
 
     public void run(final boolean shutdown) throws IOException {
         // Load config.
-        importExportSerializer.read(testDir.toPath(), null, ImportMode.IGNORE_CONFIRMATION);
+        importExportSerializer.read(testDir, null, ImportMode.IGNORE_CONFIRMATION);
 
-        final File repoDir = new File(StroomCoreServerTestFileUtil.getTestResourcesDir(), "SampleRepositoryCreator/repo");
-        repoDir.mkdirs();
+        final Path repoDir = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve( "SampleRepositoryCreator/repo");
+        Files.createDirectories(repoDir);
         FileSystemUtil.deleteContents(repoDir);
 
-        final StroomZipRepository repository = new StroomZipRepository(repoDir.getAbsolutePath());
+        final StroomZipRepository repository = new StroomZipRepository(FileUtil.getCanonicalPath(repoDir));
 
         // Add data.
         final ProxyRepositoryCreator creator = new ProxyRepositoryCreator(feedService, repository);
@@ -101,14 +102,13 @@ public final class SampleRepositoryCreator {
         long startTime = System.currentTimeMillis() - (14 * dayMs);
 
         // Load each data item 5 times to create a reasonable amount to test.
-        final Path p = testDir.toPath();
         for (int i = 0; i < 5; i++) {
             // Load reference data first.
-            creator.read(p, true, startTime);
+            creator.read(testDir, true, startTime);
             startTime += tenMinMs;
 
             // Then load event data.
-            creator.read(p, false, startTime);
+            creator.read(testDir, false, startTime);
             startTime += tenMinMs;
         }
 

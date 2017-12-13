@@ -17,20 +17,20 @@
 package stroom.util.config;
 
 import stroom.util.AbstractCommandLineTool;
+import stroom.util.io.FileUtil;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -45,7 +45,7 @@ public class Configure extends AbstractCommandLineTool {
     private boolean readParameter = true;
     private boolean exitOnError = true;
 
-    private List<File> processFile = new ArrayList<>();
+    private List<Path> processFile = new ArrayList<>();
     private ParameterFile parameterFile;
 
     public static void printUsage() {
@@ -116,22 +116,22 @@ public class Configure extends AbstractCommandLineTool {
                 exitWithError();
             }
 
-            File parameter = new File(parameterFilePath);
+            Path parameter = Paths.get(parameterFilePath);
 
-            if (!parameter.isFile()) {
+            if (!Files.isRegularFile(parameter)) {
                 printUsage();
                 System.out.print(parameterFilePath + " does not exist");
                 exitWithError();
             }
             // Create parameters in
-            FileInputStream parameterIS = new FileInputStream(parameter);
-            parameterFile = unmarshal(parameterIS);
-            parameterIS.close();
+            try (final InputStream inputStream = Files.newInputStream(parameter)) {
+                parameterFile = unmarshal(inputStream);
+            }
 
             StringTokenizer processFiles = new StringTokenizer(processFilePath, ",");
             while (processFiles.hasMoreTokens()) {
-                File process = new File(processFiles.nextToken());
-                if (!process.isFile()) {
+                final Path process = Paths.get(processFiles.nextToken());
+                if (!Files.isRegularFile(process)) {
                     printUsage();
                     System.out.print(parameterFile + " does not exist");
                     exitWithError();
@@ -143,7 +143,7 @@ public class Configure extends AbstractCommandLineTool {
 
             writeParameter();
 
-            for (File file : processFile) {
+            for (Path file : processFile) {
                 processFile(file);
             }
 
@@ -159,21 +159,20 @@ public class Configure extends AbstractCommandLineTool {
 
     public void writeParameter() throws IOException {
         writeHeading("Updating " + parameterFilePath);
-        FileOutputStream fileOutputStream = new FileOutputStream(parameterFilePath);
-        marshal(parameterFile, fileOutputStream);
-        fileOutputStream.close();
-
+        try (final OutputStream outputStream = Files.newOutputStream(Paths.get(parameterFilePath))) {
+            marshal(parameterFile, outputStream);
+        }
     }
 
-    public void processFile(File file) throws IOException {
-        writeHeading(file.getAbsolutePath());
+    public void processFile(Path file) throws IOException {
+        writeHeading(FileUtil.getCanonicalPath(file));
 
-        File newFile = new File(file.getAbsolutePath() + ".tmp");
-        newFile.delete();
+        Path newFile = file.getParent().resolve(file.getFileName().toString() + ".tmp");
+        Files.deleteIfExists(newFile);
         int replaceCount = 0;
-        try (BufferedReader buffReader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
-             BufferedWriter buffWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(newFile)))) {
-            String line = null;
+        try (BufferedReader buffReader = new BufferedReader(Files.newBufferedReader(file));
+             BufferedWriter buffWriter = new BufferedWriter(Files.newBufferedWriter(newFile))) {
+            String line;
             int lineCount = 0;
             while ((line = buffReader.readLine()) != null) {
                 lineCount++;
@@ -181,7 +180,7 @@ public class Configure extends AbstractCommandLineTool {
                     if (line.contains(parameter.getName())) {
                         line = line.replace(parameter.getName(), parameter.getValue());
                         replaceCount++;
-                        System.out.println(file.getAbsolutePath() + ": Replaced " + parameter.getName() + " with "
+                        System.out.println(FileUtil.getCanonicalPath(file) + ": Replaced " + parameter.getName() + " with "
                                 + parameter.getValue() + " at line " + lineCount);
                     }
                 }
@@ -192,15 +191,15 @@ public class Configure extends AbstractCommandLineTool {
 
         if (replaceCount == 0) {
             System.out.println("Nothing replaced in file");
-            newFile.delete();
+            Files.delete(newFile);
         } else {
-            file.delete();
-            newFile.renameTo(file);
+            Files.delete(file);
+            Files.move(newFile, file);
         }
         System.out.println();
     }
 
-    public void readParameter() throws IOException {
+    private void readParameter() throws IOException {
         writeHeading("Parameters - Hit enter to use the default in brackets");
 
         InputStreamReader inputStreamReader = new InputStreamReader(System.in);
@@ -217,7 +216,7 @@ public class Configure extends AbstractCommandLineTool {
 
         for (Parameter parameter : parameterFile.getParameter()) {
             int tryCount = 0;
-            boolean ok = true;
+            boolean ok;
             do {
                 System.out.print(parameter.getName() + " : " + parameter.getDescription() + " [" + parameter.getValue()
                         + "] > ");

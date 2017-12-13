@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.importexport.server;
@@ -19,13 +20,12 @@ package stroom.importexport.server;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.DocRefs;
-import stroom.entity.shared.Folder;
-import stroom.entity.shared.FolderService;
-import stroom.entity.shared.ImportState;
+import stroom.importexport.shared.ImportState;
+import stroom.explorer.server.ExplorerService;
+import stroom.explorer.shared.ExplorerConstants;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
-import stroom.pipeline.shared.PipelineEntityService;
-import stroom.query.api.v2.DocRef;
+import stroom.pipeline.server.PipelineService;
 import stroom.resource.server.ResourceStore;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
@@ -44,42 +44,40 @@ public class TestImportExportServiceImpl3 extends AbstractCoreIntegrationTest {
     @Resource
     private ResourceStore resourceStore;
     @Resource
-    private FolderService folderService;
-    @Resource
-    private PipelineEntityService pipelineEntityService;
+    private PipelineService pipelineService;
     @Resource
     private FeedService feedService;
     @Resource
     private CommonTestScenarioCreator commonTestScenarioCreator;
+    @Resource
+    private ExplorerService explorerService;
 
     @Test
     public void testImportZip() throws Exception {
-        Feed feed = null;
-
         final int BATCH_SIZE = 200;
         for (int i = 0; i < BATCH_SIZE; i++) {
-            feed = commonTestScenarioCreator.createSimpleFeed();
+            explorerService.create(Feed.ENTITY_TYPE, FileSystemTestUtil.getUniqueTestString(), null, null);
         }
         final List<Message> msgList = new ArrayList<>();
 
-        final Path testFile = getCurrentTestPath().resolve("ExportTest" + FileSystemTestUtil.getUniqueTestString() + ".zip");
+        final Path testFile = getCurrentTestDir().resolve("ExportTest" + FileSystemTestUtil.getUniqueTestString() + ".zip");
 
         final DocRefs docRefs = new DocRefs();
-        docRefs.add(new DocRef(Folder.ENTITY_TYPE, "0", "System"));
+        docRefs.add(ExplorerConstants.ROOT_DOC_REF);
 
-        importExportService.exportConfig(docRefs, testFile, msgList);
+        importExportService.exportConfig(null, testFile, msgList);
 
         Assert.assertEquals(0, msgList.size());
 
-        final List<String> list = ZipUtil.pathList(testFile.toFile());
+        final List<String> list = ZipUtil.pathList(testFile);
 
         // Expected size is 1 greater than batch size because it should contain the parent folder for the feeds.
-        final int expectedSize = BATCH_SIZE + 1;
+        final int expectedSize = BATCH_SIZE * 2;
 
         Assert.assertEquals(expectedSize, list.size());
 
         final List<ImportState> confirmList = importExportService.createImportConfirmationList(testFile);
 
-        Assert.assertEquals(expectedSize, confirmList.size());
+        Assert.assertEquals(BATCH_SIZE, confirmList.size());
     }
 }

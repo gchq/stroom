@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.streamstore.server;
@@ -19,8 +20,8 @@ package stroom.streamstore.server;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.feed.MetaMap;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.streamstore.server.fs.serializable.RANestedInputStream;
 import stroom.streamstore.shared.StreamType;
@@ -32,10 +33,9 @@ import stroom.util.test.FileSystemTestUtil;
 import stroom.feed.StroomHeaderArguments;
 
 import javax.annotation.Resource;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -57,10 +57,10 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
 
     @Test
     public void testSimpleSingleFile() throws IOException {
-        final File file = new File(getCurrentTestDir(),
+        final Path file = getCurrentTestDir().resolve(
                 FileSystemTestUtil.getUniqueTestString() + "TestFileSystemZipProcessor.zip");
         try {
-            final ZipOutputStream zipOut = new ZipOutputStream(new FileOutputStream(file));
+            final ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(file));
             zipOut.putNextEntry(new ZipEntry("tom1.dat"));
             zipOut.write("File1\nFile1\n".getBytes());
             zipOut.closeEntry();
@@ -74,16 +74,16 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
             doTest(file, 1, new HashSet<>(Arrays.asList("revt.bgz", "revt.meta.bgz", "revt.mf.dat")),
                     expectedContent, expectedBoundaries);
         } finally {
-            file.delete();
+            Files.delete(file);
         }
     }
 
     @Test
     public void testSimpleSingleFileReadThreeTimes() throws IOException {
-        final File file = new File(getCurrentTestDir(),
+        final Path file = getCurrentTestDir().resolve(
                 FileSystemTestUtil.getUniqueTestString() + "TestFileSystemZipProcessor.zip");
         try {
-            final ZipOutputStream zipOut = new ZipOutputStream(new FileOutputStream(file));
+            final ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(file));
             zipOut.putNextEntry(new ZipEntry("tom1.dat"));
             zipOut.write("File1\nFile1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
             zipOut.closeEntry();
@@ -98,16 +98,16 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                             Arrays.asList("revt.bgz", "revt.bdy.dat", "revt.meta.bgz", "revt.meta.bdy.dat", "revt.mf.dat")),
                     expectedContent, expectedBoundaries);
         } finally {
-            file.delete();
+            Files.delete(file);
         }
     }
 
     @Test
     public void testSimpleSingleFileWithMetaAndContext() throws IOException {
-        final File file = new File(getCurrentTestDir(),
+        final Path file = getCurrentTestDir().resolve(
                 FileSystemTestUtil.getUniqueTestString() + "TestFileSystemZipProcessor.zip");
         try {
-            final ZipOutputStream zipOut = new ZipOutputStream(new FileOutputStream(file));
+            final ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(file));
             zipOut.putNextEntry(new ZipEntry("tom1.dat"));
             zipOut.write("File1\nFile1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
             zipOut.closeEntry();
@@ -133,18 +133,18 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                     new HashSet<>(Arrays.asList("revt.bgz", "revt.ctx.bgz", "revt.meta.bgz", "revt.mf.dat")),
                     expectedContent, expectedBoundaries);
         } finally {
-            file.delete();
+            Files.delete(file);
         }
 
     }
 
     @Test
     public void testMultiFileWithMetaAndContext() throws IOException {
-        final File file = new File(getCurrentTestDir(),
+        final Path file = getCurrentTestDir().resolve(
                 FileSystemTestUtil.getUniqueTestString() + "TestFileSystemZipProcessor.zip");
         try {
             // Build a zip with an odd order
-            final ZipOutputStream zipOut = new ZipOutputStream(new FileOutputStream(file));
+            final ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(file));
             zipOut.putNextEntry(new ZipEntry("tom1.dat"));
             zipOut.write("File1\nFile1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
             zipOut.closeEntry();
@@ -180,17 +180,16 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                     "revt.ctx.bdy.dat", "revt.meta.bgz", "revt.meta.bdy.dat", "revt.mf.dat")), expectedContent,
                     expectedBoundaries);
         } finally {
-            file.delete();
+            Files.delete(file);
         }
-
     }
 
     @Test
     public void testMultiFile() throws IOException {
-        final File file = new File(getCurrentTestDir(),
+        final Path file = getCurrentTestDir().resolve(
                 FileSystemTestUtil.getUniqueTestString() + "TestFileSystemZipProcessor.zip");
         try {
-            final ZipOutputStream zipOut = new ZipOutputStream(new FileOutputStream(file));
+            final ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(file));
             zipOut.putNextEntry(new ZipEntry("tom1.dat"));
             zipOut.write("File1\nFile1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
             zipOut.closeEntry();
@@ -208,11 +207,11 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                             Arrays.asList("revt.bgz", "revt.bdy.dat", "revt.meta.bgz", "revt.meta.bdy.dat", "revt.mf.dat")),
                     expectedContent, expectedBoundaries);
         } finally {
-            file.delete();
+            Files.delete(file);
         }
     }
 
-    private void doTest(final File file, final int processCount, final Set<String> expectedFiles,
+    private void doTest(final Path file, final int processCount, final Set<String> expectedFiles,
                         final HashMap<StreamType, String> expectedContent,
                         final HashMap<StreamType, List<String>> expectedBoundaries) throws IOException {
         final Feed eventFeed = commonTestScenarioCreator.createSimpleFeed();
@@ -228,7 +227,7 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
         stroomStreamProcessor.setAppendReceivedPath(false);
 
         for (int i = 0; i < processCount; i++) {
-            stroomStreamProcessor.process(new FileInputStream(file), String.valueOf(i));
+            stroomStreamProcessor.process(Files.newInputStream(file), String.valueOf(i));
         }
 
         stroomStreamProcessor.closeHandlers();
@@ -238,9 +237,9 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
 
         final HashSet<String> foundFiles = new HashSet<>();
 
-        for (final File rfile : files) {
-            if (rfile.isFile()) {
-                String fileName = rfile.getName();
+        for (final Path rfile : files) {
+            if (Files.isRegularFile(rfile)) {
+                String fileName = rfile.getFileName().toString();
                 fileName = fileName.substring(fileName.indexOf(".") + 1);
                 foundFiles.add(fileName);
             }

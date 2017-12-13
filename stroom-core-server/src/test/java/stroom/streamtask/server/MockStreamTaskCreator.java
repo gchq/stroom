@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.streamtask.server;
@@ -24,10 +25,10 @@ import stroom.entity.shared.Clearable;
 import stroom.node.shared.Node;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.Stream;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.StreamProcessorFilter;
-import stroom.streamtask.shared.StreamProcessorFilterService;
 import stroom.streamtask.shared.StreamTask;
 import stroom.streamtask.shared.TaskStatus;
 import stroom.util.spring.StroomSpringProfiles;
@@ -45,6 +46,8 @@ public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
     private StreamStore streamStore;
     @Resource
     private StreamProcessorFilterService streamProcessorFilterService;
+    @Resource
+    private ExpressionToFindCriteria expressionToFindCriteria;
 
     @Override
     public void clear() {
@@ -64,7 +67,10 @@ public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
             // Get tasks for each filter.
             taskList = new ArrayList<>();
             for (final StreamProcessorFilter filter : streamProcessorFilters) {
-                final FindStreamCriteria findStreamCriteria = filter.getFindStreamCriteria();
+                final QueryData queryData = filter.getQueryData();
+
+                final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
+                findStreamCriteria.setExpression(queryData.getExpression());
                 final BaseResultList<Stream> streams = streamStore.find(findStreamCriteria);
 
                 BaseEntityUtil.sort(streams);

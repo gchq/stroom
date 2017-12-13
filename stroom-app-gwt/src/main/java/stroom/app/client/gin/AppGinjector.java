@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.app.client.gin;
@@ -25,6 +26,8 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
 import stroom.about.client.presenter.AboutPresenter;
 import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
+import stroom.annotations.client.gin.AnnotationsIndexGinjector;
+import stroom.annotations.client.gin.AnnotationsIndexModule;
 import stroom.app.client.presenter.AppPresenter;
 import stroom.cache.client.gin.CacheGinjector;
 import stroom.cache.client.gin.CacheModule;
@@ -36,13 +39,14 @@ import stroom.dashboard.client.vis.gin.VisModule;
 import stroom.dictionary.client.gin.DictionaryGinjector;
 import stroom.dictionary.client.gin.DictionaryModule;
 import stroom.dispatch.client.ClientDispatchModule;
+import stroom.elastic.client.gin.ElasticIndexGinjector;
+import stroom.elastic.client.gin.ElasticIndexModule;
 import stroom.entity.client.gin.EntityGinjector;
 import stroom.entity.client.gin.EntityModule;
 import stroom.explorer.client.presenter.ExplorerTabPanePresenter;
 import stroom.explorer.client.presenter.ExplorerTreePresenter;
 import stroom.feed.client.gin.FeedGinjector;
 import stroom.feed.client.gin.FeedModule;
-import stroom.folder.client.FolderRootPresenter;
 import stroom.folder.client.gin.FolderGinjector;
 import stroom.folder.client.gin.FolderModule;
 import stroom.importexport.client.gin.ImportExportConfigGinjector;
@@ -55,8 +59,8 @@ import stroom.monitoring.client.gin.MonitoringGinjector;
 import stroom.monitoring.client.gin.MonitoringModule;
 import stroom.pipeline.client.gin.PipelineGinjector;
 import stroom.pipeline.client.gin.PipelineModule;
-import stroom.policy.client.gin.PolicyModule;
 import stroom.query.client.QueryModule;
+import stroom.ruleset.client.gin.PolicyModule;
 import stroom.script.client.gin.ScriptGinjector;
 import stroom.script.client.gin.ScriptModule;
 import stroom.security.client.gin.SecurityGinjector;
@@ -80,12 +84,14 @@ import stroom.xmlschema.client.gin.XMLSchemaModule;
 
 @GinModules({
         AlertModule.class,
+        AnnotationsIndexModule.class,
         AppModule.class,
         CacheModule.class,
         ClientDispatchModule.class,
         DashboardModule.class,
         DictionaryModule.class,
         EntityModule.class,
+        ElasticIndexModule.class,
         FeedModule.class,
         FolderModule.class,
         ImportExportConfigModule.class,
@@ -113,6 +119,8 @@ public interface AppGinjector extends
         DashboardGinjector,
         DictionaryGinjector,
         EntityGinjector,
+        AnnotationsIndexGinjector,
+        ElasticIndexGinjector,
         FeedGinjector,
         FolderGinjector,
         Ginjector,
@@ -151,6 +159,4 @@ public interface AppGinjector extends
     AsyncProvider<ExplorerTreePresenter> getExplorerTreePresenter();
 
     AsyncProvider<AboutPresenter> getAboutPresenter();
-
-    AsyncProvider<FolderRootPresenter> getFolderRootPresenter();
 }

@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 import stroom.entity.server.util.XMLUtil;
-import stroom.test.StroomProcessTestFileUtil;
+import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.test.StroomUnitTest;
 import stroom.util.xml.SAXParserFactoryFactory;
@@ -33,14 +33,12 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.stream.Stream;
 
 public class TestXMLWriter extends StroomUnitTest {
     public static final SAXParserFactory PARSER_FACTORY;
@@ -53,8 +51,8 @@ public class TestXMLWriter extends StroomUnitTest {
 
     @Test
     public void test() {
-        final File testInputDir = StroomProcessTestFileUtil.getTestResourcesDir();
-        final File testOutputDir = new File(StroomProcessTestFileUtil.getTestOutputDir(), "TestXMLWriter");
+        final Path testInputDir = StroomPipelineTestFileUtil.getTestResourcesDir();
+        final Path testOutputDir = StroomPipelineTestFileUtil.getTestOutputDir().resolve("TestXMLWriter");
 
         processDir(testInputDir, testOutputDir);
     }
@@ -70,35 +68,37 @@ public class TestXMLWriter extends StroomUnitTest {
         Assert.assertTrue(error);
     }
 
-    private void processDir(final File inputDir, final File outputDir) {
-        for (final File file : inputDir.listFiles()) {
-            if (file.isDirectory()) {
-                final File newOutputDir = new File(outputDir, file.getName());
-                processDir(file, newOutputDir);
-            } else if (file.getName().endsWith(".xml")) {
-                processXML(file, outputDir);
-            }
+    private void processDir(final Path inputDir, final Path outputDir) {
+        try (final Stream<Path> stream = Files.list(inputDir)) {
+            stream.forEach(p -> {
+                if (Files.isDirectory(p)) {
+                    final Path newOutputDir = outputDir.resolve(p.getFileName().toString());
+                    processDir(p, newOutputDir);
+                } else if (p.getFileName().toString().endsWith(".xml")) {
+                    processXML(p, outputDir);
+                }
+            });
+        } catch (final IOException e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 
-    private void processXML(final File inputFile, final File outputDir) {
-        LOGGER.info("Processing file: " + inputFile.getAbsolutePath());
+    private void processXML(final Path inputFile, final Path outputDir) {
+        LOGGER.info("Processing file: " + FileUtil.getCanonicalPath(inputFile));
         FileUtil.mkdirs(outputDir);
 
         // First create SAXON formatted output.
-        final File saxonOutput = new File(outputDir,
-                inputFile.getName().substring(0, inputFile.getName().lastIndexOf('.')) + ".saxon.xml");
+        final String fileName = inputFile.getFileName().toString();
+        final Path saxonOutput = outputDir.resolve(fileName.substring(0, fileName.lastIndexOf('.')) + ".saxon.xml");
         try {
             // Pretty print with SAXON.
-            XMLUtil.prettyPrintXML(new BufferedInputStream(new FileInputStream(inputFile)),
-                    new BufferedOutputStream(new FileOutputStream(saxonOutput)));
+            XMLUtil.prettyPrintXML(new BufferedInputStream(Files.newInputStream(inputFile)),
+                    new BufferedOutputStream(Files.newOutputStream(saxonOutput)));
 
             try {
                 // Pretty print with XMLWriter.
-                final File xwOutput = new File(outputDir,
-                        inputFile.getName().substring(0, inputFile.getName().lastIndexOf('.')) + ".xw.xml");
-                final FileWriter fw = new FileWriter(xwOutput);
-                final BufferedWriter bw = new BufferedWriter(fw);
+                final Path xwOutput = outputDir.resolve(fileName.substring(0, fileName.lastIndexOf('.')) + ".xw.xml");
+                final BufferedWriter bw = Files.newBufferedWriter(xwOutput);
                 final XMLWriter xmlWriter = new XMLWriter(bw);
                 xmlWriter.setOutputXMLDecl(true);
                 xmlWriter.setIndentation(3);
@@ -106,7 +106,7 @@ public class TestXMLWriter extends StroomUnitTest {
                 final SAXParser saxParser = PARSER_FACTORY.newSAXParser();
                 final XMLReader xmlReader = saxParser.getXMLReader();
                 xmlReader.setContentHandler(xmlWriter);
-                xmlReader.parse(new InputSource(new BufferedReader(new FileReader(inputFile))));
+                xmlReader.parse(new InputSource(Files.newBufferedReader(inputFile)));
 
                 bw.close();
 

@@ -1,0 +1,15 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<script>
+   <dependenciesXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
+	&lt;docs&gt;
+        &lt;doc&gt;
+&lt;type&gt;Script&lt;/type&gt;
+&lt;uuid&gt;61cc6424-9899-4f38-ad77-f4204f9de166&lt;/uuid&gt;
+&lt;name&gt;D3&lt;/name&gt;
+&lt;/doc&gt;
+	&lt;/docs&gt;
+    </dependenciesXML>
+   <description>Library for displaying hover tips with d3.js</description>
+   <name>D3-Tip</name>
+   <uuid>4f336f7d-5357-4fb3-a42b-88c967588e0a</uuid>
+</script>

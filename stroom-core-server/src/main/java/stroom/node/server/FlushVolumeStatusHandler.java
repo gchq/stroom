@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.node.server;
@@ -19,7 +20,6 @@ package stroom.node.server;
 import org.springframework.context.annotation.Scope;
 import stroom.entity.cluster.FlushServiceClusterTask;
 import stroom.node.shared.FlushVolumeStatusAction;
-import stroom.node.shared.VolumeService;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.server.AbstractTaskHandler;

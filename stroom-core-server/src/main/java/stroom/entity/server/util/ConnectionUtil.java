@@ -99,7 +99,7 @@ public class ConnectionUtil {
         return StroomProperties.getIntProperty(MULTI_INSERT_BATCH_SIZE, MULTI_INSERT_BATCH_SIZE_DEFAULT);
     }
 
-    public static final void close(final Connection connection) {
+    public static void close(final Connection connection) {
         if (connection != null) {
             try {
                 connection.close();

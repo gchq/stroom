@@ -62,8 +62,6 @@ public final class DocRefUtil {
             // Ignore, we might get an exception getting some fields on lazy hibernate objects.
         }
 
-        DocRef docRef = new DocRef(type, uuid, name);
-        docRef.setId(id);
-        return docRef;
+        return new DocRef(type, uuid, name);
     }
 }

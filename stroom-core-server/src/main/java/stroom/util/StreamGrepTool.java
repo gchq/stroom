@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import stroom.entity.shared.Period;
 import stroom.feed.server.FeedServiceImpl;
 import stroom.feed.shared.Feed;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.spring.PersistenceConfiguration;
 import stroom.spring.ScopeConfiguration;
 import stroom.spring.ServerComponentScanConfiguration;
@@ -34,11 +36,10 @@ import stroom.streamstore.server.StreamTypeServiceImpl;
 import stroom.streamstore.server.fs.FileSystemStreamTypeUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.spring.StroomSpringProfiles;
-import stroom.util.thread.ThreadScopeRunnable;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -116,61 +117,58 @@ public class StreamGrepTool extends AbstractCommandLineTool {
         // Boot up spring
         final ApplicationContext appContext = getAppContext();
 
-        final FindStreamCriteria criteria = new FindStreamCriteria();
+        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
 
-        Long createPeriodFromMs = null;
+        String createStartTime = null;
         if (StringUtils.isNotBlank(createPeriodFrom)) {
-            createPeriodFromMs = DateUtil.parseNormalDateTimeString(createPeriodFrom);
+            createStartTime = createPeriodFrom;
         }
-        Long createPeriodToMs = null;
+        String createEndTime = null;
         if (StringUtils.isNotBlank(createPeriodTo)) {
-            createPeriodToMs = DateUtil.parseNormalDateTimeString(createPeriodTo);
+            createEndTime = createPeriodTo;
         }
 
-        criteria.setCreatePeriod(new Period(createPeriodFromMs, createPeriodToMs));
+        builder.addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, createStartTime + "," + createEndTime);
 
         final StreamStore streamStore = appContext.getBean(StreamStore.class);
         final FeedServiceImpl feedService = appContext.getBean(FeedServiceImpl.class);
         final StreamTypeServiceImpl streamTypeService = appContext.getBean(StreamTypeServiceImpl.class);
 
-        new ThreadScopeRunnable() {
-            @Override
-            protected void exec() {
-                Feed definition = null;
-                if (feed != null) {
-                    definition = feedService.loadByName(feed);
-                    if (definition == null) {
-                        throw new RuntimeException("Unable to locate Feed " + feed);
-                    }
-                    criteria.obtainFeeds().obtainInclude().add(definition.getId());
-                }
-
-                if (streamType != null) {
-                    final StreamType type = streamTypeService.loadByName(streamType);
-                    if (type == null) {
-                        throw new RuntimeException("Unable to locate stream type " + streamType);
-                    }
-                    criteria.obtainStreamTypeIdSet().add(type.getId());
-                } else {
-                    criteria.obtainStreamTypeIdSet().add(StreamType.RAW_EVENTS.getId());
-                }
-
-                // Query the stream store
-                final List<Stream> results = streamStore.find(criteria);
-
-                int count = 0;
-                for (final Stream stream : results) {
-                    // TODO : Add caching here to load stream types.
-                    final StreamType streamType = streamTypeService.load(stream.getStreamType());
-                    count++;
-                    LOGGER.info("processing() - " + count + "/" + results.size() + " "
-                            + FileSystemStreamTypeUtil.getDirectory(stream, streamType) + " "
-                            + FileSystemStreamTypeUtil.getBaseName(stream));
-
-                    processFile(streamStore, stream.getId(), match);
-                }
+        Feed definition = null;
+        if (feed != null) {
+            definition = feedService.loadByName(feed);
+            if (definition == null) {
+                throw new RuntimeException("Unable to locate Feed " + feed);
             }
-        }.run();
+            builder.addTerm(StreamDataSource.FEED, Condition.EQUALS, definition.getName());
+        }
+
+        if (streamType != null) {
+            final StreamType type = streamTypeService.loadByName(streamType);
+            if (type == null) {
+                throw new RuntimeException("Unable to locate stream type " + streamType);
+            }
+            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, type.getDisplayValue());
+        } else {
+            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.RAW_EVENTS.getDisplayValue());
+        }
+
+        // Query the stream store
+        final FindStreamCriteria criteria = new FindStreamCriteria();
+        criteria.setExpression(builder.build());
+        final List<Stream> results = streamStore.find(criteria);
+
+        int count = 0;
+        for (final Stream stream : results) {
+            // TODO : Add caching here to load stream types.
+            final StreamType streamType = streamTypeService.load(stream.getStreamType());
+            count++;
+            LOGGER.info("processing() - " + count + "/" + results.size() + " "
+                    + FileSystemStreamTypeUtil.getDirectory(stream, streamType) + " "
+                    + FileSystemStreamTypeUtil.getBaseName(stream));
+
+            processFile(streamStore, stream.getId(), match);
+        }
     }
 
     private ApplicationContext getAppContext() {

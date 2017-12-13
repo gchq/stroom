@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.statistics.client.common;
@@ -23,13 +24,11 @@ import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.document.client.DocumentPluginEventManager;
+import stroom.document.client.DocumentTabData;
 import stroom.entity.client.EntityPlugin;
-import stroom.entity.client.EntityPluginEventManager;
-import stroom.entity.client.EntityTabData;
-import stroom.entity.client.presenter.EntityEditPresenter;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.shared.DocRefUtil;
-import stroom.node.client.ClientPropertyCache;
-import stroom.security.client.ClientSecurityContext;
 import stroom.statistics.client.common.presenter.StatisticsDataSourcePresenter;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
@@ -44,11 +43,12 @@ public class StatisticsPlugin extends EntityPlugin<StatisticStoreEntity> {
     private final Provider<StatisticsDataSourcePresenter> editorProvider;
 
     @Inject
-    public StatisticsPlugin(final EventBus eventBus, final Provider<StatisticsDataSourcePresenter> editorProvider,
-                            final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
-                            final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager,
-                            final ClientPropertyCache clientPropertyCache) {
-        super(eventBus, dispatcher, securityContext, contentManager, entityPluginEventManager);
+    public StatisticsPlugin(final EventBus eventBus,
+                            final Provider<StatisticsDataSourcePresenter> editorProvider,
+                            final ClientDispatchAsync dispatcher,
+                            final ContentManager contentManager,
+                            final DocumentPluginEventManager entityPluginEventManager) {
+        super(eventBus, dispatcher, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
     }
 
@@ -58,14 +58,14 @@ public class StatisticsPlugin extends EntityPlugin<StatisticStoreEntity> {
     }
 
     @Override
-    protected EntityEditPresenter<?, ?> createEditor() {
+    protected DocumentEditPresenter<?, ?> createEditor() {
         return editorProvider.get();
     }
 
     @Override
-    public void save(final EntityTabData tabData) {
-        if (tabData != null && tabData instanceof EntityEditPresenter<?, ?>) {
-            final EntityEditPresenter<?, StatisticStoreEntity> presenter = (EntityEditPresenter<?, StatisticStoreEntity>) tabData;
+    public void save(final DocumentTabData tabData) {
+        if (tabData != null && tabData instanceof DocumentEditPresenter<?, ?>) {
+            final DocumentEditPresenter<?, StatisticStoreEntity> presenter = (DocumentEditPresenter<?, StatisticStoreEntity>) tabData;
             if (presenter.isDirty()) {
                 final StatisticStoreEntity entity = presenter.getEntity();
 
@@ -77,7 +77,7 @@ public class StatisticsPlugin extends EntityPlugin<StatisticStoreEntity> {
         }
     }
 
-    private void doConfirmSave(final EntityEditPresenter<?, StatisticStoreEntity> presenter,
+    private void doConfirmSave(final DocumentEditPresenter<?, StatisticStoreEntity> presenter,
                                final StatisticStoreEntity entity, final StatisticStoreEntity entityFromDb) {
         // get the persisted versions of the fields we care about
         final StatisticType prevType = entityFromDb.getStatisticType();
@@ -91,11 +91,10 @@ public class StatisticsPlugin extends EntityPlugin<StatisticStoreEntity> {
         // if one of a select list of attributes has changed then warn the user
         // only need a null check on the engine name as the rest will never be
         // null
-        if (entityFromDb != null && (
-                !prevType.equals(entity.getStatisticType())
-                        || !prevRollUpType.equals(entity.getRollUpType()) || !prevInterval.equals(entity.getPrecision())
-                        || !prevFieldList.equals(entity.getStatisticFields())
-                        || !prevMaskSet.equals(entity.getCustomRollUpMasks()))) {
+        if (!prevType.equals(entity.getStatisticType())
+                || !prevRollUpType.equals(entity.getRollUpType()) || !prevInterval.equals(entity.getPrecision())
+                || !prevFieldList.equals(entity.getStatisticFields())
+                || !prevMaskSet.equals(entity.getCustomRollUpMasks())) {
             ConfirmEvent.fireWarn(this, SafeHtmlUtils
                             .fromTrustedString("Changes to the following attributes of a statistic data source:<br/><br/>"
                                     + "Engine Name<br/>Statistic Type<br/>Precision<br/>Rollup Type<br/>Field list<br/>Custom roll-ups<br/><br/>"
@@ -115,8 +114,8 @@ public class StatisticsPlugin extends EntityPlugin<StatisticStoreEntity> {
         }
     }
 
-    private void doSave(final EntityEditPresenter<?, StatisticStoreEntity> presenter,
+    private void doSave(final DocumentEditPresenter<?, StatisticStoreEntity> presenter,
                         final StatisticStoreEntity entity) {
-        save(entity).onSuccess(presenter::read);
+        save(DocRefUtil.create(entity), entity).onSuccess(doc -> presenter.read(DocRefUtil.create(doc), doc));
     }
 }

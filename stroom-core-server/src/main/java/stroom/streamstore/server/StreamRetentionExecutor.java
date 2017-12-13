@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.streamstore.server;
@@ -22,12 +23,16 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.util.PeriodUtil;
 import stroom.entity.shared.Period;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.jobsystem.server.ClusterLockService;
 import stroom.jobsystem.server.JobTrackedSchedule;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
@@ -35,7 +40,7 @@ import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
 import stroom.util.task.TaskMonitor;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import java.util.List;
 
 /**
@@ -49,14 +54,18 @@ public class StreamRetentionExecutor {
     private static final String LOCK_NAME = "StreamRetentionExecutor";
     private static final int DELETE_STREAM_BATCH_SIZE = 1000;
 
-    @Resource
-    private FeedService feedService;
-    @Resource
-    private StreamStore streamStore;
-    @Resource
-    private TaskMonitor taskMonitor;
-    @Resource
-    private ClusterLockService clusterLockService;
+    private final FeedService feedService;
+    private final StreamStore streamStore;
+    private final TaskMonitor taskMonitor;
+    private final ClusterLockService clusterLockService;
+
+    @Inject
+    StreamRetentionExecutor(final FeedService feedService, final StreamStore streamStore, final TaskMonitor taskMonitor, final ClusterLockService clusterLockService) {
+        this.feedService = feedService;
+        this.streamStore = streamStore;
+        this.taskMonitor = taskMonitor;
+        this.clusterLockService = clusterLockService;
+    }
 
     /**
      * Gets a task if one is available, returns null otherwise.
@@ -97,11 +106,10 @@ public class StreamRetentionExecutor {
             final Period createPeriod = PeriodUtil.createToDateWithOffset(System.currentTimeMillis(),
                     -1 * feed.getRetentionDayAge());
 
-            LOGGER.info("processFeed() - {} deleting range {} .. {}", new Object[]{
-                    feed.getName(),
+            LOGGER.info("processFeed() - {} deleting range {} .. {}", feed.getName(),
                     DateUtil.createNormalDateTimeString(createPeriod.getFrom()),
                     DateUtil.createNormalDateTimeString(createPeriod.getTo())
-            });
+            );
 
             taskMonitor.info("{} deleting range {} .. {}", new Object[]{
                     feed.getName(),
@@ -109,14 +117,17 @@ public class StreamRetentionExecutor {
                     DateUtil.createNormalDateTimeString(createPeriod.getTo())
             });
 
+            final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+                    .addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(createPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(createPeriod.getToMs()))
+                    .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName())
+                    // we only want it to logically delete UNLOCKED items and not ones
+                    // already marked as DELETED
+                    .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
+                    .build();
+
             // Delete anything received older than -1 * retention age
             final FindStreamCriteria criteria = new FindStreamCriteria();
-            criteria.setCreatePeriod(createPeriod);
-            criteria.obtainFeeds().obtainInclude().add(feed.getId());
-            // we only want it to logically delete UNLOCKED items and not ones
-            // already marked as DELETED
-            criteria.obtainStatusSet().setSingleItem(StreamStatus.UNLOCKED);
-
+            criteria.setExpression(expression);
             criteria.obtainPageRequest().setLength(DELETE_STREAM_BATCH_SIZE);
 
             long total = 0;

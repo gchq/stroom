@@ -25,10 +25,8 @@ import org.springframework.stereotype.Component;
 import stroom.cache.StroomCacheManager;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.QueryEntity;
-import stroom.dictionary.shared.Dictionary;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
-import stroom.entity.shared.Folder;
 import stroom.entity.shared.Res;
 import stroom.feed.shared.Feed;
 import stroom.index.server.IndexShardManager;
@@ -39,16 +37,16 @@ import stroom.jobsystem.shared.ClusterLock;
 import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobNode;
 import stroom.node.server.NodeConfig;
+import stroom.node.server.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
 import stroom.node.shared.Volume;
-import stroom.node.shared.VolumeService;
 import stroom.node.shared.VolumeState;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.XSLT;
-import stroom.policy.shared.Policy;
+import stroom.ruleset.shared.Policy;
 import stroom.script.shared.Script;
 import stroom.security.server.AppPermission;
 import stroom.security.server.DocumentPermission;
@@ -57,13 +55,13 @@ import stroom.security.server.User;
 import stroom.security.server.UserGroupUser;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.stats.shared.StroomStatsStoreEntity;
+import stroom.streamstore.server.StreamAttributeKeyService;
 import stroom.streamstore.server.StreamAttributeValueFlush;
 import stroom.streamstore.server.fs.FileSystemUtil;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeKey;
-import stroom.streamstore.shared.StreamAttributeKeyService;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.streamstore.shared.StreamVolume;
 import stroom.streamtask.server.StreamTaskCreator;
@@ -95,10 +93,9 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
             AppPermission.TABLE_NAME,
             ClusterLock.TABLE_NAME,
             Dashboard.TABLE_NAME,
-            Dictionary.TABLE_NAME,
+            "doc",
             DocumentPermission.TABLE_NAME,
             Feed.TABLE_NAME,
-            Folder.TABLE_NAME,
             Index.TABLE_NAME,
             Index.TABLE_NAME_INDEX_VOLUME, //link table between IDX and VOL so no entity of its own
             IndexShard.TABLE_NAME,
@@ -203,7 +200,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
         for (final Volume volume : volumes) {
             // The parent will also pick up the index shard (as well as the
             // store)
-            FileSystemUtil.deleteContents(FileSystemUtil.createFileTypeRoot(volume).getParentFile());
+            FileSystemUtil.deleteContents(FileSystemUtil.createFileTypeRoot(volume).getParent());
         }
 
         //Clear any un-flushed stream attributes

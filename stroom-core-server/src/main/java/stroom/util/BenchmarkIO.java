@@ -32,11 +32,11 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -63,8 +63,8 @@ public class BenchmarkIO {
             System.out.println("Usage = <PATH> <RECORDS> <RUNS>");
         } else {
             final String path = args[0];
-            final File dir = new File(path);
-            if (!dir.isDirectory()) {
+            final Path dir = Paths.get(path);
+            if (!Files.isDirectory(dir)) {
                 System.out.println("Specified directory \"" + path + "\" does not exist.");
             } else {
                 int recordCount = 2000000;
@@ -92,22 +92,22 @@ public class BenchmarkIO {
         }
     }
 
-    private void test(final File dir, final int recordCount) throws Exception {
+    private void test(final Path dir, final int recordCount) throws Exception {
         final byte[] data = createData(recordCount);
 
-        final File rawFile = new File(dir, "test.dat");
-        final File gzipFile = new File(dir, "test.gzip");
-        final File bgzipFile = new File(dir, "test.bgzip");
-        final File bgzipDatFile1a = new File(dir, "test1a.dat.bgzip");
-        final File bgzipIdxFile1a = new File(dir, "test1a.idx");
-        final File bgzipDatFile1b = new File(dir, "test1b.dat.bgzip");
-        final File bgzipIdxFile1b = new File(dir, "test1b.idx.bgzip");
-        final File bgzipDatFile2 = new File(dir, "test2.dat.bgzip");
-        final File bgzipIdxFile2 = new File(dir, "test2.idx");
-        final File bgzipDatFile3 = new File(dir, "test3.dat.bgzip");
-        final File bgzipIdxFile3 = new File(dir, "test4.idx");
+        final Path rawFile = dir.resolve("test.dat");
+        final Path gzipFile = dir.resolve("test.gzip");
+        final Path bgzipFile = dir.resolve("test.bgzip");
+        final Path bgzipDatFile1a = dir.resolve("test1a.dat.bgzip");
+        final Path bgzipIdxFile1a = dir.resolve("test1a.idx");
+        final Path bgzipDatFile1b = dir.resolve("test1b.dat.bgzip");
+        final Path bgzipIdxFile1b = dir.resolve("test1b.idx.bgzip");
+        final Path bgzipDatFile2 = dir.resolve("test2.dat.bgzip");
+        final Path bgzipIdxFile2 = dir.resolve("test2.idx");
+        final Path bgzipDatFile3 = dir.resolve("test3.dat.bgzip");
+        final Path bgzipIdxFile3 = dir.resolve("test4.idx");
 
-        FileUtil.mkdirs(rawFile.getParentFile());
+        Files.createDirectories(dir);
 
         doTest(rawFile, null, data, StreamType.PLAIN);
         doTest(gzipFile, null, data, StreamType.GZIP);
@@ -117,31 +117,31 @@ public class BenchmarkIO {
         doTest(bgzipDatFile2, bgzipIdxFile2, data, StreamType.RAW_SEG_TEXT);
         doTest(bgzipDatFile3, bgzipIdxFile3, data, StreamType.RAW_SEG_XML);
 
-        FileUtil.deleteFile(rawFile);
-        FileUtil.deleteFile(gzipFile);
-        FileUtil.deleteFile(bgzipFile);
-        FileUtil.deleteFile(bgzipDatFile1a);
-        FileUtil.deleteFile(bgzipIdxFile1a);
-        FileUtil.deleteFile(bgzipDatFile1b);
-        FileUtil.deleteFile(bgzipIdxFile1b);
-        FileUtil.deleteFile(bgzipDatFile2);
-        FileUtil.deleteFile(bgzipIdxFile2);
-        FileUtil.deleteFile(bgzipDatFile3);
-        FileUtil.deleteFile(bgzipIdxFile3);
+        Files.delete(rawFile);
+        Files.delete(gzipFile);
+        Files.delete(bgzipFile);
+        Files.delete(bgzipDatFile1a);
+        Files.delete(bgzipIdxFile1a);
+        Files.delete(bgzipDatFile1b);
+        Files.delete(bgzipIdxFile1b);
+        Files.delete(bgzipDatFile2);
+        Files.delete(bgzipIdxFile2);
+        Files.delete(bgzipDatFile3);
+        Files.delete(bgzipIdxFile3);
     }
 
-    public void doTest(final File file1, final File file2, final byte[] data, final StreamType streamType)
+    public void doTest(final Path file1, final Path file2, final byte[] data, final StreamType streamType)
             throws Exception {
         // Write the data.
         OutputStream os = null;
         switch (streamType) {
             case PLAIN:
-                os = new BufferedOutputStream(new FileOutputStream(file1), FileSystemUtil.STREAM_BUFFER_SIZE);
+                os = new BufferedOutputStream(Files.newOutputStream(file1), FileSystemUtil.STREAM_BUFFER_SIZE);
                 break;
             case GZIP:
                 os = new BufferedOutputStream(
                         new GZIPOutputStream(
-                                new BufferedOutputStream(new FileOutputStream(file1), FileSystemUtil.STREAM_BUFFER_SIZE)),
+                                new BufferedOutputStream(Files.newOutputStream(file1), FileSystemUtil.STREAM_BUFFER_SIZE)),
                         FileSystemUtil.STREAM_BUFFER_SIZE);
                 break;
             case BGZIP:
@@ -190,15 +190,15 @@ public class BenchmarkIO {
         final double mb = ((double) data.length) / MB;
         double sec = elapsed / 1000;
         int mbps = (int) (mb / sec);
-        final long fileLength = file1.length();
+        final long fileLength = Files.size(file1);
 
-        System.out.println("Writing " + streamType + " " + (int) mb + "Mb to \"" + file1.getAbsolutePath() + "\" took "
+        System.out.println("Writing " + streamType + " " + (int) mb + "Mb to \"" + FileUtil.getCanonicalPath(file1) + "\" took "
                 + (int) elapsed + "ms = " + mbps + "Mb/s");
         System.out.println("Output file is " + (int) (fileLength / MB) + "Mb, compression ratio = "
                 + (int) (100 - ((100D / data.length) * fileLength)) + "%");
 
         if (file2 != null) {
-            final long fileLength2 = file2.length();
+            final long fileLength2 = Files.size(file2);
             System.out.println("Output file 2 is " + (int) (fileLength2 / MB) + "Mb");
 
         }
@@ -209,11 +209,11 @@ public class BenchmarkIO {
         InputStream is = null;
         switch (streamType) {
             case PLAIN:
-                is = new FileInputStream(file1);
+                is = Files.newInputStream(file1);
                 break;
             case GZIP:
                 is = new GZIPInputStream(
-                        new BufferedInputStream(new FileInputStream(file1), FileSystemUtil.STREAM_BUFFER_SIZE));
+                        new BufferedInputStream(Files.newInputStream(file1), FileSystemUtil.STREAM_BUFFER_SIZE));
                 break;
             case BGZIP:
                 is = new BlockGZIPInputFile(file1);
@@ -250,7 +250,7 @@ public class BenchmarkIO {
         elapsed = System.currentTimeMillis() - startTime;
         sec = elapsed / 1000;
         mbps = (int) (mb / sec);
-        System.out.println("Reading " + streamType + " " + (int) mb + "Mb from \"" + file1.getAbsolutePath()
+        System.out.println("Reading " + streamType + " " + (int) mb + "Mb from \"" + FileUtil.getCanonicalPath(file1)
                 + "\" took " + (int) elapsed + "ms = " + mbps + "Mb/s");
 
         readSpeed.put(streamType, readSpeed.get(streamType) + mbps);

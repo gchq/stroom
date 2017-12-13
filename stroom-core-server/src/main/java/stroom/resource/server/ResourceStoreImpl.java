@@ -24,7 +24,8 @@ import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomShutdown;
 import stroom.util.spring.StroomStartup;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
@@ -39,12 +40,16 @@ public class ResourceStoreImpl implements ResourceStore {
     private Set<ResourceKey> currentFiles = new HashSet<>();
     private Set<ResourceKey> oldFiles = new HashSet<>();
     private long sequence;
-    private File tempDir = null;
+    private Path tempDir = null;
 
-    private File getTempFile() {
+    private Path getTempFile() {
         if (tempDir == null) {
-            tempDir = new File(FileUtil.getTempDir(), "resources");
-            tempDir.mkdirs();
+            tempDir = FileUtil.getTempDir().resolve("resources");
+            try {
+                Files.createDirectories(tempDir);
+            } catch (final IOException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
         }
         return tempDir;
     }
@@ -56,7 +61,7 @@ public class ResourceStoreImpl implements ResourceStore {
 
     @Override
     public synchronized ResourceKey createTempFile(final String name) {
-        final String fileName = new File(getTempFile(), (sequence++) + name).getAbsolutePath();
+        final String fileName = FileUtil.getCanonicalPath(getTempFile().resolve((sequence++) + name));
         final ResourceKey resourceKey = new ResourceKey(name, fileName);
         currentFiles.add(resourceKey);
 
@@ -71,11 +76,11 @@ public class ResourceStoreImpl implements ResourceStore {
         if (oldFiles.contains(resourceKey)) {
             oldFiles.remove(resourceKey);
         }
-        final File file = new File(resourceKey.getKey());
-        if (file.isFile()) {
-            if (!file.delete()) {
-                file.deleteOnExit();
-            }
+        final Path file = Paths.get(resourceKey.getKey());
+        try {
+            Files.deleteIfExists(file);
+        } catch (final IOException e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 

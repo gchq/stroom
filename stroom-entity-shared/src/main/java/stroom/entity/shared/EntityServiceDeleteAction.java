@@ -16,14 +16,27 @@
 
 package stroom.entity.shared;
 
-public class EntityServiceDeleteAction<E extends Entity> extends AbstractEntityAction<E> {
+import stroom.util.shared.VoidResult;
+
+public class EntityServiceDeleteAction extends AbstractEntityAction<VoidResult> {
     private static final long serialVersionUID = 800905016214418723L;
+
+    private Entity entity;
 
     public EntityServiceDeleteAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public EntityServiceDeleteAction(final E entity) {
-        super(entity, "Delete: " + entity);
+    public EntityServiceDeleteAction(final Entity entity) {
+        this.entity = entity;
+    }
+
+    public Entity getEntity() {
+        return entity;
+    }
+
+    @Override
+    public String getTaskName() {
+        return "Save: " + entity;
     }
 }

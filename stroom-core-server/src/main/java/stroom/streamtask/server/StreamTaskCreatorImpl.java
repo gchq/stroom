@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.streamtask.server;
@@ -29,30 +30,31 @@ import stroom.search.server.EventRef;
 import stroom.search.server.EventRefs;
 import stroom.search.server.EventSearchTask;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
+import stroom.security.UserTokenUtil;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
+import stroom.streamstore.server.OldFindStreamCriteria;
 import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Limits;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
+import stroom.streamtask.server.ExpressionToFindCriteria.Context;
 import stroom.streamtask.server.StreamTaskCreatorTransactionHelper.CreatedTasks;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
-import stroom.streamtask.shared.StreamProcessorFilterService;
 import stroom.streamtask.shared.StreamProcessorFilterTracker;
 import stroom.streamtask.shared.StreamTask;
-import stroom.streamtask.shared.StreamTaskService;
 import stroom.streamtask.shared.TaskStatus;
 import stroom.task.server.TaskCallbackAdaptor;
 import stroom.task.server.TaskManager;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.UserTokenUtil;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomShutdown;
@@ -104,6 +106,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     private final InternalStatisticsReceiver internalStatisticsReceiver;
     private final StreamStore streamStore;
     private final SecurityContext securityContext;
+    private final ExpressionToFindCriteria expressionToFindCriteria;
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
 
@@ -154,7 +157,8 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                           final StroomPropertyService propertyService,
                           final InternalStatisticsReceiver internalStatisticsReceiver,
                           final StreamStore streamStore,
-                          final SecurityContext securityContext) {
+                          final SecurityContext securityContext,
+                          final ExpressionToFindCriteria expressionToFindCriteria) {
 
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.streamTaskTransactionHelper = streamTaskTransactionHelper;
@@ -166,6 +170,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         this.internalStatisticsReceiver = internalStatisticsReceiver;
         this.streamStore = streamStore;
         this.securityContext = securityContext;
+        this.expressionToFindCriteria = expressionToFindCriteria;
     }
 
     @StroomStartup
@@ -506,8 +511,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
             if (loadedFilter != null) {
 
                 // Set the current user to be the one who created the filter so that only streams that that user has access to are processed.
-                securityContext.pushUser(UserTokenUtil.create(loadedFilter.getCreateUser(), null));
-                try {
+                try (final SecurityHelper securityHelper = SecurityHelper.asUser(securityContext, UserTokenUtil.create(loadedFilter.getCreateUser(), null))) {
                     LOGGER.debug("createTasksForFilter() - streamProcessorFilter {}", loadedFilter.toString());
 
                     // Only try and create tasks if the processor is enabled.
@@ -538,7 +542,11 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                             // Skip once we have done all that is required
                             final int requiredTasks = tasksToCreate;
                             if (requiredTasks > 0 && !taskMonitor.isTerminated()) {
-                                final FindStreamCriteria findStreamCriteria = loadedFilter.getFindStreamCriteria();
+                                final QueryData queryData = loadedFilter.getQueryData();
+
+                                final Context context = new Context(null, System.currentTimeMillis());
+                                final OldFindStreamCriteria findStreamCriteria = expressionToFindCriteria.convert(queryData, context);
+                                boolean isStreamStoreSearch = (queryData.getDataSource() != null) && queryData.getDataSource().getType().equals(StreamDataSource.STREAM_STORE_TYPE);
 
                                 // Record the time before we are going to query for
                                 // streams for tracking purposes.
@@ -552,15 +560,14 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                                 // if the filter will be used indefinitely.
                                 if (tracker.getMaxStreamCreateMs() == null) {
                                     final long maxStreamId = recentStreamInfo.getMaxStreamId();
-                                    final FindStreamCriteria criteria = loadedFilter.getFindStreamCriteria();
                                     Long streamCreateMaxMs = null;
 
                                     // If the criteria has a stream id set with the
                                     // greatest id that is less than the current max
                                     // stream id then we can bound the max stream
                                     // create time.
-                                    if (criteria.getStreamIdSet() != null) {
-                                        final Long maxId = criteria.getStreamIdSet().getMaxId();
+                                    if (findStreamCriteria.getStreamIdSet() != null) {
+                                        final Long maxId = findStreamCriteria.getStreamIdSet().getMaxId();
                                         if (maxId != null && maxId.longValue() < maxStreamId) {
                                             streamCreateMaxMs = min(streamCreateMaxMs, streamQueryTime);
                                         }
@@ -570,9 +577,9 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                                     // upper limit on stream id that is less than
                                     // the current max stream id then we can bound
                                     // the max stream create time.
-                                    if (criteria.getStreamIdRange() != null) {
-                                        if (criteria.getStreamIdRange().getTo() != null
-                                                && criteria.getStreamIdRange().getTo().longValue() < maxStreamId) {
+                                    if (findStreamCriteria.getStreamIdRange() != null) {
+                                        if (findStreamCriteria.getStreamIdRange().getTo() != null
+                                                && findStreamCriteria.getStreamIdRange().getTo().longValue() < maxStreamId) {
                                             streamCreateMaxMs = min(streamCreateMaxMs, streamQueryTime);
                                         }
                                     }
@@ -580,15 +587,15 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                                     // If the criteria has a stream creation period
                                     // then determine the maximum stream creation
                                     // time from this period.
-                                    if (criteria.getCreatePeriod() != null && criteria.getCreatePeriod().getTo() != null) {
-                                        streamCreateMaxMs = min(streamCreateMaxMs, criteria.getCreatePeriod().getTo());
+                                    if (findStreamCriteria.getCreatePeriod() != null && findStreamCriteria.getCreatePeriod().getTo() != null) {
+                                        streamCreateMaxMs = min(streamCreateMaxMs, findStreamCriteria.getCreatePeriod().getTo());
                                     }
 
                                     // For the time being we will get task
                                     // production for queries to end with the latest
                                     // stream that existed the first time this is
                                     // called.
-                                    if (criteria.getQueryData() != null) {
+                                    if (!isStreamStoreSearch) {
                                         streamCreateMaxMs = min(streamCreateMaxMs, streamQueryTime);
                                     }
 
@@ -611,12 +618,18 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                                             tracker = streamTaskTransactionHelper.saveTracker(tracker);
                                         }
 
-                                    } else if (findStreamCriteria.getQueryData() != null) {
+                                    } else if (!isStreamStoreSearch) {
                                         // Create stream tasks by executing a
                                         // search.
                                         searching = true;
-                                        createTasksFromSearchQuery(loadedFilter, findStreamCriteria, taskMonitor, logPrefix,
-                                                streamQueryTime, node, requiredTasks, queue, recentStreamInfo, tracker);
+                                        createTasksFromSearchQuery(loadedFilter,
+                                                queryData,
+                                                streamQueryTime,
+                                                node,
+                                                requiredTasks,
+                                                queue,
+                                                recentStreamInfo,
+                                                tracker);
 
                                     } else {
                                         // Create tasks from a standard stream
@@ -634,8 +647,6 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                             exhaustedFilterMap.put(loadedFilter.getId(), Boolean.FALSE);
                         }
                     }
-                } finally {
-                    securityContext.popUser();
                 }
             }
         } catch (final Throwable t) {
@@ -657,7 +668,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
             final FindStreamTaskCriteria findStreamTaskCriteria = new FindStreamTaskCriteria();
             findStreamTaskCriteria.obtainStreamTaskStatusSet().add(TaskStatus.UNPROCESSED);
             findStreamTaskCriteria.obtainNodeIdSet().setMatchNull(true);
-            findStreamTaskCriteria.obtainFindStreamCriteria().obtainStatusSet().add(StreamStatus.UNLOCKED);
+            findStreamTaskCriteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
             findStreamTaskCriteria.obtainStreamProcessorFilterIdSet().add(filter.getId());
             findStreamTaskCriteria.obtainPageRequest().setLength(tasksToCreate);
 
@@ -695,17 +706,15 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     }
 
     private void createTasksFromSearchQuery(final StreamProcessorFilter filter,
-                                            final FindStreamCriteria findStreamCriteria, final TaskMonitor taskMonitor, final String logPrefix,
-                                            final long streamQueryTime, final Node node, final int requiredTasks, final StreamTaskQueue queue,
+                                            final QueryData queryData,
+                                            final long streamQueryTime,
+                                            final Node node, final int requiredTasks, final StreamTaskQueue queue,
                                             final StreamTaskCreatorRecentStreamDetails recentStreamInfo, final StreamProcessorFilterTracker tracker) {
         final EventRef minEvent = new EventRef(tracker.getMinStreamId(), tracker.getMinEventId());
         final EventRef maxEvent = new EventRef(Long.MAX_VALUE, 0L);
         long maxStreams = requiredTasks;
         long maxEvents = 1000000;
         final long maxEventsPerStream = 1000;
-
-        // Create stream tasks by executing a search.
-        final QueryData queryData = findStreamCriteria.getQueryData();
 
         // Are there any limits set on the query.
         if (queryData.getLimits() != null) {
@@ -760,7 +769,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         tracker.setStatus("Searching...");
         final StreamProcessorFilterTracker updatedTracker = streamTaskTransactionHelper.saveTracker(tracker);
 
-        final EventSearchTask eventSearchTask = new EventSearchTask(UserTokenUtil.create(filter.getUpdateUser(), null), findStreamCriteria, query,
+        final EventSearchTask eventSearchTask = new EventSearchTask(UserTokenUtil.create(filter.getUpdateUser(), null), query,
                 minEvent, maxEvent, maxStreams, maxEvents, maxEventsPerStream, POLL_INTERVAL_MS);
         taskManager.execAsync(eventSearchTask, new TaskCallbackAdaptor<EventRefs>() {
             @Override
@@ -784,8 +793,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                 // Transfer the newly created (and available) tasks to the
                 // queue.
                 createdTasks.getAvailableTaskList().forEach(queue::add);
-                LOGGER.debug("createTasks() - Created {} tasks (tasksToCreate={}) for filter {}",
-                        new Object[]{createdTasks.getTotalTasksCreated(), requiredTasks, filter.toString()});
+                LOGGER.debug("createTasks() - Created {} tasks (tasksToCreate={}) for filter {}", createdTasks.getTotalTasksCreated(), requiredTasks, filter.toString());
 
                 exhaustedFilterMap.put(filter.getId(), resultSize == 0 || reachedLimit);
 
@@ -800,16 +808,22 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     }
 
     private void createTasksFromCriteria(final StreamProcessorFilter filter,
-                                         final FindStreamCriteria findStreamCriteria, final TaskMonitor taskMonitor, final String logPrefix,
-                                         final long streamQueryTime, final Node node, final int requiredTasks, final StreamTaskQueue queue,
-                                         final StreamTaskCreatorRecentStreamDetails recentStreamInfo, final StreamProcessorFilterTracker tracker) {
+                                         final OldFindStreamCriteria findStreamCriteria,
+                                         final TaskMonitor taskMonitor,
+                                         final String logPrefix,
+                                         final long streamQueryTime,
+                                         final Node node,
+                                         final int requiredTasks,
+                                         final StreamTaskQueue queue,
+                                         final StreamTaskCreatorRecentStreamDetails recentStreamInfo,
+                                         final StreamProcessorFilterTracker tracker) {
         // Update the tracker status message.
         tracker.setStatus("Creating...");
         final StreamProcessorFilterTracker updatedTracker = streamTaskTransactionHelper.saveTracker(tracker);
 
         // This will contain locked and unlocked streams
         final List<Stream> streamList = streamTaskTransactionHelper.runSelectStreamQuery(filter.getStreamProcessor(),
-                filter.getFindStreamCriteria(), updatedTracker.getMinStreamId(), requiredTasks);
+                findStreamCriteria, updatedTracker.getMinStreamId(), requiredTasks);
 
         // Just create regular stream processing tasks.
         final Map<Stream, InclusiveRanges> map = new HashMap<>();
@@ -821,8 +835,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                 streamQueryTime, map, node, recentStreamInfo, false);
         // Transfer the newly created (and available) tasks to the queue.
         createdTasks.getAvailableTaskList().forEach(queue::add);
-        LOGGER.debug("createTasks() - Created {} tasks (tasksToCreate={}) for filter {}",
-                new Object[]{createdTasks.getTotalTasksCreated(), requiredTasks, filter.toString()});
+        LOGGER.debug("createTasks() - Created {} tasks (tasksToCreate={}) for filter {}", createdTasks.getTotalTasksCreated(), requiredTasks, filter.toString());
         exhaustedFilterMap.put(filter.getId(), createdTasks.getTotalTasksCreated() == 0);
     }
 

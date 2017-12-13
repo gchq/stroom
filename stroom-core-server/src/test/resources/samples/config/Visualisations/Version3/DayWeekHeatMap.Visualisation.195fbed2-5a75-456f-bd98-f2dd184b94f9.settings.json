@@ -1,0 +1,37 @@
+{
+    "tabs" : [ 
+        {
+            "name" : "Data",
+            "controls" : [ 
+                {
+                    "id" : "days",
+                    "type" :  "field",
+                    "label" : "Days"
+                }, 
+                {
+                    "id" : "values",
+                    "type" :  "field",
+                    "label" : "Values"
+                } 
+            ]
+        } 
+    ],
+    "data" : {
+        "structure" : {
+            "values" : {
+                "fields" : [ 
+                    {
+                        "id" : "${days}",
+                        "sort" : {
+                            "enabled" : "true",
+                            "direction" : "Ascending"
+                        }
+                    }, 
+                    {
+                        "id" : "${values}"
+                    } 
+                ]
+            }
+        }
+    }
+}

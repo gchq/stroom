@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.index.server;
@@ -33,10 +34,9 @@ import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.index.shared.IndexShardService;
+import stroom.node.server.VolumeService;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
-import stroom.node.shared.VolumeService;
 import stroom.security.Insecure;
 import stroom.security.Secured;
 import stroom.security.SecurityContext;
@@ -168,7 +168,7 @@ public class IndexShardServiceImpl
                                            final FindIndexShardCriteria criteria) {
             super.appendBasicCriteria(sql, alias, criteria);
 
-            sql.appendEntityIdSetQuery(alias + ".index", criteria.getIndexIdSet());
+            sql.appendDocRefSetQuery(alias + ".index", criteria.getIndexSet());
             sql.appendEntityIdSetQuery(alias, criteria.getIndexShardSet());
             sql.appendEntityIdSetQuery(alias + ".node", criteria.getNodeIdSet());
             sql.appendEntityIdSetQuery(alias + ".volume", criteria.getVolumeIdSet());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.streamtask.server;
@@ -22,14 +23,12 @@ import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.CriteriaLoggingUtil;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.SystemEntityServiceImpl;
-import stroom.entity.server.UserManagerQueryUtil;
 import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.Folder;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.entity.shared.SummaryDataRow;
 import stroom.feed.shared.Feed;
@@ -37,14 +36,12 @@ import stroom.node.shared.Node;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.security.Secured;
 import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamTask;
-import stroom.streamtask.shared.StreamTaskService;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -133,14 +130,9 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
         sql.append(")");
         sql.append(" WHERE 1=1");
 
-        sql.appendPrimitiveValueSetQuery("S." + Stream.STATUS, criteria.obtainFindStreamCriteria().getStatusSet());
-        sql.appendEntityIdSetQuery("P." + BaseEntity.ID,
-                criteria.obtainFindStreamCriteria().getPipelineIdSet());
-        sql.appendIncludeExcludeSetQuery("F." + BaseEntity.ID,
-                criteria.obtainFindStreamCriteria().getFeeds());
-
-        UserManagerQueryUtil.appendFolderCriteria(criteria.obtainFindStreamCriteria().getFolderIdSet(),
-                "P." + Folder.FOREIGN_KEY, sql, getEntityManager());
+        sql.appendPrimitiveValueSetQuery("S." + Stream.STATUS, criteria.getStatusSet());
+        sql.appendEntityIdSetQuery("P." + BaseEntity.ID, criteria.getPipelineIdSet());
+        sql.appendEntityIdSetQuery("F." + BaseEntity.ID, criteria.getFeedIdSet());
 
         sql.append(" GROUP BY PIPE_ID, FEED_ID, PRIORITY_1, STAT_ID1");
         sql.append(") D");
@@ -158,15 +150,16 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
     @Override
     public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindStreamTaskCriteria criteria) {
         CriteriaLoggingUtil.appendCriteriaSet(items, "streamTaskStatusSet", criteria.getStreamTaskStatusSet());
+        CriteriaLoggingUtil.appendEntityIdSet(items, "streamIdSet", criteria.getStreamIdSet());
         CriteriaLoggingUtil.appendEntityIdSet(items, "nodeIdSet", criteria.getNodeIdSet());
         CriteriaLoggingUtil.appendEntityIdSet(items, "streamTaskIdSet", criteria.getStreamTaskIdSet());
-        CriteriaLoggingUtil.appendEntityIdSet(items, "streamProcessorFilterIdSet",
-                criteria.getStreamProcessorFilterIdSet());
+        CriteriaLoggingUtil.appendEntityIdSet(items, "streamProcessorFilterIdSet", criteria.getStreamProcessorFilterIdSet());
+        CriteriaLoggingUtil.appendCriteriaSet(items, "statusSet", criteria.getStatusSet());
         CriteriaLoggingUtil.appendEntityIdSet(items, "pipelineIdSet", criteria.getPipelineIdSet());
+        CriteriaLoggingUtil.appendEntityIdSet(items, "feedIdSet", criteria.getFeedIdSet());
         CriteriaLoggingUtil.appendDateTerm(items, "createMs", criteria.getCreateMs());
-
-        streamStore.appendCriteria(items, criteria.getFindStreamCriteria());
-
+        CriteriaLoggingUtil.appendRangeTerm(items, "createPeriod", criteria.getCreatePeriod());
+        CriteriaLoggingUtil.appendRangeTerm(items, "effectivePeriod", criteria.getEffectivePeriod());
         super.appendCriteria(items, criteria);
     }
 
@@ -243,28 +236,23 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
 
             sql.appendValueQuery(alias + ".createMs", criteria.getCreateMs());
 
-            final FindStreamCriteria findStreamCriteria = criteria.getFindStreamCriteria();
-            if (findStreamCriteria != null) {
-                sql.appendEntityIdSetQuery(alias + ".stream", findStreamCriteria.getStreamIdSet());
+//            if (criteria.getStatusSet() != null || criteria.getFeedIdSet() != null || criteria.getPipelineIdSet() != null) {
+                sql.appendEntityIdSetQuery(alias + ".stream", criteria.getStreamIdSet());
 
-                sql.appendEntityIdSetQuery(alias + ".stream.streamType", findStreamCriteria.getStreamTypeIdSet());
+            sql.appendEntityIdSetQuery(alias + ".stream.streamType", criteria.getStreamTypeIdSet());
 
-                sql.appendPrimitiveValueSetQuery(alias + ".stream.pstatus", findStreamCriteria.getStatusSet());
+            sql.appendPrimitiveValueSetQuery(alias + ".stream.pstatus", criteria.getStatusSet());
 
                 sql.appendEntityIdSetQuery(alias + ".streamProcessorFilter.streamProcessor.pipeline",
-                        findStreamCriteria.getPipelineIdSet());
+                        criteria.getPipelineIdSet());
 
-                sql.appendEntityIdSetQuery(alias + ".streamProcessorFilter.streamProcessor",
-                        findStreamCriteria.getStreamProcessorIdSet());
+//                sql.appendEntityIdSetQuery(alias + ".streamProcessorFilter.streamProcessor",
+//                        criteria.getStreamProcessorIdSet());
 
-                sql.appendIncludeExcludeSetQuery(alias + ".stream.feed", findStreamCriteria.getFeeds());
+            sql.appendEntityIdSetQuery(alias + ".stream.feed", criteria.getFeedIdSet());
 
-                sql.appendRangeQuery(alias + ".stream.createMs", findStreamCriteria.getCreatePeriod());
-                sql.appendRangeQuery(alias + ".stream.effectiveMs", findStreamCriteria.getEffectivePeriod());
-            }
-
-            UserManagerQueryUtil.appendFolderCriteria(criteria.obtainFindStreamCriteria().getFolderIdSet(),
-                    alias + ".streamProcessorFilter.streamProcessor.pipeline.folder", sql, getEntityManager());
+                sql.appendRangeQuery(alias + ".stream.createMs", criteria.getCreatePeriod());
+                sql.appendRangeQuery(alias + ".stream.effectiveMs", criteria.getEffectivePeriod());
         }
     }
 }

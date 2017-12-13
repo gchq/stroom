@@ -19,7 +19,7 @@ package stroom.explorer.client.presenter;
 import com.google.gwt.user.cellview.client.HasSelection;
 import com.google.gwt.view.client.SelectionModel.AbstractSelectionModel;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.TreeStructure;
 
 import java.util.HashMap;
@@ -29,13 +29,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerData> implements HasSelection<ExplorerData> {
+public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerNode> implements HasSelection<ExplorerNode> {
     // Ensure one value per key
-    private final HashMap<ExplorerData, TickBoxState> stateMap = new HashMap<>();
-    private final Set<ExplorerData> stateChanges = new HashSet<>();
+    private final HashMap<ExplorerNode, TickBoxState> stateMap = new HashMap<>();
+    private final Set<ExplorerNode> stateChanges = new HashSet<>();
 
     private TreeStructure treeStructure;
-    private Map<ExplorerData, Set<ExplorerData>> descendants = new HashMap<>();
+    private Map<ExplorerNode, Set<ExplorerNode>> descendants = new HashMap<>();
 
     public TickBoxSelectionModel() {
         super(null);
@@ -46,9 +46,9 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerData> 
      *
      * @return the set of selected items
      */
-    public Set<ExplorerData> getSelectedSet() {
-        final Set<ExplorerData> selected = new HashSet<>();
-        for (final Entry<ExplorerData, TickBoxState> entry : stateMap.entrySet()) {
+    public Set<ExplorerNode> getSelectedSet() {
+        final Set<ExplorerNode> selected = new HashSet<>();
+        for (final Entry<ExplorerNode, TickBoxState> entry : stateMap.entrySet()) {
             if (TickBoxState.TICK.equals(entry.getValue())) {
                 selected.add(entry.getKey());
             }
@@ -59,13 +59,13 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerData> 
     // This method will just return the opposite of the previous state to make
     // sure that the UI refreshes the appropriate rows.
     @Override
-    public boolean isSelected(final ExplorerData item) {
+    public boolean isSelected(final ExplorerNode item) {
         final TickBoxState currentState = getState(item);
         return currentState != TickBoxState.UNTICK;
     }
 
     @Override
-    public void setSelected(final ExplorerData item, final boolean selected) {
+    public void setSelected(final ExplorerNode item, final boolean selected) {
         if (selected) {
             setState(item, TickBoxState.TICK);
         } else {
@@ -73,7 +73,7 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerData> 
         }
     }
 
-    private void setState(final ExplorerData item, final TickBoxState state) {
+    private void setState(final ExplorerNode item, final TickBoxState state) {
         final TickBoxState currentState = getState(item);
         if (currentState != state) {
             modifyState(item, state);
@@ -92,20 +92,20 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerData> 
         }
     }
 
-    private void removeDescendants(final ExplorerData item) {
+    private void removeDescendants(final ExplorerNode item) {
         modifyState(item, TickBoxState.UNTICK);
-        Set<ExplorerData> set = descendants.get(item);
+        Set<ExplorerNode> set = descendants.get(item);
         if (set != null) {
-            for (final ExplorerData descendant : set) {
+            for (final ExplorerNode descendant : set) {
                 removeDescendants(descendant);
             }
             descendants.remove(item);
         }
     }
 
-    private void addDescendants(final TreeStructure treeStructure, final ExplorerData ancestor, final ExplorerData descendant) {
+    private void addDescendants(final TreeStructure treeStructure, final ExplorerNode ancestor, final ExplorerNode descendant) {
         if (treeStructure != null && ancestor != null) {
-            Set<ExplorerData> set = descendants.get(ancestor);
+            Set<ExplorerNode> set = descendants.get(ancestor);
             if (set == null) {
                 set = new HashSet<>();
                 descendants.put(ancestor, set);
@@ -117,18 +117,18 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerData> 
     }
 
     @Override
-    public boolean hasSelectionChanged(final ExplorerData item) {
+    public boolean hasSelectionChanged(final ExplorerNode item) {
         return stateChanges.remove(item);
     }
 
-    private void changeParent(final ExplorerData item) {
-        final ExplorerData parent = getParent(item);
+    private void changeParent(final ExplorerNode item) {
+        final ExplorerNode parent = getParent(item);
         if (parent != null) {
             boolean allTicked = true;
             boolean allUnticked = true;
-            final List<ExplorerData> children = getChildren(parent);
+            final List<ExplorerNode> children = getChildren(parent);
             if (children != null && children.size() > 0) {
-                for (final ExplorerData child : children) {
+                for (final ExplorerNode child : children) {
                     final TickBoxState childState = getState(child);
                     switch (childState) {
                         case TICK:
@@ -158,17 +158,17 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerData> 
         }
     }
 
-    private void selectChildren(final ExplorerData item) {
-        final List<ExplorerData> children = getChildren(item);
+    private void selectChildren(final ExplorerNode item) {
+        final List<ExplorerNode> children = getChildren(item);
         if (children != null && children.size() > 0) {
-            for (final ExplorerData child : children) {
+            for (final ExplorerNode child : children) {
                 modifyState(child, TickBoxState.TICK);
                 addDescendants(treeStructure, treeStructure.getParent(child), child);
             }
         }
     }
 
-    private void modifyState(final ExplorerData item, final TickBoxState state) {
+    private void modifyState(final ExplorerNode item, final TickBoxState state) {
         final TickBoxState currentState = getState(item);
         if (currentState != state) {
             stateChanges.add(item);
@@ -180,7 +180,7 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerData> 
         }
     }
 
-    public TickBoxState getState(final ExplorerData item) {
+    public TickBoxState getState(final ExplorerNode item) {
         final TickBoxState state = stateMap.get(item);
         if (state == null) {
             return TickBoxState.UNTICK;
@@ -188,14 +188,14 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerData> 
         return state;
     }
 
-    private ExplorerData getParent(final ExplorerData object) {
+    private ExplorerNode getParent(final ExplorerNode object) {
         if (treeStructure != null) {
             return treeStructure.getParent(object);
         }
         return null;
     }
 
-    private List<ExplorerData> getChildren(final ExplorerData object) {
+    private List<ExplorerNode> getChildren(final ExplorerNode object) {
         if (treeStructure != null) {
             return treeStructure.getChildren(object);
         }
@@ -207,16 +207,16 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerData> 
 
         // Once the tree structure changes ensure we auto select descendants of selected ancestors.
         if (treeStructure != null) {
-            for (final ExplorerData item : getSelectedSet()) {
+            for (final ExplorerNode item : getSelectedSet()) {
                 selectChildren(treeStructure, item);
             }
         }
     }
 
-    private void selectChildren(final TreeStructure treeStructure, final ExplorerData item) {
-        final List<ExplorerData> children = treeStructure.getChildren(item);
+    private void selectChildren(final TreeStructure treeStructure, final ExplorerNode item) {
+        final List<ExplorerNode> children = treeStructure.getChildren(item);
         if (children != null) {
-            for (final ExplorerData child : children) {
+            for (final ExplorerNode child : children) {
                 setSelected(child, true);
                 selectChildren(treeStructure, child);
             }

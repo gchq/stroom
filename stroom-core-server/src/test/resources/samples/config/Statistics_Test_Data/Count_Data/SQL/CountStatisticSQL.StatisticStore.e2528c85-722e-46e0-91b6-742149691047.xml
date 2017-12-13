@@ -1,0 +1,10 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<statisticStore>
+   <description>This is my description</description>
+   <enabled>true</enabled>
+   <name>CountStatisticSQL</name>
+   <precision>60000</precision>
+   <rollUpType>ALL</rollUpType>
+   <statisticType>COUNT</statisticType>
+   <uuid>e2528c85-722e-46e0-91b6-742149691047</uuid>
+</statisticStore>

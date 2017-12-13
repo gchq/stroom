@@ -26,10 +26,12 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -49,7 +51,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
     private boolean append = false;
     private MetaMap attributeMap = null;
     private OutputStream outputStream;
-    private Set<File> files;
+    private Set<Path> files;
     private FileSystemStreamTarget parent;
 
     private FileSystemStreamTarget(final Stream requestMetaData, final Set<StreamVolume> metaDataVolume,
@@ -63,7 +65,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
     }
 
     private FileSystemStreamTarget(final FileSystemStreamTarget aParent, final StreamType aStreamType,
-                                   final Set<File> aFiles) {
+                                   final Set<Path> aFiles) {
         this.stream = aParent.stream;
         this.metaDataVolume = aParent.metaDataVolume;
         this.parent = aParent;
@@ -123,10 +125,14 @@ public final class FileSystemStreamTarget implements StreamTarget {
 
     public Long getTotalFileSize() {
         long total = 0;
-        final Set<File> fileSet = getFiles(false);
+        final Set<Path> fileSet = getFiles(false);
 
-        for (final File file : fileSet) {
-            total += file.length();
+        for (final Path file : fileSet) {
+            try {
+                total += Files.size(file);
+            } catch (final IOException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
         }
         return total;
     }
@@ -140,16 +146,16 @@ public final class FileSystemStreamTarget implements StreamTarget {
         return metaDataVolume;
     }
 
-    public Set<File> getFiles(final boolean createPath) {
+    public Set<Path> getFiles(final boolean createPath) {
         if (files == null) {
             files = new HashSet<>();
             if (parent == null) {
                 for (final StreamVolume smVolume : metaDataVolume) {
-                    final File aFile = FileSystemStreamTypeUtil.createRootStreamFile(smVolume.getVolume(), stream,
+                    final Path aFile = FileSystemStreamTypeUtil.createRootStreamFile(smVolume.getVolume(), stream,
                             streamType);
                     if (createPath) {
-                        final File rootDir = new File(smVolume.getVolume().getPath());
-                        if (!FileSystemUtil.mkdirs(rootDir, aFile.getParentFile())) {
+                        final Path rootDir = Paths.get(smVolume.getVolume().getPath());
+                        if (!FileSystemUtil.mkdirs(rootDir, aFile.getParent())) {
                             // Unable to create path
                             throw new StreamException("Unable to create directory for file " + aFile);
 
@@ -163,7 +169,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
                         .collect(Collectors.toList()));
             }
             if (LOGGER.isDebugEnabled()) {
-                for (final File fileItem : files) {
+                for (final Path fileItem : files) {
                     LOGGER.debug("getFile() " + fileItem);
                 }
             }
@@ -181,7 +187,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
                 // Ensure File Is New and the path exists
                 files = getFiles(true);
 
-                if (!FileSystemUtil.deleteAnyFile(files)) {
+                if (!FileSystemUtil.deleteAnyPath(files)) {
                     LOGGER.error("getOutputStream() - Unable to delete existing files for new stream target");
                     throw new StreamException("Unable to delete existing files for new stream target " + files);
                 }
@@ -206,7 +212,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
         if (!closed && StreamType.MANIFEST.equals(type)) {
             throw new RuntimeException("Stream store is responsible for the child manifest stream");
         }
-        final Set<File> childFile = FileSystemStreamTypeUtil.createChildStreamFile(getFiles(false), type);
+        final Set<Path> childFile = FileSystemStreamTypeUtil.createChildStreamPath(getFiles(false), type);
         final FileSystemStreamTarget child = new FileSystemStreamTarget(this, type, childFile);
         childrenAccessed.add(child);
         return child;
@@ -245,10 +251,10 @@ public final class FileSystemStreamTarget implements StreamTarget {
         if (attributeMap == null) {
             attributeMap = new MetaMap();
             if (isAppend()) {
-                final File manifestFile = FileSystemStreamTypeUtil
+                final Path manifestFile = FileSystemStreamTypeUtil
                         .createChildStreamFile(getFiles(false).iterator().next(), StreamType.MANIFEST);
-                if (manifestFile.isFile()) {
-                    try (FileInputStream inputStream = new FileInputStream(manifestFile)) {
+                if (Files.isRegularFile(manifestFile)) {
+                    try (final InputStream inputStream = Files.newInputStream(manifestFile)) {
                         attributeMap.read(inputStream, true);
                     } catch (final Exception ex) {
                         LOGGER.error("getAttributeMap()", ex);

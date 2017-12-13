@@ -16,25 +16,25 @@
 
 package stroom.util.io;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 public class FilePermissionUtil {
     static final long MS_IN_DAY = 24L * 60L * 60L * 1000L;
 
-    public static void tracePath(File file) throws IOException {
-        Path path = file.toPath();
-        BasicFileAttributes basicFileAttributes = Files.readAttributes(path, BasicFileAttributes.class);
+    public static void tracePath(Path file) throws IOException {
+        BasicFileAttributes basicFileAttributes = Files.readAttributes(file, BasicFileAttributes.class);
 
-        Set<PosixFilePermission> filePermissions = Files.getPosixFilePermissions(path);
+        Set<PosixFilePermission> filePermissions = Files.getPosixFilePermissions(file);
 
         System.out.println("File Attributes: " + file);
         System.out.println();
@@ -42,17 +42,14 @@ public class FilePermissionUtil {
         System.out.println("lastAccessTime  " + basicFileAttributes.lastAccessTime());
         System.out.println("creationTime    " + basicFileAttributes.creationTime());
         System.out.println("filePermissions " + PosixFilePermissions.toString(filePermissions));
-        System.out.println("canWrite        " + file.canWrite());
         System.out.println();
-
     }
 
     public static void main(String[] args) throws IOException {
-        File file = new File(args[0]);
-        Path path = file.toPath();
+        Path file = Paths.get(args[0]);
 
         tracePath(file);
-        Set<PosixFilePermission> filePermissions = Files.getPosixFilePermissions(path);
+        Set<PosixFilePermission> filePermissions = Files.getPosixFilePermissions(file);
 
         System.out.println("Setting Permission ");
         System.out.println();
@@ -69,14 +66,13 @@ public class FilePermissionUtil {
                 newFilePermissions.add(filePermission);
             }
         }
-        if (!file.setReadOnly()) {
-            System.out.println("Unable to set readonly");
-        }
+
+        Files.setPosixFilePermissions(file, new HashSet<>(Arrays.asList(PosixFilePermission.OWNER_READ, PosixFilePermission.GROUP_READ)));
 
         FileTime newFileAccessTime = FileTime.fromMillis(
-                Files.readAttributes(path, BasicFileAttributes.class).lastAccessTime().toMillis() + MS_IN_DAY);
+                Files.readAttributes(file, BasicFileAttributes.class).lastAccessTime().toMillis() + MS_IN_DAY);
         System.out.println("Setting lastAccessTime +24H");
-        Files.setAttribute(path, "lastAccessTime", newFileAccessTime);
+        Files.setAttribute(file, "lastAccessTime", newFileAccessTime);
 
         System.out.println();
 

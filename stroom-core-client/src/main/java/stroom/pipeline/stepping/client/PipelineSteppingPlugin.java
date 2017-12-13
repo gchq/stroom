@@ -81,10 +81,8 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
         chooser.addDataSelectionHandler(event -> {
             final DocRef pipeline = chooser.getSelectedEntityReference();
             if (pipeline != null) {
-
-
                 final FindStreamAttributeMapCriteria streamAttributeMapCriteria = new FindStreamAttributeMapCriteria();
-                streamAttributeMapCriteria.obtainFindStreamCriteria().obtainStreamIdSet().add(streamId);
+                streamAttributeMapCriteria.obtainFindStreamCriteria().obtainSelectedIdSet().add(streamId);
                 streamAttributeMapCriteria.getFetchSet().add(Feed.ENTITY_TYPE);
 
                 dispatcher.exec(new EntityServiceFindAction<FindStreamAttributeMapCriteria, StreamAttributeMap>(streamAttributeMapCriteria)).onSuccess(result -> {

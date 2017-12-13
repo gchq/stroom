@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,13 +12,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.streamstore.server;
 
-import stroom.entity.server.SupportsCriteriaLogging;
-import stroom.entity.shared.FindDeleteService;
-import stroom.entity.shared.FindService;
+import stroom.entity.server.FindDeleteService;
+import stroom.entity.server.FindService;
+import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
@@ -40,8 +41,7 @@ import java.util.List;
  * stream to unlock the file.
  * </p>
  */
-public interface StreamStore extends FindService<Stream, FindStreamCriteria>, FindDeleteService<FindStreamCriteria>,
-        SupportsCriteriaLogging<FindStreamCriteria> {
+public interface StreamStore extends FindService<Stream, FindStreamCriteria>, FindDeleteService<FindStreamCriteria> {
     /**
      * Load a stream by id.
      *
@@ -110,7 +110,7 @@ public interface StreamStore extends FindService<Stream, FindStreamCriteria>, Fi
      * Open a existing stream source.
      * </p>
      *
-     * @param id        The stream id to open a stream source for.
+     * @param streamId        The stream id to open a stream source for.
      * @param anyStatus Used to specify if this method will return stream sources that
      *                  are logically deleted or locked. If false only unlocked stream
      *                  sources will be returned, null otherwise.
@@ -164,15 +164,7 @@ public interface StreamStore extends FindService<Stream, FindStreamCriteria>, Fi
      */
     Long deleteStream(Stream stream);
 
-    /**
-     * <p>
-     * Delete a stream.
-     * </p>
-     *
-     * @return items deleted
-     */
-    @Override
-    Long findDelete(FindStreamCriteria findStreamCriteria);
+    BaseResultList<Stream> find(OldFindStreamCriteria findStreamCriteria) throws RuntimeException;
 
     /**
      * <p>

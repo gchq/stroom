@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.entity.server;
@@ -20,7 +21,7 @@ import event.logging.BaseAdvancedQueryOperator.And;
 import event.logging.Query;
 import event.logging.Query.Advanced;
 import org.springframework.context.annotation.Scope;
-import stroom.dashboard.server.logging.EntityEventLog;
+import stroom.logging.DocumentEventLog;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.EntityServiceFindSummaryAction;
@@ -37,12 +38,12 @@ import javax.inject.Inject;
 class EntityServiceFindSummaryHandler
         extends AbstractTaskHandler<EntityServiceFindSummaryAction<BaseCriteria>, ResultList<SummaryDataRow>> {
     private final EntityServiceBeanRegistry beanRegistry;
-    private final EntityEventLog entityEventLog;
+    private final DocumentEventLog documentEventLog;
 
     @Inject
-    EntityServiceFindSummaryHandler(final EntityServiceBeanRegistry beanRegistry, final EntityEventLog entityEventLog) {
+    EntityServiceFindSummaryHandler(final EntityServiceBeanRegistry beanRegistry, final DocumentEventLog documentEventLog) {
         this.beanRegistry = beanRegistry;
-        this.entityEventLog = entityEventLog;
+        this.documentEventLog = documentEventLog;
     }
 
     @SuppressWarnings("unchecked")
@@ -68,9 +69,9 @@ class EntityServiceFindSummaryHandler
 
         try {
             result = (BaseResultList<SummaryDataRow>) beanRegistry.invoke("findSummary", action.getCriteria());
-            entityEventLog.searchSummary(action.getCriteria(), query, result);
+            documentEventLog.searchSummary(action.getCriteria(), query, result);
         } catch (final RuntimeException e) {
-            entityEventLog.searchSummary(action.getCriteria(), query, e);
+            documentEventLog.searchSummary(action.getCriteria(), query, e);
 
             throw e;
         }

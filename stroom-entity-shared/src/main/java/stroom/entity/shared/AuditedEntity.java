@@ -32,29 +32,11 @@ public abstract class AuditedEntity extends BaseEntitySmall {
     public static final Set<String> AUDIT_FIELDS = Collections
             .unmodifiableSet(new HashSet<>(Arrays.asList("createTime", "updateTime", "createUser", "updateUser")));
     private static final long serialVersionUID = -2887373467654809485L;
-    /**
-     * The gets set depending on if we are running in the server side with a
-     * spring context.
-     */
-    private static CurrentUserResolver currentUserResolver;
+
     private Long createTime;
     private Long updateTime;
     private String createUser;
     private String updateUser;
-
-    public static void setCurrentUserResolver(final CurrentUserResolver acurrentUserResolver) {
-        currentUserResolver = acurrentUserResolver;
-    }
-
-    /**
-     * @return the user who is logged in or NULL.
-     */
-    private static String getCurrentUser() {
-        if (currentUserResolver != null) {
-            return currentUserResolver.getCurrentUser();
-        }
-        return null;
-    }
 
     @Override
     public void clearPersistence() {
@@ -95,27 +77,5 @@ public abstract class AuditedEntity extends BaseEntitySmall {
 
     public void setUpdateUser(final String updateUser) {
         this.updateUser = updateUser;
-    }
-
-    /**
-     * JPA hook.
-     */
-    @Override
-    public void prePersist() {
-        final long now = System.currentTimeMillis();
-        setCreateTime(now);
-        setCreateUser(getCurrentUser());
-        setUpdateTime(now);
-        setUpdateUser(getCurrentUser());
-    }
-
-    /**
-     * JPA hook.
-     */
-    @Override
-    public void preUpdate() {
-        final long now = System.currentTimeMillis();
-        setUpdateTime(now);
-        setUpdateUser(getCurrentUser());
     }
 }

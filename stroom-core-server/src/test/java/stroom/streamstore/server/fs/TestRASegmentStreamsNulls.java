@@ -26,16 +26,17 @@ import stroom.util.io.StreamUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestRASegmentStreamsNulls extends StroomUnitTest {
     @Test
     public void testNoSegments() throws IOException {
-        final File dir = getCurrentTestDir();
-        final File datFile = new File(dir, "test.bzg");
-        final File segFile = new File(dir, "test.seg.dat");
+        final Path dir = getCurrentTestDir();
+        final Path datFile = dir.resolve("test.bzg");
+        final Path segFile = dir.resolve("test.seg.dat");
 
         final SegmentOutputStream segStream = new RASegmentOutputStream(new BlockGZIPOutputFile(datFile),
                 new LockingFileOutputStream(segFile, true));
@@ -44,8 +45,8 @@ public class TestRASegmentStreamsNulls extends StroomUnitTest {
 
         segStream.close();
 
-        Assert.assertTrue(datFile.isFile());
-        Assert.assertFalse(segFile.isFile());
+        Assert.assertTrue(Files.isRegularFile(datFile));
+        Assert.assertFalse(Files.isRegularFile(segFile));
 
         RASegmentInputStream inputStream = new RASegmentInputStream(new BlockGZIPInputFile(datFile),
                 new UncompressedInputStream(segFile, true));
@@ -63,7 +64,7 @@ public class TestRASegmentStreamsNulls extends StroomUnitTest {
 
         Assert.assertEquals("tom1", StreamUtil.streamToString(inputStream));
 
-        datFile.delete();
-        segFile.delete();
+        Files.deleteIfExists(datFile);
+        Files.deleteIfExists(segFile);
     }
 }

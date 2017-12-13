@@ -12,20 +12,22 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.search.server;
 
 import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.Sort.Direction;
+import stroom.index.server.IndexService;
+import stroom.index.server.IndexShardService;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexService;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
-import stroom.index.shared.IndexShardService;
 import stroom.node.shared.Node;
+import stroom.security.SecurityHelper;
 import stroom.query.common.v2.ResultHandler;
 import stroom.query.api.v2.Query;
 import stroom.security.SecurityContext;
@@ -85,9 +87,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
 
     @Override
     public VoidResult exec(final AsyncSearchTask task) {
-        try {
-            securityContext.elevatePermissions();
-
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             final ClusterSearchResultCollector resultCollector = task.getResultCollector();
             final ResultHandler resultHandler = resultCollector.getResultHandler();
 
@@ -113,7 +113,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
 
                     // Get a list of search index shards to look through.
                     final FindIndexShardCriteria findIndexShardCriteria = new FindIndexShardCriteria();
-                    findIndexShardCriteria.getIndexIdSet().add(index.getId());
+                    findIndexShardCriteria.getIndexSet().add(query.getDataSource());
                     // Only non deleted indexes.
                     findIndexShardCriteria.getIndexShardStatusSet().addAll(IndexShard.NON_DELETED_INDEX_SHARD_STATUS);
                     // Order by partition name and key.
@@ -191,9 +191,6 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
             }
 
             return VoidResult.INSTANCE;
-
-        } finally {
-            securityContext.restorePermissions();
         }
     }
 

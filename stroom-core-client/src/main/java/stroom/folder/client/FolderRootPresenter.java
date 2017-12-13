@@ -23,8 +23,8 @@ import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.LinkTabPanelPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
-import stroom.entity.shared.Folder;
 import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.process.client.presenter.ProcessorPresenter;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -35,6 +35,7 @@ import stroom.streamtask.shared.StreamProcessor;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPreset;
 import stroom.util.client.ImageUtil;
+import stroom.util.shared.SharedObject;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -44,7 +45,7 @@ public class FolderRootPresenter extends LinkTabPanelPresenter implements TabDat
     private static final TabData PROCESSORS = new TabDataImpl("Processors");
 
     private final ClientSecurityContext securityContext;
-    private final TabContentProvider<Folder> tabContentProvider = new TabContentProvider<>();
+    private final TabContentProvider<SharedObject> tabContentProvider = new TabContentProvider<>();
     private ProcessorPresenter processorPresenter;
 
     @Inject
@@ -96,7 +97,7 @@ public class FolderRootPresenter extends LinkTabPanelPresenter implements TabDat
 
     @Override
     public String getLabel() {
-        return "System";
+        return ExplorerConstants.SYSTEM;
     }
 
     @Override

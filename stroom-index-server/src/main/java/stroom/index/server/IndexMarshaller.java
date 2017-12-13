@@ -16,13 +16,14 @@
 
 package stroom.index.server;
 
-import org.springframework.stereotype.Component;
 import stroom.entity.server.EntityMarshaller;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexFields;
 
-@Component
-public class IndexMarshaller extends EntityMarshaller<Index, IndexFields> {
+class IndexMarshaller extends EntityMarshaller<Index, IndexFields> {
+    IndexMarshaller() {
+    }
+
     @Override
     public IndexFields getObject(final Index entity) {
         return entity.getIndexFieldsObject();

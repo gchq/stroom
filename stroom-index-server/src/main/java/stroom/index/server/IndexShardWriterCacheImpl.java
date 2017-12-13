@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
-import stroom.index.shared.IndexShardService;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;
@@ -146,7 +145,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         criteria.getNodeIdSet().add(nodeCache.getDefaultNode());
         criteria.getFetchSet().add(Index.ENTITY_TYPE);
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
-        criteria.getIndexIdSet().add(indexShardKey.getIndex());
+        criteria.getIndexSet().add(DocRefUtil.create(indexShardKey.getIndex()));
         criteria.getPartition().setString(indexShardKey.getPartition());
         final List<IndexShard> list = indexShardService.find(criteria);
         for (final IndexShard indexShard : list) {

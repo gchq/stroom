@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.index.server;
@@ -26,7 +27,6 @@ import stroom.index.shared.Index;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
-import stroom.index.shared.IndexShardService;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
@@ -77,7 +77,7 @@ public class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         Assert.assertEquals(2, commonTestControl.countEntity(IndexShard.class));
 
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getIndexIdSet().setMatchAll(true);
+        criteria.getIndexSet().setMatchAll(true);
 
         checkDocCount(0, writer1);
         checkDocCount(0, writer1.getIndexShardId());

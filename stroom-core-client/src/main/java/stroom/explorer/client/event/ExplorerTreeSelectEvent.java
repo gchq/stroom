@@ -19,21 +19,21 @@ package stroom.explorer.client.event;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.SelectionType;
 
 public class ExplorerTreeSelectEvent extends GwtEvent<ExplorerTreeSelectEvent.Handler> {
     private static Type<ExplorerTreeSelectEvent.Handler> TYPE;
-    private final MultiSelectionModel<ExplorerData> selectionModel;
+    private final MultiSelectionModel<ExplorerNode> selectionModel;
     private final SelectionType selectionType;
 
-    public ExplorerTreeSelectEvent(final MultiSelectionModel<ExplorerData> selectionModel, final SelectionType selectionType) {
+    public ExplorerTreeSelectEvent(final MultiSelectionModel<ExplorerNode> selectionModel, final SelectionType selectionType) {
         this.selectionModel = selectionModel;
         this.selectionType = selectionType;
     }
 
-    public static void fire(final HasHandlers source, final MultiSelectionModel<ExplorerData> selectionModel, final SelectionType selectionType) {
+    public static void fire(final HasHandlers source, final MultiSelectionModel<ExplorerNode> selectionModel, final SelectionType selectionType) {
         source.fireEvent(new ExplorerTreeSelectEvent(selectionModel, selectionType));
     }
 
@@ -54,7 +54,7 @@ public class ExplorerTreeSelectEvent extends GwtEvent<ExplorerTreeSelectEvent.Ha
         handler.onSelect(this);
     }
 
-    public MultiSelectionModel<ExplorerData> getSelectionModel() {
+    public MultiSelectionModel<ExplorerNode> getSelectionModel() {
         return selectionModel;
     }
 

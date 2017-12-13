@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.pipeline.server;
@@ -19,29 +20,24 @@ package stroom.pipeline.server;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.DocumentEntityServiceImpl;
-import stroom.entity.server.util.StroomDatabaseInfo;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.pipeline.shared.FindTextConverterCriteria;
-import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.TextConverter;
-import stroom.pipeline.shared.TextConverterService;
 import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.List;
 
 @Component
 @Transactional
 public class TextConverterServiceImpl extends DocumentEntityServiceImpl<TextConverter, FindTextConverterCriteria>
         implements TextConverterService {
-    private final StroomDatabaseInfo stroomDatabaseInfo;
 
     @Inject
-    TextConverterServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext, final StroomDatabaseInfo stroomDatabaseInfo) {
+    TextConverterServiceImpl(final StroomEntityManager entityManager,
+                             final ImportExportHelper importExportHelper,
+                             final SecurityContext securityContext) {
         super(entityManager, importExportHelper, securityContext);
-        this.stroomDatabaseInfo = stroomDatabaseInfo;
     }
 
     @Override
@@ -49,25 +45,25 @@ public class TextConverterServiceImpl extends DocumentEntityServiceImpl<TextConv
         return TextConverter.class;
     }
 
-    @Override
-    protected List<EntityReferenceQuery> getReferenceTableList() {
-        final boolean mySql = stroomDatabaseInfo.isMysql();
-        final ArrayList<EntityReferenceQuery> rtnList = new ArrayList<>();
-        if (mySql) {
-            rtnList.add(new EntityReferenceQuery(PipelineEntity.ENTITY_TYPE, PipelineEntity.TABLE_NAME,
-                    PipelineEntity.DATA + " regexp '<type>@TYPE@</type>[[:space:]]*<id>@ID@</id>'"));
-        } else {
-            // This won't work too well as we really need to match with a regex
-            // that we can only do in MySQL
-            rtnList.add(new EntityReferenceQuery(PipelineEntity.ENTITY_TYPE, PipelineEntity.TABLE_NAME,
-                    "(locate('<type>@TYPE@</type>', CAST(" + PipelineEntity.DATA
-                            + " AS LONGVARCHAR)) <> 0 AND locate('<id>@ID@</id>', CAST(" + PipelineEntity.DATA
-                            + " AS LONGVARCHAR)) <> 0)"));
-
-        }
-
-        return rtnList;
-    }
+//    @Override
+//    protected List<EntityReferenceQuery> getReferenceTableList() {
+//        final boolean mySql = stroomDatabaseInfo.isMysql();
+//        final ArrayList<EntityReferenceQuery> rtnList = new ArrayList<>();
+//        if (mySql) {
+//            rtnList.add(new EntityReferenceQuery(PipelineEntity.ENTITY_TYPE, PipelineEntity.TABLE_NAME,
+//                    PipelineEntity.DATA + " regexp '<type>@TYPE@</type>[[:space:]]*<id>@ID@</id>'"));
+//        } else {
+//            // This won't work too well as we really need to match with a regex
+//            // that we can only do in MySQL
+//            rtnList.add(new EntityReferenceQuery(PipelineEntity.ENTITY_TYPE, PipelineEntity.TABLE_NAME,
+//                    "(locate('<type>@TYPE@</type>', CAST(" + PipelineEntity.DATA
+//                            + " AS LONGVARCHAR)) <> 0 AND locate('<id>@ID@</id>', CAST(" + PipelineEntity.DATA
+//                            + " AS LONGVARCHAR)) <> 0)"));
+//
+//        }
+//
+//        return rtnList;
+//    }
 
     @Override
     public FindTextConverterCriteria createCriteria() {

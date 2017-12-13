@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.entity.client.presenter;
@@ -24,9 +25,9 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
-public class ManageNewEntityPresenter extends MyPresenterWidget<NameEntityView> {
+public class ManageNewEntityPresenter extends MyPresenterWidget<NameDocumentView> {
     @Inject
-    public ManageNewEntityPresenter(final EventBus eventBus, final NameEntityView view) {
+    public ManageNewEntityPresenter(final EventBus eventBus, final NameDocumentView view) {
         super(eventBus, view);
     }
 

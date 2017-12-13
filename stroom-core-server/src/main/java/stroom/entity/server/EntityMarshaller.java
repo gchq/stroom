@@ -45,11 +45,6 @@ public abstract class EntityMarshaller<E extends BaseEntity, O> implements Marsh
 
     @Override
     public E marshal(final E entity) {
-        return marshal(entity, false, false);
-    }
-
-    @Override
-    public E marshal(final E entity, final boolean external, final boolean ignoreErrors) {
         try {
             Object object = getObject(entity);
 
@@ -72,11 +67,6 @@ public abstract class EntityMarshaller<E extends BaseEntity, O> implements Marsh
 
     @Override
     public E unmarshal(final E entity) {
-        return unmarshal(entity, false, false);
-    }
-
-    @Override
-    public E unmarshal(final E entity, final boolean external, final boolean ignoreErrors) {
         try {
             final String data = getData(entity);
             final O object = XMLMarshallerUtil.unmarshal(jaxbContext, getObjectType(), data);

@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.entity.server;
@@ -20,23 +21,17 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocumentEntity;
-import stroom.entity.shared.DocumentEntityService;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.FindDocumentEntityCriteria;
-import stroom.entity.shared.FindService;
-import stroom.entity.shared.Folder;
-import stroom.entity.shared.ImportState;
-import stroom.entity.shared.ImportState.ImportMode;
-import stroom.entity.shared.ImportState.State;
-import stroom.entity.shared.PermissionInheritance;
-import stroom.importexport.server.Config;
-import stroom.importexport.server.EntityPathResolver;
 import stroom.importexport.server.ImportExportHelper;
+import stroom.importexport.shared.ImportState;
+import stroom.importexport.shared.ImportState.ImportMode;
+import stroom.importexport.shared.ImportState.State;
 import stroom.query.api.v2.DocRef;
+import stroom.util.shared.DocRefInfo;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -46,7 +41,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-public abstract class MockDocumentEntityService<E extends DocumentEntity, C extends FindDocumentEntityCriteria> implements DocumentEntityService<E>, FindService<E, C>, Clearable {
+public abstract class MockDocumentEntityService<E extends DocumentEntity, C extends FindDocumentEntityCriteria> implements DocumentEntityService<E>, BaseEntityService<E>, FindService<E, C>, Clearable {
     private static final Set<String> BLANK_SET = Collections.emptySet();
     protected final Map<Long, E> map = new ConcurrentHashMap<>();
     private final AtomicLong currentId = new AtomicLong();
@@ -54,8 +49,8 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
 
     private String entityType;
 
-    public MockDocumentEntityService(final GenericEntityService genericEntityService, final EntityPathResolver entityPathResolver) {
-        this.importExportHelper = new ImportExportHelper(genericEntityService, entityPathResolver);
+    public MockDocumentEntityService(final ImportExportHelper importExportHelper) {
+        this.importExportHelper = importExportHelper;
     }
 
     public MockDocumentEntityService() {
@@ -63,12 +58,7 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
     }
 
     @Override
-    public E create(final DocRef folder, final String name) throws RuntimeException {
-        return create(folder, name, PermissionInheritance.NONE);
-    }
-
-    @Override
-    public E create(final DocRef folder, final String name, final PermissionInheritance permissionInheritance) throws RuntimeException {
+    public E create(final String name) throws RuntimeException {
         // Create a new entity instance.
         E entity;
         try {
@@ -77,25 +67,125 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
             throw new EntityServiceException(e.getMessage());
         }
 
-        // Validate the entity name.
         entity.setName(name);
-        setFolder(entity, folder);
         return doSave(entity);
     }
+//
+//    // =======================
+//    // START DocumentService
+//    // =======================
+//    @Override
+//    public DocRef createDocument(final DocRef folder, final String name) {
+//        return DocRefUtil.create(create(folder, name));
+//    }
+//
+//    @Override
+//    public DocRef copyDocument(final DocRef document, final DocRef folder, final String name) {
+//        final E original = loadByUuid(document.getUuid());
+//        return DocRefUtil.create(copy(original, folder, name));
+//    }
+//
+//    @Override
+//    public DocRef moveDocument(final DocRef document, final DocRef folder, final String name) {
+//        final E before = loadByUuid(document.getUuid());
+//        return DocRefUtil.create(move(before, folder, name));
+//    }
+//
+//    @Override
+//    public Boolean deleteDocument(final DocRef document) {
+//        final E entity = loadByUuid(document.getUuid());
+//        if (entity != null) {
+//            return delete(entity);
+//        }
+//
+//        // If we couldn't find the entity then it must have been deleted already so return true.
+//        return true;
+//    }
+//
+//    @Override
+//    public DocRef importDocument(final DocRef folder, final String name, final String data) {
+//        return null;
+//    }
+//
+//    @Override
+//    public String exportDocument(final DocRef document) {
+//        return null;
+//    }
+//
+////    @Override
+////    public DocumentType getDocumentType() {
+////        return null;
+////    }
+//
+//    protected DocumentType getDocumentType(final int priority, final String type, final String displayType) {
+//        final String url = getIconUrl(type);
+//        return new DocumentType(priority, type, displayType, url);
+//    }
+//
+//    private String getIconUrl(final String type) {
+//        return DocumentType.DOC_IMAGE_URL + type + ".png";
+//    }
+//
+//    // =======================
+//    // END DocumentService
+//    // =======================
 
-    private void setFolder(final E entity, final DocRef folderRef) throws RuntimeException {
-        // TODO : Remove this when document entities no longer reference a folder.
-        Folder folder = null;
-        if (folderRef != null && folderRef.getId() != null) {
-            folder = new Folder();
-            folder.setId(folderRef.getId());
-        }
-        entity.setFolder(folder);
-
-        if (entity.getUuid() == null) {
-            entity.setUuid(UUID.randomUUID().toString());
-        }
-    }
+//    @Override
+//    public E create(final DocRef folder, final String name) {
+//        return create(folder, name, PermissionInheritance.NONE);
+//    }
+//
+//    private E create(final DocRef folder, final String name, final PermissionInheritance permissionInheritance) throws RuntimeException {
+//        // Create a new entity instance.
+//        E entity;
+//        try {
+//            entity = getEntityClass().newInstance();
+//        } catch (final IllegalAccessException | InstantiationException e) {
+//            throw new EntityServiceException(e.getMessage());
+//        }
+//
+//        // Validate the entity name.
+//        entity.setName(name);
+//        setFolder(entity, folder);
+//        return doSave(entity);
+//    }
+//
+//    // TODO : Temporary for query service.
+//    protected E create(final E entity) {
+//        return doSave(entity);
+//    }
+//
+//    @Override
+//    public E saveAs(final E entity, final DocRef folder, final String name, final PermissionInheritance permissionInheritance) throws RuntimeException {
+//        entity.clearPersistence();
+//        entity.setName(name);
+//        setFolder(entity, folder);
+//        final E result = create(entity);
+//        return result;
+//    }
+//
+//    private void setFolder(final E entity, final String folderUUID) throws RuntimeException {
+//        DocRef folderRef = null;
+//        if (folderUUID != null) {
+//            folderRef = new DocRef(Folder.ENTITY_TYPE, folderUUID);
+//        }
+//
+//        setFolder(entity, folderRef);
+//    }
+//
+//    private void setFolder(final E entity, final DocRef folderRef) throws RuntimeException {
+//        // TODO : Remove this when document entities no longer reference a folder.
+//        Folder folder = null;
+//        if (folderRef != null && folderRef.getId() != null) {
+//            folder = new Folder();
+//            folder.setId(folderRef.getId());
+//        }
+//        entity.setFolder(folder);
+//
+//        if (entity.getUuid() == null) {
+//            entity.setUuid(UUID.randomUUID().toString());
+//        }
+//    }
 
     @Override
     public E loadByUuid(final String uuid) throws RuntimeException {
@@ -114,35 +204,35 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
         return null;
     }
 
-    @Override
-    public E loadByName(final DocRef folder, final String name) throws RuntimeException {
-        return loadByName(folder, name, null);
-    }
-
-    @Override
-    public E loadByName(final DocRef folder, final String name, final Set<String> fetchSet) throws RuntimeException {
-        final BaseResultList<E> results = find(null);
-        if (results == null) {
-            return null;
-        }
-
-        for (final E entity : results) {
-            boolean found = true;
-            if (folder != null && !folder.equals(DocRefUtil.create(entity.getFolder()))) {
-                found = false;
-            }
-
-            if (name != null && !name.equals(entity.getName())) {
-                found = false;
-            }
-
-            if (found) {
-                return entity;
-            }
-        }
-
-        return null;
-    }
+//    @Override
+//    public E loadByName(final DocRef folder, final String name) throws RuntimeException {
+//        return loadByName(folder, name, null);
+//    }
+//
+//    @Override
+//    public E loadByName(final DocRef folder, final String name, final Set<String> fetchSet) throws RuntimeException {
+//        final BaseResultList<E> results = find(null);
+//        if (results == null) {
+//            return null;
+//        }
+//
+//        for (final E entity : results) {
+//            boolean found = true;
+//            if (folder != null && !folder.equals(DocRefUtil.create(entity.getFolder()))) {
+//                found = false;
+//            }
+//
+//            if (name != null && !name.equals(entity.getName())) {
+//                found = false;
+//            }
+//
+//            if (found) {
+//                return entity;
+//            }
+//        }
+//
+//        return null;
+//    }
 
     @Override
     public E load(final E entity) throws RuntimeException {
@@ -157,60 +247,62 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
         return loadById(entity.getId(), fetchSet);
     }
 
-
     @Override
     public E loadById(final long id) throws RuntimeException {
         return loadById(id, BLANK_SET);
     }
-
 
     @Override
     public E loadById(final long id, final Set<String> fetchSet) throws RuntimeException {
         return map.get(id);
     }
 
-    @Override
-    public E loadByIdInsecure(final long id, final Set<String> fetchSet) throws RuntimeException {
-        return map.get(id);
-    }
+//    @Override
+//    public E loadByIdInsecure(final long id, final Set<String> fetchSet) throws RuntimeException {
+//        return map.get(id);
+//    }
 
     @Override
     public E save(final E entity) throws RuntimeException {
         if (!entity.isPersistent()) {
             throw new EntityServiceException("You cannot update an entity that has not been created");
         }
-
-        if (entity.getUuid() == null) {
-            entity.setUuid(UUID.randomUUID().toString());
-        }
         return doSave(entity);
     }
 
-    @Override
-    public E copy(final E entity, final DocRef folder, final String name, final PermissionInheritance permissionInheritance) {
-        // This is going to be a copy so clear the persistence so save will create a new DB entry.
-        entity.clearPersistence();
-
-        // Validate the entity name.
-        entity.setName(name);
-
-        setFolder(entity, folder);
-        return doSave(entity);
-    }
-
-    @Override
-    public E move(final E entity, final DocRef folder, final PermissionInheritance permissionInheritance) {
-        setFolder(entity, folder);
-        return save(entity);
-    }
+//    @Override
+//    public E copy(final E entity, final DocRef folder, final String name) {
+//        // This is going to be a copy so clear the persistence so save will create a new DB entry.
+//        entity.clearPersistence();
+//
+//        // Validate the entity name.
+//        entity.setName(name);
+//
+//        setFolder(entity, folder);
+//        return doSave(entity);
+//    }
+//
+//    @Override
+//    public E move(final E entity, final DocRef folder) {
+//        setFolder(entity, folder);
+//        return save(entity);
+//    }
 
     private E doSave(final E entity) {
         if (!entity.isPersistent()) {
             entity.setId(currentId.incrementAndGet());
         }
+        if (entity.getUuid() == null) {
+            entity.setUuid(UUID.randomUUID().toString());
+        }
         map.put(entity.getId(), entity);
         return entity;
     }
+//
+//    @Override
+//    public Boolean delete(final DocRef item) {
+//        return delete(loadByUuid(item.getUuid()));
+//    }
 
     @Override
     public Boolean delete(E entity) throws RuntimeException {
@@ -221,22 +313,22 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
         }
     }
 
-    @Override
-    public List<E> findByFolder(final DocRef folder, final Set<String> fetchSet) throws RuntimeException {
-        final BaseResultList<E> results = find(null);
-        if (results == null) {
-            return null;
-        }
-
-        final List<E> list = new ArrayList<>(results.size());
-        for (final E entity : results) {
-            if (folder != null && folder.equals(DocRefUtil.create(entity.getFolder()))) {
-                list.add(entity);
-            }
-        }
-
-        return list;
-    }
+//    @Override
+//    public List<E> findByFolder(final DocRef folder, final Set<String> fetchSet) throws RuntimeException {
+//        final BaseResultList<E> results = find(null);
+//        if (results == null) {
+//            return null;
+//        }
+//
+//        final List<E> list = new ArrayList<>(results.size());
+//        for (final E entity : results) {
+//            if (folder != null && folder.equals(DocRefUtil.create(entity.getFolder()))) {
+//                list.add(entity);
+//            }
+//        }
+//
+//        return list;
+//    }
 
     public boolean isMatch(final C criteria, final E entity) {
         return criteria.getName().isMatch(entity.getName());
@@ -258,54 +350,25 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
         return null;
     }
 
-    @Override
-    public String[] getPermissions() {
-        return new String[0];
-    }
+//    @Override
+//    public String[] getPermissions() {
+//        return new String[0];
+//    }
 
     @Override
-    public DocRef importDocument(final Folder folder, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
+    public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
         if (importExportHelper == null) {
             throw new RuntimeException("Import not supported for this test");
         }
 
-//        // We don't want to overwrite any marshaled data so disable marshalling on creation.
-//        setFolder(entity, folder);
-//
-//        // Save directly so there is no marshalling of objects that would destroy imported data.
-//        return doSave(entity);
-//
-//        return null;
-
-
         E entity = null;
 
         try {
-            // Get the main config data.
-            String mainConfigPath = null;
-            for (final String key : dataMap.keySet()) {
-                if (key.endsWith(getEntityType() + ".xml")) {
-                    mainConfigPath = key;
-                }
-            }
-
-            if (mainConfigPath == null) {
-                throw new RuntimeException("Unable to find config data");
-            }
-
-            final Config config = new Config();
-            config.read(new StringReader(dataMap.get(mainConfigPath)));
-
-            final String uuid = config.getString("uuid");
-            if (uuid == null) {
-                throw new RuntimeException("Unable to get UUID for item");
-            }
-
-            entity = loadByUuid(uuid, Collections.singleton("all"));
+            // See if a document already exists with this uuid.
+            entity = loadByUuid(docRef.getUuid(), Collections.singleton("all"));
 
             if (entity == null) {
                 entity = getEntityClass().newInstance();
-                entity.setFolder(folder);
 
                 if (importMode == ImportMode.CREATE_CONFIRMATION) {
                     importState.setState(State.NEW);
@@ -316,10 +379,7 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
                 }
             }
 
-            importExportHelper.performImport(entity, dataMap, mainConfigPath, importState, importMode);
-
-            // We don't want to overwrite any marshaled data so disable marshalling on creation.
-            setFolder(entity, DocRefUtil.create(folder));
+            importExportHelper.performImport(entity, dataMap, importState, importMode);
 
             // Save directly so there is no marshalling of objects that would destroy imported data.
             if (importMode == ImportMode.IGNORE_CONFIRMATION
@@ -344,6 +404,129 @@ public abstract class MockDocumentEntityService<E extends DocumentEntity, C exte
         map.clear();
         currentId.set(0);
     }
+
+    ////////////////////////////////////////////////////////////////////////
+    // START OF ExplorerActionHandler
+    ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public final DocRef createDocument(final String name, final String parentFolderUUID) {
+        return DocRefUtil.create(create(name));
+    }
+
+    @Override
+    public DocRef copyDocument(final String uuid, final String parentFolderUUID) {
+        final E entity = loadByUuid(uuid);
+
+        // This is going to be a copy so clear the persistence so save will create a new DB entry.
+        entity.clearPersistence();
+
+        final E result = doSave(entity);
+        return DocRefUtil.create(result);
+    }
+
+    @Override
+    public DocRef moveDocument(final String uuid, final String parentFolderUUID) {
+        final E entity = loadByUuid(uuid);
+
+        final E result = save(entity);
+        return DocRefUtil.create(result);
+    }
+
+    @Override
+    public DocRef renameDocument(final String uuid, final String name) {
+        final E entity = loadByUuid(uuid);
+
+        entity.setName(name);
+
+        final E result = save(entity);
+        return DocRefUtil.create(result);
+    }
+
+    //    @Override
+//    public DocRef move(final DocRef document, final DocRef folder, final String name, final PermissionInheritance permissionInheritance) {
+//        try {
+//            final E entity = loadByUuid(document.getUuid());
+//
+//            entity.setName(name);
+//
+//            setFolder(entity, folder);
+//
+//            final E result = entityServiceHelper.save(entity);
+//            final DocRef dest = DocRefUtil.create(result);
+//
+//            if (permissionInheritance != null) {
+//                switch (permissionInheritance) {
+//                    case NONE:
+//                        addDocumentPermissions(document, dest, true);
+//                        break;
+//                    case COMBINED:
+//                        addDocumentPermissions(document, dest, true);
+//                        addDocumentPermissions(folder, dest, true);
+//                        break;
+//                    case INHERIT:
+//                        addDocumentPermissions(folder, dest, true);
+//                        break;
+//                }
+//            }
+//
+//            documentEventLog.move(document, folder, name);
+//            return dest;
+//        } catch (final RuntimeException e) {
+//            documentEventLog.move(document, folder, name, e);
+//            throw e;
+//        }
+//    }
+
+    @Override
+    public void deleteDocument(final String uuid) {
+        E entity = loadByUuid(uuid);
+        if (entity != null) {
+            delete(entity);
+        }
+    }
+
+    @Override
+    public DocRefInfo info(final String uuid) {
+        final E entity = loadByUuid(uuid);
+        if (entity == null) {
+            throw new EntityServiceException("Entity not found");
+        }
+        return new DocRefInfo.Builder()
+                .docRef(new DocRef.Builder()
+                        .type(entity.getType())
+                        .uuid(entity.getUuid())
+                        .name(entity.getName())
+                        .build())
+                .createUser(entity.getCreateUser())
+                .createTime(entity.getCreateTime())
+                .updateUser(entity.getUpdateUser())
+                .updateTime(entity.getUpdateTime())
+                .build();
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    // END OF ExplorerActionHandler
+    ////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////
+    // START OF DocumentActionHandler
+    ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public E readDocument(final DocRef docRef) {
+        return loadByUuid(docRef.getUuid());
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public E writeDocument(final E document) {
+        return save(document);
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    // END OF DocumentActionHandler
+    ////////////////////////////////////////////////////////////////////////
 
     public String getEntityType() {
         if (entityType == null) {

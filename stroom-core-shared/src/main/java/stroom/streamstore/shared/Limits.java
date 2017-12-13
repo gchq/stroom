@@ -66,4 +66,32 @@ public class Limits implements SharedObject {
     public void setDurationMs(Long durationMs) {
         this.durationMs = durationMs;
     }
+
+    public static class Builder {
+
+        private final Limits instance;
+
+        public Builder() {
+            this.instance = new Limits();
+        }
+
+        public Builder streamCount(final Long value) {
+            this.instance.streamCount = value;
+            return this;
+        }
+
+        public Builder eventCount(final Long value) {
+            this.instance.eventCount = value;
+            return this;
+        }
+
+        public Builder durationMs(final Long value) {
+            this.instance.durationMs = value;
+            return this;
+        }
+
+        public Limits build() {
+            return instance;
+        }
+    }
 }

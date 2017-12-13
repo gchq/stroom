@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,34 +17,32 @@
 package stroom.pipeline.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.entity.server.MarshalOptions;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.SavePipelineXMLAction;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 @TaskHandlerBean(task = SavePipelineXMLAction.class)
 @Scope(value = StroomScope.TASK)
-public class SavePipelineXMLHandler extends AbstractTaskHandler<SavePipelineXMLAction, VoidResult> {
-    @Resource
-    private PipelineEntityService pipelineEntityService;
-    @Resource
-    private MarshalOptions marshalOptions;
+class SavePipelineXMLHandler extends AbstractTaskHandler<SavePipelineXMLAction, VoidResult> {
+    private final PipelineService pipelineService;
+
+    @Inject
+    SavePipelineXMLHandler(final PipelineService pipelineService) {
+        this.pipelineService = pipelineService;
+    }
 
     @Override
     public VoidResult exec(final SavePipelineXMLAction action) {
-        marshalOptions.setDisabled(true);
-
-        final PipelineEntity pipelineEntity = pipelineEntityService.loadById(action.getPipelineId());
+        final PipelineEntity pipelineEntity = pipelineService.loadByUuid(action.getPipeline().getUuid());
 
         if (pipelineEntity != null) {
             pipelineEntity.setData(action.getXml());
-            pipelineEntityService.save(pipelineEntity);
+            pipelineService.saveWithoutMarshal(pipelineEntity);
         }
 
         return VoidResult.INSTANCE;

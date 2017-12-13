@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.dashboard.server.logging;
@@ -29,8 +30,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.datasource.DataSourceProviderRegistry;
-import stroom.dictionary.shared.DictionaryService;
+import stroom.dictionary.server.DictionaryStore;
 import stroom.entity.server.QueryDataLogUtil;
+import stroom.logging.StroomEventLoggingService;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.Insecure;
@@ -47,7 +49,7 @@ public class SearchEventLogImpl implements SearchEventLog {
     @Resource
     private DataSourceProviderRegistry dataSourceProviderRegistry;
     @Resource
-    private DictionaryService dictionaryService;
+    private DictionaryStore dictionaryStore;
 
     @Override
     public void search(final DocRef dataSourceRef, final ExpressionOperator expression) {
@@ -154,7 +156,7 @@ public class SearchEventLogImpl implements SearchEventLog {
         final Query query = new Query();
         final Advanced advanced = new Advanced();
         query.setAdvanced(advanced);
-        QueryDataLogUtil.appendExpressionItem(advanced.getAdvancedQueryItems(), dictionaryService, expression);
+        QueryDataLogUtil.appendExpressionItem(advanced.getAdvancedQueryItems(), dictionaryStore, expression);
         return query;
     }
 }

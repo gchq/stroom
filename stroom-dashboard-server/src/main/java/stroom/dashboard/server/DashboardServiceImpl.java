@@ -21,22 +21,22 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import stroom.logging.DocumentEventLog;
 import stroom.dashboard.shared.Dashboard;
-import stroom.dashboard.shared.DashboardService;
 import stroom.dashboard.shared.FindDashboardCriteria;
 import stroom.dashboard.shared.QueryEntity;
 import stroom.entity.server.AutoMarshal;
 import stroom.entity.server.DocumentEntityServiceImpl;
+import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
-import stroom.entity.shared.PermissionInheritance;
+import stroom.entity.shared.DocRefUtil;
 import stroom.importexport.server.ImportExportHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
-import java.util.Arrays;
 
 @Component
 @Transactional
@@ -45,17 +45,14 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
         implements DashboardService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DashboardServiceImpl.class);
 
-    private static final String[] PERMISSIONS = Arrays.copyOf(STANDARD_PERMISSIONS, STANDARD_PERMISSIONS.length + 1);
-
-    static {
-        PERMISSIONS[PERMISSIONS.length - 1] = "Download";
-    }
-
     private final ResourceLoader resourceLoader;
     private String xmlTemplate;
 
     @Inject
-    DashboardServiceImpl(final StroomEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext, final ResourceLoader resourceLoader) {
+    DashboardServiceImpl(final StroomEntityManager entityManager,
+                         final ImportExportHelper importExportHelper,
+                         final SecurityContext securityContext,
+                         final ResourceLoader resourceLoader) {
         super(entityManager, importExportHelper, securityContext);
         this.resourceLoader = resourceLoader;
     }
@@ -70,27 +67,27 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
         return new FindDashboardCriteria();
     }
 
-    @Override
-    public Dashboard create(final DocRef folder, final String name, final PermissionInheritance permissionInheritance) throws RuntimeException {
-        final Dashboard dashboard = super.create(folder, name, permissionInheritance);
-        // Add the template.
-        if (dashboard.getData() == null) {
-            dashboard.setData(getTemplate());
-        }
-        return super.save(dashboard);
-    }
-
-    @Override
-    public Dashboard save(Dashboard entity) throws RuntimeException {
-        if (entity.getData() == null) {
-            entity.setData(getTemplate());
-        }
-        return super.save(entity);
-    }
+//    @Override
+//    protected Dashboard create(final Dashboard entity) {
+//        final Dashboard dashboard = super.create(entity);
+//        // Add the template.
+//        if (dashboard.getData() == null) {
+//            dashboard.setData(getTemplate());
+//        }
+//        return super.save(dashboard);
+//    }
+//
+//    @Override
+//    public Dashboard save(Dashboard entity) throws RuntimeException {
+//        if (entity.getData() == null) {
+//            entity.setData(getTemplate());
+//        }
+//        return super.save(entity);
+//    }
 
     @Override
     public Boolean delete(final Dashboard entity) throws RuntimeException {
-        checkDeletePermission(entity);
+        checkDeletePermission(DocRefUtil.create(entity));
 
         // Delete associated queries first.
         final SqlBuilder sql = new SqlBuilder();
@@ -125,7 +122,35 @@ public class DashboardServiceImpl extends DocumentEntityServiceImpl<Dashboard, F
     }
 
     @Override
-    public String[] getPermissions() {
-        return PERMISSIONS;
+    protected QueryAppender<Dashboard, FindDashboardCriteria> createQueryAppender(final StroomEntityManager entityManager) {
+        return new DashboardQueryAppender(entityManager, this);
+    }
+
+    private static class DashboardQueryAppender extends QueryAppender<Dashboard, FindDashboardCriteria> {
+        private final DashboardServiceImpl dashboardService;
+        private final DashboardMarshaller marshaller;
+
+        DashboardQueryAppender(final StroomEntityManager entityManager, final DashboardServiceImpl dashboardService) {
+            super(entityManager);
+            this.dashboardService = dashboardService;
+            this.marshaller = new DashboardMarshaller();
+        }
+
+        @Override
+        protected void postLoad(final Dashboard entity) {
+            super.postLoad(entity);
+            marshaller.unmarshal(entity);
+        }
+
+        @Override
+        protected void preSave(final Dashboard entity) {
+            super.preSave(entity);
+
+            if (entity.getData() == null && entity.getDashboardData() == null) {
+                entity.setData(dashboardService.getTemplate());
+            } else {
+                marshaller.marshal(entity);
+            }
+        }
     }
 }

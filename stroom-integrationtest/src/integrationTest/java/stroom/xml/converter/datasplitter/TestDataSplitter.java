@@ -22,7 +22,7 @@ import org.junit.Test;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.test.AbstractProcessIntegrationTest;
-import stroom.test.StroomProcessTestFileUtil;
+import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.task.TaskScopeContextHolder;
 import stroom.xml.F2XTestUtil;
@@ -66,7 +66,7 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
     @Test
     public void testNetworkMonitoringSample() throws Exception {
         final String xml = runF2XTest(TextConverterType.DATA_SPLITTER, "TestDataSplitter/CSVWithHeading.ds",
-                StroomProcessTestFileUtil.getInputStream("TestDataSplitter/NetworkMonitoringSample.in"));
+                StroomPipelineTestFileUtil.getInputStream("TestDataSplitter/NetworkMonitoringSample.in"));
 
         Assert.assertTrue(xml.indexOf("<data name=\"IPAddress\" value=\"192.168.0.3\"/>") != -1);
     }
@@ -105,7 +105,7 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
     @Test
     public void testRefDataCSV() throws Exception {
         final String xml = runF2XTest(TextConverterType.DATA_SPLITTER, "TestDataSplitter/SimpleCSVSplitter.ds",
-                StroomProcessTestFileUtil.getInputStream("TestDataSplitter/SampleRefData-HostNameToIP.in"));
+                StroomPipelineTestFileUtil.getInputStream("TestDataSplitter/SampleRefData-HostNameToIP.in"));
 
         Assert.assertTrue(xml.indexOf("<data name=\"IP Address\" value=\"192.168.0.10\"/>") != -1);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,19 +12,19 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.pipeline.server;
 
 import org.springframework.context.annotation.Scope;
-import stroom.dashboard.server.logging.StreamEventLog;
-import stroom.feed.shared.FeedService;
+import stroom.logging.StreamEventLog;
+import stroom.feed.server.FeedService;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.factory.PipelineDataCache;
 import stroom.pipeline.server.factory.PipelineFactory;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataAction;
-import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
@@ -42,8 +42,8 @@ import javax.inject.Inject;
 @Secured(Stream.VIEW_DATA_PERMISSION)
 public class FetchDataHandler extends AbstractFetchDataHandler<FetchDataAction> {
     @Inject
-    FetchDataHandler(final StreamStore streamStore, final FeedService feedService, final FeedHolder feedHolder, final PipelineHolder pipelineHolder, final StreamHolder streamHolder, final PipelineEntityService pipelineEntityService, final PipelineFactory pipelineFactory, final ErrorReceiverProxy errorReceiverProxy, final PipelineDataCache pipelineDataCache, final StreamEventLog streamEventLog, final SecurityContext securityContext) {
-        super(streamStore, feedService, feedHolder, pipelineHolder, streamHolder, pipelineEntityService, pipelineFactory, errorReceiverProxy, pipelineDataCache, streamEventLog, securityContext);
+    FetchDataHandler(final StreamStore streamStore, final FeedService feedService, final FeedHolder feedHolder, final PipelineHolder pipelineHolder, final StreamHolder streamHolder, final PipelineService pipelineService, final PipelineFactory pipelineFactory, final ErrorReceiverProxy errorReceiverProxy, final PipelineDataCache pipelineDataCache, final StreamEventLog streamEventLog, final SecurityContext securityContext) {
+        super(streamStore, feedService, feedHolder, pipelineHolder, streamHolder, pipelineService, pipelineFactory, errorReceiverProxy, pipelineDataCache, streamEventLog, securityContext);
     }
 
     @Override

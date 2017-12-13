@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.test;
@@ -20,8 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.MetaMap;
+import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.feed.shared.FeedService;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFile;
@@ -33,6 +34,7 @@ import stroom.streamstore.server.fs.serializable.RawInputSegmentWriter;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.server.StreamTargetStroomStreamHandler;
+import stroom.util.io.FileUtil;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -84,9 +86,9 @@ public class DataLoader {
     private void loadInputFile(final Path file, final boolean mandateEffectiveDate, final Long effectiveMs) {
         final Feed feed = getFeed(file);
         try (final InputStream inputStream = Files.newInputStream(file)) {
-            loadInputStream(feed, file.toAbsolutePath().toString(), inputStream, mandateEffectiveDate, effectiveMs);
+            loadInputStream(feed, FileUtil.getCanonicalPath(file), inputStream, mandateEffectiveDate, effectiveMs);
         } catch (final IOException e) {
-            throw new RuntimeException("Error loading file: " + file.toAbsolutePath(), e);
+            throw new RuntimeException("Error loading file: " + FileUtil.getCanonicalPath(file), e);
         }
     }
 
@@ -124,7 +126,7 @@ public class DataLoader {
         final Feed feed = getFeed(file);
 
         if (feed.isReference() == mandateEffectiveDate) {
-            LOGGER.info("Loading data: " + file.toAbsolutePath());
+            LOGGER.info("Loading data: " + FileUtil.getCanonicalPath(file));
 
             try {
                 final StroomZipFile stroomZipFile = new StroomZipFile(file);
@@ -160,7 +162,7 @@ public class DataLoader {
                 stroomZipFile.close();
 
             } catch (final IOException e) {
-                throw new RuntimeException("Error loading file: " + file.toAbsolutePath(), e);
+                throw new RuntimeException("Error loading file: " + FileUtil.getCanonicalPath(file), e);
             }
         }
     }

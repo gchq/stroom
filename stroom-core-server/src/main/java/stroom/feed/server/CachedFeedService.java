@@ -28,7 +28,9 @@ import javax.inject.Inject;
 @Component("cachedFeedService")
 public class CachedFeedService extends FeedServiceImpl {
     @Inject
-    CachedFeedService(final CachingEntityManager entityManager, final ImportExportHelper importExportHelper, final SecurityContext securityContext) {
+    CachedFeedService(final CachingEntityManager entityManager,
+                      final ImportExportHelper importExportHelper,
+                      final SecurityContext securityContext) {
         super(entityManager, importExportHelper, securityContext);
     }
 }

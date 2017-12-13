@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.test;
@@ -29,8 +30,6 @@ import stroom.dashboard.server.MockQueryService;
 import stroom.dashboard.server.MockVisualisationService;
 import stroom.datafeed.server.MockHttpServletRequest;
 import stroom.datafeed.server.MockHttpServletResponse;
-import stroom.dictionary.MockDictionaryService;
-import stroom.entity.server.MockDocumentEntityService;
 import stroom.entity.server.MockEntityService;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.feed.server.MockFeedService;
@@ -51,14 +50,13 @@ import stroom.node.server.MockNodeService;
 import stroom.node.server.MockRecordCountService;
 import stroom.node.server.NodeConfigForTesting;
 import stroom.node.server.NodeConfigImpl;
-import stroom.node.shared.NodeService;
-import stroom.node.shared.VolumeService;
-import stroom.pipeline.server.MockPipelineEntityService;
+import stroom.node.server.NodeService;
+import stroom.node.server.VolumeService;
+import stroom.pipeline.server.MockPipelineService;
 import stroom.pipeline.server.MockTextConverterService;
 import stroom.pipeline.server.MockXSLTService;
 import stroom.pipeline.server.factory.MockPipelineElementRegistryFactory;
 import stroom.resource.server.MockResourceStore;
-import stroom.security.server.MockFolderService;
 import stroom.security.server.MockUserService;
 import stroom.streamstore.server.MockStreamStore;
 import stroom.streamstore.server.MockStreamTypeService;
@@ -83,11 +81,11 @@ import stroom.xmlschema.server.MockXMLSchemaService;
         "stroom.cluster",
         "stroom.datafeed",
         "stroom.datasource",
+        "stroom.docstore.server",
         "stroom.db",
         "stroom.dictionary",
         "stroom.dispatch",
         "stroom.entity",
-        "stroom.explorer",
         "stroom.feed",
         "stroom.folder",
         "stroom.importexport",
@@ -128,7 +126,6 @@ import stroom.xmlschema.server.MockXMLSchemaService;
         // Exclude all mocks
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockClusterNodeManager.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockCommonTestControl.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockDictionaryService.class),
         // @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value =
         // MockEntityPathResolver.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockEntityService.class),
@@ -144,10 +141,9 @@ import stroom.xmlschema.server.MockXMLSchemaService;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockJobService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockMetaDataStatistic.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockClusterLockService.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockDocumentEntityService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockNodeService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockPipelineElementRegistryFactory.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockPipelineEntityService.class),
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockPipelineService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockQueryService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockRecordCountService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockResourceStore.class),
@@ -158,7 +154,6 @@ import stroom.xmlschema.server.MockXMLSchemaService;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockStreamTaskCreator.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockStreamTaskService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockStreamTypeService.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockFolderService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockUserService.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockTask.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = MockTaskFactory.class),

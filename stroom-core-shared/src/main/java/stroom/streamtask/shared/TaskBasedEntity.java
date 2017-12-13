@@ -108,11 +108,6 @@ public abstract class TaskBasedEntity extends BaseEntityBig {
     }
 
     @Override
-    public void prePersist() {
-        setCreateMs(System.currentTimeMillis());
-    }
-
-    @Override
     protected void toString(final StringBuilder sb) {
         super.toString(sb);
         sb.append(", status=");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.folder.client;
@@ -23,12 +24,12 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.ContentManager.CloseHandler;
 import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.EntityPluginEventManager;
-import stroom.entity.shared.FolderService;
+import stroom.document.client.DocumentPluginEventManager;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.presenter.ExplorerTreePresenter;
 import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.ExplorerData;
+import stroom.explorer.shared.ExplorerConstants;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.shared.Stream;
 import stroom.streamtask.shared.StreamProcessor;
@@ -48,7 +49,7 @@ public class FolderRootPlugin extends Plugin implements TabData {
     @Inject
     public FolderRootPlugin(final EventBus eventBus, final ExplorerTreePresenter explorerTreePresenter,
                             final Provider<FolderRootPresenter> editorProvider, final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
-                            final ContentManager contentManager, final EntityPluginEventManager entityPluginEventManager) {
+                            final ContentManager contentManager, final DocumentPluginEventManager entityPluginEventManager) {
         super(eventBus);
         this.contentManager = contentManager;
         this.editorProvider = editorProvider;
@@ -64,8 +65,8 @@ public class FolderRootPlugin extends Plugin implements TabData {
                 getEventBus().addHandler(ExplorerTreeSelectEvent.getType(), event -> {
                     final SelectionType selectionType = event.getSelectionType();
                     if (!selectionType.isRightClick() && !selectionType.isMultiSelect()) {
-                        final ExplorerData selected = event.getSelectionModel().getSelected();
-                        if (selected != null && FolderService.ROOT.equals(selected.getType())) {
+                        final ExplorerNode selected = event.getSelectionModel().getSelected();
+                        if (selected != null && ExplorerConstants.SYSTEM.equals(selected.getType())) {
                             if (presenter == null && selectionType.isDoubleSelect()) {
                                 // If the presenter is null then we haven't got
                                 // this tab open.
@@ -102,12 +103,12 @@ public class FolderRootPlugin extends Plugin implements TabData {
 
     @Override
     public Icon getIcon() {
-        return new SvgIcon(ImageUtil.getImageURL() + DocumentType.DOC_IMAGE_URL + FolderService.ROOT, 18, 18);
+        return new SvgIcon(ImageUtil.getImageURL() + DocumentType.DOC_IMAGE_URL + ExplorerConstants.SYSTEM, 18, 18);
     }
 
     @Override
     public String getLabel() {
-        return FolderService.ROOT;
+        return ExplorerConstants.SYSTEM;
     }
 
     @Override

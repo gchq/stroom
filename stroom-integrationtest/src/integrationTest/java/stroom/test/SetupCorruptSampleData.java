@@ -17,9 +17,24 @@
 package stroom.test;
 
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import stroom.dashboard.spring.DashboardConfiguration;
+import stroom.dictionary.spring.DictionaryConfiguration;
+import stroom.explorer.server.ExplorerConfiguration;
 import stroom.feed.shared.Feed;
+import stroom.index.spring.IndexConfiguration;
+import stroom.logging.spring.EventLoggingConfiguration;
 import stroom.node.server.NodeCache;
+import stroom.pipeline.spring.PipelineConfiguration;
+import stroom.ruleset.spring.RuleSetConfiguration;
+import stroom.script.spring.ScriptConfiguration;
+import stroom.search.spring.SearchConfiguration;
+import stroom.security.spring.SecurityConfiguration;
+import stroom.spring.PersistenceConfiguration;
+import stroom.spring.ScopeConfiguration;
+import stroom.spring.ScopeTestConfiguration;
+import stroom.spring.ServerConfiguration;
+import stroom.statistics.spring.StatisticsConfiguration;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.fs.FileSystemUtil;
@@ -29,6 +44,7 @@ import stroom.util.AbstractCommandLineTool;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.spring.StroomSpringProfiles;
+import stroom.visualisation.spring.VisualisationConfiguration;
 
 /**
  * Script to create some base data for testing.
@@ -55,11 +71,29 @@ public final class SetupCorruptSampleData extends AbstractCommandLineTool {
     public void run() {
         FileSystemUtil.deleteContents(FileUtil.getTempDir());
 
-        System.setProperty("spring.profiles.active", StroomSpringProfiles.TEST);
-        final String[] context = new String[]{"classpath:META-INF/spring/stroomCoreServerContext.xml",
-                "classpath:META-INF/spring/stroomDatabaseCommonTestControl.xml",
-                "classpath:META-INF/spring/stroomCoreServerLocalTestingContext.xml"};
-        appContext = new ClassPathXmlApplicationContext(context);
+        @SuppressWarnings("resource") final AnnotationConfigApplicationContext appContext = new AnnotationConfigApplicationContext();
+        appContext.getEnvironment().setActiveProfiles(StroomSpringProfiles.PROD,
+                SecurityConfiguration.MOCK_SECURITY);
+        appContext.register(
+                ScopeConfiguration.class,
+                PersistenceConfiguration.class,
+                SetupSampleDataComponentScanConfiguration.class,
+                ServerConfiguration.class,
+                ExplorerConfiguration.class,
+                RuleSetConfiguration.class,
+                SecurityConfiguration.class,
+                ScopeTestConfiguration.class,
+                DictionaryConfiguration.class,
+                PipelineConfiguration.class,
+                EventLoggingConfiguration.class,
+                IndexConfiguration.class,
+                SearchConfiguration.class,
+                ScriptConfiguration.class,
+                VisualisationConfiguration.class,
+                DashboardConfiguration.class,
+                StatisticsConfiguration.class
+        );
+        appContext.refresh();
 
         // Force nodes to be created
         appContext.getBean(NodeCache.class).getDefaultNode();

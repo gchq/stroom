@@ -21,10 +21,13 @@ import stroom.io.StreamCloser;
 import stroom.util.io.FileUtil;
 
 import java.io.BufferedOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -32,11 +35,11 @@ import java.util.zip.GZIPOutputStream;
  */
 public class BlockGZIPOutputFile extends OutputStream implements SeekableOutputStream {
     // We have in built locking while open
-    private final File finalFile;
-    private final File lockFile;
+    private final Path finalFile;
+    private final Path lockFile;
 
     // The file we write to
-    private final RandomAccessFile raFile;
+    private final FileChannel raFile;
 
     // The main buffer used (typically holds 2 longs and the the GZIP output).
     // We use 'big' buffer (that holds the whole block) as we go back and write
@@ -49,7 +52,6 @@ public class BlockGZIPOutputFile extends OutputStream implements SeekableOutputS
     // The stream - we hold a buffer onto it as well
     private BufferedOutputStream currentStreamBuffer;
     private GZIPOutputStream currentStreamGzip;
-    private long currentRawBlockStartPos = 0;
     // The block size we are using
     private int blockSize;
     // The current 'logical' uncompressed data item we have written
@@ -63,14 +65,14 @@ public class BlockGZIPOutputFile extends OutputStream implements SeekableOutputS
     /**
      * @see BlockGZIPConstants
      */
-    public BlockGZIPOutputFile(final File file) throws IOException {
+    public BlockGZIPOutputFile(final Path file) throws IOException {
         this(file, BlockGZIPConstants.DEFAULT_BLOCK_SIZE);
     }
 
     /**
      * @see BlockGZIPConstants
      */
-    public BlockGZIPOutputFile(final File file, final int blockSize) throws IOException {
+    public BlockGZIPOutputFile(final Path file, final int blockSize) throws IOException {
         this.blockSize = blockSize;
         this.mainBuffer = new BlockByteArrayOutputStream();
         this.indexBuffer = new BlockByteArrayOutputStream();
@@ -79,12 +81,12 @@ public class BlockGZIPOutputFile extends OutputStream implements SeekableOutputS
         indexBuffer.write(BlockGZIPConstants.MAGIC_MARKER);
 
         this.finalFile = file;
-        this.lockFile = new File(file.getAbsolutePath() + BlockGZIPConstants.LOCK_EXTENSION);
+        this.lockFile = file.getParent().resolve(file.getFileName().toString() + BlockGZIPConstants.LOCK_EXTENSION);
 
         FileUtil.deleteFile(finalFile);
         FileUtil.deleteFile(lockFile);
 
-        this.raFile = new RandomAccessFile(lockFile, BlockGZIPConstants.READ_WRITE);
+        this.raFile = FileChannel.open(lockFile, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE);
 
         // Write a marker
         mainBuffer.write(BlockGZIPConstants.BLOCK_GZIP_V1_IDENTIFIER);
@@ -109,7 +111,7 @@ public class BlockGZIPOutputFile extends OutputStream implements SeekableOutputS
      * Write the buffer to the file and reset it.
      */
     private void flushMainBuffer() throws IOException {
-        raFile.write(mainBuffer.getRawBuffer(), 0, mainBuffer.size());
+        raFile.write(ByteBuffer.wrap(mainBuffer.getRawBuffer(), 0, mainBuffer.size()));
         mainBuffer.reset();
     }
 
@@ -146,7 +148,7 @@ public class BlockGZIPOutputFile extends OutputStream implements SeekableOutputS
         currentBlockEndPos = (blockCount + 1) * blockSize;
 
         // Record the start Pos
-        currentRawBlockStartPos = raFile.getChannel().position();
+        final long currentRawBlockStartPos = raFile.position();
 
         // Record the index
         indexBuffer.writeLong(currentRawBlockStartPos);
@@ -224,17 +226,17 @@ public class BlockGZIPOutputFile extends OutputStream implements SeekableOutputS
                 }
 
                 // Record where we are going to start writing the index
-                final long idxStart = raFile.getChannel().position();
+                final long idxStart = raFile.position();
 
                 // Append the Index
-                raFile.write(indexBuffer.getRawBuffer(), 0, indexBuffer.size());
+                raFile.write(ByteBuffer.wrap(indexBuffer.getRawBuffer(), 0, indexBuffer.size()));
 
                 // Now Record the EOF
-                final long eof = raFile.getChannel().size();
+                final long eof = raFile.size();
 
                 // Seek back to the start to write the above stats.
                 // Write the Index Post back in the header
-                raFile.seek(BlockGZIPConstants.BLOCK_GZIP_V1_IDENTIFIER.length + BlockGZIPConstants.LONG_BYTES);
+                raFile.position(BlockGZIPConstants.BLOCK_GZIP_V1_IDENTIFIER.length + BlockGZIPConstants.LONG_BYTES);
                 // Write the uncompressed stream size
 
                 mainBuffer.reset();
@@ -249,15 +251,15 @@ public class BlockGZIPOutputFile extends OutputStream implements SeekableOutputS
 
                 raFile.close();
 
-                if (!lockFile.renameTo(finalFile)) {
-                    throw new IOException("Failed to rename lock file " + lockFile);
+                try {
+                    Files.move(lockFile, finalFile);
+                } catch (final IOException e) {
+                    throw new IOException("Failed to rename lock file " + lockFile, e);
                 }
             }
         } finally {
             try {
                 streamCloser.close();
-            } catch (IOException e) {
-                throw e;
             } finally {
                 super.close();
             }
@@ -275,11 +277,11 @@ public class BlockGZIPOutputFile extends OutputStream implements SeekableOutputS
         }
     }
 
-    public long getBlockCount() {
+    long getBlockCount() {
         return blockCount;
     }
 
-    public long getBlockSize() {
+    long getBlockSize() {
         return blockSize;
     }
 

@@ -23,8 +23,6 @@ import stroom.util.shared.SharedObject;
 
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
 import javax.persistence.Transient;
 import javax.persistence.Version;
 import javax.xml.bind.annotation.XmlTransient;
@@ -65,20 +63,6 @@ public abstract class BaseEntity extends Entity implements HasType, HasId, Share
     public abstract long getId();
 
     public abstract void setId(long id);
-
-    /**
-     * JPA hook.
-     */
-    @PrePersist
-    public void prePersist() {
-    }
-
-    /**
-     * JPA hook.
-     */
-    @PreUpdate
-    public void preUpdate() {
-    }
 
     /**
      * Have we saved yet?

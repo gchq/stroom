@@ -1,0 +1,30 @@
+package stroom.explorer.shared;
+
+import stroom.entity.shared.Action;
+import stroom.entity.shared.SharedDocRefInfo;
+import stroom.query.api.v2.DocRef;
+
+public class ExplorerServiceInfoAction extends Action<SharedDocRefInfo> {
+
+    private DocRef docRef;
+
+    /**
+     * Default constructor for GWT serialisation
+     */
+    public ExplorerServiceInfoAction() {
+
+    }
+
+    public ExplorerServiceInfoAction(final DocRef docRef) {
+        this.docRef = docRef;
+    }
+
+    public DocRef getDocRef() {
+        return docRef;
+    }
+
+    @Override
+    public String getTaskName() {
+        return null;
+    }
+}

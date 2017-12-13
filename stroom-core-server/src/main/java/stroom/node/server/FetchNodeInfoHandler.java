@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.node.server;
@@ -25,7 +26,6 @@ import stroom.entity.shared.ResultList;
 import stroom.node.shared.FetchNodeInfoAction;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeInfoResult;
-import stroom.node.shared.NodeService;
 import stroom.task.cluster.ClusterCallEntry;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.DefaultClusterResultCollector;

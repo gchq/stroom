@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,14 @@
 
 package stroom.dashboard.server;
 
-import org.springframework.stereotype.Component;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.entity.server.EntityMarshaller;
 
-@Component
-public class DashboardMarshaller extends EntityMarshaller<Dashboard, DashboardConfig> {
+class DashboardMarshaller extends EntityMarshaller<Dashboard, DashboardConfig> {
+    DashboardMarshaller() {
+    }
+
     @Override
     public DashboardConfig getObject(final Dashboard entity) {
         return entity.getDashboardData();

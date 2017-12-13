@@ -23,11 +23,10 @@ import stroom.util.io.FileUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestDelayedCreateOutputStream extends StroomUnitTest {
@@ -42,12 +41,12 @@ public class TestDelayedCreateOutputStream extends StroomUnitTest {
     }
 
     private void doTest(final boolean write) throws IOException {
-        final File file = new File(getCurrentTestDir(), "DelayedCreateOutputStream.dat");
+        final Path file = getCurrentTestDir().resolve("DelayedCreateOutputStream.dat");
         FileUtil.deleteFile(file);
 
         final DelayedCreateOutputStream delayedCreateOutputStream = createTestStream(file);
 
-        Assert.assertFalse(file.isFile());
+        Assert.assertFalse(Files.isRegularFile(file));
         if (write) {
             delayedCreateOutputStream.write(1);
         } else {
@@ -55,20 +54,20 @@ public class TestDelayedCreateOutputStream extends StroomUnitTest {
         }
         delayedCreateOutputStream.close();
 
-        Assert.assertEquals(write, file.isFile());
+        Assert.assertEquals(write, Files.isRegularFile(file));
 
         if (write) {
             FileUtil.deleteFile(file);
         }
     }
 
-    private DelayedCreateOutputStream createTestStream(final File file) {
+    private DelayedCreateOutputStream createTestStream(final Path file) {
         final DelayedCreateOutputStream delayedCreateOutputStream = new DelayedCreateOutputStream() {
             @Override
             protected OutputStream createOutputStream() {
                 try {
-                    return new FileOutputStream(file);
-                } catch (final FileNotFoundException e) {
+                    return Files.newOutputStream(file);
+                } catch (final IOException e) {
                     throw new RuntimeException(e);
                 }
             }

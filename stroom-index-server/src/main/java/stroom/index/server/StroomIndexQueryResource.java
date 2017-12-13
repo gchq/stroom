@@ -25,8 +25,6 @@ import io.swagger.annotations.ApiParam;
 import org.springframework.stereotype.Component;
 import stroom.datasource.api.v2.DataSource;
 import stroom.index.shared.Index;
-import stroom.index.shared.IndexService;
-import stroom.pool.SecurityHelper;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
@@ -36,6 +34,7 @@ import stroom.search.server.IndexDataSourceFieldUtil;
 import stroom.search.server.SearchResultCreatorManager;
 import stroom.search.server.SearchResultCreatorManager.Key;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
@@ -74,7 +73,7 @@ public class StroomIndexQueryResource implements HasHealthCheck {
             value = "Submit a request for a data source definition, supplying the DocRef for the data source",
             response = DataSource.class)
     public DataSource getDataSource(@ApiParam("DocRef") final DocRef docRef) {
-        try (final SecurityHelper securityHelper = SecurityHelper.elev(securityContext)) {
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             final Index index = indexService.loadByUuid(docRef.getUuid());
             return new DataSource(IndexDataSourceFieldUtil.getDataSourceFields(index));
         }

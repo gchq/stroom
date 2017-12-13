@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.index.server;
@@ -20,14 +21,10 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.server.util.BaseEntityDeProxyProcessor;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.FolderService;
 import stroom.index.shared.FindIndexCriteria;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
-import stroom.index.shared.IndexService;
-import stroom.query.api.v2.DocRef;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.annotation.Resource;
@@ -35,17 +32,14 @@ import javax.annotation.Resource;
 public class TestIndexServiceImpl extends AbstractCoreIntegrationTest {
     @Resource
     private IndexService indexService;
-    @Resource
-    private FolderService folderService;
 
     private Index testIndex;
     private Index refIndex;
 
     @Override
     protected void onBefore() {
-        final DocRef testFolder = DocRefUtil.create(folderService.create(null, "Test Group"));
-        refIndex = indexService.create(testFolder, "Ref index");
-        testIndex = indexService.create(testFolder, "Test index");
+        refIndex = indexService.create("Ref index");
+        testIndex = indexService.create("Test index");
 
         final IndexFields indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(IndexField.createDateField("TimeCreated"));

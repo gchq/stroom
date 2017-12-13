@@ -26,12 +26,12 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.streamstore.server.tools.StoreCreationTool;
 import stroom.streamtask.server.StreamProcessorTaskExecutor;
 import stroom.test.CommonTranslationTest;
-import stroom.test.StroomProcessTestFileUtil;
+import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomSpringProfiles;
 
 import javax.annotation.Resource;
-import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -45,10 +45,10 @@ public class CommonIndexingTest {
 
     private static final String DIR = "CommonIndexingTest/";
 
-    public static final File INDEX_XSLT = StroomProcessTestFileUtil.getTestResourcesFile(DIR + "index.xsl");
-    public static final File SEARCH_RESULT_XSLT = StroomProcessTestFileUtil
+    public static final Path INDEX_XSLT = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "index.xsl");
+    public static final Path SEARCH_RESULT_XSLT = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "search_result.xsl");
-    public static final File SEARCH_RESULT_TEXT_XSLT = StroomProcessTestFileUtil
+    public static final Path SEARCH_RESULT_TEXT_XSLT = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "search_result_text.xsl");
 
     @Resource
@@ -93,7 +93,7 @@ public class CommonIndexingTest {
 
     public int flushIndex() {
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getIndexIdSet().setMatchAll(true);
+        criteria.getIndexSet().setMatchAll(true);
         indexShardManager.findFlush(criteria);
 
         return 1;

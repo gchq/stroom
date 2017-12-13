@@ -63,4 +63,32 @@ public class QueryData implements Serializable {
     public void setLimits(final Limits limits) {
         this.limits = limits;
     }
+
+    public static class Builder {
+
+        private final QueryData instance;
+
+        public Builder() {
+            this.instance = new QueryData();
+        }
+
+        public Builder dataSource(final DocRef value) {
+            this.instance.dataSource = value;
+            return this;
+        }
+
+        public Builder limits(final Limits value) {
+            this.instance.limits = value;
+            return this;
+        }
+
+        public Builder expression(final ExpressionOperator value) {
+            this.instance.expression = value;
+            return this;
+        }
+
+        public QueryData build() {
+            return instance;
+        }
+    }
 }

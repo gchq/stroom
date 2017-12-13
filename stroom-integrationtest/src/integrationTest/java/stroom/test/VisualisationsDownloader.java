@@ -3,6 +3,7 @@ package stroom.test;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.util.io.FileUtil;
 import stroom.util.shared.Version;
 
 import java.io.IOException;
@@ -36,19 +37,19 @@ public class VisualisationsDownloader extends AbstractContentDownloader {
         if (destFileExists && conflictMode.equals(ConflictMode.KEEP_EXISTING)) {
             LOGGER.debug("Requested contentPack {} already exists in {}, keeping existing",
                     RELEASE_PREFIX,
-                    destFilePath.toAbsolutePath().toString());
+                    FileUtil.getCanonicalPath(destFilePath));
             return destFilePath;
         }
 
         if (destFileExists && conflictMode.equals(ConflictMode.OVERWRITE_EXISTING)) {
             LOGGER.debug("Requested contentPack {} already exists in {}, overwriting existing",
                     RELEASE_PREFIX,
-                    destFilePath.toAbsolutePath().toString());
+                    FileUtil.getCanonicalPath(destFilePath));
             try {
                 Files.delete(destFilePath);
             } catch (IOException e) {
                 throw new RuntimeException(String.format("Unable to remove existing content pack %s",
-                        destFilePath.toAbsolutePath().toString()), e);
+                        FileUtil.getCanonicalPath(destFilePath)), e);
             }
         }
 
@@ -56,7 +57,7 @@ public class VisualisationsDownloader extends AbstractContentDownloader {
         LOGGER.info("Downloading contentPack {} from {} to {}",
                 RELEASE_PREFIX,
                 fileUrl.toString(),
-                destFilePath.toAbsolutePath().toString());
+                FileUtil.getCanonicalPath(destFilePath));
 
         downloadFile(fileUrl, destFilePath);
 

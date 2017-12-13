@@ -16,8 +16,8 @@
 
 package stroom.importexport.server;
 
-import stroom.dashboard.server.logging.ImportExportEventLog;
-import stroom.entity.shared.ImportState;
+import stroom.logging.ImportExportEventLog;
+import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportConfigAction;
 import stroom.security.Secured;
 import stroom.servlet.SessionResourceStore;

@@ -86,15 +86,15 @@ public class TestTranslationTaskContextAndFlattening extends AbstractProcessInte
         // Assert.assertEquals(1, results.loadByName(0).getRecordsWritten());
         //
         // // Compare all files.
-        // ComparisonHelper.compareFiles(new File(StroomProcessTestFileUtil
-        // .getTestDataDir(), DIR));
+        // ComparisonHelper.compareFiles(StroomProcessTestFileUtil
+        // .getTestDataDir().resolve(DIR));
         //
         // // Make sure flattening dir exists.
-        // final File flatteningDir = new File(StroomProcessTestFileUtil
-        // .getTestDataDir(), FLATTENING_DIR);
-        // Assert.assertTrue(flatteningDir.isDirectory());
-        // final File flatFile = new File(flatteningDir, "2_STROOM.out");
-        // Assert.assertTrue(flatFile.isFile());
+        // final Path flatteningDir = StroomProcessTestFileUtil
+        // .getTestDataDir().resolve(FLATTENING_DIR);
+        // Assert.assertTrue(Files.isDirectory(flatteningDir));
+        // final Path flatFile = flatteningDir.resolve("2_STROOM.out");
+        // Assert.assertTrue(Files.isRegularFile(flatFile));
     }
 
     // private List<TranslationTaskResult> doTest() throws Exception {

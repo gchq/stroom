@@ -18,11 +18,10 @@ package stroom.streamstore.server.fs;
 
 import stroom.io.SeekableOutputStream;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -43,21 +42,21 @@ public class ParallelOutputStream extends OutputStream implements SeekableOutput
         this.outputStreamListSize = outputStreamList.size();
     }
 
-    private static Set<OutputStream> createOutputStreamsForFiles(final Set<File> outFileSet)
-            throws FileNotFoundException {
+    private static Set<OutputStream> createOutputStreamsForFiles(final Set<Path> outFileSet)
+            throws IOException {
         Set<OutputStream> rtn = new HashSet<>();
-        for (File file : outFileSet) {
-            rtn.add(new FileOutputStream(file));
+        for (Path file : outFileSet) {
+            rtn.add(Files.newOutputStream(file));
         }
         return rtn;
     }
 
-    public static ParallelOutputStream create(final Set<File> outFileSet) throws FileNotFoundException {
+    public static ParallelOutputStream create(final Set<Path> outFileSet) throws IOException {
         return new ParallelOutputStream(createOutputStreamsForFiles(outFileSet));
     }
 
     public static OutputStream createForStreamSet(final Set<OutputStream> outputStreamSet)
-            throws FileNotFoundException {
+            throws IOException {
         if (outputStreamSet.size() == 1) {
             return outputStreamSet.iterator().next();
         }

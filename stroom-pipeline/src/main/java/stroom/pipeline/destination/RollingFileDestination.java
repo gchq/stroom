@@ -20,13 +20,13 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.server.writer.PathCreator;
+import stroom.util.io.FileUtil;
 
 import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.function.Consumer;
 
 public class RollingFileDestination extends RollingDestination {
@@ -37,8 +37,8 @@ public class RollingFileDestination extends RollingDestination {
     private final String fileName;
     private final String rolledFileName;
 
-    private final File dir;
-    private final File file;
+    private final Path dir;
+    private final Path file;
 
     public RollingFileDestination(final String key,
                                   final long frequency,
@@ -46,8 +46,8 @@ public class RollingFileDestination extends RollingDestination {
                                   final long creationTime,
                                   final String fileName,
                                   final String rolledFileName,
-                                  final File dir,
-                                  final File file)
+                                  final Path dir,
+                                  final Path file)
             throws IOException {
         super(key, frequency, maxSize, creationTime);
 
@@ -59,19 +59,19 @@ public class RollingFileDestination extends RollingDestination {
 
         // Make sure we can create this path.
         try {
-            if (file.exists()) {
+            if (Files.isRegularFile(file)) {
                 LOGGER.debug("File exists for key={}", key);
 
                 // I have a feeling that the OS might sometimes report that a
                 // file exists that has actually just been rolled.
                 LOGGER.warn("File exists for key={} so rolling immediately", key);
-                setOutputStream(new ByteCountOutputStream(new BufferedOutputStream(new FileOutputStream(file, true))));
+                setOutputStream(new ByteCountOutputStream(new BufferedOutputStream(Files.newOutputStream(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND))));
 
                 // Roll the file.
                 roll();
 
             } else {
-                setOutputStream(new ByteCountOutputStream(new BufferedOutputStream(new FileOutputStream(file, true))));
+                setOutputStream(new ByteCountOutputStream(new BufferedOutputStream(Files.newOutputStream(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND))));
             }
         } catch (final IOException e) {
             try {
@@ -93,29 +93,19 @@ public class RollingFileDestination extends RollingDestination {
         destFileName = PathCreator.replaceFileName(destFileName, fileName);
 
         // Create the destination file.
-        final File destFile = new File(dir, destFileName);
+        final Path destFile = dir.resolve(destFileName);
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Rolling file '{}' to '{}'", getFullPath(file), getFullPath(destFile));
         }
 
         // Create source path.
-        Path source = null;
-        try {
-            source = file.toPath();
-        } catch (final Throwable t) {
-            exceptionConsumer.accept(wrapRollException(file, destFile, t));
-        }
+        Path source = file;
 
         // Create destination path.
-        Path dest = null;
-        try {
-            dest = destFile.toPath();
-        } catch (final Throwable t) {
-            exceptionConsumer.accept(wrapRollException(file, destFile, t));
-        }
+        Path dest = destFile;
 
         // If we have got valid paths for source and dest then attempt move.
-        if (source != null && dest != null) {
+        if (source != null) {
             if (Files.isRegularFile(dest)) {
                 LOGGER.error("Failed to roll file '{}' to '{}' as target exists", getFullPath(file),
                         getFullPath(destFile));
@@ -135,15 +125,10 @@ public class RollingFileDestination extends RollingDestination {
                 while (!success && attempt <= MAX_FAILED_RENAME_ATTEMPTS) {
                     // Try to rename the file to something else.
                     final String suffix = StringUtils.leftPad(String.valueOf(attempt), 3, '0');
-                    final File failedFile = new File(dir, file.getName() + "." + suffix);
-                    try {
-                        dest = null;
-                        dest = failedFile.toPath();
-                    } catch (final Throwable t) {
-                        LOGGER.error(t.getMessage(), t);
-                    }
+                    final Path failedFile = dir.resolve(file.getFileName().toString() + "." + suffix);
+                    dest = failedFile;
 
-                    if (dest != null && !Files.isRegularFile(dest)) {
+                    if (!Files.isRegularFile(dest)) {
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug("Renaming file '{}' to '{}'", getFullPath(file), getFullPath(failedFile));
                         }
@@ -175,16 +160,12 @@ public class RollingFileDestination extends RollingDestination {
         }
     }
 
-    private String getFullPath(final File file) {
-        try {
-            return file.getCanonicalPath();
-        } catch (final IOException e) {
-            return file.getAbsolutePath();
-        }
+    private String getFullPath(final Path file) {
+        return FileUtil.getCanonicalPath(file);
     }
 
-    private Throwable wrapRollException(final File sourceFile,
-                                        final File destFile,
+    private Throwable wrapRollException(final Path sourceFile,
+                                        final Path destFile,
                                         final Throwable e) {
         final String msg = String.format("Failed to roll file '%s' to '%s' - %s",
                 getFullPath(sourceFile),

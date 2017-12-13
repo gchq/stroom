@@ -23,7 +23,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.EntityServiceHelper;
-import stroom.entity.server.FindServiceHelper;
 import stroom.entity.server.QueryAppender;
 import stroom.entity.server.util.FieldMap;
 import stroom.entity.server.util.HqlBuilder;
@@ -46,6 +45,7 @@ import javax.inject.Inject;
 import javax.persistence.PersistenceException;
 import javax.persistence.Transient;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -98,7 +98,6 @@ public class UserServiceImpl implements UserService {
     private final boolean neverExpire;
 
     private final EntityServiceHelper<User> entityServiceHelper;
-    private final FindServiceHelper<User, FindUserCriteria> findServiceHelper;
     private final DocumentPermissionService documentPermissionService;
 
     private final QueryAppender<User, FindUserCriteria> queryAppender;
@@ -117,12 +116,12 @@ public class UserServiceImpl implements UserService {
         this.documentPermissionService = documentPermissionService;
 
         this.queryAppender = createQueryAppender(entityManager);
-        this.entityServiceHelper = new EntityServiceHelper<>(entityManager, getEntityClass(), queryAppender);
-        this.findServiceHelper = new FindServiceHelper<>(entityManager, getEntityClass(), queryAppender);
+        this.entityServiceHelper = new EntityServiceHelper<>(entityManager, getEntityClass());
+//        this.findServiceHelper = new FindServiceHelper<>(entityManager, getEntityClass(), queryAppender);
     }
 
-    protected QueryAppender<User, FindUserCriteria> createQueryAppender(final StroomEntityManager entityManager) {
-        return new QueryAppender(entityManager);
+    private QueryAppender<User, FindUserCriteria> createQueryAppender(final StroomEntityManager entityManager) {
+        return new QueryAppender<>(entityManager);
     }
 
     /**
@@ -285,24 +284,24 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     @Override
     public User load(final User entity) throws RuntimeException {
-        return entityServiceHelper.load(entity);
+        return entityServiceHelper.load(entity, Collections.emptySet(), queryAppender);
     }
 
     @Transactional(readOnly = true)
     @Override
     public User load(final User entity, final Set<String> fetchSet) throws RuntimeException {
-        return entityServiceHelper.load(entity, fetchSet);
+        return entityServiceHelper.load(entity, fetchSet, queryAppender);
     }
 
     @Override
     public final User loadByUuid(final String uuid) throws RuntimeException {
-        return entityServiceHelper.loadByUuid(uuid);
+        return entityServiceHelper.loadByUuid(uuid, Collections.emptySet(), queryAppender);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public final User loadByUuid(final String uuid, final Set<String> fetchSet) throws RuntimeException {
-        return entityServiceHelper.loadByUuid(uuid, fetchSet);
+        return entityServiceHelper.loadByUuid(uuid, fetchSet, queryAppender);
     }
 
     @Override
@@ -329,9 +328,9 @@ public class UserServiceImpl implements UserService {
                 }
             }
 
-            return entityServiceHelper.save(user);
+            return entityServiceHelper.save(user, queryAppender);
         } else {
-            return entityServiceHelper.save(user);
+            return entityServiceHelper.save(user, queryAppender);
         }
     }
 
@@ -353,7 +352,7 @@ public class UserServiceImpl implements UserService {
 
     private List<UserRef> toRefList(final List<User> list) {
         final List<UserRef> refs = new ArrayList<>(list.size());
-        list.stream().forEach(user -> refs.add(UserRefFactory.create(user)));
+        list.forEach(user -> refs.add(UserRefFactory.create(user)));
         return refs;
     }
 

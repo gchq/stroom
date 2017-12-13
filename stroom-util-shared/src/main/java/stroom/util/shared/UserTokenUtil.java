@@ -18,6 +18,8 @@ package stroom.util.shared;
 
 //TODO rewrite as a builder. Maybe write a mapper to a userRef
 public final class UserTokenUtil {
+    public static final String INTERNAL_PROCESSING_USER_TOKEN = createInternal();
+
     private static final String DELIMITER = "|";
     private static final String INTERNAL = "INTERNAL";
     private static final String USER = "user";
@@ -27,8 +29,8 @@ public final class UserTokenUtil {
         // Utility class.
     }
 
-    public static String createInternal() {
-        return create(SYSTEM, INTERNAL, null, null);
+    private static String createInternal() {
+        return create(SYSTEM, INTERNAL, null);
     }
 
     public static String create(final String userId, final String sessionId) {
