@@ -16,7 +16,6 @@ dependencies {
     compile libs.stroomQueryApi
     compile libs.stroomQueryCommon
     compile libs.stroomQueryAudit
-    compile libs.stroomStatsSchema
 
     compile libs.curator_client
     compile libs.curator_framework
@@ -80,7 +79,6 @@ dependencies {
 
     testCompile libs.junit
     testCompile libs.mockito_core
-    testCompile libs.commons_io
 
     //the following logging libs are needed when running junits outside dropwizard
     testRuntime libs.jcl_over_slf4j
