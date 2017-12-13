@@ -16,6 +16,11 @@
 
 package stroom.streamstore.server;
 
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import stroom.feed.MetaMap;
 import stroom.jobsystem.server.ClusterLockService;
 import stroom.node.server.StroomPropertyService;
 import stroom.streamstore.shared.Stream;
@@ -23,16 +28,11 @@ import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeKeyService;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.StroomLogger;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.StroomLogger;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomShutdown;
-import stroom.feed.MetaMap;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -64,7 +64,7 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
         private final boolean append;
         private final MetaMap metaMap;
 
-        public AsyncFlush(final Stream stream, final boolean append, final MetaMap metaMap) {
+        AsyncFlush(final Stream stream, final boolean append, final MetaMap metaMap) {
             this.stream = stream;
             this.append = append;
             this.metaMap = metaMap;
@@ -132,8 +132,8 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
         while (!ranOutOfItems) {
             final FindStreamAttributeValueCriteria criteria = new FindStreamAttributeValueCriteria();
 
-            final ArrayList<AsyncFlush> batchInsert = new ArrayList<AsyncFlush>();
-            AsyncFlush item = null;
+            final ArrayList<AsyncFlush> batchInsert = new ArrayList<>();
+            AsyncFlush item;
             while ((item = queue.poll()) != null && batchInsert.size() < BATCH_SIZE) {
                 batchInsert.add(item);
                 criteria.obtainStreamIdSet().add(item.getStream());
@@ -153,12 +153,8 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
                 // Key by the StreamAttributeKey pk
                 final Map<Long, Map<Long, StreamAttributeValue>> streamToAttributeMap = new HashMap<>();
                 for (final StreamAttributeValue value : streamAttributeValueService.find(criteria)) {
-                    Map<Long, StreamAttributeValue> map = streamToAttributeMap.get(value.getStreamId());
-                    if (map == null) {
-                        map = new HashMap<>();
-                        streamToAttributeMap.put(value.getStreamId(), map);
-                    }
-                    map.put(value.getStreamAttributeKeyId(), value);
+                    streamToAttributeMap.computeIfAbsent(value.getStreamId(), k -> new HashMap<>())
+                            .put(value.getStreamAttributeKeyId(), value);
                 }
 
                 final List<StreamAttributeValue> batchUpdate = new ArrayList<>();

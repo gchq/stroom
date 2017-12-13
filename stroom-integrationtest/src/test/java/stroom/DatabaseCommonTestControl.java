@@ -111,7 +111,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
             Node.TABLE_NAME,
             Permission.TABLE_NAME,
             PipelineEntity.TABLE_NAME,
-            Policy.
+            Policy.TABLE_NAME,
             Query.TABLE_NAME,
             Rack.TABLE_NAME,
             Res.TABLE_NAME,
@@ -222,12 +222,12 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
         LOGGER.info("test environment teardown completed in %s", Duration.between(startTime, Instant.now()));
     }
 
-    public void createStreamAttributeKeys() {
+    private void createStreamAttributeKeys() {
         final BaseResultList<StreamAttributeKey> list = streamAttributeKeyService
                 .find(new FindStreamAttributeKeyCriteria());
         LOGGER.info("Existing stream attribute keys: [%s]", list);
 
-        final HashSet<String> existingItems = new HashSet<String>();
+        final HashSet<String> existingItems = new HashSet<>();
         for (final StreamAttributeKey streamAttributeKey : list) {
             existingItems.add(streamAttributeKey.getName());
         }
