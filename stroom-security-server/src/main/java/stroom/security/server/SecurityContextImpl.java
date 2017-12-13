@@ -88,7 +88,7 @@ class SecurityContextImpl implements SecurityContext {
 
         if (token != null) {
             final String[] parts = token.split("\\|", -1);
-            if (parts.length < 4) {
+            if (parts.length < 3) {
                 LOGGER.error("Unexpected token format '" + token + "'");
                 throw new AuthenticationServiceException("Unexpected token format '" + token + "'");
             }
