@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Issue **#501** : Improve the database teardown process in integration tests to speed up builds
+
 ### Merged
 
 * Merged in [v5.1-beta.2]

@@ -45,10 +45,12 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Component
 public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush {
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeValueFlushImpl.class);
+
     public static final String LOCK_NAME = "StreamAttributeDelete";
     public static final int MONTH_OLD_MS = 1000 * 60 * 60 * 24 * 30;
     public static final int BATCH_SIZE = 1000;
-    private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeValueFlushImpl.class);
+
     final Queue<AsyncFlush> queue = new ConcurrentLinkedQueue<>();
     @Resource
     private StreamAttributeKeyService streamAttributeKeyService;
@@ -64,6 +66,11 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
     @Override
     public void persitAttributes(final Stream stream, final boolean append, final MetaMap metaMap) {
         queue.add(new AsyncFlush(stream, append, metaMap));
+    }
+
+    @Override
+    public void clear() {
+        queue.clear();
     }
 
     @StroomShutdown
@@ -101,7 +108,7 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
             final FindStreamAttributeValueCriteria criteria = new FindStreamAttributeValueCriteria();
 
             final ArrayList<AsyncFlush> batchInsert = new ArrayList<>();
-            AsyncFlush item = null;
+            AsyncFlush item;
             while ((item = queue.poll()) != null && batchInsert.size() < BATCH_SIZE) {
                 batchInsert.add(item);
                 criteria.obtainStreamIdSet().add(item.getStream());
@@ -121,12 +128,8 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
                 // Key by the StreamAttributeKey pk
                 final Map<Long, Map<Long, StreamAttributeValue>> streamToAttributeMap = new HashMap<>();
                 for (final StreamAttributeValue value : streamAttributeValueService.find(criteria)) {
-                    Map<Long, StreamAttributeValue> map = streamToAttributeMap.get(value.getStreamId());
-                    if (map == null) {
-                        map = new HashMap<>();
-                        streamToAttributeMap.put(value.getStreamId(), map);
-                    }
-                    map.put(value.getStreamAttributeKeyId(), value);
+                    streamToAttributeMap.computeIfAbsent(value.getStreamId(), k -> new HashMap<>())
+                            .put(value.getStreamAttributeKeyId(), value);
                 }
 
                 final List<StreamAttributeValue> batchUpdate = new ArrayList<>();
