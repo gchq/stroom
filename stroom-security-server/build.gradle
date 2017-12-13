@@ -23,6 +23,7 @@ dependencies {
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
+    compile libs.stroomAuthApi
     compile libs.stroomQueryApi
     compile libs.eventLogging
     compile libs.aspectjrt
@@ -52,8 +53,6 @@ dependencies {
     // Do not remove this as it is needed by Spring to send emails.
     compile libs.javax_mail_api
     permitUnusedDeclared libs.javax_mail_api
-
-    compile libs.dropwizard_metrics_annotation
 
     runtime libs.shiro_aspectj
 
